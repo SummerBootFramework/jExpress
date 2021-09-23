@@ -1,4 +1,4 @@
-### Summer Boot Framework is a Java Framework powered with Netty
+### Summer Boot Framework is a Java Framework powered by Netty
 
 <!--
 **SummerBootFramework/SummerBootFramework** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
