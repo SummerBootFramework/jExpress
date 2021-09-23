@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.summerframework.boot</groupId>
+    <artifactId>summer.boot</artifactId>
+    <version>2.0.11</version>
+    <packaging>jar</packaging>
+    <name>Summer Boot</name>
+    <url>http://maven.apache.org</url>
+	
+    <developers>
+        <developer>
+            <name>Changski Tie Zheng Zhang</name>
+        </developer>
+    </developers>  
+    
+    <properties>        
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- Commons -->
+        <commons-lang3.version>3.12.0</commons-lang3.version>
+        <commons-cli.version>1.4</commons-cli.version>
+        <commons-io.version>2.11.0</commons-io.version>
+        <!-- Logging -->
+        <log4j-api.version>2.14.1</log4j-api.version>
+        <log4j-disruptor.version>3.4.4</log4j-disruptor.version>
+        <!-- Mail -->
+        <javax-mail.version>1.6.2</javax-mail.version>
+        <javax-activation.version>1.1.1</javax-activation.version>
+        <!-- Security -->
+        <samba.jcifs.version>1.3.3</samba.jcifs.version>
+        <bouncycastle.version>1.69</bouncycastle.version>
+        <!-- JWT -->
+        <jwt.version>0.9.1</jwt.version>
+
+        <!-- Netty stable version is 4.1.59 and 4.1.65, (do NOT use 4.1.60~4.1.64)-->        
+        <netty.version>4.1.67.Final</netty.version>
+        <netty-tcnative.version>2.0.41.Final</netty-tcnative.version>
+        <!-- MIME-Type -->
+        <tika.version>2.1.0</tika.version>
+        <!-- JAX-RS -->
+        <rs-api.version>2.1.1</rs-api.version>
+        <javax.annotation.version>1.3.2</javax.annotation.version>
+        <reflections.version>0.9.12</reflections.version>
+
+        <!-- JSON/XML/Bean Validation -->
+        <jackson.version>2.12.5</jackson.version>    
+        <gson.version>2.8.8</gson.version>
+        <!-- Bean Validation -->
+        <validation-api.version>2.0.1.Final</validation-api.version>
+        <hibernate-validator.version>6.2.0.Final</hibernate-validator.version>
+        <el.api.version>3.0.0</el.api.version>
+        <el.Implementation.version>2.2.6</el.Implementation.version>
+
+        <!-- IOC Injection -->
+        <guice.version>5.0.1</guice.version>
+
+        <!-- JPA -->
+        <hibernate.version>5.5.7.Final</hibernate.version>
+        <hikari-cp.version>5.0.0</hikari-cp.version>
+
+        <!-- Cache -->
+        <jedis.version>3.7.0</jedis.version>
+
+        <!-- Template Engine -->
+        <freemarker.version>2.3.31</freemarker.version>
+        <!-- PDF - PDFBox 
+        <pdfbox.version>2.0.24</pdfbox.version>-->
+        <!-- PDF - com.openhtmltopdf -->	       
+        <openhtml.version>1.0.9</openhtml.version>
+        <!-- PDF - iText -->
+        <itext7-core.version>7.1.16</itext7-core.version>
+        <itext7-html2pdf.version>3.0.5</itext7-html2pdf.version>
+        
+        <!-- Testing  -->
+        <testng.version>7.4.0</testng.version>
+    </properties>
+    
+    <distributionManagement>
+        <repository>
+            <id>nexus-auth-releases</id>
+            <name>Nexus Release Repository</name>
+            <url>http://${nexus.host}/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus-auth-snapshots</id>
+            <name>Nexus Snapshot Repository</name>
+            <url>http://${nexus.host}/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+	
+    <dependencies>
+        <!-- Commons -->
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 Apache 2.0-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/commons-cli/commons-cli Apache 2.0-->
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>${commons-cli.version}</version>
+            <!--            <optional>true</optional>-->
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/commons-io/commons-io Apache 2.0-->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
+        </dependency>
+
+
+        <!-- Logging -->
+        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api Apache 2.0-->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j-api.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core Apache 2.0-->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j-api.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.lmax/disruptor Apache 2.0-->
+        <dependency>
+            <groupId>com.lmax</groupId>
+            <artifactId>disruptor</artifactId>
+            <version>${log4j-disruptor.version}</version>
+        </dependency>
+
+
+        <!-- Mail -->
+        <!-- https://mvnrepository.com/artifact/com.sun.mail/javax.mail CDDL, GPL 2.0-->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+            <version>${javax-mail.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/javax.activation/activation CDDL 1.0-->
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+            <version>${javax-activation.version}</version>
+        </dependency>
+
+
+        <!-- Security -->
+        <!-- https://mvnrepository.com/artifact/org.samba.jcifs/jcifs LGPL 2.1-->
+        <dependency>
+            <groupId>org.samba.jcifs</groupId>
+            <artifactId>jcifs</artifactId>
+            <version>${samba.jcifs.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on BouncyCastle-->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+        <!-- JWT -->
+        <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt Apache 2.0-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>${jwt.version}</version>
+        </dependency>
+
+
+        <!-- Netty -->
+        <!-- https://mvnrepository.com/artifact/io.netty/netty-all Apache 2.0-->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.netty/netty-transport-native-epoll Apache 2.0-->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-epoll</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.netty/netty-transport-native-kqueue Apache 2.0-->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-kqueue</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.netty/netty-tcnative-boringssl-static Apache-->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-tcnative-boringssl-static</artifactId>
+            <version>${netty-tcnative.version}</version>
+        </dependency>
+        <!-- MIME-Type -->
+        <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core Apache 2.0-->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+        <!-- JAX-RS -->
+        <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api EPL 2.0-->
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>${rs-api.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api CDDL, GPL 2.0 -->
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+            <version>${javax.annotation.version}</version>
+            <scope>compile</scope>
+        </dependency>        
+        <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>${reflections.version}</version>
+        </dependency>
+
+
+        <!-- JSON/XML/Bean Validation -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind Apache 2.0-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core Apache 2.0-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations Apache 2.0-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 Apache 2.0-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-jsonSchema Apache 2.0-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jsonSchema</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- XML -->
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml Apache 2.0-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- Bean Validation -->
+        <!-- https://mvnrepository.com/artifact/javax.validation/validation-api Apache 2.0-->
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>${validation-api.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator Apache 2.0-->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${hibernate-validator.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/javax.el/javax.el-api CDDL, GPL, GPL 2.0-->
+        <dependency>
+            <groupId>javax.el</groupId>
+            <artifactId>javax.el-api</artifactId>
+            <version>${el.api.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.glassfish.web/javax.el CDDL, GPL, GPL 2.0-->
+        <dependency>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>javax.el</artifactId>
+            <version>${el.Implementation.version}</version>
+        </dependency>
+
+
+        <!-- Injection -->
+        <!-- https://mvnrepository.com/artifact/com.google.inject/guice Apache 2.0-->            
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>${guice.version}</version>
+        </dependency>
+
+
+        <!-- JPA -->
+        <!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-core LGPL 2.1-->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-hikaricp LGPL 2.1-->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-hikaricp</artifactId>
+            <version>${hibernate.version}</version>
+        </dependency>
+        <!-- JPA Connection Pool -->
+        <!-- https://mvnrepository.com/artifact/com.zaxxer/HikariCP Apache 2.0-->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>${hikari-cp.version}</version>
+        </dependency>
+
+
+        <!-- Cache -->
+        <!-- https://mvnrepository.com/artifact/redis.clients/jedis MIT-->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>${jedis.version}</version>
+        </dependency>
+
+
+        <!-- Template Engine -->
+        <!-- https://mvnrepository.com/artifact/org.freemarker/freemarker Apache 2.0-->
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+            <version>${freemarker.version}</version>
+        </dependency>
+        <!-- PDF - iText -->
+        <!-- https://mvnrepository.com/artifact/com.itextpdf/itext7-core AGPL 3.0-->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext7-core</artifactId>
+            <version>${itext7-core.version}</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.itextpdf/html2pdf AGPL 3.0-->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>html2pdf</artifactId>
+            <version>${itext7-html2pdf.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- PDF - PDFBox -->
+        <!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox Apache 2.0-->
+        <!--        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>-->        
+        
+        <!-- PDF - com.openhtmltopdf -->
+        <!-- https://mvnrepository.com/artifact/com.openhtmltopdf/openhtmltopdf-pdfbox LGPL 2.1-->
+        <dependency>
+            <!-- ALWAYS required, usually included transitively. -->
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-core</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>
+        <dependency>
+            <!-- Required for PDF output. -->
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>  	
+        <dependency>
+            <!-- Required for image output only. -->  	
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-java2d</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>  	
+        <dependency>
+            <!-- Optional, leave out if you do not need right-to-left or bi-directional text support. -->
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-rtl-support</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>  	 
+        <dependency>
+            <!-- Optional, leave out if you do not need logging via slf4j. -->
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-slf4j</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>  	
+        <dependency>
+            <!-- Optional, leave out if you do not need SVG support. -->
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-svg-support</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>
+        <dependency>
+            <!-- Optional, leave out if you do not need MathML support. -->
+            <!-- Introduced in RC-13. -->
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-mathml-support</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>
+
+
+        <!-- Testing  -->
+        <!-- https://mvnrepository.com/artifact/org.testng/testng Apache 2.0-->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>  
+</project>

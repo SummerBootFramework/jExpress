@@ -1,0 +1,367 @@
+/*
+ * Copyright 2005 The Summer Boot Framework Project
+ *
+ * The Summer Boot Framework Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+package org.summerframework.nio.server;
+
+import org.summerframework.nio.server.domain.ServiceError;
+import org.summerframework.nio.server.domain.ServiceResponse;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelProgressiveFuture;
+import io.netty.channel.ChannelProgressiveFutureListener;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.stream.ChunkedFile;
+import io.netty.util.AsciiString;
+import io.netty.util.CharsetUtil;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Base64;
+import java.util.regex.Pattern;
+import javax.activation.MimetypesFileTypeMap;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tika.Tika;
+import org.summerframework.boot.BootErrorCode;
+
+/**
+ *
+ * @author Changski Tie Zheng Zhang
+ */
+public class NioHttpUtil {
+
+    private static final Logger log = LogManager.getLogger(NioHttpUtil.class.getName());
+
+    //security
+    public static final String HTTP_HEADER_AUTH_TOKEN = "Authorization";// "X-Auth-Token";// "X_Authorization"; //RFC 7235, sec. 4.2
+    public static final String HTTP_HEADER_AUTH_TYPE = "Bearer";// RFC6750, https://tools.ietf.org/html/rfc6750
+
+    // <img src="data:image/png;base64,<base64 str here>" alt="Red dot" />
+    // <object type="application/pdf" data="data:application/pdf;base64,<base64 str here>"/>
+    public static String encodeMimeBase64(File file) throws IOException {
+        byte[] contentBytes = Files.readAllBytes(file.toPath());
+        return Base64.getMimeEncoder().encodeToString(contentBytes);
+    }
+
+    public static String encodeMimeBase64(byte[] contentBytes) {
+        return Base64.getMimeEncoder().encodeToString(contentBytes);
+    }
+
+    public static byte[] decodeMimeBase64(String contentBase64) {
+        return Base64.getMimeDecoder().decode(contentBase64);
+    }
+
+    public static void decodeMimeBase64(String contentBase64, File dest) throws IOException {
+        byte[] contentBytes = Base64.getMimeDecoder().decode(contentBase64);
+        FileUtils.writeByteArrayToFile(dest, contentBytes);
+    }
+
+    public static final AsciiString KEEP_ALIVE = new AsciiString("keep-alive");
+    public static final AsciiString CONNECTION = new AsciiString("Connection");
+
+    public static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, int errorCode, String msg, Throwable ex) {
+        var e = new ServiceError(errorCode, null, msg, ex);
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.copiedBuffer(e.toJson(), CharsetUtil.UTF_8));
+        resp.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
+        ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
+    }
+
+    public static void sendRedirect(ChannelHandlerContext ctx, String newUri) {
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND);//HttpResponseStatus.PERMANENT_REDIRECT : HttpResponseStatus.TEMPORARY_REDIRECT
+        resp.headers().set(HttpHeaderNames.LOCATION, newUri);
+        ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
+    }
+
+    public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceResponse serviceResponse) {
+        if (serviceResponse.file() != null) {
+            return sendFile(ctx, isKeepAlive, serviceResponse);
+        }
+        if (StringUtils.isBlank(serviceResponse.txt()) && serviceResponse.error() != null) {
+            serviceResponse.txt(serviceResponse.error().toJson());
+        }
+        if (StringUtils.isNotBlank(serviceResponse.txt())) {
+            return sendText(ctx, isKeepAlive, serviceResponse.headers(), serviceResponse.status(), serviceResponse.txt(), serviceResponse.contentType(), serviceResponse.charsetName(), true);
+        }
+        if (serviceResponse.redirect() != null) {
+            NioHttpUtil.sendRedirect(ctx, serviceResponse.redirect());
+            return 0;
+        }
+
+        HttpResponseStatus status = serviceResponse.status();
+        if (HttpResponseStatus.OK.equals(status)) {
+            status = HttpResponseStatus.NO_CONTENT;
+        }
+        return sendText(ctx, isKeepAlive, serviceResponse.headers(), status, null, serviceResponse.contentType(), serviceResponse.charsetName(), true);
+    }
+
+    public static long sendText(ChannelHandlerContext ctx, boolean isKeepAlive, HttpHeaders serviceHeaders, HttpResponseStatus status, String content, String contentType, String charsetName, boolean flush) {
+        if (content == null) {
+            content = "";
+        }
+        //FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.wrappedBuffer(content.getBytes(CharsetUtil.UTF_8)));
+        byte[] contentBytes;
+        if (charsetName == null) {
+            contentBytes = content.getBytes(StandardCharsets.UTF_8);
+            charsetName = "UTF-8";
+        } else {
+            try {
+                contentBytes = content.getBytes(charsetName);
+            } catch (UnsupportedEncodingException ex) {
+                log.warn("Unsupported charset=" + charsetName + ": " + ex);
+                contentBytes = content.getBytes(StandardCharsets.UTF_8);
+                charsetName = "UTF-8";
+            }
+        }
+//        int a = 252;//"ü"
+//        byte[] b = {(byte) a};
+//        contentBytes = b;
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.wrappedBuffer(contentBytes));
+        HttpHeaders h = resp.headers();
+        if (serviceHeaders != null) {
+            //headers.forEach((k, v) -> h.set(k, v));
+            h.set(serviceHeaders);
+        }
+        if (contentType != null) {
+            h.set(HttpHeaderNames.CONTENT_TYPE, contentType + ";charset=" + charsetName);
+        }
+        long contentLength = resp.content().readableBytes();
+
+        if (contentLength > Integer.MAX_VALUE) {
+            h.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(contentLength));
+        } else {
+            h.setInt(HttpHeaderNames.CONTENT_LENGTH, (int) contentLength);
+        }
+
+        // send
+        if (isKeepAlive) {//HttpUtil.isKeepAlive(req);
+            // Add keep alive header as per:
+            // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
+            h.set(HttpHeaderNames.CONNECTION, KEEP_ALIVE);
+            if (flush) {
+                ctx.writeAndFlush(resp);
+            } else {
+                ctx.write(resp);
+            }
+        } else {
+            // If keep-alive is off, close the connection once the content is fully written.
+            if (flush) {
+                ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
+            } else {
+                ctx.write(resp).addListener(ChannelFutureListener.CLOSE);
+            }
+        }
+        return contentLength;
+    }
+
+    public static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceResponse serviceResponse) {
+        long fileLength = -1;
+        final RandomAccessFile randomAccessFile;
+        File file = serviceResponse.file();
+        String filePath = serviceResponse.txt();
+        try {
+            randomAccessFile = new RandomAccessFile(file, "r");
+            fileLength = randomAccessFile.length();
+            HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+            HttpHeaders h = response.headers();
+            h.set(serviceResponse.headers());
+
+            if (isKeepAlive) {
+                // Add keep alive header as per:
+                // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
+                h.set(HttpHeaderNames.CONNECTION, KEEP_ALIVE);
+            }
+            ctx.write(response);
+            // the sending progress
+            ChannelFuture sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
+            sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
+                @Override
+                public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
+                    if (total < 0) { // total unknown
+                        log.error(filePath + " -> Transfer progress: " + progress);
+                    } else {
+                        log.debug(() -> filePath + " -> Transfer progress: " + progress + " / " + total);
+                    }
+                }
+
+                @Override
+                public void operationComplete(ChannelProgressiveFuture future) throws Exception {
+                    log.debug(() -> filePath + " -> Transfer complete.");
+                    randomAccessFile.close();
+                }
+            });
+            ChannelFuture lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+            if (!isKeepAlive) {
+                lastContentFuture.addListener(ChannelFutureListener.CLOSE);
+            }
+        } catch (IOException ex) {
+            log.error("download " + filePath, ex);
+            sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, "faild to download", null);
+        }
+        return fileLength;
+    }
+
+    public static String getFileContentType(File file) {
+        String mimeType;
+        try {
+            Tika tika = new Tika();
+            mimeType = tika.detect(file);
+        } catch (IOException ex) {
+            MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
+            mimeType = mimeTypesMap.getContentType(file.getPath());
+            log.warn(() -> "Magic cannot get MIME from " + file.getAbsolutePath());
+        }
+        return mimeType;
+    }
+
+    private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[A-Za-z0-9][-_A-Za-z0-9\\.]*");
+
+    public static String getHttpPostBodyString(FullHttpRequest fullHttpRequest) {
+        ByteBuf buf = fullHttpRequest.content();
+        String jsonStr = buf.toString(io.netty.util.CharsetUtil.UTF_8);
+        //buf.release();
+        log.debug(() -> "\n" + fullHttpRequest.uri() + "\n" + jsonStr);
+        return jsonStr;
+    }
+
+    public static String decode(String value) {
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException ex) {
+            return value;
+        }
+    }
+
+    private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
+
+    public static boolean sanitizeUri(String uri) {
+        try {
+            uri = URLDecoder.decode(uri, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            try {
+                uri = URLDecoder.decode(uri, "ISO-8859-1");
+            } catch (UnsupportedEncodingException e1) {
+                return false;
+            }
+        }
+        uri = uri.replace('/', File.separatorChar);
+        // Simplistic dumb security check.
+        // You will have to do something serious in the production environment.
+        return !(uri.contains(File.separator + '.')
+                || uri.contains('.' + File.separator)
+                || uri.charAt(0) == '.'
+                || uri.charAt(uri.length() - 1) == '.'
+                || INSECURE_URI.matcher(uri).matches());
+    }
+
+    public static boolean sanitizePath(String path) {
+        return !path.contains(File.separator + '.')
+                && !path.contains('.' + File.separator);
+    }
+
+    @Deprecated
+    public static String sanitizeDocRootUri(String uri, String docroot) {
+        try {
+            uri = URLDecoder.decode(uri, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            try {
+                uri = URLDecoder.decode(uri, "ISO-8859-1");
+            } catch (UnsupportedEncodingException e1) {
+                throw new Error(e);
+            }
+        }
+        uri = uri.replace('/', File.separatorChar);
+        // Simplistic dumb security check.
+        // You will have to do something serious in the production environment.
+        if (uri.contains(File.separator + '.')
+                || uri.contains('.' + File.separator)
+                || uri.charAt(0) == '.'
+                || uri.charAt(uri.length() - 1) == '.'
+                || INSECURE_URI.matcher(uri).matches()) {
+            return null;
+        }
+        if (!uri.startsWith(docroot)) {
+            return null;
+        }
+        return System.getProperty("user.dir") + uri;
+    }
+
+    @Deprecated
+    public static void sendListing(ChannelHandlerContext ctx, File dir) {
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+        StringBuilder sb = new StringBuilder();
+        String dirPath = dir.getPath();
+        sb.append("<!DOCTYPE html>\r\n");
+        sb.append("<html><head><title>");
+        sb.append(dirPath);
+        sb.append(" dir：");
+        sb.append("</title></head><body>\r\n");
+        sb.append("<h3>");
+        sb.append(dirPath).append(" dir：");
+        sb.append("</h3>\r\n");
+        sb.append("<ul>");
+        sb.append("<li>Link：<a href=\"../\">..</a></li>\r\n");
+        for (File f : dir.listFiles()) {
+            if (f.isHidden() || !f.canRead()) {
+                continue;
+            }
+            String name = f.getName();
+            if (!ALLOWED_FILE_NAME.matcher(name).matches()) {
+                continue;
+            }
+            sb.append("<li>Link：<a href=\"");
+            sb.append(name);
+            sb.append("\">");
+            sb.append(name);
+            sb.append("</a></li>\r\n");
+        }
+        sb.append("</ul></body></html>\r\n");
+        ByteBuf buffer = Unpooled.copiedBuffer(sb, io.netty.util.CharsetUtil.UTF_8);
+        response.content().writeBytes(buffer);
+        buffer.release();
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+    }
+
+}
+
+//        List<Integer> failed = rdlList.keySet()
+//                .stream()
+//                .filter(k -> rdlList.get(k) == null)
+//                .sorted()
+//                .collect(Collectors.toList());
+//        log.error(() -> "RDL Signon failed: " + failed);
+//
+//        Map<Integer, String> success = rdlList.entrySet()
+//                .stream()
+//                .filter(e -> e.getValue() != null)
+//                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
