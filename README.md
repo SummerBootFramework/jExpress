@@ -254,17 +254,37 @@ java -jar my-service.jar -domain production
 
 ## 5. Ping with Load Balancer
 
-**5.1 Intent****
+**5.1 Intent**
 
-- No longer need to stop and restart microservices when the configuration changes
+- Work with load balancer
 
-**5.2 Motivation****
+**5.2 Motivation**
 
-- No longer need to stop and restart microservices when the configuration changes
+- Need to tell the load balancer my service status but do not affect my application log
 
-**5.3 Sample Code****
+**5.3 Sample Code**
 
-- No longer need to stop and restart microservices when the configuration changes
+Add the following to enable ping on https://host:port/myservice/ping
+
+```
+.enable_Ping_HealthCheck("/myservice", "ping")
+```
+
+Full version:
+
+ ```bash
+public class Main {
+    public static void main(String[] args) {
+        SummerApplication.bind(Main.class)
+        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+                .bind_NIOHandler(HttpRequestHandler.class)
+                .enable_Ping_HealthCheck("/myservice", "ping")
+                .run(args, "my app v1.0");
+    }
+}
+ ```
+
+
 
 
 
@@ -272,15 +292,47 @@ java -jar my-service.jar -domain production
 
 **6.1 Intent****
 
-- No longer need to stop and restart microservices when the configuration changes
+- Tell load balancer I'm not at good status 
 
 **6.2 Motivation****
 
-- No longer need to stop and restart microservices when the configuration changes
+- When one of your application/service's dependency (database, 3rd party service, etc.) is down, the framework will automatically response error to load balancer, so that no upcoming request will route to this node.
 
 **6.3 Sample Code****
 
-- No longer need to stop and restart microservices when the configuration changes
+Add the following:
+
+```
+.enable_Ping_HealthCheck(AppURI.CONTEXT_ROOT, AppURI.LOAD_BALANCER_HEALTH_CHECK, HealthInspectorImpl.class)
+```
+
+Full version:
+
+ ```bash
+public class Main {
+    public static void main(String[] args) {
+        SummerApplication.bind(Main.class)
+        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+                .bind_NIOHandler(HttpRequestHandler.class)
+                .enable_Ping_HealthCheck(AppURI.CONTEXT_ROOT, AppURI.LOAD_BALANCER_HEALTH_CHECK, HealthInspectorImpl.class)
+                .run(args, "my app v1.0");
+    }
+}
+
+@Singleton
+public class HealthInspectorImpl extends BootHealthInspectorImpl {
+    @Inject
+    private DataRepository db;
+
+    @Override
+    protected void healthCheck(@Nonnull ServiceError error, @Nullable Logger callerLog) {
+        error.addErrors(db.ping());
+    }
+
+}
+ ```
+
+
 
 
 
@@ -304,13 +356,62 @@ java -jar my-service.jar -domain production
 
 **8.1 Intent**
 
-- No longer need to stop and restart microservices when the configuration changes
+- Show the request log and response log from the same client together
+- Client receives response without waiting for application to finish the logging/reporting as before.
+- Save disk space for log files
+- Easy to identify where the log file generate and by which server
 
 **8.2 Motivation**
 
-- No longer need to stop and restart microservices when the configuration changes
+- Request#1 is logged, and its response is logged separately after hundreds of lines
+- You don want to keep the client side wait just because your application is doing logging
+- Log file will be zipped automatically when file size exceeds the predefined limit.
+- Log file name will be automatically filled with server name when created.
 
-**8.3 Sample Code**
+
+
+**8.3 And there are 2 type of separated logs:**
+
+**1. Request log** - lt contains client request related information. A single log entry contains the following information:
+
+1. Security/Business required information: who did what when, how and from where
+2. Performance tuning required information: POI (point of interest) of the key events
+3. App support required information: The full conversation between client and service
+4. App Debug required information: The full conversation between service and 3rd paty
+
+Log sample:
+
+> 2021-07-24 14:12:36,620 INFO com.dlo.courtfiling.app.http.io.HttpRequestHandler.lambda$channelRead0$4() [pool-4-thread-6] request_6.caller=null
+> 	request_6=GET /web-resources/styles/util_fileupload.css, dataSize=0, KeepAlive=true, chn=[id: 0x1e5deb34, L:/0:0:0:0:0:0:0:1:8989 - R:/0:0:0:0:0:0:0:1:1047], ctx=484232802, hdl=com.dlo.courtfiling.app.http.io.HttpRequestHandler@2baf9cd4
+> 	responsed_6=200 OK, error=0, queuing=3ms, process=18ms, response=18ms, cont.len=2048bytes
+> 	POI: service.begin=4ms, auth.begin=4ms, process.begin=4ms, biz.begin=4ms, biz.end=18ms, process.end=18ms, service.end=18ms, 
+> 	1.client_req.headers=DefaultHttpHeaders[Host: localhost:8989, Connection: keep-alive, sec-ch-ua: "Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92", DNT: 1, sec-ch-ua-mobile: ?0, User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36, Accept: text/css,*/*;q=0.1, Sec-Fetch-Site: same-origin, Sec-Fetch-Mode: no-cors, Sec-Fetch-Dest: style, Referer: https://localhost:8989/, Accept-Encoding: gzip, deflate, br, Accept-Language: en-GB,en-US;q=0.9,en;q=0.8,zh-CN;q=0.7,zh;q=0.6, content-length: 0]
+> 	2.client_req.body=null
+> 	3.server_resp.headers=DefaultHttpHeaders[content-length: 2048, content-type: text/css]
+> 	4.server_resp.body=null
+
+```
+POI: service.begin=4ms, auth.begin=4ms, process.begin=4ms, biz.begin=4ms, biz.end=18ms, process.end=18ms, service.end=18ms
+
+This shows service begin process the client request after 4ms from I/O layer process, and business process took 14ms (18 - 4) to finish, and I/O layer took 0ms (18 - 18) to send the response to cleint
+```
+
+
+
+**2. Application Status/Event log** - l it contains application status related information (version, start event, configuration change event, TPS, etc.), below is a sample:
+
+> 2021-09-24 14:11:06,181 INFO org.summerframework.nio.server.NioServer.bind() [main] starting... Epoll=false, KQueue=false, multiplexer=AVAILABLE 
+> 2021-09-24 14:11:06,633 INFO org.summerframework.nio.server.NioServer.bind() [main] [OPENSSL] [TLSv1.2, TLSv1.3] (30s): [TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256, TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256] 
+> 2021-09-24 14:11:07,987 INFO org.summerframework.nio.server.NioServer.bind() [main] Server Summer.Boot.v2.0.11@DuXiaoPC (Client Auth: NONE) is listening on JDK https://0.0.0.0:8989/service 
+> 2021-09-24 14:11:07,988 INFO org.summerframework.boot.SummerApplication.start() [main] CourtFiling v1.0.0RC1u1_Summer.Boot.v2.0.11@DuXiaoPC_UTF-8 pid#29768@DuXiaoPC application launched (success), kill -9 or Ctrl+C to shutdown 
+> 2021-09-24 14:12:37,010 DEBUG org.summerframework.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=20, tps=20, activeChannel=2, totalChannel=10, totalHit=20 (ping0 + biz20), task=20, completed=20, queue=0, active=0, pool=9, core=9, max=9, largest=9 
+> 2021-09-24 14:12:38,001 DEBUG org.summerframework.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=4, tps=4, activeChannel=2, totalChannel=10, totalHit=24 (ping0 + biz24), task=24, completed=24, queue=0, active=0, pool=9, core=9, max=9, largest=9 
+
+
+
+
+
+
 
 
 
