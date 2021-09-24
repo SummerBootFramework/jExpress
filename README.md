@@ -59,7 +59,9 @@ public class Main {
 
 Add the following
 
-> .bind_SummerBootConfig("my config file name", AppConfig.CFG)
+```
+.bind_SummerBootConfig("my config file name", AppConfig.CFG)
+```
 
 
 
@@ -136,11 +138,15 @@ public class Main {
 
 run with dev configuration
 
-> java -jar my-service.jar -domain dev
+```
+java -jar my-service.jar -domain dev
+```
 
 run with production configuration
 
-> java -jar my-service.jar -domain production
+```
+java -jar my-service.jar -domain production
+```
 
 
 
