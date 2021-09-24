@@ -4,7 +4,7 @@
 
 
 
-## 1. Rapid development of microservices with Non-blocking I/O (powered by Netty Reactor - *multiplexing* approach)
+## 1. Performance: RESTful Web Services (JAX-RS) with Non-blocking I/O (powered by Netty Reactor - *multiplexing* approach)
 
 **1.1 Intent**
 
