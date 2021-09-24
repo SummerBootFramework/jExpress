@@ -254,21 +254,33 @@ java -jar my-service.jar -domain production
 
 ## 5. Ping with Load Balancer
 
-**5.1 Intent**
+**5.1 Intent****
 
-**5.2 Motivation**
+- No longer need to stop and restart microservices when the configuration changes
 
-**5.3 Sample Code**
+**5.2 Motivation****
+
+- No longer need to stop and restart microservices when the configuration changes
+
+**5.3 Sample Code****
+
+- No longer need to stop and restart microservices when the configuration changes
 
 
 
 ## 6. Ping with Health Check/Auto-Shutdown
 
-**6.1 Intent**
+**6.1 Intent****
 
-**6.2 Motivation**
+- No longer need to stop and restart microservices when the configuration changes
 
-**6.3 Sample Code**
+**6.2 Motivation****
+
+- No longer need to stop and restart microservices when the configuration changes
+
+**6.3 Sample Code****
+
+- No longer need to stop and restart microservices when the configuration changes
 
 
 
@@ -276,9 +288,15 @@ java -jar my-service.jar -domain production
 
 **7.1 Intent**
 
+- No longer need to stop and restart microservices when the configuration changes
+
 **7.2 Motivation**
 
+- No longer need to stop and restart microservices when the configuration changes
+
 **7.3 Sample Code**
+
+- No longer need to stop and restart microservices when the configuration changes
 
 
 
@@ -286,9 +304,15 @@ java -jar my-service.jar -domain production
 
 **8.1 Intent**
 
+- No longer need to stop and restart microservices when the configuration changes
+
 **8.2 Motivation**
 
+- No longer need to stop and restart microservices when the configuration changes
+
 **8.3 Sample Code**
+
+
 
 
 
@@ -296,19 +320,135 @@ java -jar my-service.jar -domain production
 
 **9.1 Intent**
 
+- Run in mock mode
+
 **9.2 Motivation**
+
+- You need to run you application with mocked implementations
+- You need to tell the application which component(s) should use the mocked implementation
 
 **9.3 Sample Code**
 
+Add the following if you define all your error codes in AppErrorCode class:
+
+```
+.bind_SummerBootConfig("cfg_db.properties", DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+# false means do not load config file When in mock mode
+```
+
+Full version:
+
+ ```bash
+public class Main {
+    public static void main(String[] args) {
+        SummerApplication.bind(Main.class)
+        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+                .bind_NIOHandler(HttpRequestHandler.class)
+                .run(args, "my app v1.0");
+    }
+}
+
+public class GuiceModule extends AbstractModule {
+
+    public enum Mock {
+        db
+    }
+
+    private final Set<Mock> mockItems = new HashSet<>();
+
+    public GuiceModule(Mock... mocks) {
+        if (mocks != null && mocks.length > 0) {
+            mockItems.addAll(Arrays.asList(mocks));
+        }
+    }
+
+    private boolean isMock(Mock mockItem) {
+        return SummerApplication.isMockMode(mockItem.name()) || mockItems.contains(mockItem);
+    }
+
+    @Override
+    public void configure() {
+        bind(DataRepository.class).to(isMock(Mock.db)
+                ? DataRepositoryImpl_Mock.class
+                : DataRepositoryImpl_SQLServer.class);
+    }
+}
+ ```
+
+run the following command:
+
+```
+java -jar my-service.jar -?
+```
+
+you will see the following:
+
+> -mock <items>      launch application in mock mode, valid values <db>
+
+the command below will run your application with a mocked database implementation (DataRepositoryImpl_Mock.class):
+
+```
+java -jar my-service.jar -mock db
+```
 
 
-## 10. CLI -  duplicated error code check
+
+
+
+## 10. CLI -  list and check duplicated error code
 
 **10.1 Intent**
 
+- Check your error codes defined in your application
+
 **10.2 Motivation**
 
+- With the development of more functions, you might have duplicated error code
+- You may need to have a error code list
+
 **10.3 Sample Code**
+
+Add the following if you define all your error codes in AppErrorCode class:
+
+```
+Class errorCodeClass = AppErrorCode.class;
+boolean checkDuplicated = true;
+.enable_CLI_ListErrorCodes(errorCodeClass, checkDuplicated)
+```
+
+Full version:
+
+ ```bash
+public class Main {
+    public static void main(String[] args) {
+        SummerApplication.bind(Main.class)
+        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+                .bind_NIOHandler(HttpRequestHandler.class)
+                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
+                .run(args, "my app v1.0");
+    }
+}
+ ```
+
+run the following command:
+
+```
+java -jar my-service.jar -?
+```
+
+you will see the following:
+
+>  -errorcode         list application error code
+
+the command below will show you a list of error codes, or error message indicates the duplicated ones:
+
+```
+java -jar my-service.jar -errorcode
+```
+
+
 
 
 
@@ -316,7 +456,51 @@ java -jar my-service.jar -domain production
 
 **11.1 Intent**
 
+- Keep configuration files clean and in sync with your code
+
 **11.2 Motivation**
 
+- With the development of more functions, like document maintenance, the configuration file may be inconsistent with the code
+- You need a way to dump a clean configurations template from code
+
 **11.3 Sample Code**
+
+Add the following if you want to enable dumping a template of MyConfig
+
+```
+.enable_CLI_ViewConfig(MyConfig.class)
+```
+
+Full version:
+
+ ```bash
+public class Main {
+    public static void main(String[] args) {
+        SummerApplication.bind(Main.class)
+        		.bind_SummerBootConfig("my config file name", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
+        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+                .bind_NIOHandler(HttpRequestHandler.class)
+                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
+                .run(args, "my app v1.0");
+    }
+}
+ ```
+
+
+
+run the following command:
+
+```
+java -jar my-service.jar -?
+```
+
+you will see the following:
+
+> -sample <config>   view config sample, valid values <NioConfig,HttpConfig,SMTPConfig,AuthConfig,AppConfig>
+
+the command below will show your a clean template of AppConfig:
+
+```
+java -jar my-service.jar -sample AppConfig
+```
 
