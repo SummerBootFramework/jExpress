@@ -1,11 +1,10 @@
+
 # Summer Boot focuses on solving the following non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided
 
 
 
 
-
 ## 1. Performance: RESTful Web Services (JAX-RS) with Non-blocking I/O (powered by Netty Reactor - *multiplexing* approach)
-
 **1.1 Intent**
 
 - To solve the performance bottleneck of traditional multi-threading mode at I/O layer
@@ -151,7 +150,6 @@ java -jar my-service.jar -domain production
 
 
 ## 4. Two-Level-Access protected Configuration
-
 **4.1 Intent**
 
 - **Sensitive Data** - passwords, license keys, signing key (HS256, HS384, HS512 only) and 3rd party tokens (AWS integration token, etc.) cannot be plain text.
@@ -599,7 +597,7 @@ you will see the following:
 
 > -sample <config>   view config sample, valid values <NioConfig,HttpConfig,SMTPConfig,AuthConfig,AppConfig>
 
-the command below will show your a clean template of AppConfig:
+the command below will show you a clean template of AppConfig:
 
 ```
 java -jar my-service.jar -sample AppConfig
