@@ -128,6 +128,7 @@ public abstract class CommandLineRunner {
                 throw new RuntimeException("failed to load " + adminPwdFile, ex);
             }
             String adminPwd = props.getProperty("APP_ROOT_PASSWORD");
+            adminPwd = SecurityUtil.base64Decode(adminPwd);
             SecurityUtil.SCERET_KEY = new SecretKeySpec(SecurityUtil.buildSecretKey(adminPwd), "AES");
         } else if (cli.hasOption(ADMIN_PWD)) {// "else" = only one option, cannot both
             String adminPwd = cli.getOptionValue(ADMIN_PWD);
