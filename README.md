@@ -180,7 +180,7 @@ java -jar my-service.jar -sample NioConfig,HttpConfig,SMTPConfig,AuthConfig
 
 **3.2 Motivation**
 
-- Your Wall Street investors definitely don’t want to stop and restart the cash cow just because you need to update your config file with a renewed 3rd party license key
+- Your Wall Street investors definitely don’t want to stop and restart the "cash cow" just because you need to update your config file with a renewed 3rd party license key
 
   
 
