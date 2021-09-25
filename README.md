@@ -1,9 +1,11 @@
+
 # Summer Boot focuses on solving the following non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided
 
 
 
-
 ## 1. Performance: RESTful Web Services (JAX-RS) with Non-blocking I/O (powered by Netty Reactor - *multiplexing* approach)
+
+
 
 **1.1 Intent**
 
@@ -215,7 +217,6 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
 
 ## 4. Protected Configuration
-
 **4.1 Intent**
 
 - Sensitive Data - passwords, license keys, signing key (HS256, HS384, HS512 only) and 3rd party tokens (AWS integration token, etc.) cannot be plain text.
@@ -224,17 +225,14 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
   - **One-Way Protection:** application admin can only write to config file with plain text, but not able to read encrypted sensitive data from config file
   - **Two Level Protection:** application root password is managed/protected by root admin, it controls sensitive data encryption/decryption, and it should not be managed application admin
-
+  
   
 
 **4.2 Motivation**
 
 - You want to protect sensitive data in the config files, and you encrypt them with a key.
-
 - Nobody hangs the key on the door it just locked, so you do need to protect the key, which just locks (encrypt) the sensitive data in your safe box, and you do NOT want to keep it hardcoded in your source code.
-
 - You really do NOT want to enter an endless loop by keep creating a new key to protect the original key, which protects the sensitive data.
-
 - You only need one extra root password to encrypt/decrypt the sensitive data, and this root password is not with your application admin.
 
 - **Two Level Access**: who controls what
@@ -305,7 +303,7 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
 - **Manual Encrypt mode:** In case you want to manually verify an encrypted sensitive data
 
-  use the command below, compare the output with the encrypted value in the config file:
+   use the command below, compare the output with the encrypted value in the config file:
 
   ```
   java -jar my-service.jar -encrypt <plain text> -auth <my app root password>
@@ -645,13 +643,24 @@ java -jar my-service.jar -mock db
 Add the following if you define all your error codes in AppErrorCode class:
 
 ```
-Class errorCodeClass = AppErrorCode.class;boolean checkDuplicated = true;.enable_CLI_ListErrorCodes(errorCodeClass, checkDuplicated)
+Class errorCodeClass = AppErrorCode.class;
+boolean checkDuplicated = true;
+.enable_CLI_ListErrorCodes(errorCodeClass, checkDuplicated)
 ```
 
 Full version:
 
  ```bash
-public class Main {    public static void main(String[] args) {        SummerApplication.bind(Main.class)        		.bind_SummerBootConfig("my config file name", MyConfig.instance)        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)                .bind_NIOHandler(HttpRequestHandler.class)                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)                .run(args, "my app v1.0");    }}
+public class Main {
+    public static void main(String[] args) {
+        SummerApplication.bind(Main.class)
+        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+                .bind_NIOHandler(HttpRequestHandler.class)
+                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
+                .run(args, "my app v1.0");
+    }
+}
  ```
 
 run the following command:
@@ -696,7 +705,16 @@ Add the following if you want to enable dumping a template of MyConfig
 Full version:
 
  ```bash
-public class Main {    public static void main(String[] args) {        SummerApplication.bind(Main.class)        		.bind_SummerBootConfig("my config file name", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)                .bind_NIOHandler(HttpRequestHandler.class)                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)                .run(args, "my app v1.0");    }}
+public class Main {
+    public static void main(String[] args) {
+        SummerApplication.bind(Main.class)
+        		.bind_SummerBootConfig("my config file name", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
+        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+                .bind_NIOHandler(HttpRequestHandler.class)
+                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
+                .run(args, "my app v1.0");
+    }
+}
  ```
 
 
