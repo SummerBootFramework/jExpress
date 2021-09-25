@@ -30,7 +30,7 @@ public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
                 .bind_NIOHandler(HttpRequestHandler.class)
-                .run(args, "my app v1.0");
+                .run(args, "My Service 1.0");
     }
 }
 
@@ -174,21 +174,19 @@ java -jar my-service.jar -sample NioConfig,HttpConfig,SMTPConfig,AuthConfig
 
 **3.1 Intent**
 
-- No longer need to stop and restart microservices when the configuration changes
-
-- Implementing a High Availability/Disaster Recovery (Hot/Hot) Configuration
+- Need to guarantee service continuity and protect it from configuration changes (3rd party tokens, license keys, etc.)
 
   
 
 **3.2 Motivation**
 
-- Service continuity needs to be guaranteed when configuration (3rd party token, license key, etc.) changes
+- Your Wall Street investors definitely don’t want to stop and restart the cash cow just because you need to update your config file with a renewed 3rd party license key
 
   
 
 **3.3 Sample Code**
 
-Add the following
+Add the following, **once the config changed, the Summer Boot will automatically load it up and refresh the  AppConfig.CFG**
 
 ```
 .bind_SummerBootConfig("my config file name", AppConfig.CFG)
@@ -202,12 +200,14 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("cfg_app.properties", AppConfig.instance)
+        		.bind_SummerBootConfig("cfg_app.properties", AppConfig.CFG)
                 .bind_NIOHandler(HttpRequestHandler.class)
-                .run(args, "my app v1.0");
+                .run(args, "My Service 1.0");
     }
 }
  ```
+
+
 
 AppConfig.java
 
@@ -217,7 +217,7 @@ AppConfig.java
 #3. make AppConfig subclass of AbstractSummerBootConfig
 
 public class AppConfig extends AbstractSummerBootConfig {
-    public static final AppConfig instance = new AppConfig();
+    public static final AppConfig CFG = new AppConfig();
 
     private AppConfig() {
     }
@@ -411,7 +411,7 @@ public class Main {
         		.bind_SummerBootConfig("my config file name", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck("/myservice", "ping")
-                .run(args, "my app v1.0");
+                .run(args, "My Service 1.0");
     }
 }
  ```
@@ -447,7 +447,7 @@ public class Main {
         		.bind_SummerBootConfig("my config file name", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck(AppURI.CONTEXT_ROOT, AppURI.LOAD_BALANCER_HEALTH_CHECK, HealthInspectorImpl.class)
-                .run(args, "my app v1.0");
+                .run(args, "My Service 1.0");
     }
 }
 
@@ -525,7 +525,7 @@ public class Main {
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck("/myservice", "ping")
                 .bind_AlertMessenger(MyPostOfficeImpl.class)
-                .run(args, "my app v1.0");
+                .run(args, "My Service 1.0");
     }
 }
 ```
@@ -632,7 +632,7 @@ public class Main {
         		.bind_SummerBootConfig("my config file name", MyConfig.instance)
         		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
-                .run(args, "my app v1.0");
+                .run(args, "My Service 1.0");
     }
 }
 
@@ -714,7 +714,7 @@ public class Main {
         		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
-                .run(args, "my app v1.0");
+                .run(args, "My Service 1.0");
     }
 }
  ```
@@ -768,7 +768,7 @@ public class Main {
         		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
-                .run(args, "my app v1.0");
+                .run(args, "My Service 1.0");
     }
 }
  ```
