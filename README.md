@@ -189,7 +189,7 @@ java -jar my-service.jar -sample NioConfig,HttpConfig,SMTPConfig,AuthConfig
 Add the following, **once the config changed, the Summer Boot will automatically load it up and refresh the  AppConfig.CFG**
 
 ```
-.bind_SummerBootConfig("my config file name", AppConfig.CFG)
+.bind_SummerBootConfig("cfg_app.properties", AppConfig.CFG)
 ```
 
 
@@ -408,7 +408,7 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck("/myservice", "ping")
                 .run(args, "My Service 1.0");
@@ -444,7 +444,7 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck(AppURI.CONTEXT_ROOT, AppURI.LOAD_BALANCER_HEALTH_CHECK, HealthInspectorImpl.class)
                 .run(args, "My Service 1.0");
@@ -521,7 +521,7 @@ full version:
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck("/myservice", "ping")
                 .bind_AlertMessenger(MyPostOfficeImpl.class)
@@ -629,7 +629,7 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
         		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .run(args, "My Service 1.0");
@@ -710,7 +710,7 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
         		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
@@ -764,7 +764,7 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("my config file name", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
+        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
         		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
