@@ -1,10 +1,10 @@
-
 # Summer Boot focuses on solving the following non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided
 
 
 
 
 ## 1. Performance: RESTful Web Services (JAX-RS) with Non-blocking I/O (powered by Netty Reactor - *multiplexing* approach)
+
 **1.1 Intent**
 
 - To solve the performance bottleneck of traditional multi-threading mode at I/O layer
@@ -38,60 +38,15 @@ public class Main {
 
 
 
-## 2. Hot Configuration
+## 2. Domain Configuration
 
 **2.1 Intent**
-
-- No longer need to stop and restart microservices when the configuration changes
-
-- Implementing a High Availability/Disaster Recovery (Hot/Hot) Configuration
-
-  
-
-**2.2 Motivation**
-
-- Service continuity needs to be guaranteed when configuration (3rd party token, license key, etc.) changes
-
-  
-
-**2.3 Sample Code**
-
-Add the following
-
-```
-.bind_SummerBootConfig("my config file name", AppConfig.CFG)
-```
-
-
-
-Full version:
-
- ```bash
-public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
-                .bind_NIOHandler(HttpRequestHandler.class)
-                .run(args, "my app v1.0");
-    }
-}
-
-#1. create a config class named 'MyConfig', use volatile to define your config items
-#2. Make MyConfig singleton, and MyConfig.instance is the singleton instance
-#3. make MyConfig subclass of AbstractSummerBootConfig
- ```
-
-
-
-## 3. Domain Configuration
-
-**3.1 Intent**
 
 - When you have multiple configuration sets, you need a point from which you can control the configuration
 
   
 
-**3.2 Motivation**
+**2.2 Motivation**
 
 - During the development, you have dev environment setup and configurations ready for development env. And then you need to have another set of configuration for QA environment, and then another set of configuration for production.
 
@@ -133,7 +88,7 @@ public class Main {
 
   
 
-**3.3 Sample Code**
+**2.3 Sample Code**
 
 run with dev configuration
 
@@ -149,20 +104,137 @@ java -jar my-service.jar -domain production
 
 
 
-## 4. Two-Level-Access protected Configuration
+## 3. Hot Configuration
+
+**3.1 Intent**
+
+- No longer need to stop and restart microservices when the configuration changes
+
+- Implementing a High Availability/Disaster Recovery (Hot/Hot) Configuration
+
+  
+
+**3.2 Motivation**
+
+- Service continuity needs to be guaranteed when configuration (3rd party token, license key, etc.) changes
+
+  
+
+**3.3 Sample Code**
+
+Add the following
+
+```
+.bind_SummerBootConfig("my config file name", AppConfig.CFG)
+```
+
+
+
+Full version:
+
+ ```bash
+public class Main {
+    public static void main(String[] args) {
+        SummerApplication.bind(Main.class)
+        		.bind_SummerBootConfig("cfg_app.properties", AppConfig.instance)
+                .bind_NIOHandler(HttpRequestHandler.class)
+                .run(args, "my app v1.0");
+    }
+}
+ ```
+
+AppConfig.java
+
+```
+#1. create a config class named 'AppConfig', use volatile to define your config items
+#2. Make AppConfig singleton, and AppConfig.instance is the singleton instance
+#3. make AppConfig subclass of AbstractSummerBootConfig
+
+public class AppConfig extends AbstractSummerBootConfig {
+    public static final AppConfig instance = new AppConfig();
+
+    private AppConfig() {
+    }
+
+	//1. server binding
+    @Memo(title = "1. server binding")
+    @Config(key = "server.binding.addr")
+    private volatile String bindingAddr;
+    @Config(key = "server.binding.port")
+    private volatile int bindingPort;
+
+    //2. Server keystore
+    @Memo(title = "2. Server keystore")
+    @Config(key = "server.ssl.KeyStore", StorePwdKey = "server.ssl.KeyStorePwd",
+            AliasKey = "server.ssl.KeyAlias", AliasPwdKey = "server.ssl.KeyPwd", required = false)
+    @JsonIgnore
+    private volatile KeyManagerFactory kmf;
+    
+    @JsonIgnore
+    @Config(key = "vendor.password", validate = Config.Validate.Encrypted)
+    protected volatile String sbsVendorPassword;
+    
+    @Memo(title = "3. Email Alert")
+    @Config(key = "email.to.support", validate = Config.Validate.EmailRecipients,
+            desc = "CSV format: user1@email.com, user2@email.com")
+    protected volatile Set<String> emailToList;
+    
+    ...
+    
+    the getter and setter methods...
+}
+```
+
+cfg_app.properties
+
+```
+#####################
+# 1. server binding #
+#####################
+server.binding.addr=0.0.0.0
+server.binding.port=5678
+
+
+###########################
+# 2. Server keystore      #
+###########################
+server.ssl.KeyStore=server.keystore
+server.ssl.KeyStorePwd=ENC(xf3jrVGMrv2SzBGtDte2bQ==)
+server.ssl.KeyAlias=mydomain
+server.ssl.KeyPwd=ENC(xf3jrVGMrv2SzBGtDte2bQ==)
+
+vendor.password=ENC(xf3jrVGMrv2SzBGtDte2bQ==)
+
+###########################
+# 3. Email Alert          #
+###########################
+## CSV format: user1@email.com, user2@email.com
+email.to.support=johndoe@email.com, janedoe@email.com
+```
+
+
+
+## 4. Protected Configuration
+
 **4.1 Intent**
 
-- **Sensitive Data** - passwords, license keys, signing key (HS256, HS384, HS512 only) and 3rd party tokens (AWS integration token, etc.) cannot be plain text.
+- Sensitive Data - passwords, license keys, signing key (HS256, HS384, HS512 only) and 3rd party tokens (AWS integration token, etc.) cannot be plain text.
 
-- To protect sensitive data in the config files
+- Protect sensitive data in the config files - just like the "one ring to rule them all" in The Lord of the Rings
+
+  - **One-Way Protection:** application admin can only write to config file with plain text, but not able to read encrypted sensitive data from config file
+  - **Two Level Protection:** application root password is managed/protected by root admin, it controls sensitive data encryption/decryption, and it should not be managed application admin
 
   
 
 **4.2 Motivation**
 
 - You want to protect sensitive data in the config files, and you encrypt them with a key.
+
 - Nobody hangs the key on the door it just locked, so you do need to protect the key, which just locks (encrypt) the sensitive data in your safe box, and you do NOT want to keep it hardcoded in your source code.
+
 - You really do NOT want to enter an endless loop by keep creating a new key to protect the original key, which protects the sensitive data.
+
 - You only need one extra root password to encrypt/decrypt the sensitive data, and this root password is not with your application admin.
 
 - **Two Level Access**: who controls what
@@ -233,7 +305,7 @@ java -jar my-service.jar -domain production
 
 - **Manual Encrypt mode:** In case you want to manually verify an encrypted sensitive data
 
-   use the command below, compare the output with the encrypted value in the config file:
+  use the command below, compare the output with the encrypted value in the config file:
 
   ```
   java -jar my-service.jar -encrypt <plain text> -auth <my app root password>
@@ -338,15 +410,77 @@ public class HealthInspectorImpl extends BootHealthInspectorImpl {
 
 **7.1 Intent**
 
-- No longer need to stop and restart microservices when the configuration changes
+- Get noticed before someone knocks your door
 
 **7.2 Motivation**
 
-- No longer need to stop and restart microservices when the configuration changes
+- Support team want to get noticed when some expected issues happens, like database down, network donw
+- Development team want get get noticed when some unexpected issues happens, like defect/bug caused runtime exception
+- But you don't want to get bombed by those emails
 
 **7.3 Sample Code**
 
-- No longer need to stop and restart microservices when the configuration changes
+there is a pre-defined config: cfg_smtp.properties
+
+```
+####################
+# 1. SMTP Settings #
+####################
+mail.smtp.host=smtpserver
+mail.smtp.user=abc_service@email.addr
+mail.smtp.userName=ABC Service
+
+
+###########################################
+# 2. Alert Recipients                     #
+# Format: CSV format                      #
+# Example: johndoe@olg.ca, janedoe@olg.ca #
+###########################################
+#email.to.AppSupport=
+## use AppSupport if not provided
+#email.to.Development=
+
+## use AppSupport if not provided
+#email.to.ReportViewer=
+
+## Alert message with the same title will not be sent out within this minutes
+debouncing.emailalert_minute=30
+```
+
+add the following:
+
+```
+.bind_AlertMessenger(MyPostOfficeImpl.class)
+```
+
+full version:
+
+```
+public class Main {
+    public static void main(String[] args) {
+        SummerApplication.bind(Main.class)
+        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
+                .bind_NIOHandler(HttpRequestHandler.class)
+                .enable_Ping_HealthCheck("/myservice", "ping")
+                .bind_AlertMessenger(MyPostOfficeImpl.class)
+                .run(args, "my app v1.0");
+    }
+}
+```
+
+MyPostOfficeImpl.java
+
+```
+@Singleton
+public class MyPostOfficeImpl extends BootPostOfficeImpl {
+
+    @Override
+    protected String updateAlertTitle(String title) {
+        return "[ALERT] " + title;
+    }
+}
+
+```
 
 
 
@@ -511,24 +645,13 @@ java -jar my-service.jar -mock db
 Add the following if you define all your error codes in AppErrorCode class:
 
 ```
-Class errorCodeClass = AppErrorCode.class;
-boolean checkDuplicated = true;
-.enable_CLI_ListErrorCodes(errorCodeClass, checkDuplicated)
+Class errorCodeClass = AppErrorCode.class;boolean checkDuplicated = true;.enable_CLI_ListErrorCodes(errorCodeClass, checkDuplicated)
 ```
 
 Full version:
 
  ```bash
-public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("my config file name", MyConfig.instance)
-        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
-                .bind_NIOHandler(HttpRequestHandler.class)
-                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
-                .run(args, "my app v1.0");
-    }
-}
+public class Main {    public static void main(String[] args) {        SummerApplication.bind(Main.class)        		.bind_SummerBootConfig("my config file name", MyConfig.instance)        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)                .bind_NIOHandler(HttpRequestHandler.class)                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)                .run(args, "my app v1.0");    }}
  ```
 
 run the following command:
@@ -573,16 +696,7 @@ Add the following if you want to enable dumping a template of MyConfig
 Full version:
 
  ```bash
-public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("my config file name", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
-        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
-                .bind_NIOHandler(HttpRequestHandler.class)
-                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
-                .run(args, "my app v1.0");
-    }
-}
+public class Main {    public static void main(String[] args) {        SummerApplication.bind(Main.class)        		.bind_SummerBootConfig("my config file name", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)                .bind_NIOHandler(HttpRequestHandler.class)                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)                .run(args, "my app v1.0");    }}
  ```
 
 
