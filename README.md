@@ -64,6 +64,34 @@ public class HttpRequestHandler extends BootHttpRequestHandler {
 
 ```
 
+A RESTful API class with JAX-RS style, and annotate this class with @Controller 
+
+```
+@Singleton
+@Controller
+@Path(MY_CONTEXT_ROOT + "/mock")
+@Consumes(MediaType.APPLICATION_JSON)
+public class MyClass {
+    @POST
+    @PUT
+    @Path("/xml/{sset}/{year}/{foo2}")// mock/xml/4,3,2/2012;  author  =   Changski   ;  country =  加拿大     /123
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML})
+    public Foo test_JAX_RS(Foo foo,
+            String body,
+            @CookieParam("ck") String cv, @CookieParam("ck") Cookie ck,
+            @PathParam("sset") SortedSet<Foo2> ss, @PathParam("foo2") Foo2 foo2,
+            @PathParam("year") int y, @MatrixParam("country") String c, @MatrixParam("author") String a,
+            final ServiceResponse response) {
+        response.status(HttpResponseStatus.OK);
+        if (foo != null) {
+            foo.bar = cv;
+        }
+        return foo;
+    }
+}
+```
+
 
 
 ## 2. Domain Configuration
@@ -114,7 +142,15 @@ public class HttpRequestHandler extends BootHttpRequestHandler {
               server.truststore
    ```
 
-  
+  There are five pre-defined configurations:
+
+  > see section 11 (CLI -  generate configuration file) to get the configuration template
+
+  1. cfg_auth.properties - manage the role-based access
+  2.  cfg_smtp.properties - manage the Auto-Alert (see section 7)
+  3.  cfg_http.properties - manage the Java 11 HTTP Client
+  4.  cfg_nio.properties - manage the Netty NIO
+  5.  cfg_db.properties - manage the JPA, the format is pure JPA properties
 
 **2.3 Sample Code**
 
@@ -131,6 +167,8 @@ java -jar my-service.jar -domain production
 ```
 
 
+
+java -jar my-service.jar -sample NioConfig,HttpConfig,SMTPConfig,AuthConfig
 
 ## 3. Hot Configuration
 
@@ -562,14 +600,6 @@ This shows service begin process the client request after 4ms from I/O layer pro
 > 2021-09-24 14:11:07,988 INFO org.summerframework.boot.SummerApplication.start() [main] CourtFiling v1.0.0RC1u1_Summer.Boot.v2.0.11@DuXiaoPC_UTF-8 pid#29768@DuXiaoPC application launched (success), kill -9 or Ctrl+C to shutdown 
 > 2021-09-24 14:12:37,010 DEBUG org.summerframework.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=20, tps=20, activeChannel=2, totalChannel=10, totalHit=20 (ping0 + biz20), task=20, completed=20, queue=0, active=0, pool=9, core=9, max=9, largest=9 
 > 2021-09-24 14:12:38,001 DEBUG org.summerframework.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=4, tps=4, activeChannel=2, totalChannel=10, totalHit=24 (ping0 + biz24), task=24, completed=24, queue=0, active=0, pool=9, core=9, max=9, largest=9 
-
-
-
-
-
-
-
-
 
 
 
