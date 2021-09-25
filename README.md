@@ -38,6 +38,32 @@ public class Main {
 #2. create a RESTful API class with JAX-RS style, and annotate this class with @Controller 
  ```
 
+HttpRequestHandler.java
+
+```
+@Singleton
+public class HttpRequestHandler extends BootHttpRequestHandler {
+
+    @Inject
+    protected Authenticator auth;
+
+    @Inject
+    protected AppCache cache;
+
+    @Override //role-based validation
+    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceResponse response) throws IOException {
+        if (processor.isRoleBased()) {
+            auth.verifyToken(httpRequestHeaders, null, response);
+            if (response.caller() == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+```
+
 
 
 ## 2. Domain Configuration
