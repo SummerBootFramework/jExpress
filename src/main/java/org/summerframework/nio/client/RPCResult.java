@@ -31,8 +31,8 @@ import org.apache.commons.lang3.StringUtils;
 /**
  *
  * @author Changski Tie Zheng Zhang
- * @param <T>
- * @param <E>
+ * @param <T> Success(JSON) result type
+ * @param <E> Error(JSON) result type
  */
 public class RPCResult<T, E> {
 
@@ -118,7 +118,7 @@ public class RPCResult<T, E> {
             ret = getRpcResponse(jacksonMapper, responseType, responseClass);
         } catch (Throwable ex) {
             if (serviceResponse != null) {
-                var e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
+                Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
                 serviceResponse.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
             }
             ret = null;

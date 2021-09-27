@@ -150,7 +150,7 @@ public class JsonUtil {
             // error Message format. DO not use ":" in messages as it is a reserved JSON delimiter
             // Example for value: cardNumber=aaBBCC3232; The card Number is in incorrect format;
         }
-        var e = new Error(appErrorCode, null, sb.toString(), null);
+        Error e = new Error(appErrorCode, null, sb.toString(), null);
         response.status(HttpResponseStatus.BAD_REQUEST).error(e);
 
 //        Map<String, String> errorMap = BeanValidationUtil.getErrorMessages(bean);

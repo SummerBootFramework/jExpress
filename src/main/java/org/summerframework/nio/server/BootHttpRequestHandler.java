@@ -194,7 +194,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     protected void nak(ServiceResponse response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {
         // 1. convert to JSON
-        var e = new Error(appErrorCode, null, errorMessage, null);
+        Error e = new Error(appErrorCode, null, errorMessage, null);
         // 2. build JSON response with same app error code, and keep the default INFO log level.
         response.status(httpResponseStatus).error(e);
     }
@@ -211,8 +211,8 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      */
     protected void nakError(ServiceResponse response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex) {
         // 1. convert to JSON
-        //var e = new ServiceError(appErrorCode, null, errorMessage, ex);
-        var e = new Error(appErrorCode, null, errorMessage, ex);
+        //Error e = new ServiceError(appErrorCode, null, errorMessage, ex);
+        Error e = new Error(appErrorCode, null, errorMessage, ex);
         // 2. build JSON response with same app error code and exception, and Level.ERROR is used as the default log level when exception is not null, 
         // the log level will be set to INFO once the exception is null.
         response.status(httpResponseStatus).error(e);

@@ -129,7 +129,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @return 
      */
     protected <T, E> RPCResult<T, E> onInterrupted(HttpRequest req, ServiceResponse serviceResponse, Throwable ex) {
-        var e = new Error(BootErrorCode.APP_INTERRUPTED, null, "RPC Interrupted", ex);
+        Error e = new Error(BootErrorCode.APP_INTERRUPTED, null, "RPC Interrupted", ex);
         serviceResponse.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
         return null;
     }
@@ -142,7 +142,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @return 
      */
     protected <T, E> RPCResult<T, E> onHttpRequestTimeout(ServiceResponse serviceResponse) {
-        var e = new Error(BootErrorCode.HTTPREQUEST_TIMEOUT, null, "RPC Request Timeout", null);
+        Error e = new Error(BootErrorCode.HTTPREQUEST_TIMEOUT, null, "RPC Request Timeout", null);
         serviceResponse.status(HttpResponseStatus.GATEWAY_TIMEOUT).error(e);
         return null;
     }
@@ -155,7 +155,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @return 
      */
     protected <T extends Object> T onUnknownResponseFormat(ServiceResponse serviceResponse, Throwable ex) {
-        var e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
+        Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
         serviceResponse.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
         return null;
     }

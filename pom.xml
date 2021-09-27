@@ -7,7 +7,7 @@
     <packaging>jar</packaging>
     <name>Summer Boot Core</name>
     <description>Summer Boot (Core) focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
-    <url>http://maven.apache.org</url>
+    <url>https://github.com/SummerBootFramework/core</url>
 	
     <licenses>
         <license>

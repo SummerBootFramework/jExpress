@@ -182,7 +182,7 @@ public abstract class BootAuthenticator implements Authenticator {
     public Caller verifyToken(String authToken, BootCache cache, ServiceResponse response) {
         Caller caller = null;
         if (authToken == null) {
-            var e = new Error(BootErrorCode.AUTH_REQUIRE_TOKEN, null, "Missing AuthToken", null);
+            Error e = new Error(BootErrorCode.AUTH_REQUIRE_TOKEN, null, "Missing AuthToken", null);
             response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
@@ -190,21 +190,21 @@ public abstract class BootAuthenticator implements Authenticator {
                 String jti = claims.getId();
                 response.callerId(jti);
                 if (cache != null && cache.isOnBlacklist(jti)) {// because jti is used as blacklist key in logout
-                    var e = new Error(BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Blacklisted AuthToken", null);
+                    Error e = new Error(BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Blacklisted AuthToken", null);
                     response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
                     caller = unmarshalCaller(claims);
                     if (listener != null && !listener.verify(caller, claims)) {
-                        var e = new Error(BootErrorCode.AUTH_INVALID_TOKEN, null, "Rejected AuthToken", null);
+                        Error e = new Error(BootErrorCode.AUTH_INVALID_TOKEN, null, "Rejected AuthToken", null);
                         response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                         caller = null;
                     }
                 }
             } catch (ExpiredJwtException ex) {
-                var e = new Error(BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Expired AuthToken", null);
+                Error e = new Error(BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Expired AuthToken", null);
                 response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             } catch (JwtException ex) {
-                var e = new Error(BootErrorCode.AUTH_INVALID_TOKEN, ex.getClass().getSimpleName(), "Invalid AuthToken - " + ex.getMessage(), null);
+                Error e = new Error(BootErrorCode.AUTH_INVALID_TOKEN, ex.getClass().getSimpleName(), "Invalid AuthToken - " + ex.getMessage(), null);
                 response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             }
         }

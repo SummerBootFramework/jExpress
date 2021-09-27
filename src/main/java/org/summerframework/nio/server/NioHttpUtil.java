@@ -90,7 +90,7 @@ public class NioHttpUtil {
     public static final AsciiString CONNECTION = new AsciiString("Connection");
 
     public static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, int errorCode, String msg, Throwable ex) {
-        var e = new ServiceError(errorCode, null, msg, ex);
+        ServiceError e = new ServiceError(errorCode, null, msg, ex);
         FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.copiedBuffer(e.toJson(), CharsetUtil.UTF_8));
         resp.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);

@@ -110,9 +110,9 @@ abstract public class SummerApplication extends CommandLineRunner {
     /**
      * For Unit Testing only
      *
-     * @param appModule
-     * @param callerClass
-     * @return
+     * @param appModule application Google Inject Guice module
+     * @param callerClass the main class
+     * @return combined (app and framework) Google Inject Guice module
      */
     public static Module buildModule(AbstractModule appModule, Class callerClass) {
         BootGuiceModule frameworkModule = new BootGuiceModule(null, callerClass, true);

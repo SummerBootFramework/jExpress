@@ -323,7 +323,7 @@ public class ServiceResponse {
 
         if (!folder.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            var e = new Error(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
+            Error e = new Error(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
             this.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
@@ -332,7 +332,7 @@ public class ServiceResponse {
                 || !folder.isDirectory() || folder.isFile()
                 || folder.isHidden() || !folder.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            var e = new Error(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
+            Error e = new Error(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
             // 2. build JSON response with same app error code, and keep the default INFO log level.
             this.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
@@ -348,7 +348,7 @@ public class ServiceResponse {
 
         if (!file.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            var e = new Error(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
+            Error e = new Error(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
             this.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
@@ -357,7 +357,7 @@ public class ServiceResponse {
                 || file.isDirectory() || !file.isFile()
                 || file.isHidden() || !file.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            var e = new Error(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
+            Error e = new Error(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
             // 2. build JSON response with same app error code, and keep the default INFO log level.
             this.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;

@@ -147,7 +147,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 response.timestampPOI(BootPOI.SERVICE_END);
             } catch (Throwable ex) {
                 ioEx = ex;
-                var e = new Error(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send response to client", ex);
+                Error e = new Error(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send response to client", ex);
                 response.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, response);
             } finally {
@@ -196,7 +196,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         } catch (RejectedExecutionException ex) {
             long queuingTime = System.currentTimeMillis() - start;
             ServiceResponse response = ServiceResponse.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
-            var e = new Error(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many requests", ex);
+            Error e = new Error(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many requests", ex);
             response.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, response);
 
@@ -213,7 +213,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         } catch (Throwable ex) {
             long queuingTime = System.currentTimeMillis() - start;
             ServiceResponse response = ServiceResponse.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
-            var e = new Error(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
+            Error e = new Error(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
             response.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, response);
             StringBuilder sb = new StringBuilder();
@@ -312,7 +312,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 if (e == null) {
                     break;
                 }
-                for (var j : e.getErrors()) {
+                for (Error j : e.getErrors()) {
                     target = j.getErrorCode();
                     if (s == null) {
                         isInFilter = target >= cfg.getFilterCodeRangeFrom() && target <= cfg.getFilterCodeRangeTo();
