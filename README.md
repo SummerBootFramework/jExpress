@@ -25,6 +25,18 @@
 
 **1.3 Sample Code**
 
+pom.xml
+
+```
+<dependency>
+	<groupId>org.summerboot</groupId>
+	<artifactId>framework.core</artifactId>
+	<version>2.0.11</version>
+</dependency>
+```
+
+Main.java
+
  ```bash
 public class Main {
     public static void main(String[] args) {
