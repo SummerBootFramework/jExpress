@@ -29,7 +29,7 @@
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
-                .bind_NIOHandler(HttpRequestHandler.class)
+                .bind_NIOHandler(HttpRequestHandler.class, "my_handler")
                 .run(args, "My Service 1.0");
     }
 }
@@ -37,6 +37,12 @@ public class Main {
 #1. HttpRequestHandler is your ChannelHandler implementation, if you just want to use default functions, just extends org.summerframework.nio.server.BootHttpRequestHandler
 #2. create a RESTful API class with JAX-RS style, and annotate this class with @Controller 
  ```
+
+cfg_nio.properties
+
+```
+nio.HttpRequestHandler=my_handler
+```
 
 HttpRequestHandler.java
 
