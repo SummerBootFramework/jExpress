@@ -26,8 +26,10 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodySubscribers;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  *
@@ -53,6 +55,20 @@ public abstract class RPCDelegate_HTTPClientImpl {
         return sb.toString();
     }
 
+    protected <T, E> RPCResult<T, E> rpcEx(HttpRequest req, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, ServiceResponse serviceResponse, HttpResponseStatus... expectedStatusList) throws IOException {
+        String reqbody = null;
+        Optional<HttpRequest.BodyPublisher> pub = req.bodyPublisher();
+        if (pub.isPresent()) {
+            reqbody = pub.map(p -> {
+                var bodySubscriber = BodySubscribers.ofString(StandardCharsets.UTF_8);
+                var flowSubscriber = new HTTPClientStringSubscriber(bodySubscriber);
+                p.subscribe(flowSubscriber);
+                return bodySubscriber.getBody().toCompletableFuture().join();
+            }).get();
+        }
+        return this.rpcEx(req, reqbody, successResponseType, successResponseClass, errorResponseClass, serviceResponse, expectedStatusList);
+    }
+
     /**
      *
      * @param <T>
@@ -71,6 +87,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
         if (req == null) {
             return null;
         }
+
         serviceResponse.memo(RPCMemo.MEMO_RPC_REQUEST, req.toString() + " caller=" + serviceResponse.caller());
         if (requestLogInfo != null) {
             serviceResponse.memo(RPCMemo.MEMO_RPC_REQUEST_DATA, requestLogInfo);
@@ -120,13 +137,13 @@ public abstract class RPCDelegate_HTTPClientImpl {
     }
 
     /**
-     * 
+     *
      * @param <T>
      * @param <E>
      * @param req
      * @param serviceResponse
      * @param ex
-     * @return 
+     * @return
      */
     protected <T, E> RPCResult<T, E> onInterrupted(HttpRequest req, ServiceResponse serviceResponse, Throwable ex) {
         Error e = new Error(BootErrorCode.APP_INTERRUPTED, null, "RPC Interrupted", ex);
@@ -135,11 +152,11 @@ public abstract class RPCDelegate_HTTPClientImpl {
     }
 
     /**
-     * 
+     *
      * @param <T>
      * @param <E>
      * @param serviceResponse
-     * @return 
+     * @return
      */
     protected <T, E> RPCResult<T, E> onHttpRequestTimeout(ServiceResponse serviceResponse) {
         Error e = new Error(BootErrorCode.HTTPREQUEST_TIMEOUT, null, "RPC Request Timeout", null);
@@ -148,11 +165,11 @@ public abstract class RPCDelegate_HTTPClientImpl {
     }
 
     /**
-     * 
+     *
      * @param <T>
      * @param serviceResponse
      * @param ex
-     * @return 
+     * @return
      */
     protected <T extends Object> T onUnknownResponseFormat(ServiceResponse serviceResponse, Throwable ex) {
         Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
