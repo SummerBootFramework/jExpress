@@ -3,12 +3,21 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>framework.core</artifactId>
-    <version>2.0.12</version>
+    <version>2.0.13-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot Core</name>
     <description>Summer Boot (Core) focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
     <url>https://github.com/SummerBootFramework/core</url>
-	
+    <organization>
+        <name>Summer Boot Org</name>
+        <url>https://summerboot.org/</url>
+    </organization>
+    <developers>
+        <developer>
+            <name>Changski Tie Zheng Zhang</name>
+            <email>changski_skb@yahoo.ca</email>
+        </developer>
+    </developers>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -17,13 +26,7 @@
             <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
-	
-    <developers>
-        <developer>
-            <name>Changski Tie Zheng Zhang</name>
-        </developer>
-    </developers>
-    
+
     <properties>        
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
