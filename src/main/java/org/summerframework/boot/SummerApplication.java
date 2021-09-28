@@ -132,7 +132,7 @@ abstract public class SummerApplication extends CommandLineRunner {
      *
      * @param mockItemName
      * @return true if mockItemName is available in command line args 
-     * <code> -mock <mockItemName1, mockItemName2, ...></code>
+     * {@code -mock <mockItemName1, mockItemName2, ...>}
      */
     public static boolean isMockMode(String mockItemName) {
         return appMockOptions.contains(mockItemName);

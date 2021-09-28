@@ -116,28 +116,16 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
 
     /**
      * Load config settings with @Config, supported Java types:
-     * <pre>
+     * <pre>{@code
      * 1. T, K: enum, String, boolean/Boolean, byte/Byte, char/short/Short, int/Integer,
      * long/Long, float/Float, double/Double, BigDecimal, URI, URL, Path, File
-     * </pre>
-     * <pre>
      * 2. <T>[] array
-     * </pre>
-     * <pre>
      * 3. Immutable Set<T>
-     * </pre>
-     * <pre>
      * 4. Immutable List<T>
-     * </pre>
-     * <pre>
      * 5. Immutable Map<T, K>
-     * </pre>
-     * <pre>
      * 6. KeyManagerFactory
-     * </pre>
-     * <pre>
      * 7. TrustManagerFactory
-     * </pre>
+     * }</pre>
      *
      * @param cfgFile
      * @param isReal

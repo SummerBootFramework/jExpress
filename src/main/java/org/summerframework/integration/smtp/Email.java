@@ -57,7 +57,7 @@ public class Email {
          * @param type - the file extention, ie. "pdf", image
          * @param dataStream
          * @param fileName
-         * @param cid - <img src="cid:logo">
+         * @param cid - {@code<img src="cid:logo">}
          */
         public Attachment(String type, byte[] dataStream, String fileName, String cid) {
             this.type = type;

@@ -118,7 +118,7 @@ public class BootCache_RedisImple implements BootCache {
 
     protected void executeEx(JedisCall caller, int currentRetry, int maxRetry) {
         boolean success = false;
-        try (Jedis jedis = RedisConfig.CFG.getMaster();) {
+        try ( Jedis jedis = RedisConfig.CFG.getMaster();) {
             if (jedis == null) {
                 //System.out.println("e 1 retry " + currentRetry);
                 onRedisDown(REDIS_MASTER_NULL_EX);
@@ -375,12 +375,16 @@ public class BootCache_RedisImple implements BootCache {
      * Good for: low rate, check if a user input wrong password more than X
      * times within N minutes.
      *
-     * <pre>
+     * <p>
      * Not good for: high rate
-     * <pre>1. Implemented via ZSet, will keep a record/access, not memory friendly for high volumn access.
-     * <pre>2. Not atomic, not accurite with high concurrent access
-     * <pre>3. result is based on current burst ratet, it won't return true if the burst rate keeps high,
-     * no matter how long it lasts
+     * <p>
+     * 1. Implemented via ZSet, will keep a record/access, not memory friendly
+     * for high volumn access.
+     * <p>
+     * 2. Not atomic, not accurite with high concurrent access
+     * <p>
+     * 3. result is based on current burst ratet, it won't return true if the
+     * burst rate keeps high, no matter how long it lasts
      *
      * @param key
      * @param periodSecond
@@ -391,7 +395,7 @@ public class BootCache_RedisImple implements BootCache {
         final Holder<Long> holder = new Holder<>(0L);
         execute(true, jedis -> {
             Response<Long> count = null;
-            try (Pipeline pipe = jedis.pipelined();) {
+            try ( Pipeline pipe = jedis.pipelined();) {
                 pipe.multi();
                 pipe.zadd(key, nowTs, String.valueOf(nowTs));
                 pipe.zremrangeByScore(key, 0, nowTs - periodSecond * 1000);
