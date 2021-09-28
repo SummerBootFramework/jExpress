@@ -48,7 +48,7 @@ import io.netty.handler.codec.DecoderException;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @Sharable
 public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {

@@ -17,7 +17,7 @@ package org.summerframework.integration.cache.domain;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class FlashSale {
 

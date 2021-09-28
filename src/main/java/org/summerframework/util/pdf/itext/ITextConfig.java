@@ -25,7 +25,7 @@ import java.io.IOException;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 final class ITextConfig {
 

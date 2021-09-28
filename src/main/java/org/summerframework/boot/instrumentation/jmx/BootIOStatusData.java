@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class BootIOStatusData extends IOStatusData {
 

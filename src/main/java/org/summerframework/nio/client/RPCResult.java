@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  * @param <T> Success(JSON) result type
  * @param <E> Error(JSON) result type
  */

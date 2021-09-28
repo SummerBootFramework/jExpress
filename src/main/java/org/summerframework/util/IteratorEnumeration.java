@@ -20,7 +20,7 @@ import java.util.Iterator;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  * @param <E> type
  */
 public class IteratorEnumeration<E> implements Enumeration<E> {

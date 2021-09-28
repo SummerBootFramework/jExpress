@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class NioServerContext {//package access only, not a public class
 

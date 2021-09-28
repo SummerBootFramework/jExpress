@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class AppResourceBundle extends ResourceBundle {
 

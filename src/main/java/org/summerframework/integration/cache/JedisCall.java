@@ -19,7 +19,7 @@ import redis.clients.jedis.Jedis;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public interface JedisCall {
 

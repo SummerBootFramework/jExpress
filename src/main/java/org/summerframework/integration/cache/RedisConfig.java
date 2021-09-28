@@ -45,7 +45,7 @@ import org.summerframework.boot.config.SummerBootConfig;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class RedisConfig implements SummerBootConfig {
 

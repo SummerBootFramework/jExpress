@@ -28,7 +28,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class JwtUtil {
 

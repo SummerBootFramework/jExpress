@@ -31,7 +31,7 @@ import java.util.Map;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public abstract class RPCDelegate_HTTPClientImpl {
 

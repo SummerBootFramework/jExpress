@@ -50,7 +50,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class LdapAgent implements Closeable {
 

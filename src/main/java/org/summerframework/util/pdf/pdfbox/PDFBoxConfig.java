@@ -21,7 +21,7 @@ import java.net.MalformedURLException;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 class PDFBoxConfig {
 

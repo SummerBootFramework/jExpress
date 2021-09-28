@@ -27,7 +27,7 @@ import org.summerframework.boot.instrumentation.HealthInspector;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public interface BootCache extends HealthInspector {
 

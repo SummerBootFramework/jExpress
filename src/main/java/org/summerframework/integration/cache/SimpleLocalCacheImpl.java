@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @Singleton
 public class SimpleLocalCacheImpl implements SimpleLocalCache {

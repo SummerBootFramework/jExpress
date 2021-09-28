@@ -42,7 +42,7 @@ import java.util.Set;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 class BootGuiceModule extends AbstractModule {
 

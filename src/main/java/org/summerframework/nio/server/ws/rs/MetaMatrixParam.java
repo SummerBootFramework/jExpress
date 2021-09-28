@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 class MetaMatrixParam {
 

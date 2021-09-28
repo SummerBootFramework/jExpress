@@ -19,7 +19,7 @@ import io.jsonwebtoken.Claims;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public interface AuthenticatorListener {
 

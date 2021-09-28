@@ -53,7 +53,7 @@ import io.netty.handler.codec.DecoderException;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHandler<HttpObject> {
 

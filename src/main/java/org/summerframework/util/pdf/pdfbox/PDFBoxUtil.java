@@ -30,7 +30,7 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class PDFBoxUtil {
 

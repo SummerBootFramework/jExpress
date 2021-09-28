@@ -30,7 +30,7 @@ import javax.mail.Session;
 /**
  * Volatile Bean　Pattern
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class SMTPConfig extends AbstractSummerBootConfig {
 

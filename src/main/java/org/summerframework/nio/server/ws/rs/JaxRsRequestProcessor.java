@@ -52,7 +52,7 @@ import org.summerframework.nio.server.RequestProcessor;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class JaxRsRequestProcessor implements RequestProcessor {
 

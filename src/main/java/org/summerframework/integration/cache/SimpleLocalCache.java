@@ -17,7 +17,7 @@ package org.summerframework.integration.cache;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public interface SimpleLocalCache {
 

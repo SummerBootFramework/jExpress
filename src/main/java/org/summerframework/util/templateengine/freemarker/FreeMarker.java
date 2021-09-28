@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class FreeMarker {
 

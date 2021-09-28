@@ -21,7 +21,7 @@ import java.util.Locale;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public interface I18n {
 

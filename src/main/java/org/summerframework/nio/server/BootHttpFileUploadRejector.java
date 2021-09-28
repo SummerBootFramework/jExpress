@@ -25,7 +25,7 @@ import java.util.Map;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @ChannelHandler.Sharable
 public class BootHttpFileUploadRejector extends BootHttpFileUploadHandler {

@@ -29,7 +29,7 @@ import javax.net.ssl.TrustManager;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class LdapSSLConnectionFactory extends SocketFactory {
 

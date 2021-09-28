@@ -46,7 +46,7 @@ import org.summerframework.nio.server.ws.rs.EnumConvert;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class ReflectionUtil {
 

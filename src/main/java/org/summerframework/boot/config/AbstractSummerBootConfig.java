@@ -47,7 +47,7 @@ import org.apache.tika.utils.ExceptionUtils;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
 public abstract class AbstractSummerBootConfig implements SummerBootConfig {

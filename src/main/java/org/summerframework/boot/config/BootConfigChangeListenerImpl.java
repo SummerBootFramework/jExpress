@@ -23,7 +23,7 @@ import java.io.File;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @Singleton
 public class BootConfigChangeListenerImpl implements ConfigChangeListener {

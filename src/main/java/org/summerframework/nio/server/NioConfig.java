@@ -40,7 +40,7 @@ import io.netty.channel.ChannelHandler;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class NioConfig extends AbstractSummerBootConfig {
 

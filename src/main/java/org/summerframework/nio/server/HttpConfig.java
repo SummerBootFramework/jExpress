@@ -50,7 +50,7 @@ import java.net.ProxySelector;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class HttpConfig extends AbstractSummerBootConfig {
 

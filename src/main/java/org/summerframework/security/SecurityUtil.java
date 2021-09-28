@@ -39,7 +39,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public final class SecurityUtil {
 

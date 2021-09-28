@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @Target(value = {ElementType.TYPE, PARAMETER, ElementType.METHOD})
 @Retention(value = RetentionPolicy.RUNTIME)

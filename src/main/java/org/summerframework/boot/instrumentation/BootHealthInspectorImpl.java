@@ -27,7 +27,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @Singleton
 public class BootHealthInspectorImpl implements HealthInspector {

@@ -24,7 +24,7 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class PDFBox {
 

@@ -56,7 +56,7 @@ import org.summerframework.boot.BootErrorCode;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class NioHttpUtil {
 

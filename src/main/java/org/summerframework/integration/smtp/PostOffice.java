@@ -20,7 +20,7 @@ import java.util.Collection;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public interface PostOffice extends HealthInspector<String> {
 

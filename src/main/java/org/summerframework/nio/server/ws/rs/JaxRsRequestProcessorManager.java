@@ -37,7 +37,7 @@ import java.lang.reflect.Proxy;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class JaxRsRequestProcessorManager {
 

@@ -33,7 +33,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
 

@@ -42,7 +42,7 @@ import redis.clients.jedis.params.SetParams;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @Singleton
 public class BootCache_RedisImple implements BootCache {

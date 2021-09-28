@@ -39,7 +39,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class AuthConfig extends AbstractSummerBootConfig {
 

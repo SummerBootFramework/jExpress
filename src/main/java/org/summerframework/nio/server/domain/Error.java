@@ -22,7 +22,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class Error {
 

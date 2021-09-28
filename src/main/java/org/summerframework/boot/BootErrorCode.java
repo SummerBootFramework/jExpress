@@ -19,7 +19,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public interface BootErrorCode {
 

@@ -43,7 +43,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @Singleton
 public abstract class BootAuthenticator implements Authenticator {

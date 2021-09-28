@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  * @param <T> parameter
  */
 public interface HealthInspector<T extends Object> {

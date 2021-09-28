@@ -30,7 +30,7 @@ import java.nio.file.Paths;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class IText {
 

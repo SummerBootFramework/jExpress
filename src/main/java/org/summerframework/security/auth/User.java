@@ -24,7 +24,7 @@ import java.util.Set;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class User implements Serializable, Caller, Comparable<User> {
 

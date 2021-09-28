@@ -32,7 +32,7 @@ import org.summerframework.boot.instrumentation.HTTPClientStatusListener;
 
 /**
  *
- * @author Changski Tie Zheng Zhang
+ * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @Singleton
 public class InstrumentationMgrImpl implements InstrumentationMgr {
