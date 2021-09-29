@@ -21,11 +21,12 @@ package org.summerframework.boot;
  */
 public interface BootConstant {
 
-    // runtime info
+    //runtime info
     String PID = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
-    String VERSION = "Summer.Boot.v2.0.12@" + System.getProperty("hostName");
+    //version
+    String VERSION = "Summer.Boot.v2.0.13@" + System.getProperty("hostName");
 
-    // logging metadata
+    //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
 
 }
