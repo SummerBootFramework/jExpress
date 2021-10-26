@@ -44,14 +44,14 @@ public abstract class RPCDelegate_HTTPClientImpl {
      */
     public static String convertFormDataToString(Map<Object, Object> data) {
         StringBuilder sb = new StringBuilder();
-        for (Map.Entry<Object, Object> entry : data.entrySet()) {
+        data.entrySet().forEach(entry -> {
             if (sb.length() > 0) {
                 sb.append("&");
             }
             sb.append(URLEncoder.encode(entry.getKey().toString(), StandardCharsets.UTF_8))
                     .append("=")
                     .append(URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8));
-        }
+        });
         return sb.toString();
     }
 
