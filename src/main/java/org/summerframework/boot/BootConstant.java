@@ -23,6 +23,7 @@ public interface BootConstant {
 
     //runtime info
     String PID = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+    
     //version
     String VERSION = "Summer.Boot.v2.0.14@" + System.getProperty("hostName");
 
