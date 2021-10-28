@@ -239,7 +239,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
     }
 
     @JsonIgnore
-    Key getJwtRootSigningKey() {
+    public Key getJwtRootSigningKey() {
         return jwtRootSigningKey;
     }
 
@@ -259,11 +259,11 @@ public class AuthConfig extends AbstractSummerBootConfig {
         return userTTL;
     }
 
-    RoleMapping getRole(String role) {
+    public RoleMapping getRole(String role) {
         return roles.get(role);
     }
 
-    Map<String, RoleMapping> getRoles() {
+    public Map<String, RoleMapping> getRoles() {
         return roles;
     }
     
