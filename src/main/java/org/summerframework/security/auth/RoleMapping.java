@@ -26,7 +26,7 @@ import java.util.Set;
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-class RoleMapping {
+public class RoleMapping {
 
     public enum Type {
         users, groups
@@ -44,7 +44,7 @@ class RoleMapping {
         return roleName;
     }
 
-    void add(Type type, String csv) {
+    public void add(Type type, String csv) {
         String[] a = FormatterUtil.parseCsv(csv);
         switch (type) {
             case users:
@@ -56,11 +56,11 @@ class RoleMapping {
         }
     }
 
-    Set<String> getGroups() {
+    public Set<String> getGroups() {
         return groups;
     }
 
-    Set<String> getUsers() {
+    public Set<String> getUsers() {
         return users;
     }
 }

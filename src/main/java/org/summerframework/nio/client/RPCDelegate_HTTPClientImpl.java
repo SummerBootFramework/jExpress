@@ -121,19 +121,38 @@ public abstract class RPCDelegate_HTTPClientImpl {
                 }
             }
         }
-        RPCResult rpcResult = new RPCResult(httpResponse, rpcResponseJsonBody, isRemoteSuccess);
-        if (rpcResponseStatusCode == HttpResponseStatus.REQUEST_TIMEOUT.code()) {
-            return onHttpRequestTimeout(serviceResponse);
+        if (stopOnRPCResponseStatusCode(rpcHttpStatus, serviceResponse)) {
+            return null;
         }
 
         // 3b. set result: 
+        RPCResult rpcResult = new RPCResult(httpResponse, rpcResponseJsonBody, isRemoteSuccess);
         try {
             rpcResult.update(successResponseType, successResponseClass, errorResponseClass);
         } catch (Throwable ex) {
             rpcResult = onUnknownResponseFormat(serviceResponse, ex);
         }
-
         return rpcResult;
+    }
+
+    /**
+     *
+     * @param rpcHttpStatus
+     * @param serviceResponse
+     * @return true on 408 or greater than 500
+     */
+    protected boolean stopOnRPCResponseStatusCode(HttpResponseStatus rpcHttpStatus, ServiceResponse serviceResponse) {
+        if (rpcHttpStatus.code() == HttpResponseStatus.REQUEST_TIMEOUT.code()) {// = 408
+            Error e = new Error(BootErrorCode.HTTPREQUEST_TIMEOUT, null, "RPC Request Timeout", null);
+            serviceResponse.status(HttpResponseStatus.GATEWAY_TIMEOUT).error(e);
+            return true;
+        }
+        if (rpcHttpStatus.code() > HttpResponseStatus.INTERNAL_SERVER_ERROR.code()) {// > 500
+            Error e = new Error(BootErrorCode.ACCESS_ERROR_RPC, "RPC Server", "RPC Server Error", null);
+            serviceResponse.status(rpcHttpStatus).error(e);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -148,19 +167,6 @@ public abstract class RPCDelegate_HTTPClientImpl {
     protected <T, E> RPCResult<T, E> onInterrupted(HttpRequest req, ServiceResponse serviceResponse, Throwable ex) {
         Error e = new Error(BootErrorCode.APP_INTERRUPTED, null, "RPC Interrupted", ex);
         serviceResponse.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
-        return null;
-    }
-
-    /**
-     *
-     * @param <T>
-     * @param <E>
-     * @param serviceResponse
-     * @return
-     */
-    protected <T, E> RPCResult<T, E> onHttpRequestTimeout(ServiceResponse serviceResponse) {
-        Error e = new Error(BootErrorCode.HTTPREQUEST_TIMEOUT, null, "RPC Request Timeout", null);
-        serviceResponse.status(HttpResponseStatus.GATEWAY_TIMEOUT).error(e);
         return null;
     }
 
