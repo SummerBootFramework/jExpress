@@ -95,7 +95,7 @@ public class RPCResult<T, E> {
         if (remoteSuccess) {
             setSuccessResponse(getRpcResponse(jacksonMapper, successResponseType, successResponseClass));
         } else {
-            setErrorResponse(getRpcResponse(jacksonMapper, successResponseType, errorResponseClass));
+            setErrorResponse(getRpcResponse(jacksonMapper, null, errorResponseClass));
         }
     }
 
@@ -107,7 +107,7 @@ public class RPCResult<T, E> {
         if (remoteSuccess) {
             setSuccessResponse(getRpcResponse(jacksonMapper, successResponseType, successResponseClass, serviceResponse));
         } else {
-            setErrorResponse(getRpcResponse(jacksonMapper, successResponseType, errorResponseClass, serviceResponse));
+            setErrorResponse(getRpcResponse(jacksonMapper, null, errorResponseClass, serviceResponse));
         }
     }
 

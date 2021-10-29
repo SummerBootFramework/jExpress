@@ -75,8 +75,8 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @param <E>
      * @param req
      * @param requestLogInfo
-     * @param successResponseType
-     * @param successResponseClass
+     * @param successResponseType - this will be ignored when successResponseClass is specified, and cannot be null when successResponseClass is null
+     * @param successResponseClass - when specified, successResponseType will be ignored.
      * @param errorResponseClass
      * @param serviceResponse
      * @param expectedStatusList
@@ -121,16 +121,15 @@ public abstract class RPCDelegate_HTTPClientImpl {
                 }
             }
         }
-        if (stopOnRPCResponseStatusCode(rpcHttpStatus, serviceResponse)) {
-            return null;
-        }
 
         // 3b. set result: 
         RPCResult rpcResult = new RPCResult(httpResponse, rpcResponseJsonBody, isRemoteSuccess);
-        try {
-            rpcResult.update(successResponseType, successResponseClass, errorResponseClass);
-        } catch (Throwable ex) {
-            rpcResult = onUnknownResponseFormat(serviceResponse, ex);
+        if (validateHttpStatus(rpcHttpStatus, rpcResponseJsonBody, serviceResponse)) {
+            try {
+                rpcResult.update(successResponseType, successResponseClass, errorResponseClass);
+            } catch (Throwable ex) {
+                rpcResult = onUnknownResponseFormat(serviceResponse, ex);
+            }
         }
         return rpcResult;
     }
@@ -138,21 +137,23 @@ public abstract class RPCDelegate_HTTPClientImpl {
     /**
      *
      * @param rpcHttpStatus
+     * @param rpcResponseJsonBody
      * @param serviceResponse
-     * @return true on 408 or greater than 500
+     * @return false to stop processing (default on 408 or greater than 500),
+     * true to continue
      */
-    protected boolean stopOnRPCResponseStatusCode(HttpResponseStatus rpcHttpStatus, ServiceResponse serviceResponse) {
+    protected boolean validateHttpStatus(HttpResponseStatus rpcHttpStatus, String rpcResponseJsonBody, ServiceResponse serviceResponse) {
         if (rpcHttpStatus.code() == HttpResponseStatus.REQUEST_TIMEOUT.code()) {// = 408
             Error e = new Error(BootErrorCode.HTTPREQUEST_TIMEOUT, null, "RPC Request Timeout", null);
             serviceResponse.status(HttpResponseStatus.GATEWAY_TIMEOUT).error(e);
-            return true;
+            return false;
         }
         if (rpcHttpStatus.code() > HttpResponseStatus.INTERNAL_SERVER_ERROR.code()) {// > 500
-            Error e = new Error(BootErrorCode.ACCESS_ERROR_RPC, "RPC Server", "RPC Server Error", null);
+            Error e = new Error(BootErrorCode.ACCESS_ERROR_RPC, null, "RPC Server Error", null);
             serviceResponse.status(rpcHttpStatus).error(e);
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     /**
