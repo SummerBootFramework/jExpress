@@ -30,7 +30,7 @@ import java.util.List;
 public class ServiceError {
 
     private long ref;
-    private Object meta;
+    private Object attachedData;
 
     private List<Error> errors;
 
@@ -65,12 +65,12 @@ public class ServiceError {
         this.ref = ref;
     }
 
-    public Object getMeta() {
-        return meta;
+    public Object getAttachedData() {
+        return attachedData;
     }
 
-    public void setMeta(Object meta) {
-        this.meta = meta;
+    public void setAttachedData(Object attachedData) {
+        this.attachedData = attachedData;
     }
 
     public List<Error> getErrors() {
