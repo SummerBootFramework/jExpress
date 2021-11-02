@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -28,9 +29,9 @@ import java.util.Set;
  */
 public class User implements Serializable, Caller, Comparable<User> {
 
-    protected Long tenantId;
+    protected Long tenantId = 0L;
     protected String tenantName;
-    protected Long id;
+    protected Long id = 0L;
     protected String uid;
     @JsonIgnore
     protected String password;
@@ -131,6 +132,35 @@ public class User implements Serializable, Caller, Comparable<User> {
     }
 
     @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 59 * hash + Objects.hashCode(this.tenantId);
+        hash = 59 * hash + Objects.hashCode(this.id);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final User other = (User) obj;
+        if (!Objects.equals(this.tenantId, other.tenantId)) {
+            return false;
+        }
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
     public int compareTo(User arg0) {
         if (arg0 == null) {
             return 1;
@@ -146,7 +176,7 @@ public class User implements Serializable, Caller, Comparable<User> {
             if (id2 == null) {
                 return 1;
             } else {
-                return id.compareTo(arg0.getId());
+                return id.compareTo(id2);
             }
         }
     }

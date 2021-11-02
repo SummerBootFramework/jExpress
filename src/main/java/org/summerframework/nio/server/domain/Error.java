@@ -24,13 +24,14 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  *
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
-public class Error {
+public class Error<T> {
 
     private int errorCode;
     private String errorTag;
     private String errorDesc;
     private String cause;
     private Throwable ex;
+    private T attachedData;
 
     public Error() {
     }
@@ -51,6 +52,10 @@ public class Error {
 
     @Override
     public String toString() {
+        return toJson();
+    }
+
+    protected String toStringEx() {
         if (cause == null) {
             return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + "\"}";
         }
@@ -102,7 +107,7 @@ public class Error {
         try {
             return JsonUtil.toJson(this, true, true);
         } catch (JsonProcessingException ex) {
-            return toString();
+            return toStringEx();
         }
     }
 
@@ -142,4 +147,13 @@ public class Error {
     public Throwable getEx() {
         return ex;
     }
+
+    public T getAttachedData() {
+        return attachedData;
+    }
+
+    public void setAttachedData(T attachedData) {
+        this.attachedData = attachedData;
+    }
+
 }
