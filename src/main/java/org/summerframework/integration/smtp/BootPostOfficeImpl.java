@@ -40,16 +40,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class BootPostOfficeImpl implements PostOffice {
 
-    private static final ExecutorService POST_OFFICE;
+    private static final ExecutorService POSTOFFICE = buildPostffice();
 
-    static {
-        POST_OFFICE = new ThreadPoolExecutor(2, 2,
+    protected static ExecutorService buildPostffice() {
+        ExecutorService postoffice = new ThreadPoolExecutor(2, 2,
                 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            POST_OFFICE.shutdown();
+            postoffice.shutdown();
         }, "ShutdownHook.PostOffice")
         );
+        return postoffice;
     }
 
     protected Logger log = LogManager.getLogger(getClass().getName());
@@ -123,7 +124,7 @@ public class BootPostOfficeImpl implements PostOffice {
             }
         };
         if (async) {
-            POST_OFFICE.execute(postman);
+            POSTOFFICE.execute(postman);
         } else {
             postman.run();
         }
@@ -152,7 +153,7 @@ public class BootPostOfficeImpl implements PostOffice {
                             log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
                         }
                     };
-                    POST_OFFICE.execute(postman);
+                    POSTOFFICE.execute(postman);
                 } else {
                     email.send();
                 }

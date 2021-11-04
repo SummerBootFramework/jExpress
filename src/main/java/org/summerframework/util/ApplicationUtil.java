@@ -15,6 +15,8 @@
  */
 package org.summerframework.util;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -49,4 +51,16 @@ public class ApplicationUtil {
         return duplicates;
     }
 
+    public static String getServerName(boolean exitWhenFail) {
+        try {
+            System.setProperty("hostName", InetAddress.getLocalHost().getHostName());
+        } catch (UnknownHostException ex) {
+            System.setProperty("hostName", null);
+            ex.printStackTrace(System.err);
+            if (exitWhenFail) {
+                System.exit(-1);
+            }
+        }
+        return System.getProperty("hostName");
+    }
 }

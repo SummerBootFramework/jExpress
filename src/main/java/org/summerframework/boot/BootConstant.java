@@ -15,6 +15,8 @@
  */
 package org.summerframework.boot;
 
+import org.summerframework.util.ApplicationUtil;
+
 /**
  *
  * @author Changski Tie Zheng Zhang, Du Xiao
@@ -25,7 +27,7 @@ public interface BootConstant {
     String PID = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
 
     //version
-    String VERSION = "Summer.Boot.v2.0.16@" + System.getProperty("hostName");
+    String VERSION = "Summer.Boot.v2.0.17@" + ApplicationUtil.getServerName(false);
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
