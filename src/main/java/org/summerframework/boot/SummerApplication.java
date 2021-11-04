@@ -77,15 +77,6 @@ import org.apache.commons.lang3.StringUtils;
  */
 abstract public class SummerApplication extends CommandLineRunner {
 
-    static {
-        try {
-            System.setProperty("hostName", InetAddress.getLocalHost().getHostName());
-        } catch (UnknownHostException ex) {
-            ex.printStackTrace(System.err);
-            System.exit(-1);
-        }
-    }
-
     protected static Logger log;
 
     private static final String CFG_MONITOR_INTERVAL = "cmi";
@@ -131,7 +122,7 @@ abstract public class SummerApplication extends CommandLineRunner {
      * Check if a given name is provided in command line -mock option
      *
      * @param mockItemName
-     * @return true if mockItemName is available in command line args 
+     * @return true if mockItemName is available in command line args
      * {@code -mock <mockItemName1, mockItemName2, ...>}
      */
     public static boolean isMockMode(String mockItemName) {
@@ -416,8 +407,8 @@ abstract public class SummerApplication extends CommandLineRunner {
     public <T extends SummerApplication> T enable_Ping_HealthCheck(String contextRoot, String pingPath, Class<? extends HealthInspector> healthInspectorClass) {
         this.enable_ping_healthInspectorClass = healthInspectorClass;
         //if (enable_ping_healthInspectorClass != null) {
-            NioServerContext.setWebApiContextRoot(contextRoot);
-            NioServerContext.setLoadBalancerHealthCheckPath(pingPath);
+        NioServerContext.setWebApiContextRoot(contextRoot);
+        NioServerContext.setLoadBalancerHealthCheckPath(pingPath);
         //}
         return (T) this;
     }
@@ -432,13 +423,13 @@ abstract public class SummerApplication extends CommandLineRunner {
     public void run(String[] args, String version) throws Exception {
         run(args, version, true);
     }
-    
+
     /**
-     * 
+     *
      * @param args
      * @param version
      * @param startNIO
-     * @throws Exception 
+     * @throws Exception
      */
     public void run(String[] args, String version, boolean startNIO) throws Exception {
         init(args, version, startNIO);
@@ -801,10 +792,10 @@ abstract public class SummerApplication extends CommandLineRunner {
     /**
      * run application with ping enabled, URI as webApiContextRoot +
      * loadBalancerHealthCheckPath
-     * 
+     *
      * @param version
      * @param startNIO
-     * @throws Exception 
+     * @throws Exception
      */
     private void start(String version, boolean startNIO) throws Exception {
         try {
