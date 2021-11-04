@@ -75,8 +75,11 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @param <E>
      * @param req
      * @param requestLogInfo
-     * @param successResponseType - this will be ignored when successResponseClass is specified, and cannot be null when successResponseClass is null
-     * @param successResponseClass - when specified, successResponseType will be ignored.
+     * @param successResponseType - this will be ignored when
+     * successResponseClass is specified, and cannot be null when
+     * successResponseClass is null
+     * @param successResponseClass - when specified, successResponseType will be
+     * ignored.
      * @param errorResponseClass
      * @param serviceResponse
      * @param expectedStatusList
