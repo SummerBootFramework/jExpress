@@ -127,8 +127,11 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
     }
 
     protected void onControllerActionFinally(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceResponse response) {
+    }
+
+    protected void protectAuthToken(RequestProcessor processor, HttpHeaders httpRequestHeaders) {
         if (processor != null && processor.isRoleBased()) {
-            httpRequestHeaders.set(HttpHeaderNames.AUTHORIZATION, "Bearer token-verified");// protect auth token from being logged
+            httpRequestHeaders.set(HttpHeaderNames.AUTHORIZATION, "Bearer ***");// protect auth token from being logged
         }
     }
 
