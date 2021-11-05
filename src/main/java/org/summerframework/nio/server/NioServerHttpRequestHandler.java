@@ -356,7 +356,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
     abstract protected void service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceResponse response);
 
-    abstract protected String beforeLogging(String originalResponse);
+    abstract protected String beforeLogging(String originallLogContent);
 
     abstract protected void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
             final ServiceResponse response, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception;
