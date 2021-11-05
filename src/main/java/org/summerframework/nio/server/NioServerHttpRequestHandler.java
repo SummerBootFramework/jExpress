@@ -181,11 +181,11 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     response.reportPOI(cfg, sb);
                     VerboseClientServerCommunication(cfg, httpHeaders, httpPostRequestBody, response, sb);
                     response.reportMemo(sb);
-                    report = scrapeLogging(sb.toString());
+                    report = beforeLogging(sb.toString());
                     log.log(level, report, response.cause());
                 }
                 try {
-                    onServiceFinal_ResponseSent_LogSaved(httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, response, queuingTime, processTime, responseTime, responseContentLength, report, ioEx);
+                    afterLogging(httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, response, queuingTime, processTime, responseTime, responseContentLength, report, ioEx);
                 } catch (Throwable ex) {
                     log.error("report failed", ex);
                 }
@@ -356,10 +356,10 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
     abstract protected void service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceResponse response);
 
-    abstract protected String scrapeLogging(String originalResponse);
+    abstract protected String beforeLogging(String originallLogContent);
 
-    abstract protected void onServiceFinal_ResponseSent_LogSaved(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceResponse response, long queuingTime, long processTime, long responseTime, long responseContentLength, String report, Throwable ioEx) throws Exception;
+    abstract protected void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
+            final ServiceResponse response, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception;
 
     /**
      * callback by Guice injection
