@@ -112,7 +112,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         } catch (Throwable ex) {
             onUnexpectedException(ex, processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, response);
         } finally {
-            onControllerActionFinally(processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, response);
+            afterService(processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, response);
             response.timestampPOI(BootPOI.PROCESS_END);
         }
     }
@@ -126,12 +126,9 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure/Bug?", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
-    protected void onControllerActionFinally(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceResponse response) {
-    }
-
     protected void protectAuthToken(RequestProcessor processor, HttpHeaders httpRequestHeaders) {
         if (processor != null && processor.isRoleBased()) {
-            httpRequestHeaders.set(HttpHeaderNames.AUTHORIZATION, "Bearer ***");// protect auth token from being logged
+            httpRequestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect auth token from being logged
         }
     }
 
@@ -139,14 +136,18 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         return true;
     }
 
+    protected void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceResponse response) {
+        protectAuthToken(processor, httpRequestHeaders);
+    }
+
     @Override
-    protected String scrapeLogging(String log) {
+    protected String beforeLogging(String log) {
         return log;
     }
 
     @Override
-    protected void onServiceFinal_ResponseSent_LogSaved(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceResponse response, long queuingTime, long processTime, long responseTime, long responseContentLength, String report, Throwable ioEx) throws Exception {
+    protected void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
+            final ServiceResponse response, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception {
     }
 
     private static final ThreadPoolExecutor POOL;
