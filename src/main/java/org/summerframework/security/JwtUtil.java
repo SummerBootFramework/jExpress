@@ -21,6 +21,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.crypto.MacProvider;
 import java.security.Key;
+import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -105,6 +106,7 @@ public class JwtUtil {
         setJwtExpireTime(builder, timeUnit, ttl);
 
         //2. Let's set the JWT Claims
+        builder.setIssuedAt(new Date());
         builder.signWith(signatureAlgorithm, privateKey);
 
         //3. Builds the JWT and serializes it to a compact, URL-safe string
