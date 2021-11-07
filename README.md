@@ -515,7 +515,7 @@ mail.smtp.userName=ABC Service
 ###########################################
 # 2. Alert Recipients                     #
 # Format: CSV format                      #
-# Example: johndoe@olg.ca, janedoe@olg.ca #
+# Example: johndoe@xx.com, janedoe@xx.com #
 ###########################################
 #email.to.AppSupport=
 ## use AppSupport if not provided
