@@ -21,7 +21,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.crypto.MacProvider;
 import java.security.Key;
-import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
