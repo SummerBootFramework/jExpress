@@ -15,10 +15,8 @@
  */
 package org.summerframework.boot.instrumentation;
 
-import org.summerframework.nio.server.NioServer;
 import org.summerframework.nio.server.domain.Error;
 import org.summerframework.nio.server.domain.ServiceError;
-import org.summerframework.util.JsonUtil;
 import com.google.inject.Singleton;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -39,47 +37,9 @@ public class BootHealthInspectorImpl implements HealthInspector {
      */
     @Override
     public List<Error> ping(Object... args) {
-        boolean changeNIOerviceStatus = false;
-        Logger callerLog = null;
-        if (args != null && args.length > 0) {
-            for (Object arg : args) {
-                if (arg == null) {
-                    continue;
-                }
-                if (arg instanceof Boolean) {
-                    changeNIOerviceStatus = (Boolean) arg;
-                } else if (arg instanceof Logger) {
-                    callerLog = (Logger) arg;
-                }
-            }
-        }
         ServiceError error = new ServiceError();
-        healthCheck(error, callerLog);
+        healthCheck(error, null);
         List<Error> errors = error.getErrors();
-        //check result
-        StringBuilder sb = new StringBuilder();
-        sb.append(System.lineSeparator()).append("Self Inspection ");
-        if (errors == null || errors.isEmpty()) {
-            NioServer.setServiceHealthOk(true, null);
-            sb.append("passed");
-            if (callerLog != null) {
-                callerLog.info(sb);
-            }
-        } else {
-            String inspectionReport;
-            try {
-                inspectionReport = JsonUtil.toJson(errors, true, true);
-            } catch (Throwable ex) {
-                inspectionReport = "total " + errors.size();
-            }
-            if (changeNIOerviceStatus) {
-                NioServer.setServiceHealthOk(false, inspectionReport);
-            }
-            sb.append("failed: ").append(inspectionReport);
-            if (callerLog != null) {
-                callerLog.error(sb);
-            }
-        }
         return errors;
     }
 
