@@ -39,8 +39,6 @@ import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -823,6 +821,7 @@ abstract public class SummerApplication extends CommandLineRunner {
                 List<Error> errors = healthInspector.ping(log);
                 if (errors == null || errors.isEmpty()) {
                     sb.append("passed");
+                    log.info(sb);
                 } else {
                     String inspectionReport;
                     try {
@@ -831,6 +830,11 @@ abstract public class SummerApplication extends CommandLineRunner {
                         inspectionReport = "total " + errors.size();
                     }
                     sb.append("failed: ").append(inspectionReport);
+                    if (startNIO) {
+                        NioServer.setServiceHealthOk(false, sb.toString(), healthInspector);
+                    } else {
+                        log.warn(sb);
+                    }
                 }
             } else {
                 sb.append("skipped");
