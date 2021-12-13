@@ -199,8 +199,8 @@ public class NioConfig extends AbstractSummerBootConfig {
             desc = "Sent Idle enabled only when value > 0")
     private volatile int writerIdleTime = 0;
 
-    @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "60")
-    private volatile int healthInspectionIntervalSeconds = 60;
+    @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
+    private volatile int healthInspectionIntervalSeconds = 5;
 
     private static Injector INJECTOR;
 
