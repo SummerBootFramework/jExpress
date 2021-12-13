@@ -36,11 +36,7 @@ import java.nio.channels.UnresolvedAddressException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import javax.naming.NamingException;
 import javax.persistence.PersistenceException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -87,28 +83,27 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             //} catch (ExpiredJwtException | SignatureException | MalformedJwtException ex) {
             //    nak(response, HttpResponseStatus.UNAUTHORIZED, BootErrorCode.AUTH_INVALID_TOKEN, "Invalid JWT");
         } catch (NamingException ex) {
-            nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_LDAP, "Cannot access LDAP", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+            onNamingException(ex, httptMethod, httpRequestPath, response);
         } catch (PersistenceException ex) {
-            nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, "Cannot access database", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+            onPersistenceException(ex, httptMethod, httpRequestPath, response);
         } catch (HttpConnectTimeoutException ex) {// a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
-            nak(response, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPCLIENT_TIMEOUT, ex.getMessage());
-            response.level(Level.WARN);
+            onHttpConnectTimeoutException(ex, httptMethod, httpRequestPath, response);
         } catch (HttpTimeoutException ex) {// a response is not received within a specified time period.            
-            // 504 will trigger terminal retry
-            nak(response, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPREQUEST_TIMEOUT, ex.getMessage());
-            response.level(Level.WARN);
+            onHttpTimeoutException(ex, httptMethod, httpRequestPath, response);
+        } catch (RejectedExecutionException ex) {
+            onRejectedExecutionException(ex, httptMethod, httpRequestPath, response);
         } catch (IOException | UnresolvedAddressException ex) {//SocketException, 
             Throwable rc = ExceptionUtils.getRootCause(ex);
+            if (rc == null) {
+                rc = ex;
+            }
             if (rc instanceof RejectedExecutionException) {
-                nak(response, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, ex.getMessage());
-                response.level(Level.WARN);
+                onRejectedExecutionException(rc, httptMethod, httpRequestPath, response);
             } else {
-                startHealthInspectionSingleton(NioConfig.CFG.getHealthInspectionIntervalSeconds(), ex);
-                nakFatal(response, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+                onIOException(rc, httptMethod, httpRequestPath, response);
             }
         } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+            onInterruptedException(ex, httptMethod, httpRequestPath, response);
         } catch (Throwable ex) {
             onUnexpectedException(ex, processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, response);
         } finally {
@@ -117,27 +112,82 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         }
     }
 
+    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceResponse response) throws Exception {
+        return true;
+    }
+
     protected void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
             final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceResponse response) {
         response.status(HttpResponseStatus.NOT_FOUND).error(new Error(BootErrorCode.AUTH_INVALID_URL, "path not found", httptMethod + " " + httpRequestPath, null));
+    }
+
+    protected void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+        nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_LDAP, "Cannot access LDAP", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+    }
+
+    protected void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+        nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, "Cannot access database", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+    }
+
+    /**
+     * Happens when a connection, over which an HttpRequest is intended to be
+     * sent, is not successfully established within a specified time period.
+     *
+     * @param ex
+     * @param httptMethod
+     * @param httpRequestPath
+     * @param response
+     */
+    protected void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+        nak(response, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPCLIENT_TIMEOUT, ex.getMessage());
+        response.level(Level.WARN);
+    }
+
+    /**
+     * Happens when a response is not received within a specified time period.
+     *
+     * @param ex
+     * @param httptMethod
+     * @param httpRequestPath
+     * @param response
+     */
+    protected void onHttpTimeoutException(HttpTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+        nak(response, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPREQUEST_TIMEOUT, ex.getMessage());
+        response.level(Level.WARN);
+    }
+
+    protected void onRejectedExecutionException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+        nak(response, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, ex.getMessage());
+        response.level(Level.WARN);
+    }
+
+    protected void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+        NioServer.setServiceHealthOk(false, ex.toString(), getHealthInspector());
+        nakFatal(response, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+    }
+
+    protected HealthInspector getHealthInspector() {
+        return healthInspector;
+    }
+
+    protected void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+        Thread.currentThread().interrupt();
+        nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+
     }
 
     protected void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceResponse response) {
         nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure/Bug?", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
+    protected void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceResponse response) {
+        protectAuthToken(processor, httpRequestHeaders);
+    }
+
     protected void protectAuthToken(RequestProcessor processor, HttpHeaders httpRequestHeaders) {
         if (processor != null && processor.isRoleBased()) {
             httpRequestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect auth token from being logged
         }
-    }
-
-    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceResponse response) throws Exception {
-        return true;
-    }
-
-    protected void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceResponse response) {
-        protectAuthToken(processor, httpRequestHeaders);
     }
 
     @Override
@@ -148,52 +198,6 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
     @Override
     protected void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
             final ServiceResponse response, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception {
-    }
-
-    private static final ThreadPoolExecutor POOL;
-
-    static {
-        POOL = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(1), Executors.defaultThreadFactory(), new ThreadPoolExecutor.DiscardPolicy());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            POOL.shutdown();
-        }, "ShutdownHook.BootHttpRequestHandler")
-        );
-    }
-
-    protected void startHealthInspectionSingleton(int inspectionIntervalSeconds, Throwable cause) {
-        if (healthInspector == null) {
-            return;
-        }
-        long i = HealthInspector.healthInspectorCounter.incrementAndGet();
-        if (i > 1) {
-            return;
-        }
-        Runnable asyncTask = () -> {
-            HealthInspector.healthInspectorCounter.incrementAndGet();
-            boolean inspectionFailed;
-            do {
-                List<Error> errors = healthInspector.ping(true, log);
-                inspectionFailed = errors != null && !errors.isEmpty();
-                if (inspectionFailed) {
-                    try {
-                        TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
-                    } catch (InterruptedException ex) {
-                        Thread.currentThread().interrupt();
-                    }
-                }
-            } while (inspectionFailed);
-            HealthInspector.healthInspectorCounter.set(0);
-        };
-        if (POOL.getActiveCount() < 1) {
-            try {
-                POOL.execute(asyncTask);
-            } catch (RejectedExecutionException ex2) {
-                log.debug("Duplicated HealthInspection Rejected");
-            }
-        } else {
-            log.debug("HealthInspection Skipped");
-        }
     }
 
     protected void nak(ServiceResponse response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {
