@@ -137,8 +137,9 @@ public class NioHttpUtil {
             try {
                 contentBytes = content.getBytes(charsetName);
             } catch (UnsupportedEncodingException ex) {
-                log.warn("Unsupported charset=" + charsetName + ": " + ex);
-                contentBytes = content.getBytes(StandardCharsets.UTF_8);
+                String error = "Unsupported Header (Accept-Charset: " + charsetName + "): " + ex.getMessage();
+                contentBytes = error.getBytes(StandardCharsets.UTF_8);
+                status = HttpResponseStatus.NOT_ACCEPTABLE;
                 charsetName = "UTF-8";
             }
         }
