@@ -190,6 +190,7 @@ public class RedisConfig implements SummerBootConfig {
 //                    }
                 }
             } catch (JedisConnectionException | JedisDataException ex) {
+                log.warn("find connection: " + ex);
             }
         }
         if (failoveredMasterPool != null) {
@@ -202,12 +203,10 @@ public class RedisConfig implements SummerBootConfig {
         if (masterPool != null) {
             // now switched to new master node
             try (Jedis jedis = masterPool.getResource();) {
-                Socket s = jedis.getClient().getSocket();
-                String host = s.getInetAddress().getHostName();
-                int port = s.getPort();
-                ret = host + ":" + port;
+                //ret = jedis.getClient().toString();
+                ret = jedis.getConnection().toString();
                 long ttl = (Long.MAX_VALUE - System.currentTimeMillis() - 1000) / 1000;
-                jedis.psetex(key, ttl, host);
+                jedis.psetex(key, ttl, ret);
                 //jedis.set(key, ret);
             }
         }
