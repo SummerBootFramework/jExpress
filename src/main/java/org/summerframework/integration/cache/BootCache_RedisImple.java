@@ -372,7 +372,7 @@ public class BootCache_RedisImple implements BootCache {
     }
 
     /**
-     * Good for: low rate, check if a user input wrong password more than X
+     * Only good for: low rate, check if a user input wrong password more than X
      * times within N minutes.
      *
      * <p>
@@ -390,18 +390,20 @@ public class BootCache_RedisImple implements BootCache {
      * @param periodSecond
      * @return the burst rate of the current period window
      */
+    @Deprecated
     public long rateLimiterGetSlidingWindowRate(String key, int periodSecond) {
         long nowTs = System.currentTimeMillis();
         final Holder<Long> holder = new Holder<>(0L);
         execute(true, jedis -> {
-            Response<Long> count = null;
-            try ( Pipeline pipe = jedis.pipelined();) {
-                pipe.multi();
-                pipe.zadd(key, nowTs, String.valueOf(nowTs));
-                pipe.zremrangeByScore(key, 0, nowTs - periodSecond * 1000);
-                count = pipe.zcard(key);
-                pipe.expire(key, periodSecond + 1);
-                pipe.exec();
+            Response<Long> count;
+            try ( Pipeline pipeline = jedis.pipelined();) {
+                //pipeline.multi();
+                pipeline.zadd(key, nowTs, String.valueOf(nowTs));
+                pipeline.zremrangeByScore(key, 0, nowTs - periodSecond * 1000);
+                count = pipeline.zcard(key);
+                pipeline.expire(key, periodSecond + 1);
+                //pipeline.exec();
+                pipeline.syncAndReturnAll();
             }
             if (count != null && count.get() != null) {
                 long c = count.get();
