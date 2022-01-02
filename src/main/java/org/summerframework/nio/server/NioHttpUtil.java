@@ -124,6 +124,8 @@ public class NioHttpUtil {
         return sendText(ctx, isKeepAlive, serviceResponse.headers(), status, null, serviceResponse.contentType(), serviceResponse.charsetName(), true);
     }
 
+    private static final String DEFAULT_CHARSET = "UTF-8";
+
     public static long sendText(ChannelHandlerContext ctx, boolean isKeepAlive, HttpHeaders serviceHeaders, HttpResponseStatus status, String content, String contentType, String charsetName, boolean flush) {
         if (content == null) {
             content = "";
@@ -132,15 +134,17 @@ public class NioHttpUtil {
         byte[] contentBytes;
         if (charsetName == null) {
             contentBytes = content.getBytes(StandardCharsets.UTF_8);
-            charsetName = "UTF-8";
+            charsetName = DEFAULT_CHARSET;
         } else {
             try {
                 contentBytes = content.getBytes(charsetName);
             } catch (UnsupportedEncodingException ex) {
-                String error = "Unsupported Header (Accept-Charset: " + charsetName + "): " + ex.getMessage();
-                contentBytes = error.getBytes(StandardCharsets.UTF_8);
-                status = HttpResponseStatus.NOT_ACCEPTABLE;
-                charsetName = "UTF-8";
+//                String error = "Unsupported Header (Accept-Charset: " + charsetName + "): " + ex.getMessage();
+//                contentBytes = error.getBytes(StandardCharsets.UTF_8);
+//                status = HttpResponseStatus.NOT_ACCEPTABLE;
+                log.warn("Unsupported Header (Accept-Charset: " + charsetName + "): " + ex.getMessage());
+                contentBytes = content.getBytes(StandardCharsets.UTF_8);
+                charsetName = DEFAULT_CHARSET;
             }
         }
 //        int a = 252;//"ü"
