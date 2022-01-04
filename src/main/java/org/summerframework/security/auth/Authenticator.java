@@ -15,7 +15,7 @@
  */
 package org.summerframework.security.auth;
 
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.io.IOException;
 import javax.naming.NamingException;
@@ -46,7 +46,7 @@ public interface Authenticator extends HealthInspector {
      * @throws java.io.IOException
      * @throws javax.naming.NamingException
      */
-    String authenticate(String uid, String pwd, int validForMinutes, final ServiceResponse response) throws IOException, NamingException;
+    String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext response) throws IOException, NamingException;
 
     /**
      * Retrieve token based on RFC 6750 - The OAuth 2.0 Authorization Framework
@@ -66,7 +66,7 @@ public interface Authenticator extends HealthInspector {
      * @param response
      * @return Caller
      */
-    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceResponse response);
+    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceContext response);
 
     /**
      *
@@ -76,7 +76,7 @@ public interface Authenticator extends HealthInspector {
      * @param response
      * @return Caller
      */
-    <T extends Caller> T verifyToken(String authToken, BootCache cache, final ServiceResponse response);
+    <T extends Caller> T verifyToken(String authToken, BootCache cache, final ServiceContext response);
 
     /**
      * Success HTTP Status: 204 No Content
@@ -85,7 +85,7 @@ public interface Authenticator extends HealthInspector {
      * @param cache
      * @param response
      */
-    void logout(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceResponse response);
+    void logout(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceContext response);
 
     /**
      * Success HTTP Status: 204 No Content
@@ -94,5 +94,5 @@ public interface Authenticator extends HealthInspector {
      * @param cache
      * @param response
      */
-    void logout(String authToken, BootCache cache, final ServiceResponse response);
+    void logout(String authToken, BootCache cache, final ServiceContext response);
 }

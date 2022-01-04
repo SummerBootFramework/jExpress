@@ -15,7 +15,7 @@
  */
 package org.summerframework.nio.server;
 
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.lang.annotation.Annotation;
@@ -36,6 +36,6 @@ public interface RequestProcessor {
 
     boolean matches(String httpRequestPath);
 
-    void process(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceResponse response, int BAD_REQUEST) throws Throwable;
+    void process(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext response, int BAD_REQUEST) throws Throwable;
 
 }

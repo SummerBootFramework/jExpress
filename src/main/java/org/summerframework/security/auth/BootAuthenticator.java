@@ -19,7 +19,7 @@ import org.summerframework.boot.BootErrorCode;
 import org.summerframework.boot.BootPOI;
 import org.summerframework.integration.cache.BootCache;
 import org.summerframework.nio.server.domain.Error;
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.security.JwtUtil;
 import org.summerframework.util.FormatterUtil;
 import com.google.inject.Singleton;
@@ -56,7 +56,7 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public String authenticate(String uid, String pwd, int validForMinutes, final ServiceResponse response) throws IOException, NamingException {
+    public String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext response) throws IOException, NamingException {
         //1. protect request body from being logged
         response.privacyReqContent(true);
 
@@ -173,13 +173,13 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public Caller verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, ServiceResponse response) {
+    public Caller verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, ServiceContext response) {
         String authToken = getAuthToken(httpRequestHeaders);
         return verifyToken(authToken, cache, response);
     }
 
     @Override
-    public Caller verifyToken(String authToken, BootCache cache, ServiceResponse response) {
+    public Caller verifyToken(String authToken, BootCache cache, ServiceContext response) {
         Caller caller = null;
         if (authToken == null) {
             Error e = new Error(BootErrorCode.AUTH_REQUIRE_TOKEN, null, "Missing AuthToken", null);
@@ -213,13 +213,13 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public void logout(HttpHeaders httpRequestHeaders, BootCache cache, ServiceResponse response) {
+    public void logout(HttpHeaders httpRequestHeaders, BootCache cache, ServiceContext response) {
         String authToken = getAuthToken(httpRequestHeaders);
         logout(authToken, cache, response);
     }
 
     @Override
-    public void logout(String authToken, BootCache cache, ServiceResponse response) {
+    public void logout(String authToken, BootCache cache, ServiceContext response) {
         try {
             Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtRootSigningKey(), authToken);
             String jti = claims.getId();

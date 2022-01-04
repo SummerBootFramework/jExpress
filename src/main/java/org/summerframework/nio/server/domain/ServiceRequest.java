@@ -106,7 +106,7 @@ public class ServiceRequest {
         return getParam(queryParams, key, null, 0);
     }
 
-    public String getQueryParam(String key, final ServiceResponse response, int errorCode) {
+    public String getQueryParam(String key, final ServiceContext response, int errorCode) {
         return getParam(queryParams, key, response, errorCode);
     }
 
@@ -118,7 +118,7 @@ public class ServiceRequest {
     private QueryStringDecoder qd = null;
     private Map<String, List<String>> pms = null;
 
-    public String getFormParam(String key, final ServiceResponse response, int errorCode) {
+    public String getFormParam(String key, final ServiceContext response, int errorCode) {
         if (qd == null) {
             qd = new QueryStringDecoder(httpPostRequestBody, StandardCharsets.UTF_8, false);
         }
@@ -132,7 +132,7 @@ public class ServiceRequest {
         return getParam(pms, key, null, 0);
     }
 
-    private String getParam(Map<String, List<String>> pms, String key, final ServiceResponse response, int errorCode) {
+    private String getParam(Map<String, List<String>> pms, String key, final ServiceContext response, int errorCode) {
         String value = null;
         if (pms != null && !pms.isEmpty()) {
             List<String> vs = pms.get(key);

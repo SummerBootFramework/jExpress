@@ -45,7 +45,7 @@ import javax.ws.rs.core.MediaType;
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class ServiceResponse {
+public class ServiceContext {
 
     //private ChannelHandlerContext ctx;
     private final SocketAddress localIP;
@@ -84,21 +84,21 @@ public class ServiceResponse {
     private boolean privacyReqContent = false;
     private boolean privacyRespContent = false;
 
-    public static ServiceResponse build(long hit) {
-        return new ServiceResponse(null, hit, System.currentTimeMillis());
+    public static ServiceContext build(long hit) {
+        return new ServiceContext(null, hit, System.currentTimeMillis());
     }
 
-    public static ServiceResponse build(ChannelHandlerContext ctx, long hit, long startTs) {
-        return new ServiceResponse(ctx, hit, startTs);
+    public static ServiceContext build(ChannelHandlerContext ctx, long hit, long startTs) {
+        return new ServiceContext(ctx, hit, startTs);
     }
 
     @Override
     public String toString() {
-        //return "ServiceResponse{" + "status=" + status + ", headers=" + headers + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errorCode=" + errorCode + ", errorTag=" + errorTag + ", cause=" + cause + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
-        return "ServiceResponse{" + "status=" + status + ", headers=" + headers + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + errors + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
+        //return "ServiceContext{" + "status=" + status + ", headers=" + headers + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errorCode=" + errorCode + ", errorTag=" + errorTag + ", cause=" + cause + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
+        return "ServiceContext{" + "status=" + status + ", headers=" + headers + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + errors + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
     }
 
-    private ServiceResponse(ChannelHandlerContext ctx, long hit, long startTs) {
+    private ServiceContext(ChannelHandlerContext ctx, long hit, long startTs) {
         if (ctx != null && ctx.channel() != null) {
             this.localIP = ctx.channel().localAddress();
             this.remoteIP = ctx.channel().remoteAddress();
@@ -125,7 +125,7 @@ public class ServiceResponse {
         return startTs;
     }
 
-    public ServiceResponse reset() {
+    public ServiceContext reset() {
         status = HttpResponseStatus.FORBIDDEN;
         // 1.4 data
         data = null;
@@ -158,7 +158,7 @@ public class ServiceResponse {
         return status;
     }
 
-    public ServiceResponse status(HttpResponseStatus status) {
+    public ServiceContext status(HttpResponseStatus status) {
         this.status = status;
         return this;
     }
@@ -168,7 +168,7 @@ public class ServiceResponse {
         return headers;
     }
 
-    public ServiceResponse headers(HttpHeaders headers) {
+    public ServiceContext headers(HttpHeaders headers) {
         if (headers == null || headers.isEmpty()) {
             return this;
         }
@@ -189,7 +189,7 @@ public class ServiceResponse {
 //            headers.add(key, value);
 //            return this;
 //        }
-    public ServiceResponse header(String key, Object value) {
+    public ServiceContext header(String key, Object value) {
         if (StringUtils.isBlank(key)) {
             return this;
         }
@@ -214,7 +214,7 @@ public class ServiceResponse {
 //            headers.add(key, values);
 //            return this;
 //        }
-    public ServiceResponse header(String key, Iterable<?> values) {
+    public ServiceContext header(String key, Iterable<?> values) {
         if (StringUtils.isBlank(key)) {
             return this;
         }
@@ -229,7 +229,7 @@ public class ServiceResponse {
         return this;
     }
 
-    public ServiceResponse headers(Map<String, Iterable<?>> hs) {
+    public ServiceContext headers(Map<String, Iterable<?>> hs) {
         if (hs == null) {
             return this;
         }
@@ -252,12 +252,12 @@ public class ServiceResponse {
         return contentType;
     }
 
-    public ServiceResponse contentType(String contentType) {
+    public ServiceContext contentType(String contentType) {
         this.contentType = contentType;
         return this;
     }
 
-    public ServiceResponse contentTypeTry(String contentType) {
+    public ServiceContext contentTypeTry(String contentType) {
         if (contentType != null) {
             this.contentType = contentType;
         }
@@ -268,7 +268,7 @@ public class ServiceResponse {
         return charsetName;
     }
 
-    public ServiceResponse charsetName(String charsetName) {
+    public ServiceContext charsetName(String charsetName) {
         this.charsetName = charsetName;
         return this;
     }
@@ -278,7 +278,7 @@ public class ServiceResponse {
         return this.redirect;
     }
 
-    public ServiceResponse redirect(String redirect) {
+    public ServiceContext redirect(String redirect) {
         this.redirect = redirect;
         this.txt = null;
         this.file = null;
@@ -291,7 +291,7 @@ public class ServiceResponse {
         return txt;
     }
 
-    public ServiceResponse txt(String txt) {
+    public ServiceContext txt(String txt) {
         this.txt = txt;
         return this;
     }
@@ -301,7 +301,7 @@ public class ServiceResponse {
         return data;
     }
 
-    public ServiceResponse data(byte[] data) {
+    public ServiceContext data(byte[] data) {
         this.data = data;
         return this;
     }
@@ -373,7 +373,7 @@ public class ServiceResponse {
 //        ERRPR_PAGES.add(HttpResponseStatus.NOT_FOUND.code());
 //    }
 //
-//    public ServiceResponse visualizeError() {
+//    public ServiceContext visualizeError() {
 //        if (ERRPR_PAGES.contains(status.code())) {
 //            String errorFileName = status.code() + ".html";
 //            File errorFile = new File(HttpConfig.CFG.getDocroot() + File.separator + HttpConfig.CFG.getWebResources()
@@ -382,7 +382,7 @@ public class ServiceResponse {
 //        }
 //        return this;
 //    }
-    public ServiceResponse file(File file, boolean isDownloadMode) {
+    public ServiceContext file(File file, boolean isDownloadMode) {
         if (!precheckFile(file, isDownloadMode)) {
             String errorFileName = status.code() + (isDownloadMode ? ".txt" : ".html");
             file = new File(HttpConfig.CFG.getDocroot() + File.separator + HttpConfig.CFG.getWebResources()
@@ -424,7 +424,7 @@ public class ServiceResponse {
         return (T) caller;
     }
 
-    public <T extends Caller> ServiceResponse caller(T caller) {
+    public <T extends Caller> ServiceContext caller(T caller) {
         this.caller = caller;
         return this;
     }
@@ -434,7 +434,7 @@ public class ServiceResponse {
         return callerId;
     }
 
-    public ServiceResponse callerId(String callerId) {
+    public ServiceContext callerId(String callerId) {
         this.callerId = callerId;
         return this;
     }
@@ -443,7 +443,7 @@ public class ServiceResponse {
 //        return errorCode;
 //    }
 //
-//    public ServiceResponse errorCode(int errorCode) {
+//    public ServiceContext errorCode(int errorCode) {
 //        this.errorCode = errorCode;
 //        return this;
 //    }
@@ -452,7 +452,7 @@ public class ServiceResponse {
 //        return errorTag;
 //    }
 //
-//    public ServiceResponse errorTag(String errorTag) {
+//    public ServiceContext errorTag(String errorTag) {
 //        this.errorTag = errorTag;
 //        return this;
 //    }
@@ -461,7 +461,7 @@ public class ServiceResponse {
 //        return cause;
 //    }
 //
-//    public ServiceResponse cause(Throwable ex) {
+//    public ServiceContext cause(Throwable ex) {
 //        this.cause = ex;
 //        if (ex == null) {
 //            level = Level.INFO;
@@ -478,7 +478,7 @@ public class ServiceResponse {
         return errors;
     }
 
-    public ServiceResponse error(Error error) {
+    public ServiceContext error(Error error) {
         if (error == null) {
             return this;
         }
@@ -494,7 +494,7 @@ public class ServiceResponse {
         return this;
     }
 
-    public ServiceResponse errors(Collection<Error> es) {
+    public ServiceContext errors(Collection<Error> es) {
         if (es == null || es.isEmpty()) {
             return this;
         }
@@ -521,12 +521,12 @@ public class ServiceResponse {
         return level;
     }
 
-    public ServiceResponse level(Level level) {
+    public ServiceContext level(Level level) {
         this.level = level;
         return this;
     }
 
-    public ServiceResponse privacyReqHeader(boolean enabled) {
+    public ServiceContext privacyReqHeader(boolean enabled) {
         this.privacyReqHeader = enabled;
         return this;
     }
@@ -535,7 +535,7 @@ public class ServiceResponse {
         return privacyReqHeader;
     }
 
-    public ServiceResponse privacyReqContent(boolean enabled) {
+    public ServiceContext privacyReqContent(boolean enabled) {
         this.privacyReqContent = enabled;
         return this;
     }
@@ -544,7 +544,7 @@ public class ServiceResponse {
         return privacyReqContent;
     }
 
-    public ServiceResponse privacyRespHeader(boolean enabled) {
+    public ServiceContext privacyRespHeader(boolean enabled) {
         this.privacyRespHeader = enabled;
         return this;
     }
@@ -553,7 +553,7 @@ public class ServiceResponse {
         return privacyRespHeader;
     }
 
-    public ServiceResponse privacyRespContent(boolean enabled) {
+    public ServiceContext privacyRespContent(boolean enabled) {
         this.privacyRespContent = enabled;
         return this;
     }
@@ -562,7 +562,7 @@ public class ServiceResponse {
         return privacyRespContent;
     }
 
-    public ServiceResponse timestampPOI(String marker) {
+    public ServiceContext timestampPOI(String marker) {
 //        if (poi == null) {
 //            //poi = new LinkedHashMap();
 //            poi = new ArrayList();
@@ -577,7 +577,7 @@ public class ServiceResponse {
         return poi;
     }
 
-    public ServiceResponse memo(String id, String desc) {
+    public ServiceContext memo(String id, String desc) {
         if (memo == null) {
             memo = new ArrayList();
         }
