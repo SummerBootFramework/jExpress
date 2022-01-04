@@ -256,10 +256,10 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext response, int badRequestErrorCode) throws Throwable {
+    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int badRequestErrorCode) throws Throwable {
         if (roleBased) {//authentication is done, now we do authorization
             boolean isAuthorized = false;
-            Caller caller = response.caller();
+            Caller caller = context.caller();
             if (caller != null) {
                 if (permitAll) {
                     isAuthorized = true;
@@ -273,7 +273,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 }
             }
             if (!isAuthorized) {
-                response.status(HttpResponseStatus.UNAUTHORIZED)
+                context.status(HttpResponseStatus.UNAUTHORIZED)
                         .error(new Error(BootErrorCode.AUTH_NO_PERMISSION, null, "Caller is not in role: " + rolesAllowed, null));
                 return;
             }
@@ -283,34 +283,34 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             ServiceRequest request = buildServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody);
             Object[] paramValues = new Object[parameterSize];
             for (int i = 0; i < parameterSize; i++) {
-                paramValues[i] = parameterList.get(i).value(badRequestErrorCode, request, response);
+                paramValues[i] = parameterList.get(i).value(badRequestErrorCode, request, context);
             }
-            if (response.error() != null) {
+            if (context.error() != null) {
                 return;
             }
             try {
-                response.timestampPOI(BootPOI.BIZ_BEGIN).contentTypeTry(contentType);
+                context.timestampPOI(BootPOI.BIZ_BEGIN).contentTypeTry(contentType);
                 ret = javaMethod.invoke(javaInstance, paramValues);
             } catch (InvocationTargetException ex) {
                 throw ex.getCause();
             } finally {
-                response.timestampPOI(BootPOI.BIZ_END);
+                context.timestampPOI(BootPOI.BIZ_END);
             }
         } else {
             try {
-                response.timestampPOI(BootPOI.BIZ_BEGIN).contentTypeTry(contentType);
+                context.timestampPOI(BootPOI.BIZ_BEGIN).contentTypeTry(contentType);
                 ret = javaMethod.invoke(javaInstance);
             } catch (InvocationTargetException ex) {
                 throw ex.getCause();
             } finally {
-                response.timestampPOI(BootPOI.BIZ_END);
+                context.timestampPOI(BootPOI.BIZ_END);
             }
         }
         if (ret != null) {
             if (ret instanceof String) {
-                response.txt((String) ret);
+                context.txt((String) ret);
             } else if (ret instanceof File) {
-                response.file((File) ret, true);
+                context.file((File) ret, true);
             } else {
                 if (priducesSize > 1) {
                     String a = httpHeaders.get(HttpHeaderNames.ACCEPT);
@@ -325,11 +325,11 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 }
                 switch (contentType) {
                     case MediaType.APPLICATION_JSON:
-                        response.txt(JsonUtil.toJson(ret, false, true));
+                        context.txt(JsonUtil.toJson(ret, false, true));
                         break;
                     case MediaType.APPLICATION_XML:
                     case MediaType.TEXT_XML:
-                        response.txt(JsonUtil.toXML(ret));
+                        context.txt(JsonUtil.toXML(ret));
                         break;
                 }
             }

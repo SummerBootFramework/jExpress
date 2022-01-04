@@ -191,7 +191,7 @@ class JaxRsRequestParameter {
         return key;
     }
 
-    public Object value(int badRequestErrorCode, ServiceRequest request, ServiceContext response) throws JAXBException {
+    public Object value(int badRequestErrorCode, ServiceRequest request, ServiceContext context) throws JAXBException {
         ParamType currentType = type;
         if (currentType.equals(ParamType.Body_By_RquestType)) {
             String ct = request.getHttpHeaders().get(HttpHeaderNames.CONTENT_TYPE);
@@ -209,22 +209,22 @@ class JaxRsRequestParameter {
             case Request:
                 return request;
             case Response:
-                return response;
+                return context;
             case PathParam:
                 String v = request.getPathParam(key);
-                return parse(v, defaultValue, response, badRequestErrorCode);
+                return parse(v, defaultValue, context, badRequestErrorCode);
             case MatrixParam:
                 v = request.getMatrixParam(key);
-                return parse(v, defaultValue, response, badRequestErrorCode);
+                return parse(v, defaultValue, context, badRequestErrorCode);
             case QueryParam:
                 v = request.getQueryParam(key);
-                return parse(v, defaultValue, response, badRequestErrorCode);
+                return parse(v, defaultValue, context, badRequestErrorCode);
             case FormParam:
                 v = request.getFormParam(key);
-                return parse(v, defaultValue, response, badRequestErrorCode);
+                return parse(v, defaultValue, context, badRequestErrorCode);
             case HeaderParam:
                 v = request.getHttpHeaders().get(key);
-                return parse(v, defaultValue, response, badRequestErrorCode);
+                return parse(v, defaultValue, context, badRequestErrorCode);
             case CookieParam:
                 String value = request.getHttpHeaders().get(HttpHeaderNames.COOKIE);
                 if (value == null) {
@@ -258,13 +258,13 @@ class JaxRsRequestParameter {
                     // 1. convert to JSON
                     Error e = new Error(badRequestErrorCode, null, "Bad request: " + ex.toString(), null);
                     // 2. build JSON response with same app error code, and keep the default INFO log level.
-                    response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+                    context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     return null;
                 }
                 if (postDataObj == null) {
                     if (isRequired) {
                         Error e = new Error(badRequestErrorCode, null, "missing " + type, null);
-                        response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+                        context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     } else {
                         return null;
                     }
@@ -278,11 +278,11 @@ class JaxRsRequestParameter {
                                 hasError = true;
                                 Error e = new Error(badRequestErrorCode, null, validationError, null);
                                 // 2. build JSON response with same app error code, and keep the default INFO log level.
-                                response.error(e);
+                                context.error(e);
                             }
                         }
                         if (hasError) {
-                            response.status(HttpResponseStatus.BAD_REQUEST);
+                            context.status(HttpResponseStatus.BAD_REQUEST);
                             return null;
                         }
                     } else {
@@ -290,7 +290,7 @@ class JaxRsRequestParameter {
                         if (validationError != null) {
                             Error e = new Error(badRequestErrorCode, null, validationError, null);
                             // 2. build JSON response with same app error code, and keep the default INFO log level.
-                            response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+                            context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                             return null;
                         }
                     }
@@ -300,7 +300,7 @@ class JaxRsRequestParameter {
                 v = request.getHttpPostRequestBody();
                 if (isRequired && StringUtils.isBlank(v)) {
                     Error e = new Error(badRequestErrorCode, null, "missing " + type, null);
-                    response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+                    context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                 }
                 return v;
             case Body_XML:
@@ -311,13 +311,13 @@ class JaxRsRequestParameter {
                     // 1. convert to JSON
                     Error e = new Error(badRequestErrorCode, null, "Bad request: " + ex.toString(), null);
                     // 2. build JSON response with same app error code, and keep the default INFO log level.
-                    response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+                    context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     return null;
                 }
                 if (postDataObj == null) {
                     if (isRequired) {
                         Error e = new Error(badRequestErrorCode, null, "missing " + type, null);
-                        response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+                        context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     } else {
                         return null;
                     }
@@ -326,20 +326,20 @@ class JaxRsRequestParameter {
                     if (validationError != null) {
                         Error e = new Error(badRequestErrorCode, null, validationError, null);
                         // 2. build JSON response with same app error code, and keep the default INFO log level.
-                        response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+                        context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                         return null;
                     }
                 }
                 return postDataObj;
             case Body_By_RquestType:
                 v = request.getHttpPostRequestBody();
-                postDataObj = parse(v, defaultValue, response, badRequestErrorCode);
+                postDataObj = parse(v, defaultValue, context, badRequestErrorCode);
                 if (autoBeanValidation) {
                     String validationError = BeanValidationUtil.getBeanValidationResult(postDataObj);
                     if (validationError != null) {
                         Error e = new Error(badRequestErrorCode, null, validationError, null);
                         // 2. build JSON response with same app error code, and keep the default INFO log level.
-                        response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+                        context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                         return null;
                     }
                 }
@@ -348,14 +348,14 @@ class JaxRsRequestParameter {
         return null;
     }
 
-    private Object parse(String value, String defaultValue, ServiceContext response, int badRequestErrorCode) {
+    private Object parse(String value, String defaultValue, ServiceContext context, int badRequestErrorCode) {
         if (StringUtils.isBlank(value)) {
             if (defaultValue != null) {
                 value = defaultValue;
             } else {
                 if (isRequired) {
                     Error e = new Error(badRequestErrorCode, null, "missing " + type + "{" + key + "}=" + value, null);
-                    response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+                    context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                 }
                 return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
             }
@@ -364,7 +364,7 @@ class JaxRsRequestParameter {
             return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, false, false, enumConvert);
         } catch (Throwable ex) {
             Error e = new Error(badRequestErrorCode, null, "invalid " + type + "{" + key + "}=" + value, ex);
-            response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+            context.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
         }
     }

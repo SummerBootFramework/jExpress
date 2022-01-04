@@ -36,6 +36,6 @@ public interface RequestProcessor {
 
     boolean matches(String httpRequestPath);
 
-    void process(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext response, int BAD_REQUEST) throws Throwable;
+    void process(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context, int BAD_REQUEST) throws Throwable;
 
 }

@@ -266,8 +266,8 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
 //            } else {
 //                cookies = ServerCookieDecoder.STRICT.decode(value);
 //            }
-        ServiceContext response = ServiceContext.build(hitIndex);
-        caller = authenticate(httpHeaders, response);
+        ServiceContext context = ServiceContext.build(hitIndex);
+        caller = authenticate(httpHeaders, context);
         if (caller == null) {
             ServiceError e = new ServiceError(BootErrorCode.AUTH_INVALID_USER, null, "Unauthorized Caller", null);
             NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.FORBIDDEN, e.toJson(), null, null, true);
@@ -294,7 +294,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
 
     protected abstract boolean isValidRequestPath(String httpRequestPath);
 
-    protected abstract Caller authenticate(final HttpHeaders httpHeaders, ServiceContext response);
+    protected abstract Caller authenticate(final HttpHeaders httpHeaders, ServiceContext context);
 
     protected abstract long getCallerFileUploadSizeLimit_Bytes(Caller caller);
 
