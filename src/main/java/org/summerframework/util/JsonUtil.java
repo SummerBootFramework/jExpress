@@ -159,7 +159,7 @@ public class JsonUtil {
 //            error.setErrorCode(AppErrorCode.BAD_REQUEST);
 //            error.setErrorDesc(bean.getClass().getSimpleName() + " Validation Failed: "
 //                    + errorMap.entrySet().stream().map(o -> o.getValue()).collect(Collectors.joining("; ")));
-//            response.error(error).status(HttpResponseStatus.BAD_REQUEST);
+//            context.error(error).status(HttpResponseStatus.BAD_REQUEST);
 //        }
         return false;
     }

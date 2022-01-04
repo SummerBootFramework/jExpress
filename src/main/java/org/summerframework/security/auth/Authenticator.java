@@ -41,12 +41,12 @@ public interface Authenticator extends HealthInspector {
      * @param uid
      * @param pwd
      * @param validForMinutes
-     * @param response
+     * @param context
      * @return JWT
      * @throws java.io.IOException
      * @throws javax.naming.NamingException
      */
-    String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext response) throws IOException, NamingException;
+    String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws IOException, NamingException;
 
     /**
      * Retrieve token based on RFC 6750 - The OAuth 2.0 Authorization Framework
@@ -63,36 +63,36 @@ public interface Authenticator extends HealthInspector {
      * @param <T>
      * @param httpRequestHeaders contains Authorization = Bearer + JWT
      * @param cache
-     * @param response
+     * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceContext response);
+    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceContext context);
 
     /**
      *
      * @param <T>
      * @param authToken
      * @param cache
-     * @param response
+     * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyToken(String authToken, BootCache cache, final ServiceContext response);
+    <T extends Caller> T verifyToken(String authToken, BootCache cache, final ServiceContext context);
 
     /**
      * Success HTTP Status: 204 No Content
      *
      * @param httpRequestHeaders contains Authorization = Bearer + JWT
      * @param cache
-     * @param response
+     * @param context
      */
-    void logout(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceContext response);
+    void logout(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceContext context);
 
     /**
      * Success HTTP Status: 204 No Content
      *
      * @param authToken
      * @param cache
-     * @param response
+     * @param context
      */
-    void logout(String authToken, BootCache cache, final ServiceContext response);
+    void logout(String authToken, BootCache cache, final ServiceContext context);
 }

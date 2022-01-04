@@ -56,16 +56,16 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext response) throws IOException, NamingException {
+    public String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws IOException, NamingException {
         //1. protect request body from being logged
-        response.privacyReqContent(true);
+        context.privacyReqContent(true);
 
         //2. verifyToken caller      
-        response.timestampPOI(BootPOI.LDAP_BEGIN);
+        context.timestampPOI(BootPOI.LDAP_BEGIN);
         Caller caller = authenticateCaller(uid, pwd, listener);
-        response.timestampPOI(BootPOI.LDAP_END);
+        context.timestampPOI(BootPOI.LDAP_END);
         if (caller == null) {
-            response.status(HttpResponseStatus.UNAUTHORIZED);
+            context.status(HttpResponseStatus.UNAUTHORIZED);
             return null;
         }
 
@@ -79,7 +79,7 @@ public abstract class BootAuthenticator implements Authenticator {
         if (listener != null) {
             listener.onLoginSuccess(caller.getUid(), token);
         }
-        response.caller(caller).status(HttpResponseStatus.CREATED).privacyRespHeader(true);
+        context.caller(caller).status(HttpResponseStatus.CREATED).privacyRespHeader(true);
         return token;
     }
 
@@ -173,53 +173,53 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public Caller verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, ServiceContext response) {
+    public Caller verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, ServiceContext context) {
         String authToken = getAuthToken(httpRequestHeaders);
-        return verifyToken(authToken, cache, response);
+        return verifyToken(authToken, cache, context);
     }
 
     @Override
-    public Caller verifyToken(String authToken, BootCache cache, ServiceContext response) {
+    public Caller verifyToken(String authToken, BootCache cache, ServiceContext context) {
         Caller caller = null;
         if (authToken == null) {
             Error e = new Error(BootErrorCode.AUTH_REQUIRE_TOKEN, null, "Missing AuthToken", null);
-            response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
+            context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
                 Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtRootSigningKey(), authToken);
                 String jti = claims.getId();
-                response.callerId(jti);
+                context.callerId(jti);
                 if (cache != null && cache.isOnBlacklist(jti)) {// because jti is used as blacklist key in logout
                     Error e = new Error(BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Blacklisted AuthToken", null);
-                    response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
+                    context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
                     caller = unmarshalCaller(claims);
                     if (listener != null && !listener.verify(caller, claims)) {
                         Error e = new Error(BootErrorCode.AUTH_INVALID_TOKEN, null, "Rejected AuthToken", null);
-                        response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
+                        context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                         caller = null;
                     }
                 }
             } catch (ExpiredJwtException ex) {
                 Error e = new Error(BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Expired AuthToken", null);
-                response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
+                context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             } catch (JwtException ex) {
                 Error e = new Error(BootErrorCode.AUTH_INVALID_TOKEN, ex.getClass().getSimpleName(), "Invalid AuthToken - " + ex.getMessage(), null);
-                response.error(e).status(HttpResponseStatus.UNAUTHORIZED);
+                context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             }
         }
-        response.caller(caller);
+        context.caller(caller);
         return caller;
     }
 
     @Override
-    public void logout(HttpHeaders httpRequestHeaders, BootCache cache, ServiceContext response) {
+    public void logout(HttpHeaders httpRequestHeaders, BootCache cache, ServiceContext context) {
         String authToken = getAuthToken(httpRequestHeaders);
-        logout(authToken, cache, response);
+        logout(authToken, cache, context);
     }
 
     @Override
-    public void logout(String authToken, BootCache cache, ServiceContext response) {
+    public void logout(String authToken, BootCache cache, ServiceContext context) {
         try {
             Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtRootSigningKey(), authToken);
             String jti = claims.getId();
@@ -233,12 +233,12 @@ public abstract class BootAuthenticator implements Authenticator {
                 listener.onLogout(jti, authToken, expireInMilliseconds);
             }
         } catch (SignatureException | MalformedJwtException ex) {
-            response.status(HttpResponseStatus.FORBIDDEN);
+            context.status(HttpResponseStatus.FORBIDDEN);
             return;
         } catch (ExpiredJwtException ex) {
             //ignore
         }
-        response.status(HttpResponseStatus.NO_CONTENT);
+        context.status(HttpResponseStatus.NO_CONTENT);
     }
 
 }
