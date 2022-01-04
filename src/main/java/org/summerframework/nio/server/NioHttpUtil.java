@@ -16,7 +16,7 @@
 package org.summerframework.nio.server;
 
 import org.summerframework.nio.server.domain.ServiceError;
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -102,26 +102,26 @@ public class NioHttpUtil {
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
 
-    public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceResponse serviceResponse) {
-        if (serviceResponse.file() != null) {
-            return sendFile(ctx, isKeepAlive, serviceResponse);
+    public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext) {
+        if (serviceContext.file() != null) {
+            return sendFile(ctx, isKeepAlive, serviceContext);
         }
-        if (StringUtils.isBlank(serviceResponse.txt()) && serviceResponse.error() != null) {
-            serviceResponse.txt(serviceResponse.error().toJson());
+        if (StringUtils.isBlank(serviceContext.txt()) && serviceContext.error() != null) {
+            serviceContext.txt(serviceContext.error().toJson());
         }
-        if (StringUtils.isNotBlank(serviceResponse.txt())) {
-            return sendText(ctx, isKeepAlive, serviceResponse.headers(), serviceResponse.status(), serviceResponse.txt(), serviceResponse.contentType(), serviceResponse.charsetName(), true);
+        if (StringUtils.isNotBlank(serviceContext.txt())) {
+            return sendText(ctx, isKeepAlive, serviceContext.headers(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
         }
-        if (serviceResponse.redirect() != null) {
-            NioHttpUtil.sendRedirect(ctx, serviceResponse.redirect());
+        if (serviceContext.redirect() != null) {
+            NioHttpUtil.sendRedirect(ctx, serviceContext.redirect());
             return 0;
         }
 
-        HttpResponseStatus status = serviceResponse.status();
+        HttpResponseStatus status = serviceContext.status();
         if (HttpResponseStatus.OK.equals(status)) {
             status = HttpResponseStatus.NO_CONTENT;
         }
-        return sendText(ctx, isKeepAlive, serviceResponse.headers(), status, null, serviceResponse.contentType(), serviceResponse.charsetName(), true);
+        return sendText(ctx, isKeepAlive, serviceContext.headers(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true);
     }
 
     private static final String DEFAULT_CHARSET = "UTF-8";
@@ -188,17 +188,17 @@ public class NioHttpUtil {
         return contentLength;
     }
 
-    public static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceResponse serviceResponse) {
+    public static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext) {
         long fileLength = -1;
         final RandomAccessFile randomAccessFile;
-        File file = serviceResponse.file();
-        String filePath = serviceResponse.txt();
+        File file = serviceContext.file();
+        String filePath = serviceContext.txt();
         try {
             randomAccessFile = new RandomAccessFile(file, "r");
             fileLength = randomAccessFile.length();
             HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
             HttpHeaders h = response.headers();
-            h.set(serviceResponse.headers());
+            h.set(serviceContext.headers());
 
             if (isKeepAlive) {
                 // Add keep alive header as per:

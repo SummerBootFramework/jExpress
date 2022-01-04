@@ -17,7 +17,7 @@ package org.summerframework.nio.server.ws.rs;
 
 import org.summerframework.nio.server.domain.Error;
 import org.summerframework.nio.server.domain.ServiceRequest;
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.util.BeanValidationUtil;
 import org.summerframework.util.JsonUtil;
 import org.summerframework.util.ReflectionUtil;
@@ -106,7 +106,7 @@ class JaxRsRequestParameter {
         if (targetClass.equals(ServiceRequest.class)) {
             type = ParamType.Request;
             key = null;
-        } else if (targetClass.equals(ServiceResponse.class)) {
+        } else if (targetClass.equals(ServiceContext.class)) {
             type = ParamType.Response;
             key = null;
         } else {
@@ -191,7 +191,7 @@ class JaxRsRequestParameter {
         return key;
     }
 
-    public Object value(int badRequestErrorCode, ServiceRequest request, ServiceResponse response) throws JAXBException {
+    public Object value(int badRequestErrorCode, ServiceRequest request, ServiceContext response) throws JAXBException {
         ParamType currentType = type;
         if (currentType.equals(ParamType.Body_By_RquestType)) {
             String ct = request.getHttpHeaders().get(HttpHeaderNames.CONTENT_TYPE);
@@ -348,7 +348,7 @@ class JaxRsRequestParameter {
         return null;
     }
 
-    private Object parse(String value, String defaultValue, ServiceResponse response, int badRequestErrorCode) {
+    private Object parse(String value, String defaultValue, ServiceContext response, int badRequestErrorCode) {
         if (StringUtils.isBlank(value)) {
             if (defaultValue != null) {
                 value = defaultValue;

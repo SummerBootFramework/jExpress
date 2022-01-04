@@ -70,10 +70,10 @@ public class HttpRequestHandler extends BootHttpRequestHandler {
     protected AppCache cache;
 
     @Override //role-based validation
-    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceResponse response) throws IOException {
+    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws IOException {
         if (processor.isRoleBased()) {
             auth.verifyToken(httpRequestHeaders, null, response);
-            if (response.caller() == null) {
+            if (context.caller() == null) {
                 return false;
             }
         }
@@ -101,8 +101,8 @@ public class MyClass {
             @CookieParam("ck") String cv, @CookieParam("ck") Cookie ck,
             @PathParam("sset") SortedSet<Foo2> ss, @PathParam("foo2") Foo2 foo2,
             @PathParam("year") int y, @MatrixParam("country") String c, @MatrixParam("author") String a,
-            final ServiceResponse response) {
-        response.status(HttpResponseStatus.OK);
+            final ServiceContext context) {
+        context.status(HttpResponseStatus.OK);
         if (foo != null) {
             foo.bar = cv;
         }

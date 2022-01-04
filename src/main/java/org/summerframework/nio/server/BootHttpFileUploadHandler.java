@@ -16,7 +16,7 @@
 package org.summerframework.nio.server;
 
 import org.summerframework.nio.server.domain.ServiceError;
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.nio.server.multipart.MultipartUtil;
 import org.summerframework.security.auth.Caller;
 import io.netty.channel.ChannelHandlerContext;
@@ -266,7 +266,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
 //            } else {
 //                cookies = ServerCookieDecoder.STRICT.decode(value);
 //            }
-        ServiceResponse response = ServiceResponse.build(hitIndex);
+        ServiceContext response = ServiceContext.build(hitIndex);
         caller = authenticate(httpHeaders, response);
         if (caller == null) {
             ServiceError e = new ServiceError(BootErrorCode.AUTH_INVALID_USER, null, "Unauthorized Caller", null);
@@ -294,7 +294,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
 
     protected abstract boolean isValidRequestPath(String httpRequestPath);
 
-    protected abstract Caller authenticate(final HttpHeaders httpHeaders, ServiceResponse response);
+    protected abstract Caller authenticate(final HttpHeaders httpHeaders, ServiceContext response);
 
     protected abstract long getCallerFileUploadSizeLimit_Bytes(Caller caller);
 

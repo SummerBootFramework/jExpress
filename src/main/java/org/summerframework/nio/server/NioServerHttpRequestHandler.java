@@ -18,7 +18,7 @@ package org.summerframework.nio.server;
 import org.summerframework.nio.server.annotation.Controller;
 import org.summerframework.nio.server.domain.Error;
 import org.summerframework.nio.server.domain.ServiceError;
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.security.auth.Caller;
 import com.google.inject.Inject;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -110,7 +110,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         long dataSize = req.content().capacity();
 //        if (dataSize > _5MB) {
 //            ServiceError e = new ServiceError(BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT, null, "Upload file cannot over 5MB", null);
-//            ServiceResponse response = ServiceResponse.build(hitIndex).txt(e.toJson()).status(HttpResponseStatus.INSUFFICIENT_STORAGE).errorCode(BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT).level(Level.DEBUG);
+//            ServiceContext response = ServiceContext.build(hitIndex).txt(e.toJson()).status(HttpResponseStatus.INSUFFICIENT_STORAGE).errorCode(BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT).level(Level.DEBUG);
 //            NioHttpUtil.sendText(ctx, true, null, response.status(), response.txt(), response.contentType(), true);
 //            return;
 //        }
@@ -132,10 +132,10 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceResponse response = ServiceResponse.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
+            ServiceContext response = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
             String acceptCharset = httpHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
             if (StringUtils.isNotBlank(acceptCharset)) {
-                response.charsetName(acceptCharset);//.contentType(ServiceResponse.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
+                response.charsetName(acceptCharset);//.contentType(ServiceContext.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
             }
             long responseContentLength = -1;
             Throwable ioEx = null;
@@ -195,7 +195,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             cfg.getBizExecutor().execute(asyncTask);
         } catch (RejectedExecutionException ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceResponse response = ServiceResponse.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
+            ServiceContext response = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
             Error e = new Error(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many requests", ex);
             response.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, response);
@@ -212,7 +212,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             log.fatal(sb.toString());
         } catch (Throwable ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceResponse response = ServiceResponse.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
+            ServiceContext response = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
             Error e = new Error(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
             response.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, response);
@@ -251,7 +251,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    private void VerboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceResponse response, StringBuilder sb) {
+    private void VerboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext response, StringBuilder sb) {
         boolean isInFilter = false;
         // 3a. caller filter
         Caller caller = response.caller();
@@ -354,12 +354,12 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         }
     }
 
-    abstract protected void service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceResponse response);
+    abstract protected void service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext response);
 
     abstract protected String beforeLogging(String originallLogContent);
 
     abstract protected void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceResponse response, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception;
+            final ServiceContext response, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception;
 
     /**
      * callback by Guice injection

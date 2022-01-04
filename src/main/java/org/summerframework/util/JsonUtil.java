@@ -16,7 +16,7 @@
 package org.summerframework.util;
 
 import org.summerframework.nio.server.domain.Error;
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -132,7 +132,7 @@ public class JsonUtil {
 
     public static final ValidatorFactory ValidatorFactory = Validation.buildDefaultValidatorFactory();
 
-    public static boolean isValidBean(Object bean, int appErrorCode, final ServiceResponse response) {
+    public static boolean isValidBean(Object bean, int appErrorCode, final ServiceContext context) {
         Set<ConstraintViolation<Object>> violations = ValidatorFactory.getValidator().validate(bean);
         if (violations.isEmpty()) {
             return true;
@@ -151,7 +151,7 @@ public class JsonUtil {
             // Example for value: cardNumber=aaBBCC3232; The card Number is in incorrect format;
         }
         Error e = new Error(appErrorCode, null, sb.toString(), null);
-        response.status(HttpResponseStatus.BAD_REQUEST).error(e);
+        context.status(HttpResponseStatus.BAD_REQUEST).error(e);
 
 //        Map<String, String> errorMap = BeanValidationUtil.getErrorMessages(bean);
 //        boolean isValid = errorMap.isEmpty();
