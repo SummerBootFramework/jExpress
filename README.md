@@ -72,7 +72,7 @@ public class HttpRequestHandler extends BootHttpRequestHandler {
     @Override //role-based validation
     protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws IOException {
         if (processor.isRoleBased()) {
-            auth.verifyToken(httpRequestHeaders, null, response);
+            auth.verifyToken(httpRequestHeaders, null, context);
             if (context.caller() == null) {
                 return false;
             }

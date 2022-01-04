@@ -36,7 +36,7 @@ public class BootHttpFileUploadRejector extends BootHttpFileUploadHandler {
     }
 
     @Override
-    protected Caller authenticate(final HttpHeaders httpHeaders, ServiceContext response) {
+    protected Caller authenticate(final HttpHeaders httpHeaders, ServiceContext context) {
         return null;
     }
 

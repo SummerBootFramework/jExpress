@@ -58,7 +58,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     @Override
     protected void service(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
-            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext response) {
+            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
         RequestProcessor processor = null;
         try {
             // step1. find controller and the action in it
@@ -66,67 +66,67 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             if (processor == null) {
                 processor = getRequestProcessor(httptMethod, "");
                 if (processor == null) {
-                    onActionNotFound(ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, response);
+                    onActionNotFound(ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
                     return;
                 }
             }
 
             // step2. caller authentication, will do authorization in next step(ControllerAction.process(...))
-            response.timestampPOI(BootPOI.AUTH_BEGIN);
-            if (!authenticateCaller(processor, httpRequestHeaders, httpRequestPath, response)) {
+            context.timestampPOI(BootPOI.AUTH_BEGIN);
+            if (!authenticateCaller(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return;
             }
 
             // step3. serve the request, most frequently called first
-            response.timestampPOI(BootPOI.PROCESS_BEGIN);
-            processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, response, BootErrorCode.NIO_WSRS_REQUEST_BAD_DATA);
+            context.timestampPOI(BootPOI.PROCESS_BEGIN);
+            processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context, BootErrorCode.NIO_WSRS_REQUEST_BAD_DATA);
             //} catch (ExpiredJwtException | SignatureException | MalformedJwtException ex) {
-            //    nak(response, HttpResponseStatus.UNAUTHORIZED, BootErrorCode.AUTH_INVALID_TOKEN, "Invalid JWT");
+            //    nak(context, HttpResponseStatus.UNAUTHORIZED, BootErrorCode.AUTH_INVALID_TOKEN, "Invalid JWT");
         } catch (NamingException ex) {
-            onNamingException(ex, httptMethod, httpRequestPath, response);
+            onNamingException(ex, httptMethod, httpRequestPath, context);
         } catch (PersistenceException ex) {
-            onPersistenceException(ex, httptMethod, httpRequestPath, response);
+            onPersistenceException(ex, httptMethod, httpRequestPath, context);
         } catch (HttpConnectTimeoutException ex) {// a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
-            onHttpConnectTimeoutException(ex, httptMethod, httpRequestPath, response);
-        } catch (HttpTimeoutException ex) {// a response is not received within a specified time period.            
-            onHttpTimeoutException(ex, httptMethod, httpRequestPath, response);
+            onHttpConnectTimeoutException(ex, httptMethod, httpRequestPath, context);
+        } catch (HttpTimeoutException ex) {// a context is not received within a specified time period.            
+            onHttpTimeoutException(ex, httptMethod, httpRequestPath, context);
         } catch (RejectedExecutionException ex) {
-            onRejectedExecutionException(ex, httptMethod, httpRequestPath, response);
+            onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
         } catch (IOException | UnresolvedAddressException ex) {//SocketException, 
             Throwable rc = ExceptionUtils.getRootCause(ex);
             if (rc == null) {
                 rc = ex;
             }
             if (rc instanceof RejectedExecutionException) {
-                onRejectedExecutionException(rc, httptMethod, httpRequestPath, response);
+                onRejectedExecutionException(rc, httptMethod, httpRequestPath, context);
             } else {
-                onIOException(rc, httptMethod, httpRequestPath, response);
+                onIOException(rc, httptMethod, httpRequestPath, context);
             }
         } catch (InterruptedException ex) {
-            onInterruptedException(ex, httptMethod, httpRequestPath, response);
+            onInterruptedException(ex, httptMethod, httpRequestPath, context);
         } catch (Throwable ex) {
-            onUnexpectedException(ex, processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, response);
+            onUnexpectedException(ex, processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
         } finally {
-            afterService(processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, response);
-            response.timestampPOI(BootPOI.PROCESS_END);
+            afterService(processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
+            context.timestampPOI(BootPOI.PROCESS_END);
         }
     }
 
-    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext response) throws Exception {
+    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception {
         return true;
     }
 
     protected void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
-            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext response) {
-        response.status(HttpResponseStatus.NOT_FOUND).error(new Error(BootErrorCode.AUTH_INVALID_URL, "path not found", httptMethod + " " + httpRequestPath, null));
+            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
+        context.status(HttpResponseStatus.NOT_FOUND).error(new Error(BootErrorCode.AUTH_INVALID_URL, "path not found", httptMethod + " " + httpRequestPath, null));
     }
 
-    protected void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
-        nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_LDAP, "Cannot access LDAP", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+    protected void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_LDAP, "Cannot access LDAP", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
-    protected void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
-        nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, "Cannot access database", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+    protected void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, "Cannot access database", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     /**
@@ -136,51 +136,51 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * @param ex
      * @param httptMethod
      * @param httpRequestPath
-     * @param response
+     * @param context
      */
-    protected void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
-        nak(response, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPCLIENT_TIMEOUT, ex.getMessage());
-        response.level(Level.WARN);
+    protected void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
+        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPCLIENT_TIMEOUT, ex.getMessage());
+        context.level(Level.WARN);
     }
 
     /**
-     * Happens when a response is not received within a specified time period.
+     * Happens when a context is not received within a specified time period.
      *
      * @param ex
      * @param httptMethod
      * @param httpRequestPath
-     * @param response
+     * @param context
      */
-    protected void onHttpTimeoutException(HttpTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
-        nak(response, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPREQUEST_TIMEOUT, ex.getMessage());
-        response.level(Level.WARN);
+    protected void onHttpTimeoutException(HttpTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
+        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPREQUEST_TIMEOUT, ex.getMessage());
+        context.level(Level.WARN);
     }
 
-    protected void onRejectedExecutionException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
-        nak(response, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, ex.getMessage());
-        response.level(Level.WARN);
+    protected void onRejectedExecutionException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
+        nak(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, ex.getMessage());
+        context.level(Level.WARN);
     }
 
-    protected void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
+    protected void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
         NioServer.setServiceHealthOk(false, ex.toString(), getHealthInspector());
-        nakFatal(response, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     protected HealthInspector getHealthInspector() {
         return healthInspector;
     }
 
-    protected void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
+    protected void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
         Thread.currentThread().interrupt();
-        nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
 
     }
 
-    protected void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext response) {
-        nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure/Bug?", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+    protected void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure/Bug?", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
-    protected void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext response) {
+    protected void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
         protectAuthToken(processor, httpRequestHeaders);
     }
 
@@ -197,40 +197,40 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     @Override
     protected void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext response, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception {
+            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception {
     }
 
-    protected void nak(ServiceContext response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {
+    protected void nak(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {
         // 1. convert to JSON
         Error e = new Error(appErrorCode, null, errorMessage, null);
-        // 2. build JSON response with same app error code, and keep the default INFO log level.
-        response.status(httpResponseStatus).error(e);
+        // 2. build JSON context with same app error code, and keep the default INFO log level.
+        context.status(httpResponseStatus).error(e);
     }
 
     /**
-     * Build negative acknowledgement response with exception at ERROR level
+     * Build negative acknowledgement context with exception at ERROR level
      * when ex is not null
      *
-     * @param response
+     * @param context
      * @param httpResponseStatus
      * @param appErrorCode
      * @param errorMessage
      * @param ex
      */
-    protected void nakError(ServiceContext response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex) {
+    protected void nakError(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex) {
         // 1. convert to JSON
         //Error e = new ServiceError(appErrorCode, null, errorMessage, ex);
         Error e = new Error(appErrorCode, null, errorMessage, ex);
-        // 2. build JSON response with same app error code and exception, and Level.ERROR is used as the default log level when exception is not null, 
+        // 2. build JSON context with same app error code and exception, and Level.ERROR is used as the default log level when exception is not null, 
         // the log level will be set to INFO once the exception is null.
-        response.status(httpResponseStatus).error(e);
+        context.status(httpResponseStatus).error(e);
     }
 
     /**
-     * Build negative acknowledgement response with exception at FATAL level, no
+     * Build negative acknowledgement context with exception at FATAL level, no
      * matter ex is null or not
      *
-     * @param response
+     * @param context
      * @param httpResponseStatus
      * @param appErrorCode
      * @param errorMessage
@@ -238,15 +238,15 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * @param emailTo
      * @param content
      */
-    protected void nakFatal(ServiceContext response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex, Collection<String> emailTo, String content) {
-        // 1. build JSON response with same app error code and exception
-        nakError(response, httpResponseStatus, appErrorCode, errorMessage, ex);
+    protected void nakFatal(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex, Collection<String> emailTo, String content) {
+        // 1. build JSON context with same app error code and exception
+        nakError(context, httpResponseStatus, appErrorCode, errorMessage, ex);
         // 2. set log level to FATAL
-        response.level(Level.FATAL);
+        context.level(Level.FATAL);
         // 3. send sendAlertAsync
         if (po != null) {
             // build email content
-            String briefContent = "caller=" + response.callerId() + ", request#" + response.hit() + ": " + content;
+            String briefContent = "caller=" + context.callerId() + ", request#" + context.hit() + ": " + content;
             po.sendAlertAsync(emailTo, errorMessage, briefContent, ex, true);
         }
     }
