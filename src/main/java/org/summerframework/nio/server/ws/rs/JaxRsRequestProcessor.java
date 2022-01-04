@@ -19,7 +19,7 @@ import org.summerframework.boot.BootErrorCode;
 import org.summerframework.boot.BootPOI;
 import org.summerframework.nio.server.domain.Error;
 import org.summerframework.nio.server.domain.ServiceRequest;
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.security.auth.AuthConfig;
 import org.summerframework.security.auth.Caller;
 import org.summerframework.util.FormatterUtil;
@@ -256,7 +256,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceResponse response, int badRequestErrorCode) throws Throwable {
+    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext response, int badRequestErrorCode) throws Throwable {
         if (roleBased) {//authentication is done, now we do authorization
             boolean isAuthorized = false;
             Caller caller = response.caller();

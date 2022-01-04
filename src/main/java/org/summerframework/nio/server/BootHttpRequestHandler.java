@@ -21,7 +21,7 @@ import org.summerframework.boot.instrumentation.HealthInspector;
 import org.summerframework.integration.smtp.PostOffice;
 import org.summerframework.integration.smtp.SMTPConfig;
 import org.summerframework.nio.server.domain.Error;
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.channel.ChannelHandlerContext;
@@ -58,7 +58,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     @Override
     protected void service(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
-            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceResponse response) {
+            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext response) {
         RequestProcessor processor = null;
         try {
             // step1. find controller and the action in it
@@ -112,20 +112,20 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         }
     }
 
-    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceResponse response) throws Exception {
+    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext response) throws Exception {
         return true;
     }
 
     protected void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
-            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceResponse response) {
+            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext response) {
         response.status(HttpResponseStatus.NOT_FOUND).error(new Error(BootErrorCode.AUTH_INVALID_URL, "path not found", httptMethod + " " + httpRequestPath, null));
     }
 
-    protected void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+    protected void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
         nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_LDAP, "Cannot access LDAP", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
-    protected void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+    protected void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
         nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, "Cannot access database", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
@@ -138,7 +138,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * @param httpRequestPath
      * @param response
      */
-    protected void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+    protected void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
         nak(response, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPCLIENT_TIMEOUT, ex.getMessage());
         response.level(Level.WARN);
     }
@@ -151,17 +151,17 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * @param httpRequestPath
      * @param response
      */
-    protected void onHttpTimeoutException(HttpTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+    protected void onHttpTimeoutException(HttpTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
         nak(response, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPREQUEST_TIMEOUT, ex.getMessage());
         response.level(Level.WARN);
     }
 
-    protected void onRejectedExecutionException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+    protected void onRejectedExecutionException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
         nak(response, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, ex.getMessage());
         response.level(Level.WARN);
     }
 
-    protected void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+    protected void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
         NioServer.setServiceHealthOk(false, ex.toString(), getHealthInspector());
         nakFatal(response, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
@@ -170,17 +170,17 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         return healthInspector;
     }
 
-    protected void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceResponse response) {
+    protected void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext response) {
         Thread.currentThread().interrupt();
         nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
 
     }
 
-    protected void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceResponse response) {
+    protected void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext response) {
         nakFatal(response, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure/Bug?", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
-    protected void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceResponse response) {
+    protected void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext response) {
         protectAuthToken(processor, httpRequestHeaders);
     }
 
@@ -197,10 +197,10 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     @Override
     protected void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceResponse response, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception {
+            final ServiceContext response, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception {
     }
 
-    protected void nak(ServiceResponse response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {
+    protected void nak(ServiceContext response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {
         // 1. convert to JSON
         Error e = new Error(appErrorCode, null, errorMessage, null);
         // 2. build JSON response with same app error code, and keep the default INFO log level.
@@ -217,7 +217,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * @param errorMessage
      * @param ex
      */
-    protected void nakError(ServiceResponse response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex) {
+    protected void nakError(ServiceContext response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex) {
         // 1. convert to JSON
         //Error e = new ServiceError(appErrorCode, null, errorMessage, ex);
         Error e = new Error(appErrorCode, null, errorMessage, ex);
@@ -238,7 +238,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * @param emailTo
      * @param content
      */
-    protected void nakFatal(ServiceResponse response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex, Collection<String> emailTo, String content) {
+    protected void nakFatal(ServiceContext response, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex, Collection<String> emailTo, String content) {
         // 1. build JSON response with same app error code and exception
         nakError(response, httpResponseStatus, appErrorCode, errorMessage, ex);
         // 2. set log level to FATAL

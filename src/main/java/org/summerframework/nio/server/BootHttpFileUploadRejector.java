@@ -15,7 +15,7 @@
  */
 package org.summerframework.nio.server;
 
-import org.summerframework.nio.server.domain.ServiceResponse;
+import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.security.auth.Caller;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -36,7 +36,7 @@ public class BootHttpFileUploadRejector extends BootHttpFileUploadHandler {
     }
 
     @Override
-    protected Caller authenticate(final HttpHeaders httpHeaders, ServiceResponse response) {
+    protected Caller authenticate(final HttpHeaders httpHeaders, ServiceContext response) {
         return null;
     }
 
