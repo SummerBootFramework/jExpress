@@ -21,6 +21,7 @@ import org.summerframework.nio.server.HttpConfig;
 import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.nio.server.domain.Error;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -56,6 +57,10 @@ public abstract class RPCDelegate_HTTPClientImpl {
     }
 
     protected <T, E> RPCResult<T, E> rpcEx(HttpRequest req, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, ServiceContext serviceContext, HttpResponseStatus... expectedStatusList) throws IOException {
+        return this.rpcEx(req, null, successResponseType, successResponseClass, errorResponseClass, serviceContext, expectedStatusList);
+    }
+
+    protected <T, E> RPCResult<T, E> rpcEx(HttpRequest req, ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, ServiceContext serviceContext, HttpResponseStatus... expectedStatusList) throws IOException {
         String reqbody = null;
         Optional<HttpRequest.BodyPublisher> pub = req.bodyPublisher();
         if (pub.isPresent()) {
@@ -66,7 +71,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
                 return bodySubscriber.getBody().toCompletableFuture().join();
             }).get();
         }
-        return this.rpcEx(req, reqbody, successResponseType, successResponseClass, errorResponseClass, serviceContext, expectedStatusList);
+        return this.rpcEx(req, reqbody, jacksonMapper, successResponseType, successResponseClass, errorResponseClass, serviceContext, expectedStatusList);
     }
 
     /**
@@ -75,6 +80,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @param <E>
      * @param req
      * @param requestLogInfo
+     * @param jacksonMapper
      * @param successResponseType - this will be ignored when
      * successResponseClass is specified, and cannot be null when
      * successResponseClass is null
@@ -86,7 +92,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @return
      * @throws IOException
      */
-    protected <T, E> RPCResult<T, E> rpcEx(HttpRequest req, String requestLogInfo, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, ServiceContext serviceContext, HttpResponseStatus... expectedStatusList) throws IOException {
+    protected <T, E> RPCResult<T, E> rpcEx(HttpRequest req, String requestLogInfo, ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, ServiceContext serviceContext, HttpResponseStatus... expectedStatusList) throws IOException {
         if (req == null) {
             return null;
         }
@@ -129,7 +135,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
         RPCResult rpcResult = new RPCResult(httpResponse, rpcResponseJsonBody, isRemoteSuccess);
         if (validateHttpStatus(rpcHttpStatus, rpcResponseJsonBody, serviceContext)) {
             try {
-                rpcResult.update(successResponseType, successResponseClass, errorResponseClass);
+                rpcResult.update(jacksonMapper, successResponseType, successResponseClass, errorResponseClass);
             } catch (Throwable ex) {
                 rpcResult = onUnknownResponseFormat(serviceContext, ex);
             }
