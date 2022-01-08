@@ -51,18 +51,18 @@ public class JsonUtil {
         JacksonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         JacksonMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         JacksonMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        JacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        JacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
         JacksonMapperIgnoreNull.registerModule(new JavaTimeModule());
         //JacksonMapperIgnoreNull.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
         JacksonMapperIgnoreNull.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         JacksonMapperIgnoreNull.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         JacksonMapperIgnoreNull.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        JacksonMapperIgnoreNull.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        JacksonMapperIgnoreNull.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
     }
 
     /**
-     * Serialization, convert to JSON string, not pretty
+     * Serialization, convert to JSON string, not pretty and ignore null/empty
      *
      * @param <T>
      * @param obj
@@ -70,7 +70,7 @@ public class JsonUtil {
      * @throws JsonProcessingException
      */
     public static <T extends Object> String toJson(T obj) throws JsonProcessingException {
-        return toJson(obj, false, false);
+        return toJson(obj, false, true);
     }
 
     /**
