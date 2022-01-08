@@ -104,7 +104,7 @@ public class JsonUtil {
     }
 
     /**
-     * Deserialization, convert JSON string to object T
+     * Deserialization , convert JSON string to object T
      *
      * @param <T>
      * @param c
@@ -119,6 +119,32 @@ public class JsonUtil {
         return JacksonMapper.readValue(json, c);
     }
 
+    /**
+     * Deserialization , convert JSON string to object T
+     *
+     * @param <T>
+     * @param javaType
+     * @param json
+     * @return
+     * @throws JsonProcessingException
+     */
+    public static <T extends Object> T fromJson(JavaType javaType, String json) throws JsonProcessingException {
+        if (StringUtils.isBlank(json)) {
+            return null;
+        }
+        return JacksonMapper.readValue(json, javaType);
+    }
+
+    /**
+     * Deserialization , convert JSON string to object T
+     *
+     * @param <R>
+     * @param collectionClass
+     * @param genericClass
+     * @param json
+     * @return
+     * @throws JsonProcessingException
+     */
     public static <R extends Object> R fromJson(Class<R> collectionClass, Class<?> genericClass, String json) throws JsonProcessingException {
         if (StringUtils.isBlank(json)) {
             return null;
