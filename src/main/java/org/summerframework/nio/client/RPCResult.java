@@ -19,14 +19,12 @@ import org.summerframework.boot.BootErrorCode;
 import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.nio.server.domain.Error;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.http.HttpResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.summerframework.util.JsonUtil;
 
 /**
  *
@@ -36,17 +34,16 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class RPCResult<T, E> {
 
-    public static final ObjectMapper DefaultJacksonMapper = new ObjectMapper();
-
-    static {
-        DefaultJacksonMapper.registerModule(new JavaTimeModule());
-        //JacksonMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
-        DefaultJacksonMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        DefaultJacksonMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-    }
-
+//    public static final ObjectMapper DefaultJacksonMapper = new ObjectMapper();
+//
+//    static {
+//        DefaultJacksonMapper.registerModule(new JavaTimeModule());
+//        //JacksonMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+//        DefaultJacksonMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+//        DefaultJacksonMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+//        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+//        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+//    }
     private final HttpResponse httpResponse;
     private final String rpcResponseBody;
     private final boolean remoteSuccess;
@@ -88,7 +85,7 @@ public class RPCResult<T, E> {
     }
 
     public void update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass) throws JsonProcessingException {
-        this.update(DefaultJacksonMapper, successResponseType, successResponseClass, errorResponseClass);
+        this.update(null, successResponseType, successResponseClass, errorResponseClass);
     }
 
     public void update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass) throws JsonProcessingException {
@@ -100,7 +97,7 @@ public class RPCResult<T, E> {
     }
 
     public void update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext serviceContext) {
-        this.update(DefaultJacksonMapper, successResponseType, successResponseClass, errorResponseClass, serviceContext);
+        this.update(null, successResponseType, successResponseClass, errorResponseClass, serviceContext);
     }
 
     public void update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext serviceContext) {
@@ -133,8 +130,8 @@ public class RPCResult<T, E> {
         R ret;
         if (jacksonMapper == null) {
             ret = responseClass == null
-                    ? DefaultJacksonMapper.readValue(rpcResponseBody, responseType)
-                    : DefaultJacksonMapper.readValue(rpcResponseBody, responseClass);
+                    ? JsonUtil.fromJson(responseType, rpcResponseBody)//DefaultJacksonMapper.readValue(rpcResponseBody, responseType)
+                    : JsonUtil.fromJson(responseClass, rpcResponseBody);//DefaultJacksonMapper.readValue(rpcResponseBody, responseClass);
         } else {
             ret = responseClass == null
                     ? jacksonMapper.readValue(rpcResponseBody, responseType)
