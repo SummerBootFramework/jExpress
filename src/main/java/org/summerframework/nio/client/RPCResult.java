@@ -18,7 +18,6 @@ package org.summerframework.nio.client;
 import org.summerframework.boot.BootErrorCode;
 import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.nio.server.domain.Error;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -46,22 +45,37 @@ public class RPCResult<T, E> {
 //    }
     private final HttpResponse httpResponse;
     private final String rpcResponseBody;
-    private final boolean remoteSuccess;
+    private final int statusCode;
+    private final HttpResponseStatus status;
+    private boolean remoteSuccess;
     private T successResponse;
     private E errorResponse;
 
-    public RPCResult(HttpResponse httpResponse, String rpcResponseBody, boolean remoteSuccess) {
+    public RPCResult(HttpResponse httpResponse, String rpcResponseBody) {
         this.httpResponse = httpResponse;
         this.rpcResponseBody = rpcResponseBody;
-        this.remoteSuccess = remoteSuccess;
+        this.statusCode = httpResponse.statusCode();
+        this.status = HttpResponseStatus.valueOf(statusCode);
     }
 
     public HttpResponse getHttpResponse() {
         return httpResponse;
     }
 
+    public HttpResponseStatus getStatus() {
+        return status;
+    }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
     public String getRpcResponseBody() {
         return rpcResponseBody;
+    }
+
+    public void setRemoteSuccess(boolean remoteSuccess) {
+        this.remoteSuccess = remoteSuccess;
     }
 
     public boolean isRemoteSuccess() {
@@ -84,58 +98,39 @@ public class RPCResult<T, E> {
         this.successResponse = successResponse;
     }
 
-    public void update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass) throws JsonProcessingException {
-        this.update(null, successResponseType, successResponseClass, errorResponseClass);
+    public void update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+        this.update(null, successResponseType, successResponseClass, errorResponseClass, context);
     }
 
-    public void update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass) throws JsonProcessingException {
+    public void update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
         if (remoteSuccess) {
-            setSuccessResponse(getRpcResponse(jacksonMapper, successResponseType, successResponseClass));
+            setSuccessResponse(getRpcResponse(jacksonMapper, successResponseType, successResponseClass, context));
         } else {
-            setErrorResponse(getRpcResponse(jacksonMapper, null, errorResponseClass));
+            setErrorResponse(getRpcResponse(jacksonMapper, null, errorResponseClass, context));
         }
     }
 
-    public void update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext serviceContext) {
-        this.update(null, successResponseType, successResponseClass, errorResponseClass, serviceContext);
-    }
-
-    public void update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext serviceContext) {
-        if (remoteSuccess) {
-            setSuccessResponse(getRpcResponse(jacksonMapper, successResponseType, successResponseClass, serviceContext));
-        } else {
-            setErrorResponse(getRpcResponse(jacksonMapper, null, errorResponseClass, serviceContext));
-        }
-    }
-
-    public <R extends Object> R getRpcResponse(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, final ServiceContext serviceContext) {
-
-        R ret;
-        try {
-            ret = getRpcResponse(jacksonMapper, responseType, responseClass);
-        } catch (Throwable ex) {
-            if (serviceContext != null) {
-                Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
-                serviceContext.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
-            }
-            ret = null;
-        }
-        return ret;
-    }
-
-    public <R extends Object> R getRpcResponse(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass) throws JsonProcessingException {
+    protected <R extends Object> R getRpcResponse(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, final ServiceContext context) {
         if (responseClass == null && responseType == null || StringUtils.isBlank(rpcResponseBody)) {
             return null;
         }
         R ret;
-        if (jacksonMapper == null) {
-            ret = responseClass == null
-                    ? JsonUtil.fromJson(responseType, rpcResponseBody)//DefaultJacksonMapper.readValue(rpcResponseBody, responseType)
-                    : JsonUtil.fromJson(responseClass, rpcResponseBody);//DefaultJacksonMapper.readValue(rpcResponseBody, responseClass);
-        } else {
-            ret = responseClass == null
-                    ? jacksonMapper.readValue(rpcResponseBody, responseType)
-                    : jacksonMapper.readValue(rpcResponseBody, responseClass);
+        try {
+            if (jacksonMapper == null) {
+                ret = responseClass == null
+                        ? JsonUtil.fromJson(responseType, rpcResponseBody)//DefaultJacksonMapper.readValue(rpcResponseBody, responseType)
+                        : JsonUtil.fromJson(responseClass, rpcResponseBody);//DefaultJacksonMapper.readValue(rpcResponseBody, responseClass);
+            } else {
+                ret = responseClass == null
+                        ? jacksonMapper.readValue(rpcResponseBody, responseType)
+                        : jacksonMapper.readValue(rpcResponseBody, responseClass);
+            }
+        } catch (Throwable ex) {
+            if (context != null) {
+                Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
+                context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
+            }
+            ret = null;
         }
 
         return ret;
