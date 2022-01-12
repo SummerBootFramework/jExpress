@@ -20,8 +20,6 @@ import org.summerframework.boot.BootPOI;
 import org.summerframework.nio.server.HttpConfig;
 import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.nio.server.domain.Error;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -56,11 +54,17 @@ public abstract class RPCDelegate_HTTPClientImpl {
         return sb.toString();
     }
 
-    protected <T, E> RPCResult<T, E> rpcEx(HttpRequest req, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, ServiceContext serviceContext, HttpResponseStatus... expectedStatusList) throws IOException {
-        return this.rpcEx(req, null, successResponseType, successResponseClass, errorResponseClass, serviceContext, expectedStatusList);
-    }
-
-    protected <T, E> RPCResult<T, E> rpcEx(HttpRequest req, ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, ServiceContext serviceContext, HttpResponseStatus... expectedStatusList) throws IOException {
+    /**
+     *
+     * @param <T>
+     * @param <E>
+     * @param serviceContext
+     * @param req
+     * @param successStatusList
+     * @return
+     * @throws IOException
+     */
+    protected <T, E> RPCResult<T, E> rpcEx(ServiceContext serviceContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException {
         String reqbody = null;
         Optional<HttpRequest.BodyPublisher> pub = req.bodyPublisher();
         if (pub.isPresent()) {
@@ -71,98 +75,59 @@ public abstract class RPCDelegate_HTTPClientImpl {
                 return bodySubscriber.getBody().toCompletableFuture().join();
             }).get();
         }
-        return this.rpcEx(req, reqbody, jacksonMapper, successResponseType, successResponseClass, errorResponseClass, serviceContext, expectedStatusList);
+        return this.rpcEx(serviceContext, req, reqbody, successStatusList);
     }
 
     /**
      *
      * @param <T>
      * @param <E>
+     * @param context
      * @param req
-     * @param requestLogInfo
-     * @param jacksonMapper
-     * @param successResponseType - this will be ignored when
-     * successResponseClass is specified, and cannot be null when
-     * successResponseClass is null
-     * @param successResponseClass - when specified, successResponseType will be
-     * ignored.
-     * @param errorResponseClass
-     * @param serviceContext
-     * @param expectedStatusList
-     * @return
+     * @param reqbody
+     * @param successStatusList
+     * @return a Non-Null RPCResult
      * @throws IOException
      */
-    protected <T, E> RPCResult<T, E> rpcEx(HttpRequest req, String requestLogInfo, ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, ServiceContext serviceContext, HttpResponseStatus... expectedStatusList) throws IOException {
-        if (req == null) {
-            return null;
+    protected <T, E> RPCResult<T, E> rpcEx(ServiceContext context, HttpRequest req, String reqbody, HttpResponseStatus... successStatusList) throws IOException {
+        //1. log memo
+        context.memo(RPCMemo.MEMO_RPC_REQUEST, req.toString() + " caller=" + context.caller());
+        if (reqbody != null) {
+            context.memo(RPCMemo.MEMO_RPC_REQUEST_DATA, reqbody);
         }
-
-        serviceContext.memo(RPCMemo.MEMO_RPC_REQUEST, req.toString() + " caller=" + serviceContext.caller());
-        if (requestLogInfo != null) {
-            serviceContext.memo(RPCMemo.MEMO_RPC_REQUEST_DATA, requestLogInfo);
-        }
-        // 3. call remote sever
+        //2. call remote sever
         HttpResponse httpResponse;
-        serviceContext.timestampPOI(BootPOI.RPC_BEGIN);
+        context.timestampPOI(BootPOI.RPC_BEGIN);
         try {
             httpResponse = HttpConfig.CFG.getHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            return onInterrupted(req, serviceContext, ex);
+            return onInterrupted(req, context, ex);
         } finally {
-            serviceContext.timestampPOI(BootPOI.RPC_END);
+            context.timestampPOI(BootPOI.RPC_END);
         }
-        int rpcResponseStatusCode = httpResponse.statusCode();
+        //3a. update status
         String rpcResponseJsonBody = String.valueOf(httpResponse.body());
-        serviceContext.memo(RPCMemo.MEMO_RPC_RESPONSE, rpcResponseStatusCode + " " + httpResponse.headers());
-        serviceContext.memo(RPCMemo.MEMO_RPC_RESPONSE_DATA, rpcResponseJsonBody);
-        HttpResponseStatus rpcHttpStatus = HttpResponseStatus.valueOf(rpcResponseStatusCode);
-        serviceContext.status(rpcHttpStatus);
-        // 3a. verify result - check authorized
+        RPCResult rpcResult = new RPCResult(httpResponse, rpcResponseJsonBody);
+        context.memo(RPCMemo.MEMO_RPC_RESPONSE, rpcResult.getStatusCode() + " " + httpResponse.headers());
+        context.memo(RPCMemo.MEMO_RPC_RESPONSE_DATA, rpcResponseJsonBody);
+        context.status(rpcResult.getStatus());
+
+        // 3b. check remote success or not
         boolean isRemoteSuccess = false;
-        if (expectedStatusList == null || expectedStatusList.length < 1) {
-            isRemoteSuccess = rpcResponseStatusCode == HttpResponseStatus.OK.code();
+        if (successStatusList == null || successStatusList.length < 1) {
+            isRemoteSuccess = rpcResult.getStatusCode() == HttpResponseStatus.OK.code();
         } else {
-            for (HttpResponseStatus expectedStatus : expectedStatusList) {// a simple loop is way faster than Arrays
-                if (rpcResponseStatusCode == expectedStatus.code()) {
+            for (HttpResponseStatus successStatus : successStatusList) {// a simple loop is way faster than Arrays
+                if (rpcResult.getStatusCode() == successStatus.code()) {
                     isRemoteSuccess = true;
                     break;
                 }
             }
         }
+        rpcResult.setRemoteSuccess(isRemoteSuccess);
 
-        // 3b. set result: 
-        RPCResult rpcResult = new RPCResult(httpResponse, rpcResponseJsonBody, isRemoteSuccess);
-        if (validateHttpStatus(rpcHttpStatus, rpcResponseJsonBody, serviceContext)) {
-            try {
-                rpcResult.update(jacksonMapper, successResponseType, successResponseClass, errorResponseClass);
-            } catch (Throwable ex) {
-                rpcResult = onUnknownResponseFormat(serviceContext, ex);
-            }
-        }
         return rpcResult;
-    }
-
-    /**
-     *
-     * @param rpcHttpStatus
-     * @param rpcResponseJsonBody
-     * @param serviceContext
-     * @return false to stop processing (default on 408 or greater than 500),
-     * true to continue
-     */
-    protected boolean validateHttpStatus(HttpResponseStatus rpcHttpStatus, String rpcResponseJsonBody, ServiceContext serviceContext) {
-        if (rpcHttpStatus.code() == HttpResponseStatus.REQUEST_TIMEOUT.code()) {// = 408
-            Error e = new Error(BootErrorCode.HTTPREQUEST_TIMEOUT, null, "RPC Request Timeout", null);
-            serviceContext.status(HttpResponseStatus.GATEWAY_TIMEOUT).error(e);
-            return false;
-        }
-        if (rpcHttpStatus.code() > HttpResponseStatus.INTERNAL_SERVER_ERROR.code()) {// > 500
-            Error e = new Error(BootErrorCode.ACCESS_ERROR_RPC, null, "RPC Server Error", null);
-            serviceContext.status(rpcHttpStatus).error(e);
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -180,16 +145,4 @@ public abstract class RPCDelegate_HTTPClientImpl {
         return null;
     }
 
-    /**
-     *
-     * @param <T>
-     * @param serviceContext
-     * @param ex
-     * @return
-     */
-    protected <T extends Object> T onUnknownResponseFormat(ServiceContext serviceContext, Throwable ex) {
-        Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
-        serviceContext.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
-        return null;
-    }
 }
