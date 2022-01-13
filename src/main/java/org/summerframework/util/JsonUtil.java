@@ -51,14 +51,14 @@ public class JsonUtil {
         JacksonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         JacksonMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         JacksonMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        JacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        JacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         JacksonMapperIgnoreNull.registerModule(new JavaTimeModule());
         //JacksonMapperIgnoreNull.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
         JacksonMapperIgnoreNull.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         JacksonMapperIgnoreNull.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         JacksonMapperIgnoreNull.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        JacksonMapperIgnoreNull.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        JacksonMapperIgnoreNull.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     /**
