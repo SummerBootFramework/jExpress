@@ -160,7 +160,7 @@
         <!-- JWT -->
         <jwt.version>0.9.1</jwt.version>
 
-        <netty.version>4.1.72.Final</netty.version>
+        <netty.version>4.1.73.Final</netty.version>
         <netty-tcnative.version>2.0.46.Final</netty-tcnative.version>
         <!-- MIME-Type -->
         <tika.version>2.2.1</tika.version>
@@ -183,7 +183,7 @@
 
         <!-- JPA -->
         <hibernate.version>5.5.7.Final</hibernate.version>
-        <hikari-cp.version>5.0.0</hikari-cp.version>
+        <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
         <jedis.version>4.0.1</jedis.version>
@@ -195,11 +195,11 @@
         <!-- PDF - com.openhtmltopdf -->	       
         <openhtml.version>1.0.10</openhtml.version>
         <!-- PDF - iText -->
-        <itext7-core.version>7.2.0</itext7-core.version>
-        <itext7-html2pdf.version>4.0.0</itext7-html2pdf.version>
+        <itext7-core.version>7.2.1</itext7-core.version>
+        <itext7-html2pdf.version>4.0.1</itext7-html2pdf.version>
         
         <!-- Testing  -->
-        <testng.version>7.4.0</testng.version>
+        <testng.version>7.5</testng.version>
     </properties>
     
 

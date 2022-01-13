@@ -15,15 +15,17 @@
  */
 package org.summerframework.nio.client;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.summerframework.boot.BootErrorCode;
 import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.nio.server.domain.Error;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.http.HttpResponse;
 import org.apache.commons.lang3.StringUtils;
-import org.summerframework.util.JsonUtil;
 
 /**
  *
@@ -33,16 +35,16 @@ import org.summerframework.util.JsonUtil;
  */
 public class RPCResult<T, E> {
 
-//    public static final ObjectMapper DefaultJacksonMapper = new ObjectMapper();
-//
-//    static {
-//        DefaultJacksonMapper.registerModule(new JavaTimeModule());
-//        //JacksonMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
-//        DefaultJacksonMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-//        DefaultJacksonMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-//        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-//        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-//    }
+    public static final ObjectMapper DefaultJacksonMapper = new ObjectMapper();
+
+    static {
+        DefaultJacksonMapper.registerModule(new JavaTimeModule());
+        //JacksonMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+        DefaultJacksonMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        DefaultJacksonMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+    }
     private final HttpResponse httpResponse;
     private final String rpcResponseBody;
     private final int statusCode;
@@ -99,7 +101,7 @@ public class RPCResult<T, E> {
     }
 
     public void update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
-        this.update(null, successResponseType, successResponseClass, errorResponseClass, context);
+        this.update(DefaultJacksonMapper, successResponseType, successResponseClass, errorResponseClass, context);
     }
 
     public void update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
@@ -115,16 +117,14 @@ public class RPCResult<T, E> {
             return null;
         }
         R ret;
+        if (jacksonMapper == null) {
+            jacksonMapper = DefaultJacksonMapper;
+        }
         try {
-            if (jacksonMapper == null) {
-                ret = responseClass == null
-                        ? JsonUtil.fromJson(responseType, rpcResponseBody)//DefaultJacksonMapper.readValue(rpcResponseBody, responseType)
-                        : JsonUtil.fromJson(responseClass, rpcResponseBody);//DefaultJacksonMapper.readValue(rpcResponseBody, responseClass);
-            } else {
-                ret = responseClass == null
-                        ? jacksonMapper.readValue(rpcResponseBody, responseType)
-                        : jacksonMapper.readValue(rpcResponseBody, responseClass);
-            }
+            ret = responseClass == null
+                    ? jacksonMapper.readValue(rpcResponseBody, responseType)
+                    : jacksonMapper.readValue(rpcResponseBody, responseClass);
+
         } catch (Throwable ex) {
             if (context != null) {
                 Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
