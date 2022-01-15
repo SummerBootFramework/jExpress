@@ -21,7 +21,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +31,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -43,9 +43,11 @@ import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.ProviderException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -66,6 +68,16 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.bouncycastle.pkcs.PKCSException;
 
 /**
  *
@@ -74,6 +86,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class EncryptorUtil {
 
     private static final String AES_KEY_ALGO = "AES";
+    private static final String DSA_KEY_ALGO = "DSA";
     private static final String RSA_KEY_ALGO = "RSA";
     private static final String ENCRYPT_ALGO = "AES/GCM/NoPadding";
     private static final String RSA_Cipher_Algorithm = "RSA/ECB/PKCS1Padding";
@@ -99,7 +112,7 @@ public class EncryptorUtil {
      */
     public static byte[] md5(File filename) throws NoSuchAlgorithmException, IOException {
         MessageDigest complete = MessageDigest.getInstance("MD5");
-        try ( InputStream fis = new FileInputStream(filename);) {
+        try (InputStream fis = new FileInputStream(filename);) {
             byte[] buffer = new byte[1024];
             int numRead;
             do {
@@ -152,7 +165,7 @@ public class EncryptorUtil {
         byte[] digest = md.digest();
         return digest;
     }
-    
+
     public static String md5ToString(byte[] md5) {
         StringBuilder sb = new StringBuilder();
         if (md5 != null) {
@@ -325,40 +338,48 @@ public class EncryptorUtil {
 //        
 //        return newKeyPair;
 //    }
+    public static PublicKey loadPublicKey(KeyFileType fileType, File publicKeyFile) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, CertificateException {
+        return loadPublicKey(fileType, publicKeyFile, RSA_KEY_ALGO);
+    }
+
     /**
      *
      * @param fileType
      * @param publicKeyFile
+     * @param algorithm
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws InvalidKeySpecException
      * @throws CertificateException
      */
-    public static PublicKey loadPublicKey(KeyFileType fileType, File publicKeyFile) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, CertificateException {
+    public static PublicKey loadPublicKey(KeyFileType fileType, File publicKeyFile, String algorithm) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, CertificateException {
         PublicKey publicKey;
         switch (fileType) {
             case X509:
+            case PKCS12:
+            case JKS:
+            case PKCS8:
                 // Load the public key bytes
-                byte[] keyBytes = Files.readAllBytes(Paths.get(publicKeyFile.getAbsolutePath()));
-                String keyPEM = new String(keyBytes, Charset.defaultCharset());
-                int begin = keyPEM.indexOf("-----");
-                keyPEM = keyPEM.substring(begin);
-                keyPEM = keyPEM
-                        .replace("-----BEGIN PUBLIC KEY-----", "")
-                        .replaceAll(System.lineSeparator(), "")
-                        .replace("-----END PUBLIC KEY-----", "")
-                        //                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
-                        //                .replace("-----END RSA PRIVATE KEY-----", "")
-                        //                .replace("-----BEGIN EC PRIVATE KEY-----", "")
-                        //                .replace("-----END EC PRIVATE KEY-----", "")
-                        //.replaceAll(System.lineSeparator(), "");
-                        .replaceAll("\\s+", "");
-                byte[] encoded = Base64.getDecoder().decode(keyPEM);
+//                byte[] keyBytes = Files.readAllBytes(Paths.get(publicKeyFile.getAbsolutePath()));
+//                String keyPEM = new String(keyBytes, Charset.defaultCharset());
+//                int begin = keyPEM.indexOf("-----");
+//                keyPEM = keyPEM.substring(begin);
+//                keyPEM = keyPEM
+//                        .replace("-----BEGIN PUBLIC KEY-----", "")
+//                        .replaceAll(System.lineSeparator(), "")
+//                        .replace("-----END PUBLIC KEY-----", "")
+//                        //                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+//                        //                .replace("-----END RSA PRIVATE KEY-----", "")
+//                        //                .replace("-----BEGIN EC PRIVATE KEY-----", "")
+//                        //                .replace("-----END EC PRIVATE KEY-----", "")
+//                        //.replaceAll(System.lineSeparator(), "");
+//                        .replaceAll("\\s+", "");
+                byte[] encoded = loadPermKeyFileContent(publicKeyFile);
                 // Turn the encoded key into a real RSA public key.
                 // Public keys are encoded in X.509.
                 X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
-                KeyFactory keyFactory = KeyFactory.getInstance(RSA_KEY_ALGO);
+                KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
                 publicKey = keyFactory.generatePublic(keySpec);
                 break;
             case Certificate:
@@ -373,11 +394,76 @@ public class EncryptorUtil {
         return publicKey;
     }
 
-    public static PrivateKey loadPrivateKey(File pemFile) throws FileNotFoundException, IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+    public static PrivateKey loadPrivateKey(File pemFile) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+        return loadPrivateKey(pemFile, RSA_KEY_ALGO);
+    }
+
+    public static PrivateKey loadPrivateKey(File pemFile, String algorithm) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+        byte[] pkcs8Data = loadPermKeyFileContent(pemFile);
+
+        // Turn the encoded key into a real RSA private key.
+        // Private keys are encoded in PKCS#8.
+        KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Data);
+        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+
+        return privateKey;
+    }
+
+    public static PrivateKey loadPrivateKey(File pemFile, char... password) throws IOException, OperatorCreationException, GeneralSecurityException {
+        if (password == null || password.length < 1) {
+            return loadPrivateKey(pemFile);
+        }
+//        Provider[] ps = Security.getProviders();
+//        for (Provider p : ps) {
+//            System.out.println("Provider.before=" + p);
+//        }
+        Security.addProvider(new BouncyCastleProvider());
+//        ps = Security.getProviders();
+//        for (Provider p : ps) {
+//            System.out.println("Provider.after=" + p);
+//        }
+
+//        Provider provider = Security.getProvider(providerName);
+//        if (provider == null) {
+//            System.out.println(providerName + " provider not installed");
+//            return null;
+//        }
+//        System.out.println("Provider Name :" + provider.getName());
+//        System.out.println("Provider Version :" + provider.getVersion());
+//        System.out.println("Provider Info:" + provider.getInfo());
+        byte[] pkcs8Data = loadPermKeyFileContent(pemFile);
+
+        ASN1Sequence derseq = ASN1Sequence.getInstance(pkcs8Data);
+        PKCS8EncryptedPrivateKeyInfo encobj = new PKCS8EncryptedPrivateKeyInfo(EncryptedPrivateKeyInfo.getInstance(derseq));
+        // decrypt and convert key
+        JceOpenSSLPKCS8DecryptorProviderBuilder jce = new JceOpenSSLPKCS8DecryptorProviderBuilder();
+//        String providerName = "BC";//BouncyCastle
+//        jce.setProvider(providerName);
+        InputDecryptorProvider decryptionProv = jce.build(password);
+        PrivateKeyInfo privateKeyInfo;
+        try {
+            privateKeyInfo = encobj.decryptPrivateKeyInfo(decryptionProv);
+        } catch (PKCSException ex) {
+            throw new GeneralSecurityException("Invalid private key password", ex);
+        } finally {
+            for (int i = 0; i < password.length; i++) {
+                password[i] = 0;
+            }
+        }
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        PrivateKey privateKey = converter.getPrivateKey(privateKeyInfo);
+        return privateKey;
+    }
+
+    public static byte[] loadPermKeyFileContent(File pemFile) throws InvalidKeySpecException, IOException {
         // Load the private key bytes
-        byte[] keyBytes = Files.readAllBytes(pemFile.toPath());
-        String keyPEM = new String(keyBytes);
+        byte[] keyBytes = Files.readAllBytes(Paths.get(pemFile.getAbsolutePath()));
+        String keyPEM = new String(keyBytes, Charset.defaultCharset());
         int begin = keyPEM.indexOf("-----");
+        if (begin < 0) {
+            throw new InvalidKeySpecException("missing key header");
+        }
         keyPEM = keyPEM.substring(begin);
         keyPEM = keyPEM
                 .replace("-----BEGIN PRIVATE KEY-----", "")
@@ -389,17 +475,13 @@ public class EncryptorUtil {
                 .replace("-----BEGIN EC PRIVATE KEY-----", "")
                 .replace("-----END EC PRIVATE KEY-----", "")
                 //.replaceAll(System.lineSeparator(), "");
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
                 .replaceAll("\\s+", "");
         //byte[] encoded = java.util.Base64.getDecoder().decode(privateKeyContent);
         //byte[] header = Hex.decode("30 81bf 020100 301006072a8648ce3d020106052b81040022 0481a7");
-        byte[] encoded = Base64.getDecoder().decode(keyPEM);
-
-        // Turn the encoded key into a real RSA private key.
-        // Private keys are encoded in PKCS#8.
-        KeyFactory keyFactory = KeyFactory.getInstance(RSA_KEY_ALGO);
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
-        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
-        return privateKey;
+        byte[] pkcs8Data = Base64.getDecoder().decode(keyPEM);
+        return pkcs8Data;
     }
 
     /**
@@ -476,7 +558,7 @@ public class EncryptorUtil {
         }
 
         //3. streaming
-        try ( InputStream plainDataInputStream = new FileInputStream(plainDataFileName);  FileOutputStream fos = new FileOutputStream(encryptedFileName);  DataOutputStream output = new DataOutputStream(fos);  CipherOutputStream cos = new CipherOutputStream(output, cipher);) {
+        try (InputStream plainDataInputStream = new FileInputStream(plainDataFileName); FileOutputStream fos = new FileOutputStream(encryptedFileName); DataOutputStream output = new DataOutputStream(fos); CipherOutputStream cos = new CipherOutputStream(output, cipher);) {
             //3.0 write metadata
             output.writeInt(metadata.length);
             output.write(metadata);
@@ -553,7 +635,7 @@ public class EncryptorUtil {
 
         //3. streaming
         byte[] ret;
-        try ( ByteArrayOutputStream bos = new ByteArrayOutputStream();  DataOutputStream output = new DataOutputStream(bos);) {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream output = new DataOutputStream(bos);) {
             //3.0 write metadata
             output.writeInt(metadata.length);
             output.write(metadata);
@@ -605,7 +687,7 @@ public class EncryptorUtil {
 
         @Override
         public String toString() {
-            return info + " (md5: "+md5+")";
+            return info + " (md5: " + md5 + ")";
         }
     }
 
@@ -628,7 +710,7 @@ public class EncryptorUtil {
      * @throws javax.crypto.BadPaddingException
      */
     public static void decrypt(Key asymmetricKey, SecretKey symmetricKey, String encryptedFileName, String plainDataFileName, Key digitalSignatureKey, @Nullable EncryptionMeta meta) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-        try ( DataInputStream dis = new DataInputStream(new FileInputStream(encryptedFileName));) {
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(encryptedFileName));) {
             //0. metadata
             byte[] metadata = new byte[dis.readInt()];
             dis.readFully(metadata);
@@ -673,7 +755,7 @@ public class EncryptorUtil {
             }
             Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
             //4. decrypt streaming
-            try ( CipherInputStream cis = new CipherInputStream(dis, cipher);  FileOutputStream fos = new FileOutputStream(plainDataFileName);) {
+            try (CipherInputStream cis = new CipherInputStream(dis, cipher); FileOutputStream fos = new FileOutputStream(plainDataFileName);) {
                 final int BUFF_SIZE = 102400;
                 final byte[] buffer = new byte[BUFF_SIZE];
                 int byteRead;
@@ -722,7 +804,7 @@ public class EncryptorUtil {
      */
     public static byte[] decrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] encryptedData, Key digitalSignatureKey, @Nullable EncryptionMeta meta) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         byte[] ret;
-        try ( DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedData));) {
+        try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedData));) {
             //0. metadata
             byte[] metadata = new byte[dis.readInt()];
             dis.readFully(metadata);
@@ -767,7 +849,7 @@ public class EncryptorUtil {
             }
             Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
             //4. decrypt streaming
-            try ( CipherInputStream cis = new CipherInputStream(dis, cipher);  ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
+            try (CipherInputStream cis = new CipherInputStream(dis, cipher); ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
                 final int BUFF_SIZE = 102400;
                 final byte[] buffer = new byte[BUFF_SIZE];
                 int byteRead;
@@ -802,13 +884,13 @@ public class EncryptorUtil {
     }
 
     public static byte[] decrypt(SecretKey symmetricKey, byte[] encryptedLibraryBytes) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
-        try ( DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedLibraryBytes));) {
+        try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedLibraryBytes));) {
             //2. read iv
             byte[] iv = new byte[IV_LENGTH_BYTE];
             dis.readFully(iv);
             Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
             //4. decrypt streaming
-            try ( CipherInputStream cis = new CipherInputStream(dis, cipher);  ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
+            try (CipherInputStream cis = new CipherInputStream(dis, cipher); ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
                 final int BUFF_SIZE = 102400;
                 final byte[] buffer = new byte[BUFF_SIZE];
                 int byteRead;
@@ -828,7 +910,7 @@ public class EncryptorUtil {
         Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
 
         //3. streaming
-        try ( InputStream plainDataInputStream = new FileInputStream(plainDataFileName);  FileOutputStream fos = new FileOutputStream(encryptedFileName);  DataOutputStream output = new DataOutputStream(fos);  CipherOutputStream cos = new CipherOutputStream(output, cipher);) {
+        try (InputStream plainDataInputStream = new FileInputStream(plainDataFileName); FileOutputStream fos = new FileOutputStream(encryptedFileName); DataOutputStream output = new DataOutputStream(fos); CipherOutputStream cos = new CipherOutputStream(output, cipher);) {
             output.write(iv);
             //3.4 encrypte
             int byteRead;
