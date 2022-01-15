@@ -18,11 +18,14 @@ package org.summerframework.util;
 import org.summerframework.nio.server.domain.Error;
 import org.summerframework.nio.server.domain.ServiceContext;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -38,6 +41,8 @@ import org.apache.commons.lang3.StringUtils;
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class JsonUtil {
+    private static boolean isToJsonIgnoreNull = true;
+    private static boolean isToJsonPretty = false;
 
     protected static final ObjectMapper JacksonMapper = new ObjectMapper();
     protected static final ObjectMapper JacksonMapperIgnoreNull = new ObjectMapper()
@@ -46,19 +51,43 @@ public class JsonUtil {
     protected final static XmlMapper xmlMapper = new XmlMapper();
 
     static {
-        JacksonMapper.registerModule(new JavaTimeModule());
-        //JacksonMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
-        JacksonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        JacksonMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-        JacksonMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        JacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        registerModules(new JavaTimeModule());
+        //configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true);
+        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+    }
 
-        JacksonMapperIgnoreNull.registerModule(new JavaTimeModule());
-        //JacksonMapperIgnoreNull.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
-        JacksonMapperIgnoreNull.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        JacksonMapperIgnoreNull.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-        JacksonMapperIgnoreNull.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        JacksonMapperIgnoreNull.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    public static void registerModules(Module... modules) {
+        JacksonMapper.registerModules(modules);
+        JacksonMapperIgnoreNull.registerModules(modules);
+    }
+
+    public static void configure(SerializationFeature f, boolean state) {
+        JacksonMapper.configure(f, state);
+        JacksonMapperIgnoreNull.configure(f, state);
+    }
+
+    public static void configure(DeserializationFeature f, boolean state) {
+        JacksonMapper.configure(f, state);
+        JacksonMapperIgnoreNull.configure(f, state);
+    }
+
+    public static void configure(JsonGenerator.Feature f, boolean state) {
+        JacksonMapper.configure(f, state);
+        JacksonMapperIgnoreNull.configure(f, state);
+    }
+
+    public static void configure(JsonParser.Feature f, boolean state) {
+        JacksonMapper.configure(f, state);
+        JacksonMapperIgnoreNull.configure(f, state);
+    }
+
+    public static void configure(boolean fromJsonFailOnUnknownProperties, boolean toJsonIgnoreNull, boolean toJsonPretty) {
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, fromJsonFailOnUnknownProperties);
+        isToJsonIgnoreNull = toJsonIgnoreNull;
+        isToJsonPretty = toJsonPretty;
     }
 
     /**
@@ -70,7 +99,7 @@ public class JsonUtil {
      * @throws JsonProcessingException
      */
     public static <T extends Object> String toJson(T obj) throws JsonProcessingException {
-        return toJson(obj, false, true);
+        return toJson(obj, isToJsonPretty, isToJsonIgnoreNull);
     }
 
     /**

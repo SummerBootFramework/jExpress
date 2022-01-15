@@ -56,7 +56,7 @@ public class RPCResult<T, E> {
     public RPCResult(HttpResponse httpResponse, String rpcResponseBody) {
         this.httpResponse = httpResponse;
         this.rpcResponseBody = rpcResponseBody;
-        this.statusCode = httpResponse.statusCode();
+        this.statusCode = httpResponse == null ? 0 : httpResponse.statusCode();
         this.status = HttpResponseStatus.valueOf(statusCode);
     }
 
