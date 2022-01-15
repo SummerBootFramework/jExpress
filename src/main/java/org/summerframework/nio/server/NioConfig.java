@@ -37,6 +37,7 @@ import org.summerframework.boot.config.AbstractSummerBootConfig;
 import org.summerframework.boot.config.annotation.Config;
 import org.summerframework.boot.config.annotation.Memo;
 import io.netty.channel.ChannelHandler;
+import org.summerframework.util.JsonUtil;
 
 /**
  *
@@ -126,14 +127,14 @@ public class NioConfig extends AbstractSummerBootConfig {
     private volatile int soBacklog = 1024;
 
     @Config(key = "nio.server.socket.SO_RCVBUF", defaultValue = "1048576",
-            desc=" - cat /proc/sys/net/ipv4/tcp_rmem (max 1024k)")
+            desc = " - cat /proc/sys/net/ipv4/tcp_rmem (max 1024k)")
     private volatile int soRcvBuf = 1048576;
 
     @Config(key = "nio.server.socket.SO_SNDBUF", defaultValue = "1048576",
-            desc=" - cat /proc/sys/net/ipv4/tcp_smem (max 1024k)")
+            desc = " - cat /proc/sys/net/ipv4/tcp_smem (max 1024k)")
     private volatile int soSndBuf = 1048576;
     @Config(key = "nio.server.HttpObjectAggregator.maxContentLength", defaultValue = "65536",
-            desc= "default - 64kb")
+            desc = "default - 64kb")
     private volatile int httpObjectAggregatorMaxContentLength = 65536;
 
     //4.1 Netty controller
@@ -204,12 +205,17 @@ public class NioConfig extends AbstractSummerBootConfig {
 
     private static Injector INJECTOR;
 
-    @Config(key = "nio.isHttpService", defaultValue = "true")
+    @Config(key = "nio.HttpService.enabled", defaultValue = "true")
     private volatile boolean httpService = true;
+    @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
+    private volatile boolean fromJsonFailOnUnknownProperties = true;
+    @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
+    private volatile boolean toJsonIgnoreNull = true;
+    @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
+    private volatile boolean toJsonPretty = false;
 
 //    @Config(key = "nio.useDefaultHTTPHandler", defaultValue = "true")
 //    private volatile boolean useDefaultHTTPHandler = true;
-
     @Config(key = "nio.HttpFileUploadHandler", required = false)
     private volatile String fielUploadHandlerAnnotatedName = null;
 
@@ -268,11 +274,12 @@ public class NioConfig extends AbstractSummerBootConfig {
     @Config(key = "nio.verbose.ServiceTimePOI.type", defaultValue = "all",
             desc = "valid value = filter, all, ignore")
     private volatile VerboseTargetPOIType filterPOIType = VerboseTargetPOIType.all;
+
     public enum VerboseTargetPOIType {
         filter, all, ignore
     }
     @Config(key = "nio.verbose.ServiceTimePOI.filter", defaultValue = "auth.begin, auth.end, db.begin, db.end",
-            desc="CSV format")
+            desc = "CSV format")
     private volatile Set<String> filterPOISet;
 
     @Override
@@ -355,6 +362,7 @@ public class NioConfig extends AbstractSummerBootConfig {
                 }
             }
         }
+        JsonUtil.configure(fromJsonFailOnUnknownProperties, toJsonIgnoreNull, toJsonPretty);
 
         //5.1 caller filter
         String key;
@@ -557,10 +565,21 @@ public class NioConfig extends AbstractSummerBootConfig {
         return httpService;
     }
 
+    public boolean isFromJsonFailOnUnknownProperties() {
+        return fromJsonFailOnUnknownProperties;
+    }
+
+    public boolean isToJsonIgnoreNull() {
+        return toJsonIgnoreNull;
+    }
+
+    public boolean isToJsonPretty() {
+        return toJsonPretty;
+    }
+
 //    public boolean isUseDefaultHTTPHandler() {
 //        return useDefaultHTTPHandler;
 //    }
-
     public String getFielUploadHandlerAnnotatedName() {
         return fielUploadHandlerAnnotatedName;
     }
