@@ -43,7 +43,6 @@ import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.Provider;
 import java.security.ProviderException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -96,6 +95,7 @@ public class EncryptorUtil {
 
     static {
         try {
+            Security.addProvider(new BouncyCastleProvider());
             System.setProperty("hostName", InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException ex) {
             ex.printStackTrace(System.err);
@@ -418,7 +418,6 @@ public class EncryptorUtil {
 //        for (Provider p : ps) {
 //            System.out.println("Provider.before=" + p);
 //        }
-        Security.addProvider(new BouncyCastleProvider());
 //        ps = Security.getProviders();
 //        for (Provider p : ps) {
 //            System.out.println("Provider.after=" + p);
