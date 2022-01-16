@@ -486,7 +486,10 @@ public class ServiceContext {
             errors = new ServiceError(hit);
         }
         errors.addError(error);
-        cause = error.getEx();
+        Throwable t = error.getEx();
+        if (t != null) {
+            cause = t;
+        }
         // set log level
         if (error.getEx() != null) {
             level = Level.ERROR;
@@ -503,7 +506,10 @@ public class ServiceContext {
         }
         errors.addErrors(es);
         for (Error e : es) {
-            cause = e.getEx();
+            Throwable t = e.getEx();
+            if (t != null) {
+                cause = t;
+            }
             if (cause != null) {
                 level = Level.ERROR;
                 //break;

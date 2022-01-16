@@ -15,6 +15,9 @@
  */
 package org.summerframework.nio.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.summerframework.boot.BootErrorCode;
 import org.summerframework.nio.server.domain.ServiceContext;
@@ -25,7 +28,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.http.HttpResponse;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.summerframework.nio.server.domain.ServiceErrorConvertible;
 
 /**
  *
@@ -33,71 +38,95 @@ import org.apache.commons.lang3.StringUtils;
  * @param <T> Success(JSON) result type
  * @param <E> Error(JSON) result type
  */
-public class RPCResult<T, E> {
+public class RPCResult<T, E extends ServiceErrorConvertible> {
 
-    public static final ObjectMapper DefaultJacksonMapper = new ObjectMapper();
+    public static final ObjectMapper DefaultJacksonMapper = new ObjectMapper()
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+
+    public static void registerModules(com.fasterxml.jackson.databind.Module... modules) {
+        DefaultJacksonMapper.registerModules(modules);
+    }
+
+    public static void configure(SerializationFeature f, boolean state) {
+        DefaultJacksonMapper.configure(f, state);
+    }
+
+    public static void configure(DeserializationFeature f, boolean state) {
+        DefaultJacksonMapper.configure(f, state);
+    }
+
+    public static void configure(JsonGenerator.Feature f, boolean state) {
+        DefaultJacksonMapper.configure(f, state);
+    }
+
+    public static void configure(JsonParser.Feature f, boolean state) {
+        DefaultJacksonMapper.configure(f, state);
+    }
+
+    public static void fromJsonFailOnUnknownProperties(boolean state) {
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, state);
+    }
 
     static {
-        DefaultJacksonMapper.registerModule(new JavaTimeModule());
+        registerModules(new JavaTimeModule());
         //JacksonMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
-        DefaultJacksonMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        DefaultJacksonMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        DefaultJacksonMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
     }
+
     private final HttpResponse httpResponse;
     private final String rpcResponseBody;
-    private final int statusCode;
-    private final HttpResponseStatus status;
-    private boolean remoteSuccess;
+    private final int httpStatusCode;
+    private final HttpResponseStatus httpStatus;
+    private final boolean remoteSuccess;
     private T successResponse;
     private E errorResponse;
 
-    public RPCResult(HttpResponse httpResponse, String rpcResponseBody) {
+    public RPCResult(HttpResponse httpResponse, boolean remoteSuccess) {
         this.httpResponse = httpResponse;
-        this.rpcResponseBody = rpcResponseBody;
-        this.statusCode = httpResponse == null ? 0 : httpResponse.statusCode();
-        this.status = HttpResponseStatus.valueOf(statusCode);
-    }
-
-    public HttpResponse getHttpResponse() {
-        return httpResponse;
-    }
-
-    public HttpResponseStatus getStatus() {
-        return status;
-    }
-
-    public int getStatusCode() {
-        return statusCode;
-    }
-
-    public String getRpcResponseBody() {
-        return rpcResponseBody;
-    }
-
-    public void setRemoteSuccess(boolean remoteSuccess) {
+        this.rpcResponseBody = httpResponse == null ? null : String.valueOf(httpResponse.body());
+        this.httpStatusCode = httpResponse == null ? 0 : httpResponse.statusCode();
+        this.httpStatus = HttpResponseStatus.valueOf(httpStatusCode);
         this.remoteSuccess = remoteSuccess;
     }
 
-    public boolean isRemoteSuccess() {
+    public HttpResponse httpResponse() {
+        return httpResponse;
+    }
+
+    public HttpResponseStatus httpStatus() {
+        return httpStatus;
+    }
+
+    public int httpStatusCode() {
+        return httpStatusCode;
+    }
+
+    public String httpResponseBody() {
+        return rpcResponseBody;
+    }
+
+    public boolean remoteSuccess() {
         return remoteSuccess;
     }
 
-    public E getErrorResponse() {
+    public E errorResponse() {
         return errorResponse;
     }
 
-    public void setErrorResponse(E errorResponse) {
-        this.errorResponse = errorResponse;
-    }
-
-    public T getSuccessResponse() {
+    public T successResponse() {
         return successResponse;
     }
 
-    public void setSuccessResponse(T successResponse) {
-        this.successResponse = successResponse;
+    public void update(Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+        this.update(DefaultJacksonMapper, null, successResponseClass, errorResponseClass, context);
+    }
+
+    public void update(JavaType successResponseType, Class<E> errorResponseClass, final ServiceContext context) {
+        this.update(DefaultJacksonMapper, successResponseType, null, errorResponseClass, context);
     }
 
     public void update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
@@ -105,14 +134,26 @@ public class RPCResult<T, E> {
     }
 
     public void update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+        if (context != null) {
+            context.status(httpStatus);
+        }
         if (remoteSuccess) {
-            setSuccessResponse(getRpcResponse(jacksonMapper, successResponseType, successResponseClass, context));
+            successResponse = fromJson(jacksonMapper, successResponseType, successResponseClass, context);
         } else {
-            setErrorResponse(getRpcResponse(jacksonMapper, null, errorResponseClass, context));
+            errorResponse = fromJson(jacksonMapper, null, errorResponseClass, context);
+            if (errorResponse != null & context != null) {
+                if (errorResponse.isSingleError()) {
+                    Error e = errorResponse.toSerivceError();
+                    context.error(e);
+                } else {
+                    List<Error> errors = errorResponse.toSerivceErrors();
+                    context.errors(errors);
+                }
+            }
         }
     }
 
-    protected <R extends Object> R getRpcResponse(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, final ServiceContext context) {
+    protected <R extends Object> R fromJson(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, final ServiceContext context) {
         if (responseClass == null && responseType == null || StringUtils.isBlank(rpcResponseBody)) {
             return null;
         }
@@ -127,8 +168,8 @@ public class RPCResult<T, E> {
 
         } catch (Throwable ex) {
             if (context != null) {
-                Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Unexpected RPC response format", ex);
-                context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
+                Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, "Unexpected RPC response format", rpcResponseBody, ex);
+                context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
             }
             ret = null;
         }
