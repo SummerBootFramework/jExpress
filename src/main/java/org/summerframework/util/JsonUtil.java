@@ -41,6 +41,7 @@ import org.apache.commons.lang3.StringUtils;
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class JsonUtil {
+
     private static boolean isToJsonIgnoreNull = true;
     private static boolean isToJsonPretty = false;
 
@@ -49,15 +50,6 @@ public class JsonUtil {
             .setSerializationInclusion(Include.NON_NULL)
             .setSerializationInclusion(Include.NON_EMPTY);
     protected final static XmlMapper xmlMapper = new XmlMapper();
-
-    static {
-        registerModules(new JavaTimeModule());
-        //configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true);
-        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-    }
 
     public static void registerModules(Module... modules) {
         JacksonMapper.registerModules(modules);
@@ -88,6 +80,15 @@ public class JsonUtil {
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, fromJsonFailOnUnknownProperties);
         isToJsonIgnoreNull = toJsonIgnoreNull;
         isToJsonPretty = toJsonPretty;
+    }
+
+    static {
+        registerModules(new JavaTimeModule());
+        //configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true);
+        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
     }
 
     /**
