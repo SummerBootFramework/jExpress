@@ -32,7 +32,6 @@ pom.xml
 <dependency>
 	<groupId>org.summerboot</groupId>
 	<artifactId>framework.core</artifactId>
-	<version>2.0.25</version>
 </dependency>
 ```
 
