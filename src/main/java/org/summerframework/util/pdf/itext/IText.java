@@ -44,18 +44,7 @@ public class IText {
         cfg = new ITextConfig(baseDir, fontDir);
     }
 
-    public static interface HTMLConverter<T> {
-
-        String toHTML(String templateFileName, T dto) throws IOException;
-    }
-
-    public byte[] html2PDF(String templateFileName, HTMLConverter converter, Object dto) throws IOException {
-        return html2PDF(templateFileName, converter, dto, cfg.getWriterProperties());
-    }
-
-    public byte[] html2PDF(String templateFileName, HTMLConverter converter, Object dto, WriterProperties writerProperties) throws IOException {
-        String html = converter.toHTML(templateFileName, dto);
-
+    public byte[] html2PDF(String html, WriterProperties writerProperties) throws IOException {
         ConverterProperties prop = new ConverterProperties();
         prop.setFontProvider(cfg.getFontProvider());
         prop.setBaseUri(cfg.getBaseUri());
