@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -32,13 +34,16 @@ import java.nio.charset.StandardCharsets;
  */
 public class FreeMarker {
 
-    public static interface Converter<R, T> {
+    private static Map<String, FreeMarker> POOL = new ConcurrentHashMap();
 
-        R toDataModel(T dto) throws IOException;
-    }
-
-    public static FreeMarker init(String directoryForTemplateLoading) throws IOException {
-        return new FreeMarker(directoryForTemplateLoading);
+    public static FreeMarker get(File directoryForTemplateLoading) throws IOException {
+        String key = directoryForTemplateLoading.getAbsolutePath();
+        FreeMarker fm = POOL.get(key);
+        if (fm == null) {
+            fm = new FreeMarker(directoryForTemplateLoading);
+            POOL.put(key, fm);
+        }
+        return fm;
     }
 
     // Create your Configuration instance, and specify if up to what FreeMarker
@@ -46,10 +51,10 @@ public class FreeMarker {
     // backward-compatible. See the Configuration JavaDoc for details.
     private final Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
 
-    private FreeMarker(String directoryForTemplateLoading) throws IOException {
+    private FreeMarker(File directoryForTemplateLoading) throws IOException {
         // Specify the source where the template files come from. Here I set a
         // plain directory for it, but non-file-system sources are possible too:
-        cfg.setDirectoryForTemplateLoading(new File(directoryForTemplateLoading).getAbsoluteFile());
+        cfg.setDirectoryForTemplateLoading(directoryForTemplateLoading);
 
         // From here we will set the settings recommended for new projects. These
         // aren't the defaults for backward compatibilty.
@@ -71,13 +76,26 @@ public class FreeMarker {
         cfg.setFallbackOnNullLoopVariable(false);
     }
 
-    private Template getTemplate(String templateName) throws IOException {
+    public Template getTemplate(String templateName) throws IOException {
         return cfg.getTemplate(templateName, null, "UTF-8");
     }
 
+    public static interface Converter<R, T> {
+
+        R toDataModel(T dto) throws IOException;
+    }
+
     public String process(String templateName, Converter converter, Object dto) throws IOException {
-        Object dataModel = converter.toDataModel(dto);
         Template template = getTemplate(templateName);
+        return process(template, converter, dto);
+    }
+
+    public static String process(Template template, Converter converter, Object dto) throws IOException {
+        Object dataModel = converter.toDataModel(dto);
+        return process(template, dataModel, dto);
+    }
+
+    public static String process(Template template, Object dataModel, Object dto) throws IOException {
         String ret;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); Writer out = new OutputStreamWriter(baos, StandardCharsets.UTF_8);) {
             template.process(dataModel, out);
