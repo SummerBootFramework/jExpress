@@ -121,19 +121,19 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         return successResponse;
     }
 
-    public void update(Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
-        this.update(DefaultJacksonMapper, null, successResponseClass, errorResponseClass, context);
+    public RPCResult<T, E> update(Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+        return update(DefaultJacksonMapper, null, successResponseClass, errorResponseClass, context);
     }
 
-    public void update(JavaType successResponseType, Class<E> errorResponseClass, final ServiceContext context) {
-        this.update(DefaultJacksonMapper, successResponseType, null, errorResponseClass, context);
+    public RPCResult<T, E> update(JavaType successResponseType, Class<E> errorResponseClass, final ServiceContext context) {
+        return update(DefaultJacksonMapper, successResponseType, null, errorResponseClass, context);
     }
 
-    public void update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
-        this.update(DefaultJacksonMapper, successResponseType, successResponseClass, errorResponseClass, context);
+    public RPCResult<T, E> update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+        return update(DefaultJacksonMapper, successResponseType, successResponseClass, errorResponseClass, context);
     }
 
-    public void update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+    public RPCResult<T, E> update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
         if (context != null) {
             context.status(httpStatus);
         }
@@ -151,6 +151,7 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
                 }
             }
         }
+        return this;
     }
 
     protected <R extends Object> R fromJson(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, final ServiceContext context) {
