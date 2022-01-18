@@ -432,8 +432,8 @@ public class ConfigUtil {
         StringBuilder sb = new StringBuilder();
         LineIterator iterator = FileUtils.lineIterator(configFile, "UTf-8");
         while (iterator.hasNext()) {
-            String line = iterator.nextLine();
-            if (!line.trim().startsWith("#")) {
+            String line = iterator.nextLine().trim();
+            if (!line.startsWith("#")) {
                 String updatedLine = FormatterUtil.updateLine(line, encrypt);
                 if (updatedLine != null) {
                     line = updatedLine;

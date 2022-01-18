@@ -253,8 +253,8 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
         StringBuilder sb = new StringBuilder();
         LineIterator iterator = FileUtils.lineIterator(new File(cfgFile), "UTf-8");
         while (iterator.hasNext()) {
-            String line = iterator.nextLine();
-            if (!line.trim().startsWith("#")) {
+            String line = iterator.nextLine().trim();
+            if (!line.startsWith("#")) {
                 int i = line.indexOf("=");
                 if (i > 0) {
                     String key = line.substring(0, i).trim();
