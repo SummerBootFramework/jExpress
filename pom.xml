@@ -161,7 +161,7 @@
         <jwt.version>0.9.1</jwt.version>
 
         <netty.version>4.1.73.Final</netty.version>
-        <netty-tcnative.version>2.0.46.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.47.Final</netty-tcnative.version>
         <!-- MIME-Type -->
         <tika.version>2.2.1</tika.version>
         <!-- JAX-RS -->
@@ -190,8 +190,10 @@
 
         <!-- Template Engine -->
         <freemarker.version>2.3.31</freemarker.version>
+        <!-- Barcode -->
+        <zxing.version>3.4.1</zxing.version>
         <!-- PDF - PDFBox 
-        <pdfbox.version>2.0.24</pdfbox.version>-->
+        <pdfbox.version>2.0.25</pdfbox.version>-->
         <!-- PDF - com.openhtmltopdf -->	       
         <openhtml.version>1.0.10</openhtml.version>
         <!-- PDF - iText -->
@@ -463,6 +465,23 @@
             <artifactId>freemarker</artifactId>
             <version>${freemarker.version}</version>
         </dependency>
+        
+        <!-- Barcode-417 -->
+        <!-- https://mvnrepository.com/artifact/com.google.zxing/core -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.zxing/javase -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>${zxing.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        
         <!-- PDF - iText -->
         <!-- https://mvnrepository.com/artifact/com.itextpdf/itext7-core AGPL 3.0-->
         <dependency>

@@ -34,16 +34,25 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.utils.ExceptionUtils;
+import org.summerframework.util.FormatterUtil;
 
 /**
  *
@@ -234,6 +243,32 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
             field.set(this, tmf);
         } else {
             ReflectionUtil.loadField(this, field, value, autoDecrypt, isEmailRecipients);
+        }
+    }
+
+    public void updateAndSave(Map<String, String> updatedCfgs) throws IOException {
+        if (updatedCfgs == null || updatedCfgs.isEmpty()) {
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        LineIterator iterator = FileUtils.lineIterator(new File(cfgFile), "UTf-8");
+        while (iterator.hasNext()) {
+            String line = iterator.nextLine();
+            if (!line.trim().startsWith("#")) {
+                int i = line.indexOf("=");
+                if (i > 0) {
+                    String key = line.substring(0, i).trim();
+                    if (updatedCfgs.containsKey(key)) {
+                        line = key + "=" + updatedCfgs.get(key);
+                    }
+                }
+            }
+            sb.append(line).append(System.lineSeparator());
+        }
+
+        try (FileOutputStream output = new FileOutputStream(cfgFile);
+                FileChannel foc = output.getChannel();) {
+            foc.write(ByteBuffer.wrap(sb.toString().getBytes(StandardCharsets.UTF_8)));
         }
     }
 
