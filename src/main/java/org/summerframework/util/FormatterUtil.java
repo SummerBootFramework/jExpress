@@ -31,6 +31,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -129,7 +130,7 @@ public class FormatterUtil {
         if (plain == null) {
             return null;
         }
-        return plain.replaceAll("\""+target+"\"\\s*:\\s*\"\\s*[0-9]*", "\""+target+"\":\"********");
+        return plain.replaceAll("\"" + target + "\"\\s*:\\s*\"\\s*[0-9]*", "\"" + target + "\":\"********");
     }
 
     private static final Pattern REGEX_DEC_PATTERN = Pattern.compile(DECRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
@@ -279,5 +280,9 @@ public class FormatterUtil {
                 .withZoneSameInstant(ZONE_ID_ONTARIO)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
+    }
+
+    public static String encodeMimeBase64(byte[] contentBytes) {
+        return Base64.getMimeEncoder().encodeToString(contentBytes);
     }
 }

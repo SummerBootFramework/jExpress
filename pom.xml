@@ -466,7 +466,8 @@
             <version>${freemarker.version}</version>
         </dependency>
         
-        <!-- Barcode-417 -->
+        <!-- Barcode -->
+        <!-- ZXing (“zebra crossing”) is an open-source, multi-format 1D/2D barcode image processing library implemented in Java, with ports to other languages. This is the main library that supports QR codes in Java. -->
         <!-- https://mvnrepository.com/artifact/com.google.zxing/core -->
         <dependency>
             <groupId>com.google.zxing</groupId>
