@@ -19,16 +19,28 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.Writer;
 import com.google.zxing.WriterException;
+import com.google.zxing.aztec.AztecWriter;
 import com.google.zxing.client.j2se.MatrixToImageConfig;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
+import com.google.zxing.datamatrix.DataMatrixWriter;
+import com.google.zxing.oned.CodaBarWriter;
+import com.google.zxing.oned.Code128Writer;
+import com.google.zxing.oned.Code39Writer;
+import com.google.zxing.oned.Code93Writer;
+import com.google.zxing.oned.EAN13Writer;
+import com.google.zxing.oned.EAN8Writer;
+import com.google.zxing.oned.ITFWriter;
+import com.google.zxing.oned.UPCAWriter;
+import com.google.zxing.oned.UPCEWriter;
 import com.google.zxing.pdf417.PDF417Writer;
+import com.google.zxing.qrcode.QRCodeWriter;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.Map;
 import javax.imageio.ImageIO;
+import org.summerframework.util.FormatterUtil;
 
 /**
  *
@@ -37,7 +49,7 @@ import javax.imageio.ImageIO;
 public class BarcodeUtil {
 
     //    public static void main(String[] args) throws IOException {
-//        BitMatrix bitMatrix = buildPDF417("123451234567812", 480, 200);
+//        BitMatrix bitMatrix = generatePDF417("123451234567812", 480, 200);
 //        byte[] data = toByteArray(bitMatrix, "png");
 //        java.io.File f = new java.io.File("run/pdf417.png").getAbsoluteFile();
 //        System.out.println("save to " + f);
@@ -46,35 +58,110 @@ public class BarcodeUtil {
     public static final int ARGB_BLACK = 0xff000000;
     public static final int ARGB_WHITE = 0xfffffae7;//0xfffffae7;
     public static final int ARGB_TRANSPARENT = 0x00ffffff;//0xfffffae7;
+    public static final Map<EncodeHintType, ?> DEFAULT_HINTS = Map.of(EncodeHintType.CHARACTER_SET, "utf-8", EncodeHintType.MARGIN, 0);
 
-//    public static String toPDF417(String contents, int width, int height) throws IOException {
-//        return toPDF417(contents, width, height, ARGB_BLACK, ARGB_TRANSPARENT);
+//    public static String toPDF417(String contents, int widthPixels, int heightPixels) throws IOException {
+//        return toPDF417(contents, widthPixels, heightPixels, ARGB_BLACK, ARGB_TRANSPARENT);
 //    }
-    public static String toPDF417(String contents, int width, int height, int onColor, int offColor) throws IOException {
-        BitMatrix bitMatrix = buildPDF417(contents, width, height);
-        byte[] data = toByteArray(bitMatrix, "png", onColor, offColor);
-        return encodeMimeBase64(data);
+    public static String generateBase64Image(String barcodeText, BarcodeFormat bf, int widthPixels, int heightPixels, int onColor, int offColor) throws IOException {
+        return generateBase64Image(barcodeText, bf, widthPixels, heightPixels, onColor, offColor, DEFAULT_HINTS);
     }
 
-    public static BitMatrix buildPDF417(String contents, int width, int height) throws IOException {
-        Writer writer = new PDF417Writer();
+    /**
+     * {@code Useage in HTML <img src="data:image/png;base64,${barcode image string}" alt="barcode" />}.
+     *
+     * @param barcodeText
+     * @param bf
+     * @param widthPixels
+     * @param heightPixels
+     * @param onColor ARGB
+     * @param offColor ARGB
+     * @param cfg
+     * @return
+     * @throws IOException
+     */
+    public static String generateBase64Image(String barcodeText, BarcodeFormat bf, int widthPixels, int heightPixels, int onColor, int offColor, Map<EncodeHintType, ?> cfg) throws IOException {
+        Writer writer;
+        switch (bf) {
+            case AZTEC:
+                writer = new AztecWriter();
+                break;
+            case CODABAR:
+                writer = new CodaBarWriter();
+                break;
+            case CODE_128:
+                writer = new Code128Writer();
+                break;
+            case CODE_39:
+                writer = new Code39Writer();
+                break;
+            case CODE_93:
+                writer = new Code93Writer();
+                break;
+            case DATA_MATRIX:
+                writer = new DataMatrixWriter();
+                break;
+            case EAN_13:
+                writer = new EAN13Writer();
+                break;
+            case EAN_8:
+                writer = new EAN8Writer();
+                break;
+            case ITF:
+                writer = new ITFWriter();
+                break;
+            case MAXICODE:
+                writer = null;
+                break;
+            case PDF_417:
+                writer = new PDF417Writer();
+                break;
+            case QR_CODE:
+                writer = new QRCodeWriter();
+                break;
+            case RSS_14:
+                writer = null;
+                break;
+            case UPC_A:
+                writer = new UPCAWriter();
+                break;
+            case UPC_E:
+                writer = new UPCEWriter();
+                break;
+            case UPC_EAN_EXTENSION:
+                writer = null;
+                break;
+            default:
+                return null;
+        }
+        BitMatrix bitMatrix = generateBarcode(barcodeText, writer, bf, widthPixels, heightPixels, cfg);
+        byte[] data = toByteArray(bitMatrix, "png", onColor, offColor);
+        return FormatterUtil.encodeMimeBase64(data);
+    }
+
+    public static BitMatrix generateBarcode(String barcodeText, Writer writer, BarcodeFormat bf, int widthPixels, int heightPixels, Map<EncodeHintType, ?> cfg) throws IOException {
         try {
-            return writer.encode(contents, BarcodeFormat.PDF_417, width, height, HINTS);
+            return writer.encode(barcodeText, bf, widthPixels, heightPixels, cfg);
         } catch (WriterException ex) {
             throw new IOException(ex);
         }
     }
-    
-    public static String encodeMimeBase64(byte[] contentBytes) {
-        return Base64.getMimeEncoder().encodeToString(contentBytes);
-    }
 
-    private static final Map<EncodeHintType, Object> HINTS = Map.of(EncodeHintType.CHARACTER_SET, "utf-8",
-            EncodeHintType.MARGIN, 0);
-
+//    public static String encodeMimeBase64(byte[] contentBytes) {
+//        return Base64.getMimeEncoder().encodeToString(contentBytes);
+//    }
 //    public static byte[] toByteArray(BitMatrix matrix, String format) throws IOException {
 //        return toByteArray(matrix, format, ARGB_BLACK, ARGB_TRANSPARENT);
 //    }
+    /**
+     *
+     * @param matrix
+     * @param format png
+     * @param onColor ARGB
+     * @param offColor ARGB
+     * @return
+     * @throws IOException
+     */
     public static byte[] toByteArray(BitMatrix matrix, String format, int onColor, int offColor) throws IOException {
         byte[] bytes;
         MatrixToImageConfig config = new MatrixToImageConfig(onColor, offColor);
@@ -86,11 +173,11 @@ public class BarcodeUtil {
     }
 
     public static BufferedImage toBufferedImage(BitMatrix matrix) {
-//        int width = matrix.getWidth();
-//        int height = matrix.getHeight();
-//        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-//        for (int x = 0; x < width; x++) {
-//            for (int y = 0; y < height; y++) {
+//        int widthPixels = matrix.getWidth();
+//        int heightPixels = matrix.getHeight();
+//        BufferedImage image = new BufferedImage(widthPixels, heightPixels, BufferedImage.TYPE_INT_ARGB);
+//        for (int x = 0; x < widthPixels; x++) {
+//            for (int y = 0; y < heightPixels; y++) {
 //                image.setRGB(x, y, matrix.get(x, y) == true ? ARGB_BLACK : ARGB_WHITE);
 //            }
 //        }

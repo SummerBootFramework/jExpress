@@ -246,7 +246,7 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
         }
     }
 
-    public void updateAndSave(Map<String, String> updatedCfgs) throws IOException {
+    public void updateConfigFile(Map<String, String> updatedCfgs) throws IOException {
         if (updatedCfgs == null || updatedCfgs.isEmpty()) {
             return;
         }
