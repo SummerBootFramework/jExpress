@@ -17,6 +17,7 @@ package org.summerframework.util.pdf.barcode;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
+import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.Writer;
 import com.google.zxing.WriterException;
 import com.google.zxing.aztec.AztecWriter;
@@ -71,7 +72,7 @@ public class BarcodeUtil {
      * {@code Useage in HTML <img src="data:image/png;base64,${barcode image string}" alt="barcode" />}.
      *
      * @param barcodeText
-     * @param bf
+     * @param format
      * @param widthPixels
      * @param heightPixels
      * @param onColor ARGB
@@ -80,9 +81,9 @@ public class BarcodeUtil {
      * @return
      * @throws IOException
      */
-    public static String generateBase64Image(String barcodeText, BarcodeFormat bf, int widthPixels, int heightPixels, int onColor, int offColor, Map<EncodeHintType, ?> cfg) throws IOException {
+    public static String generateBase64Image(String barcodeText, BarcodeFormat format, int widthPixels, int heightPixels, int onColor, int offColor, Map<EncodeHintType, ?> cfg) throws IOException {
         Writer writer;
-        switch (bf) {
+        switch (format) {
             case AZTEC:
                 writer = new AztecWriter();
                 break;
@@ -110,17 +111,11 @@ public class BarcodeUtil {
             case ITF:
                 writer = new ITFWriter();
                 break;
-            case MAXICODE:
-                writer = null;
-                break;
             case PDF_417:
                 writer = new PDF417Writer();
                 break;
             case QR_CODE:
                 writer = new QRCodeWriter();
-                break;
-            case RSS_14:
-                writer = null;
                 break;
             case UPC_A:
                 writer = new UPCAWriter();
@@ -128,13 +123,14 @@ public class BarcodeUtil {
             case UPC_E:
                 writer = new UPCEWriter();
                 break;
+            case RSS_14:
+            case MAXICODE:
             case UPC_EAN_EXTENSION:
-                writer = null;
-                break;
             default:
-                return null;
+                throw new IllegalArgumentException("No encoder available for format " + format);
+
         }
-        BitMatrix bitMatrix = generateBarcode(barcodeText, writer, bf, widthPixels, heightPixels, cfg);
+        BitMatrix bitMatrix = generateBarcode(barcodeText, writer, format, widthPixels, heightPixels, cfg);
         byte[] data = toByteArray(bitMatrix, "png", onColor, offColor);
         return FormatterUtil.encodeMimeBase64(data);
     }
