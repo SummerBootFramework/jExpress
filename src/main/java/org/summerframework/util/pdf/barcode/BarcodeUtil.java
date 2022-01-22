@@ -168,7 +168,7 @@ public class BarcodeUtil {
         return bytes;
     }
 
-    public static BufferedImage toBufferedImage(BitMatrix matrix) {
+    public static BufferedImage toBufferedImage(BitMatrix matrix, int onColor, int offColor) {
 //        int widthPixels = matrix.getWidth();
 //        int heightPixels = matrix.getHeight();
 //        BufferedImage image = new BufferedImage(widthPixels, heightPixels, BufferedImage.TYPE_INT_ARGB);
@@ -178,7 +178,8 @@ public class BarcodeUtil {
 //            }
 //        }
 //        return image;
-        return MatrixToImageWriter.toBufferedImage(matrix);
+        MatrixToImageConfig config = new MatrixToImageConfig(onColor, offColor);
+        return MatrixToImageWriter.toBufferedImage(matrix, config);
     }
 
     /**
