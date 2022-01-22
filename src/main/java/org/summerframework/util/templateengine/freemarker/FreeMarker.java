@@ -92,10 +92,10 @@ public class FreeMarker {
 
     public static String process(Template template, Converter converter, Object dto) throws IOException {
         Object dataModel = converter.toDataModel(dto);
-        return process(template, dataModel, dto);
+        return process(template, dataModel);
     }
 
-    public static String process(Template template, Object dataModel, Object dto) throws IOException {
+    public static String process(Template template, Object dataModel) throws IOException {
         String ret;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); Writer out = new OutputStreamWriter(baos, StandardCharsets.UTF_8);) {
             template.process(dataModel, out);
