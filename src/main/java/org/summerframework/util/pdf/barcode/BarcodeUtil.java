@@ -17,7 +17,6 @@ package org.summerframework.util.pdf.barcode;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
-import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.Writer;
 import com.google.zxing.WriterException;
 import com.google.zxing.aztec.AztecWriter;
@@ -168,7 +167,7 @@ public class BarcodeUtil {
         return bytes;
     }
 
-    public static BufferedImage toBufferedImage(BitMatrix matrix) {
+    public static BufferedImage toBufferedImage(BitMatrix matrix, int onColor, int offColor) {
 //        int widthPixels = matrix.getWidth();
 //        int heightPixels = matrix.getHeight();
 //        BufferedImage image = new BufferedImage(widthPixels, heightPixels, BufferedImage.TYPE_INT_ARGB);
@@ -178,7 +177,8 @@ public class BarcodeUtil {
 //            }
 //        }
 //        return image;
-        return MatrixToImageWriter.toBufferedImage(matrix);
+        MatrixToImageConfig config = new MatrixToImageConfig(onColor, offColor);
+        return MatrixToImageWriter.toBufferedImage(matrix, config);
     }
 
     /**
