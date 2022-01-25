@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.summerframework.util.templateengine.freemarker;
+package org.summerframework.util.templateengine;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -85,17 +85,17 @@ public class FreeMarker {
         R toDataModel(T dto) throws IOException;
     }
 
-    public String process(String templateName, Converter converter, Object dto) throws IOException {
+    public String generate(String templateName, Converter converter, Object dto) throws IOException {
         Template template = getTemplate(templateName);
-        return process(template, converter, dto);
+        return generate(template, converter, dto);
     }
 
-    public static String process(Template template, Converter converter, Object dto) throws IOException {
+    public static String generate(Template template, Converter converter, Object dto) throws IOException {
         Object dataModel = converter.toDataModel(dto);
-        return process(template, dataModel);
+        return generate(template, dataModel);
     }
 
-    public static String process(Template template, Object dataModel) throws IOException {
+    public static String generate(Template template, Object dataModel) throws IOException {
         String ret;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); Writer out = new OutputStreamWriter(baos, StandardCharsets.UTF_8);) {
             template.process(dataModel, out);
