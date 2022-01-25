@@ -42,11 +42,11 @@ import org.summerframework.boot.config.SummerBootConfig;
  *
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
-public class DatabaseConfig implements SummerBootConfig {
+public class HibernateConfig implements SummerBootConfig {
 
     private static volatile Logger log = null;
 
-    public static final DatabaseConfig CFG = new DatabaseConfig();
+    public static final HibernateConfig CFG = new HibernateConfig();
     private volatile SessionFactory sessionFactory;
 
     private String cfgFile;
@@ -73,7 +73,7 @@ public class DatabaseConfig implements SummerBootConfig {
 
     @Override
     public SummerBootConfig temp() {
-        return new DatabaseConfig();
+        return new HibernateConfig();
     }
 
     @Override
@@ -97,13 +97,19 @@ public class DatabaseConfig implements SummerBootConfig {
             settings.put(name, props.getProperty(name));
             //}
         });
-        settings.put(Environment.PASS, helper.getAsPassword(props, "hibernate.connection.password"));
+
+        //Environment.PASS = "hibernate.connection.password"
+        settings.put(Environment.PASS, helper.getAsPassword(props, Environment.PASS));
         String error = helper.getError();
         if (error != null) {
             throw new IllegalArgumentException(error);
         }
 
-        // build SessionFactory
+//        //build EMF
+//        EntityManagerFactory emf = new EntityManagerFactoryBuilderImpl(
+//                new PersistenceUnitInfoDescriptor(null), settings)
+//                .build();
+        //build SessionFactory
         SessionFactory old = sessionFactory;
         StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
         registryBuilder.applySettings(settings);
@@ -137,11 +143,16 @@ public class DatabaseConfig implements SummerBootConfig {
         }
     }
 
+    public Map<String, Object> getSettings() {
+        return settings;
+    }
+
+    public SessionFactory getSessionFactory() {
+        return sessionFactory;
+    }
+
     public EntityManager em() {
         return sessionFactory.createEntityManager();
     }
 
-    public Map<String, Object> getSettings() {
-        return settings;
-    }
 }

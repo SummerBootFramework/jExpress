@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.summerframework.util.pdf.pdfbox;
+package org.summerframework.util.pdf;
 
 import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
@@ -114,7 +114,7 @@ public class PDFBox {
         return spp;
     }
 
-    public static byte[] html2PDF(String html, PDDocumentInformation info, File baseDir, float pdfVersion, ProtectionPolicy protectionPolicy) throws IOException {
+    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         useFonts(builder, null);
         builder.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
