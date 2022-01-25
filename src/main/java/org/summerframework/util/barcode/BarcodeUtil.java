@@ -13,11 +13,10 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.summerframework.util.pdf.barcode;
+package org.summerframework.util.barcode;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
-import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.Writer;
 import com.google.zxing.WriterException;
 import com.google.zxing.aztec.AztecWriter;
