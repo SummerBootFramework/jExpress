@@ -15,6 +15,7 @@
  */
 package org.summerframework.integration.db;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.summerframework.boot.config.ConfigUtil;
 import org.summerframework.util.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -47,6 +48,7 @@ public class HibernateConfig implements SummerBootConfig {
     private static volatile Logger log = null;
 
     public static final HibernateConfig CFG = new HibernateConfig();
+    @JsonIgnore
     private volatile SessionFactory sessionFactory;
 
     private String cfgFile;

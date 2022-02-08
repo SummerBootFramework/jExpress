@@ -181,6 +181,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     context.reportPOI(cfg, sb);
                     VerboseClientServerCommunication(cfg, httpHeaders, httpPostRequestBody, context, sb);
                     context.reportMemo(sb);
+                    sb.append(System.lineSeparator());
                     report = beforeLogging(sb.toString());
                     log.log(level, report, context.cause());
                 }
