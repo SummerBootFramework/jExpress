@@ -16,46 +16,14 @@
 package org.summerframework.integration.cache;
 
 import org.summerframework.integration.cache.domain.FlashSale;
-import org.summerframework.nio.server.domain.Error;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.UUID;
 import org.summerframework.boot.BootConstant;
-import org.summerframework.boot.BootErrorCode;
-import org.summerframework.boot.instrumentation.HealthInspector;
 
 /**
  *
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
-public interface BootCache extends HealthInspector {
-
-    @Override
-    default List<Error> ping(Object... params) {
-        Error e = null;
-        try {
-            String key = "jwt123";
-            putOnBlacklist(key, "uid123", 1000);
-            boolean isOnBlacklist = isOnBlacklist(key);
-            if (!isOnBlacklist) {
-                e = new Error(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Data Error", "failed to read", null);
-            }
-            TimeUnit.MILLISECONDS.sleep(1500);
-            isOnBlacklist = isOnBlacklist(key);
-            if (isOnBlacklist) {
-                e = new Error(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Access Error", "failed to expire", null);
-            }
-        } catch (Throwable ex) {
-            e = new Error(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Access Error", ex.toString(), ex);
-        }
-        List<Error> errors = null;
-        if (e != null) {
-            errors = new ArrayList<>();
-            errors.add(e);
-        }
-        return errors;
-    }
+public interface BootCache {
 
     /**
      * this is a Distributed non-blocking version of lock() method; it attempts
@@ -97,10 +65,6 @@ public interface BootCache extends HealthInspector {
     default boolean debounced(String key, String unlockPassword, int ttlMinute) {
         return !tryLock(key, unlockPassword, ttlMinute * 60000);
     }
-
-    void putOnBlacklist(String key, String value, long expireInSeconds);
-
-    boolean isOnBlacklist(String key);
 
     /**
      * flash sale - enable

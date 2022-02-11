@@ -17,7 +17,7 @@ package org.summerframework.security.auth;
 
 import org.summerframework.boot.BootErrorCode;
 import org.summerframework.boot.BootPOI;
-import org.summerframework.integration.cache.BootCache;
+import org.summerframework.integration.cache.AuthTokenCache;
 import org.summerframework.nio.server.domain.Error;
 import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.security.JwtUtil;
@@ -173,13 +173,13 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public Caller verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, ServiceContext context) {
+    public Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, ServiceContext context) {
         String authToken = getAuthToken(httpRequestHeaders);
         return verifyToken(authToken, cache, context);
     }
 
     @Override
-    public Caller verifyToken(String authToken, BootCache cache, ServiceContext context) {
+    public Caller verifyToken(String authToken, AuthTokenCache cache, ServiceContext context) {
         Caller caller = null;
         if (authToken == null) {
             Error e = new Error(BootErrorCode.AUTH_REQUIRE_TOKEN, null, "Missing AuthToken", null);
@@ -213,13 +213,13 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public void logout(HttpHeaders httpRequestHeaders, BootCache cache, ServiceContext context) {
+    public void logout(HttpHeaders httpRequestHeaders, AuthTokenCache cache, ServiceContext context) {
         String authToken = getAuthToken(httpRequestHeaders);
         logout(authToken, cache, context);
     }
 
     @Override
-    public void logout(String authToken, BootCache cache, ServiceContext context) {
+    public void logout(String authToken, AuthTokenCache cache, ServiceContext context) {
         try {
             Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtRootSigningKey(), authToken);
             String jti = claims.getId();

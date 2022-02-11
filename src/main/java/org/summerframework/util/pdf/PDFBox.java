@@ -47,7 +47,7 @@ public class PDFBox {
 
     private static File[] fontFiles = null;
 
-    public static void loadFonts(File fontDir) throws IOException {
+    public static int loadFonts(File fontDir) throws IOException {
         if (!fontDir.isDirectory()) {
             throw new IOException("Not a directory: " + fontDir);
         }
@@ -55,18 +55,20 @@ public class PDFBox {
             String lower = name.toLowerCase();
             return lower.endsWith(".ttf") || lower.endsWith(".ttc");// || lower.endsWith(".otf");
         });
-        if (fontFiles == null || fontFiles.length < 1) {
-            throw new IOException("No font files found: " + fontDir);
-        }
+//        if (fontFiles == null || fontFiles.length < 1) {
+//            throw new IOException("No font files found: " + fontDir);
+//        }
+        return fontFiles == null ? 0 : fontFiles.length;
     }
 
     public static File[] getFontFiles() {
         return fontFiles;
     }
 
-    public static void useFonts(PdfRendererBuilder builder, PDDocument doc) throws IOException {
+    public static int useFonts(PdfRendererBuilder builder, PDDocument doc) throws IOException {
         if (fontFiles == null || fontFiles.length < 1) {
-            throw new IOException("No font loaded: call PDFBoxUtil.loadFonts(File fontDir) first");
+            //throw new IOException("No font loaded: call PDFBoxUtil.loadFonts(File fontDir) first");
+            return 0;
         }
         for (File file : fontFiles) {
             String fileName = file.getName();
@@ -82,6 +84,7 @@ public class PDFBox {
                 }
             }
         }
+        return fontFiles.length;
     }
 
     private static final AccessPermission DEFAULT_AP = buildDefaultAccessPermission();

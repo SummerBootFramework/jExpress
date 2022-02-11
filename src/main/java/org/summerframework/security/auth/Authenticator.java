@@ -19,7 +19,7 @@ import org.summerframework.nio.server.domain.ServiceContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.io.IOException;
 import javax.naming.NamingException;
-import org.summerframework.integration.cache.BootCache;
+import org.summerframework.integration.cache.AuthTokenCache;
 import org.summerframework.boot.instrumentation.HealthInspector;
 
 /**
@@ -66,7 +66,7 @@ public interface Authenticator extends HealthInspector {
      * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceContext context);
+    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, final ServiceContext context);
 
     /**
      *
@@ -76,7 +76,7 @@ public interface Authenticator extends HealthInspector {
      * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyToken(String authToken, BootCache cache, final ServiceContext context);
+    <T extends Caller> T verifyToken(String authToken, AuthTokenCache cache, final ServiceContext context);
 
     /**
      * Success HTTP Status: 204 No Content
@@ -85,7 +85,7 @@ public interface Authenticator extends HealthInspector {
      * @param cache
      * @param context
      */
-    void logout(HttpHeaders httpRequestHeaders, BootCache cache, final ServiceContext context);
+    void logout(HttpHeaders httpRequestHeaders, AuthTokenCache cache, final ServiceContext context);
 
     /**
      * Success HTTP Status: 204 No Content
@@ -94,5 +94,5 @@ public interface Authenticator extends HealthInspector {
      * @param cache
      * @param context
      */
-    void logout(String authToken, BootCache cache, final ServiceContext context);
+    void logout(String authToken, AuthTokenCache cache, final ServiceContext context);
 }
