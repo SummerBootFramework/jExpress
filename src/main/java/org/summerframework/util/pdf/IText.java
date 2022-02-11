@@ -56,27 +56,30 @@ public class IText {
         return FONTS.get(name);
     }
 
-    private static FontProvider fontProvider;
+    private static FontProvider fontProvider = null;
 
     public static FontProvider loadFonts(File fontDir) throws IOException {
         if (!fontDir.isDirectory()) {
             throw new IOException(fontDir.getAbsolutePath() + " is not a directory");
         }
-        FontSet fontSet = new FontSet();
-        fontSet.addDirectory(fontDir.getAbsolutePath(), true);
-        fontProvider = new FontProvider(fontSet);
 
         File[] files = fontDir.listFiles((File dir1, String name) -> {
             String lower = name.toLowerCase();
             return lower.endsWith(".ttf") || lower.endsWith(".ttc") || lower.endsWith(".otf");
         });
 
+        if (files == null || files.length < 1) {
+            return null;
+        }
         for (File file : files) {
             String fileName = file.getName();
             String fontFamily = fileName.substring(0, fileName.lastIndexOf("."));
             PdfFont font = PdfFontFactory.createFont(file.getAbsolutePath(), PdfEncodings.IDENTITY_H);
             FONTS.put(fontFamily, font);
         }
+        FontSet fontSet = new FontSet();
+        fontSet.addDirectory(fontDir.getAbsolutePath(), true);
+        fontProvider = new FontProvider(fontSet);
         return fontProvider;
     }
 

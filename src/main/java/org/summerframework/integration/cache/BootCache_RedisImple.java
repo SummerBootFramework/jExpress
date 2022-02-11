@@ -45,7 +45,7 @@ import redis.clients.jedis.params.SetParams;
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
 @Singleton
-public class BootCache_RedisImple implements BootCache {
+public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     /*
       to avoid: 
@@ -118,7 +118,7 @@ public class BootCache_RedisImple implements BootCache {
 
     protected void executeEx(JedisCall caller, int currentRetry, int maxRetry) {
         boolean success = false;
-        try ( Jedis jedis = RedisConfig.CFG.getMaster();) {
+        try (Jedis jedis = RedisConfig.CFG.getMaster();) {
             if (jedis == null) {
                 //System.out.println("e 1 retry " + currentRetry);
                 onRedisDown(REDIS_MASTER_NULL_EX);
@@ -396,7 +396,7 @@ public class BootCache_RedisImple implements BootCache {
         final Holder<Long> holder = new Holder<>(0L);
         execute(true, jedis -> {
             Response<Long> count;
-            try ( Pipeline pipeline = jedis.pipelined();) {
+            try (Pipeline pipeline = jedis.pipelined();) {
                 //pipeline.multi();
                 pipeline.zadd(key, nowTs, String.valueOf(nowTs));
                 pipeline.zremrangeByScore(key, 0, nowTs - periodSecond * 1000);
