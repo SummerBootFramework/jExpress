@@ -76,10 +76,10 @@ public class JsonUtil {
         JacksonMapperIgnoreNull.configure(f, state);
     }
 
-    public static void configure(boolean fromJsonFailOnUnknownProperties, boolean toJsonIgnoreNull, boolean toJsonPretty) {
+    public static void configure(boolean fromJsonFailOnUnknownProperties, boolean toJsonPretty, boolean toJsonIgnoreNull) {
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, fromJsonFailOnUnknownProperties);
-        isToJsonIgnoreNull = toJsonIgnoreNull;
         isToJsonPretty = toJsonPretty;
+        isToJsonIgnoreNull = toJsonIgnoreNull;
     }
 
     static {

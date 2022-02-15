@@ -15,59 +15,58 @@
  */
 package org.summerframework.boot;
 
-import org.summerframework.util.ApplicationUtil;
-import org.summerframework.boot.cli.CommandLineRunner;
-import org.summerframework.boot.config.AbstractSummerBootConfig;
-import org.summerframework.boot.config.ConfigChangeListener;
-import org.summerframework.boot.config.ConfigUtil;
-import org.summerframework.boot.config.ConfigUtil.ConfigLoadMode;
-import org.summerframework.boot.instrumentation.jmx.InstrumentationMgr;
-import org.summerframework.i18n.I18n;
-import org.summerframework.integration.smtp.PostOffice;
-import org.summerframework.integration.smtp.SMTPConfig;
-import org.summerframework.nio.server.HttpConfig;
-import org.summerframework.nio.server.NioConfig;
-import org.summerframework.nio.server.NioServer;
-import org.summerframework.nio.server.domain.Error;
-import org.summerframework.security.auth.AuthConfig;
-import org.summerframework.util.JsonUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.netty.channel.ChannelHandler;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import static java.util.stream.Collectors.toMap;
+import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.summerframework.boot.instrumentation.HealthInspector;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.summerframework.boot.config.SummerBootConfig;
-import org.summerframework.nio.server.BootHttpPingHandler;
-import org.summerframework.nio.server.BootHttpRequestHandler;
-import org.summerframework.nio.server.NioServerContext;
-import org.summerframework.util.FormatterUtil;
-import org.summerframework.util.ReflectionUtil;
-import com.google.inject.name.Names;
-import io.netty.channel.ChannelHandler;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
 import org.apache.commons.cli.Options;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerframework.boot.cli.CommandLineRunner;
+import org.summerframework.boot.config.AbstractSummerBootConfig;
+import org.summerframework.boot.config.ConfigChangeListener;
+import org.summerframework.boot.config.ConfigUtil;
+import org.summerframework.boot.config.ConfigUtil.ConfigLoadMode;
+import org.summerframework.boot.config.SummerBootConfig;
+import org.summerframework.boot.instrumentation.HealthInspector;
+import org.summerframework.boot.instrumentation.jmx.InstrumentationMgr;
+import org.summerframework.i18n.I18n;
+import org.summerframework.integration.smtp.PostOffice;
+import org.summerframework.integration.smtp.SMTPConfig;
+import org.summerframework.nio.server.BootHttpPingHandler;
+import org.summerframework.nio.server.BootHttpRequestHandler;
+import org.summerframework.nio.server.HttpConfig;
+import org.summerframework.nio.server.NioConfig;
+import org.summerframework.nio.server.NioServer;
+import org.summerframework.nio.server.NioServerContext;
+import org.summerframework.security.auth.AuthConfig;
+import org.summerframework.util.ApplicationUtil;
+import org.summerframework.util.FormatterUtil;
+import org.summerframework.util.JsonUtil;
+import org.summerframework.util.ReflectionUtil;
 
 /**
  *
@@ -700,7 +699,7 @@ abstract public class SummerApplication extends CommandLineRunner {
                             .entrySet()
                             .stream()
                             .sorted(Map.Entry.comparingByValue())
-                            .collect(toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
+                            .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
                     String json = JsonUtil.toJson(sorted, true, false);
                     System.out.println(json);
                 } else {
@@ -717,7 +716,7 @@ abstract public class SummerApplication extends CommandLineRunner {
                             .entrySet()
                             .stream()
                             .sorted(Map.Entry.comparingByValue())
-                            .collect(toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
+                            .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
                     String json = JsonUtil.toJson(sorted, true, false);
                     System.out.println(json);
                 } else {

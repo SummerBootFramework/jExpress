@@ -362,7 +362,7 @@ public class NioConfig extends AbstractSummerBootConfig {
                 }
             }
         }
-        JsonUtil.configure(fromJsonFailOnUnknownProperties, toJsonIgnoreNull, toJsonPretty);
+        JsonUtil.configure(fromJsonFailOnUnknownProperties, toJsonPretty, toJsonIgnoreNull);
 
         //5.1 caller filter
         String key;

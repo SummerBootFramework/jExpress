@@ -325,7 +325,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 }
                 switch (contentType) {
                     case MediaType.APPLICATION_JSON:
-                        context.txt(JsonUtil.toJson(ret, false, true));
+                        context.txt(JsonUtil.toJson(ret));
                         break;
                     case MediaType.APPLICATION_XML:
                     case MediaType.TEXT_XML:
