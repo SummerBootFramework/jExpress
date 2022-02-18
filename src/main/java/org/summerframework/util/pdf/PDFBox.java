@@ -17,12 +17,16 @@ package org.summerframework.util.pdf;
 
 import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import javax.imageio.ImageIO;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -32,6 +36,8 @@ import org.apache.pdfbox.pdmodel.encryption.ProtectionPolicy;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 
 /**
  *
@@ -153,6 +159,98 @@ public class PDFBox {
         } catch (MalformedURLException ex) {
             throw new IOException("Invalid baseDirectory=" + baseDirectory, ex);
         }
+    }
+
+    /**
+     *
+     * @param pdfData
+     * @param dpi
+     * @param imageType
+     * @param formatName a {@code String} containing the informal name of a
+     * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @return
+     * @throws IOException
+     */
+    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, String formatName) throws IOException {
+        List<BufferedImage> images = pdf2Images(pdfData, dpi, imageType);
+        List<byte[]> imageDatas = images2Bytes(images, formatName);
+        return imageDatas;
+
+    }
+
+    /**
+     *
+     * @param pdfFile
+     * @param dpi
+     * @param imageType
+     * @param formatName a {@code String} containing the informal name of a
+     * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @return
+     * @throws IOException
+     */
+    public static List<byte[]> pdf2Images(File pdfFile, float dpi, ImageType imageType, String formatName) throws IOException {
+        List<BufferedImage> images = pdf2Images(pdfFile, dpi, imageType);
+        List<byte[]> imageDatas = images2Bytes(images, formatName);
+        return imageDatas;
+    }
+
+    public static List<BufferedImage> pdf2Images(byte[] pdfData, float dpi, ImageType imageType) throws IOException {
+        //1: Loading an Existing PDF Document
+        PDDocument document = PDDocument.load(pdfData);
+        return pdf2Images(document, dpi, imageType);
+    }
+
+    public static List<BufferedImage> pdf2Images(File pdfFile, float dpi, ImageType imageType) throws IOException {
+        //1: Loading an Existing PDF Document
+        PDDocument document = PDDocument.load(pdfFile);
+        return pdf2Images(document, dpi, imageType);
+    }
+
+    /**
+     *
+     * @param document
+     * @param dpi 300
+     * @param imageType
+     * @return
+     * @throws IOException
+     */
+    public static List<BufferedImage> pdf2Images(PDDocument document, float dpi, ImageType imageType) throws IOException {
+        //1: Loading an Existing PDF Document
+        //PDDocument document = PDDocument.load(pdfData);
+        //2: Instantiating the PDFRenderer Class
+        PDFRenderer renderer = new PDFRenderer(document);
+        //3: Rendering Image from the PDF Document
+        //BufferedImage image = renderer.renderImage(0);
+        //4: save to file
+        //ImageIO.write(image, "JPEG", new File("C:/PdfBox_Examples/myimage.jpg"));
+
+        int totalPages = document.getNumberOfPages();
+        List<BufferedImage> images = new ArrayList();
+        for (int currentPage = 0; currentPage < totalPages; currentPage++) {
+            BufferedImage image = renderer.renderImageWithDPI(currentPage, dpi, imageType);
+            images.add(image);
+        }
+        return images;
+    }
+
+    /**
+     *
+     * @param images
+     * @param formatName a {@code String} containing the informal name of a
+     * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @return
+     * @throws IOException
+     */
+    public static List<byte[]> images2Bytes(List<BufferedImage> images, String formatName) throws IOException {
+        List<byte[]> imageDataList = new ArrayList(images.size());
+        for (BufferedImage image : images) {
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
+                ImageIO.write(image, formatName, baos);
+                byte[] imageData = baos.toByteArray();
+                imageDataList.add(imageData);
+            }
+        }
+        return imageDataList;
     }
 
     public static interface Writer<T> {
