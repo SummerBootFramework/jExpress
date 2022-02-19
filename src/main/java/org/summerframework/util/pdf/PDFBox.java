@@ -196,19 +196,21 @@ public class PDFBox {
 
     public static List<BufferedImage> pdf2Images(byte[] pdfData, float dpi, ImageType imageType) throws IOException {
         //1: Loading an Existing PDF Document
-        PDDocument document = PDDocument.load(pdfData);
-        return pdf2Images(document, dpi, imageType);
+        try (PDDocument document = PDDocument.load(pdfData);) {
+            return pdf2Images(document, dpi, imageType);
+        }
     }
 
     public static List<BufferedImage> pdf2Images(File pdfFile, float dpi, ImageType imageType) throws IOException {
         //1: Loading an Existing PDF Document
-        PDDocument document = PDDocument.load(pdfFile);
-        return pdf2Images(document, dpi, imageType);
+        try (PDDocument document = PDDocument.load(pdfFile);) {
+            return pdf2Images(document, dpi, imageType);
+        }
     }
 
     /**
      *
-     * @param document
+     * @param document make sure the caller will close the document
      * @param dpi 300
      * @param imageType
      * @return
