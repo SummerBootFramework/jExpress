@@ -15,6 +15,7 @@
  */
 package org.summerframework.util.pdf;
 
+import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder;
 import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.awt.image.BufferedImage;
@@ -53,6 +54,8 @@ public class PDFBox {
 
     private static File[] fontFiles = null;
 
+    private static Map<File, String> fonts = null;
+
     public static int loadFonts(File fontDir) throws IOException {
         if (!fontDir.isDirectory()) {
             throw new IOException("Not a directory: " + fontDir);
@@ -61,6 +64,15 @@ public class PDFBox {
             String lower = name.toLowerCase();
             return lower.endsWith(".ttf") || lower.endsWith(".ttc");// || lower.endsWith(".otf");
         });
+        if (fontFiles != null && fontFiles.length > 0) {
+            fonts = new HashMap();
+            for (File file : fontFiles) {
+                String fileName = file.getName();
+                String fontFamily = fileName.substring(0, fileName.lastIndexOf("."));
+                fonts.put(file.getAbsoluteFile(), fontFamily);
+            }
+        }
+
 //        if (fontFiles == null || fontFiles.length < 1) {
 //            throw new IOException("No font files found: " + fontDir);
 //        }
@@ -71,20 +83,30 @@ public class PDFBox {
         return fontFiles;
     }
 
+    /**
+     *
+     * @return {@code <font file, fontFamily>}
+     */
+    public static Map<File, String> getFonts() {
+        return Map.copyOf(fonts);
+    }
+
     public static int useFonts(PdfRendererBuilder builder, PDDocument doc) throws IOException {
-        if (fontFiles == null || fontFiles.length < 1) {
+        if (fonts == null || fonts.isEmpty()) {
             //throw new IOException("No font loaded: call PDFBoxUtil.loadFonts(File fontDir) first");
             return 0;
         }
-        for (File file : fontFiles) {
-            String fileName = file.getName();
-            String fontFamily = fileName.substring(0, fileName.lastIndexOf("."));
+        for (File fontFile : fonts.keySet()) {
+            //String fileName = fontFile.getName();
+            //String fontFamily = fileName.substring(0, fileName.lastIndexOf("."));
+            String fontFamily = fonts.get(fontFile);
             if (builder != null) {
-                builder.useFont(file, fontFamily);
+                builder.useFont(fontFile, fontFamily);
             }
             if (doc != null) {
+                String fileName = fontFile.getName();
                 if (!fileName.endsWith(".otf")) {
-                    PDFont font = PDType0Font.load(doc, file.getAbsoluteFile());
+                    PDFont font = PDType0Font.load(doc, fontFile);
                     //PDFont font =        PDType0Font.load(doc, new File(PDFBoxConfig.CFG.getFontDir() + "\\SimHei.ttf"));
                     FONTS.put(fontFamily, font);
                 }
@@ -124,6 +146,12 @@ public class PDFBox {
     }
 
     public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
+        return html2PDF(html, baseDir, protectionPolicy, info, pdfVersion,
+                BaseRendererBuilder.PAGE_SIZE_LETTER_WIDTH, BaseRendererBuilder.PAGE_SIZE_LETTER_HEIGHT, BaseRendererBuilder.PAGE_SIZE_LETTER_UNITS);
+    }
+
+    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion,
+            float pageWidth, float pageHeight, BaseRendererBuilder.PageSizeUnits units) throws IOException {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         useFonts(builder, null);
         builder.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
@@ -131,6 +159,7 @@ public class PDFBox {
             builder.withProducer(info.getProducer());
         }
         builder.useFastMode();
+        builder.useDefaultPageSize(pageWidth, pageHeight, units);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
             builder.toStream(baos);
             try (PdfBoxRenderer renderer = builder.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {
@@ -145,9 +174,10 @@ public class PDFBox {
 //                    doc.setDocumentInformation(info);
 //                }
                 //build PDF
-                renderer.layout();
-                renderer.createPDF();
+                renderer.layout();//com.openhtmltopdf.load INFO:: Loading font(ArialUnicodeMS) from PDFont supplier now.
+                renderer.createPDF();//com.openhtmltopdf.general INFO:: Using fast-mode renderer. Prepare to fly.
             }
+
             return baos.toByteArray();
         }
     }
@@ -218,7 +248,7 @@ public class PDFBox {
      */
     public static List<BufferedImage> pdf2Images(PDDocument document, float dpi, ImageType imageType) throws IOException {
         //1: Loading an Existing PDF Document
-        //PDDocument document = PDDocument.load(pdfData);
+        //try(PDDocument document = PDDocument.load(pdfData);)
         //2: Instantiating the PDFRenderer Class
         PDFRenderer renderer = new PDFRenderer(document);
         //3: Rendering Image from the PDF Document
