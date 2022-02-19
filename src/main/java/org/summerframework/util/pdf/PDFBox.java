@@ -56,7 +56,12 @@ public class PDFBox {
 
     private static Map<File, String> fonts = null;
 
-    public static int loadFonts(File fontDir) throws IOException {
+    public static int loadFonts(File fontDir, File fontCacheDir) throws IOException {
+        if (fontCacheDir != null) {
+            //java -Dpdfbox.fontcache=/tmp
+            fontCacheDir.mkdirs();
+            System.setProperty("pdfbox.fontcache", fontCacheDir.getAbsolutePath());
+        }
         if (!fontDir.isDirectory()) {
             throw new IOException("Not a directory: " + fontDir);
         }
