@@ -56,11 +56,14 @@ public class PDFBox {
 
     private static Map<File, String> fonts = null;
 
-    public static int loadFonts(File fontDir, File fontCacheDir) throws IOException {
+    public static int loadFonts(File fontCacheDir, File fontDir) throws IOException {
         if (fontCacheDir != null) {
             //java -Dpdfbox.fontcache=/tmp
             fontCacheDir.mkdirs();
             System.setProperty("pdfbox.fontcache", fontCacheDir.getAbsolutePath());
+        }
+        if (fontDir == null) {
+            return 0;
         }
         if (!fontDir.isDirectory()) {
             throw new IOException("Not a directory: " + fontDir);
@@ -152,7 +155,8 @@ public class PDFBox {
 
     public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
         return html2PDF(html, baseDir, protectionPolicy, info, pdfVersion,
-                BaseRendererBuilder.PAGE_SIZE_LETTER_WIDTH, BaseRendererBuilder.PAGE_SIZE_LETTER_HEIGHT, BaseRendererBuilder.PAGE_SIZE_LETTER_UNITS);
+                //BaseRendererBuilder.PAGE_SIZE_LETTER_WIDTH, BaseRendererBuilder.PAGE_SIZE_LETTER_HEIGHT, BaseRendererBuilder.PAGE_SIZE_LETTER_UNITS);
+                BaseRendererBuilder.PAGE_SIZE_LETTER_WIDTH, BaseRendererBuilder.PAGE_SIZE_LETTER_HEIGHT, null);
     }
 
     public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion,
@@ -164,7 +168,9 @@ public class PDFBox {
             builder.withProducer(info.getProducer());
         }
         builder.useFastMode();
-        builder.useDefaultPageSize(pageWidth, pageHeight, units);
+        if (units != null) {
+            builder.useDefaultPageSize(pageWidth, pageHeight, units);
+        }
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
             builder.toStream(baos);
             try (PdfBoxRenderer renderer = builder.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {
