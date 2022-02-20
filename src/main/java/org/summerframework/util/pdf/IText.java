@@ -56,9 +56,9 @@ public class IText {
         return FONTS.get(name);
     }
 
-    private static FontProvider fontProvider = null;
+    private static FontSet fontSet = null;
 
-    public static FontProvider loadFonts(File fontDir) throws IOException {
+    public static FontSet loadFonts(File fontDir) throws IOException {
         if (!fontDir.isDirectory()) {
             throw new IOException(fontDir.getAbsolutePath() + " is not a directory");
         }
@@ -77,10 +77,9 @@ public class IText {
             PdfFont font = PdfFontFactory.createFont(file.getAbsolutePath(), PdfEncodings.IDENTITY_H);
             FONTS.put(fontFamily, font);
         }
-        FontSet fontSet = new FontSet();
+        fontSet = new FontSet();
         fontSet.addDirectory(fontDir.getAbsolutePath(), true);
-        fontProvider = new FontProvider(fontSet);
-        return fontProvider;
+        return fontSet;
     }
 
     public static WriterProperties buildDefaultAccessPermission(String userPwd, String ownerPwd) {
@@ -111,7 +110,9 @@ public class IText {
 
     public static byte[] html2PDF(String html, File baseDir, WriterProperties writerProperties) throws IOException {
         ConverterProperties prop = new ConverterProperties();
-        prop.setFontProvider(fontProvider);
+        if (fontSet != null) {
+            prop.setFontProvider(new FontProvider(fontSet));
+        }
         prop.setBaseUri(baseDir.getAbsolutePath());
         ByteArrayOutputStream out;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
