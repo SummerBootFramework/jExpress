@@ -190,6 +190,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 } catch (Throwable ex) {
                     log.error("report failed", ex);
                 }
+                //context.clear();
             }
         };
         try {

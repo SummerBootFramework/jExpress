@@ -30,6 +30,7 @@ import java.net.SocketAddress;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
@@ -70,6 +71,7 @@ public class ServiceContext {
     private String redirect;
     private final List<POI> poi = new ArrayList<>();
     private List<Memo> memo;
+    private Map<String, Object> attributes;
 
     // 2.1 error
 //    private int errorCode;
@@ -109,6 +111,50 @@ public class ServiceContext {
         this.hit = hit;
         this.startTs = startTs;
         poi.add(new POI(BootPOI.SERVICE_BEGIN));
+    }
+
+//    public void clear() {
+//        if (poi != null) {
+//            poi.clear();
+//        }
+//        if (memo != null) {
+//            memo.clear();
+//        }
+//        if (attributes != null) {
+//            attributes.clear();
+//        }
+//    }
+    /**
+     * get attribute value by kay
+     *
+     * @param key
+     * @return
+     */
+    public Object attribute(String key) {
+        return attributes == null ? null : attributes.get(key);
+    }
+
+    /**
+     * set or remove attribute value
+     *
+     * @param key
+     * @param value remove key-value if value is null, otherwise add key-value
+     * @return current ServiceContext instance
+     */
+    public ServiceContext attribute(String key, Object value) {
+        if (attributes == null) {
+            if (key == null || value == null) {
+                return this;
+            } else {
+                attributes = new HashMap();
+            }
+        }
+        if (value == null) {
+            attributes.remove(key);
+        } else {
+            attributes.put(key, value);
+        }
+        return this;
     }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
