@@ -15,11 +15,13 @@
  */
 package org.summerframework.util;
 
+import java.awt.image.BufferedImage;
 import static org.summerframework.boot.config.ConfigUtil.DECRYPTED_WARPER_PREFIX;
 import static org.summerframework.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 import org.summerframework.security.SecurityUtil;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -284,5 +287,19 @@ public class FormatterUtil {
 
     public static String encodeMimeBase64(byte[] contentBytes) {
         return Base64.getMimeEncoder().encodeToString(contentBytes);
+    }
+
+    /**
+     *
+     * @param bi
+     * @param format - png
+     * @return
+     * @throws IOException
+     */
+    public static byte[] toByteArray(BufferedImage bi, String format) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(bi, format, baos);
+        byte[] bytes = baos.toByteArray();
+        return bytes;
     }
 }
