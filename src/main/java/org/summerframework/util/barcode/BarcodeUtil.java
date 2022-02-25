@@ -17,29 +17,17 @@ package org.summerframework.util.barcode;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
+import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.Writer;
 import com.google.zxing.WriterException;
-import com.google.zxing.aztec.AztecWriter;
 import com.google.zxing.client.j2se.MatrixToImageConfig;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
-import com.google.zxing.datamatrix.DataMatrixWriter;
-import com.google.zxing.oned.CodaBarWriter;
-import com.google.zxing.oned.Code128Writer;
-import com.google.zxing.oned.Code39Writer;
-import com.google.zxing.oned.Code93Writer;
-import com.google.zxing.oned.EAN13Writer;
-import com.google.zxing.oned.EAN8Writer;
-import com.google.zxing.oned.ITFWriter;
-import com.google.zxing.oned.UPCAWriter;
-import com.google.zxing.oned.UPCEWriter;
-import com.google.zxing.pdf417.PDF417Writer;
-import com.google.zxing.qrcode.QRCodeWriter;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import javax.imageio.ImageIO;
 import org.summerframework.util.FormatterUtil;
 
 /**
@@ -58,87 +46,40 @@ public class BarcodeUtil {
     public static final int ARGB_BLACK = 0xff000000;
     public static final int ARGB_WHITE = 0xfffffae7;//0xfffffae7;
     public static final int ARGB_TRANSPARENT = 0x00ffffff;//0xfffffae7;
-    public static final Map<EncodeHintType, ?> DEFAULT_HINTS = Map.of(EncodeHintType.CHARACTER_SET, "utf-8", EncodeHintType.MARGIN, 0);
-
-//    public static String toPDF417(String contents, int widthPixels, int heightPixels) throws IOException {
-//        return toPDF417(contents, widthPixels, heightPixels, ARGB_BLACK, ARGB_TRANSPARENT);
-//    }
-    public static String generateBase64Image(String barcodeText, BarcodeFormat bf, int widthPixels, int heightPixels, int onColor, int offColor) throws IOException {
-        return generateBase64Image(barcodeText, bf, widthPixels, heightPixels, onColor, offColor, DEFAULT_HINTS);
-    }
+    public static final Map<EncodeHintType, ?> DEFAULT_COFNIG = Map.of(
+            EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8,
+            EncodeHintType.MARGIN, 0);
 
     /**
      * {@code Useage in HTML <img src="data:image/png;base64,${barcode image string}" alt="barcode" />}.
      *
      * @param barcodeText
-     * @param format
+     * @param barcodeFormat
      * @param widthPixels
      * @param heightPixels
+     * @param cfg
+     * @param imageFormat png, jpg, etc.
      * @param onColor ARGB
      * @param offColor ARGB
-     * @param cfg
      * @return
      * @throws IOException
      */
-    public static String generateBase64Image(String barcodeText, BarcodeFormat format, int widthPixels, int heightPixels, int onColor, int offColor, Map<EncodeHintType, ?> cfg) throws IOException {
-        Writer writer;
-        switch (format) {
-            case AZTEC:
-                writer = new AztecWriter();
-                break;
-            case CODABAR:
-                writer = new CodaBarWriter();
-                break;
-            case CODE_128:
-                writer = new Code128Writer();
-                break;
-            case CODE_39:
-                writer = new Code39Writer();
-                break;
-            case CODE_93:
-                writer = new Code93Writer();
-                break;
-            case DATA_MATRIX:
-                writer = new DataMatrixWriter();
-                break;
-            case EAN_13:
-                writer = new EAN13Writer();
-                break;
-            case EAN_8:
-                writer = new EAN8Writer();
-                break;
-            case ITF:
-                writer = new ITFWriter();
-                break;
-            case PDF_417:
-                writer = new PDF417Writer();
-                break;
-            case QR_CODE:
-                writer = new QRCodeWriter();
-                break;
-            case UPC_A:
-                writer = new UPCAWriter();
-                break;
-            case UPC_E:
-                writer = new UPCEWriter();
-                break;
-            case RSS_14:
-            case MAXICODE:
-            case UPC_EAN_EXTENSION:
-            default:
-                throw new IllegalArgumentException("No encoder available for format " + format);
-
-        }
-        BitMatrix bitMatrix = generateBarcode(barcodeText, writer, format, widthPixels, heightPixels, cfg);
-        byte[] data = toByteArray(bitMatrix, "png", onColor, offColor);
+    public static String generateBase64Image(String barcodeText, BarcodeFormat barcodeFormat, int widthPixels, int heightPixels, Map<EncodeHintType, ?> cfg, String imageFormat, int onColor, int offColor) throws IOException {
+        BitMatrix bitMatrix = generateBarcode(barcodeText, barcodeFormat, widthPixels, heightPixels, cfg);
+        byte[] data = toByteArray(bitMatrix, imageFormat, onColor, offColor);
         return FormatterUtil.encodeMimeBase64(data);
     }
 
-    public static BitMatrix generateBarcode(String barcodeText, Writer writer, BarcodeFormat bf, int widthPixels, int heightPixels, Map<EncodeHintType, ?> cfg) throws IOException {
+    public static BitMatrix generateBarcode(String barcodeText, BarcodeFormat format, int widthPixels, int heightPixels, Map<EncodeHintType, ?> cfg) throws IOException {
+        Writer writer = new MultiFormatWriter();
+        return generateBarcode(barcodeText, writer, format, widthPixels, heightPixels, cfg);
+    }
+
+    public static BitMatrix generateBarcode(String barcodeText, Writer writer, BarcodeFormat format, int widthPixels, int heightPixels, Map<EncodeHintType, ?> cfg) throws IOException {
         try {
-            return writer.encode(barcodeText, bf, widthPixels, heightPixels, cfg);
+            return writer.encode(barcodeText, format, widthPixels, heightPixels, cfg);
         } catch (WriterException ex) {
-            throw new IOException(ex);
+            throw new IOException(writer.toString() + "(" + format + ")", ex);
         }
     }
 
@@ -151,17 +92,17 @@ public class BarcodeUtil {
     /**
      *
      * @param matrix
-     * @param format png
+     * @param imageFormat png
      * @param onColor ARGB
      * @param offColor ARGB
      * @return
      * @throws IOException
      */
-    public static byte[] toByteArray(BitMatrix matrix, String format, int onColor, int offColor) throws IOException {
+    public static byte[] toByteArray(BitMatrix matrix, String imageFormat, int onColor, int offColor) throws IOException {
         byte[] bytes;
         MatrixToImageConfig config = new MatrixToImageConfig(onColor, offColor);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
-            MatrixToImageWriter.writeToStream(matrix, format, baos, config);
+            MatrixToImageWriter.writeToStream(matrix, imageFormat, baos, config);
             bytes = baos.toByteArray();
         }
         return bytes;
@@ -179,19 +120,5 @@ public class BarcodeUtil {
 //        return image;
         MatrixToImageConfig config = new MatrixToImageConfig(onColor, offColor);
         return MatrixToImageWriter.toBufferedImage(matrix, config);
-    }
-
-    /**
-     *
-     * @param bi
-     * @param format - png
-     * @return
-     * @throws IOException
-     */
-    public static byte[] toByteArray(BufferedImage bi, String format) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(bi, format, baos);
-        byte[] bytes = baos.toByteArray();
-        return bytes;
     }
 }
