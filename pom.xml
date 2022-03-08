@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>framework.core</artifactId>
-    <version>2.0.30</version>
+    <version>2.0.31-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot Core</name>
     <description>Summer Boot (Core) focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
@@ -170,11 +170,11 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.13.1</jackson.version>    
+        <jackson.version>2.13.2</jackson.version>    
         <gson.version>2.9.0</gson.version>
         <!-- Bean Validation -->
+        <hibernate-validator.version>6.2.3.Final</hibernate-validator.version>
         <validation-api.version>2.0.1.Final</validation-api.version>
-        <hibernate-validator.version>6.2.1.Final</hibernate-validator.version>
         <el.api.version>3.0.0</el.api.version>
         <el.Implementation.version>2.2.6</el.Implementation.version>
 
@@ -182,7 +182,7 @@
         <guice.version>5.1.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>5.5.7.Final</hibernate.version>
+        <hibernate.version>5.6.5.Final</hibernate.version>
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
@@ -399,17 +399,17 @@
             <version>${jackson.version}</version>
         </dependency>
         <!-- Bean Validation -->
-        <!-- https://mvnrepository.com/artifact/javax.validation/validation-api Apache 2.0-->
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>${validation-api.version}</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator Apache 2.0-->
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
             <version>${hibernate-validator.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/javax.validation/validation-api Apache 2.0-->
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>${validation-api.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/javax.el/javax.el-api CDDL, GPL, GPL 2.0-->
         <dependency>
@@ -423,6 +423,7 @@
             <artifactId>javax.el</artifactId>
             <version>${el.Implementation.version}</version>
         </dependency>
+
 
 
         <!-- Injection -->

@@ -74,6 +74,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             // step2. caller authentication, will do authorization in next step(ControllerAction.process(...))
             context.timestampPOI(BootPOI.AUTH_BEGIN);
             if (!authenticateCaller(processor, httpRequestHeaders, httpRequestPath, context)) {
+                context.status(HttpResponseStatus.UNAUTHORIZED);
                 return;
             }
 
