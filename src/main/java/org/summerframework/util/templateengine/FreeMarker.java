@@ -76,6 +76,10 @@ public class FreeMarker {
         cfg.setFallbackOnNullLoopVariable(false);
     }
 
+    public Configuration getConfiguration() {
+        return cfg;
+    }
+
     public Template getTemplate(String templateName) throws IOException {
         return cfg.getTemplate(templateName, null, "UTF-8");
     }
@@ -97,7 +101,8 @@ public class FreeMarker {
 
     public static String generate(Template template, Object dataModel) throws IOException {
         String ret;
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); Writer out = new OutputStreamWriter(baos, StandardCharsets.UTF_8);) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
+                Writer out = new OutputStreamWriter(baos, StandardCharsets.UTF_8);) {
             template.process(dataModel, out);
             byte[] htmlData = baos.toByteArray();
             ret = new String(htmlData, StandardCharsets.UTF_8);
