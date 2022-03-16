@@ -160,8 +160,8 @@
         <!-- JWT -->
         <jwt.version>0.9.1</jwt.version>
 
-        <netty.version>4.1.74.Final</netty.version>
-        <netty-tcnative.version>2.0.50.Final</netty-tcnative.version>
+        <netty.version>4.1.75.Final</netty.version>
+        <netty-tcnative.version>2.0.51.Final</netty-tcnative.version>
         <!-- MIME-Type -->
         <tika.version>2.3.0</tika.version>
         <!-- JAX-RS -->
@@ -398,6 +398,8 @@
             <artifactId>jackson-dataformat-xml</artifactId>
             <version>${jackson.version}</version>
         </dependency>
+        
+        
         <!-- Bean Validation -->
         <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator Apache 2.0-->
         <dependency>
@@ -423,7 +425,6 @@
             <artifactId>javax.el</artifactId>
             <version>${el.Implementation.version}</version>
         </dependency>
-
 
 
         <!-- Injection -->
