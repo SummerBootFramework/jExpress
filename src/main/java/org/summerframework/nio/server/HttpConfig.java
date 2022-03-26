@@ -218,9 +218,9 @@ public class HttpConfig extends AbstractSummerBootConfig {
         // 3.1 HTTP Client keystore        
         KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
         // 3.2 HTTP Client truststore        
-        TrustManager[] sbsTrustManagers = tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
+        TrustManager[] trustManagers = tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
         Boolean disableHostnameVerification = true;
-        SSLContext sslContext = SSLUtil.buildSSLContext(keyManagers, sbsTrustManagers, protocal, disableHostnameVerification);
+        SSLContext sslContext = SSLUtil.buildSSLContext(keyManagers, trustManagers, protocal, disableHostnameVerification);
 
         // 3.3 HTTP Client Executor
         if (httpClientMaxSize < httpClientCoreSize) {

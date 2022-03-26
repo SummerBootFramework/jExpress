@@ -237,6 +237,7 @@ public class NioServer {
                 ciphers = Http2SecurityUtil.CIPHERS;
             }
             SslProvider sp = NioConfig.CFG.getSslProvider();
+            sp =null;
             if (sp == null) {
                 jdkSslContext = SSLContext.getInstance(NioConfig.CFG.getSslProtocols()[0]);
                 jdkSslContext.init(kmf.getKeyManagers(), tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers(), SecureRandom.getInstanceStrong());

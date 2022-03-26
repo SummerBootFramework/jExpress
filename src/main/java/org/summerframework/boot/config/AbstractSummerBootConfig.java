@@ -116,7 +116,6 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
     @Override
     public String info() {
         try {
-            //return Constant.VERSION + "{" + "getConfigFile=" + getConfigFile + ", emailToAppSupport=" + Arrays.toString(emailToAppSupport) + ", emailToBatchLoginReport=" + Arrays.toString(emailToBatchLoginReport) + ", emailBatchLoginReportFailedLimit=" + emailBatchLoginReportFailedLimit + ", ttlRDL=" + ttlRDL + ", emailAlertDebouncingInterval=" + emailAlertDebouncingInterval + ", ttlBatchLoadDebouncing=" + ttlBatchLoadOnStartDebouncing + ", batchLoginOnStart=" + batchLoginOnStart + ", ioStatusListenerPoolSize=" + ioStatusListenerPoolSize + ", defaultHttpHeaders=" + Arrays.toString(defaultHttpHeaders) + ", sbsApiURL=" + sbsApiRoot + '}';
             return JsonUtil.toJson(this, true, false);
         } catch (JsonProcessingException ex) {
             return ex.toString();
