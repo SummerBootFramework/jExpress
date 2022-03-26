@@ -43,7 +43,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class SSLUtil {
 
-    public static String DEFAULT_PROTOCOL = "TLSv1.2";
+    public static String DEFAULT_PROTOCOL = "TLSv1.3";
     // Create all-trusting host name verifier
 
     /**
@@ -51,12 +51,17 @@ public class SSLUtil {
      */
     public static final HostnameVerifier IGNORE_HOST_NAME_VERIFIER = (String hostname, SSLSession session) -> true;
 
+    enum Caller {
+        client, server
+    }
+
     /**
      * To trust all certificates
      */
     private static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
     public static final TrustManager[] TRUST_ALL_CERTIFICATES = new TrustManager[]{
         new X509TrustManager() {
+
             @Override
             public java.security.cert.X509Certificate[] getAcceptedIssuers() {
                 return TRUSTED_CERTIFICATE;
@@ -64,19 +69,20 @@ public class SSLUtil {
 
             @Override
             public void checkClientTrusted(X509Certificate[] certs, String authType) {
-//                    System.out.println("client.authType=" + authType);
-//                    for (X509Certificate cer : certs) {
-//                        System.out.println("client.cer=" + cer.getSubjectDN());
-//                    }
+                //checkTrusted(Caller.client, certs, authType);
             }
 
             @Override
             public void checkServerTrusted(X509Certificate[] certs, String authType) {
-//                    System.out.println("server.authType=" + authType);
-//                    for (X509Certificate cer : certs) {
-//                        System.out.println("server.cer=" + cer.getSubjectDN());
-//                    }
+                //checkTrusted(Caller.server, certs, authType);
             }
+
+//            private void checkTrusted(Caller caller, X509Certificate[] certs, String authType) {
+//                System.out.println(caller + ".authType=" + authType);
+//                for (X509Certificate cer : certs) {
+//                    System.out.println(caller + ".cer=" + cer.getSubjectDN());
+//                }
+//            }
         }
     };
 
@@ -104,13 +110,12 @@ public class SSLUtil {
 //        char[] keyStorePwd = StringUtils.isBlank(keyStorePwdStr) ? null : SecurityUtil.decrypt(v).toCharArray();
 //        return buildKeyManagers(keyStorePath, char[] keyStorePwd);
 //    }
-
     public static KeyManagerFactory buildKeyManagerFactory(String keyStorePath, char[] keyStorePwd, String keyAlias, char[] keyPwd) throws GeneralSecurityException, IOException {
         if (StringUtils.isBlank(keyStorePath)) {
             return null;
         }
         KeyManagerFactory kmf = null;
-        try ( InputStream keystoreIn = new FileInputStream(keyStorePath.trim());) {
+        try (InputStream keystoreIn = new FileInputStream(keyStorePath.trim());) {
             KeyStore ks = KeyStore.getInstance("JKS");
             ks.load(keystoreIn, keyStorePwd);
             if (StringUtils.isNotBlank(keyAlias)) {
@@ -156,7 +161,7 @@ public class SSLUtil {
             return null;
         }
         TrustManagerFactory tf = null;
-        try ( InputStream truststoreIn = new FileInputStream(trustStorePath);) {
+        try (InputStream truststoreIn = new FileInputStream(trustStorePath);) {
             KeyStore tks = KeyStore.getInstance("JKS");
             tks.load(truststoreIn, trustStorePwd);
             tf = TrustManagerFactory.getInstance("SunX509");

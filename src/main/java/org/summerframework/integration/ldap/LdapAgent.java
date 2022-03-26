@@ -226,7 +226,7 @@ public class LdapAgent implements Closeable {
     /**
      *
      * @param password
-     * @param algorithm MD5, SHA-1, SHA-256
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws GeneralSecurityException
      */
@@ -235,14 +235,22 @@ public class LdapAgent implements Closeable {
         digest.update(password.getBytes(StandardCharsets.UTF_8));
         byte[] md5 = digest.digest();
         String md5Password = Base64.getEncoder().encodeToString(md5);
-        return "{" + algorithm + "}" + md5Password;
+        //return "{MD5}" + md5Password;
+        return md5Password;
     }
     private static final int SALT_LENGTH = 4;
 
     public static String generateSSHA(String password) throws NoSuchAlgorithmException {
-        return generateSSHA(password, "SHA-1");
+        return generateSSHA(password, "SHA3-256");
     }
 
+    /**
+     * 
+     * @param _password
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @return
+     * @throws NoSuchAlgorithmException 
+     */
     public static String generateSSHA(String _password, String algorithm) throws NoSuchAlgorithmException {
         byte[] password = _password.getBytes(StandardCharsets.UTF_8);
         SecureRandom secureRandom = new SecureRandom();
@@ -259,7 +267,7 @@ public class LdapAgent implements Closeable {
         System.arraycopy(hash, 0, hashPlusSalt, 0, hash.length);
         System.arraycopy(salt, 0, hashPlusSalt, hash.length, salt.length);
 
-        return new StringBuilder().append("{SSHA}")
+        return new StringBuilder()//.append("{SSHA}")
                 .append(Base64.getEncoder().encodeToString(hashPlusSalt))
                 .toString();
     }
