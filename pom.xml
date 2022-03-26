@@ -186,7 +186,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.13.2</jackson.version>    
+        <jackson.version>2.13.2.1</jackson.version>    
         <gson.version>2.9.0</gson.version>
         <!-- Bean Validation -->
         <hibernate-validator.version>6.2.3.Final</hibernate-validator.version>
