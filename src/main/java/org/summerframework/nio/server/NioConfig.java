@@ -147,10 +147,10 @@ public class NioConfig extends AbstractSummerBootConfig {
     private volatile int httpServerCodec_MaxInitialLineLength = 4096;
 
     @Config(key = "nio.server.httpServerCodec.MaxHeaderSize", defaultValue = "4096")
-    private volatile int httpServerCodec_MaxHeaderSize = 8192;
+    private volatile int httpServerCodec_MaxHeaderSize = 4096;
 
     @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "4096")
-    private volatile int httpServerCodec_MaxChunkSize = 8192;
+    private volatile int httpServerCodec_MaxChunkSize = 4096;
 
     //4.2 Netty Performance - NIO and Biz Exector Pool
     @Memo(title = "4.2 Netty Performance - NIO and Biz Exector Pool")
@@ -192,7 +192,7 @@ public class NioConfig extends AbstractSummerBootConfig {
 
     //4.3 Netty Channel Handler
     @Memo(title = "4.3 Netty Channel Handler")
-    @Config(key = "nio.server.RreaderIdleTime", required = false,
+    @Config(key = "nio.server.ReaderIdleTime", required = false,
             desc = "rec Idle enabled only when value > 0")
     private volatile int readerIdleTime = 0;
 
