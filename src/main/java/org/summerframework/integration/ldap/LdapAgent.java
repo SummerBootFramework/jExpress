@@ -223,23 +223,33 @@ public class LdapAgent implements Closeable {
         return ret;
     }
 
-    public static String hashMD5Password(String password) throws GeneralSecurityException {
-        MessageDigest digest = MessageDigest.getInstance("MD5");
+    /**
+     *
+     * @param password
+     * @param algorithm MD5, SHA-1, SHA-256
+     * @return
+     * @throws GeneralSecurityException
+     */
+    public static String hashMD5Password(String password, String algorithm) throws GeneralSecurityException {
+        MessageDigest digest = MessageDigest.getInstance(algorithm);
         digest.update(password.getBytes(StandardCharsets.UTF_8));
         byte[] md5 = digest.digest();
         String md5Password = Base64.getEncoder().encodeToString(md5);
-        return "{MD5}" + md5Password;
+        return "{" + algorithm + "}" + md5Password;
     }
-
     private static final int SALT_LENGTH = 4;
 
-    public static String generateSSHA(String _password) throws NoSuchAlgorithmException {
+    public static String generateSSHA(String password) throws NoSuchAlgorithmException {
+        return generateSSHA(password, "SHA-1");
+    }
+
+    public static String generateSSHA(String _password, String algorithm) throws NoSuchAlgorithmException {
         byte[] password = _password.getBytes(StandardCharsets.UTF_8);
         SecureRandom secureRandom = new SecureRandom();
         byte[] salt = new byte[SALT_LENGTH];
         secureRandom.nextBytes(salt);
 
-        MessageDigest crypt = MessageDigest.getInstance("SHA-1");
+        MessageDigest crypt = MessageDigest.getInstance(algorithm);
         crypt.reset();
         crypt.update(password);
         crypt.update(salt);

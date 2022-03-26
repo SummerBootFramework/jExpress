@@ -84,14 +84,14 @@ import org.bouncycastle.pkcs.PKCSException;
  */
 public class EncryptorUtil {
 
-    private static final String AES_KEY_ALGO = "AES";
-    private static final String DSA_KEY_ALGO = "DSA";
-    private static final String RSA_KEY_ALGO = "RSA";
-    private static final String ENCRYPT_ALGO = "AES/GCM/NoPadding";
-    private static final String RSA_Cipher_Algorithm = "RSA/ECB/PKCS1Padding";
-    private static final int TAG_LENGTH_BIT = 128;
-    private static final int IV_LENGTH_BYTE = 12;
-    private static final int AES_KEY_BIT = 256;
+    public static final String AES_KEY_ALGO = "AES";
+    public static final String MESSAGEDIGEST_ALGORITHM = "SHA-1";//"MD5" is a broken or risky cryptographic algorithm
+    public static final String RSA_KEY_ALGO = "RSA";
+    public static final String ENCRYPT_ALGO = "AES/GCM/PKCS5Padding";
+    public static final String RSA_CIPHER_ALGORITHM = "RSA/None/OAEPWithSHA-256AndMGF1Padding";//Cryptographic algorithm ECB is weak and should not be used： "RSA/ECB/PKCS1Padding"
+    public static final int TAG_LENGTH_BIT = 128;
+    public static final int IV_LENGTH_BYTE = 12;
+    public static final int AES_KEY_BIT = 256;
 
     static {
         try {
@@ -111,7 +111,19 @@ public class EncryptorUtil {
      * @throws IOException
      */
     public static byte[] md5(File filename) throws NoSuchAlgorithmException, IOException {
-        MessageDigest complete = MessageDigest.getInstance("MD5");
+        return md5(filename, MESSAGEDIGEST_ALGORITHM);
+    }
+
+    /**
+     *
+     * @param filename
+     * @param algorithm MD5, SHA-1 or SHA-256
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     */
+    public static byte[] md5(File filename, String algorithm) throws NoSuchAlgorithmException, IOException {
+        MessageDigest complete = MessageDigest.getInstance(algorithm);
         try (InputStream fis = new FileInputStream(filename);) {
             byte[] buffer = new byte[1024];
             int numRead;
@@ -133,7 +145,7 @@ public class EncryptorUtil {
      * @throws NoSuchAlgorithmException
      */
     public static byte[] md5(String text) throws UnsupportedEncodingException, NoSuchAlgorithmException {
-        return md5(text.getBytes(StandardCharsets.UTF_8), "MD5");
+        return md5(text.getBytes(StandardCharsets.UTF_8), MESSAGEDIGEST_ALGORITHM);
     }
 
     /**
@@ -143,7 +155,7 @@ public class EncryptorUtil {
      * @throws NoSuchAlgorithmException
      */
     public static byte[] md5(byte[] data) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest md = MessageDigest.getInstance(MESSAGEDIGEST_ALGORITHM);
         //md.reset();
         md.update(data);
         byte[] digest = md.digest();
@@ -223,6 +235,44 @@ public class EncryptorUtil {
         Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
         byte[] plainData = cipher.doFinal(encryptedData);
         return plainData;
+    }
+
+    public static void encrypt(SecretKey symmetricKey, String plainDataFileName, String encryptedFileName) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        //1. create cipher wtiht this key
+        byte[] iv = generateInitializationVector(IV_LENGTH_BYTE);
+        Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
+
+        //3. streaming
+        try (InputStream plainDataInputStream = new FileInputStream(plainDataFileName); FileOutputStream fos = new FileOutputStream(encryptedFileName); DataOutputStream output = new DataOutputStream(fos); CipherOutputStream cos = new CipherOutputStream(output, cipher);) {
+            output.write(iv);
+            //3.4 encrypte
+            int byteRead;
+            final int BUFF_SIZE = 102400;
+            final byte[] buffer = new byte[BUFF_SIZE];
+            while ((byteRead = plainDataInputStream.read(buffer)) != -1) {
+                cos.write(buffer, 0, byteRead);
+            }
+        }
+    }
+
+    public static byte[] decrypt(SecretKey symmetricKey, byte[] encryptedLibraryBytes) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+        try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedLibraryBytes));) {
+            //2. read iv
+            byte[] iv = new byte[IV_LENGTH_BYTE];
+            dis.readFully(iv);
+            Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
+            //4. decrypt streaming
+            try (CipherInputStream cis = new CipherInputStream(dis, cipher); ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
+                final int BUFF_SIZE = 102400;
+                final byte[] buffer = new byte[BUFF_SIZE];
+                int byteRead;
+                // Read through the file, decrypting each byte.
+                while ((byteRead = cis.read(buffer)) != -1) {
+                    bos.write(buffer, 0, byteRead);
+                }
+                return bos.toByteArray();
+            }
+        }
     }
 
     public enum KeyFileType {
@@ -496,7 +546,7 @@ public class EncryptorUtil {
      * @throws BadPaddingException
      */
     private static byte[] asymmetric(int cipherMode, Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
-        Cipher rsaCipher = Cipher.getInstance(RSA_Cipher_Algorithm);
+        Cipher rsaCipher = Cipher.getInstance(RSA_CIPHER_ALGORITHM);
         rsaCipher.init(cipherMode, asymmetricKey);
         // Encrypt the Rijndael key with the RSA cipher
         // and write it to the beginning of the file.
@@ -529,6 +579,26 @@ public class EncryptorUtil {
      * @throws BadPaddingException
      */
     public static void encrypt(Key asymmetricKey, SecretKey symmetricKey, String plainDataFileName, String encryptedFileName, Key digitalSignatureKey) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        encrypt(asymmetricKey, symmetricKey, plainDataFileName, encryptedFileName, digitalSignatureKey, MESSAGEDIGEST_ALGORITHM);
+    }
+
+    /**
+     *
+     * @param asymmetricKey
+     * @param symmetricKey
+     * @param plainDataFileName
+     * @param encryptedFileName
+     * @param digitalSignatureKey
+     * @param md5Algorithm MD5, SHA-1, SHA-256
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static void encrypt(Key asymmetricKey, SecretKey symmetricKey, String plainDataFileName, String encryptedFileName, Key digitalSignatureKey, String md5Algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         //0. metadata        
         String metaInfo = System.currentTimeMillis() + ", " + System.getProperty("hostName");
         byte[] metadata = metaInfo.getBytes(StandardCharsets.UTF_8);
@@ -546,7 +616,7 @@ public class EncryptorUtil {
         //2. asymmetric encrypt file header
         byte[] asymmetricEncryptedMD5 = null, asymmetricEncryptedIV = iv, asymmetricEncryptedSessionKey = null, asymmetricEncryptedSymmetricKeyAlgorithm = null;
         if (asymmetricKey != null) {
-            byte[] md5 = md5(new File(plainDataFileName));
+            byte[] md5 = md5(new File(plainDataFileName), md5Algorithm);
             asymmetricEncryptedMD5 = encrypt(asymmetricKey, md5);
             asymmetricEncryptedIV = encrypt(asymmetricKey, iv);
             if (randomSymmetricKey) {
@@ -605,6 +675,26 @@ public class EncryptorUtil {
      * @throws BadPaddingException
      */
     public static byte[] encrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] plainData, Key digitalSignatureKey) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        return encrypt(asymmetricKey, symmetricKey, plainData, digitalSignatureKey, MESSAGEDIGEST_ALGORITHM);
+    }
+
+    /**
+     *
+     * @param asymmetricKey
+     * @param symmetricKey
+     * @param plainData
+     * @param digitalSignatureKey
+     * @param md5Algorithm MD5, SHA-1, SHA-256
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static byte[] encrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] plainData, Key digitalSignatureKey, String md5Algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         //0. metadata        
         String metaInfo = LocalDateTime.now() + ", " + System.getProperty("hostName");
         byte[] metadata = metaInfo.getBytes(StandardCharsets.UTF_8);
@@ -622,7 +712,7 @@ public class EncryptorUtil {
         //2. asymmetric encrypt file header
         byte[] asymmetricEncryptedMD5 = null, asymmetricEncryptedIV = iv, asymmetricEncryptedSessionKey = null, asymmetricEncryptedSymmetricKeyAlgorithm = null;
         if (asymmetricKey != null) {
-            byte[] md5 = md5(plainData);
+            byte[] md5 = md5(plainData, md5Algorithm);
             asymmetricEncryptedMD5 = encrypt(asymmetricKey, md5);
             asymmetricEncryptedIV = encrypt(asymmetricKey, iv);
             if (randomSymmetricKey) {
@@ -709,6 +799,27 @@ public class EncryptorUtil {
      * @throws javax.crypto.BadPaddingException
      */
     public static void decrypt(Key asymmetricKey, SecretKey symmetricKey, String encryptedFileName, String plainDataFileName, Key digitalSignatureKey, @Nullable EncryptionMeta meta) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        decrypt(asymmetricKey, symmetricKey, encryptedFileName, plainDataFileName, digitalSignatureKey, meta, MESSAGEDIGEST_ALGORITHM);
+    }
+
+    /**
+     *
+     * @param asymmetricKey
+     * @param symmetricKey
+     * @param encryptedFileName
+     * @param plainDataFileName
+     * @param digitalSignatureKey
+     * @param meta
+     * @param md5Algorithm MD5, SHA-1, SHA-256
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static void decrypt(Key asymmetricKey, SecretKey symmetricKey, String encryptedFileName, String plainDataFileName, Key digitalSignatureKey, @Nullable EncryptionMeta meta, String md5Algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         try (DataInputStream dis = new DataInputStream(new FileInputStream(encryptedFileName));) {
             //0. metadata
             byte[] metadata = new byte[dis.readInt()];
@@ -763,7 +874,7 @@ public class EncryptorUtil {
                     fos.write(buffer, 0, byteRead);
                 }
             }
-            byte[] md5 = md5(new File(plainDataFileName));
+            byte[] md5 = md5(new File(plainDataFileName), md5Algorithm);
             if (meta != null) {
                 meta.setMd5(md5ToString(md5));
             }
@@ -792,6 +903,7 @@ public class EncryptorUtil {
      * if null
      * @param encryptedData
      * @param digitalSignatureKey - to verify the digital signature if not null
+     * @param meta
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -802,6 +914,27 @@ public class EncryptorUtil {
      * @throws javax.crypto.BadPaddingException
      */
     public static byte[] decrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] encryptedData, Key digitalSignatureKey, @Nullable EncryptionMeta meta) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        return decrypt(asymmetricKey, symmetricKey, encryptedData, digitalSignatureKey, meta, MESSAGEDIGEST_ALGORITHM);
+    }
+
+    /**
+     *
+     * @param asymmetricKey
+     * @param symmetricKey
+     * @param encryptedData
+     * @param digitalSignatureKey
+     * @param meta
+     * @param md5Algorithm MD5, SHA-1, SHA-256
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static byte[] decrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] encryptedData, Key digitalSignatureKey, @Nullable EncryptionMeta meta, String md5Algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         byte[] ret;
         try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedData));) {
             //0. metadata
@@ -859,12 +992,11 @@ public class EncryptorUtil {
                 ret = bos.toByteArray();
             }
 
-            byte[] md5 = md5(ret);
+            byte[] md5 = md5(ret, md5Algorithm);
             if (meta != null) {
                 meta.setMd5(md5ToString(md5));
             }
             if (decryptedMD5 != null) {
-
                 boolean isMatch = md5 != null && decryptedMD5.length == md5.length;
                 if (isMatch) {
                     for (int i = 0; i < md5.length; i++) {
@@ -880,44 +1012,5 @@ public class EncryptorUtil {
             }
         }
         return ret;
-    }
-
-    public static byte[] decrypt(SecretKey symmetricKey, byte[] encryptedLibraryBytes) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
-        try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedLibraryBytes));) {
-            //2. read iv
-            byte[] iv = new byte[IV_LENGTH_BYTE];
-            dis.readFully(iv);
-            Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
-            //4. decrypt streaming
-            try (CipherInputStream cis = new CipherInputStream(dis, cipher); ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
-                final int BUFF_SIZE = 102400;
-                final byte[] buffer = new byte[BUFF_SIZE];
-                int byteRead;
-                // Read through the file, decrypting each byte.
-                while ((byteRead = cis.read(buffer)) != -1) {
-                    bos.write(buffer, 0, byteRead);
-                }
-                return bos.toByteArray();
-            }
-        }
-    }
-
-    @Deprecated
-    public static void encrypt(SecretKey symmetricKey, String plainDataFileName, String encryptedFileName) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-        //1. create cipher wtiht this key
-        byte[] iv = generateInitializationVector(IV_LENGTH_BYTE);
-        Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
-
-        //3. streaming
-        try (InputStream plainDataInputStream = new FileInputStream(plainDataFileName); FileOutputStream fos = new FileOutputStream(encryptedFileName); DataOutputStream output = new DataOutputStream(fos); CipherOutputStream cos = new CipherOutputStream(output, cipher);) {
-            output.write(iv);
-            //3.4 encrypte
-            int byteRead;
-            final int BUFF_SIZE = 102400;
-            final byte[] buffer = new byte[BUFF_SIZE];
-            while ((byteRead = plainDataInputStream.read(buffer)) != -1) {
-                cos.write(buffer, 0, byteRead);
-            }
-        }
     }
 }
