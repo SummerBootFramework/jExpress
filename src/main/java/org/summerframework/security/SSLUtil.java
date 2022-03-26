@@ -20,21 +20,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.Key;
-import java.security.KeyManagementException;
 import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -51,13 +46,10 @@ public class SSLUtil {
      */
     public static final HostnameVerifier IGNORE_HOST_NAME_VERIFIER = (String hostname, SSLSession session) -> true;
 
-    enum Caller {
+    /*    enum Caller {
         client, server
     }
 
-    /**
-     * To trust all certificates
-     */
     private static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
     public static final TrustManager[] TRUST_ALL_CERTIFICATES = new TrustManager[]{
         new X509TrustManager() {
@@ -84,9 +76,10 @@ public class SSLUtil {
 //                }
 //            }
         }
-    };
+    };*/
+    public static final TrustManager[] TRUST_ALL_CERTIFICATES = null;
 
-    public static void disableSslVerification(KeyManager[] kms) throws NoSuchAlgorithmException, KeyManagementException {
+    /*public static void disableSslVerification(KeyManager[] kms) throws NoSuchAlgorithmException, KeyManagementException {
         // 1. ignore the host name verification
         HttpsURLConnection.setDefaultHostnameVerifier(IGNORE_HOST_NAME_VERIFIER);
 
@@ -104,8 +97,7 @@ public class SSLUtil {
         SSLContext sc = SSLContext.getInstance(DEFAULT_PROTOCOL);
         sc.init(kms, TRUST_ALL_CERTIFICATES, new java.security.SecureRandom());
         HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-    }
-
+    }*/
     //    public static KeyManager[] buildKeyManagers(String keyStorePath, String keyStorePwdStr) throws GeneralSecurityException, IOException {
 //        char[] keyStorePwd = StringUtils.isBlank(keyStorePwdStr) ? null : SecurityUtil.decrypt(v).toCharArray();
 //        return buildKeyManagers(keyStorePath, char[] keyStorePwd);
@@ -187,10 +179,10 @@ public class SSLUtil {
         return tmf == null ? TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
     }
 
-    public static void disableHostnameVerification(Boolean d) {
+    public static void disableHostnameVerification(Boolean disableHostnameVerification) {
         // -Djdk.internal.httpclient.disableHostnameVerification
-        if (d != null) {
-            System.setProperty("jdk.internal.httpclient.disableHostnameVerification", d.toString());
+        if (disableHostnameVerification != null) {
+            System.setProperty("jdk.internal.httpclient.disableHostnameVerification", disableHostnameVerification.toString());
         }
     }
 
@@ -210,9 +202,7 @@ public class SSLUtil {
         // Initialize the SSLContext to work with key and trust managers.
         ret.init(kms, tms, SecureRandom.getInstanceStrong());
 
-        if (disableHostnameVerification != null) {
-            System.setProperty("jdk.internal.httpclient.disableHostnameVerification", disableHostnameVerification.toString());
-        }
+        disableHostnameVerification(disableHostnameVerification);
         return ret;
     }
 
