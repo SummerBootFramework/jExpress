@@ -85,7 +85,7 @@ import org.bouncycastle.pkcs.PKCSException;
 public class EncryptorUtil {
 
     public static final String AES_KEY_ALGO = "AES";
-    public static final String MESSAGEDIGEST_ALGORITHM = "SHA-1";//"MD5" is a broken or risky cryptographic algorithm
+    public static final String MESSAGEDIGEST_ALGORITHM = "SHA3-256";//MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
     public static final String RSA_KEY_ALGO = "RSA";
     public static final String ENCRYPT_ALGO = "AES/GCM/PKCS5Padding";
     public static final String RSA_CIPHER_ALGORITHM = "RSA/None/OAEPWithSHA-256AndMGF1Padding";//Cryptographic algorithm ECB is weak and should not be used： "RSA/ECB/PKCS1Padding"
@@ -117,7 +117,7 @@ public class EncryptorUtil {
     /**
      *
      * @param filename
-     * @param algorithm MD5, SHA-1 or SHA-256
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws NoSuchAlgorithmException
      * @throws IOException
@@ -165,7 +165,7 @@ public class EncryptorUtil {
     /**
      *
      * @param data
-     * @param algorithm MD5 (32-bit), SHA, SHA-256 (64-bit), SHA-384, SHA-512
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * (128-bit)
      * @return
      * @throws NoSuchAlgorithmException
@@ -589,7 +589,7 @@ public class EncryptorUtil {
      * @param plainDataFileName
      * @param encryptedFileName
      * @param digitalSignatureKey
-     * @param md5Algorithm MD5, SHA-1, SHA-256
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -684,7 +684,7 @@ public class EncryptorUtil {
      * @param symmetricKey
      * @param plainData
      * @param digitalSignatureKey
-     * @param md5Algorithm MD5, SHA-1, SHA-256
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -810,7 +810,7 @@ public class EncryptorUtil {
      * @param plainDataFileName
      * @param digitalSignatureKey
      * @param meta
-     * @param md5Algorithm MD5, SHA-1, SHA-256
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -924,7 +924,7 @@ public class EncryptorUtil {
      * @param encryptedData
      * @param digitalSignatureKey
      * @param meta
-     * @param md5Algorithm MD5, SHA-1, SHA-256
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
