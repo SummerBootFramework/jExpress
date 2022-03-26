@@ -94,12 +94,12 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
     @Override
     public void onHTTPClientAccessReportUpdate(long task, long completed, long queue, long active, long pool, long core, long max, long largest) {
         Runnable asyncTask = () -> {
-            BootIOStatusData data = new BootIOStatusData(DTF.format(LocalDateTime.now()), "SBS-IO", -1, -1, -1, -1, -1, -1, -1, task, completed, queue, active, pool, core, max, largest);
+            BootIOStatusData data = new BootIOStatusData(DTF.format(LocalDateTime.now()), "HTTPClient-IO", -1, -1, -1, -1, -1, -1, -1, task, completed, queue, active, pool, core, max, largest);
             events.addFirst(data);
             while (events.size() > 100) {
                 events.removeLast();
             }
-            setLastIOStatus(data.toString(), "SBS-IO");
+            setLastIOStatus(data.toString(), "HTTPClient-IO");
         };
         POOL.execute(asyncTask);
     }

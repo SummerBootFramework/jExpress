@@ -268,19 +268,20 @@ public class FormatterUtil {
     public static ZoneId ZONE_ID_ONTARIO = ZoneId.of("America/Toronto");
 
     /**
-     * Maps the SBS time to an ET format.
+     * Maps the UTC time to an ET format.
      *
-     * @param utcTime SBS time to be formatted.
+     * @param utcTime UTC time to be formatted.
+     * @param zoneId
      *
      * @return ET formatted time.
      *
      */
-    public static String transformUTCDateTimeToLocalDateTime(String utcTime) {
+    public static String transformUTCDateTimeToLocalDateTime(String utcTime, ZoneId zoneId) {
         if (StringUtils.isBlank(utcTime)) {
             return null;
         }
         return ZonedDateTime.parse(utcTime, UTC_DATE_TIME_FORMATTER)
-                .withZoneSameInstant(ZONE_ID_ONTARIO)
+                .withZoneSameInstant(zoneId)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
     }
