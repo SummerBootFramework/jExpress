@@ -23,6 +23,7 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -30,6 +31,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -46,7 +48,7 @@ public class SSLUtil {
      */
     public static final HostnameVerifier IGNORE_HOST_NAME_VERIFIER = (String hostname, SSLSession session) -> true;
 
-    /*    enum Caller {
+    enum Caller {
         client, server
     }
 
@@ -76,8 +78,8 @@ public class SSLUtil {
 //                }
 //            }
         }
-    };*/
-    public static final TrustManager[] TRUST_ALL_CERTIFICATES = null;
+    };
+    //public static final TrustManager[] TRUST_ALL_CERTIFICATES = null;
 
     /*public static void disableSslVerification(KeyManager[] kms) throws NoSuchAlgorithmException, KeyManagementException {
         // 1. ignore the host name verification
