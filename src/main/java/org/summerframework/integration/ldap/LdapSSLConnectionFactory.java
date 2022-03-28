@@ -51,7 +51,7 @@ public class LdapSSLConnectionFactory extends SocketFactory {
 
     public LdapSSLConnectionFactory() {
         try {
-            SSLContext sslCtx = SSLUtil.buildSSLContext(KMS, TMS, TLS_PROTOCAL, null);
+            SSLContext sslCtx = SSLUtil.buildSSLContext(KMS, TMS, TLS_PROTOCAL);
             sf = sslCtx.getSocketFactory();
         } catch (IOException | GeneralSecurityException ex) {
             throw new RuntimeException(ex);

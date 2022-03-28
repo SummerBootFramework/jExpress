@@ -181,20 +181,13 @@ public class SSLUtil {
         return tmf == null ? TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
     }
 
-    public static void disableHostnameVerification(Boolean disableHostnameVerification) {
-        // -Djdk.internal.httpclient.disableHostnameVerification
-        if (disableHostnameVerification != null) {
-            System.setProperty("jdk.internal.httpclient.disableHostnameVerification", disableHostnameVerification.toString());
-        }
-    }
-
-    public static SSLContext buildSSLContext(String keyStorePath, char[] keyStorePwd, String keyAlias, char[] keyPwd, String protocol, String trustStorePath, char[] trustStorePwd, Boolean disableHostnameVerification) throws GeneralSecurityException, IOException {
+    public static SSLContext buildSSLContext(String keyStorePath, char[] keyStorePwd, String keyAlias, char[] keyPwd, String protocol, String trustStorePath, char[] trustStorePwd) throws GeneralSecurityException, IOException {
         KeyManager[] kms = buildKeyManagers(keyStorePath, keyStorePwd, keyAlias, keyPwd);
         TrustManager[] tms = buildTrustManagers(trustStorePath, trustStorePwd);
-        return buildSSLContext(kms, tms, protocol, disableHostnameVerification);
+        return buildSSLContext(kms, tms, protocol);
     }
 
-    public static SSLContext buildSSLContext(KeyManager[] kms, TrustManager[] tms, String protocol, Boolean disableHostnameVerification) throws GeneralSecurityException, IOException {
+    public static SSLContext buildSSLContext(KeyManager[] kms, TrustManager[] tms, String protocol) throws GeneralSecurityException, IOException {
         if (kms == null) {
             return null;
         }
@@ -203,8 +196,6 @@ public class SSLUtil {
         SSLContext ret = SSLContext.getInstance(protocol);
         // Initialize the SSLContext to work with key and trust managers.
         ret.init(kms, tms, SecureRandom.getInstanceStrong());
-
-        disableHostnameVerification(disableHostnameVerification);
         return ret;
     }
 
