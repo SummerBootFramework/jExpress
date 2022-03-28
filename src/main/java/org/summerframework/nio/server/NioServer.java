@@ -237,10 +237,10 @@ public class NioServer {
                 ciphers = Http2SecurityUtil.CIPHERS;
             }
             SslProvider sp = NioConfig.CFG.getSslProvider();
-            if (sp == null) {
-                jdkSslContext = SSLContext.getInstance(NioConfig.CFG.getSslProtocols()[0]);
-                jdkSslContext.init(kmf.getKeyManagers(), tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers(), SecureRandom.getInstanceStrong());
-            } else {
+//            if (sp == null) {
+//                jdkSslContext = SSLContext.getInstance(NioConfig.CFG.getSslProtocols()[0]);
+//                jdkSslContext.init(kmf.getKeyManagers(), tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers(), SecureRandom.getInstanceStrong());
+//            } else {
                 nettySslContext = SslContextBuilder.forServer(kmf)
                         .trustManager(tmf)
                         .clientAuth(clientAuth)
@@ -249,7 +249,7 @@ public class NioServer {
                         .protocols(NioConfig.CFG.getSslProtocols())
                         .ciphers(ciphers, SupportedCipherSuiteFilter.INSTANCE)
                         .build();
-            }
+//            }
             log.info(StringUtils.join("[" + sp + "] " + Arrays.asList(NioConfig.CFG.getSslProtocols())) + " (" + NioConfig.CFG.getSslHandshakeTimeout() + "s): " + ciphers);
         }
 
