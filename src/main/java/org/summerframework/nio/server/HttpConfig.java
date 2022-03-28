@@ -337,6 +337,10 @@ public class HttpConfig extends AbstractSummerBootConfig {
         return protocal;
     }
 
+    public Boolean isHostnameVerificationEnabled() {
+        return hostnameVerification;
+    }
+
     public String getProxyHost() {
         return proxyHost;
     }
