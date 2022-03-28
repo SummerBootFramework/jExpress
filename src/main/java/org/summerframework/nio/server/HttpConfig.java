@@ -128,8 +128,8 @@ public class HttpConfig extends AbstractSummerBootConfig {
     @Config(key = "httpclient.ssl.TrustStore", StorePwdKey = "httpclient.ssl.TrustStorePwd", required = false)
     private volatile TrustManagerFactory tmf;
 
-    @Config(key = "httpclient.ssl.disableHostnameVerification", required = false, defaultValue = "true")
-    private volatile Boolean disableHostnameVerification = true;
+    @Config(key = "httpclient.ssl.HostnameVerification", required = false, defaultValue = "false")
+    private volatile Boolean hostnameVerification = false;
 
     @Config(key = "httpclient.proxy.host", required = false)
     private volatile String proxyHost;
@@ -222,7 +222,10 @@ public class HttpConfig extends AbstractSummerBootConfig {
         KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
         // 3.2 HTTP Client truststore        
         TrustManager[] trustManagers = tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
-        SSLContext sslContext = SSLUtil.buildSSLContext(keyManagers, trustManagers, protocal, disableHostnameVerification);
+        SSLContext sslContext = SSLUtil.buildSSLContext(keyManagers, trustManagers, protocal);
+        if (hostnameVerification != null) {
+            System.setProperty("jdk.internal.httpclient.disableHostnameVerification", hostnameVerification ? "false" : "true");
+        }
 
         // 3.3 HTTP Client Executor
         if (httpClientMaxSize < httpClientCoreSize) {
