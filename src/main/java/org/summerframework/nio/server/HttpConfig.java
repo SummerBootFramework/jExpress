@@ -79,20 +79,20 @@ public class HttpConfig extends AbstractSummerBootConfig {
     //1. Default NIO Response HTTP Headers
     @Memo(title = "1. Default NIO Response HTTP Headers",
             desc = "put generic HTTP response headers here",
-            format = "nio.DefaultResponseHttpHeaders.?=?",
-            example = "nio.DefaultResponseHttpHeaders.Access-Control-Allow-Origin=https://www.courtfiling.ca\n"
-            + "nio.DefaultResponseHttpHeaders.Access-Control-Allow-Headers=X-Requested-With, Content-Type, Origin, Authorization\n"
-            + "nio.DefaultResponseHttpHeaders.Access-Control-Allow-Methods=PUT,GET,POST,DELETE,OPTIONS,PATCH\n"
-            + "nio.DefaultResponseHttpHeaders.Access-Control-Allow-Credentials=false\n"
-            + "nio.DefaultResponseHttpHeaders.Access-Control-Allow-Credentials=false\n"
-            + "nio.DefaultResponseHttpHeaders.Access-Control-Max-Age=3600\n"
-            + "nio.DefaultResponseHttpHeaders.Content-Security-Policy=default-src 'self';script-src 'self' www.google-analytics.com www.google.com www.gstatic. js.stripe.com ajax.cloudflare.com;style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;img-src 'self' www.google-analytics.com stats.g.doubleclick.net www.gstatic.com;font-src 'self' cdnjs.cloudflare.com fonts.gstatic.com;base-uri 'self';child-src www.google.com js.stripe.com;form-action 'self';frame-ancestors 'none';report-uri=\"https://www.courtfiling.ca/report-uri\"\n"
-            + "nio.DefaultResponseHttpHeaders.X-XSS-Protection=1; mode=block\n"
-            + "nio.DefaultResponseHttpHeaders.Strict-Transport-Security=max-age=31536000;includeSubDomains;preload\n"
-            + "nio.DefaultResponseHttpHeaders.X-Frame-Options=sameorigin\n"
-            + "nio.DefaultResponseHttpHeaders.Expect-CT=max-age=86400, enforce, report-uri=\"https://www.courtfiling.ca/report-uri\"\n"
-            + "nio.DefaultResponseHttpHeaders.X-Content-Type-Options=nosniff\n"
-            + "nio.DefaultResponseHttpHeaders.Feature-Policy=autoplay 'none';camera 'none' ")
+            format = "server.DefaultResponseHttpHeaders.?=?",
+            example = "server.DefaultResponseHttpHeaders.Access-Control-Allow-Origin=https://www.summerboot.org\n"
+            + "server.DefaultResponseHttpHeaders.Access-Control-Allow-Headers=X-Requested-With, Content-Type, Origin, Authorization\n"
+            + "server.DefaultResponseHttpHeaders.Access-Control-Allow-Methods=PUT,GET,POST,DELETE,OPTIONS,PATCH\n"
+            + "server.DefaultResponseHttpHeaders.Access-Control-Allow-Credentials=false\n"
+            + "server.DefaultResponseHttpHeaders.Access-Control-Allow-Credentials=false\n"
+            + "server.DefaultResponseHttpHeaders.Access-Control-Max-Age=3600\n"
+            + "server.DefaultResponseHttpHeaders.Content-Security-Policy=default-src 'self';script-src 'self' www.google-analytics.com www.google.com www.gstatic. js.stripe.com ajax.cloudflare.com;style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;img-src 'self' www.google-analytics.com stats.g.doubleclick.net www.gstatic.com;font-src 'self' cdnjs.cloudflare.com fonts.gstatic.com;base-uri 'self';child-src www.google.com js.stripe.com;form-action 'self';frame-ancestors 'none';report-uri=\"https://www.summerboot.org/report-uri\"\n"
+            + "server.DefaultResponseHttpHeaders.X-XSS-Protection=1; mode=block\n"
+            + "server.DefaultResponseHttpHeaders.Strict-Transport-Security=max-age=31536000;includeSubDomains;preload\n"
+            + "server.DefaultResponseHttpHeaders.X-Frame-Options=sameorigin\n"
+            + "server.DefaultResponseHttpHeaders.Expect-CT=max-age=86400, enforce, report-uri=\"https://www.summerboot.org/report-uri\"\n"
+            + "server.DefaultResponseHttpHeaders.X-Content-Type-Options=nosniff\n"
+            + "server.DefaultResponseHttpHeaders.Feature-Policy=autoplay 'none';camera 'none' ")
 
     private final HttpHeaders serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
 
@@ -190,7 +190,7 @@ public class HttpConfig extends AbstractSummerBootConfig {
         serverDefaultResponseHeaders.clear();
         httpClientDefaultRequestHeaders.clear();
         keys.forEach((name) -> {
-            if (name.startsWith("nio.DefaultResponseHttpHeaders.")) {
+            if (name.startsWith("server.DefaultResponseHttpHeaders.")) {
                 String[] names = name.split("\\.");
                 String headerName = names[2];
                 String headerValue = props.getProperty(name);

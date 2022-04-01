@@ -15,7 +15,6 @@
  */
 package org.summerframework.nio.server;
 
-import org.summerframework.security.SSLUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -39,7 +38,6 @@ import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
