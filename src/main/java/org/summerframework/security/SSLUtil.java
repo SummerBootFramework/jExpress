@@ -174,11 +174,8 @@ public class SSLUtil {
     }
 
     public static TrustManager[] buildTrustManagers(String trustStorePath, char[] trustStorePwd) throws GeneralSecurityException, IOException {
-        if (StringUtils.isBlank(trustStorePath)) {
-            return TRUST_ALL_CERTIFICATES;
-        }
         TrustManagerFactory tmf = buildTrustManagerFactory(trustStorePath, trustStorePwd);
-        return tmf == null ? TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
+        return tmf == null ? null : tmf.getTrustManagers();
     }
 
     public static SSLContext buildSSLContext(String keyStorePath, char[] keyStorePwd, String keyAlias, char[] keyPwd, String protocol, String trustStorePath, char[] trustStorePwd) throws GeneralSecurityException, IOException {
