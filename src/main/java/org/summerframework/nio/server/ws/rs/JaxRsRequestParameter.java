@@ -43,7 +43,7 @@ import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.xml.bind.JAXBException;
+//import javax.xml.bind.JAXBException;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -191,7 +191,7 @@ class JaxRsRequestParameter {
         return key;
     }
 
-    public Object value(int badRequestErrorCode, ServiceRequest request, ServiceContext context) throws JAXBException {
+    public Object value(int badRequestErrorCode, ServiceRequest request, ServiceContext context) /*throws JAXBException*/ {
         ParamType currentType = type;
         if (currentType.equals(ParamType.Body_By_RquestType)) {
             String ct = request.getHttpHeaders().get(HttpHeaderNames.CONTENT_TYPE);
