@@ -199,7 +199,7 @@
         <guice.version>5.1.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>5.6.5.Final</hibernate.version>
+        <hibernate.version>6.0.0.Final</hibernate.version>
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
@@ -309,6 +309,13 @@
             <artifactId>jjwt</artifactId>
             <version>${jwt.version}</version>
         </dependency>
+        <!-- backward compatibility for jjwt only https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+
 
 
         <!-- Netty -->
