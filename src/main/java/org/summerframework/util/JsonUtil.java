@@ -52,26 +52,31 @@ public class JsonUtil {
     protected final static XmlMapper xmlMapper = new XmlMapper();
 
     public static void registerModules(Module... modules) {
+        xmlMapper.registerModules(modules);
         JacksonMapper.registerModules(modules);
         JacksonMapperIgnoreNull.registerModules(modules);
     }
 
     public static void configure(SerializationFeature f, boolean state) {
+        xmlMapper.configure(f, state);
         JacksonMapper.configure(f, state);
         JacksonMapperIgnoreNull.configure(f, state);
     }
 
     public static void configure(DeserializationFeature f, boolean state) {
+        xmlMapper.configure(f, state);
         JacksonMapper.configure(f, state);
         JacksonMapperIgnoreNull.configure(f, state);
     }
 
     public static void configure(JsonGenerator.Feature f, boolean state) {
+        xmlMapper.configure(f, state);
         JacksonMapper.configure(f, state);
         JacksonMapperIgnoreNull.configure(f, state);
     }
 
     public static void configure(JsonParser.Feature f, boolean state) {
+        xmlMapper.configure(f, state);
         JacksonMapper.configure(f, state);
         JacksonMapperIgnoreNull.configure(f, state);
     }

@@ -152,7 +152,7 @@ class JaxRsRequestParameter {
                             autoBeanValidation = true;
                         }
                         if (consumes == null) {//default
-                            type = ParamType.Body_JSON;
+                            type = ParamType.Body_By_RquestType;
                         } else {
                             if (consumes.size() > 1 || consumes.contains("*/*")) {
                                 type = ParamType.Body_By_RquestType;
@@ -162,7 +162,7 @@ class JaxRsRequestParameter {
                                 } else if (consumes.contains(MediaType.APPLICATION_XML) || consumes.contains(MediaType.TEXT_XML)) {
                                     type = ParamType.Body_XML;
                                 } else {
-                                    //non-String and not JSON
+                                    //non-String, neither JSON, neither XML
                                     throw new UnsupportedOperationException(error + "Unsupported @Consumes(" + consumes + ") for non-String parameter, currently supported values: " + JaxRsRequestProcessor.SupportedProducesWithReturnType);
                                 }
                             }

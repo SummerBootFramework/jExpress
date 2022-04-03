@@ -48,10 +48,23 @@ public class ServiceError {
         this.errors.add(new Error(errorCode, errorTag, errorDesc, ex));
     }
 
+    @Override
+    public String toString() {
+        return "ServiceError{" + "ref=" + ref + ", attachedData=" + attachedData + ", errors=" + errors + '}';
+    }
+
     public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
         try {
             return JsonUtil.toJson(this, true, true);
+        } catch (JsonProcessingException ex) {
+            return toString();
+        }
+    }
+
+    public String toXML() {
+        try {
+            return JsonUtil.toXML(this);
         } catch (JsonProcessingException ex) {
             return toString();
         }
