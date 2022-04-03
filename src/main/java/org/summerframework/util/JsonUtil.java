@@ -225,7 +225,7 @@ public class JsonUtil {
         return false;
     }
 
-    public static <T extends Object> T fromXML(String xml, Class<T> targetClass) throws JsonProcessingException {
+    public static <T extends Object> T fromXML(Class<T> targetClass, String xml) throws JsonProcessingException {
         return (T) xmlMapper.readValue(xml, targetClass);
     }
 

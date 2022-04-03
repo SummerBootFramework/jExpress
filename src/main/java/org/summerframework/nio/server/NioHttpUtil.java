@@ -108,7 +108,17 @@ public class NioHttpUtil {
             return sendFile(ctx, isKeepAlive, serviceContext);
         }
         if (StringUtils.isBlank(serviceContext.txt()) && serviceContext.error() != null) {
-            serviceContext.txt(serviceContext.error().toJson()).contentType(MediaType.APPLICATION_JSON);
+            String clientAcceptContentType = serviceContext.clientAcceptContentType();
+            if (clientAcceptContentType != null) {
+                clientAcceptContentType = clientAcceptContentType.toLowerCase();
+                if (clientAcceptContentType.contains("json")) {
+                    serviceContext.txt(serviceContext.error().toJson()).contentType(MediaType.APPLICATION_JSON);
+                } else if (clientAcceptContentType.contains("xml")) {
+                    serviceContext.txt(serviceContext.error().toXML()).contentType(MediaType.APPLICATION_XML);
+                }
+            } else {
+                serviceContext.txt(serviceContext.error().toJson()).contentType(MediaType.APPLICATION_JSON);
+            }
         }
         if (StringUtils.isNotBlank(serviceContext.txt())) {
             return sendText(ctx, isKeepAlive, serviceContext.headers(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
@@ -193,7 +203,7 @@ public class NioHttpUtil {
         long fileLength = -1;
         final RandomAccessFile randomAccessFile;
         File file = serviceContext.file();
-        String filePath = serviceContext.txt();
+        String filePath = file.getName();
         try {
             randomAccessFile = new RandomAccessFile(file, "r");
             fileLength = randomAccessFile.length();

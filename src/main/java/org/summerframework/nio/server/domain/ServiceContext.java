@@ -61,12 +61,13 @@ public class ServiceContext {
     private HttpHeaders headers;
     // 1.3 content type    
     private String contentType;// = MediaType.APPLICATION_JSON;
+    private String clientAcceptContentType;
     private String charsetName;
     // 1.4 data
     private byte[] data;
     private String txt = "";
     private File file;
-    private boolean downloadMode;
+    private boolean downloadMode = true;
     private String redirect;
     private final List<POI> poi = new ArrayList<>();
     private List<Memo> memo;
@@ -302,13 +303,21 @@ public class ServiceContext {
         return this;
     }
 
+    public String clientAcceptContentType() {
+        return clientAcceptContentType;
+    }
+
+    public ServiceContext clientAcceptContentType(String clientAcceptContentType) {
+        this.clientAcceptContentType = clientAcceptContentType;
+        return this;
+    }
+
 //    public ServiceContext contentTypeTry(String contentType) {
 //        if (contentType != null) {
 //            this.contentType = contentType;
 //        }
 //        return this;
 //    }
-
     public String charsetName() {
         return charsetName;
     }
@@ -358,6 +367,11 @@ public class ServiceContext {
 
     public boolean isDownloadMode() {
         return downloadMode;
+    }
+
+    public ServiceContext downloadMode(boolean downloadMode) {
+        this.downloadMode = downloadMode;
+        return this;
     }
 
     public boolean precheckFolder(File folder) {
@@ -428,17 +442,21 @@ public class ServiceContext {
 //        return this;
 //    }
     public ServiceContext file(File file, boolean isDownloadMode) {
-        if (!precheckFile(file, isDownloadMode)) {
-            String errorFileName = status.code() + (isDownloadMode ? ".txt" : ".html");
+        this.downloadMode = isDownloadMode;
+        return this.file(file);
+    }
+
+    public ServiceContext file(File file) {
+        if (!precheckFile(file, downloadMode)) {
+            String errorFileName = status.code() + (downloadMode ? ".txt" : ".html");
             file = new File(HttpConfig.CFG.getDocroot() + File.separator + HttpConfig.CFG.getWebResources()
                     + File.separator + errorFileName).getAbsoluteFile();
         }
         this.txt = null;
         this.redirect = null;
         this.file = file;
-        this.downloadMode = isDownloadMode;
         this.contentType = NioHttpUtil.getFileContentType(file);
-        if (!isDownloadMode) {
+        if (!downloadMode) {
             serviceError = null;
         }
 
@@ -452,7 +470,7 @@ public class ServiceContext {
             headers.setInt(HttpHeaderNames.CONTENT_LENGTH, (int) fileLength);
         }
         headers.set(HttpHeaderNames.CONTENT_TYPE, contentType);
-        if (isDownloadMode) {
+        if (downloadMode) {
             String fileName = file.getName();
             try {
                 fileName = URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
