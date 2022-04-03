@@ -39,7 +39,6 @@ import org.summerframework.boot.BootErrorCode;
 import org.summerframework.boot.BootPOI;
 import org.summerframework.nio.server.NioConfig;
 import java.util.Set;
-import javax.ws.rs.core.MediaType;
 
 /**
  *
@@ -61,7 +60,7 @@ public class ServiceContext {
     // 1.2 headers
     private HttpHeaders headers;
     // 1.3 content type    
-    private String contentType = MediaType.APPLICATION_JSON;
+    private String contentType;// = MediaType.APPLICATION_JSON;
     private String charsetName;
     // 1.4 data
     private byte[] data;
@@ -77,7 +76,7 @@ public class ServiceContext {
 //    private int errorCode;
 //    private String errorTag;
 //    private Throwable cause;
-    private ServiceError errors;
+    private ServiceError serviceError;
     private Throwable cause;
     // 2.2 logging control
     private Level level = Level.INFO;
@@ -97,7 +96,7 @@ public class ServiceContext {
     @Override
     public String toString() {
         //return "ServiceContext{" + "status=" + status + ", headers=" + headers + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errorCode=" + errorCode + ", errorTag=" + errorTag + ", cause=" + cause + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
-        return "ServiceContext{" + "status=" + status + ", headers=" + headers + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + errors + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
+        return "ServiceContext{" + "status=" + status + ", headers=" + headers + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
     }
 
     private ServiceContext(ChannelHandlerContext ctx, long hit, long startTs) {
@@ -183,7 +182,7 @@ public class ServiceContext {
 //        errorCode = 0;
 //        errorTag = null;
 //        cause = null;
-        errors = null;
+        serviceError = null;
         cause = null;
         // 2.2 logging control
         level = Level.INFO;
@@ -303,12 +302,12 @@ public class ServiceContext {
         return this;
     }
 
-    public ServiceContext contentTypeTry(String contentType) {
-        if (contentType != null) {
-            this.contentType = contentType;
-        }
-        return this;
-    }
+//    public ServiceContext contentTypeTry(String contentType) {
+//        if (contentType != null) {
+//            this.contentType = contentType;
+//        }
+//        return this;
+//    }
 
     public String charsetName() {
         return charsetName;
@@ -440,7 +439,7 @@ public class ServiceContext {
         this.downloadMode = isDownloadMode;
         this.contentType = NioHttpUtil.getFileContentType(file);
         if (!isDownloadMode) {
-            errors = null;
+            serviceError = null;
         }
 
         if (headers == null) {
@@ -518,20 +517,20 @@ public class ServiceContext {
 //    }
     //@JsonInclude(JsonInclude.Include.NON_NULL)
     public ServiceError error() {
-        if (errors == null || errors.getErrors() == null || errors.getErrors().isEmpty()) {
+        if (serviceError == null || serviceError.getErrors() == null || serviceError.getErrors().isEmpty()) {
             return null;
         }
-        return errors;
+        return serviceError;
     }
 
     public ServiceContext error(Error error) {
         if (error == null) {
             return this;
         }
-        if (errors == null) {
-            errors = new ServiceError(hit);
+        if (serviceError == null) {
+            serviceError = new ServiceError(hit);
         }
-        errors.addError(error);
+        serviceError.addError(error);
         Throwable t = error.getEx();
         if (t != null) {
             cause = t;
@@ -545,12 +544,14 @@ public class ServiceContext {
 
     public ServiceContext errors(Collection<Error> es) {
         if (es == null || es.isEmpty()) {
+            serviceError.getErrors().clear();
+            serviceError = null;
             return this;
         }
-        if (errors == null) {
-            errors = new ServiceError(hit);
+        if (serviceError == null) {
+            serviceError = new ServiceError(hit);
         }
-        errors.addErrors(es);
+        serviceError.addErrors(es);
         for (Error e : es) {
             Throwable t = e.getEx();
             if (t != null) {

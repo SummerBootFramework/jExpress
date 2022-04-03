@@ -47,6 +47,7 @@ import java.nio.file.Files;
 import java.util.Base64;
 import java.util.regex.Pattern;
 import javax.activation.MimetypesFileTypeMap;
+import javax.ws.rs.core.MediaType;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -107,7 +108,7 @@ public class NioHttpUtil {
             return sendFile(ctx, isKeepAlive, serviceContext);
         }
         if (StringUtils.isBlank(serviceContext.txt()) && serviceContext.error() != null) {
-            serviceContext.txt(serviceContext.error().toJson());
+            serviceContext.txt(serviceContext.error().toJson()).contentType(MediaType.APPLICATION_JSON);
         }
         if (StringUtils.isNotBlank(serviceContext.txt())) {
             return sendText(ctx, isKeepAlive, serviceContext.headers(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);

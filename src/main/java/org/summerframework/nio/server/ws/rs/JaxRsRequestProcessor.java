@@ -74,9 +74,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     private final List<MetaMatrixParam> metaMatrixParamList;
     private final Pattern regexPattern;
     private final int parameterSize;
-    private String contentType;
-    private final int priducesSize;
-    public static final List<String> SupportedProducesWithReturnType = Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML);
+    public static final List<String> SupportedProducesWithReturnType = Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML);
 
     public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String path) {
         //1. Basic info
@@ -156,7 +154,6 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         if (temp.isEmpty()) {
             produces = null;
-            contentType = null;
         } else {
             Class retType = javaMethod.getReturnType();
             if (retType != null && !retType.equals(String.class) && !retType.equals(File.class)) {
@@ -169,12 +166,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 
             produces = List.copyOf(temp);
             temp.clear();
-            contentType = produces.get(0);
         }
-        if (contentType == null) {
-            contentType = MediaType.APPLICATION_JSON;
-        }
-        priducesSize = produces == null ? 0 : produces.size();
 
         //5. Parse Parameters
         Parameter[] params = javaMethod.getParameters();
@@ -289,7 +281,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 return;
             }
             try {
-                context.timestampPOI(BootPOI.BIZ_BEGIN).contentTypeTry(contentType);
+                context.timestampPOI(BootPOI.BIZ_BEGIN);
                 ret = javaMethod.invoke(javaInstance, paramValues);
             } catch (InvocationTargetException ex) {
                 throw ex.getCause();
@@ -298,7 +290,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             }
         } else {
             try {
-                context.timestampPOI(BootPOI.BIZ_BEGIN).contentTypeTry(contentType);
+                context.timestampPOI(BootPOI.BIZ_BEGIN);
                 ret = javaMethod.invoke(javaInstance);
             } catch (InvocationTargetException ex) {
                 throw ex.getCause();
@@ -306,24 +298,27 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 context.timestampPOI(BootPOI.BIZ_END);
             }
         }
+
         if (ret != null) {
+            //1. calculate responseContentType
+            String responseContentType;
+            String clientAcceptedContentType = httpHeaders.get(HttpHeaderNames.ACCEPT);
+            if (produces != null) {
+                if (clientAcceptedContentType != null && produces.contains(clientAcceptedContentType)) {
+                    responseContentType = clientAcceptedContentType;//use client specified
+                } else {
+                    responseContentType = produces.get(0);//use the first one
+                }
+            } else {
+                responseContentType = MediaType.APPLICATION_JSON;// server NOT defined
+            }
+            //2. set content and contentType
             if (ret instanceof String) {
                 context.txt((String) ret);
             } else if (ret instanceof File) {
                 context.file((File) ret, true);
             } else {
-                if (priducesSize > 1) {
-                    String a = httpHeaders.get(HttpHeaderNames.ACCEPT);
-                    if (StringUtils.isNotBlank(a)) {
-                        for (String p : produces) {
-                            if (a.contains(p)) {
-                                contentType = a;
-                                break;
-                            }
-                        }
-                    }
-                }
-                switch (contentType) {
+                switch (responseContentType) {
                     case MediaType.APPLICATION_JSON:
                         context.txt(JsonUtil.toJson(ret));
                         break;
@@ -331,7 +326,14 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                     case MediaType.TEXT_XML:
                         context.txt(JsonUtil.toXML(ret));
                         break;
+                    case MediaType.TEXT_PLAIN:
+                    case MediaType.TEXT_HTML:
+                        context.txt(ret.toString());
+                        break;
                 }
+            }
+            if (context.contentType() == null) {
+                context.contentType(responseContentType);
             }
         }
     }
