@@ -15,6 +15,7 @@
  */
 package org.summerframework.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import static org.summerframework.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 import org.summerframework.security.SecurityUtil;
 import com.google.common.collect.ImmutableSortedSet;
@@ -68,15 +69,15 @@ public class ReflectionUtil {
      * 1. T, K: enum, String, boolean/Boolean, byte/Byte, char/short/Short, int/Integer,
      * long/Long, float/Float, double/Double, BigDecimal, URI, URL, Path, File
      * 2. <T>[] array
-
+     *
      * 3. Immutable Set, Immutable SortedSet<T>
-
+     *
      * 4. Immutable List<T>
-
+     *
      * 5. Immutable Map<T, K>
-
+     *
      * 6. KeyManagerFactory
-
+     *
      * 7. TrustManagerFactory
      * }</pre>
      *
@@ -277,17 +278,27 @@ public class ReflectionUtil {
             }
             return Enum.valueOf((Class<Enum>) targetClass, value);
         } else {
-            //1. There is a constructor that accepts a string parameter
+//            //1. try JSON
+//            try {
+//                return JsonUtil.fromJson(targetClass, value);
+//            } catch (JsonProcessingException ex) {
+//            }
+//            //2. try XML
+//            try {
+//                return JsonUtil.fromXML(targetClass, value);
+//            } catch (JsonProcessingException ex) {
+//            }
+
+            //1. There is a static method or a method named fromstring that accepts string parameters
+            //(for example: Integer.valueOf(String) and java.util.UUID.fromString(String));            
             try {
-                Constructor cst = targetClass.getConstructor(String.class);
-                return cst.newInstance(value);
+                Method mtd = targetClass.getMethod("valueOf", String.class);
+                return mtd.invoke(null, value);
             } catch (NoSuchMethodException | SecurityException ex) {
-                //no constructor with (String)
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                //failed to crate instance
+                //no static fromString(String)
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                //failed to call static fromString(String)
             }
-            //2. There is a static method or a method named fromstring that accepts string parameters
-            //(for example: Integer.valueOf(String) and java.util.UUID.fromString(String));
             try {
                 Method mtd = targetClass.getMethod("fromString", String.class);
                 return mtd.invoke(null, value);
@@ -296,13 +307,14 @@ public class ReflectionUtil {
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
                 //failed to call static fromString(String)
             }
+            //2. There is a constructor that accepts a string parameter
             try {
-                Method mtd = targetClass.getMethod("valueOf", String.class);
-                return mtd.invoke(null, value);
+                Constructor cst = targetClass.getConstructor(String.class);
+                return cst.newInstance(value);
             } catch (NoSuchMethodException | SecurityException ex) {
-                //no static fromString(String)
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                //failed to call static fromString(String)
+                //no constructor with (String)
+            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                //failed to crate instance
             }
         }
         return null;

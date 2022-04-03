@@ -132,7 +132,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
+            ServiceContext context = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(httpHeaders.get(HttpHeaderNames.ACCEPT));
             String acceptCharset = httpHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
             if (StringUtils.isNotBlank(acceptCharset)) {
                 context.charsetName(acceptCharset);//.contentType(ServiceContext.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
@@ -197,7 +197,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             cfg.getBizExecutor().execute(asyncTask);
         } catch (RejectedExecutionException ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
+            ServiceContext context = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(httpHeaders.get(HttpHeaderNames.ACCEPT));
             Error e = new Error(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many requests", ex);
             context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context);
@@ -214,7 +214,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             log.fatal(sb.toString());
         } catch (Throwable ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders());
+            ServiceContext context = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(httpHeaders.get(HttpHeaderNames.ACCEPT));
             Error e = new Error(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context);

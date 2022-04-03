@@ -25,7 +25,6 @@ import org.summerframework.security.auth.Caller;
 import org.summerframework.util.FormatterUtil;
 import org.summerframework.util.JsonUtil;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -65,6 +64,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     private final boolean permitAll;
     private final List<String> consumes;
     private final List<String> produces;
+    private final String produce_ExplicitType;
+    private final String produce_DefaultType;
 
     //param info    
     private final List<JaxRsRequestParameter> parameterList;
@@ -74,7 +75,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     private final List<MetaMatrixParam> metaMatrixParamList;
     private final Pattern regexPattern;
     private final int parameterSize;
-    public static final List<String> SupportedProducesWithReturnType = Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML);
+    public static final List<String> SupportedProducesWithReturnType = Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON_PATCH_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML);
 
     public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String path) {
         //1. Basic info
@@ -154,6 +155,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         if (temp.isEmpty()) {
             produces = null;
+            produce_ExplicitType = null;
+            produce_DefaultType = null;
         } else {
             Class retType = javaMethod.getReturnType();
             if (retType != null && !retType.equals(String.class) && !retType.equals(File.class)) {
@@ -165,6 +168,12 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             }
 
             produces = List.copyOf(temp);
+            produce_DefaultType = produces.get(0);
+            if (produces.size() == 1) {
+                produce_ExplicitType = produce_DefaultType;
+            } else {
+                produce_ExplicitType = null;
+            }
             temp.clear();
         }
 
@@ -249,6 +258,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 
     @Override
     public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int badRequestErrorCode) throws Throwable {
+        //1. auth
         if (roleBased) {//authentication is done, now we do authorization
             boolean isAuthorized = false;
             Caller caller = context.caller();
@@ -270,6 +280,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 return;
             }
         }
+        //2. invoke
         Object ret;
         if (parameterSize > 0) {
             ServiceRequest request = buildServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody);
@@ -298,43 +309,67 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 context.timestampPOI(BootPOI.BIZ_END);
             }
         }
-
+        //3. process return object
         if (ret != null) {
-            //1. calculate responseContentType
-            String responseContentType;
-            String clientAcceptedContentType = httpHeaders.get(HttpHeaderNames.ACCEPT);
-            if (produces != null) {
-                if (clientAcceptedContentType != null && produces.contains(clientAcceptedContentType)) {
-                    responseContentType = clientAcceptedContentType;//use client specified
+            if (ret instanceof File) {
+                context.file((File) ret);
+            } else {
+                //1. calculate responseContentType
+                String responseContentType = produce_ExplicitType;
+                if (responseContentType == null) {// server undefined or decide by client Accept header
+                    String clientAcceptedContentType = context.clientAcceptContentType();
+                    if (clientAcceptedContentType == null) {// decide by server side
+                        responseContentType = produce_DefaultType;
+                    } else {//client to match from server defined list         
+                        clientAcceptedContentType = clientAcceptedContentType.toLowerCase();
+                        if (produces != null) {
+                            for (String produce : produces) {
+                                if (clientAcceptedContentType.contains(produce)) {
+                                    responseContentType = produce;
+                                    break;
+                                }
+                            }
+                            if (responseContentType == null) {// client not match
+                                responseContentType = produce_DefaultType;
+                            }
+                        } else {
+                            if (clientAcceptedContentType.contains("json")) {
+                                responseContentType = MediaType.APPLICATION_JSON;
+                            } else if (clientAcceptedContentType.contains("xml")) {
+                                responseContentType = MediaType.APPLICATION_XML;
+                            } else if (clientAcceptedContentType.contains("txt")) {
+                                responseContentType = MediaType.TEXT_HTML;
+                            }
+                        }
+                    }
+                    if (responseContentType == null) {// finally client not match
+                        responseContentType = MediaType.APPLICATION_JSON;
+                    }
+                }
+                //2. set content and contentType
+                if (ret instanceof String) {
+                    context.txt((String) ret);
                 } else {
-                    responseContentType = produces.get(0);//use the first one
+                    switch (responseContentType) {
+                        case MediaType.APPLICATION_JSON:
+                            context.txt(JsonUtil.toJson(ret));
+                            break;
+                        case MediaType.APPLICATION_XML:
+                        case MediaType.TEXT_XML:
+                            context.txt(JsonUtil.toXML(ret));
+                            break;
+                        case MediaType.TEXT_HTML:
+                        case MediaType.TEXT_PLAIN:
+                            context.txt(ret.toString());
+                            break;
+                    }
                 }
-            } else {
-                responseContentType = MediaType.APPLICATION_JSON;// server NOT defined
-            }
-            //2. set content and contentType
-            if (ret instanceof String) {
-                context.txt((String) ret);
-            } else if (ret instanceof File) {
-                context.file((File) ret, true);
-            } else {
-                switch (responseContentType) {
-                    case MediaType.APPLICATION_JSON:
-                        context.txt(JsonUtil.toJson(ret));
-                        break;
-                    case MediaType.APPLICATION_XML:
-                    case MediaType.TEXT_XML:
-                        context.txt(JsonUtil.toXML(ret));
-                        break;
-                    case MediaType.TEXT_PLAIN:
-                    case MediaType.TEXT_HTML:
-                        context.txt(ret.toString());
-                        break;
+                //3. update content type
+                if (context.contentType() == null) {
+                    context.contentType(responseContentType);
                 }
             }
-            if (context.contentType() == null) {
-                context.contentType(responseContentType);
-            }
+
         }
     }
 

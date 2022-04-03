@@ -53,7 +53,7 @@ import org.apache.commons.lang3.StringUtils;
 class JaxRsRequestParameter {
 
     public enum ParamType {
-        Request, Response, Body_STRING, Body_JSON, Body_XML, Body_By_RquestType, PathParam, MatrixParam, QueryParam, FormParam, HeaderParam, CookieParam
+        Request, Response, Body_STRING, Body_JSON, Body_XML, Body_OnDemond_BylClientRquestType, PathParam, MatrixParam, QueryParam, FormParam, HeaderParam, CookieParam
     }
 
     private final Class targetClass;
@@ -64,16 +64,22 @@ class JaxRsRequestParameter {
     private final String key;
     private final String defaultValue;
     private final boolean isRequired;
-    private final boolean requestBodyAllowed;
+    //private final boolean requestBodyAllowed;
     private boolean autoBeanValidation = false;
     private boolean cookieParamObj = false;
     private final EnumConvert.To enumConvert;
 
     public JaxRsRequestParameter(String info, HttpMethod httpMethod, List<String> consumes, Parameter param) {
         String error = "\n\tparameter is not allowed in " + info + "(" + param + ")\n\t - ";
-        requestBodyAllowed = httpMethod.equals(HttpMethod.POST)
+        /*requestBodyAllowed = httpMethod.equals(HttpMethod.POST)
                 || httpMethod.equals(HttpMethod.PUT)
                 || httpMethod.equals(HttpMethod.PATCH);
+        
+        The RFC2616 referenced as "HTTP/1.1 spec" is now obsolete. In 2014 it was replaced by RFCs 7230-7237. 
+        Quote "the message-body SHOULD be ignored when handling the request" has been deleted. 
+        It's now just "Request message framing is independent of method semantics, even if the method doesn't define any use for a message body" 
+        The 2nd quote "The GET method means retrieve whatever information ... is identified by the Request-URI" was deleted. 
+         */
 
         parameterizedType = param.getParameterizedType();
 
@@ -143,34 +149,36 @@ class JaxRsRequestParameter {
                 key = cookieParam.value();
             } else {
                 key = null;
-                if (requestBodyAllowed) {
-                    if (targetClass.equals(String.class)) {
-                        type = ParamType.Body_STRING;
+//                if (requestBodyAllowed) {
+                if (targetClass.equals(String.class)) {
+                    type = ParamType.Body_STRING;
+                } else {
+                    Valid v = param.getAnnotation(Valid.class);
+                    if (v != null) {
+                        autoBeanValidation = true;
+                    }
+                    if (consumes == null) {//default
+                        type = ParamType.Body_OnDemond_BylClientRquestType;
                     } else {
-                        Valid v = param.getAnnotation(Valid.class);
-                        if (v != null) {
-                            autoBeanValidation = true;
-                        }
-                        if (consumes == null) {//default
-                            type = ParamType.Body_By_RquestType;
+                        if (consumes.size() > 1 || consumes.contains(MediaType.WILDCARD)) {
+                            type = ParamType.Body_OnDemond_BylClientRquestType;
                         } else {
-                            if (consumes.size() > 1 || consumes.contains("*/*")) {
-                                type = ParamType.Body_By_RquestType;
+                            String serverConsumesOnlyOneTyoe = consumes.get(0).toLowerCase();
+                            if (serverConsumesOnlyOneTyoe.contains("json")) {//if (consumes.contains(MediaType.APPLICATION_JSON) || consumes.contains(MediaType.APPLICATION_JSON_PATCH_JSON)) {
+                                type = ParamType.Body_JSON;
+                            } else if (serverConsumesOnlyOneTyoe.contains("xml")) {//} else if (consumes.contains(MediaType.APPLICATION_XML) || consumes.contains(MediaType.TEXT_XML)) {
+                                type = ParamType.Body_XML;
                             } else {
-                                if (consumes.contains(MediaType.APPLICATION_JSON)) {
-                                    type = ParamType.Body_JSON;
-                                } else if (consumes.contains(MediaType.APPLICATION_XML) || consumes.contains(MediaType.TEXT_XML)) {
-                                    type = ParamType.Body_XML;
-                                } else {
-                                    //non-String, neither JSON, neither XML
-                                    throw new UnsupportedOperationException(error + "Unsupported @Consumes(" + consumes + ") for non-String parameter, currently supported values: " + JaxRsRequestProcessor.SupportedProducesWithReturnType);
-                                }
+                                //non-String, neither JSON, neither XML
+                                //throw new UnsupportedOperationException(error + "Unsupported @Consumes(" + consumes + ") for non-String parameter, currently supported values: " + JaxRsRequestProcessor.SupportedProducesWithReturnType);
+                                type = ParamType.Body_OnDemond_BylClientRquestType;
                             }
                         }
                     }
-                } else {
-                    throw new UnsupportedOperationException(error + "converting request body to non-String parameter is only allowed for POST, PUT and PATCH");
                 }
+//                } else {
+//                    throw new UnsupportedOperationException(error + "converting request body to non-String parameter is only allowed for POST, PUT and PATCH");
+//                }
             }
         }
         isRequired = param.getAnnotation(NotNull.class) != null
@@ -191,16 +199,21 @@ class JaxRsRequestParameter {
         return key;
     }
 
+    public static void main(String[] args) {
+        String a = "abcde";
+        System.out.println(a.contains("bc"));
+        System.out.println(a.contains("Bc"));
+    }
+
     public Object value(int badRequestErrorCode, ServiceRequest request, ServiceContext context) /*throws JAXBException*/ {
         ParamType currentType = type;
-        if (currentType.equals(ParamType.Body_By_RquestType)) {
+        if (currentType.equals(ParamType.Body_OnDemond_BylClientRquestType)) {
             String ct = request.getHttpHeaders().get(HttpHeaderNames.CONTENT_TYPE);
-            if (ct == null) {
-                currentType = ParamType.Body_JSON;//default
-            } else {
-                if (ct.contains(MediaType.APPLICATION_JSON)) {
+            if (ct != null) {
+                ct = ct.toLowerCase();
+                if (ct.contains("json")) {
                     currentType = ParamType.Body_JSON;
-                } else if (ct.contains(MediaType.APPLICATION_XML) || ct.contains(MediaType.TEXT_XML)) {
+                } else if (ct.contains("xml")) {
                     currentType = ParamType.Body_XML;
                 }
             }
@@ -306,7 +319,7 @@ class JaxRsRequestParameter {
             case Body_XML:
                 v = request.getHttpPostRequestBody();
                 try {
-                    postDataObj = JsonUtil.fromXML(v, targetClass);
+                    postDataObj = JsonUtil.fromXML(targetClass, v);
                 } catch (Throwable ex) {
                     // 1. convert to JSON
                     Error e = new Error(badRequestErrorCode, null, "Bad request: " + ex.toString(), null);
@@ -331,7 +344,7 @@ class JaxRsRequestParameter {
                     }
                 }
                 return postDataObj;
-            case Body_By_RquestType:
+            case Body_OnDemond_BylClientRquestType:
                 v = request.getHttpPostRequestBody();
                 postDataObj = parse(v, defaultValue, context, badRequestErrorCode);
                 if (autoBeanValidation) {
