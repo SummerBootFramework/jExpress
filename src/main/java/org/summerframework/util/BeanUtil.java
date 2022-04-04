@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.validation.ConstraintViolation;
 import java.util.Iterator;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
@@ -199,16 +200,16 @@ public class BeanUtil {
         if (bean == null) {
             return "missing data";
         }
-        Set<jakarta.validation.ConstraintViolation<Object>> violations = ValidatorFactory.getValidator().validate(bean);
+        Set<ConstraintViolation<Object>> violations = ValidatorFactory.getValidator().validate(bean);
         if (violations.isEmpty()) {
             return null;
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append(bean.getClass().getSimpleName()).append(" Validation Failed: ");
-        Iterator<jakarta.validation.ConstraintViolation<Object>> violationsIter = violations.iterator();
+        Iterator<ConstraintViolation<Object>> violationsIter = violations.iterator();
         while (violationsIter.hasNext()) {
-            jakarta.validation.ConstraintViolation<Object> constViolation = violationsIter.next();
+            ConstraintViolation<Object> constViolation = violationsIter.next();
             sb.append(constViolation.getPropertyPath()).append("=").append(constViolation.getInvalidValue())
                     .append(" - ").append(constViolation.getMessage()).append("; ");
 
