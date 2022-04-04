@@ -562,8 +562,10 @@ public class ServiceContext {
 
     public ServiceContext errors(Collection<Error> es) {
         if (es == null || es.isEmpty()) {
-            serviceError.getErrors().clear();
-            serviceError = null;
+            if (serviceError != null && serviceError.getErrors() != null) {
+                serviceError.getErrors().clear();
+                serviceError = null;
+            }
             return this;
         }
         if (serviceError == null) {

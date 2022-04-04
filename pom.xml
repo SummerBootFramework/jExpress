@@ -408,11 +408,12 @@
             <version>${jackson.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-jsonSchema Apache 2.0-->
+<!-- it has dependency on https://mvnrepository.com/artifact/javax.validation/validation-api, which is replaced by jakarta.validation
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-jsonSchema</artifactId>
             <version>${jackson.version}</version>
-        </dependency>
+        </dependency>-->
         <!-- XML -->
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml Apache 2.0-->
         <dependency>
