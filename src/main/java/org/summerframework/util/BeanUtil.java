@@ -27,6 +27,8 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.ValidatorFactory;
 import java.util.Iterator;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
@@ -194,7 +196,7 @@ public class BeanUtil {
         return xmlMapper.writeValueAsString(obj);
     }
 
-    public static final jakarta.validation.ValidatorFactory ValidatorFactory = jakarta.validation.Validation.buildDefaultValidatorFactory();
+    public static final ValidatorFactory ValidatorFactory = Validation.buildDefaultValidatorFactory();
 
     public static String getBeanValidationResult(Object bean) {
         if (bean == null) {
