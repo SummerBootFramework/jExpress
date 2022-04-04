@@ -193,7 +193,7 @@ public class BeanUtil {
     public static String toXML(Object obj) throws JsonProcessingException {
         return xmlMapper.writeValueAsString(obj);
     }
-    
+
     public static final jakarta.validation.ValidatorFactory ValidatorFactory = jakarta.validation.Validation.buildDefaultValidatorFactory();
 
     public static String getBeanValidationResult(Object bean) {
