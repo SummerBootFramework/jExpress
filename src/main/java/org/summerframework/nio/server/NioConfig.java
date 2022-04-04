@@ -37,7 +37,7 @@ import org.summerframework.boot.config.AbstractSummerBootConfig;
 import org.summerframework.boot.config.annotation.Config;
 import org.summerframework.boot.config.annotation.Memo;
 import io.netty.channel.ChannelHandler;
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 
 /**
  *
@@ -362,7 +362,7 @@ public class NioConfig extends AbstractSummerBootConfig {
                 }
             }
         }
-        JsonUtil.configure(fromJsonFailOnUnknownProperties, toJsonPretty, toJsonIgnoreNull);
+        BeanUtil.configure(fromJsonFailOnUnknownProperties, toJsonPretty, toJsonIgnoreNull);
 
         //5.1 caller filter
         String key;

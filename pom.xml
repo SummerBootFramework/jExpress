@@ -190,10 +190,8 @@
         <jackson.patch.version>2.13.2.2</jackson.patch.version>
         <gson.version>2.9.0</gson.version>
         <!-- Bean Validation -->
-        <hibernate-validator.version>6.2.3.Final</hibernate-validator.version>
-        <validation-api.version>2.0.1.Final</validation-api.version>
-        <el.api.version>3.0.0</el.api.version>
-        <el.Implementation.version>2.2.6</el.Implementation.version>
+        <hibernate-validator.version>7.0.4.Final</hibernate-validator.version>
+        <el.Implementation.version>4.0.2</el.Implementation.version>
 
         <!-- IOC Injection -->
         <guice.version>5.1.0</guice.version>
@@ -425,31 +423,19 @@
         
         
         <!-- Bean Validation -->
-        <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator Apache 2.0-->
+        <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator -->
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
             <version>${hibernate-validator.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.validation/validation-api Apache 2.0-->
+        <!-- https://mvnrepository.com/artifact/org.glassfish/jakarta.el -->
         <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>${validation-api.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.el/javax.el-api CDDL, GPL, GPL 2.0-->
-        <dependency>
-            <groupId>javax.el</groupId>
-            <artifactId>javax.el-api</artifactId>
-            <version>${el.api.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.glassfish.web/javax.el CDDL, GPL, GPL 2.0-->
-        <dependency>
-            <groupId>org.glassfish.web</groupId>
-            <artifactId>javax.el</artifactId>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.el</artifactId>
             <version>${el.Implementation.version}</version>
+            <!-- <scope>test</scope>-->
         </dependency>
-
 
         <!-- Injection -->
         <!-- https://mvnrepository.com/artifact/com.google.inject/guice Apache 2.0-->            

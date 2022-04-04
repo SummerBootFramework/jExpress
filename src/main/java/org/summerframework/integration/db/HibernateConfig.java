@@ -17,7 +17,7 @@ package org.summerframework.integration.db;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.summerframework.boot.config.ConfigUtil;
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -67,7 +67,7 @@ public class HibernateConfig implements SummerBootConfig {
     @Override
     public String info() {
         try {
-            return JsonUtil.toJson(this, true, false);
+            return BeanUtil.toJson(this, true, false);
         } catch (JsonProcessingException ex) {
             return ex.toString();
         }

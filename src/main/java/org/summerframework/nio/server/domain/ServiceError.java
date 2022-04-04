@@ -15,7 +15,7 @@
  */
 package org.summerframework.nio.server.domain;
 
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class ServiceError {
     public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
         try {
-            return JsonUtil.toJson(this, true, true);
+            return BeanUtil.toJson(this, true, true);
         } catch (JsonProcessingException ex) {
             return toString();
         }
@@ -64,7 +64,7 @@ public class ServiceError {
 
     public String toXML() {
         try {
-            return JsonUtil.toXML(this);
+            return BeanUtil.toXML(this);
         } catch (JsonProcessingException ex) {
             return toString();
         }

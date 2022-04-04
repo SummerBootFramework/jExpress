@@ -18,7 +18,7 @@ package org.summerframework.integration.cache;
 import org.summerframework.boot.config.ConfigUtil;
 import static org.summerframework.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 import org.summerframework.security.SecurityUtil;
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.File;
@@ -73,7 +73,7 @@ public class RedisConfig implements SummerBootConfig {
     @Override
     public String info() {
         try {
-            return JsonUtil.toJson(this, true, false);
+            return BeanUtil.toJson(this, true, false);
         } catch (JsonProcessingException ex) {
             return ex.toString();
         }

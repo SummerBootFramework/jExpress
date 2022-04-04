@@ -15,7 +15,7 @@
  */
 package org.summerframework.security.auth;
 
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.Serializable;
@@ -54,7 +54,7 @@ public class User implements Serializable, Caller, Comparable<User> {
     public String toString() {
         try {
             //return "User{" + "id=" + id + ", uid=" + uid + ", groups=" + groups + ", type=" + type + '}';
-            return JsonUtil.toJson(this);
+            return BeanUtil.toJson(this);
         } catch (JsonProcessingException ex) {
             return "User{" + "id=" + id + ", uid=" + uid + ", type=" + type + ", ex=" + ex + '}';
         }

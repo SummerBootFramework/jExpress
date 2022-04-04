@@ -16,7 +16,7 @@
 package org.summerframework.boot.instrumentation.jmx;
 
 import org.summerframework.boot.instrumentation.IOStatusData;
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
@@ -38,7 +38,7 @@ public class BootIOStatusData extends IOStatusData {
     public String toString() {
         //return "[" + ts + "] " + super.toString();
         try {
-            return JsonUtil.toJson(this);
+            return BeanUtil.toJson(this);
         } catch (JsonProcessingException ex) {
             return ex.toString();
         }

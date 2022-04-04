@@ -65,7 +65,7 @@ import org.summerframework.nio.server.NioServerContext;
 import org.summerframework.security.auth.AuthConfig;
 import org.summerframework.util.ApplicationUtil;
 import org.summerframework.util.FormatterUtil;
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 import org.summerframework.util.ReflectionUtil;
 
 /**
@@ -306,7 +306,7 @@ abstract public class SummerApplication extends CommandLineRunner {
         if (errorCodeClass != null && checkDuplicated) {
             Map<Object, Set<String>> duplicated = ApplicationUtil.checkDuplicateFields(errorCodeClass, int.class);
             if (!duplicated.isEmpty()) {
-                String report = JsonUtil.toJson(duplicated, true, false);
+                String report = BeanUtil.toJson(duplicated, true, false);
                 System.err.println("duplicated.AppErrorCode=" + report);
                 System.exit(1);
             }
@@ -330,7 +330,7 @@ abstract public class SummerApplication extends CommandLineRunner {
         if (enable_cli_errorCodeClass != null && checkDuplicated) {
             Map<Object, Set<String>> duplicated = ApplicationUtil.checkDuplicateFields(poiNameClass, String.class);
             if (!duplicated.isEmpty()) {
-                String report = JsonUtil.toJson(duplicated, true, false);
+                String report = BeanUtil.toJson(duplicated, true, false);
                 System.err.println("duplicated.ServicePOI=" + report);
                 System.exit(1);
             }
@@ -700,10 +700,10 @@ abstract public class SummerApplication extends CommandLineRunner {
                             .stream()
                             .sorted(Map.Entry.comparingByValue())
                             .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
-                    String json = JsonUtil.toJson(sorted, true, false);
+                    String json = BeanUtil.toJson(sorted, true, false);
                     System.out.println(json);
                 } else {
-                    String report = JsonUtil.toJson(duplicated, true, false);
+                    String report = BeanUtil.toJson(duplicated, true, false);
                     System.out.println("duplicated.AppErrorCode=" + report);
                 }
                 System.exit(0);
@@ -717,10 +717,10 @@ abstract public class SummerApplication extends CommandLineRunner {
                             .stream()
                             .sorted(Map.Entry.comparingByValue())
                             .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
-                    String json = JsonUtil.toJson(sorted, true, false);
+                    String json = BeanUtil.toJson(sorted, true, false);
                     System.out.println(json);
                 } else {
-                    String report = JsonUtil.toJson(duplicated, true, false);
+                    String report = BeanUtil.toJson(duplicated, true, false);
                     System.out.println("duplicated.ServicePOI=" + report);
                 }
                 System.exit(0);
@@ -824,7 +824,7 @@ abstract public class SummerApplication extends CommandLineRunner {
                 } else {
                     String inspectionReport;
                     try {
-                        inspectionReport = JsonUtil.toJson(errors, true, true);
+                        inspectionReport = BeanUtil.toJson(errors, true, true);
                     } catch (Throwable ex) {
                         inspectionReport = "total " + errors.size();
                     }

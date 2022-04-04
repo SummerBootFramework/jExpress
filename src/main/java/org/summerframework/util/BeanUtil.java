@@ -15,8 +15,6 @@
  */
 package org.summerframework.util;
 
-import org.summerframework.nio.server.domain.Error;
-import org.summerframework.nio.server.domain.ServiceContext;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -28,19 +26,15 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.Iterator;
 import java.util.Set;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.ValidatorFactory;
 import org.apache.commons.lang3.StringUtils;
 
 /**
  *
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
-public class JsonUtil {
+public class BeanUtil {
 
     private static boolean isToJsonIgnoreNull = true;
     private static boolean isToJsonPretty = false;
@@ -191,45 +185,34 @@ public class JsonUtil {
         return JacksonMapper.readValue(json, javaType);
     }
 
-    public static final ValidatorFactory ValidatorFactory = Validation.buildDefaultValidatorFactory();
-
-    public static boolean isValidBean(Object bean, int appErrorCode, final ServiceContext context) {
-        Set<ConstraintViolation<Object>> violations = ValidatorFactory.getValidator().validate(bean);
-        if (violations.isEmpty()) {
-            return true;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(bean.getClass().getSimpleName()).append(" Validation Failed: ");
-        Iterator<ConstraintViolation<Object>> violationsIter = violations.iterator();
-        while (violationsIter.hasNext()) {
-            ConstraintViolation<Object> constViolation = violationsIter.next();
-            //String key = constViolation.getPropertyPath().toString();
-            //String value = key + "=" + constViolation.getInvalidValue() + " - " + constViolation.getMessage();
-            sb.append(constViolation.getPropertyPath()).append("=").append(constViolation.getInvalidValue())
-                    .append(" - ").append(constViolation.getMessage()).append("; ");
-            // error Message format. DO not use ":" in messages as it is a reserved JSON delimiter
-            // Example for value: cardNumber=aaBBCC3232; The card Number is in incorrect format;
-        }
-        Error e = new Error(appErrorCode, null, sb.toString(), null);
-        context.status(HttpResponseStatus.BAD_REQUEST).error(e);
-
-//        Map<String, String> errorMap = BeanValidationUtil.getErrorMessages(bean);
-//        boolean isValid = errorMap.isEmpty();
-//        if (!isValid) {
-//            error.setErrorCode(AppErrorCode.BAD_REQUEST);
-//            error.setErrorDesc(bean.getClass().getSimpleName() + " Validation Failed: "
-//                    + errorMap.entrySet().stream().map(o -> o.getValue()).collect(Collectors.joining("; ")));
-//            context.error(error).status(HttpResponseStatus.BAD_REQUEST);
-//        }
-        return false;
-    }
-
     public static <T extends Object> T fromXML(Class<T> targetClass, String xml) throws JsonProcessingException {
         return (T) xmlMapper.readValue(xml, targetClass);
     }
 
     public static String toXML(Object obj) throws JsonProcessingException {
         return xmlMapper.writeValueAsString(obj);
+    }
+    
+    public static final jakarta.validation.ValidatorFactory ValidatorFactory = jakarta.validation.Validation.buildDefaultValidatorFactory();
+
+    public static String getBeanValidationResult(Object bean) {
+        if (bean == null) {
+            return "missing data";
+        }
+        Set<jakarta.validation.ConstraintViolation<Object>> violations = ValidatorFactory.getValidator().validate(bean);
+        if (violations.isEmpty()) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(bean.getClass().getSimpleName()).append(" Validation Failed: ");
+        Iterator<jakarta.validation.ConstraintViolation<Object>> violationsIter = violations.iterator();
+        while (violationsIter.hasNext()) {
+            jakarta.validation.ConstraintViolation<Object> constViolation = violationsIter.next();
+            sb.append(constViolation.getPropertyPath()).append("=").append(constViolation.getInvalidValue())
+                    .append(" - ").append(constViolation.getMessage()).append("; ");
+
+        }
+        return sb.toString();
     }
 }

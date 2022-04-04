@@ -58,7 +58,7 @@ import org.apache.logging.log4j.Level;
 import org.summerframework.boot.instrumentation.NIOStatusListener;
 import org.summerframework.boot.BootConstant;
 import org.summerframework.boot.instrumentation.HealthInspector;
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 
 /**
  *
@@ -140,7 +140,7 @@ public class NioServer {
                 if (inspectionFailed) {
                     String inspectionReport;
                     try {
-                        inspectionReport = JsonUtil.toJson(errors, true, true);
+                        inspectionReport = BeanUtil.toJson(errors, true, true);
                     } catch (Throwable ex) {
                         inspectionReport = "total " + ex;
                     }

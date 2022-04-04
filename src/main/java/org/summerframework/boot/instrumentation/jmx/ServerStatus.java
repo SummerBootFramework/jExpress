@@ -18,7 +18,7 @@ package org.summerframework.boot.instrumentation.jmx;
 import org.summerframework.boot.instrumentation.NIOStatusListener;
 import org.summerframework.boot.instrumentation.HTTPClientStatusListener;
 import org.summerframework.nio.server.NioServer;
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.Singleton;
 import java.time.LocalDateTime;
@@ -124,7 +124,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
         try {
             List<Object> data = events.stream().collect(Collectors.toList());
             //data.add(0, Constant.VERSION);
-            ret = JsonUtil.toJson(data);
+            ret = BeanUtil.toJson(data);
         } catch (JsonProcessingException ex) {
             ret = ex.toString();//Constant.VERSION + ": " + ex.toString();
         }
