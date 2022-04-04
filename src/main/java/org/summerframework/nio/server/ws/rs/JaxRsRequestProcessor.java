@@ -23,7 +23,7 @@ import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.security.auth.AuthConfig;
 import org.summerframework.security.auth.Caller;
 import org.summerframework.util.FormatterUtil;
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -352,11 +352,11 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 } else {
                     switch (responseContentType) {
                         case MediaType.APPLICATION_JSON:
-                            context.txt(JsonUtil.toJson(ret));
+                            context.txt(BeanUtil.toJson(ret));
                             break;
                         case MediaType.APPLICATION_XML:
                         case MediaType.TEXT_XML:
-                            context.txt(JsonUtil.toXML(ret));
+                            context.txt(BeanUtil.toXML(ret));
                             break;
                         case MediaType.TEXT_HTML:
                         case MediaType.TEXT_PLAIN:

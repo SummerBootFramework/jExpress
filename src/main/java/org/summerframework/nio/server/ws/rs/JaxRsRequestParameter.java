@@ -18,8 +18,8 @@ package org.summerframework.nio.server.ws.rs;
 import org.summerframework.nio.server.domain.Error;
 import org.summerframework.nio.server.domain.ServiceRequest;
 import org.summerframework.nio.server.domain.ServiceContext;
-import org.summerframework.util.BeanValidationUtil;
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
+import org.summerframework.util.BeanUtil;
 import org.summerframework.util.ReflectionUtil;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -33,8 +33,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nonnull;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
@@ -263,9 +263,9 @@ class JaxRsRequestParameter {
                 Object postDataObj;
                 try {
                     if (genericClassT == null) {
-                        postDataObj = JsonUtil.fromJson(targetClass, request.getHttpPostRequestBody());
+                        postDataObj = BeanUtil.fromJson(targetClass, request.getHttpPostRequestBody());
                     } else {
-                        postDataObj = JsonUtil.fromJson(targetClass, genericClassT, request.getHttpPostRequestBody());
+                        postDataObj = BeanUtil.fromJson(targetClass, genericClassT, request.getHttpPostRequestBody());
                     }
                 } catch (Throwable ex) {
                     // 1. convert to JSON
@@ -286,7 +286,7 @@ class JaxRsRequestParameter {
                         Collection c = (Collection) postDataObj;
                         boolean hasError = false;
                         for (Object o : c) {
-                            String validationError = BeanValidationUtil.getBeanValidationResult(o);
+                            String validationError = BeanUtil.getBeanValidationResult(o);
                             if (validationError != null) {
                                 hasError = true;
                                 Error e = new Error(badRequestErrorCode, null, validationError, null);
@@ -299,7 +299,7 @@ class JaxRsRequestParameter {
                             return null;
                         }
                     } else {
-                        String validationError = BeanValidationUtil.getBeanValidationResult(postDataObj);
+                        String validationError = BeanUtil.getBeanValidationResult(postDataObj);
                         if (validationError != null) {
                             Error e = new Error(badRequestErrorCode, null, validationError, null);
                             // 2. build JSON response with same app error code, and keep the default INFO log level.
@@ -319,7 +319,7 @@ class JaxRsRequestParameter {
             case Body_XML:
                 v = request.getHttpPostRequestBody();
                 try {
-                    postDataObj = JsonUtil.fromXML(targetClass, v);
+                    postDataObj = BeanUtil.fromXML(targetClass, v);
                 } catch (Throwable ex) {
                     // 1. convert to JSON
                     Error e = new Error(badRequestErrorCode, null, "Bad request: " + ex.toString(), null);
@@ -335,7 +335,7 @@ class JaxRsRequestParameter {
                         return null;
                     }
                 } else if (autoBeanValidation) {
-                    String validationError = BeanValidationUtil.getBeanValidationResult(postDataObj);
+                    String validationError = BeanUtil.getBeanValidationResult(postDataObj);
                     if (validationError != null) {
                         Error e = new Error(badRequestErrorCode, null, validationError, null);
                         // 2. build JSON response with same app error code, and keep the default INFO log level.
@@ -348,7 +348,7 @@ class JaxRsRequestParameter {
                 v = request.getHttpPostRequestBody();
                 postDataObj = parse(v, defaultValue, context, badRequestErrorCode);
                 if (autoBeanValidation) {
-                    String validationError = BeanValidationUtil.getBeanValidationResult(postDataObj);
+                    String validationError = BeanUtil.getBeanValidationResult(postDataObj);
                     if (validationError != null) {
                         Error e = new Error(badRequestErrorCode, null, validationError, null);
                         // 2. build JSON response with same app error code, and keep the default INFO log level.

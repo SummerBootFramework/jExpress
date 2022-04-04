@@ -15,7 +15,7 @@
  */
 package org.summerframework.nio.server.domain;
 
-import org.summerframework.util.JsonUtil;
+import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -105,7 +105,7 @@ public class Error<T> {
     public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
         try {
-            return JsonUtil.toJson(this, true, true);
+            return BeanUtil.toJson(this, true, true);
         } catch (JsonProcessingException ex) {
             return toStringEx();
         }
