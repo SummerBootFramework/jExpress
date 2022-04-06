@@ -51,11 +51,11 @@ public class HibernateConfig implements SummerBootConfig {
     @JsonIgnore
     private volatile SessionFactory sessionFactory;
 
-    private String cfgFile;
+    private File cfgFile;
     private final Map<String, Object> settings = new HashMap<>();
 
     @Override
-    public String getCfgFile() {
+    public File getCfgFile() {
         return cfgFile;
     }
 
@@ -83,14 +83,14 @@ public class HibernateConfig implements SummerBootConfig {
         if (log == null) {
             log = LogManager.getLogger(getClass());
         }
-        this.cfgFile = cfgFile.getAbsolutePath();
+        this.cfgFile = cfgFile.getAbsoluteFile();
         Properties props = new Properties();
         try (InputStream is = new FileInputStream(cfgFile);) {
             props.load(is);
         }
 
         settings.clear();
-        ConfigUtil helper = new ConfigUtil(this.cfgFile);
+        ConfigUtil helper = new ConfigUtil(this.cfgFile.getAbsolutePath());
 
         Set<Object> keys = props.keySet();
         keys.forEach((key) -> {

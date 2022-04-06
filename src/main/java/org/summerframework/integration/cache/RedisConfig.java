@@ -53,7 +53,7 @@ public class RedisConfig implements SummerBootConfig {
     private static final String PK = "primary";
 
     private static volatile Logger log = null;
-    private String cfgFile;
+    private File cfgFile;
     private volatile List<JedisPool> jedisPools;
     private volatile JedisPool masterPool;
     private volatile List<String> nodes;
@@ -61,7 +61,7 @@ public class RedisConfig implements SummerBootConfig {
     private volatile int sendAlertIntervalMinutes;
 
     @Override
-    public String getCfgFile() {
+    public File getCfgFile() {
         return cfgFile;
     }
 
@@ -89,7 +89,7 @@ public class RedisConfig implements SummerBootConfig {
         if (log == null) {
             log = LogManager.getLogger(getClass());
         }
-        this.cfgFile = cfgFile.getAbsolutePath();
+        this.cfgFile = cfgFile.getAbsoluteFile();
         Properties props = new Properties();
         try (InputStream is = new FileInputStream(cfgFile);) {
             props.load(is);
@@ -104,7 +104,7 @@ public class RedisConfig implements SummerBootConfig {
         } else {
             nodes.clear();
         }
-        ConfigUtil helper = new ConfigUtil(this.cfgFile);
+        ConfigUtil helper = new ConfigUtil(this.cfgFile.getAbsolutePath());
         reconnectRetryIntervalMinutes = helper.getAsInt(props, "redis.Reconnect.Retry.IntervalMinutes", 1);
         sendAlertIntervalMinutes = helper.getAsInt(props, "redis.SendAlert.IntervalMinutes", 10);
 

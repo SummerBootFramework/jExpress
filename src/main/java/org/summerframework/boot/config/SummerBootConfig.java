@@ -23,7 +23,7 @@ import java.io.File;
  */
 public interface SummerBootConfig {
 
-    String getCfgFile();
+    File getCfgFile();
 
     String info();
 

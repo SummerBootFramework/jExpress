@@ -45,14 +45,11 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.utils.ExceptionUtils;
-import org.summerframework.util.FormatterUtil;
 
 /**
  *
@@ -63,7 +60,7 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
 
     @JsonIgnore
     protected volatile Logger log = null;
-    protected String cfgFile;
+    protected File cfgFile;
     protected String configName = getClass().getSimpleName();
 
     //public AbstractSummerBootConfig(){}
@@ -79,7 +76,7 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
     }
 
     @Override
-    public String getCfgFile() {
+    public File getCfgFile() {
         return cfgFile;
     }
 
@@ -145,17 +142,17 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
         if (log == null) {
             log = LogManager.getLogger(getClass());
         }
-        this.cfgFile = cfgFile.getAbsolutePath();
+        String configFolder = cfgFile.getParent();
+        this.cfgFile = cfgFile.getAbsoluteFile();
         if (configName == null) {
             configName = cfgFile.getName();
         }
-        String configFolder = cfgFile.getParent();
         Properties props = new Properties();
         try (InputStream is = new FileInputStream(cfgFile);
                 InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);) {
             props.load(isr);
         }
-        ConfigUtil helper = new ConfigUtil(this.cfgFile);
+        ConfigUtil helper = new ConfigUtil(this.cfgFile.getAbsolutePath());
         Class c = this.getClass();
         Field[] fields = c.getDeclaredFields();
         boolean autoDecrypt = true;
@@ -250,7 +247,7 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
             return;
         }
         StringBuilder sb = new StringBuilder();
-        LineIterator iterator = FileUtils.lineIterator(new File(cfgFile), "UTf-8");
+        LineIterator iterator = FileUtils.lineIterator(new File(cfgFile.getAbsolutePath()), "UTf-8");
         while (iterator.hasNext()) {
             String line = iterator.nextLine().trim();
             if (!line.startsWith("#")) {
