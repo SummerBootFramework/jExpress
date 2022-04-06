@@ -218,4 +218,11 @@ public class BeanUtil {
         }
         return sb.toString();
     }
+
+//    public static String getSchema(Class<?> beanClass) {
+//        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(JacksonMapper);
+//        JsonSchema schema = schemaGen.generateSchema(beanClass);
+//        String schemaString = JacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(schema);
+//        System.out.println(schemaString);
+//    }
 }
