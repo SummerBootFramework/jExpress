@@ -28,6 +28,8 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -49,34 +51,6 @@ import org.apache.commons.lang3.StringUtils;
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
 public class FormatterUtil {
-
-    public static void main(String[] args) {
-        //String from = null;//DateTimeFormatter.ISO_ZONED_DATE_TIME.format(LocalDateTime.of(2021, 3, 11, 15, 33, 45));
-        //System.out.println(from);
-//        String from = "2021-03-11T15:33:45.000-0500";
-//        from = "2021-03-11T15:33:45.000-0000";
-//        String to = transformUTCDateTimeToLocalDateTime(from);
-//        System.out.println(to);
-
-        System.out.println("--------------");
-        String p = "/services/ test /v1;a=1;b=2/aaa/{pa1}//bbb/";
-        String[] ps = parseURL(p);
-        for (String s : ps) {
-            System.out.println("p=" + s);
-        }
-        System.out.println("--------------");
-        p = "services/ test /v1;a=1;b=2/aaa/{pa1}//bbb";
-        ps = parseURL(p);
-        for (String s : ps) {
-            System.out.println("p=" + s);
-        }
-        System.out.println("--------------");
-        p = "services/ test /v1;a=1;b=2/aaa/{pa1}//bbb/";
-        ps = parseURL(p);
-        for (String s : ps) {
-            System.out.println("p=" + s);
-        }
-    }
 
     public static final String[] EMPTY_STR_ARRAY = {};
 
@@ -284,6 +258,17 @@ public class FormatterUtil {
                 .withZoneSameInstant(zoneId)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
+    }
+
+    public static LocalDateTime toLocalDateTime(long utcTs) {
+        return toLocalDateTime(utcTs, ZoneId.systemDefault());
+    }
+
+    public static LocalDateTime toLocalDateTime(long utcTs, ZoneId zoneId) {
+        if (zoneId == null) {
+            zoneId = ZoneId.systemDefault();
+        }
+        return Instant.ofEpochMilli(utcTs).atZone(zoneId).toLocalDateTime();
     }
 
     public static String encodeMimeBase64(byte[] contentBytes) {
