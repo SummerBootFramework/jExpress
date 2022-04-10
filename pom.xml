@@ -402,7 +402,7 @@
             <version>${jackson.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-jsonSchema Apache 2.0-->
-<!-- it has dependency on https://mvnrepository.com/artifact/javax.validation/validation-api, which is replaced by jakarta.validation
+        <!-- it has dependency on https://mvnrepository.com/artifact/javax.validation/validation-api, which is replaced by jakarta.validation
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-jsonSchema</artifactId>
@@ -442,15 +442,15 @@
 
 
         <!-- JPA -->
-        <!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-core LGPL 2.1-->
+        <!-- https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core  LGPL 2.1-->
         <dependency>
-            <groupId>org.hibernate</groupId>
+            <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${hibernate.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-hikaricp LGPL 2.1-->
+        <!-- https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-hikaricp  LGPL 2.1-->
         <dependency>
-            <groupId>org.hibernate</groupId>
+            <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-hikaricp</artifactId>
             <version>${hibernate.version}</version>
         </dependency>

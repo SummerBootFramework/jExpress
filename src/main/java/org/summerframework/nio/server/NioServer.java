@@ -340,6 +340,7 @@ public class NioServer {
                     long activeChannel = NioServerContext.COUNTER_ACTIVE_CHANNEL.get();
                     long pool = tpe.getPoolSize();
                     int core = tpe.getCorePoolSize();
+                    //int queueRemainingCapacity = tpe.getQueue().remainingCapacity();
                     long max = tpe.getMaximumPoolSize();
                     long largest = tpe.getLargestPoolSize();
                     long task = tpe.getTaskCount();
