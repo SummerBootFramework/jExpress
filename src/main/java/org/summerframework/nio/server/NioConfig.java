@@ -318,8 +318,9 @@ public class NioConfig extends AbstractSummerBootConfig {
             currentCore = bizExecutorCoreSize;
             currentMax = bizExecutorMaxSize;
             currentQueue = bizExecutorQueueSize;
-            // backup old
+            //backup old
             ThreadPoolExecutor old = tpe;
+            //create new
             tpe = new ThreadPoolExecutor(currentCore, currentMax, 60L, TimeUnit.SECONDS,
                     new LinkedBlockingQueue<>(currentQueue),
                     Executors.defaultThreadFactory(), new AbortPolicyWithReport("NIOBizThreadPoolExecutor"));//.DiscardOldestPolicy()
