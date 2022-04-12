@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
@@ -52,8 +53,12 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class FormatterUtil {
 
-    public static final String[] EMPTY_STR_ARRAY = {};
+    public static final long INT_MASK = 0x0FFFFFFFFL;//(long) Integer.MAX_VALUE - (long) Integer.MIN_VALUE;
+    public static final int SHORT_MASK = 0x0FFFF;
+    public static final short BYTE_MASK = 0x0FF;
+    public static final short NIBBLE_MASK = 0x0F;
 
+    public static final String[] EMPTY_STR_ARRAY = {};
     public static final String REGEX_CSV = "\\s*,\\s*";
     public static final String REGEX_URL = "\\s*/\\s*";
     public static final String REGEX_BINDING_MAP = "\\s*:\\s*";
@@ -288,4 +293,56 @@ public class FormatterUtil {
         byte[] bytes = baos.toByteArray();
         return bytes;
     }
+
+    public static String toString(ByteBuffer buffer) {
+        return toString(buffer, true, true, 8);
+    }
+
+    public static String toString(ByteBuffer buffer, boolean status, boolean headerfooter, int bytesPerLine) {
+        StringBuilder sb = new StringBuilder();
+        if (status) {
+            sb.append("ByteBuffer status:")
+                    .append(" Order=").append(buffer.order())
+                    .append(" Position=").append(buffer.position())
+                    .append(" Limit=").append(buffer.limit())
+                    .append(" Capacity=").append(buffer.capacity())
+                    .append(" Remaining=").append(buffer.remaining());
+        }
+        if (headerfooter) {
+            sb.append("\n************** ByteBuffer Contents starts **************\n");
+        }
+        byte[] array = buffer.array();
+        for (int i = 0; i < buffer.limit(); i++) {
+            sb.append(String.format("0x%02X", array[i])).append((i + 1) % bytesPerLine == 0 ? "\n" : "    ");
+        }
+        if (headerfooter) {
+            sb.append("\n************** ByteBuffer Contents ends **************\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * For old Java before Java 17 HexFormat.of().parseHex(s)
+     *
+     * @param hexString must be an even-length string
+     * @return
+     */
+    public static byte[] parseHex(String hexString) {
+        String evenLengthHexString = hexString.replaceAll("0x", "").replaceAll("[^a-zA-Z0-9]", "");//remove "0x" and other delimiters, 0x5A   ,;/n/t|...   0x01 -> 5A01
+        int len = evenLengthHexString.length();
+        if (len % 2 != 0) {
+            throw new IllegalArgumentException("Converted Hex string length=" + len + " and is not an even-length: \n\t arg: " + hexString + "\n\t hex: " + evenLengthHexString);
+        }
+        String hex = evenLengthHexString.replaceAll("[^a-fA-F0-9]", "");
+        if (!evenLengthHexString.equals(hex)) {
+            throw new IllegalArgumentException("Invalid Hex string \n\t arg: " + hexString + "\n\t hex: " + evenLengthHexString);
+        }
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(evenLengthHexString.charAt(i), 16) << 4)
+                    + Character.digit(evenLengthHexString.charAt(i + 1), 16));
+        }
+        return data;
+    }
+
 }

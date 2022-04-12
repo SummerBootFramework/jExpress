@@ -83,7 +83,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
 
     //1.2 LDAP SSL
     @Memo(title = "1.2 LDAP SSL")
-    @Config(key = "ldap.ssl.protocal", defaultValue = "TLSv1.2")
+    @Config(key = "ldap.ssl.protocal", defaultValue = "TLSv1.3")
     private volatile String ldapTLSProtocol;
     @JsonIgnore
     @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>framework.core</artifactId>
-    <version>2.0.31-SNAPSHOT</version>
+    <version>2.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot Core</name>
     <description>Summer Boot (Core) focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
@@ -176,8 +176,14 @@
         <!-- JWT -->
         <jwt.version>0.9.1</jwt.version>
 
+        <!-- NIO Netty -->
         <netty.version>4.1.75.Final</netty.version>
         <netty-tcnative.version>2.0.51.Final</netty-tcnative.version>
+        <!-- gRPC and protobuf -->
+        <grpc.version>1.45.1</grpc.version>
+        <protobuf.version>3.20.0</protobuf.version>
+        
+        
         <!-- MIME-Type -->
         <tika.version>2.3.0</tika.version>
         <!-- JAX-RS -->
@@ -211,8 +217,8 @@
         <!-- PDF - com.openhtmltopdf -->	       
         <openhtml.version>1.0.10</openhtml.version>
         <!-- PDF - iText -->
-        <itext7-core.version>7.2.1</itext7-core.version>
-        <itext7-html2pdf.version>4.0.1</itext7-html2pdf.version>
+        <itext7-core.version>7.2.2</itext7-core.version>
+        <itext7-html2pdf.version>4.0.2</itext7-html2pdf.version>
         
         <!-- Testing  -->
         <testng.version>7.5</testng.version>
@@ -315,7 +321,7 @@
 
 
 
-        <!-- Netty -->
+        <!-- NIO Netty -->
         <!-- https://mvnrepository.com/artifact/io.netty/netty-all Apache 2.0-->
         <dependency>
             <groupId>io.netty</groupId>
@@ -345,7 +351,39 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-classes</artifactId>
             <version>${netty-tcnative.version}</version>
+        </dependency>        
+        
+        <!-- gRPC and protobuf -->
+        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${protobuf.version}</version>
+            <scope>provided</scope>
+        </dependency>     
+        <!-- https://mvnrepository.com/artifact/io.grpc/grpc-protobuf -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${grpc.version}</version>
+            <scope>provided</scope>
+        </dependency>   
+        <!-- https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc.version}</version>
+            <scope>provided</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/io.grpc/grpc-stub -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>${grpc.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+
 
         <!-- MIME-Type -->
         <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core Apache 2.0-->
@@ -407,6 +445,7 @@
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-jsonSchema</artifactId>
             <version>${jackson.version}</version>
+            <scope>test</scope>
         </dependency>-->
         <!-- XML -->
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml Apache 2.0-->
