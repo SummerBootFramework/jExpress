@@ -115,7 +115,7 @@ public class HttpConfig extends AbstractSummerBootConfig {
 
     //3.1 HTTP Client Security
     @Memo(title = "3.1 HTTP Client Security")
-    @Config(key = "httpclient.ssl.protocal", required = false, defaultValue = "TLSv1.2")
+    @Config(key = "httpclient.ssl.protocal", required = false, defaultValue = "TLSv1.3")
     private volatile String protocal;
 
     @JsonIgnore

@@ -94,7 +94,7 @@ public class SSLUtil {
 //        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 //        kmf.init(ks, psw.toCharArray());
 //        KeyManager[] kms = kmf.getKeyManagers();
-        //String TLS_VERSION = "TLSv1.2";// "SSL";
+        //String TLS_VERSION = "TLSv1.3";// "SSL";
         // Install the all-trusting trust manager
         SSLContext sc = SSLContext.getInstance(DEFAULT_PROTOCOL);
         sc.init(kms, TRUST_ALL_CERTIFICATES, new java.security.SecureRandom());

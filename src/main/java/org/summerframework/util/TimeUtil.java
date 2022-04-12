@@ -30,4 +30,33 @@ public class TimeUtil {
     public static long getSecondsTillMidnight(Calendar c) {
         return 86400 - getSecondsSinceMidnight(c);
     }
+
+    public static int[] seconds2DHMS(long totalSeconds) {
+        int[] ymdhms = {0, 0, 0, 0};
+        long day = totalSeconds / 86400;
+        long hour = (totalSeconds / 3600) % 24;
+        long minute = (totalSeconds % 3600) / 60;
+        long second = totalSeconds % 60;
+        ymdhms[3] = (int) day;
+        ymdhms[2] = (int) hour;
+        ymdhms[1] = (int) minute;
+        ymdhms[0] = (int) second;
+
+        return ymdhms;
+    }
+
+    public static String seconds2DHMSString(long totalSeconds) {
+        int[] ymdhms = seconds2DHMS(totalSeconds);
+        int day = ymdhms[3];
+        int hour = ymdhms[2];
+        int min = ymdhms[1];
+        int sec = ymdhms[0];
+        return new StringBuilder()
+                .append(day).append(" day").append(day > 1 ? "s " : " ")
+                .append(hour).append(" hour").append(hour > 1 ? "s " : " ")
+                .append(min).append(" min").append(min > 1 ? "s " : " ")
+                .append(sec).append(" sec").append(sec > 1 ? "s " : " ")
+                .toString();
+
+    }
 }

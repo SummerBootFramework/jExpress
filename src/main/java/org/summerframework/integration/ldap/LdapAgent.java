@@ -82,7 +82,7 @@ public class LdapAgent implements Closeable {
             tempCfg.put(Context.SECURITY_CREDENTIALS, bindingPassword);
         }
         if (isSSL) {// Specify SSL
-            tempCfg.put(Context.SECURITY_PROTOCOL, sslProtocol);//"TLSv1.2"
+            tempCfg.put(Context.SECURITY_PROTOCOL, sslProtocol);//"TLSv1.3"
             if (ldapSSLConnectionFactoryClassName != null) {
                 tempCfg.put("java.naming.ldap.factory.socket", ldapSSLConnectionFactoryClassName);
             }

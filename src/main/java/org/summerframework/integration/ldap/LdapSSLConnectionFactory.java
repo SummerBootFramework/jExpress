@@ -37,7 +37,7 @@ public class LdapSSLConnectionFactory extends SocketFactory {
 
     private SSLSocketFactory sf;
 
-    private static String TLS_PROTOCAL = "TLSv1.2";
+    public static String TLS_PROTOCAL = "TLSv1.3";
     private static KeyManager[] KMS;
     private static TrustManager[] TMS;
 
