@@ -117,7 +117,8 @@ public class EncryptorUtil {
     /**
      *
      * @param filename
-     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws NoSuchAlgorithmException
      * @throws IOException
@@ -165,7 +166,8 @@ public class EncryptorUtil {
     /**
      *
      * @param data
-     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * (128-bit)
      * @return
      * @throws NoSuchAlgorithmException
@@ -339,9 +341,10 @@ public class EncryptorUtil {
             default:
                 throw new NoSuchAlgorithmException(fileType.name());
         }
-        FileInputStream is = new FileInputStream(keystoreFile);
         KeyStore keystore = KeyStore.getInstance(keyStoreType);
-        keystore.load(is, keyStorePwd);
+        try (FileInputStream is = new FileInputStream(keystoreFile);) {
+            keystore.load(is, keyStorePwd);
+        }
         secureMem(keyStorePwd);
 
         // Get private key
@@ -433,11 +436,12 @@ public class EncryptorUtil {
                 publicKey = keyFactory.generatePublic(keySpec);
                 break;
             case Certificate:
-                FileInputStream fin = new FileInputStream(publicKeyFile);
-                CertificateFactory f = CertificateFactory.getInstance("X.509");
-                X509Certificate certificate = (X509Certificate) f.generateCertificate(fin);
-                publicKey = certificate.getPublicKey();
-                break;
+                try (FileInputStream fin = new FileInputStream(publicKeyFile);) {
+                    CertificateFactory f = CertificateFactory.getInstance("X.509");
+                    X509Certificate certificate = (X509Certificate) f.generateCertificate(fin);
+                    publicKey = certificate.getPublicKey();
+                }
+            break;
             default:
                 throw new NoSuchAlgorithmException(fileType.name());
         }
@@ -589,7 +593,8 @@ public class EncryptorUtil {
      * @param plainDataFileName
      * @param encryptedFileName
      * @param digitalSignatureKey
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -684,7 +689,8 @@ public class EncryptorUtil {
      * @param symmetricKey
      * @param plainData
      * @param digitalSignatureKey
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -810,7 +816,8 @@ public class EncryptorUtil {
      * @param plainDataFileName
      * @param digitalSignatureKey
      * @param meta
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -924,7 +931,8 @@ public class EncryptorUtil {
      * @param encryptedData
      * @param digitalSignatureKey
      * @param meta
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException

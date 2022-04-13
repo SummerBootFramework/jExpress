@@ -302,16 +302,13 @@ public class PDFBox {
     }
 
     public static byte[] writePDF(Writer writer, Object dto, float pdfVersion) throws IOException {
-        ByteArrayOutputStream out;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             useFonts(null, doc);
             doc.protect(buildStandardProtectionPolicy(null, null));
             doc.setVersion(pdfVersion);
-            out = baos;
             writer.write(doc, dto);
-            doc.save(out);
+            doc.save(baos);
+            return baos.toByteArray();
         }
-        return out.toByteArray();
-
     }
 }
