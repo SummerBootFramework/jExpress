@@ -19,16 +19,10 @@ import java.awt.image.BufferedImage;
 import static org.summerframework.boot.config.ConfigUtil.DECRYPTED_WARPER_PREFIX;
 import static org.summerframework.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 import org.summerframework.security.SecurityUtil;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -118,7 +112,7 @@ public class FormatterUtil {
     private static final Pattern REGEX_DEC_PATTERN = Pattern.compile(DECRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
     private static final Pattern REGEX_ENC_PATTERN = Pattern.compile(ENCRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
 
-    public static String updateLine(String line, boolean encrypt) throws GeneralSecurityException {
+    public static String updateLine(String line, boolean encrypt) {
         Matcher matcher = encrypt
                 ? REGEX_DEC_PATTERN.matcher(line)
                 : REGEX_ENC_PATTERN.matcher(line);
@@ -180,69 +174,6 @@ public class FormatterUtil {
         return new String(value.getBytes(targetCharsetName), targetCharsetName);
     }
 
-    /**
-     *
-     * @param expectedStr "Fantasticèéçà Entwickeln Sie mit Vergnügen"
-     * @param targetCharset "Windows-1252"
-     * @return
-     */
-    @Deprecated
-    private static byte[] getBytesFromUTF8(String expectedStr, String targetCharset) {
-
-        // Trick: -Dfile.encoding=UTF-8 or code below:
-        // This way you are going to trick JVM which would think that charset is not set
-        // and make it to set it again to UTF-8, on runtime!
-//            System.setProperty("file.encoding", "UTF-8");
-//            Field charset = Charset.class.getDeclaredField("defaultCharset");
-//            charset.setAccessible(true);
-//            charset.set(null, null);
-        byte[] ret;
-//        try ( ByteArrayInputStream original = new ByteArrayInputStream(expectedStr.getBytes());  InputStreamReader contentReader = new InputStreamReader(original, CharsetUtil.UTF_8);  ByteArrayOutputStream converted = new ByteArrayOutputStream();  Writer writer = new OutputStreamWriter(converted, targetCharset)) {
-//            int readCount;
-//            char[] buffer = new char[4096];
-//            while ((readCount = contentReader.read(buffer, 0, buffer.length)) != -1) {
-//                writer.write(buffer, 0, readCount);
-//            }
-//            ret = converted.toByteArray();
-//        } catch (Throwable ex) {
-//            ex.printStackTrace();
-//            try {
-//                ret = expectedStr.getBytes(targetCharset);
-//            } catch (Throwable ex2) {
-//                ex2.printStackTrace();
-//                ret = expectedStr.getBytes(StandardCharsets.UTF_8);
-//            }
-//        }
-
-        int readCount;
-        char[] buffer = new char[4096];
-        try {
-            ByteArrayInputStream original = new ByteArrayInputStream(expectedStr.getBytes());
-            InputStreamReader contentReader = new InputStreamReader(original, "UTF-8");
-            try (ByteArrayOutputStream converted = new ByteArrayOutputStream()) {
-                try (Writer writer = new OutputStreamWriter(converted, "Windows-1252")) {
-                    while ((readCount = contentReader.read(buffer, 0, buffer.length)) != -1) {
-                        writer.write(buffer, 0, readCount);
-                    }
-                }
-                ret = converted.toByteArray();
-                //actualStr = new String(converted.toByteArray(), "Windows-1252");
-            }
-        } catch (Throwable ex) {
-            try {
-                ret = expectedStr.getBytes(targetCharset);
-            } catch (Throwable ex2) {
-                ex2.printStackTrace();
-                ret = expectedStr.getBytes(StandardCharsets.UTF_8);
-            }
-        }
-        return ret;
-    }
-//    public static void main(String[] args) throws UnsupportedEncodingException {
-//        DateTimeFormatter DTF = DateTimeFormatter.ofPattern("EEEE, dd LLLL, yyyy HH:mm:ss");
-//        System.out.println(DTF.format(LocalDateTime.now()));
-//    }
-
     public static DateTimeFormatter UTC_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     public static ZoneId ZONE_ID_ONTARIO = ZoneId.of("America/Toronto");
 
@@ -285,13 +216,15 @@ public class FormatterUtil {
      * @param bi
      * @param format - png
      * @return
-     * @throws IOException
+     * @throws IOException ImageIO failed to access system cache
+     * dir
      */
     public static byte[] toByteArray(BufferedImage bi, String format) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(bi, format, baos);
-        byte[] bytes = baos.toByteArray();
-        return bytes;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
+            ImageIO.write(bi, format, baos);
+            byte[] bytes = baos.toByteArray();
+            return bytes;
+        }
     }
 
     public static String toString(ByteBuffer buffer) {

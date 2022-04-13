@@ -114,15 +114,13 @@ public class IText {
             prop.setFontProvider(new FontProvider(fontSet));
         }
         prop.setBaseUri(baseDir.getAbsolutePath());
-        ByteArrayOutputStream out;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 PdfWriter writer = new PdfWriter(baos, writerProperties);
                 PdfDocument pdfDoc = new PdfDocument(writer);) {
-            out = baos;
             pdfDoc.setTagged();
             HtmlConverter.convertToPdf(html, pdfDoc, prop);
+            return baos.toByteArray();
         }
-        return out.toByteArray();
     }
 
     public static interface Writer<T> {
@@ -137,14 +135,12 @@ public class IText {
 
     public static byte[] buildPDF(Writer writer, Object dto, WriterProperties writerProperties) throws IOException {
         //MemoryStream ms = null;
-        ByteArrayOutputStream out;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 PdfWriter pdfWriter = new PdfWriter(baos, writerProperties);
                 PdfDocument pdfDoc = new PdfDocument(pdfWriter); Document document = new Document(pdfDoc)) {
-            out = baos;
             writer.write(pdfDoc, document, dto);
+            return baos.toByteArray();
         }
-        return out.toByteArray();
     }
 
 //    public String loadTemplateFromResources(String filename) {
