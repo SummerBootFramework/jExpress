@@ -13,13 +13,14 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.summerframework.nio.client;
+package org.summerframework.nio.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
@@ -35,7 +36,7 @@ import javax.net.ssl.TrustManagerFactory;
  *
  * @author Changski Tie Zheng Zhang, Du Xiao
  */
-public class Client_gRPC {
+public abstract class GRPCClient {
 
     /**
      * <pre>
@@ -56,17 +57,20 @@ public class Client_gRPC {
      * @return
      * @throws IOException
      */
-    public static ManagedChannel buildManagedChannel(URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+    public static NettyChannelBuilder getNettyChannelBuilder(URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
             @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws IOException {
         NettyChannelBuilder channelBuilder = null;
         switch (uri.getScheme()) {
             case "unix":
-                //channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
+                try {
+                channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()));
+            } catch (Throwable ex) {
                 channelBuilder = NettyChannelBuilder.forAddress(new InetSocketAddress(uri.getHost(), uri.getPort()))
                         .eventLoopGroup(new EpollEventLoopGroup())
                         .channelType(EpollDomainSocketChannel.class)
                         .usePlaintext();
-                break;
+            }
+            break;
             case "tcp":
                 channelBuilder = NettyChannelBuilder.forAddress(uri.getHost(), uri.getPort());
                 channelBuilder.usePlaintext();
@@ -98,7 +102,7 @@ public class Client_gRPC {
         if (channelBuilder == null) {
             throw new IOException("Invalid scheme specified in URI. Valid values are: tcp://, tls:// or unix://.");
         }
-        return channelBuilder.build();
+        return channelBuilder;
     }
 
     /**
@@ -110,7 +114,84 @@ public class Client_gRPC {
      * @return
      * @throws IOException
      */
-    public static ManagedChannel buildManagedChannel(URI uri) throws IOException {
-        return buildManagedChannel(uri, null, null, null, null);
+    public static NettyChannelBuilder NettyChannelBuilder(URI uri) throws IOException {
+        return getNettyChannelBuilder(uri, null, null, null, null);
+    }
+
+    protected final URI uri;
+    protected final NettyChannelBuilder channelBuilder;
+    protected ManagedChannel channel;
+
+    /**
+     * 
+     * @param uri
+     * @throws IOException 
+     */
+    public GRPCClient(URI uri) throws IOException {
+        this(uri, null, null, null, null);
+    }
+
+    /**
+     * <pre>
+     * Creates an instance of ManagedChannel for gRPC client that will use the provided uri
+     * and certificates to connect to the server.If using tcp:// or unix:// for the URL scheme, the certificate options will be ignored.
+     * </pre>
+     *
+     * @param uri URI used to connect to the server with the format
+     * scheme://path. Valid values: tcp://host:port, tls://host:port, or
+     * unix:///path/to/socket
+     * @param keyManagerFactory Key manager containing keys for authenticating
+     * with the server.
+     * @param trustManagerFactory Trust manager factory containing certificates
+     * for server verification.
+     * @param overrideAuthority
+     * @param ciphers
+     * @param tlsVersionProtocols "TLSv1.2", "TLSv1.3"
+     * @throws IOException
+     */
+    public GRPCClient(URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+            @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws IOException {
+        this(uri, getNettyChannelBuilder(uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, tlsVersionProtocols));
+    }
+
+    /**
+     * 
+     * @param uri
+     * @param channelBuilder 
+     */
+    public GRPCClient(URI uri, NettyChannelBuilder channelBuilder) {
+        this.uri = uri;
+        this.channelBuilder = channelBuilder;
+    }
+
+    public void connect() {
+        disconnect();
+        channel = channelBuilder.build();
+        Runtime.getRuntime().addShutdownHook(
+                new Thread(() -> {
+                    try {
+                        channel.shutdownNow();
+                    } catch (Throwable ex) {
+                    }
+                }, "GRPCClient.shutdown and disconnect from " + uri));
+        onConnected(channel);
+    }
+
+    /**
+     * 
+     * @param channel 
+     */
+    protected abstract void onConnected(ManagedChannel channel);
+
+    public void disconnect() {
+//        ManagedChannel c = (ManagedChannel) blockingStub.getChannel();
+        if (channel != null) {
+            try {
+                channel.shutdownNow();
+            } catch (Throwable ex) {
+            } finally {
+                channel = null;
+            }
+        }
     }
 }
