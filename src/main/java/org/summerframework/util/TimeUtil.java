@@ -15,7 +15,14 @@
  */
 package org.summerframework.util;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -58,5 +65,45 @@ public class TimeUtil {
                 .append(sec).append(" sec").append(sec > 1 ? "s " : " ")
                 .toString();
 
+    }
+
+    public static DateTimeFormatter UTC_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    public static ZoneId ZONE_ID_ONTARIO = ZoneId.of("America/Toronto");
+
+    /**
+     * Maps the UTC time to an ET format.
+     *
+     * @param utcTime UTC time to be formatted.
+     * @param zoneId
+     *
+     * @return ET formatted time.
+     *
+     */
+    public static String utcDateTimeToLocalDateTime(String utcTime, ZoneId zoneId) {
+        if (StringUtils.isBlank(utcTime)) {
+            return null;
+        }
+        return ZonedDateTime.parse(utcTime, UTC_DATE_TIME_FORMATTER)
+                .withZoneSameInstant(zoneId)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+    }
+
+    public static LocalDateTime toLocalDateTime(long utcTs) {
+        return toLocalDateTime(utcTs, ZoneId.systemDefault());
+    }
+
+    public static LocalDateTime toLocalDateTime(long utcTs, ZoneId zoneId) {
+        if (zoneId == null) {
+            zoneId = ZoneId.systemDefault();
+        }
+        return Instant.ofEpochMilli(utcTs).atZone(zoneId).toLocalDateTime();
+    }
+
+    public static OffsetDateTime toOffsetDateTime(long utcTs, ZoneId zoneId) {
+        if (zoneId == null) {
+            zoneId = ZoneId.systemDefault();
+        }
+        return Instant.ofEpochMilli(utcTs).atZone(zoneId).toOffsetDateTime();
     }
 }

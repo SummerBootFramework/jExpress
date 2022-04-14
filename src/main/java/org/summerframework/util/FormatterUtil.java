@@ -23,11 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -174,38 +169,6 @@ public class FormatterUtil {
         return new String(value.getBytes(targetCharsetName), targetCharsetName);
     }
 
-    public static DateTimeFormatter UTC_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-    public static ZoneId ZONE_ID_ONTARIO = ZoneId.of("America/Toronto");
-
-    /**
-     * Maps the UTC time to an ET format.
-     *
-     * @param utcTime UTC time to be formatted.
-     * @param zoneId
-     *
-     * @return ET formatted time.
-     *
-     */
-    public static String transformUTCDateTimeToLocalDateTime(String utcTime, ZoneId zoneId) {
-        if (StringUtils.isBlank(utcTime)) {
-            return null;
-        }
-        return ZonedDateTime.parse(utcTime, UTC_DATE_TIME_FORMATTER)
-                .withZoneSameInstant(zoneId)
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-
-    }
-
-    public static LocalDateTime toLocalDateTime(long utcTs) {
-        return toLocalDateTime(utcTs, ZoneId.systemDefault());
-    }
-
-    public static LocalDateTime toLocalDateTime(long utcTs, ZoneId zoneId) {
-        if (zoneId == null) {
-            zoneId = ZoneId.systemDefault();
-        }
-        return Instant.ofEpochMilli(utcTs).atZone(zoneId).toLocalDateTime();
-    }
 
     public static String encodeMimeBase64(byte[] contentBytes) {
         return Base64.getMimeEncoder().encodeToString(contentBytes);
@@ -216,8 +179,7 @@ public class FormatterUtil {
      * @param bi
      * @param format - png
      * @return
-     * @throws IOException ImageIO failed to access system cache
-     * dir
+     * @throws IOException ImageIO failed to access system cache dir
      */
     public static byte[] toByteArray(BufferedImage bi, String format) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {

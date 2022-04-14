@@ -15,7 +15,6 @@
  */
 package org.summerframework.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import static org.summerframework.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 import org.summerframework.security.SecurityUtil;
 import com.google.common.collect.ImmutableSortedSet;
@@ -293,6 +292,14 @@ public class ReflectionUtil {
             //(for example: Integer.valueOf(String) and java.util.UUID.fromString(String));            
             try {
                 Method mtd = targetClass.getMethod("valueOf", String.class);
+                return mtd.invoke(null, value);
+            } catch (NoSuchMethodException | SecurityException ex) {
+                //no static fromString(String)
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                //failed to call static fromString(String)
+            }
+            try {
+                Method mtd = targetClass.getMethod("of", String.class);
                 return mtd.invoke(null, value);
             } catch (NoSuchMethodException | SecurityException ex) {
                 //no static fromString(String)
