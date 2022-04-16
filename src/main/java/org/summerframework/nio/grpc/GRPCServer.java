@@ -23,11 +23,18 @@ import io.grpc.TlsServerCredentials;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerframework.boot.instrumentation.NIOStatusListener;
+import org.summerframework.nio.server.AbortPolicyWithReport;
 
 /**
  *
@@ -52,6 +59,12 @@ public class GRPCServer {
     protected final ServerCredentials serverCredentials;
     protected final ServerBuilder serverBuilder;
 
+    protected ScheduledExecutorService statusReporter = null;
+    protected ThreadPoolExecutor tpe = null;
+    protected static NIOStatusListener listener = null;
+    protected boolean servicePaused = false;
+    protected final Counter counter = new Counter();
+
     public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
         this(bindingAddr, port, initTLS(kmf, tmf));
     }
@@ -65,8 +78,91 @@ public class GRPCServer {
         } else {
             serverBuilder = Grpc.newServerBuilderForPort(port, serverCredentials);
         }
+        //serverBuilder.executor(tpe)
         //AbstractImplBase implBase = 
         //serverBuilder.addService(implBase);
+    }
+
+    public static void setListener(NIOStatusListener listener) {
+        GRPCServer.listener = listener;
+    }
+
+    public Counter configThreadPool() {
+        final int coreSize = Runtime.getRuntime().availableProcessors();
+        int poolCoreSize = coreSize + 1;// how many tasks running at the same time
+        int poolMaxSizeMaxSize = poolCoreSize;// how many tasks running at the same time
+        long keepAliveSeconds = 60L;
+        int poolQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
+        return this.configThreadPool(poolCoreSize, poolMaxSizeMaxSize, poolQueueSize, keepAliveSeconds);
+    }
+
+    /**
+     *
+     * @param poolCoreSize - the number of threads to keep in the pool, even
+     * if they are idle, unless allowCoreThreadTimeOutis set
+     * @param poolMaxSizeMaxSize - the maximum number of threads to allow in the
+     * pool
+     * @param poolQueueSize - the size of the waiting list
+     * @param keepAliveSeconds - when the number of threads is greater than the
+     * core, this is the maximum time that excess idle threads will wait for new
+     * tasks before terminating.
+     * @return
+     */
+    public Counter configThreadPool(int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds) {
+        ThreadPoolExecutor old = tpe;
+        tpe = new ThreadPoolExecutor(poolCoreSize, poolMaxSizeMaxSize, keepAliveSeconds, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(poolQueueSize),
+                Executors.defaultThreadFactory(), new AbortPolicyWithReport("gRPC Server Executor"));//.DiscardOldestPolicy()
+        serverBuilder.executor(tpe);
+        if (old != null) {
+            old.shutdown();
+        }
+
+        int interval = 1;
+        final AtomicReference<Long> lastBizHitRef = new AtomicReference<>();
+        lastBizHitRef.set(-1L);
+        long totalChannel = -1;//NioServerContext.COUNTER_TOTAL_CHANNEL.get();
+        long activeChannel = -1;//NioServerContext.COUNTER_ACTIVE_CHANNEL.get();
+        ScheduledExecutorService old2 = statusReporter;
+        statusReporter = Executors.newSingleThreadScheduledExecutor();
+        statusReporter.scheduleAtFixedRate(() -> {
+            if (listener == null && !log.isDebugEnabled()) {
+                return;
+            }
+            long bizHit = counter.getBiz();
+            //if (lastBizHit[0] == bizHit && !servicePaused) {
+            if (lastBizHitRef.get() == bizHit && !servicePaused) {
+                return;
+            }
+            lastBizHitRef.set(bizHit);
+            long hps = counter.getHitAndReset();
+            long tps = counter.getProcessedAndReset();
+            long pingHit = counter.getPing();
+            long totalHit = bizHit + pingHit;
+
+            int active = tpe.getActiveCount();
+            int queue = tpe.getQueue().size();
+            if (hps > 0 || tps > 0 || active > 0 || queue > 0 || servicePaused) {
+//                long totalChannel = NioServerContext.COUNTER_TOTAL_CHANNEL.get();
+//                long activeChannel = NioServerContext.COUNTER_ACTIVE_CHANNEL.get();
+                long pool = tpe.getPoolSize();
+                int core = tpe.getCorePoolSize();
+                //int queueRemainingCapacity = tpe.getQueue().remainingCapacity();
+                long max = tpe.getMaximumPoolSize();
+                long largest = tpe.getLargestPoolSize();
+                long task = tpe.getTaskCount();
+                long completed = tpe.getCompletedTaskCount();
+                log.debug(() -> "hps=" + hps + ", tps=" + tps + ", totalHit=" + totalHit + " (ping " + pingHit + " + biz " + bizHit + "), queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest + ", task=" + task + ", completed=" + completed + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel);
+                if (listener != null) {
+                    listener.onNIOAccessReportUpdate(hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
+                    //listener.onUpdate(data);//bad performance
+                }
+            }
+        }, 0, interval, TimeUnit.SECONDS);
+        if (old2 != null) {
+            old2.shutdownNow();
+        }
+        return counter;
     }
 
     public ServerBuilder serverBuilder() {
@@ -77,6 +173,7 @@ public class GRPCServer {
         if (server != null) {
             stop();
         }
+
         server = serverBuilder.build().start();
         log.info("*** GRPCServer is listening on " + bindingAddr + ":" + port);
         Runtime.getRuntime().addShutdownHook(
@@ -94,6 +191,9 @@ public class GRPCServer {
         }
         try {
             server.shutdown();
+            if (statusReporter != null) {
+                statusReporter.shutdown();
+            }
             log.warn("*** GRPCServer shutdown " + bindingAddr + ":" + port);
             server.awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {

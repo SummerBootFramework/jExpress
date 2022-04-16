@@ -54,6 +54,7 @@ import org.apache.logging.log4j.Logger;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.logging.log4j.Level;
 import org.summerframework.boot.instrumentation.NIOStatusListener;
 import org.summerframework.boot.BootConstant;
@@ -318,7 +319,9 @@ public class NioServer {
             }
         }
 
-        final long[] lastBizHit = {0, 0};
+        //final long[] lastBizHit = {0, 0};
+        final AtomicReference<Long> lastBizHitRef = new AtomicReference<>();
+        lastBizHitRef.set(-1L);
         if (listener != null || log.isDebugEnabled()) {
             int interval = 1;
             QPS_SERVICE.scheduleAtFixedRate(() -> {
@@ -328,10 +331,12 @@ public class NioServer {
                     return;
                 }
                 long bizHit = NioServerContext.COUNTER_BIZ_HIT.get();
-                if (lastBizHit[0] == bizHit && !servicePaused) {
+                //if (lastBizHit[0] == bizHit && !servicePaused) {
+                if (lastBizHitRef.get() == bizHit && !servicePaused) {
                     return;
                 }
-                lastBizHit[0] = bizHit;
+                //lastBizHit[0] = bizHit;
+                lastBizHitRef.set(bizHit);
                 ThreadPoolExecutor tpe = NioConfig.CFG.getBizExecutor();
                 int active = tpe.getActiveCount();
                 int queue = tpe.getQueue().size();

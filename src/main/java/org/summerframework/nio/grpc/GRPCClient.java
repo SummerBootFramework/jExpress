@@ -35,8 +35,9 @@ import javax.net.ssl.TrustManagerFactory;
 /**
  *
  * @author Changski Tie Zheng Zhang, Du Xiao
+ * @param <T>
  */
-public abstract class GRPCClient {
+public abstract class GRPCClient<T extends GRPCClient<T>> {
 
     /**
      * <pre>
@@ -123,9 +124,9 @@ public abstract class GRPCClient {
     protected ManagedChannel channel;
 
     /**
-     * 
+     *
      * @param uri
-     * @throws IOException 
+     * @throws IOException
      */
     public GRPCClient(URI uri) throws IOException {
         this(uri, null, null, null, null);
@@ -155,16 +156,16 @@ public abstract class GRPCClient {
     }
 
     /**
-     * 
+     *
      * @param uri
-     * @param channelBuilder 
+     * @param channelBuilder
      */
     public GRPCClient(URI uri, NettyChannelBuilder channelBuilder) {
         this.uri = uri;
         this.channelBuilder = channelBuilder;
     }
 
-    public void connect() {
+    public T connect() {
         disconnect();
         channel = channelBuilder.build();
         Runtime.getRuntime().addShutdownHook(
@@ -175,11 +176,12 @@ public abstract class GRPCClient {
                     }
                 }, "GRPCClient.shutdown and disconnect from " + uri));
         onConnected(channel);
+        return (T) this;
     }
 
     /**
-     * 
-     * @param channel 
+     *
+     * @param channel
      */
     protected abstract void onConnected(ManagedChannel channel);
 
