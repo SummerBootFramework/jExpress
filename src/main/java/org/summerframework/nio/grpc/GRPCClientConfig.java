@@ -1,6 +1,7 @@
 package org.summerframework.nio.grpc;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import java.io.File;
 import java.io.IOException;
@@ -27,33 +28,36 @@ public class GRPCClientConfig extends AbstractSummerBootConfig {
     }
     public static final GRPCClientConfig CFG = new GRPCClientConfig();
 
-    protected final static String ID = "";
+    protected final static String ID = "gRpc.client";
 
     protected GRPCClientConfig() {
     }
 
     //1. TRC
-    @Memo(title = "1. " + ID + "gRpc")
-    @Config(key = ID + "gRpc.url")
+    @Memo(title = "1. " + ID + " provider")
+    @Config(key = ID + ".url")
     protected volatile URI uri;
-    @Config(key = ID + "gRpc.ssl.Protocols", defaultValue = "TLSv1.3")//"TLSv1.2, TLSv1.3"
+    @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")//"TLSv1.2, TLSv1.3"
     protected String[] sslProtocols = {"TLSv1.3"};
-    @Config(key = ID + "gRpc.ssl.ciphers", required = false)
+    @Config(key = ID + ".ssl.ciphers", required = false)
     protected List ciphers;
 
     //2. TRC Client keystore
-    @Memo(title = "2. " + ID + "gRpc Client keystore")
-    @Config(key = ID + "gRpc.ssl.KeyStore", StorePwdKey = ID + "trc.ssl.KeyStorePwd",
-            AliasKey = ID + "gRpc.ssl.KeyAlias", AliasPwdKey = ID + "trc.ssl.KeyPwd", required = false)
+    @Memo(title = "2. " + ID + " keystore")
+    @Config(key = ID + ".ssl.KeyStore", StorePwdKey = ID + ".ssl.KeyStorePwd",
+            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd", required = false)
+    @JsonIgnore
     protected volatile KeyManagerFactory kmf;
 
     //3. TRC Client truststore
-    @Memo(title = "3. " + ID + "gRpc Client truststore")
-    @Config(key = ID + "gRpc.ssl.TrustStore", StorePwdKey = ID + "trc.ssl.TrustStorePwd", required = false)
+    @Memo(title = "3. " + ID + " truststore")
+    @Config(key = ID + ".ssl.TrustStore", StorePwdKey = ID + ".ssl.TrustStorePwd", required = false)
+    @JsonIgnore
     protected volatile TrustManagerFactory tmf;
-    @Config(key = ID + "gRpc.ssl.overrideAuthority", required = false)
+    @Config(key = ID + ".ssl.overrideAuthority", required = false)
     protected volatile String overrideAuthority;
 
+    @JsonIgnore
     protected volatile NettyChannelBuilder channelBuilder;
 
     @Override
