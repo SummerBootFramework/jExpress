@@ -15,7 +15,6 @@
  */
 package org.summerframework.boot.config;
 
-import org.summerframework.nio.server.NioServer;
 import java.io.File;
 import java.io.FileFilter;
 import java.nio.file.Paths;
@@ -26,6 +25,7 @@ import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerframework.boot.instrumentation.HealthMonitor;
 
 /**
  *
@@ -46,7 +46,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     public void start(File folder, int intervalSec, Map<File, Runnable> cfgUpdateTasks) throws Exception {
         File pauseFile = Paths.get(folder.getAbsolutePath(), "pause").toFile();
-        NioServer.setServicePaused(pauseFile.exists(), "by file detection " + pauseFile.getAbsolutePath());
+        HealthMonitor.setPauseStatus(pauseFile.exists(), "by file detection " + pauseFile.getAbsolutePath());
         if (running) {
             return;
         }
@@ -109,7 +109,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
     @Override
     public void onFileCreate(File file) {
         log.info(() -> "new " + file.getAbsoluteFile());
-        NioServer.setServicePaused(true, "file created " + file.getAbsolutePath());
+        HealthMonitor.setPauseStatus(true, "file created " + file.getAbsolutePath());
     }
 
     @Override
@@ -126,7 +126,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
     @Override
     public void onFileDelete(File file) {
         log.info(() -> "del " + file.getAbsoluteFile());
-        NioServer.setServicePaused(false, "file deleted " + file.getAbsolutePath());
+        HealthMonitor.setPauseStatus(false, "file deleted " + file.getAbsolutePath());
     }
 
 }

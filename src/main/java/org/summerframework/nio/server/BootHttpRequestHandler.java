@@ -41,6 +41,7 @@ import javax.naming.NamingException;
 import jakarta.persistence.PersistenceException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
+import org.summerframework.boot.instrumentation.HealthMonitor;
 
 /**
  *
@@ -163,7 +164,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
     }
 
     protected void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
-        NioServer.setServiceHealthOk(false, ex.toString(), getHealthInspector());
+        HealthMonitor.setHealthStatus(false, ex.toString(), getHealthInspector());
         nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
@@ -209,8 +210,8 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
     }
 
     /**
-     * Build negative acknowledgement context with exception at ERROR level
-     * when ex is not null
+     * Build negative acknowledgement context with exception at ERROR level when
+     * ex is not null
      *
      * @param context
      * @param httpResponseStatus

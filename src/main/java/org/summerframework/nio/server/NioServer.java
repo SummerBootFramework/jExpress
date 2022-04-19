@@ -51,15 +51,10 @@ import javax.net.ssl.TrustManagerFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.logging.log4j.Level;
 import org.summerframework.boot.instrumentation.NIOStatusListener;
 import org.summerframework.boot.BootConstant;
-import org.summerframework.boot.instrumentation.HealthInspector;
-import org.summerframework.util.BeanUtil;
+import org.summerframework.boot.instrumentation.HealthMonitor;
 
 /**
  *
@@ -76,115 +71,8 @@ public class NioServer {
 
     private static NIOStatusListener listener = null;
 
-    private static final ThreadPoolExecutor POOL_HealthInspector;
-
-    static {
-        POOL_HealthInspector = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(1), Executors.defaultThreadFactory(), new ThreadPoolExecutor.DiscardPolicy());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            POOL_HealthInspector.shutdown();
-        }, "ShutdownHook.HealthInspector")
-        );
-    }
-
     public static void setStatusListener(NIOStatusListener l) {
         listener = l;
-    }
-
-    private static boolean serviceOk = true, servicePaused = false;
-    private static HttpResponseStatus status = HttpResponseStatus.OK;
-    private static String statusReason;
-
-    public static void setServiceHealthOk(boolean newStatus, String reason, HealthInspector healthInspector) {
-        boolean serviceStatusChanged = serviceOk != newStatus;
-        serviceOk = newStatus;
-        serviceStatusUpdate(serviceStatusChanged, reason);
-        if (!serviceOk && healthInspector != null) {
-            startHealthInspectionSingleton(NioConfig.CFG.getHealthInspectionIntervalSeconds(), healthInspector);
-        }
-    }
-
-    public static void setServicePaused(boolean newStatus, String reason) {
-        boolean serviceStatusChanged = servicePaused != newStatus;
-        servicePaused = newStatus;
-        serviceStatusUpdate(serviceStatusChanged, reason);
-    }
-
-    private static void serviceStatusUpdate(boolean serviceStatusChanged, String reason) {
-        statusReason = reason;
-        status = servicePaused
-                ? HttpResponseStatus.SERVICE_UNAVAILABLE
-                : (serviceOk ? HttpResponseStatus.OK : HttpResponseStatus.SERVICE_UNAVAILABLE);
-        if (serviceStatusChanged) {
-            log.log(serviceOk ? Level.WARN : Level.FATAL, "\n\t server status changed: paused=" + servicePaused + ", OK=" + serviceOk + ", status=" + status + "\n\t reason: " + reason);
-        }
-    }
-
-    private static void startHealthInspectionSingleton(int inspectionIntervalSeconds, HealthInspector healthInspector) {
-        if (healthInspector == null || inspectionIntervalSeconds < 1) {
-            log.debug(() -> "HealthInspection Skipped: healthInspector=" + healthInspector + ", inspectionIntervalSeconds=" + inspectionIntervalSeconds);
-            return;
-        }
-        long i = HealthInspector.healthInspectorCounter.incrementAndGet();
-        if (i > 1) {
-            log.debug(() -> "Duplicated HealthInspection Rejected: total=" + i);
-            return;
-        }
-        Runnable asyncTask = () -> {
-            HealthInspector.healthInspectorCounter.incrementAndGet();
-            boolean inspectionFailed;
-            do {
-                StringBuilder sb = new StringBuilder();
-                sb.append(System.lineSeparator()).append("Self Inspection ");
-                List<org.summerframework.nio.server.domain.Error> errors = healthInspector.ping();
-                inspectionFailed = errors != null && !errors.isEmpty();
-                if (inspectionFailed) {
-                    String inspectionReport;
-                    try {
-                        inspectionReport = BeanUtil.toJson(errors, true, true);
-                    } catch (Throwable ex) {
-                        inspectionReport = "total " + ex;
-                    }
-                    sb.append("failed: ").append(inspectionReport);
-                    sb.append(System.lineSeparator()).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
-                    log.warn(sb);
-                    try {
-                        TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
-                    } catch (InterruptedException ex) {
-                        Thread.currentThread().interrupt();
-                    }
-                } else {
-                    sb.append("passed");
-                    setServiceHealthOk(true, sb.toString(), null);
-                }
-            } while (inspectionFailed);
-            HealthInspector.healthInspectorCounter.set(0);
-        };
-        if (POOL_HealthInspector.getActiveCount() < 1) {
-            try {
-                POOL_HealthInspector.execute(asyncTask);
-            } catch (RejectedExecutionException ex2) {
-                log.debug(() -> "Duplicated HealthInspection Rejected: " + ex2);
-            }
-        } else {
-            log.debug("HealthInspection Skipped");
-        }
-    }
-
-    public static boolean isServicePaused() {
-        return servicePaused;
-    }
-
-    public static boolean isServiceStatusOk() {
-        return serviceOk;
-    }
-
-    public static HttpResponseStatus getServiceStatus() {
-        return status;
-    }
-
-    public static String getServiceStatusReason() {
-        return statusReason;
     }
 
     /**
@@ -332,7 +220,7 @@ public class NioServer {
                 }
                 long bizHit = NioServerContext.COUNTER_BIZ_HIT.get();
                 //if (lastBizHit[0] == bizHit && !servicePaused) {
-                if (lastBizHitRef.get() == bizHit && !servicePaused) {
+                if (lastBizHitRef.get() == bizHit && !HealthMonitor.isServicePaused()) {
                     return;
                 }
                 //lastBizHit[0] = bizHit;
@@ -340,7 +228,7 @@ public class NioServer {
                 ThreadPoolExecutor tpe = NioConfig.CFG.getBizExecutor();
                 int active = tpe.getActiveCount();
                 int queue = tpe.getQueue().size();
-                if (hps > 0 || tps > 0 || active > 0 || queue > 0 || servicePaused) {
+                if (hps > 0 || tps > 0 || active > 0 || queue > 0 || HealthMonitor.isServicePaused()) {
                     long totalChannel = NioServerContext.COUNTER_TOTAL_CHANNEL.get();
                     long activeChannel = NioServerContext.COUNTER_ACTIVE_CHANNEL.get();
                     long pool = tpe.getPoolSize();

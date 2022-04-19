@@ -17,7 +17,6 @@ package org.summerframework.boot.instrumentation.jmx;
 
 import org.summerframework.boot.instrumentation.NIOStatusListener;
 import org.summerframework.boot.instrumentation.HTTPClientStatusListener;
-import org.summerframework.nio.server.NioServer;
 import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.Singleton;
@@ -35,6 +34,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.summerframework.boot.instrumentation.HealthInspector;
+import org.summerframework.boot.instrumentation.HealthMonitor;
 
 /**
  *
@@ -144,11 +144,11 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
 
     @Override
     public String getServiceStatus() {
-        return NioServer.getServiceStatus().toString();
+        return HealthMonitor.isServiceAvaliable()?"OK":"Service Unavaliable";
     }
 
     @Override
     public String getServiceStatusReason() {
-        return NioServer.getServiceStatusReason();
+        return HealthMonitor.getServiceStatusReason();
     }
 }

@@ -58,6 +58,9 @@ public class GRPCServerConfig extends AbstractSummerBootConfig {
     @Config(key = ID + ".pool.keepAliveSeconds", defaultValue = "60")
     private volatile long keepAliveSeconds = 60;
 
+    @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
+    private volatile int healthInspectionIntervalSeconds = 5;
+
     //2. TRC Client keystore
     @Memo(title = "2. " + ID + " Client keystore")
     @Config(key = ID + ".ssl.KeyStore", StorePwdKey = ID + ".ssl.KeyStorePwd",
@@ -129,6 +132,10 @@ public class GRPCServerConfig extends AbstractSummerBootConfig {
 
     public long getKeepAliveSeconds() {
         return keepAliveSeconds;
+    }
+
+    public int getHealthInspectionIntervalSeconds() {
+        return healthInspectionIntervalSeconds;
     }
 
     public KeyManagerFactory getKmf() {

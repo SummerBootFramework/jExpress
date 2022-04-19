@@ -52,6 +52,7 @@ import org.summerframework.boot.config.ConfigUtil;
 import org.summerframework.boot.config.ConfigUtil.ConfigLoadMode;
 import org.summerframework.boot.config.SummerBootConfig;
 import org.summerframework.boot.instrumentation.HealthInspector;
+import org.summerframework.boot.instrumentation.HealthMonitor;
 import org.summerframework.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerframework.i18n.I18n;
 import org.summerframework.integration.smtp.PostOffice;
@@ -830,7 +831,7 @@ abstract public class SummerApplication extends CommandLineRunner {
                     }
                     sb.append("failed: ").append(inspectionReport);
                     if (startNIO) {
-                        NioServer.setServiceHealthOk(false, sb.toString(), healthInspector);
+                        HealthMonitor.setHealthStatus(false, sb.toString(), healthInspector);
                     } else {
                         log.warn(sb);
                     }
