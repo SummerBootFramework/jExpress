@@ -23,11 +23,13 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerframework.boot.instrumentation.HealthMonitor;
 
 /**
  *
@@ -60,7 +62,8 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                 isPingRequest = true;
                 NioServerContext.COUNTER_PING_HIT.incrementAndGet();
                 try {
-                    NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, NioServer.getServiceStatus(), null, null, null, true);
+                    HttpResponseStatus status = HealthMonitor.isServiceAvaliable() ? HttpResponseStatus.OK : HttpResponseStatus.SERVICE_UNAVAILABLE;
+                    NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, null, null, null, true);
                 } finally {
                     ReferenceCountUtil.release(req);
                 }
