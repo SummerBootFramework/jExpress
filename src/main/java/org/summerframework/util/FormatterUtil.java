@@ -201,10 +201,10 @@ public class FormatterUtil {
     }
 
     public static String toString(ByteBuffer buffer) {
-        return toString(buffer, true, true, 8);
+        return toString(buffer, true, true, 8, "    ");
     }
 
-    public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int showNumberOfBytesPerLine) {
+    public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int showNumberOfBytesPerLine, String delimiter) {
         StringBuilder sb = new StringBuilder();
         if (showStatus) {
             sb.append("ByteBuffer status:")
@@ -222,7 +222,7 @@ public class FormatterUtil {
             byte[] array = buffer.array();
             for (int i = 0; i < buffer.limit(); i++) {
                 eol = (i + 1) % showNumberOfBytesPerLine == 0;
-                sb.append(String.format("0x%02X", array[i])).append(eol ? "\n" : "    ");
+                sb.append(String.format("0x%02X", array[i])).append(eol ? "\n" : delimiter);
             }
         }
         if (showHeaderfooter) {
