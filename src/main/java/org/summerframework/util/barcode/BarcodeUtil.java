@@ -67,7 +67,7 @@ public class BarcodeUtil {
     public static String generateBase64Image(String barcodeText, BarcodeFormat barcodeFormat, int widthPixels, int heightPixels, Map<EncodeHintType, ?> cfg, String imageFormat, int onColor, int offColor) throws IOException {
         BitMatrix bitMatrix = generateBarcode(barcodeText, barcodeFormat, widthPixels, heightPixels, cfg);
         byte[] data = toByteArray(bitMatrix, imageFormat, onColor, offColor);
-        return FormatterUtil.encodeMimeBase64(data);
+        return FormatterUtil.base64MimeEncode(data);
     }
 
     public static BitMatrix generateBarcode(String barcodeText, BarcodeFormat format, int widthPixels, int heightPixels, Map<EncodeHintType, ?> cfg) throws IOException {
@@ -83,7 +83,7 @@ public class BarcodeUtil {
         }
     }
 
-//    public static String encodeMimeBase64(byte[] contentBytes) {
+//    public static String base64MimeEncode(byte[] contentBytes) {
 //        return Base64.getMimeEncoder().encodeToString(contentBytes);
 //    }
 //    public static byte[] toByteArray(BitMatrix matrix, String format) throws IOException {

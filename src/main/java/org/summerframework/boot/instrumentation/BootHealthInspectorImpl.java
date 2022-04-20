@@ -19,8 +19,8 @@ import org.summerframework.nio.server.domain.Error;
 import org.summerframework.nio.server.domain.ServiceError;
 import com.google.inject.Singleton;
 import java.util.List;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.apache.logging.log4j.Logger;
 
 /**

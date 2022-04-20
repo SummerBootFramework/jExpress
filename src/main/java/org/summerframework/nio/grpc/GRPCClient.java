@@ -28,7 +28,7 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactor
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 
