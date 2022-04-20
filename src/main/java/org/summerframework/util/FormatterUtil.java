@@ -169,9 +169,20 @@ public class FormatterUtil {
         return new String(value.getBytes(targetCharsetName), targetCharsetName);
     }
 
-
-    public static String encodeMimeBase64(byte[] contentBytes) {
+    public static String base64MimeEncode(byte[] contentBytes) {
         return Base64.getMimeEncoder().encodeToString(contentBytes);
+    }
+
+    public static byte[] base64MimeDecode(String encodedMime) {
+        return Base64.getMimeDecoder().decode(encodedMime);
+    }
+
+    public static String base64Encode(byte[] contentBytes) {
+        return Base64.getEncoder().encodeToString(contentBytes);
+    }
+
+    public static byte[] base64Decode(String encodedMime) {
+        return Base64.getDecoder().decode(encodedMime);
     }
 
     /**
@@ -193,9 +204,9 @@ public class FormatterUtil {
         return toString(buffer, true, true, 8);
     }
 
-    public static String toString(ByteBuffer buffer, boolean status, boolean headerfooter, int bytesPerLine) {
+    public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int showNumberOfBytesPerLine) {
         StringBuilder sb = new StringBuilder();
-        if (status) {
+        if (showStatus) {
             sb.append("ByteBuffer status:")
                     .append(" Order=").append(buffer.order())
                     .append(" Position=").append(buffer.position())
@@ -203,15 +214,22 @@ public class FormatterUtil {
                     .append(" Capacity=").append(buffer.capacity())
                     .append(" Remaining=").append(buffer.remaining());
         }
-        if (headerfooter) {
+        if (showHeaderfooter) {
             sb.append("\n************** ByteBuffer Contents starts **************\n");
         }
-        byte[] array = buffer.array();
-        for (int i = 0; i < buffer.limit(); i++) {
-            sb.append(String.format("0x%02X", array[i])).append((i + 1) % bytesPerLine == 0 ? "\n" : "    ");
+        boolean eol = false;
+        if (showNumberOfBytesPerLine > 0) {
+            byte[] array = buffer.array();
+            for (int i = 0; i < buffer.limit(); i++) {
+                eol = (i + 1) % showNumberOfBytesPerLine == 0;
+                sb.append(String.format("0x%02X", array[i])).append(eol ? "\n" : "    ");
+            }
         }
-        if (headerfooter) {
-            sb.append("\n************** ByteBuffer Contents ends **************\n");
+        if (showHeaderfooter) {
+            if (!eol) {
+                sb.append("\n");
+            }
+            sb.append("************** ByteBuffer Contents ends **************\n");
         }
         return sb.toString();
     }

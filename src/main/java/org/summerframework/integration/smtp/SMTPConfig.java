@@ -24,8 +24,8 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
 
 /**
  * Volatile Bean　Pattern
@@ -144,7 +144,7 @@ public class SMTPConfig extends AbstractSummerBootConfig {
         }
 
         mailSession = Session.getInstance(props,
-                new javax.mail.Authenticator() {
+                new jakarta.mail.Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(smtpUser, smtpPassword);

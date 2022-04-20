@@ -25,6 +25,7 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.regex.Pattern;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -33,7 +34,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
-import jcifs.util.Base64;
+//import jcifs.util.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -77,8 +78,8 @@ public final class SecurityUtil {
                     .replace("-----BEGIN PUBLIC KEY-----", "")
                     .replace("-----END PUBLIC KEY-----", "")
                     .replaceAll("\\s+", "");
-            //byte[] encoded = java.util.Base64.getDecoder().decode(publicKeyContent);
-            byte[] encoded = Base64.decode(publicKeyContent);
+            byte[] encoded = java.util.Base64.getDecoder().decode(publicKeyContent);
+            //byte[] encoded = Base64.decode(publicKeyContent);
             X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(encoded);
             Key pubKey = kf.generatePublic(keySpecX509);
             ret[0] = pubKey;
@@ -92,9 +93,9 @@ public final class SecurityUtil {
                     .replace("-----BEGIN EC PRIVATE KEY-----", "")
                     .replace("-----END EC PRIVATE KEY-----", "")
                     .replaceAll("\\s+", "");
-            //byte[] encoded = java.util.Base64.getDecoder().decode(privateKeyContent);
             //byte[] header = Hex.decode("30 81bf 020100 301006072a8648ce3d020106052b81040022 0481a7");
-            byte[] encoded = Base64.decode(privateKeyContent);
+            byte[] encoded = java.util.Base64.getDecoder().decode(privateKeyContent);
+            //byte[] encoded = Base64.decode(privateKeyContent);
             //byte[] bytes = Arrays.concatenate(header, encoded);
             PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(encoded);
             Key privKey = kf.generatePrivate(keySpecPKCS8);
@@ -125,7 +126,8 @@ public final class SecurityUtil {
         cipher.init(Cipher.ENCRYPT_MODE, SCERET_KEY);
         byte[] utf8 = plainData.getBytes(StandardCharsets.UTF_8);
         byte[] encryptedData = cipher.doFinal(utf8);
-        String result = Base64.encode(encryptedData);
+        //String result = Base64.encode(encryptedData);
+        String result = Base64.getEncoder().encodeToString(encryptedData);
         for (int i = 0; i < utf8.length; i++) {
             utf8[i] = 0;
         }
@@ -180,7 +182,8 @@ public final class SecurityUtil {
         byte[] result;
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.DECRYPT_MODE, SCERET_KEY);
-        byte[] decodedData = Base64.decode(encrypted);
+        //byte[] decodedData = Base64.decode(encrypted);
+        byte[] decodedData = Base64.getDecoder().decode(encrypted);
         result = cipher.doFinal(decodedData);
         for (int i = 0; i < decodedData.length; i++) {
             decodedData[i] = 0;
@@ -188,7 +191,7 @@ public final class SecurityUtil {
         return result;
     }
 
-//    public static String base64Decode(String base64Text) throws UnsupportedEncodingException {
+//    public static String base64MimeDecode(String base64Text) throws UnsupportedEncodingException {
 //        // Decode base64 to get bytes
 //        //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
 //        byte[] dec = java.util.Base64.getDecoder().decode(base64Text);
@@ -198,12 +201,13 @@ public final class SecurityUtil {
     public static String base64Decode(String base64Text) {
         // Decode base64 to get bytes
         //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
-        byte[] dec = Base64.decode(base64Text);
+        //byte[] dec = Base64.decode(base64Text);
+        byte[] dec = Base64.getDecoder().decode(base64Text);
         // Decode using utf-8
         return new String(dec, StandardCharsets.UTF_8);
     }
 
-//    public static String base64Encode(String plainText) throws UnsupportedEncodingException {
+//    public static String base64MimeEncode(String plainText) throws UnsupportedEncodingException {
 //        // Decode base64 to get bytes
 //        //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
 //        byte[] dec = java.util.Base64.getEncoder().encode(plainText.getBytes(StandardCharsets.UTF_8));
@@ -211,7 +215,8 @@ public final class SecurityUtil {
 //        return new String(dec, StandardCharsets.UTF_8);
 //    }
     public static String base64Encode(String plain) {
-        return Base64.encode(plain.getBytes(StandardCharsets.UTF_8));
+        //return Base64.encode(plain.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(plain.getBytes(StandardCharsets.UTF_8));
     }
 
     public static final Pattern hasUppercase = Pattern.compile("[A-Z]");
