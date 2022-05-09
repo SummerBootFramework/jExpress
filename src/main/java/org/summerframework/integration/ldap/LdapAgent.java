@@ -111,6 +111,7 @@ public class LdapAgent implements Closeable {
     @Override
     public void close() throws IOException {
         if (m_ctx != null) {
+            log.debug("processing...");
             try {
                 m_ctx.close();
             } catch (NamingException ex) {
@@ -118,12 +119,15 @@ public class LdapAgent implements Closeable {
             } finally {
                 m_ctx = null;
             }
+            log.debug("success");
         }
     }
 
     private void connect() throws NamingException, IOException {
         close();
+        log.debug(baseDN + ", isAD=" + isAD);
         m_ctx = new InitialLdapContext(cfg, null);
+        log.debug("success");
         // Start TLS
 //        StartTlsResponse tls = (StartTlsResponse) m_ctx.extendedOperation(new StartTlsRequest());
 //        try {
@@ -170,9 +174,7 @@ public class LdapAgent implements Closeable {
     }
 
     public List<Attributes> query(final String sFilter) throws NamingException {
-        if (log.isDebugEnabled()) {
-            log.debug("base=" + baseDN + ", filter=" + sFilter);
-        }
+        log.debug(() -> "base=" + baseDN + ", filter=" + sFilter);
         List<Attributes> ret = new ArrayList();
         SearchControls ctlsUser = new SearchControls();
         ctlsUser.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -226,7 +228,8 @@ public class LdapAgent implements Closeable {
     /**
      *
      * @param password
-     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws GeneralSecurityException
      */
@@ -245,11 +248,12 @@ public class LdapAgent implements Closeable {
     }
 
     /**
-     * 
+     *
      * @param _password
-     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
-     * @throws NoSuchAlgorithmException 
+     * @throws NoSuchAlgorithmException
      */
     public static String generateSSHA(String _password, String algorithm) throws NoSuchAlgorithmException {
         byte[] password = _password.getBytes(StandardCharsets.UTF_8);
