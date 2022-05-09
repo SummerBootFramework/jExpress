@@ -28,8 +28,10 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -258,4 +260,15 @@ public class FormatterUtil {
         return data;
     }
 
+    public static <T extends Object> Set<T> findDuplicates(List<T> listContainingDuplicates) {
+        final Set<T> setToReturn = new HashSet<>();
+        final Set<T> set1 = new HashSet<>();
+
+        for (T yourInt : listContainingDuplicates) {
+            if (!set1.add(yourInt)) {
+                setToReturn.add(yourInt);
+            }
+        }
+        return setToReturn;
+    }
 }

@@ -22,6 +22,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
+import java.util.Random;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -105,5 +106,12 @@ public class TimeUtil {
             zoneId = ZoneId.systemDefault();
         }
         return Instant.ofEpochMilli(utcTs).atZone(zoneId).toOffsetDateTime();
+    }
+
+    protected static Random RANDOM = new Random();
+
+    public static int random(int low, int high) {
+        int result = RANDOM.nextInt(high - low) + low;
+        return result;
     }
 }

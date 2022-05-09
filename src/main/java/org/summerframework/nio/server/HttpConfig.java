@@ -115,8 +115,8 @@ public class HttpConfig extends AbstractSummerBootConfig {
 
     //3.1 HTTP Client Security
     @Memo(title = "3.1 HTTP Client Security")
-    @Config(key = "httpclient.ssl.protocal", required = false, defaultValue = "TLSv1.3")
-    private volatile String protocal;
+    @Config(key = "httpclient.ssl.protocol", required = false, defaultValue = "TLSv1.3")
+    private volatile String protocol;
 
     @JsonIgnore
     @Config(key = "httpclient.ssl.KeyStore", StorePwdKey = "httpclient.ssl.KeyStorePwd",
@@ -222,7 +222,7 @@ public class HttpConfig extends AbstractSummerBootConfig {
         KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
         // 3.2 HTTP Client truststore        
         TrustManager[] trustManagers = tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
-        SSLContext sslContext = SSLUtil.buildSSLContext(keyManagers, trustManagers, protocal);
+        SSLContext sslContext = SSLUtil.buildSSLContext(keyManagers, trustManagers, protocol);
         if (hostnameVerification != null) {
             System.setProperty("jdk.internal.httpclient.disableHostnameVerification", hostnameVerification ? "false" : "true");
         }
@@ -333,8 +333,8 @@ public class HttpConfig extends AbstractSummerBootConfig {
         return httpClientDefaultRequestHeaders;
     }
 
-    public String getProtocal() {
-        return protocal;
+    public String getProtocol() {
+        return protocol;
     }
 
     public Boolean isHostnameVerificationEnabled() {
