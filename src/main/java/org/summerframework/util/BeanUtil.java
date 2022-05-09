@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -161,6 +162,13 @@ public class BeanUtil {
      * @throws JsonProcessingException
      */
     public static <T extends Object> T fromJson(JavaType javaType, String json) throws JsonProcessingException {
+        if (StringUtils.isBlank(json)) {
+            return null;
+        }
+        return JacksonMapper.readValue(json, javaType);
+    }
+
+    public static <T extends Object> T fromJson(TypeReference<T> javaType, String json) throws JsonProcessingException {
         if (StringUtils.isBlank(json)) {
             return null;
         }

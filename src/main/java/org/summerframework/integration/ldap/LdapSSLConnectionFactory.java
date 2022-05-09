@@ -37,21 +37,21 @@ public class LdapSSLConnectionFactory extends SocketFactory {
 
     private SSLSocketFactory sf;
 
-    public static String TLS_PROTOCAL = "TLSv1.3";
+    public static String TLS_PROTOCOL = "TLSv1.3";
     private static KeyManager[] KMS;
     private static TrustManager[] TMS;
 
-    public static void init(KeyManager[] kms, TrustManager[] tms, String protocal) {
+    public static void init(KeyManager[] kms, TrustManager[] tms, String protocol) {
         KMS = kms;
         TMS = tms;
-        if (protocal != null) {
-            TLS_PROTOCAL = protocal;
+        if (protocol != null) {
+            TLS_PROTOCOL = protocol;
         }
     }
 
     public LdapSSLConnectionFactory() {
         try {
-            SSLContext sslCtx = SSLUtil.buildSSLContext(KMS, TMS, TLS_PROTOCAL);
+            SSLContext sslCtx = SSLUtil.buildSSLContext(KMS, TMS, TLS_PROTOCOL);
             sf = sslCtx.getSocketFactory();
         } catch (IOException | GeneralSecurityException ex) {
             throw new RuntimeException(ex);
