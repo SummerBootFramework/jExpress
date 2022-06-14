@@ -44,9 +44,9 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class FormatterUtil {
 
-    public static final long INT_MASK = 0x0FFFFFFFFL;//(long) Integer.MAX_VALUE - (long) Integer.MIN_VALUE;
-    public static final int SHORT_MASK = 0x0FFFF;
-    public static final short BYTE_MASK = 0x0FF;
+    public static final long INT_MASK = 0xFFFFFFFFL;//(long) Integer.MAX_VALUE - (long) Integer.MIN_VALUE;
+    public static final int SHORT_MASK = 0xFFFF;
+    public static final short BYTE_MASK = 0xFF;
     public static final short NIBBLE_MASK = 0x0F;
 
     public static final String[] EMPTY_STR_ARRAY = {};

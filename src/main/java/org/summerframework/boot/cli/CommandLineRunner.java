@@ -22,7 +22,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Properties;
-import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -30,6 +29,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.summerframework.security.EncryptorUtil;
 
 /**
  *
@@ -129,10 +129,10 @@ public abstract class CommandLineRunner {
             }
             String adminPwd = props.getProperty("APP_ROOT_PASSWORD");
             adminPwd = SecurityUtil.base64Decode(adminPwd);
-            SecurityUtil.SCERET_KEY = new SecretKeySpec(SecurityUtil.buildSecretKey(adminPwd), "AES");
+            EncryptorUtil.init(adminPwd);
         } else if (cli.hasOption(ADMIN_PWD)) {// "else" = only one option, cannot both
             String adminPwd = cli.getOptionValue(ADMIN_PWD);
-            SecurityUtil.SCERET_KEY = new SecretKeySpec(SecurityUtil.buildSecretKey(adminPwd), "AES");
+            EncryptorUtil.init(adminPwd);
         }
         // generate JWT root signing key
         if (cli.hasOption(JWT)) {

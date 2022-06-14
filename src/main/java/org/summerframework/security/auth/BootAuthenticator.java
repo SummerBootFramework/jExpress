@@ -28,12 +28,11 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureException;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
+import java.security.Key;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -73,9 +72,9 @@ public abstract class BootAuthenticator implements Authenticator {
         JwtBuilder builder = marshalCaller(caller);
 
         //4. create JWT
-        String token = JwtUtil.createJWT(AuthConfig.CFG.getJwtSignatureAlgorithm(),
-                AuthConfig.CFG.getJwtRootSigningKey(),
-                builder, TimeUnit.MINUTES, validForMinutes);
+        //String token = JwtUtil.createJWT(AuthConfig.CFG.getJwtSignatureAlgorithm(),
+        Key signingKey = AuthConfig.CFG.getJwtSigningKey();
+        String token = JwtUtil.createJWT(signingKey, builder, TimeUnit.MINUTES, validForMinutes);
         if (listener != null) {
             listener.onLoginSuccess(caller.getUid(), token);
         }
@@ -186,7 +185,7 @@ public abstract class BootAuthenticator implements Authenticator {
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
-                Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtRootSigningKey(), authToken);
+                Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtParser(), authToken).getBody();
                 String jti = claims.getId();
                 context.callerId(jti);
                 if (cache != null && cache.isOnBlacklist(jti)) {// because jti is used as blacklist key in logout
@@ -221,7 +220,7 @@ public abstract class BootAuthenticator implements Authenticator {
     @Override
     public void logout(String authToken, AuthTokenCache cache, ServiceContext context) {
         try {
-            Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtRootSigningKey(), authToken);
+            Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtParser(), authToken).getBody();
             String jti = claims.getId();
             String uid = claims.getSubject();
             Date exp = claims.getExpiration();
@@ -232,11 +231,11 @@ public abstract class BootAuthenticator implements Authenticator {
             if (listener != null) {
                 listener.onLogout(jti, authToken, expireInMilliseconds);
             }
-        } catch (SignatureException | MalformedJwtException ex) {
-            context.status(HttpResponseStatus.FORBIDDEN);
-            return;
         } catch (ExpiredJwtException ex) {
             //ignore
+        } catch (JwtException ex) {
+            context.status(HttpResponseStatus.FORBIDDEN);
+            return;
         }
         context.status(HttpResponseStatus.NO_CONTENT);
     }
