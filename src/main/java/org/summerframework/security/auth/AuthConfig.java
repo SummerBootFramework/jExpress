@@ -22,12 +22,15 @@ import org.summerframework.boot.config.annotation.Memo;
 import org.summerframework.integration.ldap.LdapAgent;
 import org.summerframework.integration.ldap.LdapSSLConnectionFactory;
 import org.summerframework.security.JwtUtil;
-import org.summerframework.security.SecurityUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
 import java.io.File;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +39,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.summerframework.security.EncryptorUtil;
 
 /**
  *
@@ -98,22 +103,28 @@ public class AuthConfig extends AbstractSummerBootConfig {
 
     //2. JWT
     @Memo(title = "2. JWT")
-    @Config(key = "jwt.SignatureAlgorithm", defaultValue = "HS256",
-            desc = "valid values = HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512")
-    private volatile String algorithm;
+    @JsonIgnore
+    @Config(key = "jwt.root.SigningKey", validate = Config.Validate.Encrypted, required = false,
+            desc = "symmetric key")
+    private volatile String jwtSigningKeyString;
 
-    @Config(key = "jwt.root.SigningKey.Algorithm", defaultValue = "SHA-2")
-    private volatile String keyAlgorithm;
+    @Config(key = "jwt.SigningKeyFile", required = false,
+            desc = "private key")
+    private volatile File privateKeyFile;
 
     @JsonIgnore
-    @Config(key = "jwt.root.SigningKey", validate = Config.Validate.Encrypted,
-            desc = "symmetric key when algorithm is one of the HS256, HS384, HS512\n"
-            + "public key when algorithm is one of the RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512")
-    private volatile String jwtRootSigningKeyString;
+    @Config(key = "jwt.SigningKeyPwd", validate = Config.Validate.Encrypted, required = false,
+            desc = "private key password")
+    private volatile String privateKeyPwd;
 
-    private volatile Key jwtRootSigningKey;
+    @Config(key = "jwt.ParsingKeyFile", required = false,
+            desc = "public key")
+    private volatile File publicKeyFile;
 
-    private volatile SignatureAlgorithm jwtSignatureAlgorithm;
+    @JsonIgnore
+    private volatile Key jwtSigningKey;
+    @JsonIgnore
+    private volatile JwtParser jwtParser;
 
     @Config(key = "jwt.issuer", required = false)
     private volatile String jwtIssuer;
@@ -137,7 +148,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
     private Map<String, RoleMapping> roles;
 
     @Override
-    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException, OperatorCreationException, GeneralSecurityException {
         // 1. LDAP Client keystore
         if (ldapHost != null) {
             // 1.1 LDAP Client keystore
@@ -151,25 +162,22 @@ public class AuthConfig extends AbstractSummerBootConfig {
             ldapConfig = LdapAgent.buildCfg(ldapHost, ldapPort, isSSL, ldapSSLConnectionFactoryClassName, ldapTLSProtocol, bindingUserDN, bindingPassword);
         }
         // 2. JWT        
-        jwtSignatureAlgorithm = SignatureAlgorithm.forName(algorithm);
-        switch (jwtSignatureAlgorithm) {
-            case HS256:
-            case HS384:
-            case HS512:
-                jwtRootSigningKey = JwtUtil.parseSigningKey(jwtRootSigningKeyString, keyAlgorithm);
-                break;
-            case RS256:
-            case RS384:
-            case RS512:
-            case ES256:
-            case ES384:
-            case ES512:
-            case PS256:
-            case PS384:
-            case PS512:
-                Key[] keys = SecurityUtil.parseKeyPair(jwtRootSigningKeyString, null, keyAlgorithm);
-                jwtRootSigningKey = keys[0];
-                break;
+        if (jwtSigningKeyString != null) {
+            //jwtSigningKey = EncryptorUtil.keyFromString(jwtSigningKeyString, jwtSignatureAlgorithm.getJcaName());
+            jwtSigningKey = JwtUtil.parseSigningKey(jwtSigningKeyString);
+            jwtParser = Jwts.parserBuilder() // (1)
+                    .setSigningKey(jwtSigningKey) // (2)
+                    .build(); // (3)
+        }
+        //File rootFolder = cfgFile.getParentFile().getParentFile();
+        if (privateKeyFile != null) {
+            jwtSigningKey = EncryptorUtil.loadPrivateKey(privateKeyFile, privateKeyPwd.toCharArray());
+        }
+        if (publicKeyFile != null) {
+            PublicKey publicKey = EncryptorUtil.loadPublicKey(EncryptorUtil.KeyFileType.PKCS12, publicKeyFile);
+            jwtParser = Jwts.parserBuilder() // (1)
+                    .setSigningKey(publicKey) // (2)
+                    .build(); // (3)
         }
 
         // 3. Cache TTL
@@ -234,17 +242,14 @@ public class AuthConfig extends AbstractSummerBootConfig {
         return ldapConfig;
     }
 
-    public SignatureAlgorithm getJwtSignatureAlgorithm() {
-        return jwtSignatureAlgorithm;
+    @JsonIgnore
+    public Key getJwtSigningKey() {
+        return jwtSigningKey;
     }
 
     @JsonIgnore
-    public Key getJwtRootSigningKey() {
-        return jwtRootSigningKey;
-    }
-
-    public String getKeyAlgorithm() {
-        return keyAlgorithm;
+    public JwtParser getJwtParser() {
+        return jwtParser;
     }
 
     public String getJwtIssuer() {
@@ -266,7 +271,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
     public Map<String, RoleMapping> getRoles() {
         return roles;
     }
-    
+
     public Set<String> getRoleNames() {
         return Set.copyOf(roles.keySet());
     }

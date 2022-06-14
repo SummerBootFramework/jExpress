@@ -41,6 +41,7 @@ import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
@@ -238,7 +239,24 @@ public abstract class AbstractSummerBootConfig implements SummerBootConfig {
                     key_storeFile, key_storePwd);
             field.set(this, tmf);
         } else {
+            if (value != null && (fieldClass.equals(File.class) || fieldClass.equals(Path.class))) {
+                File file = new File(value);
+                if (!file.isAbsolute()) {
+                    value = configFolder + File.separator + value;
+                }
+            }
             ReflectionUtil.loadField(this, field, value, autoDecrypt, isEmailRecipients);
+        }
+    }
+
+    protected String updateFilePath(File domainDir, String fileName) {
+        if (StringUtils.isBlank(fileName)) {
+            return fileName;
+        }
+        if (fileName.startsWith(File.separator)) {
+            return new File(fileName).getAbsolutePath();
+        } else {
+            return new File(domainDir.getAbsolutePath() + File.separator + fileName).getAbsolutePath();
         }
     }
 
