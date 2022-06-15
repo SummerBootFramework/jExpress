@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -74,7 +73,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
             desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global voer SSL 3269")
     private volatile int ldapPort;
 
-    @Config(key = "ldap.baseDN", defaultValue = "DC=testent,DC=testad,DC=testmre")
+    @Config(key = "ldap.baseDN")
     private volatile String ldapBaseDN;
 
     @Config(key = "ldap.bindingUserDN", required = false)
@@ -103,42 +102,42 @@ public class AuthConfig extends AbstractSummerBootConfig {
 
     //2. JWT
     @Memo(title = "2. JWT")
-    @JsonIgnore
-    @Config(key = "jwt.root.SigningKey", validate = Config.Validate.Encrypted, required = false,
-            desc = "symmetric key")
-    private volatile String jwtSigningKeyString;
-
-    @Config(key = "jwt.SigningKeyFile", required = false,
-            desc = "private key")
+    @Config(key = "jwt.asymmetric.SigningKeyFile", required = false,
+            desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size. To generate the keypair manually:\n"
+            + "1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
+            + "2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out public.pem \n"
+            + "3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM \n"
+            + "4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out private.pem")
     private volatile File privateKeyFile;
 
     @JsonIgnore
-    @Config(key = "jwt.SigningKeyPwd", validate = Config.Validate.Encrypted, required = false,
-            desc = "private key password")
+    @Config(key = "jwt.asymmetric.SigningKeyPwd", validate = Config.Validate.Encrypted, required = false,
+            desc = "The password of this private key")
     private volatile String privateKeyPwd;
 
-    @Config(key = "jwt.ParsingKeyFile", required = false,
-            desc = "public key")
+    @Config(key = "jwt.asymmetric.ParsingKeyFile", required = false,
+            desc = "Path to the public key file corresponding to this private key")
     private volatile File publicKeyFile;
+
+    @JsonIgnore
+    @Config(key = "jwt.symmetric.key", validate = Config.Validate.Encrypted, required = false,
+            desc = "HMAC-SHA key for bothe signing and parsing, it will be ignored when asymmetric one is specified.\n"
+            + "Use this command to generate this key: java -jar <app>.jar -jwt <HS256, HS384, HS512>")
+    private volatile String symmetricKey;
 
     @JsonIgnore
     private volatile Key jwtSigningKey;
     @JsonIgnore
     private volatile JwtParser jwtParser;
 
+    @Config(key = "jwt.ttl.minutes", defaultValue = "1440")
+    private volatile int jwtTTL;
+
     @Config(key = "jwt.issuer", required = false)
     private volatile String jwtIssuer;
 
-    //3. Cache TTL
-    @Memo(title = "3. Cache TTL")
-    @Config(key = "cache.ttl.jwt.minutes")
-    private volatile int jwtTTL;
-
-    @Config(key = "cache.ttl.user.minutes")
-    private volatile long userTTL;
-
-    //4. Role mapping
-    @Memo(title = "4. Role mapping",
+    //3. Role mapping
+    @Memo(title = "3. Role mapping",
             desc = "Map the role with user group (no matter the group is defined in LDAP or DB)",
             format = "roles.<role name>.groups=csv list\n"
             + "roles.<role name>.users=csv list",
@@ -162,9 +161,9 @@ public class AuthConfig extends AbstractSummerBootConfig {
             ldapConfig = LdapAgent.buildCfg(ldapHost, ldapPort, isSSL, ldapSSLConnectionFactoryClassName, ldapTLSProtocol, bindingUserDN, bindingPassword);
         }
         // 2. JWT        
-        if (jwtSigningKeyString != null) {
+        if (symmetricKey != null) {
             //jwtSigningKey = EncryptorUtil.keyFromString(jwtSigningKeyString, jwtSignatureAlgorithm.getJcaName());
-            jwtSigningKey = JwtUtil.parseSigningKey(jwtSigningKeyString);
+            jwtSigningKey = JwtUtil.parseSigningKey(symmetricKey);
             jwtParser = Jwts.parserBuilder() // (1)
                     .setSigningKey(jwtSigningKey) // (2)
                     .build(); // (3)
@@ -182,8 +181,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
 
         // 3. Cache TTL
         //jwtTTL = TimeUnit.MINUTES.toMillis(jwtTTL);
-        userTTL = TimeUnit.MINUTES.toMillis(userTTL);
-
+        //userTTL = TimeUnit.MINUTES.toMillis(userTTL);
         String error = helper.getError();
         if (error != null) {
             throw new IllegalArgumentException(error);
@@ -258,10 +256,6 @@ public class AuthConfig extends AbstractSummerBootConfig {
 
     public int getJwtTTL() {
         return jwtTTL;
-    }
-
-    public long getUserTTL() {
-        return userTTL;
     }
 
     public RoleMapping getRole(String role) {
