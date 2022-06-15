@@ -45,9 +45,9 @@ public class JwtUtil {
      * <code>2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out public.pem</code>
      * <code>3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM</code>
      * <code>4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out private.pem</code>
-     * 
+     *
      * @param signatureAlgorithm
-     * @return 
+     * @return
      */
     public static KeyPair buildSigningParsingKeyPair(SignatureAlgorithm signatureAlgorithm) {
         return Keys.keyPairFor(signatureAlgorithm);
