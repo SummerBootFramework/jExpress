@@ -59,7 +59,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
     }
 
     //1.1 LDAP settings
-    @Memo(title = "1.1 LDAP settings")
+    @Memo(title = "1.1 LDAP connection settings")
     @Config(key = "ldap.type.AD", defaultValue = "false",
             desc = "set it true only when LDAP is implemented by Microsoft Active Directory (AD)\n"
             + "false when use others like Open LDAP, IBM Tivoli, Apache")
@@ -85,8 +85,8 @@ public class AuthConfig extends AbstractSummerBootConfig {
     @Config(key = "ldap.TenantGroupName", required = false)
     private volatile String ldapTenantGroupName;
 
-    //1.2 LDAP SSL
-    @Memo(title = "1.2 LDAP SSL")
+    //1.2 LDAP Client keystore
+    @Memo(title = "1.2 LDAP Client keystore")
     @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3")
     private volatile String ldapTLSProtocol;
     @JsonIgnore
@@ -94,6 +94,8 @@ public class AuthConfig extends AbstractSummerBootConfig {
             AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd", required = false)
     private volatile KeyManagerFactory kmf;
 
+    //1.3 LDAP Client truststore
+    @Memo(title = "1.3 LDAP Client truststore")
     @JsonIgnore
     @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd", required = false)
     private volatile TrustManagerFactory tmf;
