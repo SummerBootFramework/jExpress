@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -109,7 +110,7 @@ public class FormatterUtil {
     private static final Pattern REGEX_DEC_PATTERN = Pattern.compile(DECRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
     private static final Pattern REGEX_ENC_PATTERN = Pattern.compile(ENCRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
 
-    public static String updateLine(String line, boolean encrypt) {
+    public static String updateProtectedLine(String line, boolean encrypt) throws GeneralSecurityException {
         Matcher matcher = encrypt
                 ? REGEX_DEC_PATTERN.matcher(line)
                 : REGEX_ENC_PATTERN.matcher(line);
@@ -121,7 +122,7 @@ public class FormatterUtil {
             return null;
         }
         for (String match : matches) {
-            try {
+            //try {
                 String converted;
                 if (encrypt) {
                     converted = SecurityUtil.encrypt(match, true);
@@ -130,9 +131,9 @@ public class FormatterUtil {
                     converted = SecurityUtil.decrypt(match, true);
                     line = line.replace(ENCRYPTED_WARPER_PREFIX + "(" + match + ")", DECRYPTED_WARPER_PREFIX + "(" + converted + ")");
                 }
-            } catch (Throwable ex) {
-                System.out.println(ex + " - " + match + ": " + line);
-            }
+            //} catch (Throwable ex) {
+            //    System.err.println(ex + " - " + match + ": " + line);
+            //}
         }
         return line;
     }
