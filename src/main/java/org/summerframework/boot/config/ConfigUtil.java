@@ -434,7 +434,7 @@ public class ConfigUtil {
         while (iterator.hasNext()) {
             String line = iterator.nextLine().trim();
             if (!line.startsWith("#")) {
-                String updatedLine = FormatterUtil.updateLine(line, encrypt);
+                String updatedLine = FormatterUtil.updateProtectedLine(line, encrypt);
                 if (updatedLine != null) {
                     line = updatedLine;
                     updated++;
