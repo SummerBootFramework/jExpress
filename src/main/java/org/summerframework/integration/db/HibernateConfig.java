@@ -78,13 +78,14 @@ public class HibernateConfig implements SummerBootConfig {
         return new HibernateConfig();
     }
 
+    private final Properties props = new Properties();
+
     @Override
     public void load(File cfgFile, boolean isReal) throws IOException, GeneralSecurityException {
         if (log == null) {
             log = LogManager.getLogger(getClass());
         }
         this.cfgFile = cfgFile.getAbsoluteFile();
-        Properties props = new Properties();
         try (InputStream is = new FileInputStream(cfgFile);) {
             props.load(is);
         }
@@ -155,6 +156,10 @@ public class HibernateConfig implements SummerBootConfig {
 
     public EntityManager em() {
         return sessionFactory.createEntityManager();
+    }
+
+    public String getProperty(String key) {
+        return props.getProperty(key);
     }
 
 }
