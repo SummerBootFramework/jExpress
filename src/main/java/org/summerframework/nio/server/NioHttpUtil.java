@@ -121,7 +121,7 @@ public class NioHttpUtil {
             }
         }
         if (StringUtils.isNotBlank(serviceContext.txt())) {
-            return sendText(ctx, isKeepAlive, serviceContext.headers(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
+            return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
         }
         if (serviceContext.redirect() != null) {
             NioHttpUtil.sendRedirect(ctx, serviceContext.redirect());
@@ -132,7 +132,7 @@ public class NioHttpUtil {
         if (HttpResponseStatus.OK.equals(status)) {
             status = HttpResponseStatus.NO_CONTENT;
         }
-        return sendText(ctx, isKeepAlive, serviceContext.headers(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true);
+        return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true);
     }
 
     private static final String DEFAULT_CHARSET = "UTF-8";
@@ -180,7 +180,7 @@ public class NioHttpUtil {
 
         // send
         if (isKeepAlive) {//HttpUtil.isKeepAlive(req);
-            // Add keep alive header as per:
+            // Add keep alive responseHeader as per:
             // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
             h.set(HttpHeaderNames.CONNECTION, KEEP_ALIVE);
             if (flush) {
@@ -209,10 +209,10 @@ public class NioHttpUtil {
             fileLength = randomAccessFile.length();
             HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
             HttpHeaders h = response.headers();
-            h.set(serviceContext.headers());
+            h.set(serviceContext.responseHeaders());
 
             if (isKeepAlive) {
-                // Add keep alive header as per:
+                // Add keep alive responseHeader as per:
                 // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
                 h.set(HttpHeaderNames.CONNECTION, KEEP_ALIVE);
             }
