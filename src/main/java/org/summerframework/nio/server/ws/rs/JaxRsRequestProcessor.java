@@ -316,7 +316,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             } else {
                 //1. calculate responseContentType
                 String responseContentType = produce_ExplicitType;
-                if (responseContentType == null) {// server undefined or decide by client Accept header
+                if (responseContentType == null) {// server undefined or decide by client Accept responseHeader
                     String clientAcceptedContentType = context.clientAcceptContentType();
                     if (clientAcceptedContentType == null) {// decide by server side
                         responseContentType = produce_DefaultType;
