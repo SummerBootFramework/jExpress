@@ -58,7 +58,7 @@ public class ServiceContext {
     //  1.1 status
     private HttpResponseStatus status = HttpResponseStatus.FORBIDDEN;
     // 1.2 responseHeader
-    private HttpHeaders requestHeaders;
+    private final HttpHeaders requestHeaders;
     private HttpHeaders responseHeaders;
     // 1.3 content type    
     private String contentType;// = MediaType.APPLICATION_JSON;
