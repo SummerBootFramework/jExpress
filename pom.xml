@@ -165,7 +165,7 @@
         <commons-cli.version>1.5.0</commons-cli.version>
         <commons-io.version>2.11.0</commons-io.version>
         <!-- Logging -->
-        <log4j-api.version>2.17.2</log4j-api.version>
+        <log4j-api.version>2.18.0</log4j-api.version>
         <log4j-disruptor.version>3.4.4</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
@@ -175,11 +175,11 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.78.Final</netty.version>
+        <netty.version>4.1.79.Final</netty.version>
         <netty-tcnative.version>2.0.53.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.47.0</grpc.version>
-        <protobuf.version>3.21.1</protobuf.version>
+        <protobuf.version>3.21.2</protobuf.version>
         
         
         <!-- MIME-Type -->
@@ -199,7 +199,7 @@
         <guice.version>5.1.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.1.0.Final</hibernate.version>
+        <hibernate.version>6.1.1.Final</hibernate.version>
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
@@ -214,11 +214,11 @@
         <!-- PDF - com.openhtmltopdf -->	       
         <openhtml.version>1.0.10</openhtml.version>
         <!-- PDF - iText -->
-        <itext7-core.version>7.2.2</itext7-core.version>
-        <itext7-html2pdf.version>4.0.2</itext7-html2pdf.version>
+        <itext7-core.version>7.2.3</itext7-core.version>
+        <itext7-html2pdf.version>4.0.3</itext7-html2pdf.version>
         
         <!-- Testing  -->
-        <testng.version>7.6.0</testng.version>
+        <testng.version>7.6.1</testng.version>
     </properties>
     
 

@@ -133,6 +133,7 @@ abstract public class SummerApplication extends CommandLineRunner {
 
     //app internal
     private Locale cfgDefaultRB;
+    private String domainName = null;
     private Path cfgConfigDir;
     private int CfgMonitorInterval;
     private Injector iocInjector;
@@ -178,6 +179,10 @@ abstract public class SummerApplication extends CommandLineRunner {
 
     public Locale getCfgDefaultRB() {
         return cfgDefaultRB;
+    }
+
+    public String getDomainName() {
+        return domainName;
     }
 
     public Path getCfgConfigDir() {
@@ -430,13 +435,12 @@ abstract public class SummerApplication extends CommandLineRunner {
      * @throws Exception
      */
     public void run(String[] args, String version, boolean startNIO) throws Exception {
-        init(args, version, startNIO);
+        init(args, version, startNIO);//process CLI, load config files, init IOC
         start(version, startNIO);
     }
 
     /**
-     * initialize based on command line args first then config files without
-     * caller class
+     * process CLI first then load config files without caller class, init IOC
      *
      * @param args
      * @param version
@@ -445,10 +449,10 @@ abstract public class SummerApplication extends CommandLineRunner {
     private void init(String[] args, String version, boolean startNIO) throws Exception {
         this.version = version;
 
-        //1. initialize based on application command line args
-        initializeBasedOnCommandLineArgs(args);
+        //1. process CLI
+        runCLI(args, "standalone", "configuration");
 
-        //2. initialize based on config files in configDir
+        //2. load configs
         loadBootConfigs();
         locadCustomizedConfigs(cfgConfigDir);
 
@@ -481,10 +485,6 @@ abstract public class SummerApplication extends CommandLineRunner {
         }
     }
 
-    private Path initializeBasedOnCommandLineArgs(String[] args) throws Exception {
-        return initializeBasedOnCommandLineArgs(args, "standalone", "configuration");
-    }
-
     /**
      * Initialize based on application command line args, use "standalone" as
      * the default domainFolderPrefix,and "configuration" as the default
@@ -501,14 +501,14 @@ abstract public class SummerApplication extends CommandLineRunner {
      * @return the path of configuration folder
      * @throws java.lang.Exception
      */
-    private Path initializeBasedOnCommandLineArgs(String[] args, String domainFolderPrefix, String configDirName) throws Exception {
+    private Path runCLI(String[] args, String domainFolderPrefix, String configDirName) throws Exception {
         this.cfgDomainFolderPrefix = domainFolderPrefix;
-        initBootAppCLIs();
-        initCustomizedAppCLIs(options);
-        initBootDefaultCLIs(args);//super
+        initCLIs_BootApp();
+        initCLIs_App(options);
+        initCLIs_BootDefault(args);//super
 
         // 0. preLaunch default CLI commands first, they have no dependencies on logging, config loading, etc.
-        processBootDefaultCLIs();//super
+        processCLIs_BootDefault();//super
 
         // 1. determine if in mock mode
         if (cli.hasOption(CLI_MOCKMODE)) {
@@ -555,8 +555,7 @@ abstract public class SummerApplication extends CommandLineRunner {
             CfgMonitorInterval = 5;
         }
 
-        // 4. determine config folder
-        String domainName = null;
+        // 4. determine config folder        
         if (cli.hasOption(DOMAIN)) {
             domainName = cli.getOptionValue(DOMAIN).trim();
             System.setProperty("domainName", domainName);
@@ -564,8 +563,8 @@ abstract public class SummerApplication extends CommandLineRunner {
         cfgConfigDir = ConfigUtil.cfgRoot(domainFolderPrefix, domainName, configDirName);
 
         // 5. preLaunch application CLI commands , they have dependencies on domain's configDir.
-        processBootAppCLIs(cli);
-        processCustomizedCLIs(cli);
+        processCLIs_BootApp(cli);
+        processCLIs_App(cli);
 
         // 6. All CLI is done, then use domainFolderPrefix when domainName is null
         File folder = cfgConfigDir.toFile();
@@ -589,7 +588,7 @@ abstract public class SummerApplication extends CommandLineRunner {
      *
      * @param options
      */
-    protected void initCustomizedAppCLIs(Options options) {
+    protected void initCLIs_App(Options options) {
     }
 
     /**
@@ -597,14 +596,14 @@ abstract public class SummerApplication extends CommandLineRunner {
      *
      * @param cli
      */
-    protected void processCustomizedCLIs(CommandLine cli) {
+    protected void processCLIs_App(CommandLine cli) {
     }
 
     /**
      * initialize predefined command line args initialize application CLI - add
      * CLI.options
      */
-    private void initBootAppCLIs() {
+    private void initCLIs_BootApp() {
         // list error code
         if (enable_cli_errorCodeClass != null) {
             Option arg = new Option(CLI_ERROR_CODE, false, "list application error code");
@@ -672,7 +671,7 @@ abstract public class SummerApplication extends CommandLineRunner {
      * @param cli
      * @throws java.lang.Exception
      */
-    private void processBootAppCLIs(final CommandLine cli) throws Exception {
+    private void processCLIs_BootApp(final CommandLine cli) throws Exception {
         // encrypt/decrypt config files
         if (cli.hasOption(ENCRYPT) && cli.hasOption(DOMAIN)) {
             boolean encrypt = Boolean.parseBoolean(cli.getOptionValue(ENCRYPT));
