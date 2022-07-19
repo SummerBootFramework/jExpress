@@ -25,9 +25,10 @@ public interface BootConstant {
 
     //runtime info
     String PID = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+    String HOST = ApplicationUtil.getServerName(false);
 
     //version
-    String VERSION = "Summer.Boot.v2.1.3@" + ApplicationUtil.getServerName(false);
+    String VERSION = "Summer.Boot.v2.1.3@" + HOST;
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";

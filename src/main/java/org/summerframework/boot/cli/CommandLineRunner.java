@@ -51,7 +51,7 @@ public abstract class CommandLineRunner {
 
     protected String version = BootConstant.VERSION;
 
-    final protected CommandLine initBootDefaultCLIs(String[] args) {
+    final protected CommandLine initCLIs_BootDefault(String[] args) {
         Option arg = Option.builder(USAGE)
                 .desc("Usage/Help")
                 .build();
@@ -107,7 +107,7 @@ public abstract class CommandLineRunner {
         return cli;
     }
 
-    final protected void processBootDefaultCLIs() {
+    final protected void processCLIs_BootDefault() {
         //usage
         if (cli.hasOption(USAGE)) {
             formatter.printHelp(version, options);
