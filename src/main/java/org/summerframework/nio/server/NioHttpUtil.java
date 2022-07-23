@@ -97,8 +97,8 @@ public class NioHttpUtil {
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
 
-    public static void sendRedirect(ChannelHandlerContext ctx, String newUri) {
-        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND);//HttpResponseStatus.PERMANENT_REDIRECT : HttpResponseStatus.TEMPORARY_REDIRECT
+    public static void sendRedirect(ChannelHandlerContext ctx, String newUri, HttpResponseStatus status) {
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);//HttpResponseStatus.FOUND, HttpResponseStatus.PERMANENT_REDIRECT : HttpResponseStatus.TEMPORARY_REDIRECT
         resp.headers().set(HttpHeaderNames.LOCATION, newUri);
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
@@ -124,7 +124,7 @@ public class NioHttpUtil {
             return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
         }
         if (serviceContext.redirect() != null) {
-            NioHttpUtil.sendRedirect(ctx, serviceContext.redirect());
+            NioHttpUtil.sendRedirect(ctx, serviceContext.redirect(), serviceContext.status());
             return 0;
         }
 
