@@ -339,10 +339,15 @@ public class ServiceContext {
     }
 
     public ServiceContext redirect(String redirect) {
+        return redirect(redirect, HttpResponseStatus.FOUND);
+    }
+
+    public ServiceContext redirect(String redirect, HttpResponseStatus status) {
         this.redirect = redirect;
         this.txt = null;
         this.file = null;
-        this.status = HttpResponseStatus.TEMPORARY_REDIRECT;
+        this.status = status;
+        responseHeader(HttpHeaderNames.LOCATION.toString(), redirect);
         return this;
     }
 
