@@ -23,6 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -50,6 +51,10 @@ public class ServiceContext {
     //private ChannelHandlerContext ctx;
     private final SocketAddress localIP;
     private final SocketAddress remoteIP;
+    private final HttpMethod requesMethod;
+    private final String requesURI;
+    private final HttpHeaders requestHeaders;
+    private final String requestBody;
     private final long hit;
     private final long startTs;
     private Caller caller;
@@ -58,7 +63,6 @@ public class ServiceContext {
     //  1.1 status
     private HttpResponseStatus status = HttpResponseStatus.FORBIDDEN;
     // 1.2 responseHeader
-    private final HttpHeaders requestHeaders;
     private HttpHeaders responseHeaders;
     // 1.3 content type    
     private String contentType;// = MediaType.APPLICATION_JSON;
@@ -88,11 +92,11 @@ public class ServiceContext {
     private boolean privacyRespContent = false;
 
     public static ServiceContext build(long hit) {
-        return new ServiceContext(null, hit, System.currentTimeMillis(), null);
+        return new ServiceContext(null, hit, System.currentTimeMillis(), null, null, null, null);
     }
 
-    public static ServiceContext build(ChannelHandlerContext ctx, long hit, long startTs, HttpHeaders requestHeaders) {
-        return new ServiceContext(ctx, hit, startTs, requestHeaders);
+    public static ServiceContext build(ChannelHandlerContext ctx, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+        return new ServiceContext(ctx, hit, startTs, requestHeaders, requesMethod, requesURI, requestBody);
     }
 
     @Override
@@ -101,7 +105,7 @@ public class ServiceContext {
         return "ServiceContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
     }
 
-    private ServiceContext(ChannelHandlerContext ctx, long hit, long startTs, HttpHeaders requestHeaders) {
+    private ServiceContext(ChannelHandlerContext ctx, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
         if (ctx != null && ctx.channel() != null) {
             this.localIP = ctx.channel().localAddress();
             this.remoteIP = ctx.channel().remoteAddress();
@@ -112,6 +116,9 @@ public class ServiceContext {
         this.hit = hit;
         this.startTs = startTs;
         this.requestHeaders = requestHeaders;
+        this.requesMethod = requesMethod;
+        this.requesURI = requesURI;
+        this.requestBody = requestBody;
         poi.add(new POI(BootPOI.SERVICE_BEGIN));
     }
 
@@ -199,6 +206,18 @@ public class ServiceContext {
     //@JsonInclude(JsonInclude.Include.NON_NULL)
     public long hit() {
         return hit;
+    }
+
+    public HttpMethod method() {
+        return requesMethod;
+    }
+
+    public String uri() {
+        return requesURI;
+    }
+
+    public String requestBody() {
+        return requestBody;
     }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
@@ -339,7 +358,7 @@ public class ServiceContext {
     }
 
     public ServiceContext redirect(String redirect) {
-        return redirect(redirect, HttpResponseStatus.FOUND);
+        return redirect(redirect, HttpResponseStatus.TEMPORARY_REDIRECT);//MOVED_PERMANENTLY 301, FOUND 302, TEMPORARY_REDIRECT 307, PERMANENT_REDIRECT 308
     }
 
     public ServiceContext redirect(String redirect, HttpResponseStatus status) {

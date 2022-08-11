@@ -114,4 +114,36 @@ public class TimeUtil {
         int result = RANDOM.nextInt(high - low) + low;
         return result;
     }
+
+    /**
+     * expected backoff time = random value between (2^n - 1)/2 and (2^n - 1), n
+     * should be truncated by max retry. For the example, E(3) = 3.5 slots, the
+     * expected backoff slots should between 3 ~ 7 slots
+     *
+     * @param retry the (n)th retry
+     * @param truncatedMaxRetry stop(truncate) exponential backoff when after
+     * truncatedMax retry
+     * @return the expected backoff slots
+     */
+    public static double truncatedExponentialBackoffSlots(int retry, int truncatedMaxRetry) {
+        if (retry < 1) {
+            return 0;
+        }
+        //1. truncate retry times
+        int n = Math.min(retry, truncatedMaxRetry);
+        //2. calculate expected backoff time = 2^n - 1, Changing the type of max from int to double causes the interval to be discontinuous
+        int max = (1 << n) - 1;
+        //3. calculate expected backoff mean
+        double min = max / 2;
+        //System.out.print("retry." + retry + "(" + min + "~" + max + "): ");
+        //4. generate randome value between expected backoff mean and expected backoff time
+        return (Math.random() * (max - min)) + min;
+    }
+
+//    public static void main(String[] args) {
+//        for (int i = -2; i < 10; i++) {
+//            double q = truncatedExponentialBackoffSlots(i, 5);
+//            System.out.println(q);
+//        }
+//    }
 }

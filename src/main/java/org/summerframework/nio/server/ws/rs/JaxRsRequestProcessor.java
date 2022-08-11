@@ -275,7 +275,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 }
             }
             if (!isAuthorized) {
-                context.status(HttpResponseStatus.UNAUTHORIZED)
+                context.status(HttpResponseStatus.FORBIDDEN)
                         .error(new Error(BootErrorCode.AUTH_NO_PERMISSION, null, "Caller is not in role: " + rolesAllowed, null));
                 return;
             }
@@ -369,7 +369,6 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                     context.contentType(responseContentType);
                 }
             }
-
         }
     }
 
