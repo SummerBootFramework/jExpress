@@ -1,6 +1,6 @@
 # Summer Boot was initiated by a group of developers in 2004 and was adopted by several Toronto law firms in 2011 to customize their back-end services. 
 
-# Its sub-project Summer Boot Core, open sourced in Sep 2021, focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
+# Its sub-project Summer Boot Core, open sourced in Sep 2006, focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
 
 
 
