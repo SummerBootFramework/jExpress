@@ -203,6 +203,19 @@ public class PDFBox {
     }
 
     /**
+     * 
+     * @param pdfData
+     * @param dpi
+     * @param formatName a {@code String} containing the informal name of a
+     * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @return
+     * @throws IOException 
+     */
+    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, String formatName) throws IOException {
+        return pdf2Images(pdfData, dpi, ImageType.RGB, formatName);
+    }
+
+    /**
      *
      * @param pdfData
      * @param dpi

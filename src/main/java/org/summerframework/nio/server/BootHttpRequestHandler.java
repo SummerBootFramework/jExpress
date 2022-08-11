@@ -76,6 +76,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             context.timestampPOI(BootPOI.AUTH_BEGIN);
             if (!authenticateCaller(processor, httpRequestHeaders, httpRequestPath, context)) {
                 context.status(HttpResponseStatus.UNAUTHORIZED);
+                onUnauthorized(processor, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
                 return;
             }
 
@@ -116,6 +117,10 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception {
         return true;
+    }
+
+    protected void onUnauthorized(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
+            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
     }
 
     protected void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,

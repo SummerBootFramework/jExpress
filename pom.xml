@@ -176,10 +176,10 @@
 
         <!-- NIO Netty -->
         <netty.version>4.1.79.Final</netty.version>
-        <netty-tcnative.version>2.0.53.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.54.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.48.0</grpc.version>
-        <protobuf.version>3.21.2</protobuf.version>
+        <grpc.version>1.48.1</grpc.version>
+        <protobuf.version>3.21.5</protobuf.version>
         
         
         <!-- MIME-Type -->
@@ -192,14 +192,14 @@
         <!-- JSON/XML/Bean Validation -->
         <jackson.version>2.13.3</jackson.version>
         <!-- Bean Validation -->
-        <hibernate-validator.version>7.0.4.Final</hibernate-validator.version>
+        <hibernate-validator.version>7.0.5.Final</hibernate-validator.version>
         <el.Implementation.version>4.0.2</el.Implementation.version>
 
         <!-- IOC Injection -->
         <guice.version>5.1.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.1.1.Final</hibernate.version>
+        <hibernate.version>6.1.2.Final</hibernate.version>
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
