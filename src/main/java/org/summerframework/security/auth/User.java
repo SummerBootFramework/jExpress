@@ -19,7 +19,9 @@ import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -37,6 +39,7 @@ public class User implements Serializable, Caller, Comparable<User> {
     protected String password;
     protected Set<String> groups;
     protected int type = 1;
+    protected Map prop = null;
 
     public User(long tenantId, String tenantName, long id, String uid) {
         this.tenantId = tenantId;
@@ -179,6 +182,37 @@ public class User implements Serializable, Caller, Comparable<User> {
                 return id.compareTo(id2);
             }
         }
+    }
+
+    @Override
+    public <T> T getProp(String key, Class<T> type) {
+        if (prop == null) {
+            return null;
+        }
+        return (T) prop.get(key);
+    }
+
+    @Override
+    public void putProp(String key, Object value) {
+        if (prop == null) {
+            prop = new HashMap();
+        }
+        prop.put(key, value);
+    }
+
+    @Override
+    public void remove(String key) {
+        if (prop != null) {
+            prop.remove(key);
+        }
+    }
+
+    @Override
+    public Set<String> propKeySet() {
+        if (prop == null) {
+            return null;
+        }
+        return prop.keySet();
     }
 
 }

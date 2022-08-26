@@ -225,6 +225,9 @@ public class NioConfig extends AbstractSummerBootConfig {
     @Config(key = "nio.HttpRequestHandler", defaultValue = "org.summerframework.nio.server.BootHttpRequestHandler")
     private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.class.getName();
 
+    @Config(key = "nio.WebSocket.Compress", defaultValue = "false")
+    private volatile boolean compressWebSocket = false;
+
     //5. IO Communication logging filter
     @Memo(title = "5. IO Communication logging filter")
     @Config(key = "nio.verbose.filter.usertype", defaultValue = "ignore",
@@ -436,6 +439,10 @@ public class NioConfig extends AbstractSummerBootConfig {
             return null;
         }
         return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
+    }
+
+    public boolean isCompressWebSocket() {
+        return compressWebSocket;
     }
 
     public Map<String, Integer> getBindingAddresses() {
