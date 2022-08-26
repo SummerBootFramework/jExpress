@@ -91,12 +91,10 @@ public abstract class BootAuthenticator implements Authenticator {
      * @param caller
      * @return formatted auth token builder
      */
-    protected JwtBuilder marshalCaller(Caller caller) {
+    @Override
+    public JwtBuilder marshalCaller(Caller caller) {
         String jti = String.valueOf(caller.getId());
         String issuer = AuthConfig.CFG.getJwtIssuer();
-        if (caller.getTenantId() != null || caller.getTenantName() != null) {
-            issuer = caller.getTenantName() + "#" + caller.getTenantId();
-        }
         String subject = caller.getUid();
         Set<String> groups = caller.getGroups();
         String groupsCsv = groups == null || groups.size() < 1
@@ -104,11 +102,27 @@ public abstract class BootAuthenticator implements Authenticator {
                 : groups.stream().collect(Collectors.joining(","));
         String audience = groupsCsv;
 
-        JwtBuilder builder = Jwts.builder()
-                .setId(jti)
+        Claims claims = Jwts.claims();
+        claims.setId(jti)
                 .setIssuer(issuer)
                 .setSubject(subject)
                 .setAudience(audience);
+        if (caller.getTenantId() != null) {
+            claims.put("tenantId", caller.getTenantId());
+        }
+        if (caller.getTenantName() != null) {
+            claims.put("tenantName", caller.getTenantName());
+        }
+        Set<String> keys = caller.propKeySet();
+        if (keys != null) {
+            for (String key : keys) {
+                Object v = caller.getProp(key, Object.class);
+                claims.put(key, v);
+            }
+        }
+
+        JwtBuilder builder = Jwts.builder().setClaims(claims);
+
         return builder;
     }
 
@@ -119,30 +133,23 @@ public abstract class BootAuthenticator implements Authenticator {
      * @param claims
      * @return Caller
      */
-    protected Caller unmarshalCaller(Claims claims) {
+    @Override
+    public Caller unmarshalCaller(Claims claims) {
         String jti = claims.getId();
         String issuer = claims.getIssuer();
         String subject = claims.getSubject();
         String audience = claims.getAudience();
+        Long tenantId = claims.get("tenantId", Long.class);
+        String tenantName = claims.get("tenantName", String.class);
 
-        String[] tenantInfo = {null, "0"};// tenantName#tenantId
-        if (issuer != null) {
-            tenantInfo = issuer.split("#");
-        }
-        long tenantId;
-        try {
-            tenantId = Long.parseLong(tenantInfo[1]);
-        } catch (Throwable ex) {
-            tenantId = 0;
-        }
         long id;
         try {
             id = Long.parseLong(jti);
         } catch (Throwable ex) {
-            id = 0;
+            id = -1;
         }
         String userName = subject;
-        User caller = new User(tenantId, tenantInfo[0], id, userName);
+        User caller = new User(tenantId, tenantName, id, userName);
 
         String userGroups = audience;
         if (StringUtils.isNotBlank(userGroups)) {
@@ -151,6 +158,24 @@ public abstract class BootAuthenticator implements Authenticator {
                 caller.addGroup(group);
             }
         }
+
+        Set<String> keys = claims.keySet();
+        if (keys != null) {
+            for (String key : keys) {
+                Object v = claims.get(key);
+                caller.putProp(key, v);
+            }
+        }
+        caller.remove(Claims.AUDIENCE);
+        caller.remove(Claims.EXPIRATION);
+        caller.remove(Claims.ID);
+        caller.remove(Claims.ISSUED_AT);
+        caller.remove(Claims.ISSUER);
+        caller.remove(Claims.NOT_BEFORE);
+        caller.remove(Claims.SUBJECT);
+        caller.remove("tenantId");
+        caller.remove("tenantName");
+        
         return caller;
     }
 

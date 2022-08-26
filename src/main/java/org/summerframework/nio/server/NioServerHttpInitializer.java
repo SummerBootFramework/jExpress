@@ -21,6 +21,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -146,6 +147,9 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
         ChannelHandler chl = cfg.getPingHandler();
         if (chl != null) {
             p.addLast("biz-pingHandler", chl);
+        }
+        if (cfg.isCompressWebSocket()) {
+            p.addLast(new WebSocketServerCompressionHandler());
         }
         p.addLast("biz-requestHandler", cfg.getRequestHandler());
 

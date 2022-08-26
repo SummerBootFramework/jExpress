@@ -15,12 +15,14 @@
  */
 package org.summerframework.security.auth;
 
-import org.summerframework.nio.server.domain.ServiceContext;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.io.IOException;
 import javax.naming.NamingException;
-import org.summerframework.integration.cache.AuthTokenCache;
 import org.summerframework.boot.instrumentation.HealthInspector;
+import org.summerframework.integration.cache.AuthTokenCache;
+import org.summerframework.nio.server.domain.ServiceContext;
 
 /**
  *
@@ -47,6 +49,10 @@ public interface Authenticator extends HealthInspector {
      * @throws javax.naming.NamingException
      */
     String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws IOException, NamingException;
+
+    JwtBuilder marshalCaller(Caller caller);
+
+    Caller unmarshalCaller(Claims claims);
 
     /**
      * Retrieve token based on RFC 6750 - The OAuth 2.0 Authorization Framework

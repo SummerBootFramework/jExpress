@@ -30,7 +30,7 @@ public interface Caller {
     Number getId();
 
     String getUid();
-    
+
     String getPassword();
 
     boolean isInGroup(String group);
@@ -40,4 +40,12 @@ public interface Caller {
     Set<String> getGroups();
 
     int getType();
+
+    <T extends Object> T getProp(String key, Class<T> type);
+
+    void putProp(String key, Object value);
+
+    void remove(String key);
+
+    Set<String> propKeySet();
 }
