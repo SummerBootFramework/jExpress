@@ -158,7 +158,7 @@ public class IText {
     /*
     private byte[] sample1(Ticket lottoTicket) throws IOException {
         return ITextBuilder.html2PDF((ticket) -> {
-            String html = ITextBuilder.loadTemplateFromResources("resources/html/649.html");//"resources/html/649.html"
+            String html = ITextBuilder.loadTemplateFromResources("resources/html/smple.html");//"resources/html/smple.html"
             html = html.replaceAll("_title", String.valueOf(System.currentTimeMillis()));
             return html;
         }, lottoTicket, null);
