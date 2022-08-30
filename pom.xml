@@ -195,7 +195,7 @@
         <!-- PDF - com.openhtmltopdf -->	       
         <openhtml.version>1.0.10</openhtml.version>
         <!-- PDF - iText -->
-        <itext7-core.version>7.1.16</itext7-core.version>
+        <itext7-core.version>7.2.0</itext7-core.version>
         <itext7-html2pdf.version>3.0.5</itext7-html2pdf.version>
         
         <!-- Testing  -->
