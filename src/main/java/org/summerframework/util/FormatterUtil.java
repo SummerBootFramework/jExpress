@@ -1,17 +1,17 @@
 /*
- * Copyright 2005 The Summer Boot Framework Project
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Framework Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
  *
- *   https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.summerframework.util;
 
@@ -19,27 +19,20 @@ import java.awt.image.BufferedImage;
 import static org.summerframework.boot.config.ConfigUtil.DECRYPTED_WARPER_PREFIX;
 import static org.summerframework.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 import org.summerframework.security.SecurityUtil;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -48,12 +41,16 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Du Xiao
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class FormatterUtil {
 
-    public static final String[] EMPTY_STR_ARRAY = {};
+    public static final long INT_MASK = 0xFFFFFFFFL;//(long) Integer.MAX_VALUE - (long) Integer.MIN_VALUE;
+    public static final int SHORT_MASK = 0xFFFF;
+    public static final short BYTE_MASK = 0xFF;
+    public static final short NIBBLE_MASK = 0x0F;
 
+    public static final String[] EMPTY_STR_ARRAY = {};
     public static final String REGEX_CSV = "\\s*,\\s*";
     public static final String REGEX_URL = "\\s*/\\s*";
     public static final String REGEX_BINDING_MAP = "\\s*:\\s*";
@@ -113,7 +110,7 @@ public class FormatterUtil {
     private static final Pattern REGEX_DEC_PATTERN = Pattern.compile(DECRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
     private static final Pattern REGEX_ENC_PATTERN = Pattern.compile(ENCRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
 
-    public static String updateLine(String line, boolean encrypt) throws GeneralSecurityException {
+    public static String updateProtectedLine(String line, boolean encrypt) throws GeneralSecurityException {
         Matcher matcher = encrypt
                 ? REGEX_DEC_PATTERN.matcher(line)
                 : REGEX_ENC_PATTERN.matcher(line);
@@ -125,7 +122,7 @@ public class FormatterUtil {
             return null;
         }
         for (String match : matches) {
-            try {
+            //try {
                 String converted;
                 if (encrypt) {
                     converted = SecurityUtil.encrypt(match, true);
@@ -134,9 +131,9 @@ public class FormatterUtil {
                     converted = SecurityUtil.decrypt(match, true);
                     line = line.replace(ENCRYPTED_WARPER_PREFIX + "(" + match + ")", DECRYPTED_WARPER_PREFIX + "(" + converted + ")");
                 }
-            } catch (Throwable ex) {
-                System.out.println(ex + " - " + match + ": " + line);
-            }
+            //} catch (Throwable ex) {
+            //    System.err.println(ex + " - " + match + ": " + line);
+            //}
         }
         return line;
     }
@@ -175,104 +172,20 @@ public class FormatterUtil {
         return new String(value.getBytes(targetCharsetName), targetCharsetName);
     }
 
-    /**
-     *
-     * @param expectedStr "Fantasticèéçà Entwickeln Sie mit Vergnügen"
-     * @param targetCharset "Windows-1252"
-     * @return
-     */
-    @Deprecated
-    private static byte[] getBytesFromUTF8(String expectedStr, String targetCharset) {
-
-        // Trick: -Dfile.encoding=UTF-8 or code below:
-        // This way you are going to trick JVM which would think that charset is not set
-        // and make it to set it again to UTF-8, on runtime!
-//            System.setProperty("file.encoding", "UTF-8");
-//            Field charset = Charset.class.getDeclaredField("defaultCharset");
-//            charset.setAccessible(true);
-//            charset.set(null, null);
-        byte[] ret;
-//        try ( ByteArrayInputStream original = new ByteArrayInputStream(expectedStr.getBytes());  InputStreamReader contentReader = new InputStreamReader(original, CharsetUtil.UTF_8);  ByteArrayOutputStream converted = new ByteArrayOutputStream();  Writer writer = new OutputStreamWriter(converted, targetCharset)) {
-//            int readCount;
-//            char[] buffer = new char[4096];
-//            while ((readCount = contentReader.read(buffer, 0, buffer.length)) != -1) {
-//                writer.write(buffer, 0, readCount);
-//            }
-//            ret = converted.toByteArray();
-//        } catch (Throwable ex) {
-//            ex.printStackTrace();
-//            try {
-//                ret = expectedStr.getBytes(targetCharset);
-//            } catch (Throwable ex2) {
-//                ex2.printStackTrace();
-//                ret = expectedStr.getBytes(StandardCharsets.UTF_8);
-//            }
-//        }
-
-        int readCount;
-        char[] buffer = new char[4096];
-        try {
-            ByteArrayInputStream original = new ByteArrayInputStream(expectedStr.getBytes());
-            InputStreamReader contentReader = new InputStreamReader(original, "UTF-8");
-            try (ByteArrayOutputStream converted = new ByteArrayOutputStream()) {
-                try (Writer writer = new OutputStreamWriter(converted, "Windows-1252")) {
-                    while ((readCount = contentReader.read(buffer, 0, buffer.length)) != -1) {
-                        writer.write(buffer, 0, readCount);
-                    }
-                }
-                ret = converted.toByteArray();
-                //actualStr = new String(converted.toByteArray(), "Windows-1252");
-            }
-        } catch (Throwable ex) {
-            try {
-                ret = expectedStr.getBytes(targetCharset);
-            } catch (Throwable ex2) {
-                ex2.printStackTrace();
-                ret = expectedStr.getBytes(StandardCharsets.UTF_8);
-            }
-        }
-        return ret;
-    }
-//    public static void main(String[] args) throws UnsupportedEncodingException {
-//        DateTimeFormatter DTF = DateTimeFormatter.ofPattern("EEEE, dd LLLL, yyyy HH:mm:ss");
-//        System.out.println(DTF.format(LocalDateTime.now()));
-//    }
-
-    public static DateTimeFormatter UTC_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-    public static ZoneId ZONE_ID_ONTARIO = ZoneId.of("America/Toronto");
-
-    /**
-     * Maps the UTC time to an ET format.
-     *
-     * @param utcTime UTC time to be formatted.
-     * @param zoneId
-     *
-     * @return ET formatted time.
-     *
-     */
-    public static String transformUTCDateTimeToLocalDateTime(String utcTime, ZoneId zoneId) {
-        if (StringUtils.isBlank(utcTime)) {
-            return null;
-        }
-        return ZonedDateTime.parse(utcTime, UTC_DATE_TIME_FORMATTER)
-                .withZoneSameInstant(zoneId)
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-
-    }
-
-    public static LocalDateTime toLocalDateTime(long utcTs) {
-        return toLocalDateTime(utcTs, ZoneId.systemDefault());
-    }
-
-    public static LocalDateTime toLocalDateTime(long utcTs, ZoneId zoneId) {
-        if (zoneId == null) {
-            zoneId = ZoneId.systemDefault();
-        }
-        return Instant.ofEpochMilli(utcTs).atZone(zoneId).toLocalDateTime();
-    }
-
-    public static String encodeMimeBase64(byte[] contentBytes) {
+    public static String base64MimeEncode(byte[] contentBytes) {
         return Base64.getMimeEncoder().encodeToString(contentBytes);
+    }
+
+    public static byte[] base64MimeDecode(String encodedMime) {
+        return Base64.getMimeDecoder().decode(encodedMime);
+    }
+
+    public static String base64Encode(byte[] contentBytes) {
+        return Base64.getEncoder().encodeToString(contentBytes);
+    }
+
+    public static byte[] base64Decode(String encodedMime) {
+        return Base64.getDecoder().decode(encodedMime);
     }
 
     /**
@@ -280,12 +193,83 @@ public class FormatterUtil {
      * @param bi
      * @param format - png
      * @return
-     * @throws IOException
+     * @throws IOException ImageIO failed to access system cache dir
      */
     public static byte[] toByteArray(BufferedImage bi, String format) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(bi, format, baos);
-        byte[] bytes = baos.toByteArray();
-        return bytes;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
+            ImageIO.write(bi, format, baos);
+            byte[] bytes = baos.toByteArray();
+            return bytes;
+        }
+    }
+
+    public static String toString(ByteBuffer buffer) {
+        return toString(buffer, true, true, 8, "    ");
+    }
+
+    public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int showNumberOfBytesPerLine, String delimiter) {
+        StringBuilder sb = new StringBuilder();
+        if (showStatus) {
+            sb.append("ByteBuffer status:")
+                    .append(" Order=").append(buffer.order())
+                    .append(" Position=").append(buffer.position())
+                    .append(" Limit=").append(buffer.limit())
+                    .append(" Capacity=").append(buffer.capacity())
+                    .append(" Remaining=").append(buffer.remaining());
+        }
+        if (showHeaderfooter) {
+            sb.append("\n************** ByteBuffer Contents starts **************\n");
+        }
+        boolean eol = false;
+        if (showNumberOfBytesPerLine > 0) {
+            byte[] array = buffer.array();
+            for (int i = 0; i < buffer.limit(); i++) {
+                eol = (i + 1) % showNumberOfBytesPerLine == 0;
+                sb.append(String.format("0x%02X", array[i])).append(eol ? "\n" : delimiter);
+            }
+        }
+        if (showHeaderfooter) {
+            if (!eol) {
+                sb.append("\n");
+            }
+            sb.append("************** ByteBuffer Contents ends **************\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * For old Java before Java 17 HexFormat.of().parseHex(s)
+     *
+     * @param hexString must be an even-length string
+     * @return
+     */
+    public static byte[] parseHex(String hexString) {
+        String evenLengthHexString = hexString.replaceAll("0x", "").replaceAll("[^a-zA-Z0-9]", "");//remove "0x" and other delimiters, 0x5A   ,;/n/t|...   0x01 -> 5A01
+        int len = evenLengthHexString.length();
+        if (len % 2 != 0) {
+            throw new IllegalArgumentException("Converted Hex string length=" + len + " and is not an even-length: \n\t arg: " + hexString + "\n\t hex: " + evenLengthHexString);
+        }
+        String hex = evenLengthHexString.replaceAll("[^a-fA-F0-9]", "");
+        if (!evenLengthHexString.equals(hex)) {
+            throw new IllegalArgumentException("Invalid Hex string \n\t arg: " + hexString + "\n\t hex: " + evenLengthHexString);
+        }
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(evenLengthHexString.charAt(i), 16) << 4)
+                    + Character.digit(evenLengthHexString.charAt(i + 1), 16));
+        }
+        return data;
+    }
+
+    public static <T extends Object> Set<T> findDuplicates(List<T> listContainingDuplicates) {
+        final Set<T> setToReturn = new HashSet<>();
+        final Set<T> set1 = new HashSet<>();
+
+        for (T yourInt : listContainingDuplicates) {
+            if (!set1.add(yourInt)) {
+                setToReturn.add(yourInt);
+            }
+        }
+        return setToReturn;
     }
 }

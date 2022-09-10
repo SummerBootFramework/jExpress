@@ -1,17 +1,17 @@
 /*
- * Copyright 2005 The Summer Boot Framework Project
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Framework Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
  *
- *   https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.summerframework.security;
 
@@ -56,7 +56,9 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
+import java.io.FileNotFoundException;
+import java.security.spec.EncodedKeySpec;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -80,7 +82,7 @@ import org.bouncycastle.pkcs.PKCSException;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Du Xiao
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class EncryptorUtil {
 
@@ -92,15 +94,55 @@ public class EncryptorUtil {
     public static final int TAG_LENGTH_BIT = 128;
     public static final int IV_LENGTH_BYTE = 12;
     public static final int AES_KEY_BIT = 256;
+    public static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     static {
         try {
-            Security.addProvider(new BouncyCastleProvider());
+            Security.addProvider(PROVIDER);
             System.setProperty("hostName", InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException ex) {
             ex.printStackTrace(System.err);
             System.exit(-1);
         }
+    }
+
+    public static String keyToString(Key signingKey) {
+        final byte[] secretBytes = signingKey.getEncoded();
+        return Base64.getEncoder().encodeToString(secretBytes);
+    }
+
+    /**
+     * HmacSHA256, HmacSHA384, HmacSHA512, AES, etc.
+     *
+     * @param encodedKey
+     * @param algorithm
+     * @return
+     */
+    public static Key keyFromString(String encodedKey, String algorithm) {
+        byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
+        return new SecretKeySpec(decodedKey, algorithm);
+    }
+
+    public static byte[] buildSecretKey(String password) {
+        byte[] ret = null;
+        try {
+            KeyGenerator kgen = KeyGenerator.getInstance("AES");// 创建AES的Key生产者
+            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+            secureRandom.setSeed(password.getBytes());
+            kgen.init(128, secureRandom);// 利用用户密码作为随机数初始化出
+            // 128位的key生产者
+            //加密没关系，SecureRandom是生成安全随机数序列，password.getBytes()是种子，只要种子相同，序列就一样，所以解密只要有password就行
+            SecretKey secretKey = kgen.generateKey();// 根据用户密码，生成一个密钥
+            ret = secretKey.getEncoded();// 返回基本编码格式的密钥，如果此密钥不支持编码，则返回null。
+        } catch (NoSuchAlgorithmException ex) {
+
+        }
+        return ret;
+    }
+    static Key SCERET_KEY = new SecretKeySpec(buildSecretKey("changeit"), "AES");
+
+    public static void init(String applicationPwd) {
+        SCERET_KEY = new SecretKeySpec(buildSecretKey(applicationPwd), "AES");
     }
 
     /**
@@ -117,7 +159,8 @@ public class EncryptorUtil {
     /**
      *
      * @param filename
-     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws NoSuchAlgorithmException
      * @throws IOException
@@ -165,7 +208,8 @@ public class EncryptorUtil {
     /**
      *
      * @param data
-     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * (128-bit)
      * @return
      * @throws NoSuchAlgorithmException
@@ -285,9 +329,11 @@ public class EncryptorUtil {
     }
 
     /**
-     * <code>openssl genrsa -out keypair.pem 2048</code>
-     * <code>openssl rsa -in keypair.pem -pubout -out public.pem -outform PEM</code>
-     * <code>openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in keypair.pem -out pkcs8.key</code>
+     * 
+     * <code>1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096</code>
+     * <code>2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out public.pem</code>
+     * <code>3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM</code>
+     * <code>4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out private.pem</code>
      *
      * @param keyfactoryAlgorithm - RSA(2048), EC(571)
      * @param size
@@ -302,6 +348,12 @@ public class EncryptorUtil {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance(keyfactoryAlgorithm);
         kpg.initialize(size);
         return kpg.generateKeyPair();
+    }
+
+    public static void saveKeyToFile(Key key, File file) throws IOException {
+        try (FileOutputStream keyfos = new FileOutputStream(file.getCanonicalFile());) {
+            keyfos.write(key.getEncoded());
+        }
     }
 
     public static void secureMem(char[] pwd) {
@@ -339,9 +391,10 @@ public class EncryptorUtil {
             default:
                 throw new NoSuchAlgorithmException(fileType.name());
         }
-        FileInputStream is = new FileInputStream(keystoreFile);
         KeyStore keystore = KeyStore.getInstance(keyStoreType);
-        keystore.load(is, keyStorePwd);
+        try (FileInputStream is = new FileInputStream(keystoreFile);) {
+            keystore.load(is, keyStorePwd);
+        }
         secureMem(keyStorePwd);
 
         // Get private key
@@ -425,23 +478,31 @@ public class EncryptorUtil {
 //                        //                .replace("-----END EC PRIVATE KEY-----", "")
 //                        //.replaceAll(System.lineSeparator(), "");
 //                        .replaceAll("\\s+", "");
-                byte[] encoded = loadPermKeyFileContent(publicKeyFile);
+                byte[] encoded = loadPermKey(publicKeyFile);
                 // Turn the encoded key into a real RSA public key.
                 // Public keys are encoded in X.509.
-                X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
-                KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
-                publicKey = keyFactory.generatePublic(keySpec);
+
+                publicKey = loadX509EncodedPublicKey(encoded, algorithm);
                 break;
             case Certificate:
-                FileInputStream fin = new FileInputStream(publicKeyFile);
+                try (FileInputStream fin = new FileInputStream(publicKeyFile);) {
                 CertificateFactory f = CertificateFactory.getInstance("X.509");
                 X509Certificate certificate = (X509Certificate) f.generateCertificate(fin);
                 publicKey = certificate.getPublicKey();
-                break;
+            }
+            break;
             default:
                 throw new NoSuchAlgorithmException(fileType.name());
         }
         return publicKey;
+    }
+
+    public static PublicKey loadX509EncodedPublicKey(byte[] permData, String algorithm) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        // Turn the encoded key into a real RSA public key.
+        // Public keys are encoded in X.509.
+        EncodedKeySpec keySpec = new X509EncodedKeySpec(permData);
+        KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+        return keyFactory.generatePublic(keySpec);
     }
 
     public static PrivateKey loadPrivateKey(File pemFile) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
@@ -449,8 +510,11 @@ public class EncryptorUtil {
     }
 
     public static PrivateKey loadPrivateKey(File pemFile, String algorithm) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        byte[] pkcs8Data = loadPermKeyFileContent(pemFile);
+        byte[] pkcs8Data = loadPermKey(pemFile);
+        return loadPrivateKey(pkcs8Data, algorithm);
+    }
 
+    public static PrivateKey loadPrivateKey(byte[] pkcs8Data, String algorithm) throws InvalidKeySpecException, NoSuchAlgorithmException {
         // Turn the encoded key into a real RSA private key.
         // Private keys are encoded in PKCS#8.
         KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
@@ -481,7 +545,7 @@ public class EncryptorUtil {
 //        System.out.println("Provider Name :" + provider.getName());
 //        System.out.println("Provider Version :" + provider.getVersion());
 //        System.out.println("Provider Info:" + provider.getInfo());
-        byte[] pkcs8Data = loadPermKeyFileContent(pemFile);
+        byte[] pkcs8Data = loadPermKey(pemFile);
 
         ASN1Sequence derseq = ASN1Sequence.getInstance(pkcs8Data);
         PKCS8EncryptedPrivateKeyInfo encobj = new PKCS8EncryptedPrivateKeyInfo(EncryptedPrivateKeyInfo.getInstance(derseq));
@@ -505,16 +569,23 @@ public class EncryptorUtil {
         return privateKey;
     }
 
-    public static byte[] loadPermKeyFileContent(File pemFile) throws InvalidKeySpecException, IOException {
+    public static byte[] loadPermKey(File pemFile) throws InvalidKeySpecException, IOException {
         // Load the private key bytes
         byte[] keyBytes = Files.readAllBytes(Paths.get(pemFile.getAbsolutePath()));
-        String keyPEM = new String(keyBytes, Charset.defaultCharset());
-        int begin = keyPEM.indexOf("-----");
+        String pemFileContent = new String(keyBytes, Charset.defaultCharset());
+        return loadPermKey(pemFileContent);
+    }
+
+    public static byte[] loadPermKey(String pemFileContent) throws InvalidKeySpecException {
+        // Load the private key bytes
+//        byte[] keyBytes = Files.readAllBytes(Paths.get(pemFile.getAbsolutePath()));
+//        String pemFileContent = new String(keyBytes, Charset.defaultCharset());
+        int begin = pemFileContent.indexOf("-----");
         if (begin < 0) {
             throw new InvalidKeySpecException("missing key header");
         }
-        keyPEM = keyPEM.substring(begin);
-        keyPEM = keyPEM
+        pemFileContent = pemFileContent.substring(begin);
+        pemFileContent = pemFileContent
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replace("-----BEGIN ENCRYPTED PRIVATE KEY-----", "")
@@ -529,7 +600,7 @@ public class EncryptorUtil {
                 .replaceAll("\\s+", "");
         //byte[] encoded = java.util.Base64.getDecoder().decode(privateKeyContent);
         //byte[] header = Hex.decode("30 81bf 020100 301006072a8648ce3d020106052b81040022 0481a7");
-        byte[] pkcs8Data = Base64.getDecoder().decode(keyPEM);
+        byte[] pkcs8Data = Base64.getDecoder().decode(pemFileContent);
         return pkcs8Data;
     }
 
@@ -589,7 +660,8 @@ public class EncryptorUtil {
      * @param plainDataFileName
      * @param encryptedFileName
      * @param digitalSignatureKey
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -684,7 +756,8 @@ public class EncryptorUtil {
      * @param symmetricKey
      * @param plainData
      * @param digitalSignatureKey
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -810,7 +883,8 @@ public class EncryptorUtil {
      * @param plainDataFileName
      * @param digitalSignatureKey
      * @param meta
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -924,7 +998,8 @@ public class EncryptorUtil {
      * @param encryptedData
      * @param digitalSignatureKey
      * @param meta
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException

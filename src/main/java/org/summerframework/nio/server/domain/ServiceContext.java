@@ -1,17 +1,17 @@
 /*
- * Copyright 2005 The Summer Boot Framework Project
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Framework Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
  *
- *   https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.summerframework.nio.server.domain;
 
@@ -23,6 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -42,7 +43,7 @@ import java.util.Set;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Du Xiao
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ServiceContext {
@@ -50,6 +51,10 @@ public class ServiceContext {
     //private ChannelHandlerContext ctx;
     private final SocketAddress localIP;
     private final SocketAddress remoteIP;
+    private final HttpMethod requesMethod;
+    private final String requesURI;
+    private final HttpHeaders requestHeaders;
+    private final String requestBody;
     private final long hit;
     private final long startTs;
     private Caller caller;
@@ -57,8 +62,8 @@ public class ServiceContext {
 
     //  1.1 status
     private HttpResponseStatus status = HttpResponseStatus.FORBIDDEN;
-    // 1.2 headers
-    private HttpHeaders headers;
+    // 1.2 responseHeader
+    private HttpHeaders responseHeaders;
     // 1.3 content type    
     private String contentType;// = MediaType.APPLICATION_JSON;
     private String clientAcceptContentType;
@@ -87,20 +92,20 @@ public class ServiceContext {
     private boolean privacyRespContent = false;
 
     public static ServiceContext build(long hit) {
-        return new ServiceContext(null, hit, System.currentTimeMillis());
+        return new ServiceContext(null, hit, System.currentTimeMillis(), null, null, null, null);
     }
 
-    public static ServiceContext build(ChannelHandlerContext ctx, long hit, long startTs) {
-        return new ServiceContext(ctx, hit, startTs);
+    public static ServiceContext build(ChannelHandlerContext ctx, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+        return new ServiceContext(ctx, hit, startTs, requestHeaders, requesMethod, requesURI, requestBody);
     }
 
     @Override
     public String toString() {
-        //return "ServiceContext{" + "status=" + status + ", headers=" + headers + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errorCode=" + errorCode + ", errorTag=" + errorTag + ", cause=" + cause + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
-        return "ServiceContext{" + "status=" + status + ", headers=" + headers + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
+        //return "ServiceContext{" + "status=" + status + ", responseHeader=" + responseHeader + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errorCode=" + errorCode + ", errorTag=" + errorTag + ", cause=" + cause + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
+        return "ServiceContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
     }
 
-    private ServiceContext(ChannelHandlerContext ctx, long hit, long startTs) {
+    private ServiceContext(ChannelHandlerContext ctx, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
         if (ctx != null && ctx.channel() != null) {
             this.localIP = ctx.channel().localAddress();
             this.remoteIP = ctx.channel().remoteAddress();
@@ -110,6 +115,10 @@ public class ServiceContext {
         }
         this.hit = hit;
         this.startTs = startTs;
+        this.requestHeaders = requestHeaders;
+        this.requesMethod = requesMethod;
+        this.requesURI = requesURI;
+        this.requestBody = requestBody;
         poi.add(new POI(BootPOI.SERVICE_BEGIN));
     }
 
@@ -199,6 +208,18 @@ public class ServiceContext {
         return hit;
     }
 
+    public HttpMethod method() {
+        return requesMethod;
+    }
+
+    public String uri() {
+        return requesURI;
+    }
+
+    public String requestBody() {
+        return requestBody;
+    }
+
     //@JsonInclude(JsonInclude.Include.NON_NULL)
     public HttpResponseStatus status() {
         return status;
@@ -209,19 +230,23 @@ public class ServiceContext {
         return this;
     }
 
-    //@JsonInclude(JsonInclude.Include.NON_NULL)
-    public HttpHeaders headers() {
-        return headers;
+    public HttpHeaders requestHeaders() {
+        return requestHeaders;
     }
 
-    public ServiceContext headers(HttpHeaders headers) {
+    //@JsonInclude(JsonInclude.Include.NON_NULL)
+    public HttpHeaders responseHeaders() {
+        return responseHeaders;
+    }
+
+    public ServiceContext responseHeaders(HttpHeaders headers) {
         if (headers == null || headers.isEmpty()) {
             return this;
         }
-        if (this.headers == null) {
-            this.headers = new DefaultHttpHeaders(true);
+        if (this.responseHeaders == null) {
+            this.responseHeaders = new DefaultHttpHeaders(true);
         }
-        this.headers.set(headers);
+        this.responseHeaders.set(headers);
         return this;
     }
 
@@ -229,23 +254,23 @@ public class ServiceContext {
 //            if (StringUtils.isBlank(key) || value == null) {
 //                return this;
 //            }
-//            if (headers == null) {
-//                headers = new DefaultHttpHeaders(true);
+//            if (responseHeader == null) {
+//                responseHeader = new DefaultHttpHeaders(true);
 //            }
-//            headers.add(key, value);
+//            responseHeader.add(key, value);
 //            return this;
 //        }
-    public ServiceContext header(String key, Object value) {
+    public ServiceContext responseHeader(String key, Object value) {
         if (StringUtils.isBlank(key)) {
             return this;
         }
-        if (headers == null) {
-            headers = new DefaultHttpHeaders(true);
+        if (responseHeaders == null) {
+            responseHeaders = new DefaultHttpHeaders(true);
         }
         if (value == null) {
-            headers.remove(key);
+            responseHeaders.remove(key);
         } else {
-            headers.set(key, value);
+            responseHeaders.set(key, value);
         }
         return this;
     }
@@ -254,40 +279,40 @@ public class ServiceContext {
 //            if (StringUtils.isBlank(key) || values == null) {
 //                return this;
 //            }
-//            if (headers == null) {
-//                headers = new DefaultHttpHeaders(true);
+//            if (responseHeader == null) {
+//                responseHeader = new DefaultHttpHeaders(true);
 //            }
-//            headers.add(key, values);
+//            responseHeader.add(key, values);
 //            return this;
 //        }
-    public ServiceContext header(String key, Iterable<?> values) {
+    public ServiceContext responseHeader(String key, Iterable<?> values) {
         if (StringUtils.isBlank(key)) {
             return this;
         }
-        if (headers == null) {
-            headers = new DefaultHttpHeaders(true);
+        if (responseHeaders == null) {
+            responseHeaders = new DefaultHttpHeaders(true);
         }
         if (values == null) {
-            headers.remove(key);
+            responseHeaders.remove(key);
         } else {
-            headers.set(key, values);
+            responseHeaders.set(key, values);
         }
         return this;
     }
 
-    public ServiceContext headers(Map<String, Iterable<?>> hs) {
+    public ServiceContext responseHeaders(Map<String, Iterable<?>> hs) {
         if (hs == null) {
             return this;
         }
-        if (headers == null) {
-            headers = new DefaultHttpHeaders(true);
+        if (responseHeaders == null) {
+            responseHeaders = new DefaultHttpHeaders(true);
         }
         hs.keySet().stream().filter((key) -> (StringUtils.isNotBlank(key))).forEachOrdered((key) -> {
             Iterable<?> values = hs.get(key);
             if (values == null) {
-                headers.remove(key);
+                responseHeaders.remove(key);
             } else {
-                headers.set(key, values);
+                responseHeaders.set(key, values);
             }
         });
         return this;
@@ -333,10 +358,15 @@ public class ServiceContext {
     }
 
     public ServiceContext redirect(String redirect) {
+        return redirect(redirect, HttpResponseStatus.TEMPORARY_REDIRECT);//MOVED_PERMANENTLY 301, FOUND 302, TEMPORARY_REDIRECT 307, PERMANENT_REDIRECT 308
+    }
+
+    public ServiceContext redirect(String redirect, HttpResponseStatus status) {
         this.redirect = redirect;
         this.txt = null;
         this.file = null;
-        this.status = HttpResponseStatus.TEMPORARY_REDIRECT;
+        this.status = status;
+        responseHeader(HttpHeaderNames.LOCATION.toString(), redirect);
         return this;
     }
 
@@ -460,23 +490,23 @@ public class ServiceContext {
             serviceError = null;
         }
 
-        if (headers == null) {
-            headers = new DefaultHttpHeaders(true);
+        if (responseHeaders == null) {
+            responseHeaders = new DefaultHttpHeaders(true);
         }
         long fileLength = file.length();
         if (fileLength > Integer.MAX_VALUE) {
-            headers.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(fileLength));
+            responseHeaders.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(fileLength));
         } else {
-            headers.setInt(HttpHeaderNames.CONTENT_LENGTH, (int) fileLength);
+            responseHeaders.setInt(HttpHeaderNames.CONTENT_LENGTH, (int) fileLength);
         }
-        headers.set(HttpHeaderNames.CONTENT_TYPE, contentType);
+        responseHeaders.set(HttpHeaderNames.CONTENT_TYPE, contentType);
         if (downloadMode) {
             String fileName = file.getName();
             try {
                 fileName = URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
             } catch (UnsupportedEncodingException ex) {
             }
-            headers.set(HttpHeaderNames.CONTENT_DISPOSITION, "attachment;filename=" + fileName + ";filename*=UTF-8''" + fileName);
+            responseHeaders.set(HttpHeaderNames.CONTENT_DISPOSITION, "attachment;filename=" + fileName + ";filename*=UTF-8''" + fileName);
         }
         this.status(HttpResponseStatus.OK);
         return this;

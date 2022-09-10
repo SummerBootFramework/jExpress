@@ -1,17 +1,17 @@
 /*
- * Copyright 2005 The Summer Boot Framework Project
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Framework Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
  *
- *   https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.summerframework.nio.server;
 
@@ -48,7 +48,7 @@ import io.netty.handler.codec.DecoderException;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Du Xiao
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Sharable
 public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
@@ -120,7 +120,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         final String infoReceived = infoReceived(ctx, hitIndex, httpMethod, httpRequestUri, isKeepAlive, dataSize);
         log.debug(() -> infoReceived);
 
-        final HttpHeaders httpHeaders = req.headers();
+        final HttpHeaders requestHeaders = req.headers();
         final String httpPostRequestBody;
         if (HttpMethod.POST.equals(httpMethod) || HttpMethod.PUT.equals(httpMethod) || HttpMethod.PATCH.equals(httpMethod) || HttpMethod.DELETE.equals(httpMethod)) {
             httpPostRequestBody = NioHttpUtil.getHttpPostBodyString(req);
@@ -132,8 +132,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(httpHeaders.get(HttpHeaderNames.ACCEPT));
-            String acceptCharset = httpHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
+            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            String acceptCharset = requestHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
             if (StringUtils.isNotBlank(acceptCharset)) {
                 context.charsetName(acceptCharset);//.contentType(ServiceContext.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
             }
@@ -141,7 +141,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             Throwable ioEx = null;
             long processTime = -1;
             try {
-                service(ctx, httpHeaders, httpMethod, queryStringDecoder.path(), queryStringDecoder.parameters(), httpPostRequestBody, context);
+                service(ctx, requestHeaders, httpMethod, queryStringDecoder.path(), queryStringDecoder.parameters(), httpPostRequestBody, context);
                 processTime = System.currentTimeMillis() - start;
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context);
                 context.timestampPOI(BootPOI.SERVICE_END);
@@ -179,14 +179,14 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
                     //line4
                     context.reportPOI(cfg, sb);
-                    VerboseClientServerCommunication(cfg, httpHeaders, httpPostRequestBody, context, sb);
+                    VerboseClientServerCommunication(cfg, requestHeaders, httpPostRequestBody, context, sb);
                     context.reportMemo(sb);
                     sb.append(System.lineSeparator());
                     report = beforeLogging(sb.toString());
                     log.log(level, report, context.cause());
                 }
                 try {
-                    afterLogging(httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, report, ioEx);
+                    afterLogging(requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, report, ioEx);
                 } catch (Throwable ex) {
                     log.error("report failed", ex);
                 }
@@ -197,7 +197,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             cfg.getBizExecutor().execute(asyncTask);
         } catch (RejectedExecutionException ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(httpHeaders.get(HttpHeaderNames.ACCEPT));
+            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             Error e = new Error(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many requests", ex);
             context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context);
@@ -209,12 +209,12 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     .append(", errorCode=").append(e.getErrorCode())
                     .append(", queuing=").append(queuingTime)
                     .append("ms, cont.len=").append(responseContentLength)
-                    .append("\n\t1req.headers=").append(httpHeaders)
+                    .append("\n\t1req.headers=").append(requestHeaders)
                     .append("\n\t4resp.body=").append(context.txt());
             log.fatal(sb.toString());
         } catch (Throwable ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start).headers(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(httpHeaders.get(HttpHeaderNames.ACCEPT));
+            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             Error e = new Error(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context);
@@ -225,7 +225,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     .append(", errorCode=").append(e.getErrorCode())
                     .append(", queuing=").append(queuingTime)
                     .append("ms, cont.len=").append(responseContentLength)
-                    .append("\n\t1req.headers=").append(httpHeaders)
+                    .append("\n\t1req.headers=").append(requestHeaders)
                     .append("\n\t4resp.body=").append(context.txt());
             log.fatal(sb.toString());
         }
@@ -338,7 +338,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         }
 
         // 3c. verbose aspect
-        // 3.1 request headers
+        // 3.1 request responseHeader
         if (!context.privacyReqHeader() && cfg.isVerboseReqHeader()) {
             sb.append("\n\t1.client_req.headers=").append(httpHeaders);
         }
@@ -346,9 +346,9 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         if (!context.privacyReqContent() && cfg.isVerboseReqContent()) {
             sb.append("\n\t2.client_req.body=").append(httpPostRequestBody);
         }
-        // 3.3 context headers
+        // 3.3 context responseHeader
         if (!context.privacyRespHeader() && cfg.isVerboseRespHeader()) {
-            sb.append("\n\t3.server_resp.headers=").append(context.headers());
+            sb.append("\n\t3.server_resp.headers=").append(context.responseHeaders());
         }
         // 3.4 context body
         if (!context.privacyRespContent() && cfg.isVerboseRespContent()) {

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>framework.core</artifactId>
-    <version>2.0.31-SNAPSHOT</version>
+    <version>2.1.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot Core</name>
     <description>Summer Boot (Core) focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
@@ -14,8 +14,13 @@
     </organization>
     <developers>
         <developer>
-            <name>The Summer Boot Project Contributors</name>
-            <email>ouleji@yahoo.com</email>
+            <name>IT Development Team of Dw Law Office</name>
+            <email>info@dulawoffice.com</email>
+            <url>https://www.dulawoffice.com/</url>
+        </developer>
+        <developer>
+            <name>Changski Tie Zheng Zhang 张铁铮</name>
+            <email>changski_skb@outlook.com</email>
         </developer>
     </developers>
     <licenses>
@@ -23,7 +28,7 @@
             <name>Apache License, Version 2.0</name>
             <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
-            <comments>A business-friendly OSS license</comments>
+            <comments>The Summer Boot licenses this framework to you under the Apache License, version 2.0 (the "License"); you may not use this framework except in compliance with the License and you have no policy prohibiting employee contributions back to this framework (unless the contributor to this framework is your current or retired employee).</comments>
         </license>
     </licenses>
     <scm>
@@ -55,18 +60,18 @@
                     <plugin>
                         <!--for unit test-->
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.22.2</version>
+                        <!-- <version>2.22.2</version> -->
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-scm-plugin</artifactId>
-                        <version>1.12.2</version>
+                        <!-- <version>1.12.2</version> -->
                     </plugin>
                     <!--Source-->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.1</version>
+                        <!-- <version>3.2.1</version> -->
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -81,9 +86,9 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.3.2</version>
+                        <!-- <version>3.4.0</version> -->
                         <configuration>
-                            <source>8</source>
+                            <source>11</source>
                             <aggregate>true</aggregate>
                             <charset>UTF-8</charset>
                             <encoding>UTF-8</encoding>
@@ -103,7 +108,7 @@
                     <!--Deploy-->
                     <plugin>
                         <artifactId>maven-deploy-plugin</artifactId>
-                        <version>2.8.2</version>
+                        <!-- <version>2.8.2</version> -->
                         <executions>
                             <execution>
                                 <id>default-deploy</id>
@@ -131,7 +136,7 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.12</version>
+                        <!-- <version>1.6.13</version> -->
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
@@ -165,60 +170,61 @@
         <commons-cli.version>1.5.0</commons-cli.version>
         <commons-io.version>2.11.0</commons-io.version>
         <!-- Logging -->
-        <log4j-api.version>2.17.2</log4j-api.version>
+        <log4j-api.version>2.18.0</log4j-api.version>
         <log4j-disruptor.version>3.4.4</log4j-disruptor.version>
         <!-- Mail -->
-        <javax-mail.version>1.6.2</javax-mail.version>
-        <javax-activation.version>1.1.1</javax-activation.version>
+        <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <!-- Security -->
-        <samba.jcifs.version>1.3.3</samba.jcifs.version>
         <bouncycastle.version>1.70</bouncycastle.version>
         <!-- JWT -->
-        <jwt.version>0.9.1</jwt.version>
+        <jwt.version>0.11.5</jwt.version>
 
-        <netty.version>4.1.75.Final</netty.version>
-        <netty-tcnative.version>2.0.51.Final</netty-tcnative.version>
+        <!-- NIO Netty -->
+        <netty.version>4.1.81.Final</netty.version>
+        <netty-tcnative.version>2.0.54.Final</netty-tcnative.version>
+        <!-- gRPC and protobuf -->
+        <grpc.version>1.49.0</grpc.version>
+        <protobuf.version>3.21.5</protobuf.version>
+        
+        
         <!-- MIME-Type -->
-        <tika.version>2.3.0</tika.version>
+        <tika.version>2.4.1</tika.version>
         <!-- JAX-RS -->
-        <rs-api.version>2.1.1</rs-api.version>
-        <javax.annotation.version>1.3.2</javax.annotation.version>
+        <rs-api.version>3.1.0</rs-api.version>
+        <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.13.2</jackson.version>
-        <jackson.patch.version>2.13.2.2</jackson.patch.version>
+        <jackson.version>2.13.4</jackson.version>
         <!-- Bean Validation -->
-        <hibernate-validator.version>7.0.4.Final</hibernate-validator.version>
+        <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
         <el.Implementation.version>4.0.2</el.Implementation.version>
 
         <!-- IOC Injection -->
         <guice.version>5.1.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.0.0.Final</hibernate.version>
+        <hibernate.version>6.1.3.Final</hibernate.version>
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>4.0.1</jedis.version>
+        <jedis.version>4.2.3</jedis.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.31</freemarker.version>
         <!-- Barcode -->
-        <zxing.version>3.4.1</zxing.version>
+        <zxing.version>3.5.0</zxing.version>
         <!-- PDF - PDFBox 
         <pdfbox.version>2.0.25</pdfbox.version>-->
         <!-- PDF - com.openhtmltopdf -->	       
         <openhtml.version>1.0.10</openhtml.version>
         <!-- PDF - iText -->
-        <itext7-core.version>7.2.1</itext7-core.version>
-        <itext7-html2pdf.version>4.0.1</itext7-html2pdf.version>
+        <itext7-core.version>7.2.3</itext7-core.version>
+        <itext7-html2pdf.version>4.0.3</itext7-html2pdf.version>
         
         <!-- Testing  -->
-        <testng.version>7.5</testng.version>
+        <testng.version>7.6.1</testng.version>
     </properties>
-    
-
 	
     <dependencies>
         <!-- Commons -->
@@ -265,27 +271,21 @@
 
 
         <!-- Mail -->
-        <!-- https://mvnrepository.com/artifact/com.sun.mail/javax.mail CDDL, GPL 2.0-->
+        <!-- https://mvnrepository.com/artifact/com.sun.mail/jakarta.mail -->
         <dependency>
             <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
-            <version>${javax-mail.version}</version>
+            <artifactId>jakarta.mail</artifactId>
+            <version>${jakarta-mail.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.activation/activation CDDL 1.0-->
+        <!-- https://mvnrepository.com/artifact/com.sun.activation/jakarta.activation -->
         <dependency>
-            <groupId>javax.activation</groupId>
-            <artifactId>activation</artifactId>
-            <version>${javax-activation.version}</version>
+            <groupId>com.sun.activation</groupId>
+            <artifactId>jakarta.activation</artifactId>
+            <version>${jakarta-mail.version}</version>
         </dependency>
 
 
         <!-- Security -->
-        <!-- https://mvnrepository.com/artifact/org.samba.jcifs/jcifs LGPL 2.1-->
-        <dependency>
-            <groupId>org.samba.jcifs</groupId>
-            <artifactId>jcifs</artifactId>
-            <version>${samba.jcifs.version}</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on BouncyCastle-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
@@ -303,9 +303,21 @@
         <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt Apache 2.0-->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt</artifactId>
+            <artifactId>jjwt-api</artifactId>
             <version>${jwt.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
+            <version>${jwt.version}</version>
+        </dependency>
+
         <!-- backward compatibility for jjwt only https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
         <dependency>
             <groupId>javax.xml.bind</groupId>
@@ -315,7 +327,7 @@
 
 
 
-        <!-- Netty -->
+        <!-- NIO Netty -->
         <!-- https://mvnrepository.com/artifact/io.netty/netty-all Apache 2.0-->
         <dependency>
             <groupId>io.netty</groupId>
@@ -345,7 +357,39 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-classes</artifactId>
             <version>${netty-tcnative.version}</version>
+        </dependency>        
+        
+        <!-- gRPC and protobuf -->
+        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${protobuf.version}</version>
+            <!--            <scope>provided</scope>-->
+        </dependency>     
+        <!-- https://mvnrepository.com/artifact/io.grpc/grpc-protobuf -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${grpc.version}</version>
+            <!--            <scope>provided</scope>-->
+        </dependency>   
+        <!-- https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc.version}</version>
+            <!--            <scope>provided</scope>-->
         </dependency>
+        <!-- https://mvnrepository.com/artifact/io.grpc/grpc-stub -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>${grpc.version}</version>
+            <!--            <scope>provided</scope>-->
+        </dependency>
+
+
 
         <!-- MIME-Type -->
         <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core Apache 2.0-->
@@ -355,19 +399,20 @@
             <version>${tika.version}</version>
         </dependency>
         <!-- JAX-RS -->
-        <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api EPL 2.0-->
+        <!-- https://mvnrepository.com/artifact/jakarta.ws.rs/jakarta.ws.rs-api -->
         <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
             <version>${rs-api.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api CDDL, GPL 2.0 -->
+        <!-- https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api -->
         <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-            <version>${javax.annotation.version}</version>
-            <scope>compile</scope>
-        </dependency>        
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>${jakarta.annotation.version}</version>
+        </dependency>
+       
         <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
         <dependency>
             <groupId>org.reflections</groupId>
@@ -381,7 +426,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.patch.version}</version>
+            <version>${jackson.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core Apache 2.0-->
         <dependency>
@@ -407,6 +452,7 @@
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-jsonSchema</artifactId>
             <version>${jackson.version}</version>
+            <scope>test</scope>
         </dependency>-->
         <!-- XML -->
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml Apache 2.0-->

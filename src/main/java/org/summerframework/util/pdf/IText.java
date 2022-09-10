@@ -1,17 +1,17 @@
 /*
- * Copyright 2005 The Summer Boot Framework Project
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Framework Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
  *
- *   https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.summerframework.util.pdf;
 
@@ -37,7 +37,7 @@ import java.util.Map;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Du Xiao
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class IText {
 
@@ -114,15 +114,13 @@ public class IText {
             prop.setFontProvider(new FontProvider(fontSet));
         }
         prop.setBaseUri(baseDir.getAbsolutePath());
-        ByteArrayOutputStream out;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 PdfWriter writer = new PdfWriter(baos, writerProperties);
                 PdfDocument pdfDoc = new PdfDocument(writer);) {
-            out = baos;
             pdfDoc.setTagged();
             HtmlConverter.convertToPdf(html, pdfDoc, prop);
+            return baos.toByteArray();
         }
-        return out.toByteArray();
     }
 
     public static interface Writer<T> {
@@ -137,14 +135,12 @@ public class IText {
 
     public static byte[] buildPDF(Writer writer, Object dto, WriterProperties writerProperties) throws IOException {
         //MemoryStream ms = null;
-        ByteArrayOutputStream out;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 PdfWriter pdfWriter = new PdfWriter(baos, writerProperties);
                 PdfDocument pdfDoc = new PdfDocument(pdfWriter); Document document = new Document(pdfDoc)) {
-            out = baos;
             writer.write(pdfDoc, document, dto);
+            return baos.toByteArray();
         }
-        return out.toByteArray();
     }
 
 //    public String loadTemplateFromResources(String filename) {
@@ -162,7 +158,7 @@ public class IText {
     /*
     private byte[] sample1(Ticket lottoTicket) throws IOException {
         return ITextBuilder.html2PDF((ticket) -> {
-            String html = ITextBuilder.loadTemplateFromResources("resources/html/649.html");//"resources/html/649.html"
+            String html = ITextBuilder.loadTemplateFromResources("resources/html/649.html");
             html = html.replaceAll("_title", String.valueOf(System.currentTimeMillis()));
             return html;
         }, lottoTicket, null);

@@ -1,17 +1,17 @@
 /*
- * Copyright 2005 The Summer Boot Framework Project
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Framework Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
  *
- *   https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.summerframework.integration.ldap;
 
@@ -50,7 +50,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Du Xiao
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class LdapAgent implements Closeable {
 
@@ -82,7 +82,7 @@ public class LdapAgent implements Closeable {
             tempCfg.put(Context.SECURITY_CREDENTIALS, bindingPassword);
         }
         if (isSSL) {// Specify SSL
-            tempCfg.put(Context.SECURITY_PROTOCOL, sslProtocol);//"TLSv1.2"
+            tempCfg.put(Context.SECURITY_PROTOCOL, sslProtocol);//"TLSv1.3"
             if (ldapSSLConnectionFactoryClassName != null) {
                 tempCfg.put("java.naming.ldap.factory.socket", ldapSSLConnectionFactoryClassName);
             }
@@ -111,6 +111,7 @@ public class LdapAgent implements Closeable {
     @Override
     public void close() throws IOException {
         if (m_ctx != null) {
+            log.debug("processing...");
             try {
                 m_ctx.close();
             } catch (NamingException ex) {
@@ -118,12 +119,15 @@ public class LdapAgent implements Closeable {
             } finally {
                 m_ctx = null;
             }
+            log.debug("success");
         }
     }
 
     private void connect() throws NamingException, IOException {
         close();
+        log.debug(baseDN + ", isAD=" + isAD);
         m_ctx = new InitialLdapContext(cfg, null);
+        log.debug("success");
         // Start TLS
 //        StartTlsResponse tls = (StartTlsResponse) m_ctx.extendedOperation(new StartTlsRequest());
 //        try {
@@ -170,9 +174,7 @@ public class LdapAgent implements Closeable {
     }
 
     public List<Attributes> query(final String sFilter) throws NamingException {
-        if (log.isDebugEnabled()) {
-            log.debug("base=" + baseDN + ", filter=" + sFilter);
-        }
+        log.debug(() -> "base=" + baseDN + ", filter=" + sFilter);
         List<Attributes> ret = new ArrayList();
         SearchControls ctlsUser = new SearchControls();
         ctlsUser.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -226,7 +228,8 @@ public class LdapAgent implements Closeable {
     /**
      *
      * @param password
-     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws GeneralSecurityException
      */
@@ -245,11 +248,12 @@ public class LdapAgent implements Closeable {
     }
 
     /**
-     * 
+     *
      * @param _password
-     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
-     * @throws NoSuchAlgorithmException 
+     * @throws NoSuchAlgorithmException
      */
     public static String generateSSHA(String _password, String algorithm) throws NoSuchAlgorithmException {
         byte[] password = _password.getBytes(StandardCharsets.UTF_8);

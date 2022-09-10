@@ -1,17 +1,17 @@
 /*
- * Copyright 2005 The Summer Boot Framework Project
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Framework Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
  *
- *   https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.summerframework.nio.server;
 
@@ -46,8 +46,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Base64;
 import java.util.regex.Pattern;
-import javax.activation.MimetypesFileTypeMap;
-import javax.ws.rs.core.MediaType;
+import jakarta.activation.MimetypesFileTypeMap;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -57,7 +57,7 @@ import org.summerframework.boot.BootErrorCode;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Du Xiao
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class NioHttpUtil {
 
@@ -97,8 +97,8 @@ public class NioHttpUtil {
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
 
-    public static void sendRedirect(ChannelHandlerContext ctx, String newUri) {
-        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND);//HttpResponseStatus.PERMANENT_REDIRECT : HttpResponseStatus.TEMPORARY_REDIRECT
+    public static void sendRedirect(ChannelHandlerContext ctx, String newUri, HttpResponseStatus status) {
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);//HttpResponseStatus.FOUND, HttpResponseStatus.PERMANENT_REDIRECT : HttpResponseStatus.TEMPORARY_REDIRECT
         resp.headers().set(HttpHeaderNames.LOCATION, newUri);
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
@@ -121,10 +121,10 @@ public class NioHttpUtil {
             }
         }
         if (StringUtils.isNotBlank(serviceContext.txt())) {
-            return sendText(ctx, isKeepAlive, serviceContext.headers(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
+            return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
         }
         if (serviceContext.redirect() != null) {
-            NioHttpUtil.sendRedirect(ctx, serviceContext.redirect());
+            NioHttpUtil.sendRedirect(ctx, serviceContext.redirect(), serviceContext.status());
             return 0;
         }
 
@@ -132,7 +132,7 @@ public class NioHttpUtil {
         if (HttpResponseStatus.OK.equals(status)) {
             status = HttpResponseStatus.NO_CONTENT;
         }
-        return sendText(ctx, isKeepAlive, serviceContext.headers(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true);
+        return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true);
     }
 
     private static final String DEFAULT_CHARSET = "UTF-8";
@@ -180,7 +180,7 @@ public class NioHttpUtil {
 
         // send
         if (isKeepAlive) {//HttpUtil.isKeepAlive(req);
-            // Add keep alive header as per:
+            // Add keep alive responseHeader as per:
             // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
             h.set(HttpHeaderNames.CONNECTION, KEEP_ALIVE);
             if (flush) {
@@ -209,10 +209,10 @@ public class NioHttpUtil {
             fileLength = randomAccessFile.length();
             HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
             HttpHeaders h = response.headers();
-            h.set(serviceContext.headers());
+            h.set(serviceContext.responseHeaders());
 
             if (isKeepAlive) {
-                // Add keep alive header as per:
+                // Add keep alive responseHeader as per:
                 // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
                 h.set(HttpHeaderNames.CONNECTION, KEEP_ALIVE);
             }

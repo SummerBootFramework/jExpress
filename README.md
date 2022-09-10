@@ -1,6 +1,10 @@
-# Summer Boot was initiated by a group of developers in 2004 and was adopted by several Toronto law firms in 2011 to customize their back-end services. 
+# Summer Boot Framework was initiated by a group of developers in 2004 to provide a high performance, free customizable but also lightweight Netty JAX-RS Restful and gRPC service with powerful reusable non-functional features, and was adopted by several Toronto law firms in 2011 to customize their back-end services.
 
-# Its sub-project Summer Boot Core, open sourced in Sep 2021, focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
+# Its sub-project, Summer Boot Core, focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
+
+**Open Source History: Summer Boot Core was initially open sourced on MS MySpace in Sep 2006, due to the shutdown of MySpace this framework was migrated to a server sponsored by one of the law firms in October 2011, then migrated to GitLab in Dec 2016, eventually migrated to GitHub in Sep 2021.**  
+
+> Disclaimer: We really had a great time with GitLab until 2021 when we realized one of the contributor's employer was also using GitLab at that time, we decided to move to GitHub instead to avoid incur unnecessary hassles.
 
 
 
@@ -37,7 +41,7 @@ pom.xml
 
 Main.java
 
- ```bash
+```bash
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
@@ -48,7 +52,7 @@ public class Main {
 
 #1. HttpRequestHandler is your ChannelHandler implementation, if you just want to use default functions, just extends org.summerframework.nio.server.BootHttpRequestHandler
 #2. create a RESTful API class with JAX-RS style, and annotate this class with @Controller 
- ```
+```
 
 cfg_nio.properties
 
@@ -165,10 +169,10 @@ public class MyClass {
   > see section 11 (CLI -  generate configuration file) to get the configuration template
 
   1. cfg_auth.properties - manage the role-based access
-  2.  cfg_smtp.properties - manage the Auto-Alert (see section 7)
-  3.  cfg_http.properties - manage the Java 11 HTTP Client
-  4.  cfg_nio.properties - manage the Netty NIO
-  5.  cfg_db.properties - manage the JPA, the format is pure JPA properties
+  2. cfg_smtp.properties - manage the Auto-Alert (see section 7)
+  3. cfg_http.properties - manage the Java 11 HTTP Client
+  4. cfg_nio.properties - manage the Netty NIO
+  5. cfg_db.properties - manage the JPA, the format is pure JPA properties
 
 **2.3 Sample Code**
 
@@ -214,7 +218,7 @@ Add the following, **once the config changed, the Summer Boot will automatically
 
 Full version:
 
- ```bash
+```bash
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
@@ -223,7 +227,7 @@ public class Main {
                 .run(args, "My Service 1.0");
     }
 }
- ```
+```
 
 
 
@@ -299,6 +303,7 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
 
 ## 4. Protected Configuration
+
 **4.1 Intent**
 
 - Sensitive Data - passwords, license keys, signing key (HS256, HS384, HS512 only) and 3rd party tokens (AWS integration token, etc.) cannot be plain text.
@@ -307,14 +312,17 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
   - **One-Way Protection:** application admin can only write to config file with plain text, but not able to read encrypted sensitive data from config file
   - **Two Level Protection:** application root password is managed/protected by root admin, it controls sensitive data encryption/decryption, and it should not be managed application admin
-  
+
   
 
 **4.2 Motivation**
 
 - You want to protect sensitive data in the config files, and you encrypt them with a key.
+
 - Nobody hangs the key on the door it just locked, so you do need to protect the key, which just locks (encrypt) the sensitive data in your safe box, and you do NOT want to keep it hardcoded in your source code.
+
 - You really do NOT want to enter an endless loop by keep creating a new key to protect the original key, which protects the sensitive data.
+
 - You only need one extra root password to encrypt/decrypt the sensitive data, and this root password is not with your application admin.
 
 - **Two Level Access**: who controls what
@@ -385,7 +393,7 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
 - **Manual Encrypt mode:** In case you want to manually verify an encrypted sensitive data
 
-   use the command below, compare the output with the encrypted value in the config file:
+  use the command below, compare the output with the encrypted value in the config file:
 
   ```
   java -jar my-service.jar -encrypt <plain text> -auth <my app root password>
@@ -422,7 +430,7 @@ Add the following to enable ping on https://host:port/myservice/ping
 
 Full version:
 
- ```bash
+```bash
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
@@ -432,7 +440,7 @@ public class Main {
                 .run(args, "My Service 1.0");
     }
 }
- ```
+```
 
 
 
@@ -458,7 +466,7 @@ Add the following:
 
 Full version:
 
- ```bash
+```bash
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
@@ -480,7 +488,7 @@ public class HealthInspectorImpl extends BootHealthInspectorImpl {
     }
 
 }
- ```
+```
 
 
 
@@ -643,7 +651,7 @@ Add the following if you define all your error codes in AppErrorCode class:
 
 Full version:
 
- ```bash
+```bash
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
@@ -679,7 +687,7 @@ public class GuiceModule extends AbstractModule {
                 : DataRepositoryImpl_SQLServer.class);
     }
 }
- ```
+```
 
 run the following command:
 
@@ -724,7 +732,7 @@ boolean checkDuplicated = true;
 
 Full version:
 
- ```bash
+```bash
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
@@ -735,7 +743,7 @@ public class Main {
                 .run(args, "My Service 1.0");
     }
 }
- ```
+```
 
 run the following command:
 
@@ -778,7 +786,7 @@ Add the following if you want to enable dumping a template of MyConfig
 
 Full version:
 
- ```bash
+```bash
 public class Main {
     public static void main(String[] args) {
         SummerApplication.bind(Main.class)
@@ -789,7 +797,7 @@ public class Main {
                 .run(args, "My Service 1.0");
     }
 }
- ```
+```
 
 
 

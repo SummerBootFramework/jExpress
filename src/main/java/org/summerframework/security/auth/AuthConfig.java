@@ -1,17 +1,17 @@
 /*
- * Copyright 2005 The Summer Boot Framework Project
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Framework Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
  *
- *   https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.summerframework.security.auth;
 
@@ -22,24 +22,28 @@ import org.summerframework.boot.config.annotation.Memo;
 import org.summerframework.integration.ldap.LdapAgent;
 import org.summerframework.integration.ldap.LdapSSLConnectionFactory;
 import org.summerframework.security.JwtUtil;
-import org.summerframework.security.SecurityUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
 import java.io.File;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.summerframework.security.EncryptorUtil;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Du Xiao
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class AuthConfig extends AbstractSummerBootConfig {
 
@@ -55,7 +59,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
     }
 
     //1.1 LDAP settings
-    @Memo(title = "1.1 LDAP settings")
+    @Memo(title = "1.1 LDAP connection settings")
     @Config(key = "ldap.type.AD", defaultValue = "false",
             desc = "set it true only when LDAP is implemented by Microsoft Active Directory (AD)\n"
             + "false when use others like Open LDAP, IBM Tivoli, Apache")
@@ -69,7 +73,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
             desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global voer SSL 3269")
     private volatile int ldapPort;
 
-    @Config(key = "ldap.baseDN", defaultValue = "DC=testent,DC=testad,DC=testmre")
+    @Config(key = "ldap.baseDN")
     private volatile String ldapBaseDN;
 
     @Config(key = "ldap.bindingUserDN", required = false)
@@ -81,15 +85,17 @@ public class AuthConfig extends AbstractSummerBootConfig {
     @Config(key = "ldap.TenantGroupName", required = false)
     private volatile String ldapTenantGroupName;
 
-    //1.2 LDAP SSL
-    @Memo(title = "1.2 LDAP SSL")
-    @Config(key = "ldap.ssl.protocal", defaultValue = "TLSv1.2")
+    //1.2 LDAP Client keystore
+    @Memo(title = "1.2 LDAP Client keystore")
+    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3")
     private volatile String ldapTLSProtocol;
     @JsonIgnore
     @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
             AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd", required = false)
     private volatile KeyManagerFactory kmf;
 
+    //1.3 LDAP Client truststore
+    @Memo(title = "1.3 LDAP Client truststore")
     @JsonIgnore
     @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd", required = false)
     private volatile TrustManagerFactory tmf;
@@ -98,36 +104,42 @@ public class AuthConfig extends AbstractSummerBootConfig {
 
     //2. JWT
     @Memo(title = "2. JWT")
-    @Config(key = "jwt.SignatureAlgorithm", defaultValue = "HS256",
-            desc = "valid values = HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512")
-    private volatile String algorithm;
-
-    @Config(key = "jwt.root.SigningKey.Algorithm", defaultValue = "SHA-2")
-    private volatile String keyAlgorithm;
+    @Config(key = "jwt.asymmetric.SigningKeyFile", required = false,
+            desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size. To generate the keypair manually:\n"
+            + "1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
+            + "2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out public.pem \n"
+            + "3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM \n"
+            + "4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out private.pem")
+    private volatile File privateKeyFile;
 
     @JsonIgnore
-    @Config(key = "jwt.root.SigningKey", validate = Config.Validate.Encrypted,
-            desc = "symmetric key when algorithm is one of the HS256, HS384, HS512\n"
-            + "public key when algorithm is one of the RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512")
-    private volatile String jwtRootSigningKeyString;
+    @Config(key = "jwt.asymmetric.SigningKeyPwd", validate = Config.Validate.Encrypted, required = false,
+            desc = "The password of this private key")
+    private volatile String privateKeyPwd;
 
-    private volatile Key jwtRootSigningKey;
+    @Config(key = "jwt.asymmetric.ParsingKeyFile", required = false,
+            desc = "Path to the public key file corresponding to this private key")
+    private volatile File publicKeyFile;
 
-    private volatile SignatureAlgorithm jwtSignatureAlgorithm;
+    @JsonIgnore
+    @Config(key = "jwt.symmetric.key", validate = Config.Validate.Encrypted, required = false,
+            desc = "HMAC-SHA key for bothe signing and parsing, it will be ignored when asymmetric one is specified.\n"
+            + "Use this command to generate this key: java -jar <app>.jar -jwt <HS256, HS384, HS512>")
+    private volatile String symmetricKey;
+
+    @JsonIgnore
+    private volatile Key jwtSigningKey;
+    @JsonIgnore
+    private volatile JwtParser jwtParser;
+
+    @Config(key = "jwt.ttl.minutes", defaultValue = "1440")
+    private volatile int jwtTTL;
 
     @Config(key = "jwt.issuer", required = false)
     private volatile String jwtIssuer;
 
-    //3. Cache TTL
-    @Memo(title = "3. Cache TTL")
-    @Config(key = "cache.ttl.jwt.minutes")
-    private volatile int jwtTTL;
-
-    @Config(key = "cache.ttl.user.minutes")
-    private volatile long userTTL;
-
-    //4. Role mapping
-    @Memo(title = "4. Role mapping",
+    //3. Role mapping
+    @Memo(title = "3. Role mapping",
             desc = "Map the role with user group (no matter the group is defined in LDAP or DB)",
             format = "roles.<role name>.groups=csv list\n"
             + "roles.<role name>.users=csv list",
@@ -137,7 +149,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
     private Map<String, RoleMapping> roles;
 
     @Override
-    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException, OperatorCreationException, GeneralSecurityException {
         // 1. LDAP Client keystore
         if (ldapHost != null) {
             // 1.1 LDAP Client keystore
@@ -151,31 +163,27 @@ public class AuthConfig extends AbstractSummerBootConfig {
             ldapConfig = LdapAgent.buildCfg(ldapHost, ldapPort, isSSL, ldapSSLConnectionFactoryClassName, ldapTLSProtocol, bindingUserDN, bindingPassword);
         }
         // 2. JWT        
-        jwtSignatureAlgorithm = SignatureAlgorithm.forName(algorithm);
-        switch (jwtSignatureAlgorithm) {
-            case HS256:
-            case HS384:
-            case HS512:
-                jwtRootSigningKey = JwtUtil.parseSigningKey(jwtRootSigningKeyString, keyAlgorithm);
-                break;
-            case RS256:
-            case RS384:
-            case RS512:
-            case ES256:
-            case ES384:
-            case ES512:
-            case PS256:
-            case PS384:
-            case PS512:
-                Key[] keys = SecurityUtil.parseKeyPair(jwtRootSigningKeyString, null, keyAlgorithm);
-                jwtRootSigningKey = keys[0];
-                break;
+        if (symmetricKey != null) {
+            //jwtSigningKey = EncryptorUtil.keyFromString(jwtSigningKeyString, jwtSignatureAlgorithm.getJcaName());
+            jwtSigningKey = JwtUtil.parseSigningKey(symmetricKey);
+            jwtParser = Jwts.parserBuilder() // (1)
+                    .setSigningKey(jwtSigningKey) // (2)
+                    .build(); // (3)
+        }
+        //File rootFolder = cfgFile.getParentFile().getParentFile();
+        if (privateKeyFile != null) {
+            jwtSigningKey = EncryptorUtil.loadPrivateKey(privateKeyFile, privateKeyPwd.toCharArray());
+        }
+        if (publicKeyFile != null) {
+            PublicKey publicKey = EncryptorUtil.loadPublicKey(EncryptorUtil.KeyFileType.PKCS12, publicKeyFile);
+            jwtParser = Jwts.parserBuilder() // (1)
+                    .setSigningKey(publicKey) // (2)
+                    .build(); // (3)
         }
 
         // 3. Cache TTL
         //jwtTTL = TimeUnit.MINUTES.toMillis(jwtTTL);
-        userTTL = TimeUnit.MINUTES.toMillis(userTTL);
-
+        //userTTL = TimeUnit.MINUTES.toMillis(userTTL);
         String error = helper.getError();
         if (error != null) {
             throw new IllegalArgumentException(error);
@@ -234,17 +242,14 @@ public class AuthConfig extends AbstractSummerBootConfig {
         return ldapConfig;
     }
 
-    public SignatureAlgorithm getJwtSignatureAlgorithm() {
-        return jwtSignatureAlgorithm;
+    @JsonIgnore
+    public Key getJwtSigningKey() {
+        return jwtSigningKey;
     }
 
     @JsonIgnore
-    public Key getJwtRootSigningKey() {
-        return jwtRootSigningKey;
-    }
-
-    public String getKeyAlgorithm() {
-        return keyAlgorithm;
+    public JwtParser getJwtParser() {
+        return jwtParser;
     }
 
     public String getJwtIssuer() {
@@ -255,10 +260,6 @@ public class AuthConfig extends AbstractSummerBootConfig {
         return jwtTTL;
     }
 
-    public long getUserTTL() {
-        return userTTL;
-    }
-
     public RoleMapping getRole(String role) {
         return roles.get(role);
     }
@@ -266,7 +267,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
     public Map<String, RoleMapping> getRoles() {
         return roles;
     }
-    
+
     public Set<String> getRoleNames() {
         return Set.copyOf(roles.keySet());
     }

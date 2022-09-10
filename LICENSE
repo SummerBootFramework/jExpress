@@ -21,7 +21,9 @@
       outstanding shares, or (iii) beneficial ownership of such entity.
 
       "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
+      exercising permissions granted by this License, and you have no
+      policy prohibiting employee contributions back to this work (unless 
+      the contributor to this work is your current or retired employee).
 
       "Source" form shall mean the preferred form for making modifications,
       including but not limited to software source code, documentation
@@ -186,7 +188,7 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright [yyyy] [name of copyright owner]
+   Copyright [2005-2022] [Du Law Office - The Summer Boot Framework Project]
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

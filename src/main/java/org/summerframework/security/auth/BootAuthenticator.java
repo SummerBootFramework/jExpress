@@ -1,17 +1,17 @@
 /*
- * Copyright 2005 The Summer Boot Framework Project
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Framework Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
  *
- *   https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.summerframework.security.auth;
 
@@ -28,12 +28,11 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureException;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
+import java.security.Key;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +42,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Du Xiao
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
 public abstract class BootAuthenticator implements Authenticator {
@@ -73,9 +72,9 @@ public abstract class BootAuthenticator implements Authenticator {
         JwtBuilder builder = marshalCaller(caller);
 
         //4. create JWT
-        String token = JwtUtil.createJWT(AuthConfig.CFG.getJwtSignatureAlgorithm(),
-                AuthConfig.CFG.getJwtRootSigningKey(),
-                builder, TimeUnit.MINUTES, validForMinutes);
+        //String token = JwtUtil.createJWT(AuthConfig.CFG.getJwtSignatureAlgorithm(),
+        Key signingKey = AuthConfig.CFG.getJwtSigningKey();
+        String token = JwtUtil.createJWT(signingKey, builder, TimeUnit.MINUTES, validForMinutes);
         if (listener != null) {
             listener.onLoginSuccess(caller.getUid(), token);
         }
@@ -92,12 +91,10 @@ public abstract class BootAuthenticator implements Authenticator {
      * @param caller
      * @return formatted auth token builder
      */
-    protected JwtBuilder marshalCaller(Caller caller) {
+    @Override
+    public JwtBuilder marshalCaller(Caller caller) {
         String jti = String.valueOf(caller.getId());
         String issuer = AuthConfig.CFG.getJwtIssuer();
-        if (caller.getTenantId() != null || caller.getTenantName() != null) {
-            issuer = caller.getTenantName() + "#" + caller.getTenantId();
-        }
         String subject = caller.getUid();
         Set<String> groups = caller.getGroups();
         String groupsCsv = groups == null || groups.size() < 1
@@ -105,11 +102,27 @@ public abstract class BootAuthenticator implements Authenticator {
                 : groups.stream().collect(Collectors.joining(","));
         String audience = groupsCsv;
 
-        JwtBuilder builder = Jwts.builder()
-                .setId(jti)
+        Claims claims = Jwts.claims();
+        claims.setId(jti)
                 .setIssuer(issuer)
                 .setSubject(subject)
                 .setAudience(audience);
+        if (caller.getTenantId() != null) {
+            claims.put("tenantId", caller.getTenantId());
+        }
+        if (caller.getTenantName() != null) {
+            claims.put("tenantName", caller.getTenantName());
+        }
+        Set<String> keys = caller.propKeySet();
+        if (keys != null) {
+            for (String key : keys) {
+                Object v = caller.getProp(key, Object.class);
+                claims.put(key, v);
+            }
+        }
+
+        JwtBuilder builder = Jwts.builder().setClaims(claims);
+
         return builder;
     }
 
@@ -120,30 +133,23 @@ public abstract class BootAuthenticator implements Authenticator {
      * @param claims
      * @return Caller
      */
-    protected Caller unmarshalCaller(Claims claims) {
+    @Override
+    public Caller unmarshalCaller(Claims claims) {
         String jti = claims.getId();
         String issuer = claims.getIssuer();
         String subject = claims.getSubject();
         String audience = claims.getAudience();
+        Long tenantId = claims.get("tenantId", Long.class);
+        String tenantName = claims.get("tenantName", String.class);
 
-        String[] tenantInfo = {null, "0"};// tenantName#tenantId
-        if (issuer != null) {
-            tenantInfo = issuer.split("#");
-        }
-        long tenantId;
-        try {
-            tenantId = Long.parseLong(tenantInfo[1]);
-        } catch (Throwable ex) {
-            tenantId = 0;
-        }
         long id;
         try {
             id = Long.parseLong(jti);
         } catch (Throwable ex) {
-            id = 0;
+            id = -1;
         }
         String userName = subject;
-        User caller = new User(tenantId, tenantInfo[0], id, userName);
+        User caller = new User(tenantId, tenantName, id, userName);
 
         String userGroups = audience;
         if (StringUtils.isNotBlank(userGroups)) {
@@ -152,6 +158,24 @@ public abstract class BootAuthenticator implements Authenticator {
                 caller.addGroup(group);
             }
         }
+
+        Set<String> keys = claims.keySet();
+        if (keys != null) {
+            for (String key : keys) {
+                Object v = claims.get(key);
+                caller.putProp(key, v);
+            }
+        }
+        caller.remove(Claims.AUDIENCE);
+        caller.remove(Claims.EXPIRATION);
+        caller.remove(Claims.ID);
+        caller.remove(Claims.ISSUED_AT);
+        caller.remove(Claims.ISSUER);
+        caller.remove(Claims.NOT_BEFORE);
+        caller.remove(Claims.SUBJECT);
+        caller.remove("tenantId");
+        caller.remove("tenantName");
+        
         return caller;
     }
 
@@ -186,7 +210,7 @@ public abstract class BootAuthenticator implements Authenticator {
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
-                Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtRootSigningKey(), authToken);
+                Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtParser(), authToken).getBody();
                 String jti = claims.getId();
                 context.callerId(jti);
                 if (cache != null && cache.isOnBlacklist(jti)) {// because jti is used as blacklist key in logout
@@ -221,7 +245,7 @@ public abstract class BootAuthenticator implements Authenticator {
     @Override
     public void logout(String authToken, AuthTokenCache cache, ServiceContext context) {
         try {
-            Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtRootSigningKey(), authToken);
+            Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtParser(), authToken).getBody();
             String jti = claims.getId();
             String uid = claims.getSubject();
             Date exp = claims.getExpiration();
@@ -232,11 +256,11 @@ public abstract class BootAuthenticator implements Authenticator {
             if (listener != null) {
                 listener.onLogout(jti, authToken, expireInMilliseconds);
             }
-        } catch (SignatureException | MalformedJwtException ex) {
-            context.status(HttpResponseStatus.FORBIDDEN);
-            return;
         } catch (ExpiredJwtException ex) {
             //ignore
+        } catch (JwtException ex) {
+            context.status(HttpResponseStatus.FORBIDDEN);
+            return;
         }
         context.status(HttpResponseStatus.NO_CONTENT);
     }

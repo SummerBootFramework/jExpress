@@ -1,3 +1,7 @@
+/*
+ * derivatived from https://www.javatips.net/api/storm-data-contracts-master/storm-data-contracts/src/main/java/com/forter/contracts/validation/OneOf.java
+ * derivatived from https://github.com/dropwizard/dropwizard/blob/master/dropwizard-validation/src/main/java/io/dropwizard/validation/OneOf.java
+ */
 package org.summerframework.util.annotation;
 
 import java.lang.annotation.Documented;
@@ -10,6 +14,20 @@ import java.lang.annotation.Target;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
+/**
+ * sample:
+ *
+ * <pre>
+ * {@code
+ *
+ * @Valid
+ * @NotEmpty(message = "List should not be empty")
+ * @OneOf(value = {"op1", "op2", "op3"}, message = "Only valid options are
+ * accepted")
+ * List<String> options;
+ * }
+ * </pre>
+ */
 @Target({METHOD, FIELD, ANNOTATION_TYPE})
 @Retention(RUNTIME)
 @Constraint(validatedBy = OneOfValidator.class)
