@@ -19,7 +19,7 @@ import org.summerframework.boot.BootErrorCode;
 import org.summerframework.boot.BootPOI;
 import org.summerframework.nio.server.HttpConfig;
 import org.summerframework.nio.server.domain.ServiceContext;
-import org.summerframework.nio.server.domain.Error;
+import org.summerframework.nio.server.domain.Err;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -143,7 +143,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @return
      */
     protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> onInterrupted(HttpRequest req, ServiceContext serviceContext, Throwable ex) {
-        Error e = new Error(BootErrorCode.APP_INTERRUPTED, null, "RPC Interrupted", ex);
+        Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "RPC Interrupted", ex);
         serviceContext.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
         return new RPCResult(null, false);
     }

@@ -15,7 +15,7 @@
  */
 package org.summerframework.integration.smtp;
 
-import org.summerframework.nio.server.domain.Error;
+import org.summerframework.nio.server.domain.Err;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -194,15 +194,15 @@ public class BootPostOfficeImpl implements PostOffice {
     }
 
     @Override
-    public List<Error> ping(String... emails) {
+    public List<Err> ping(String... emails) {
         Set<String> r = Set.of(emails);
-        Error e = null;
+        Err e = null;
         //String[] emails = AppConfig.CFG.getEmailToAppSupport();
         boolean success = sendEmailSync(r, "[Ping] " + BootConstant.VERSION, "just to test if you can receive this email.", false);
         if (!success) {
-            e = new Error(BootErrorCode.ACCESS_ERROR_SMTP, "Mail Access Error", "failed to send test email to app support", null);
+            e = new Err(BootErrorCode.ACCESS_ERROR_SMTP, "Mail Access Error", "failed to send test email to app support", null);
         }
-        List<Error> errors = null;
+        List<Err> errors = null;
         if (e != null) {
             errors = new ArrayList<>();
             errors.add(e);

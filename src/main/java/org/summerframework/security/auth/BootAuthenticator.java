@@ -18,7 +18,7 @@ package org.summerframework.security.auth;
 import org.summerframework.boot.BootErrorCode;
 import org.summerframework.boot.BootPOI;
 import org.summerframework.integration.cache.AuthTokenCache;
-import org.summerframework.nio.server.domain.Error;
+import org.summerframework.nio.server.domain.Err;
 import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.security.JwtUtil;
 import org.summerframework.util.FormatterUtil;
@@ -175,7 +175,7 @@ public abstract class BootAuthenticator implements Authenticator {
         caller.remove(Claims.SUBJECT);
         caller.remove("tenantId");
         caller.remove("tenantName");
-        
+
         return caller;
     }
 
@@ -197,16 +197,16 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, ServiceContext context) {
+    public Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
         String authToken = getAuthToken(httpRequestHeaders);
-        return verifyToken(authToken, cache, context);
+        return verifyToken(authToken, cache, errorCode, context);
     }
 
     @Override
-    public Caller verifyToken(String authToken, AuthTokenCache cache, ServiceContext context) {
+    public Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
         Caller caller = null;
         if (authToken == null) {
-            Error e = new Error(BootErrorCode.AUTH_REQUIRE_TOKEN, null, "Missing AuthToken", null);
+            Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_REQUIRE_TOKEN, "AUTH_REQUIRE_TOKEN", "Missing AuthToken", null);
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
@@ -214,21 +214,21 @@ public abstract class BootAuthenticator implements Authenticator {
                 String jti = claims.getId();
                 context.callerId(jti);
                 if (cache != null && cache.isOnBlacklist(jti)) {// because jti is used as blacklist key in logout
-                    Error e = new Error(BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Blacklisted AuthToken", null);
+                    Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, "AUTH_EXPIRED_TOKEN", "Blacklisted AuthToken", null);
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
                     caller = unmarshalCaller(claims);
                     if (listener != null && !listener.verify(caller, claims)) {
-                        Error e = new Error(BootErrorCode.AUTH_INVALID_TOKEN, null, "Rejected AuthToken", null);
+                        Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, "AUTH_INVALID_TOKEN", "Rejected AuthToken", null);
                         context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                         caller = null;
                     }
                 }
             } catch (ExpiredJwtException ex) {
-                Error e = new Error(BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Expired AuthToken", null);
+                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, "AUTH_EXPIRED_TOKEN", "Expired AuthToken", null);
                 context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             } catch (JwtException ex) {
-                Error e = new Error(BootErrorCode.AUTH_INVALID_TOKEN, ex.getClass().getSimpleName(), "Invalid AuthToken - " + ex.getMessage(), null);
+                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, "AUTH_INVALID_TOKEN - " + ex.getClass().getSimpleName(), "Invalid AuthToken - " + ex.getMessage(), null);
                 context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             }
         }

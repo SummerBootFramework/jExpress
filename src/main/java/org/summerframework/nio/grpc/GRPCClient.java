@@ -25,7 +25,6 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import jakarta.annotation.Nullable;
 import javax.net.ssl.KeyManagerFactory;
@@ -54,16 +53,12 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
             @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
         NettyChannelBuilder channelBuilder = null;
         switch (uri.getScheme()) {
-            case "unix":
-                try {
-                channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()));
-            } catch (Throwable ex) {
-                channelBuilder = NettyChannelBuilder.forAddress(new InetSocketAddress(uri.getHost(), uri.getPort()))
+            case "unix": //https://github.com/grpc/grpc-java/issues/1539
+                channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
                         .eventLoopGroup(new EpollEventLoopGroup())
                         .channelType(EpollDomainSocketChannel.class)
                         .usePlaintext();
-            }
-            break;
+                break;
             case "tcp":
                 channelBuilder = NettyChannelBuilder.forAddress(uri.getHost(), uri.getPort());
                 channelBuilder.usePlaintext();

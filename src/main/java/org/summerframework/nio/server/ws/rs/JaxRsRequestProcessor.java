@@ -17,7 +17,7 @@ package org.summerframework.nio.server.ws.rs;
 
 import org.summerframework.boot.BootErrorCode;
 import org.summerframework.boot.BootPOI;
-import org.summerframework.nio.server.domain.Error;
+import org.summerframework.nio.server.domain.Err;
 import org.summerframework.nio.server.domain.ServiceRequest;
 import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.security.auth.AuthConfig;
@@ -257,9 +257,9 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int badRequestErrorCode) throws Throwable {
-        //1. auth
-        if (roleBased) {//authentication is done, now we do authorization
+    public boolean authorizationCheck(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int badRequestErrorCode) throws Throwable {
+        //1. authentication is done, now we do authorizationCheck
+        if (roleBased) {
             boolean isAuthorized = false;
             Caller caller = context.caller();
             if (caller != null) {
@@ -275,11 +275,19 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 }
             }
             if (!isAuthorized) {
+                if (badRequestErrorCode < 1) {
+                    badRequestErrorCode = BootErrorCode.AUTH_NO_PERMISSION;
+                }
                 context.status(HttpResponseStatus.FORBIDDEN)
-                        .error(new Error(BootErrorCode.AUTH_NO_PERMISSION, null, "Caller is not in role: " + rolesAllowed, null));
-                return;
+                        .error(new Err(badRequestErrorCode, "Authorization Failed", "Caller is not in role: " + rolesAllowed, null));
+                return false;
             }
         }
+        return true;
+    }
+
+    @Override
+    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int badRequestErrorCode) throws Throwable {
         //2. invoke
         Object ret;
         if (parameterSize > 0) {

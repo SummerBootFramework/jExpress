@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.summerframework.boot.BootErrorCode;
 import org.summerframework.boot.instrumentation.HealthInspector;
+import org.summerframework.nio.server.domain.Err;
 
 /**
  *
@@ -28,24 +29,24 @@ import org.summerframework.boot.instrumentation.HealthInspector;
 public interface AuthTokenCache extends HealthInspector {
 
     @Override
-    default List<org.summerframework.nio.server.domain.Error> ping(Object... params) {
-        org.summerframework.nio.server.domain.Error e = null;
+    default List<Err> ping(Object... params) {
+        Err e = null;
         try {
             String key = "jwt123";
             putOnBlacklist(key, "uid123", 1000);
             boolean isOnBlacklist = isOnBlacklist(key);
             if (!isOnBlacklist) {
-                e = new org.summerframework.nio.server.domain.Error(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Data Error", "failed to read", null);
+                e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Data Error", "failed to read", null);
             }
             TimeUnit.MILLISECONDS.sleep(1500);
             isOnBlacklist = isOnBlacklist(key);
             if (isOnBlacklist) {
-                e = new org.summerframework.nio.server.domain.Error(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Access Error", "failed to expire", null);
+                e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Access Error", "failed to expire", null);
             }
         } catch (Throwable ex) {
-            e = new org.summerframework.nio.server.domain.Error(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Access Error", ex.toString(), ex);
+            e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Access Error", ex.toString(), ex);
         }
-        List<org.summerframework.nio.server.domain.Error> errors = null;
+        List<Err> errors = null;
         if (e != null) {
             errors = new ArrayList<>();
             errors.add(e);

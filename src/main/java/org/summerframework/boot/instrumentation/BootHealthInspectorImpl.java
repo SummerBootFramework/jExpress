@@ -15,7 +15,7 @@
  */
 package org.summerframework.boot.instrumentation;
 
-import org.summerframework.nio.server.domain.Error;
+import org.summerframework.nio.server.domain.Err;
 import org.summerframework.nio.server.domain.ServiceError;
 import com.google.inject.Singleton;
 import java.util.List;
@@ -36,10 +36,10 @@ public class BootHealthInspectorImpl implements HealthInspector {
      * @return
      */
     @Override
-    public List<Error> ping(Object... args) {
+    public List<Err> ping(Object... args) {
         ServiceError error = new ServiceError();
         healthCheck(error, null);
-        List<Error> errors = error.getErrors();
+        List<Err> errors = error.getErrors();
         return errors;
     }
 

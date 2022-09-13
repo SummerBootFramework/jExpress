@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerframework.nio.server.NioConfig;
+import org.summerframework.nio.server.domain.Err;
 import org.summerframework.util.BeanUtil;
 
 /**
@@ -62,7 +63,7 @@ public class HealthMonitor {
             do {
                 StringBuilder sb = new StringBuilder();
                 sb.append(System.lineSeparator()).append("Self Inspection ");
-                List<org.summerframework.nio.server.domain.Error> errors = healthInspector.ping();
+                List<Err> errors = healthInspector.ping();
                 inspectionFailed = errors != null && !errors.isEmpty();
                 if (inspectionFailed) {
                     String inspectionReport;

@@ -69,20 +69,22 @@ public interface Authenticator extends HealthInspector {
      * @param <T>
      * @param httpRequestHeaders contains Authorization = Bearer + JWT
      * @param cache
+     * @param errorCode
      * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, final ServiceContext context);
+    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
 
     /**
      *
      * @param <T>
      * @param authToken
      * @param cache
+     * @param errorCode
      * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyToken(String authToken, AuthTokenCache cache, final ServiceContext context);
+    <T extends Caller> T verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
 
     /**
      * Success HTTP Status: 204 No Content

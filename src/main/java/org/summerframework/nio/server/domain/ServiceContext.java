@@ -412,7 +412,7 @@ public class ServiceContext {
 
         if (!folder.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Error e = new Error(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
             this.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
@@ -421,7 +421,7 @@ public class ServiceContext {
                 || !folder.isDirectory() || folder.isFile()
                 || folder.isHidden() || !folder.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Error e = new Error(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
             // 2. build JSON response with same app error code, and keep the default INFO log level.
             this.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
@@ -437,7 +437,7 @@ public class ServiceContext {
 
         if (!file.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Error e = new Error(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
             this.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
@@ -446,7 +446,7 @@ public class ServiceContext {
                 || file.isDirectory() || !file.isFile()
                 || file.isHidden() || !file.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Error e = new Error(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
             // 2. build JSON response with same app error code, and keep the default INFO log level.
             this.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
@@ -571,7 +571,7 @@ public class ServiceContext {
         return serviceError;
     }
 
-    public ServiceContext error(Error error) {
+    public ServiceContext error(Err error) {
         if (error == null) {
             return this;
         }
@@ -590,7 +590,7 @@ public class ServiceContext {
         return this;
     }
 
-    public ServiceContext errors(Collection<Error> es) {
+    public ServiceContext errors(Collection<Err> es) {
         if (es == null || es.isEmpty()) {
             if (serviceError != null && serviceError.getErrors() != null) {
                 serviceError.getErrors().clear();
@@ -602,7 +602,7 @@ public class ServiceContext {
             serviceError = new ServiceError(hit);
         }
         serviceError.addErrors(es);
-        for (Error e : es) {
+        for (Err e : es) {
             Throwable t = e.getEx();
             if (t != null) {
                 cause = t;

@@ -24,7 +24,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class Error<T> {
+public class Err<T> {
 
     private int errorCode;
     private String errorTag;
@@ -33,10 +33,10 @@ public class Error<T> {
     private Throwable ex;
     private T attachedData;
 
-    public Error() {
+    public Err() {
     }
 
-    public Error(int errorCode, String errorTag, String errorDesc, Throwable ex) {
+    public Err(int errorCode, String errorTag, String errorDesc, Throwable ex) {
         this.errorCode = errorCode;
         this.errorTag = errorTag;
         this.errorDesc = errorDesc;

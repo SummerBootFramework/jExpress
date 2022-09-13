@@ -15,7 +15,7 @@
  */
 package org.summerframework.boot.instrumentation;
 
-import org.summerframework.nio.server.domain.Error;
+import org.summerframework.nio.server.domain.Err;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -28,5 +28,5 @@ public interface HealthInspector<T extends Object> {
 
     AtomicLong healthInspectorCounter = new AtomicLong(0);
 
-    List<Error> ping(T... param);
+    List<Err> ping(T... param);
 }

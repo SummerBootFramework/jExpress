@@ -32,7 +32,7 @@ public class ServiceError {
     private long ref;
     private Object attachedData;
 
-    private List<Error> errors;
+    private List<Err> errors;
 
     public ServiceError() {
     }
@@ -45,7 +45,7 @@ public class ServiceError {
         if (errors == null) {
             errors = new ArrayList();
         }
-        this.errors.add(new Error(errorCode, errorTag, errorDesc, ex));
+        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex));
     }
 
     @Override
@@ -86,22 +86,22 @@ public class ServiceError {
         this.attachedData = attachedData;
     }
 
-    public List<Error> getErrors() {
+    public List<Err> getErrors() {
         return errors;
     }
 
-    public void setErrors(List<Error> errors) {
+    public void setErrors(List<Err> errors) {
         this.errors = errors;
     }
 
-    public void addErrors(Error... error) {
+    public void addErrors(Err... error) {
         if (errors == null) {
             errors = new ArrayList();
         }
         this.errors.addAll(Arrays.asList(error));
     }
 
-    public void addErrors(Collection<Error> es) {
+    public void addErrors(Collection<Err> es) {
         if (es == null || es.isEmpty()) {
             return;
         }
@@ -112,7 +112,7 @@ public class ServiceError {
     }
 
     @JsonIgnore
-    public void addError(Error error) {
+    public void addError(Err error) {
         if (error == null) {
             return;
         }
@@ -126,7 +126,7 @@ public class ServiceError {
         if (errors == null) {
             errors = new ArrayList();
         }
-        this.errors.add(new Error(errorCode, errorTag, errorDesc, ex));
+        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex));
     }
 
 }

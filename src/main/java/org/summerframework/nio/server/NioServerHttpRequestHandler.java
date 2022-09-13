@@ -16,7 +16,7 @@
 package org.summerframework.nio.server;
 
 import org.summerframework.nio.server.annotation.Controller;
-import org.summerframework.nio.server.domain.Error;
+import org.summerframework.nio.server.domain.Err;
 import org.summerframework.nio.server.domain.ServiceError;
 import org.summerframework.nio.server.domain.ServiceContext;
 import org.summerframework.security.auth.Caller;
@@ -147,7 +147,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 context.timestampPOI(BootPOI.SERVICE_END);
             } catch (Throwable ex) {
                 ioEx = ex;
-                Error e = new Error(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send context to client", ex);
+                Err e = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send context to client", ex);
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context);
             } finally {
@@ -198,7 +198,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         } catch (RejectedExecutionException ex) {
             long queuingTime = System.currentTimeMillis() - start;
             ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
-            Error e = new Error(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many requests", ex);
+            Err e = new Err(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many requests", ex);
             context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context);
 
@@ -215,7 +215,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         } catch (Throwable ex) {
             long queuingTime = System.currentTimeMillis() - start;
             ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
-            Error e = new Error(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
+            Err e = new Err(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context);
             StringBuilder sb = new StringBuilder();
@@ -314,7 +314,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 if (e == null) {
                     break;
                 }
-                for (Error j : e.getErrors()) {
+                for (Err j : e.getErrors()) {
                     target = j.getErrorCode();
                     if (s == null) {
                         isInFilter = target >= cfg.getFilterCodeRangeFrom() && target <= cfg.getFilterCodeRangeTo();

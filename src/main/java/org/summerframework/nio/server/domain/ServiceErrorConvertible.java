@@ -25,7 +25,7 @@ public interface ServiceErrorConvertible {
 
     boolean isSingleError();
 
-    Error toSerivceError();
+    Err toSerivceError();
 
-    List<Error> toSerivceErrors();
+    List<Err> toSerivceErrors();
 }

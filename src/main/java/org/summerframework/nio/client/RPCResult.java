@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.summerframework.boot.BootErrorCode;
 import org.summerframework.nio.server.domain.ServiceContext;
-import org.summerframework.nio.server.domain.Error;
+import org.summerframework.nio.server.domain.Err;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -36,7 +36,7 @@ import org.summerframework.nio.server.domain.ServiceErrorConvertible;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <T> Success(JSON) result type
- * @param <E> Error(JSON) result type
+ * @param <E> Err(JSON) result type
  */
 public class RPCResult<T, E extends ServiceErrorConvertible> {
 
@@ -143,10 +143,10 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
             errorResponse = fromJson(jacksonMapper, null, errorResponseClass, context);
             if (errorResponse != null & context != null) {
                 if (errorResponse.isSingleError()) {
-                    Error e = errorResponse.toSerivceError();
+                    Err e = errorResponse.toSerivceError();
                     context.error(e);
                 } else {
-                    List<Error> errors = errorResponse.toSerivceErrors();
+                    List<Err> errors = errorResponse.toSerivceErrors();
                     context.errors(errors);
                 }
             }
@@ -169,7 +169,7 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
 
         } catch (Throwable ex) {
             if (context != null) {
-                Error e = new Error(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, "Unexpected RPC response format", rpcResponseBody, ex);
+                Err e = new Err(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, "Unexpected RPC response format", rpcResponseBody, ex);
                 context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
             }
             ret = null;

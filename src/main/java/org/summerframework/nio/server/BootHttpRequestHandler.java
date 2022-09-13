@@ -20,7 +20,7 @@ import org.summerframework.boot.BootPOI;
 import org.summerframework.boot.instrumentation.HealthInspector;
 import org.summerframework.integration.smtp.PostOffice;
 import org.summerframework.integration.smtp.SMTPConfig;
-import org.summerframework.nio.server.domain.Error;
+import org.summerframework.nio.server.domain.Err;
 import org.summerframework.nio.server.domain.ServiceContext;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -72,16 +72,24 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
                 }
             }
 
-            // step2. caller authentication, will do authorization in next step(ControllerAction.process(...))
-            context.timestampPOI(BootPOI.AUTH_BEGIN);
-            if (!authenticateCaller(processor, httpRequestHeaders, httpRequestPath, context)) {
-                context.status(HttpResponseStatus.UNAUTHORIZED);
-                onUnauthorized(processor, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
-                return;
+            // step2. caller authentication, will do authorizationCheck in next step(ControllerAction.process(...))
+            if (processor.isRoleBased()) {
+                context.timestampPOI(BootPOI.AUTH_BEGIN);
+                if (!authenticationCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
+                    context.status(HttpResponseStatus.UNAUTHORIZED);
+                    return;
+                }
+                if (!processor.authorizationCheck(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context, BootErrorCode.AUTH_NO_PERMISSION)) {
+                    context.status(HttpResponseStatus.FORBIDDEN);
+                    return;
+                }
             }
 
             // step3. serve the request, most frequently called first
             context.timestampPOI(BootPOI.PROCESS_BEGIN);
+            if (!preProcess(processor, httpRequestHeaders, httpRequestPath, context)) {
+                return;
+            }
             processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context, BootErrorCode.NIO_WSRS_REQUEST_BAD_DATA);
             //} catch (ExpiredJwtException | SignatureException | MalformedJwtException ex) {
             //    nak(context, HttpResponseStatus.UNAUTHORIZED, BootErrorCode.AUTH_INVALID_TOKEN, "Invalid JWT");
@@ -115,17 +123,17 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         }
     }
 
-    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception {
+    protected boolean authenticationCheck(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception {
         return true;
     }
 
-    protected void onUnauthorized(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
-            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
+    protected boolean preProcess(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception {
+        return true;
     }
 
     protected void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
             final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
-        context.status(HttpResponseStatus.NOT_FOUND).error(new Error(BootErrorCode.AUTH_INVALID_URL, "path not found", httptMethod + " " + httpRequestPath, null));
+        context.status(HttpResponseStatus.NOT_FOUND).error(new Err(BootErrorCode.AUTH_INVALID_URL, "path not found", httptMethod + " " + httpRequestPath, null));
     }
 
     protected void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
@@ -209,7 +217,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     protected void nak(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {
         // 1. convert to JSON
-        Error e = new Error(appErrorCode, null, errorMessage, null);
+        Err e = new Err(appErrorCode, null, errorMessage, null);
         // 2. build JSON context with same app error code, and keep the default INFO log level.
         context.status(httpResponseStatus).error(e);
     }
@@ -226,8 +234,8 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      */
     protected void nakError(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex) {
         // 1. convert to JSON
-        //Error e = new ServiceError(appErrorCode, null, errorMessage, ex);
-        Error e = new Error(appErrorCode, null, errorMessage, ex);
+        //Err e = new ServiceError(appErrorCode, null, errorMessage, ex);
+        Err e = new Err(appErrorCode, null, errorMessage, ex);
         // 2. build JSON context with same app error code and exception, and Level.ERROR is used as the default log level when exception is not null, 
         // the log level will be set to INFO once the exception is null.
         context.status(httpResponseStatus).error(e);
