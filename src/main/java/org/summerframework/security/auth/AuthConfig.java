@@ -133,7 +133,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
     private volatile JwtParser jwtParser;
 
     @Config(key = "jwt.ttl.minutes", defaultValue = "1440")
-    private volatile int jwtTTL;
+    private volatile int jwtTTLMinutes;
 
     @Config(key = "jwt.issuer", required = false)
     private volatile String jwtIssuer;
@@ -182,7 +182,7 @@ public class AuthConfig extends AbstractSummerBootConfig {
         }
 
         // 3. Cache TTL
-        //jwtTTL = TimeUnit.MINUTES.toMillis(jwtTTL);
+        //jwtTTL = TimeUnit.MINUTES.toMillis(jwtTTLMinutes);
         //userTTL = TimeUnit.MINUTES.toMillis(userTTL);
         String error = helper.getError();
         if (error != null) {
@@ -256,8 +256,8 @@ public class AuthConfig extends AbstractSummerBootConfig {
         return jwtIssuer;
     }
 
-    public int getJwtTTL() {
-        return jwtTTL;
+    public int getJwtTTLMinutes() {
+        return jwtTTLMinutes;
     }
 
     public RoleMapping getRole(String role) {

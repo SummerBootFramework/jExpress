@@ -61,7 +61,7 @@ public interface Authenticator extends HealthInspector {
      * @param httpRequestHeaders
      * @return
      */
-    String getAuthToken(HttpHeaders httpRequestHeaders);
+    String getBearerToken(HttpHeaders httpRequestHeaders);
 
     /**
      * Success HTTP Status: 200 OK
@@ -73,7 +73,7 @@ public interface Authenticator extends HealthInspector {
      * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
+    <T extends Caller> T verifyBearerToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
 
     /**
      *

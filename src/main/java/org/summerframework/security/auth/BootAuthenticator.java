@@ -59,7 +59,7 @@ public abstract class BootAuthenticator implements Authenticator {
         //1. protect request body from being logged
         context.privacyReqContent(true);
 
-        //2. verifyToken caller      
+        //2. authenticate caller against LDAP or DB
         context.timestampPOI(BootPOI.LDAP_BEGIN);
         Caller caller = authenticateCaller(uid, pwd, listener);
         context.timestampPOI(BootPOI.LDAP_END);
@@ -180,7 +180,7 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public String getAuthToken(HttpHeaders httpRequestHeaders) {
+    public String getBearerToken(HttpHeaders httpRequestHeaders) {
         String authToken = httpRequestHeaders.get(HttpHeaderNames.AUTHORIZATION);
         if (StringUtils.isBlank(authToken) || !authToken.startsWith("Bearer ")) {
             return null;
@@ -197,8 +197,8 @@ public abstract class BootAuthenticator implements Authenticator {
     }
 
     @Override
-    public Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
-        String authToken = getAuthToken(httpRequestHeaders);
+    public Caller verifyBearerToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
+        String authToken = getBearerToken(httpRequestHeaders);
         return verifyToken(authToken, cache, errorCode, context);
     }
 
@@ -238,7 +238,7 @@ public abstract class BootAuthenticator implements Authenticator {
 
     @Override
     public void logout(HttpHeaders httpRequestHeaders, AuthTokenCache cache, ServiceContext context) {
-        String authToken = getAuthToken(httpRequestHeaders);
+        String authToken = getBearerToken(httpRequestHeaders);
         logout(authToken, cache, context);
     }
 
