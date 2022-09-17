@@ -100,13 +100,6 @@ public class FormatterUtil {
         return ret;
     }
 
-    public static String scrapeJson(String target, String plain) {
-        if (plain == null) {
-            return null;
-        }
-        return plain.replaceAll("\"" + target + "\"\\s*:\\s*\"\\s*[0-9]*", "\"" + target + "\":\"********");
-    }
-
     private static final Pattern REGEX_DEC_PATTERN = Pattern.compile(DECRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
     private static final Pattern REGEX_ENC_PATTERN = Pattern.compile(ENCRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
 
@@ -123,14 +116,14 @@ public class FormatterUtil {
         }
         for (String match : matches) {
             //try {
-                String converted;
-                if (encrypt) {
-                    converted = SecurityUtil.encrypt(match, true);
-                    line = line.replace(DECRYPTED_WARPER_PREFIX + "(" + match + ")", ENCRYPTED_WARPER_PREFIX + "(" + converted + ")");
-                } else {
-                    converted = SecurityUtil.decrypt(match, true);
-                    line = line.replace(ENCRYPTED_WARPER_PREFIX + "(" + match + ")", DECRYPTED_WARPER_PREFIX + "(" + converted + ")");
-                }
+            String converted;
+            if (encrypt) {
+                converted = SecurityUtil.encrypt(match, true);
+                line = line.replace(DECRYPTED_WARPER_PREFIX + "(" + match + ")", ENCRYPTED_WARPER_PREFIX + "(" + converted + ")");
+            } else {
+                converted = SecurityUtil.decrypt(match, true);
+                line = line.replace(ENCRYPTED_WARPER_PREFIX + "(" + match + ")", DECRYPTED_WARPER_PREFIX + "(" + converted + ")");
+            }
             //} catch (Throwable ex) {
             //    System.err.println(ex + " - " + match + ": " + line);
             //}
@@ -271,5 +264,26 @@ public class FormatterUtil {
             }
         }
         return setToReturn;
+    }
+
+    public static String protectContentNumber(String plain, String keyword, String delimiter, String replaceWith) {
+        if (StringUtils.isBlank(plain)) {
+            return plain;
+        }
+        String regex = "(?i)" + keyword + "\\s*" + delimiter + "\\s*\"*[0-9]*";
+        String replacement = keyword + delimiter + replaceWith;
+        return plain.replaceAll(regex, replacement);
+    }
+
+    public static String protectContent(String plain, String keyword, String delimiter, String wrapper, String replaceWith) {
+        if (StringUtils.isBlank(plain)) {
+            return plain;
+        }
+        if (wrapper == null) {
+            wrapper = "";
+        }
+        String regex = "(?i)" + keyword + "\\s*" + delimiter + "\\s*" + wrapper + "(\\w*\\s*\\w*(-\\w*)*)*" + wrapper;
+        String replacement = keyword + delimiter + replaceWith + wrapper;
+        return plain.replaceAll(regex, replacement);
     }
 }
