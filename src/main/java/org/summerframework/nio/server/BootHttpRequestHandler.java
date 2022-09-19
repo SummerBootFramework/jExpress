@@ -42,6 +42,7 @@ import jakarta.persistence.PersistenceException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.summerframework.boot.instrumentation.HealthMonitor;
+import org.summerframework.util.FormatterUtil;
 
 /**
  *
@@ -264,5 +265,10 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             String briefContent = "caller=" + context.callerId() + ", request#" + context.hit() + ": " + content;
             po.sendAlertAsync(emailTo, errorMessage, briefContent, ex, true);
         }
+    }
+
+    @Override
+    public String beforeSendingError(String errorContent) {
+        return FormatterUtil.protectContent(errorContent, "java.net.UnknownHostException", ":", null, " ***");
     }
 }

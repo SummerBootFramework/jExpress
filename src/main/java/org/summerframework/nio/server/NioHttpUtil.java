@@ -103,22 +103,24 @@ public class NioHttpUtil {
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
 
-    public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext) {
+    public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext, final ErrorAuditor errorAuditor) {
         if (serviceContext.file() != null) {
             return sendFile(ctx, isKeepAlive, serviceContext);
         }
         if (StringUtils.isBlank(serviceContext.txt()) && serviceContext.error() != null) {
             String clientAcceptContentType = serviceContext.clientAcceptContentType();
-            if (clientAcceptContentType != null) {
-                clientAcceptContentType = clientAcceptContentType.toLowerCase();
-                if (clientAcceptContentType.contains("json")) {
-                    serviceContext.txt(serviceContext.error().toJson()).contentType(MediaType.APPLICATION_JSON);
-                } else if (clientAcceptContentType.contains("xml")) {
-                    serviceContext.txt(serviceContext.error().toXML()).contentType(MediaType.APPLICATION_XML);
-                }
+            String textResponse;
+            if (clientAcceptContentType != null && clientAcceptContentType.contains("xml")) {
+                textResponse = serviceContext.error().toXML();
+                serviceContext.contentType(MediaType.APPLICATION_XML);
             } else {
-                serviceContext.txt(serviceContext.error().toJson()).contentType(MediaType.APPLICATION_JSON);
+                textResponse = serviceContext.error().toJson();
+                serviceContext.contentType(MediaType.APPLICATION_JSON);
             }
+            if(errorAuditor!=null) {
+                textResponse = errorAuditor.beforeSendingError(textResponse);
+            }
+            serviceContext.txt(textResponse);
         }
         if (StringUtils.isNotBlank(serviceContext.txt())) {
             return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);

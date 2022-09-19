@@ -38,12 +38,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class FormatterUtil {
+
+    protected static Logger log = null;// = LogManager.getLogger(FormatterUtil.class);
 
     public static final long INT_MASK = 0xFFFFFFFFL;//(long) Integer.MAX_VALUE - (long) Integer.MIN_VALUE;
     public static final int SHORT_MASK = 0xFFFF;
@@ -282,8 +286,12 @@ public class FormatterUtil {
         if (wrapper == null) {
             wrapper = "";
         }
-        String regex = "(?i)" + keyword + "\\s*" + delimiter + "\\s*" + wrapper + "(\\w*\\s*\\w*(-\\w*)*)*" + wrapper;
-        String replacement = keyword + delimiter + replaceWith + wrapper;
+        final String regex = "(?i)" + keyword + "\\s*" + delimiter + "\\s*" + wrapper + "(\\w*\\s*\\w*(-\\w*)*\\.*!*@*#*\\$*\\^*&*\\**\\(*\\)*)*" + wrapper;
+        final String replacement = keyword + delimiter + replaceWith + wrapper;
+        if (log == null) {
+            log = LogManager.getLogger(FormatterUtil.class);
+        }
+        log.trace(() -> "replace " + plain + "\n\t regex=" + regex + "\n\t with=" + replacement);
         return plain.replaceAll(regex, replacement);
     }
 }
