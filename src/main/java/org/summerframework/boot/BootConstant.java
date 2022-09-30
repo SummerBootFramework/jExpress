@@ -32,5 +32,4 @@ public interface BootConstant {
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
-
 }

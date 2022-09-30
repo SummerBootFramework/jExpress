@@ -55,6 +55,7 @@ import org.summerframework.boot.instrumentation.HealthInspector;
 import org.summerframework.boot.instrumentation.HealthMonitor;
 import org.summerframework.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerframework.i18n.I18n;
+import org.summerframework.integration.smtp.BootPostOfficeImpl;
 import org.summerframework.integration.smtp.PostOffice;
 import org.summerframework.integration.smtp.SMTPConfig;
 import org.summerframework.nio.server.BootHttpPingHandler;
@@ -440,7 +441,7 @@ abstract public class SummerApplication extends CommandLineRunner {
     }
 
     /**
-     * process CLI first then load config files without caller class, init IOC
+     * process CLI first then load configuration files without caller class, init IOC
      *
      * @param args
      * @param version
@@ -473,6 +474,8 @@ abstract public class SummerApplication extends CommandLineRunner {
                     }
                     if (bindingPostOfficeClass != null) {
                         bind(PostOffice.class).to(bindingPostOfficeClass);
+                    } else {
+                        bind(PostOffice.class).to(BootPostOfficeImpl.class);
                     }
                 }
             };
@@ -795,6 +798,9 @@ abstract public class SummerApplication extends CommandLineRunner {
      * @throws Exception
      */
     private void start(String version, boolean startNIO) throws Exception {
+        if (postOffice != null) {
+            postOffice.setAppVersion(version);
+        }
         try {
             //4. preLaunch
             beforeStart(cli);
@@ -850,7 +856,7 @@ abstract public class SummerApplication extends CommandLineRunner {
 
             String fullConfigInfo = sb.toString();
             if (postOffice != null) {
-                postOffice.sendAlertAsync(SMTPConfig.CFG.getEmailToAppSupport(), "Started at " + dtf.format(LocalDateTime.now()) + " - " + version, fullConfigInfo, null, false);
+                postOffice.sendAlertAsync(SMTPConfig.CFG.getEmailToAppSupport(), "Started at " + dtf.format(LocalDateTime.now()), fullConfigInfo, null, false);
             }
         } catch (Throwable ex) {
             log.fatal(I18n.info.unlaunched.format(cfgDefaultRB), ex);

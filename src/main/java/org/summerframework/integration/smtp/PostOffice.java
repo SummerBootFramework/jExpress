@@ -67,4 +67,6 @@ public interface PostOffice extends HealthInspector<String> {
      * @return
      */
     boolean sendEmailAsync(Collection<String> to, String title, String content, boolean isHTMLFormat);
+
+    void setAppVersion(String appVersion);
 }

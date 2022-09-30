@@ -351,7 +351,7 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
 - **Auto Encrypt mode**: 
 
-  - **step1**: Wrap the values of password inside **DEC()** as shown below, Here, DEC() is a placeholder that tells the app what to encrypt, and the remaining values are untouched:
+  - **step1**: Wrap the plain text password with **DEC()** as shown below, Here, DEC() is a marker that tells the app what to encrypt, and the remaining values are untouched:
 
     ```
     datasource.password=DEC(plain password)

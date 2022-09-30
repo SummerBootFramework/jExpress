@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BootPostOfficeImpl implements PostOffice {
 
     private static final ExecutorService POSTOFFICE = buildPostffice();
+    private String appVersion = "n/a";
 
     protected static ExecutorService buildPostffice() {
         ExecutorService postoffice = new ThreadPoolExecutor(2, 2,
@@ -62,7 +63,7 @@ public class BootPostOfficeImpl implements PostOffice {
      * @return
      */
     protected String updateAlertTitle(String title) {
-        return "[ALERT] " + title;
+        return "[ALERT@" + appVersion + "] " + title;
     }
 
     /**
@@ -208,6 +209,11 @@ public class BootPostOfficeImpl implements PostOffice {
             errors.add(e);
         }
         return errors;
+    }
+
+    @Override
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
     }
 
 }
