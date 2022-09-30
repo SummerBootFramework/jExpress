@@ -41,7 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BootPostOfficeImpl implements PostOffice {
 
     private static final ExecutorService POSTOFFICE = buildPostffice();
-    private String appVersion = "n/a";
 
     protected static ExecutorService buildPostffice() {
         ExecutorService postoffice = new ThreadPoolExecutor(2, 2,
@@ -54,7 +53,9 @@ public class BootPostOfficeImpl implements PostOffice {
         return postoffice;
     }
 
-    protected Logger log = LogManager.getLogger(getClass().getName());
+    private String appVersion = BootConstant.PID;
+
+    protected static Logger log = LogManager.getLogger(BootPostOfficeImpl.class);
 
     /**
      * Update alert title
