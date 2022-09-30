@@ -141,7 +141,7 @@ abstract public class SummerApplication extends CommandLineRunner {
     private String cfgDomainFolderPrefix;
     private Class controllerScanRootClass;
     //Plugin - bind
-    private Class<? extends PostOffice> bindingPostOfficeClass;
+    private Class<? extends PostOffice> bindingPostOfficeClass = BootPostOfficeImpl.class;
     private AbstractModule bindingAppModule;
     private Class<? extends ChannelHandler> bindingChannelHandlerClass;
     private String bindingChannelHandlerBindingName;
@@ -441,7 +441,8 @@ abstract public class SummerApplication extends CommandLineRunner {
     }
 
     /**
-     * process CLI first then load configuration files without caller class, init IOC
+     * process CLI first then load configuration files without caller class,
+     * init IOC
      *
      * @param args
      * @param version
@@ -474,8 +475,6 @@ abstract public class SummerApplication extends CommandLineRunner {
                     }
                     if (bindingPostOfficeClass != null) {
                         bind(PostOffice.class).to(bindingPostOfficeClass);
-                    } else {
-                        bind(PostOffice.class).to(BootPostOfficeImpl.class);
                     }
                 }
             };
@@ -904,7 +903,7 @@ abstract public class SummerApplication extends CommandLineRunner {
      *
      * @return
      */
-    private final String getStartCommand() {
+    private String getStartCommand() {
         //try {
         String OS = System.getProperty("os.name").toLowerCase();
         boolean isWindows = OS.contains("win");
