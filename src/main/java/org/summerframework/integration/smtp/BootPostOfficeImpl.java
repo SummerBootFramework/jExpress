@@ -55,7 +55,7 @@ public class BootPostOfficeImpl implements PostOffice {
 
     private String appVersion = BootConstant.PID;
 
-    protected static Logger log = LogManager.getLogger(BootPostOfficeImpl.class);
+    protected Logger log = LogManager.getLogger(getClass());
 
     /**
      * Update alert title

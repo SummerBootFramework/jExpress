@@ -76,38 +76,41 @@ public class HttpConfig extends AbstractSummerBootConfig {
         }
     }
 
+    private static final String HEADER_SERVER_RESPONSE = "server.DefaultResponseHttpHeaders.";
+    private static final String HEADER_CLIENT_REQUEST = "httpclient.DefaultReqHttpHeaders.";
+
     //1. Default NIO Response HTTP Headers
-    @Memo(title = "1. Default NIO Response HTTP Headers",
+    @Memo(title = "1. Default Server Response HTTP Headers",
             desc = "put generic HTTP response headers here",
-            format = "server.DefaultResponseHttpHeaders.?=?",
-            example = "server.DefaultResponseHttpHeaders.Access-Control-Allow-Origin=https://www.summerboot.org\n"
-            + "server.DefaultResponseHttpHeaders.Access-Control-Allow-Headers=X-Requested-With, Content-Type, Origin, Authorization\n"
-            + "server.DefaultResponseHttpHeaders.Access-Control-Allow-Methods=PUT,GET,POST,DELETE,OPTIONS,PATCH\n"
-            + "server.DefaultResponseHttpHeaders.Access-Control-Allow-Credentials=false\n"
-            + "server.DefaultResponseHttpHeaders.Access-Control-Allow-Credentials=false\n"
-            + "server.DefaultResponseHttpHeaders.Access-Control-Max-Age=3600\n"
-            + "server.DefaultResponseHttpHeaders.Content-Security-Policy=default-src 'self';script-src 'self' www.google-analytics.com www.google.com www.gstatic. js.stripe.com ajax.cloudflare.com;style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;img-src 'self' www.google-analytics.com stats.g.doubleclick.net www.gstatic.com;font-src 'self' cdnjs.cloudflare.com fonts.gstatic.com;base-uri 'self';child-src www.google.com js.stripe.com;form-action 'self';frame-ancestors 'none';report-uri=\"https://www.summerboot.org/report-uri\"\n"
-            + "server.DefaultResponseHttpHeaders.X-XSS-Protection=1; mode=block\n"
-            + "server.DefaultResponseHttpHeaders.Strict-Transport-Security=max-age=31536000;includeSubDomains;preload\n"
-            + "server.DefaultResponseHttpHeaders.X-Frame-Options=sameorigin\n"
-            + "server.DefaultResponseHttpHeaders.Expect-CT=max-age=86400, enforce, report-uri=\"https://www.summerboot.org/report-uri\"\n"
-            + "server.DefaultResponseHttpHeaders.X-Content-Type-Options=nosniff\n"
-            + "server.DefaultResponseHttpHeaders.Feature-Policy=autoplay 'none';camera 'none' ")
+            format = HEADER_SERVER_RESPONSE + "?=?",
+            example = HEADER_SERVER_RESPONSE + "Access-Control-Allow-Origin=https://www.summerboot.org\n"
+            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Headers=X-Requested-With, Content-Type, Origin, Authorization\n"
+            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Methods=PUT,GET,POST,DELETE,OPTIONS,PATCH\n"
+            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Credentials=false\n"
+            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Credentials=false\n"
+            + HEADER_SERVER_RESPONSE + "Access-Control-Max-Age=3600\n"
+            + HEADER_SERVER_RESPONSE + "Content-Security-Policy=default-src 'self';script-src 'self' www.google-analytics.com www.google.com www.gstatic. js.stripe.com ajax.cloudflare.com;style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;img-src 'self' www.google-analytics.com stats.g.doubleclick.net www.gstatic.com;font-src 'self' cdnjs.cloudflare.com fonts.gstatic.com;base-uri 'self';child-src www.google.com js.stripe.com;form-action 'self';frame-ancestors 'none';report-uri=\"https://www.summerboot.org/report-uri\"\n"
+            + HEADER_SERVER_RESPONSE + "X-XSS-Protection=1; mode=block\n"
+            + HEADER_SERVER_RESPONSE + "Strict-Transport-Security=max-age=31536000;includeSubDomains;preload\n"
+            + HEADER_SERVER_RESPONSE + "X-Frame-Options=sameorigin\n"
+            + HEADER_SERVER_RESPONSE + "Expect-CT=max-age=86400, enforce, report-uri=\"https://www.summerboot.org/report-uri\"\n"
+            + HEADER_SERVER_RESPONSE + "X-Content-Type-Options=nosniff\n"
+            + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ")
 
     private final HttpHeaders serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
 
     //2. Web Server Mode
     @Memo(title = "2. Web Server Mode")
-    @Config(key = "nio.http.web.docroot", required = false, defaultValue = "docroot")
+    @Config(key = "server.http.web.docroot", required = false, defaultValue = "docroot")
     private volatile String docroot;
 
-    @Config(key = "nio.http.web.resources", required = false, defaultValue = "web-resources/errorpages")
+    @Config(key = "server.http.web.resources", required = false, defaultValue = "web-resources/errorpages")
     private volatile String webResources;
 
-    @Config(key = "nio.http.web.welcomePage", required = false, defaultValue = "index.html")
+    @Config(key = "server.http.web.welcomePage", required = false, defaultValue = "index.html")
     private volatile String welcomePage;
 
-    @Config(key = "nio.http.web-server.tempupload", required = false, defaultValue = "tempupload")
+    @Config(key = "server.http.web-server.tempupload", required = false, defaultValue = "tempupload")
     private volatile String tempUoloadDir;
 
     private volatile boolean downloadMode;
@@ -165,10 +168,10 @@ public class HttpConfig extends AbstractSummerBootConfig {
     //3.3 HTTP Client Default Headers
     @Memo(title = "3.3 HTTP Client Default Headers",
             desc = "put generic HTTP Client request headers here",
-            format = "httpclient.DefaultReqHttpHeaders.?=?",
-            example = "httpclient.DefaultReqHttpHeaders.Accept=application/json\n"
-            + "httpclient.DefaultReqHttpHeaders.Content-Type=application/json;charset=UTF-8\n"
-            + "httpclient.DefaultReqHttpHeaders.Accept-Language=en-ca")
+            format = HEADER_CLIENT_REQUEST + "?=?",
+            example = HEADER_CLIENT_REQUEST + "Accept=application/json\n"
+            + HEADER_CLIENT_REQUEST + "Content-Type=application/json;charset=UTF-8\n"
+            + HEADER_CLIENT_REQUEST + "Accept-Language=en-ca")
     private final Map<String, String> httpClientDefaultRequestHeaders = new HashMap<>();
 
     private HTTPClientStatusListener listener = null;
@@ -190,12 +193,12 @@ public class HttpConfig extends AbstractSummerBootConfig {
         serverDefaultResponseHeaders.clear();
         httpClientDefaultRequestHeaders.clear();
         keys.forEach((name) -> {
-            if (name.startsWith("server.DefaultResponseHttpHeaders.")) {
+            if (name.startsWith(HEADER_SERVER_RESPONSE)) {
                 String[] names = name.split("\\.");
                 String headerName = names[2];
                 String headerValue = props.getProperty(name);
                 serverDefaultResponseHeaders.set(headerName, headerValue);
-            } else if (name.startsWith("httpclient.DefaultReqHttpHeaders.")) {
+            } else if (name.startsWith(HEADER_CLIENT_REQUEST)) {
                 String[] names = name.split("\\.");
                 String headerName = names[2];
                 String headerValue = props.getProperty(name);
