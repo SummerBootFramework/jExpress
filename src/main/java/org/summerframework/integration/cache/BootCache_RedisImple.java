@@ -41,7 +41,10 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.SetParams;
 
 /**
- *
+ * 1. download  redis-cell from https://github.com/brandur/redis-cell/releases
+ * 2. unzip
+ * 3. redis-cli>module load /path/to/libredis_cell.so
+ * 
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
