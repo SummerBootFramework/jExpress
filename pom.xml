@@ -188,7 +188,7 @@
         
         
         <!-- MIME-Type -->
-        <tika.version>2.4.1</tika.version>
+        <tika.version>2.5.0</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>3.1.0</rs-api.version>
         <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
@@ -208,11 +208,11 @@
         <guice.version>5.1.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.1.3.Final</hibernate.version>
+        <hibernate.version>6.1.4.Final</hibernate.version>
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>4.2.3</jedis.version>
+        <jedis.version>4.3.0</jedis.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.31</freemarker.version>
