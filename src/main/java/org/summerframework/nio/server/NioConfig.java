@@ -65,7 +65,7 @@ public class NioConfig extends AbstractSummerBootConfig {
     //1. NIO Network Listeners
     @Memo(title = "1. NIO Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
-            example = "192.168.1.10:8988, 127.0.0.1:8988, 0.0.0.0:8989")
+            example = "192.168.1.10:8443, 127.0.0.1:8444, 0.0.0.0:8445")
 
     @Config(key = "nio.server.bindings"/*, defaultValue = "0.0.0.0:80"*/)
     private volatile Map<String, Integer> bindingAddresses = null;//Map.of("0.0.0.0", 80);
@@ -175,7 +175,7 @@ public class NioConfig extends AbstractSummerBootConfig {
     @Config(key = "nio.server.BizExecutor.CoreSize", defaultValue = "0",
             desc = "use CPU core + 1 when application is CPU bound\n"
             + "use CPU core x 2 + 1 when application is I/O bound\n"
-            + "manual config is required when it is mixed")
+            + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     private volatile int bizExecutorCoreSize = 0;// how many tasks running at the same time
     private volatile int currentCore;
 
