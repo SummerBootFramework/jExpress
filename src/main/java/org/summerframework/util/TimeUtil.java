@@ -21,6 +21,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Calendar;
 import java.util.Random;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +31,12 @@ import org.apache.commons.lang3.StringUtils;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class TimeUtil {
+
+    public static DateTimeFormatter ISO_ZONED_DATE_TIME3 = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+            .parseLenient()
+            .appendOffset("+HH:MM", "Z")
+            .toFormatter();
 
     public static long getSecondsSinceMidnight(Calendar c) {
         return 3600 * c.get(Calendar.HOUR_OF_DAY) + 60 * c.get(Calendar.MINUTE) + c.get(Calendar.SECOND);

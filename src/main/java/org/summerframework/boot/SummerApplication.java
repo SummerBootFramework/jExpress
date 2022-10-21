@@ -509,24 +509,10 @@ abstract public class SummerApplication extends CommandLineRunner {
         initCLIs_App(options);
         initCLIs_BootDefault(args);//super
 
-        // 0. preLaunch default CLI commands first, they have no dependencies on logging, config loading, etc.
+        //0. preLaunch default CLI commands first, they have no dependencies on logging, config loading, etc.
         processCLIs_BootDefault();//super
 
-        // 1. determine if in mock mode
-        if (cli.hasOption(CLI_MOCKMODE)) {
-            appMockOptions.clear();
-            String[] mockItemList = cli.getOptionValues(CLI_MOCKMODE);
-            Set<String> mockInputValues = Set.of(mockItemList);
-            if (enable_cli_validMockValues.containsAll(mockInputValues)) {
-                appMockOptions.addAll(mockInputValues);
-            } else {
-                Set<String> invalidOptions = new HashSet(mockInputValues);
-                invalidOptions.removeAll(enable_cli_validMockValues);
-                System.err.println("invalid -mock value: " + FormatterUtil.toCSV(invalidOptions) + ", valid -mock values: " + FormatterUtil.toCSV(enable_cli_validMockValues));
-                System.exit(1);
-            }
-        }
-
+        //1. show config on demand
         if (cli.hasOption(CLI_SHOW_CONFIG)) {
             String cfgName = cli.getOptionValue(CLI_SHOW_CONFIG);
             Class c = enable_cli_validConfigs.get(cfgName);
@@ -540,7 +526,7 @@ abstract public class SummerApplication extends CommandLineRunner {
             }
         }
 
-        // 2. determine locale
+        //2. determine locale
         I18n.init(getAddtionalI18n());
         if (cli.hasOption(CLI_I8N)) {
             String language = cli.getOptionValue(CLI_I8N);
@@ -549,7 +535,7 @@ abstract public class SummerApplication extends CommandLineRunner {
             cfgDefaultRB = null;
         }
 
-        // 3. determine config Change Monitor Interval        
+        //3. determine config Change Monitor Interval
         if (cli.hasOption(CFG_MONITOR_INTERVAL)) {
             String cmi = cli.getOptionValue(CFG_MONITOR_INTERVAL);
             CfgMonitorInterval = Integer.parseInt(cmi);
@@ -557,29 +543,42 @@ abstract public class SummerApplication extends CommandLineRunner {
             CfgMonitorInterval = 5;
         }
 
-        // 4. determine config folder        
+        //4. determine config folder and init logging
         if (cli.hasOption(DOMAIN)) {
             domainName = cli.getOptionValue(DOMAIN).trim();
             System.setProperty("domainName", domainName);
         }
         cfgConfigDir = ConfigUtil.cfgRoot(domainFolderPrefix, domainName, configDirName);
-
-        // 5. preLaunch application CLI commands , they have dependencies on domain's configDir.
-        processCLIs_BootApp(cli);
-        processCLIs_App(cli);
-
-        // 6. All CLI is done, then use domainFolderPrefix when domainName is null
         File folder = cfgConfigDir.toFile();
         if (!folder.isDirectory() || !folder.exists()) {
-            System.err.println("Could not find domain: " + cfgConfigDir.getParent());
+            log.fatal("Could not find domain: " + cfgConfigDir.getParent());
             System.exit(1);
         }
-
-        // 7. run logging
         String log4j2ConfigFile = Paths.get(cfgConfigDir.toString(), "log4j2.xml").toString();
         System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
         System.out.println(I18n.info.launchingLog.format(cfgDefaultRB, System.getProperty(BootConstant.LOG4J2_KEY)));
         log = LogManager.getLogger(SummerApplication.class);
+
+        //5. determine if in mock mode
+        if (cli.hasOption(CLI_MOCKMODE)) {
+            appMockOptions.clear();
+            String[] mockItemList = cli.getOptionValues(CLI_MOCKMODE);
+            Set<String> mockInputValues = Set.of(mockItemList);
+            if (enable_cli_validMockValues.containsAll(mockInputValues)) {
+                appMockOptions.addAll(mockInputValues);
+            } else {
+                Set<String> invalidOptions = new HashSet(mockInputValues);
+                invalidOptions.removeAll(enable_cli_validMockValues);
+                log.fatal("invalid -mock value: " + FormatterUtil.toCSV(invalidOptions) + ", valid -mock values: " + FormatterUtil.toCSV(enable_cli_validMockValues));
+                System.exit(1);
+            }
+        }
+
+        //6. preLaunch application CLI commands , they have dependencies on domain's configDir.
+        processCLIs_BootApp(cli);
+        processCLIs_App(cli);
+
+        // 7. run logging
         log.info(() -> I18n.info.launching.format(cfgDefaultRB) + ", cmi=" + CfgMonitorInterval + ", StartCommand>" + getStartCommand());
 
         return cfgConfigDir;
