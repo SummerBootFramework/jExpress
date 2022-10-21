@@ -89,7 +89,7 @@ public class EncryptorUtil {
     public static final String AES_KEY_ALGO = "AES";
     public static final String MESSAGEDIGEST_ALGORITHM = "SHA3-256";//MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
     public static final String RSA_KEY_ALGO = "RSA";
-    public static final String ENCRYPT_ALGO = "AES/GCM/PKCS5Padding";
+    public static final String ENCRYPT_ALGO = "AES/GCM/NoPadding";// do not use AES/CBC, and "AES/GCM/PKCS5Padding" is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html
     public static final String RSA_CIPHER_ALGORITHM = "RSA/None/OAEPWithSHA-256AndMGF1Padding";//Cryptographic algorithm ECB is weak and should not be used： "RSA/ECB/PKCS1Padding"
     public static final int TAG_LENGTH_BIT = 128;
     public static final int IV_LENGTH_BYTE = 12;

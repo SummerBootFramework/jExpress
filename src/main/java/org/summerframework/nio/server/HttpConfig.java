@@ -141,6 +141,10 @@ public class HttpConfig extends AbstractSummerBootConfig {
     @Config(key = "httpclient.proxy.port", required = false, defaultValue = "8080")
     private volatile int proxyPort;
     private volatile int currentProxyPort;
+    
+
+    @Config(key = "httpclient.redirectOption", required = false, defaultValue = "NEVER")
+    private volatile HttpClient.Redirect redirectOption;
 
     //3.2 HTTP Client Performance
     @Memo(title = "3.2 HTTP Client Performance")
@@ -268,7 +272,7 @@ public class HttpConfig extends AbstractSummerBootConfig {
                         .executor(tpe)
                         .sslContext(sslContext)
                         .version(HttpClient.Version.HTTP_2)
-                        .followRedirects(HttpClient.Redirect.NEVER);
+                        .followRedirects(redirectOption);
                 if (StringUtils.isNotBlank(proxyHost)) {
                     builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
                 }
