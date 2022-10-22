@@ -34,6 +34,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +106,7 @@ public class ReflectionUtil {
             Object nullValue = ReflectionUtil.toStandardJavaType(null, targetClass, autoDecrypt, false, enumConvert);
             return nullValue;
         }
+
         value = value.trim();
 //        Class targetClass = field.getType();
 //        Type genericType = field.getGenericType();
@@ -276,6 +280,10 @@ public class ReflectionUtil {
                 }
             }
             return Enum.valueOf((Class<Enum>) targetClass, value);
+        } else if (targetClass.equals(OffsetDateTime.class)) {
+            return OffsetDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+        } else if (targetClass.equals(LocalDateTime.class)) {
+            return LocalDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME);
         } else {
 //            //1. try JSON
 //            try {
