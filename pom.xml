@@ -175,7 +175,7 @@
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <!-- Security -->
-        <bouncycastle.version>1.70</bouncycastle.version>
+        <bouncycastle.version>1.72</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.11.5</jwt.version>
 
@@ -290,16 +290,16 @@
 
 
         <!-- Security -->
-        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on BouncyCastle-->
+        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on BouncyCastle-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
+            <artifactId>bcprov-jdk18on</artifactId>
             <version>${bouncycastle.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk15on -->
+        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
+            <artifactId>bcpkix-jdk18on</artifactId>
             <version>${bouncycastle.version}</version>
         </dependency>
 
