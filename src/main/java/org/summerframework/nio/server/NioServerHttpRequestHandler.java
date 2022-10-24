@@ -117,8 +117,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         final HttpMethod httpMethod = req.method();
         final String httpRequestUri = req.uri();
         final boolean isKeepAlive = HttpUtil.isKeepAlive(req);
-        final String infoReceived = infoReceived(ctx, hitIndex, httpMethod, httpRequestUri, isKeepAlive, dataSize);
-        log.debug(() -> infoReceived);
+        final String requestMetaInfo = requestMetaInfo(ctx, hitIndex, httpMethod, httpRequestUri, isKeepAlive, dataSize);
+        log.debug(() -> requestMetaInfo);
 
         final HttpHeaders requestHeaders = req.headers();
         final String httpPostRequestBody;
@@ -168,7 +168,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     //line1
                     sb.append("request_").append(hitIndex).append(".caller=").append(caller == null ? context.callerId() : caller);
                     //line2,3
-                    sb.append("\n\t").append(infoReceived).append("\n\tresponsed_").append(hitIndex).append("=").append(context.status())
+                    sb.append("\n\t").append(requestMetaInfo).append("\n\tresponsed_").append(hitIndex).append("=").append(context.status())
                             .append(", error=").append(error == null ? 0 : error.getErrors().size())
                             .append(", queuing=").append(queuingTime).append("ms, process=").append(processTime);
                     if (overtime) {
@@ -179,7 +179,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
                     //line4
                     context.reportPOI(cfg, sb);
-                    VerboseClientServerCommunication(cfg, requestHeaders, httpPostRequestBody, context, sb);
+                    verboseClientServerCommunication(cfg, requestHeaders, httpPostRequestBody, context, sb);
                     context.reportMemo(sb);
                     sb.append(System.lineSeparator());
                     report = beforeLogging(sb.toString());
@@ -204,7 +204,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
             StringBuilder sb = new StringBuilder();
             sb.append("request_").append(hitIndex).append("=").append(ex.toString())
-                    .append("ms\n\t").append(infoReceived).append("\n\tresponsed#").append(hitIndex)
+                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponsed#").append(hitIndex)
                     .append("=").append(context.status())
                     .append(", errorCode=").append(e.getErrorCode())
                     .append(", queuing=").append(queuingTime)
@@ -220,7 +220,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
             StringBuilder sb = new StringBuilder();
             sb.append("request_").append(hitIndex).append("=").append(ex.toString())
-                    .append("ms\n\t").append(infoReceived).append("\n\tresponsed#").append(hitIndex)
+                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponsed#").append(hitIndex)
                     .append("=").append(context.status())
                     .append(", errorCode=").append(e.getErrorCode())
                     .append(", queuing=").append(queuingTime)
@@ -241,7 +241,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    private String infoReceived(ChannelHandlerContext ctx, long hitIndex, HttpMethod httpMethod, String httpRequestUri, boolean isKeepAlive, long dataSize) {
+    private String requestMetaInfo(ChannelHandlerContext ctx, long hitIndex, HttpMethod httpMethod, String httpRequestUri, boolean isKeepAlive, long dataSize) {
         return new StringBuilder()
                 .append("request_").append(hitIndex)
                 .append("=").append(httpMethod).append(" ").append(httpRequestUri)
@@ -253,7 +253,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    private void VerboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb) {
+    private void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb) {
         boolean isInFilter = false;
         // 3a. caller filter
         Caller caller = context.caller();

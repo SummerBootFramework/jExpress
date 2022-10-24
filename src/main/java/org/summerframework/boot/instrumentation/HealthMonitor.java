@@ -46,6 +46,8 @@ public class HealthMonitor {
         }, "ShutdownHook.HealthInspector")
         );
     }
+    
+    public static final String PROMPT = "Self Inspection Result: ";
 
     private static void startHealthInspectionSingleton(int inspectionIntervalSeconds, HealthInspector healthInspector) {
         if (healthInspector == null || inspectionIntervalSeconds < 1) {
@@ -62,7 +64,7 @@ public class HealthMonitor {
             boolean inspectionFailed;
             do {
                 StringBuilder sb = new StringBuilder();
-                sb.append(System.lineSeparator()).append("Self Inspection ");
+                sb.append(System.lineSeparator()).append(PROMPT);
                 List<Err> errors = healthInspector.ping();
                 inspectionFailed = errors != null && !errors.isEmpty();
                 if (inspectionFailed) {
@@ -72,7 +74,7 @@ public class HealthMonitor {
                     } catch (Throwable ex) {
                         inspectionReport = "total " + ex;
                     }
-                    sb.append("failed: ").append(inspectionReport);
+                    sb.append(inspectionReport);
                     sb.append(System.lineSeparator()).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
                     log.warn(sb);
                     try {

@@ -125,7 +125,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
         }
 
         //3b. update status   
-        RPCResult rpcResult = new RPCResult(httpResponse, isRemoteSuccess);
+        RPCResult<T, E> rpcResult = new RPCResult(httpResponse, isRemoteSuccess);
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
         context.memo(RPCMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + httpResponse.headers());
         context.memo(RPCMemo.MEMO_RPC_RESPONSE_DATA, rpcResponseJsonBody);

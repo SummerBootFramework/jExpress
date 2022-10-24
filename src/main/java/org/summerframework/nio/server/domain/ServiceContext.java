@@ -726,6 +726,10 @@ public class ServiceContext {
         });
     }
 
+    public void reportPOI(StringBuilder sb) {
+        reportPOI(null, sb);
+    }
+
     public void reportPOI(NioConfig cfg, StringBuilder sb) {
         if (poi == null || poi.isEmpty()) {
             sb.append("\n\tPOI: n/a");

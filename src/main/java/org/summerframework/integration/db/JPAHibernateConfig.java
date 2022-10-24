@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.summerframework.boot.config.ConfigUtil;
 import org.summerframework.util.BeanUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.persistence.Entity;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import jakarta.persistence.EntityManager;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
@@ -38,21 +40,25 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
 import org.summerframework.boot.config.SummerBootConfig;
+import org.summerframework.util.FormatterUtil;
+import org.summerframework.util.ReflectionUtil;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class HibernateConfig implements SummerBootConfig {
+public class JPAHibernateConfig implements SummerBootConfig {
 
     private static volatile Logger log = null;
 
-    public static final HibernateConfig CFG = new HibernateConfig();
+    public static final JPAHibernateConfig CFG = new JPAHibernateConfig();
     @JsonIgnore
     private volatile SessionFactory sessionFactory;
 
     private File cfgFile;
+    private final Properties props = new Properties();
     private final Map<String, Object> settings = new HashMap<>();
+    private volatile Set<Class<?>> entityClasses;
 
     @Override
     public File getCfgFile() {
@@ -75,10 +81,8 @@ public class HibernateConfig implements SummerBootConfig {
 
     @Override
     public SummerBootConfig temp() {
-        return new HibernateConfig();
+        return new JPAHibernateConfig();
     }
-
-    private final Properties props = new Properties();
 
     @Override
     public void load(File cfgFile, boolean isReal) throws IOException, GeneralSecurityException {
@@ -107,17 +111,31 @@ public class HibernateConfig implements SummerBootConfig {
         if (error != null) {
             throw new IllegalArgumentException(error);
         }
+        String _rootPackageNames = props.getProperty(Environment.LOADED_CLASSES);//load JAP Entity classes from this root package names (CSV) for  O-R Mapping
+        if (StringUtils.isNotEmpty(_rootPackageNames)) {
+            String[] rootPackageNames = FormatterUtil.parseCsv(_rootPackageNames);
+            for (String rootPackageName : rootPackageNames) {
+                Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName);
+                if (entityClasses == null) {
+                    entityClasses = tempEntityClasses;
+                } else {
+                    entityClasses.addAll(tempEntityClasses);
+                }
+            }
+            //#settings.put(Environment.LOADED_CLASSES, entityClasses);
+        }
 
-//        //build EMF
-//        EntityManagerFactory emf = new EntityManagerFactoryBuilderImpl(
-//                new PersistenceUnitInfoDescriptor(null), settings)
-//                .build();
+        //build EMF
+        //EntityManagerFactory emf = new EntityManagerFactoryBuilderImpl(new PersistenceUnitInfoDescriptor(null), settings).build();
         //build SessionFactory
         SessionFactory old = sessionFactory;
         StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
         registryBuilder.applySettings(settings);
         StandardServiceRegistry registry = registryBuilder.build();
         MetadataSources sources = new MetadataSources(registry);
+        if (entityClasses != null) {
+            entityClasses.forEach(sources::addAnnotatedClass);
+        }
         Metadata metadata = sources.getMetadataBuilder().build();
         sessionFactory = metadata.getSessionFactoryBuilder().build();
 
@@ -160,6 +178,10 @@ public class HibernateConfig implements SummerBootConfig {
 
     public String getProperty(String key) {
         return props.getProperty(key);
+    }
+
+    public Set<Class<?>> getEntityClasses() {
+        return entityClasses;
     }
 
 }

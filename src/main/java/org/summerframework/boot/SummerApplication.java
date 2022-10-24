@@ -819,7 +819,7 @@ abstract public class SummerApplication extends CommandLineRunner {
 
             //3. health inspection
             StringBuilder sb = new StringBuilder();
-            sb.append(System.lineSeparator()).append("Self Inspection ");
+            sb.append(System.lineSeparator()).append(HealthMonitor.PROMPT);
             if (healthInspector != null) {
                 List<Error> errors = healthInspector.ping(log);
                 if (errors == null || errors.isEmpty()) {
@@ -832,7 +832,7 @@ abstract public class SummerApplication extends CommandLineRunner {
                     } catch (Throwable ex) {
                         inspectionReport = "total " + errors.size();
                     }
-                    sb.append("failed: ").append(inspectionReport);
+                    sb.append(inspectionReport);
                     if (startNIO) {
                         HealthMonitor.setHealthStatus(false, sb.toString(), healthInspector);
                     } else {
