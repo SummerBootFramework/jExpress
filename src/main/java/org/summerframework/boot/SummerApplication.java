@@ -84,6 +84,7 @@ abstract public class SummerApplication extends CommandLineRunner {
     private static final String CLI_POI_LIST = "poi";
     private static final String CLI_SHOW_CONFIG = "sample";
     private static final String CLI_I8N = "i18n";
+    private static String callerRootPackageName;
 
     public static SummerApplication bind(Class controllerScanRootClass) {
         return new SummerApplication(controllerScanRootClass) {
@@ -132,6 +133,10 @@ abstract public class SummerApplication extends CommandLineRunner {
         return Set.copyOf(appMockOptions);
     }
 
+    public static String getCallerRootPackageName() {
+        return callerRootPackageName;
+    }
+
     //app internal
     private Locale cfgDefaultRB;
     private String domainName = null;
@@ -172,6 +177,7 @@ abstract public class SummerApplication extends CommandLineRunner {
     }
 
     protected SummerApplication() {
+        this.controllerScanRootClass = this.getClass();
     }
 
     private SummerApplication(Class controllerScanRootClass) {
@@ -450,6 +456,7 @@ abstract public class SummerApplication extends CommandLineRunner {
      */
     private void init(String[] args, String version, boolean startNIO) throws Exception {
         this.version = version;
+        callerRootPackageName = ReflectionUtil.getRootPackageName(this.controllerScanRootClass);
 
         //1. process CLI
         runCLI(args, "standalone", "configuration");

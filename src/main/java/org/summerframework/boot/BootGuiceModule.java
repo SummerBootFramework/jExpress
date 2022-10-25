@@ -49,11 +49,13 @@ class BootGuiceModule extends AbstractModule {
     private final Object caller;
     private final Class callerClass;
     private final boolean startNIO;
+    private final String callerRootPackageName;
 
     public BootGuiceModule(Object caller, Class callerClass, boolean startNIO) {
         this.caller = caller;
         this.callerClass = callerClass == null ? caller.getClass() : callerClass;
         this.startNIO = startNIO;
+        callerRootPackageName = ReflectionUtil.getRootPackageName(this.callerClass);
     }
 
     @Override
@@ -77,9 +79,7 @@ class BootGuiceModule extends AbstractModule {
             bind(ChannelHandler.class)
                     .annotatedWith(Names.named(BootHttpRequestHandler.class.getName()))
                     .to(BootHttpRequestHandler.class);
-            String packageName = callerClass.getPackageName();
-            packageName = packageName.substring(0, packageName.indexOf("."));
-            bindControllers(binder(), packageName);
+            bindControllers(binder(), callerRootPackageName);
         }
 
         //4. main

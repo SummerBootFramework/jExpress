@@ -358,4 +358,9 @@ public class ReflectionUtil {
             results.put(varName, varValue);
         }
     }
+
+    public static String getRootPackageName(Class callerClass) {
+        String packageName = callerClass.getPackageName();
+        return packageName.substring(0, packageName.indexOf("."));
+    }
 }

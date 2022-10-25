@@ -30,7 +30,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import jakarta.persistence.EntityManager;
-import org.apache.commons.lang3.StringUtils;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
@@ -39,6 +43,7 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
+import org.summerframework.boot.SummerApplication;
 import org.summerframework.boot.config.SummerBootConfig;
 import org.summerframework.util.FormatterUtil;
 import org.summerframework.util.ReflectionUtil;
@@ -58,7 +63,7 @@ public class JPAHibernateConfig implements SummerBootConfig {
     private File cfgFile;
     private final Properties props = new Properties();
     private final Map<String, Object> settings = new HashMap<>();
-    private volatile Set<Class<?>> entityClasses;
+    private volatile List<Class<?>> entityClasses = new ArrayList();
 
     @Override
     public File getCfgFile() {
@@ -86,6 +91,17 @@ public class JPAHibernateConfig implements SummerBootConfig {
 
     @Override
     public void load(File cfgFile, boolean isReal) throws IOException, GeneralSecurityException {
+        load(cfgFile);
+    }
+
+    /**
+     *
+     * @param cfgFile
+     * @param packages in which contains the @Entity classes
+     * @throws IOException
+     * @throws GeneralSecurityException
+     */
+    public void load(File cfgFile, String... packages) throws IOException, GeneralSecurityException {
         if (log == null) {
             log = LogManager.getLogger(getClass());
         }
@@ -111,18 +127,23 @@ public class JPAHibernateConfig implements SummerBootConfig {
         if (error != null) {
             throw new IllegalArgumentException(error);
         }
-        String _rootPackageNames = props.getProperty(Environment.LOADED_CLASSES);//load JAP Entity classes from this root package names (CSV) for  O-R Mapping
-        if (StringUtils.isNotEmpty(_rootPackageNames)) {
-            String[] rootPackageNames = FormatterUtil.parseCsv(_rootPackageNames);
-            for (String rootPackageName : rootPackageNames) {
-                Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName);
-                if (entityClasses == null) {
-                    entityClasses = tempEntityClasses;
-                } else {
-                    entityClasses.addAll(tempEntityClasses);
-                }
-            }
-            //#settings.put(Environment.LOADED_CLASSES, entityClasses);
+        String callerRootPackageName = SummerApplication.getCallerRootPackageName();
+        String _rootPackageNames = callerRootPackageName + "," + props.getProperty(Environment.LOADED_CLASSES, "");//load JAP Entity classes from this root package names (CSV) for  O-R Mapping
+        log.debug("_rootPackageNames={}", _rootPackageNames);
+        String[] rootPackageNames = FormatterUtil.parseCsv(_rootPackageNames);
+        List<String> rootPackageNameList = new ArrayList();
+        rootPackageNameList.addAll(Arrays.asList(rootPackageNames));
+        rootPackageNameList.addAll(Arrays.asList(packages));
+        rootPackageNameList = rootPackageNameList.stream()
+                .distinct()
+                .collect(Collectors.toList());
+        rootPackageNameList.removeAll(Collections.singleton(""));
+        rootPackageNameList.removeAll(Collections.singleton(null));
+        log.debug("rootPackageNameList:{}", rootPackageNameList);
+        for (String rootPackageName : rootPackageNameList) {
+            Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName);
+            entityClasses.addAll(tempEntityClasses);
+            //settings.put(Environment.LOADED_CLASSES, entityClasses);
         }
 
         //build EMF
@@ -133,9 +154,7 @@ public class JPAHibernateConfig implements SummerBootConfig {
         registryBuilder.applySettings(settings);
         StandardServiceRegistry registry = registryBuilder.build();
         MetadataSources sources = new MetadataSources(registry);
-        if (entityClasses != null) {
-            entityClasses.forEach(sources::addAnnotatedClass);
-        }
+        entityClasses.forEach(sources::addAnnotatedClass);
         Metadata metadata = sources.getMetadataBuilder().build();
         sessionFactory = metadata.getSessionFactoryBuilder().build();
 
@@ -180,7 +199,7 @@ public class JPAHibernateConfig implements SummerBootConfig {
         return props.getProperty(key);
     }
 
-    public Set<Class<?>> getEntityClasses() {
+    public List<Class<?>> getEntityClasses() {
         return entityClasses;
     }
 
