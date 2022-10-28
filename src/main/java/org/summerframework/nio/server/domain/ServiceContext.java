@@ -715,25 +715,26 @@ public class ServiceContext {
 
     }
 
-    public void reportMemo(StringBuilder sb) {
+    public ServiceContext reportMemo(StringBuilder sb) {
         if (memo == null || memo.isEmpty()) {
             sb.append("\n\tMemo: n/a");
-            return;
+            return this;
         }
         sb.append("\n\n\tMemo: ");
         memo.forEach((m) -> {
             sb.append("\n\t\t").append(m.id).append("=").append(m.desc);
         });
+        return this;
     }
 
-    public void reportPOI(StringBuilder sb) {
-        reportPOI(null, sb);
+    public ServiceContext reportPOI(StringBuilder sb) {
+        return reportPOI(null, sb);
     }
 
-    public void reportPOI(NioConfig cfg, StringBuilder sb) {
+    public ServiceContext reportPOI(NioConfig cfg, StringBuilder sb) {
         if (poi == null || poi.isEmpty()) {
             sb.append("\n\tPOI: n/a");
-            return;
+            return this;
         }
         NioConfig.VerboseTargetPOIType filterType = cfg == null ? NioConfig.VerboseTargetPOIType.all : cfg.getFilterPOIType();
         sb.append("\n\tPOI: ");
@@ -753,5 +754,6 @@ public class ServiceContext {
                 sb.append("off");
                 break;
         }
+        return this;
     }
 }

@@ -758,10 +758,10 @@ abstract public class SummerApplication extends CommandLineRunner {
      */
     private int loadBootConfigs(ConfigLoadMode mode, ConfigChangeListener cfgChangeListener) throws Exception {
         Map<String, SummerBootConfig> configs = new LinkedHashMap<>();
-        configs.put("cfg_auth.properties", AuthConfig.CFG);
-        configs.put("cfg_http.properties", HttpConfig.CFG);
-        configs.put("cfg_nio.properties", NioConfig.CFG);
-        configs.put("cfg_smtp.properties", SMTPConfig.CFG);
+        configs.put(BootConstant.CFG_AUTH, AuthConfig.CFG);
+        configs.put(BootConstant.CFG_HTTP, HttpConfig.CFG);
+        configs.put(BootConstant.CFG_NIO, NioConfig.CFG);
+        configs.put(BootConstant.CFG_SMTP, SMTPConfig.CFG);
         int updated = 0;
         try {
             //1. get main configurations

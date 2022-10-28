@@ -27,6 +27,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodySubscribers;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import org.summerframework.nio.server.domain.ServiceErrorConvertible;
@@ -53,6 +54,28 @@ public abstract class RPCDelegate_HTTPClientImpl {
                     .append(URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8));
         });
         return sb.toString();
+    }
+
+    protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext serviceContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException {
+        Map<String, String> httpClientDefaultRequestHeaders = HttpConfig.CFG.getHttpClientDefaultRequestHeaders();
+        httpClientDefaultRequestHeaders.keySet().forEach(key -> {
+            String value = httpClientDefaultRequestHeaders.get(key);
+            reqBuilder.setHeader(key, value);
+        });
+        reqBuilder.timeout(Duration.ofMillis(HttpConfig.CFG.getHttpClientTimeout()));
+        HttpRequest req = reqBuilder.build();
+
+        String reqbody = null;
+        Optional<HttpRequest.BodyPublisher> pub = req.bodyPublisher();
+        if (pub.isPresent()) {
+            reqbody = pub.map(p -> {
+                var bodySubscriber = BodySubscribers.ofString(StandardCharsets.UTF_8);
+                var flowSubscriber = new HTTPClientStringSubscriber(bodySubscriber);
+                p.subscribe(flowSubscriber);
+                return bodySubscriber.getBody().toCompletableFuture().join();
+            }).get();
+        }
+        return this.rpcEx(serviceContext, req, reqbody, successStatusList);
     }
 
     /**

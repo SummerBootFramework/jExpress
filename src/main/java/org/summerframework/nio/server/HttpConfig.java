@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.io.File;
+import java.net.Authenticator;
 import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,6 +47,7 @@ import javax.net.ssl.TrustManagerFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.summerframework.boot.instrumentation.HTTPClientStatusListener;
 import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
 import java.net.ProxySelector;
 
 /**
@@ -141,8 +143,19 @@ public class HttpConfig extends AbstractSummerBootConfig {
     @Config(key = "httpclient.proxy.port", required = false, defaultValue = "8080")
     private volatile int proxyPort;
     private volatile int currentProxyPort;
-    
 
+    @Config(key = "httpclient.proxy.userName", required = false)
+    private volatile String proxyUserName;
+
+    @JsonIgnore
+    @Config(key = "httpclient.proxy.userPwd", required = false, validate = Config.Validate.Encrypted)
+    private volatile String proxyUserPwd;
+
+    @JsonIgnore
+    private volatile String proxyAuthorizationBasicValue;
+
+//    @Config(key = "httpclient.proxy.useAuthenticator", required = false, defaultValue = "false")
+//    private volatile boolean useAuthenticator = false;
     @Config(key = "httpclient.redirectOption", required = false, defaultValue = "NEVER")
     private volatile HttpClient.Redirect redirectOption;
 
@@ -167,6 +180,7 @@ public class HttpConfig extends AbstractSummerBootConfig {
     private volatile int currentQueue;
 
     private ThreadPoolExecutor tpe;
+    @JsonIgnore
     private ScheduledExecutorService ses;
 
     //3.3 HTTP Client Default Headers
@@ -264,7 +278,6 @@ public class HttpConfig extends AbstractSummerBootConfig {
             ScheduledExecutorService sesold = ses;
             // 2. build new 
             if (httpClientCoreSize > 0) {
-
                 tpe = new ThreadPoolExecutor(currentCore, currentMax, 60L, TimeUnit.SECONDS,
                         new LinkedBlockingQueue<>(currentQueue), Executors.defaultThreadFactory(), new AbortPolicyWithReport("HttpClientExecutor"));
 
@@ -275,6 +288,29 @@ public class HttpConfig extends AbstractSummerBootConfig {
                         .followRedirects(redirectOption);
                 if (StringUtils.isNotBlank(proxyHost)) {
                     builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
+                }
+                if (StringUtils.isNotBlank(proxyUserName)) {
+                    if (proxyUserPwd == null) {
+                        proxyUserPwd = "";
+                    }
+                    //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
+                    System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
+                    //2a. set proxy authenticator at the request header level: 
+                    String plain = proxyUserName + ":" + proxyUserPwd;
+                    String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
+                    proxyAuthorizationBasicValue = "Basic " + encoded;
+                    //HttpRequest.newBuilder().setHeader("Proxy-Authorization", ProxyAuthorizationValue);
+
+//                    if (useAuthenticator) {
+//                        //2b. set proxy authenticator at the HttpClient level: not flexible to deal with different remote server settings
+//                        Authenticator authenticator = new Authenticator() {
+//                            @Override
+//                            protected PasswordAuthentication getPasswordAuthentication() {
+//                                return new PasswordAuthentication(proxyUserName, proxyUserPwd.toCharArray());
+//                            }
+//                        };
+//                        builder.authenticator(authenticator);
+//                    }
                 }
                 httpClient = builder.build();
                 // 3. register new
@@ -354,6 +390,18 @@ public class HttpConfig extends AbstractSummerBootConfig {
 
     public int getProxyPort() {
         return proxyPort;
+    }
+
+    public String getProxyUserName() {
+        return proxyUserName;
+    }
+
+    public String getProxyUserPwd() {
+        return proxyUserPwd;
+    }
+
+    public String getProxyAuthorizationBasicValue() {
+        return proxyAuthorizationBasicValue;
     }
 
     public long getHttpClientTimeout() {

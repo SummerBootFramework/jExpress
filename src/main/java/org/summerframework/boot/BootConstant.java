@@ -32,4 +32,9 @@ public interface BootConstant {
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
+    
+    String CFG_AUTH = "cfg_auth.properties";
+    String CFG_HTTP = "cfg_http.properties";
+    String CFG_NIO = "cfg_nio.properties";
+    String CFG_SMTP = "cfg_smtp.properties";
 }

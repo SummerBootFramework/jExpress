@@ -74,7 +74,7 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     private final HttpResponse httpResponse;
