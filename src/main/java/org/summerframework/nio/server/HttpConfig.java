@@ -21,10 +21,10 @@ import org.summerframework.boot.config.annotation.Config;
 import org.summerframework.boot.config.annotation.Memo;
 import org.summerframework.security.SSLUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.io.File;
-import java.net.Authenticator;
 import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,8 +47,8 @@ import javax.net.ssl.TrustManagerFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.summerframework.boot.instrumentation.HTTPClientStatusListener;
 import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
 import java.net.ProxySelector;
+import org.summerframework.nio.client.RPCResult;
 
 /**
  *
@@ -159,6 +159,9 @@ public class HttpConfig extends AbstractSummerBootConfig {
     @Config(key = "httpclient.redirectOption", required = false, defaultValue = "NEVER")
     private volatile HttpClient.Redirect redirectOption;
 
+    @Config(key = "httpclient.fromJson.failOnUnknownProperties", defaultValue = "true")
+    private volatile boolean fromJsonFailOnUnknownProperties = true;
+
     //3.2 HTTP Client Performance
     @Memo(title = "3.2 HTTP Client Performance")
     private volatile HttpClient httpClient;
@@ -239,6 +242,8 @@ public class HttpConfig extends AbstractSummerBootConfig {
 //        if(!dir.exists()) {
 //            dir.mkdirs();
 //        }
+        RPCResult.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, fromJsonFailOnUnknownProperties);
+
         // 3.1 HTTP Client keystore        
         KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
         // 3.2 HTTP Client truststore        
@@ -402,6 +407,10 @@ public class HttpConfig extends AbstractSummerBootConfig {
 
     public String getProxyAuthorizationBasicValue() {
         return proxyAuthorizationBasicValue;
+    }
+
+    public boolean isFromJsonFailOnUnknownProperties() {
+        return fromJsonFailOnUnknownProperties;
     }
 
     public long getHttpClientTimeout() {
