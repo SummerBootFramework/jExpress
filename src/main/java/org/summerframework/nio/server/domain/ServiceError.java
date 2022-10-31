@@ -30,6 +30,7 @@ import java.util.List;
 public class ServiceError {
 
     private long ref;
+    @JsonIgnore
     private Object attachedData;
 
     private List<Err> errors;

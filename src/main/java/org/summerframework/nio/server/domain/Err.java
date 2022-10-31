@@ -31,6 +31,7 @@ public class Err<T> {
     private String errorDesc;
     private String cause;
     private Throwable ex;
+    @JsonIgnore
     private T attachedData;
 
     public Err() {

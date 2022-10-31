@@ -181,7 +181,7 @@ public class ServiceContext {
     }
 
     public ServiceContext reset() {
-        status = HttpResponseStatus.FORBIDDEN;
+        status = HttpResponseStatus.OK;
         // 1.4 data
         data = null;
         txt = "";
