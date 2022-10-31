@@ -26,11 +26,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class SimpleLocalCacheImpl implements SimpleLocalCache {
 
+    /**
+     *
+     * @param key
+     * @param value
+     * @param ttlSec
+     */
     @Override
     public void put(Object key, Object value, Integer ttlSec) {
         debouncingData.put(key, new CacheEntity(value, ttlSec));
     }
 
+    /**
+     *
+     * @param <T>
+     * @param key
+     * @return
+     */
     @Override
     public <T> T get(Object key) {
         if (key == null) {
@@ -49,6 +61,12 @@ public class SimpleLocalCacheImpl implements SimpleLocalCache {
         return (T) e.getValue();
     }
 
+    /**
+     *
+     * @param <T>
+     * @param key
+     * @return
+     */
     @Override
     public <T> T delete(Object key) {
         T ret = get(key);
@@ -56,6 +74,9 @@ public class SimpleLocalCacheImpl implements SimpleLocalCache {
         return ret;
     }
 
+    /**
+     *
+     */
     public static class CacheEntity {
 
         private final Object value;

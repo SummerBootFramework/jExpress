@@ -61,7 +61,7 @@ public class ServiceContext {
     private String callerId;
 
     //  1.1 status
-    private HttpResponseStatus status = HttpResponseStatus.FORBIDDEN;
+    private HttpResponseStatus status = HttpResponseStatus.OK;
     // 1.2 responseHeader
     private HttpHeaders responseHeaders;
     // 1.3 content type    

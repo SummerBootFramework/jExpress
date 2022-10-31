@@ -49,11 +49,25 @@ public abstract class BootAuthenticator implements Authenticator {
 
     protected AuthenticatorListener listener;
 
+    /**
+     *
+     * @param listener
+     */
     @Override
     public void setListener(AuthenticatorListener listener) {
         this.listener = listener;
     }
 
+    /**
+     *
+     * @param uid
+     * @param pwd
+     * @param validForMinutes
+     * @param context
+     * @return
+     * @throws IOException
+     * @throws NamingException
+     */
     @Override
     public String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws IOException, NamingException {
         //1. protect request body from being logged
@@ -82,6 +96,15 @@ public abstract class BootAuthenticator implements Authenticator {
         return token;
     }
 
+    /**
+     *
+     * @param uid
+     * @param password
+     * @param listener
+     * @return
+     * @throws IOException
+     * @throws NamingException
+     */
     abstract protected Caller authenticateCaller(String uid, String password, AuthenticatorListener listener) throws IOException, NamingException;
 
     /**
@@ -179,6 +202,11 @@ public abstract class BootAuthenticator implements Authenticator {
         return caller;
     }
 
+    /**
+     *
+     * @param httpRequestHeaders
+     * @return
+     */
     @Override
     public String getBearerToken(HttpHeaders httpRequestHeaders) {
         String authToken = httpRequestHeaders.get(HttpHeaderNames.AUTHORIZATION);
@@ -196,12 +224,28 @@ public abstract class BootAuthenticator implements Authenticator {
         return authToken;
     }
 
+    /**
+     *
+     * @param httpRequestHeaders
+     * @param cache
+     * @param errorCode
+     * @param context
+     * @return
+     */
     @Override
     public Caller verifyBearerToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
         String authToken = getBearerToken(httpRequestHeaders);
         return verifyToken(authToken, cache, errorCode, context);
     }
 
+    /**
+     *
+     * @param authToken
+     * @param cache
+     * @param errorCode
+     * @param context
+     * @return
+     */
     @Override
     public Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
         Caller caller = null;
@@ -236,12 +280,24 @@ public abstract class BootAuthenticator implements Authenticator {
         return caller;
     }
 
+    /**
+     *
+     * @param httpRequestHeaders
+     * @param cache
+     * @param context
+     */
     @Override
     public void logout(HttpHeaders httpRequestHeaders, AuthTokenCache cache, ServiceContext context) {
         String authToken = getBearerToken(httpRequestHeaders);
         logout(authToken, cache, context);
     }
 
+    /**
+     *
+     * @param authToken
+     * @param cache
+     * @param context
+     */
     @Override
     public void logout(String authToken, AuthTokenCache cache, ServiceContext context) {
         try {
