@@ -219,10 +219,10 @@ public class NioConfig extends BootJExpressConfig {
     @Config(key = "nio.HttpFileUploadHandler", required = false)
     private volatile String fielUploadHandlerAnnotatedName = null;
 
-    @Config(key = "nio.HttpPingHandler", defaultValue = "org.summerframework.nio.server.BootHttpPingHandler")
+    @Config(key = "nio.HttpPingHandler", defaultValue = "org.jexpress.nio.server.BootHttpPingHandler")
     private volatile String pingHandlerAnnotatedName = BootHttpPingHandler.class.getName();
 
-    @Config(key = "nio.HttpRequestHandler", defaultValue = "org.summerframework.nio.server.BootHttpRequestHandler")
+    @Config(key = "nio.HttpRequestHandler", defaultValue = "org.jexpress.nio.server.BootHttpRequestHandler")
     private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.class.getName();
 
     @Config(key = "nio.WebSocket.Compress", defaultValue = "false")

@@ -615,6 +615,11 @@ public class ServiceContext {
         return this;
     }
 
+    public ServiceContext cause(Throwable cause) {
+        this.cause = cause;
+        return this;
+    }
+
     public Throwable cause() {
         return cause;
     }
