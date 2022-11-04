@@ -34,8 +34,8 @@ pom.xml
 
 ```
 <dependency>
-	<groupId>org.jexpress</groupId>
-	<artifactId>jexpress.boot</artifactId>
+	<groupId>org.summerboot</groupId>
+	<artifactId>jexpress</artifactId>
 </dependency>
 ```
 
@@ -50,7 +50,7 @@ public class Main {
     }
 }
 
-#1. HttpRequestHandler is your ChannelHandler implementation, if you just want to use default functions, just extends org.jexpress.nio.server.BootHttpRequestHandler
+#1. HttpRequestHandler is your ChannelHandler implementation, if you just want to use default functions, just extends org.summerboot.jexpress.nio.server.BootHttpRequestHandler
 #2. create a RESTful API class with JAX-RS style, and annotate this class with @Controller 
 ```
 
@@ -146,7 +146,7 @@ public class MyClass {
               server.keystore
               server.truststore
   |       
-  \---env_prod
+  \---env_prod (this is the default one)
       +\---configuration
               cfg_app.properties
               cfg_auth.properties
@@ -617,12 +617,12 @@ This shows service begin process the client request after 4ms from I/O layer pro
 
 **2. Application Status/Event log** - l it contains application status related information (version, start event, configuration change event, TPS, etc.), below is a sample:
 
-> 2021-09-24 14:11:06,181 INFO org.jexpress.nio.server.NioServer.bind() [main] starting... Epoll=false, KQueue=false, multiplexer=AVAILABLE 
-> 2021-09-24 14:11:06,633 INFO org.jexpress.nio.server.NioServer.bind() [main] [OPENSSL] [TLSv1.2, TLSv1.3] (30s): [TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256, TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256] 
-> 2021-09-24 14:11:07,987 INFO org.jexpress.nio.server.NioServer.bind() [main] Server jExpress.Boot.v2.0.11@DuXiaoPC (Client Auth: NONE) is listening on JDK https://0.0.0.0:8989/service 
-> 2021-09-24 14:11:07,988 INFO org.jexpress.boot.JExpressApplication.start() [main] CourtFiling v1.0.0RC1u1_jExpress.Boot.v2.0.11@DuXiaoPC_UTF-8 pid#29768@DuXiaoPC application launched (success), kill -9 or Ctrl+C to shutdown 
-> 2021-09-24 14:12:37,010 DEBUG org.jexpress.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=20, tps=20, activeChannel=2, totalChannel=10, totalHit=20 (ping0 + biz20), task=20, completed=20, queue=0, active=0, pool=9, core=9, max=9, largest=9 
-> 2021-09-24 14:12:38,001 DEBUG org.jexpress.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=4, tps=4, activeChannel=2, totalChannel=10, totalHit=24 (ping0 + biz24), task=24, completed=24, queue=0, active=0, pool=9, core=9, max=9, largest=9 
+> 2021-09-24 14:11:06,181 INFO org.summerboot.jexpress.nio.server.NioServer.bind() [main] starting... Epoll=false, KQueue=false, multiplexer=AVAILABLE 
+> 2021-09-24 14:11:06,633 INFO org.summerboot.jexpress.nio.server.NioServer.bind() [main] [OPENSSL] [TLSv1.2, TLSv1.3] (30s): [TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256, TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256] 
+> 2021-09-24 14:11:07,987 INFO org.summerboot.jexpress.nio.server.NioServer.bind() [main] Server jExpress.Boot.v2.0.11@DuXiaoPC (Client Auth: NONE) is listening on JDK https://0.0.0.0:8989/service 
+> 2021-09-24 14:11:07,988 INFO org.summerboot.jexpress.boot.JExpressApplication.start() [main] CourtFiling v1.0.0RC1u1_jExpress.Boot.v2.0.11@DuXiaoPC_UTF-8 pid#29768@DuXiaoPC application launched (success), kill -9 or Ctrl+C to shutdown 
+> 2021-09-24 14:12:37,010 DEBUG org.summerboot.jexpress.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=20, tps=20, activeChannel=2, totalChannel=10, totalHit=20 (ping0 + biz20), task=20, completed=20, queue=0, active=0, pool=9, core=9, max=9, largest=9 
+> 2021-09-24 14:12:38,001 DEBUG org.summerboot.jexpress.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=4, tps=4, activeChannel=2, totalChannel=10, totalHit=24 (ping0 + biz24), task=24, completed=24, queue=0, active=0, pool=9, core=9, max=9, largest=9 
 
 
 
