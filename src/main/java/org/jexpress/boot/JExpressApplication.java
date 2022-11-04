@@ -139,11 +139,11 @@ abstract public class JExpressApplication extends CommandLineRunner {
 
     //app internal
     private Locale cfgDefaultRB;
-    private String domainName = null;
+    private String envName = "prod";
     private Path cfgConfigDir;
     private int CfgMonitorInterval;
     private Injector iocInjector;
-    private String cfgDomainFolderPrefix;
+    private String cfgEnvFolderPrefix;
     private Class controllerScanRootClass;
     //Plugin - bind
     private Class<? extends PostOffice> bindingPostOfficeClass = JExpressPostOfficeImpl.class;
@@ -188,16 +188,16 @@ abstract public class JExpressApplication extends CommandLineRunner {
         return cfgDefaultRB;
     }
 
-    public String getDomainName() {
-        return domainName;
+    public String getEnvName() {
+        return envName;
     }
 
     public Path getCfgConfigDir() {
         return cfgConfigDir;
     }
 
-    public String getCfgDomainFolderPrefix() {
-        return cfgDomainFolderPrefix;
+    public String getCfgEnvFolderPrefix() {
+        return cfgEnvFolderPrefix;
     }
 
     public Injector getIocInjector() {
@@ -496,22 +496,22 @@ abstract public class JExpressApplication extends CommandLineRunner {
 
     /**
      * Initialize based on application command line args, use "env" as
-     * the default domainFolderPrefix,and "configuration" as the default
+     * the default envFolderPrefix,and "configuration" as the default
      * configDirName
      *
      * <p>
      * Log4j2 will be initialized at the last step
      *
      * @param args application command line arguments
-     * @param domainFolderPrefix the prefix of domain folder under the
-     * application folder, for example: "env" is the domain prefix when
+     * @param envFolderPrefix the prefix of env folder under the
+     * application folder, for example: "env" is the env prefix when
      * preLaunch\env_proc
-     * @param configDirName the configuration folder name under domain folder
+     * @param configDirName the configuration folder name under env folder
      * @return the path of configuration folder
      * @throws java.lang.Exception
      */
-    private Path runCLI(String[] args, String domainFolderPrefix, String configDirName) throws Exception {
-        this.cfgDomainFolderPrefix = domainFolderPrefix;
+    private Path runCLI(String[] args, String envFolderPrefix, String configDirName) throws Exception {
+        this.cfgEnvFolderPrefix = envFolderPrefix;
         initCLIs_BootApp();
         initCLIs_App(options);
         initCLIs_BootDefault(args);//super
@@ -551,14 +551,18 @@ abstract public class JExpressApplication extends CommandLineRunner {
         }
 
         //4. determine config folder and init logging
-        if (cli.hasOption(DOMAIN)) {
-            domainName = cli.getOptionValue(DOMAIN).trim();
-            System.setProperty("domainName", domainName);
+//        if (cli.hasOption(DOMAIN)) {
+//            envName = cli.getOptionValue(DOMAIN).trim();
+//            System.setProperty("envName", envName);
+//        }
+        if (cli.hasOption(ENV)) {
+            envName = cli.getOptionValue(ENV).trim();
+            System.setProperty("envName", envName);
         }
-        cfgConfigDir = ConfigUtil.cfgRoot(domainFolderPrefix, domainName, configDirName);
+        cfgConfigDir = ConfigUtil.cfgRoot(envFolderPrefix, envName, configDirName);
         File folder = cfgConfigDir.toFile();
         if (!folder.isDirectory() || !folder.exists()) {
-            log.fatal("Could not find domain: " + cfgConfigDir.getParent());
+            log.fatal("Could not find env: " + cfgConfigDir.getParent());
             System.exit(1);
         }
         String log4j2ConfigFile = Paths.get(cfgConfigDir.toString(), "log4j2.xml").toString();
@@ -581,7 +585,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
             }
         }
 
-        //6. preLaunch application CLI commands , they have dependencies on domain's configDir.
+        //6. preLaunch application CLI commands , they have dependencies on env's configDir.
         processCLIs_BootApp(cli);
         processCLIs_App(cli);
 
@@ -636,10 +640,15 @@ abstract public class JExpressApplication extends CommandLineRunner {
             options.addOption(arg);
         }
 
-        Option arg = Option.builder(DOMAIN)
-                .desc("Start server from " + cfgDomainFolderPrefix + "_<name>"
-                        + System.lineSeparator() + System.lineSeparator() + "The -domain option enables multiple domain folders, this is also useful with docker, this -domian option tells the application which domain to use."
-                        + System.lineSeparator() + System.lineSeparator() + "The <domain name>: under the application folder there will be one or more folders in the format of env_<domain name>, by default there will be env_release folder, so release is the domain name of this configuration domain.")
+        Option arg = Option.builder(ENV)
+                .desc("Start server from " + cfgEnvFolderPrefix + "_<name>"
+                        + System.lineSeparator() + System.lineSeparator() + "The -env option enables multiple env folders, this is also useful with docker, this -domian option tells the application which env to use."
+                        + System.lineSeparator() + System.lineSeparator() + "The <env name>: under the application folder there will be one or more folders in the format of env_<env name>, by default there will be env_prod folder, so prod is the env name of this configuration env.")
+                .hasArg().argName("name")
+                .build();
+        options.addOption(arg);
+        arg = Option.builder(DOMAIN)
+                .desc("")
                 .hasArg().argName("name")
                 .build();
         options.addOption(arg);
@@ -673,7 +682,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
     }
 
     /**
-     * preLaunch application CLI commands , they have dependencies on domain's
+     * preLaunch application CLI commands , they have dependencies on env's
      * configDir.
      *
      * @param cli
@@ -681,7 +690,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      */
     private void processCLIs_BootApp(final CommandLine cli) throws Exception {
         // encrypt/decrypt config files
-        if (cli.hasOption(ENCRYPT) && cli.hasOption(DOMAIN)) {
+        if (cli.hasOption(ENCRYPT) && cli.hasOption(ENV)) {
             boolean encrypt = Boolean.parseBoolean(cli.getOptionValue(ENCRYPT));
             if (!encrypt && cli.hasOption(ADMIN_PWD_FILE)) {
                 System.err.println(System.lineSeparator() + "\t error: please private password with -auth option when decrypt data");
@@ -689,8 +698,8 @@ abstract public class JExpressApplication extends CommandLineRunner {
             }
             int updated = loadBootConfigs(encrypt ? ConfigLoadMode.cli_encrypt : ConfigLoadMode.cli_decrypt, null);
             if (updated > 0) {
-                String runtimeDomain = cli.getOptionValue(DOMAIN).trim();
-                System.out.println(System.lineSeparator() + "\t success: config files in env_" + runtimeDomain + " have been " + (encrypt ? "encrypted" : "decrypted"));
+                String runtimeEnv = cli.getOptionValue(ENV).trim();
+                System.out.println(System.lineSeparator() + "\t success: config files in env_" + runtimeEnv + " have been " + (encrypt ? "encrypted" : "decrypted"));
             } else {
                 System.err.println(System.lineSeparator() + "\t ignored: no config file has been changed");
             }

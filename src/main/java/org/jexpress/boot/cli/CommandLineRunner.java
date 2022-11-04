@@ -44,6 +44,7 @@ public abstract class CommandLineRunner {
     protected static final String JWT = "jwt";
     protected static final String ENCRYPT = "encrypt";
     protected static final String DOMAIN = "domain";
+    protected static final String ENV = "env";
 
     protected CommandLine cli;
     protected final HelpFormatter formatter = new HelpFormatter();
@@ -85,11 +86,11 @@ public abstract class CommandLineRunner {
 
         arg = Option.builder(ENCRYPT)
                 .desc("Encrypt the given password via application config password."
-                        + System.lineSeparator() + System.lineSeparator() + "1. Manual Batch Encrypt mode - the commands below encrypt all values in the format of \"DEC(plain text)\" in the specified configuration domain:"
-                        + System.lineSeparator() + System.lineSeparator() + "\t -domain <domain name> -encrypt true -authfile <path to a file which contains config password>"
-                        + System.lineSeparator() + System.lineSeparator() + "\t java -jar app.jar -domain <domain name>  -encrypt true -auth <my app config password>"
-                        + System.lineSeparator() + System.lineSeparator() + "2. Manual Batch Decrypt mode - the command below decrypts all values in the format of \"ENC(encrypted text)\" in the specified configuration domain:"
-                        + System.lineSeparator() + System.lineSeparator() + "t java -jar app.jar  -domain <domain name>  -encrypt false -auth <my app config password>"
+                        + System.lineSeparator() + System.lineSeparator() + "1. Manual Batch Encrypt mode - the commands below encrypt all values in the format of \"DEC(plain text)\" in the specified configuration env:"
+                        + System.lineSeparator() + System.lineSeparator() + "\t -env <env name> -encrypt true -authfile <path to a file which contains config password>"
+                        + System.lineSeparator() + System.lineSeparator() + "\t java -jar app.jar -env <env name>  -encrypt true -auth <my app config password>"
+                        + System.lineSeparator() + System.lineSeparator() + "2. Manual Batch Decrypt mode - the command below decrypts all values in the format of \"ENC(encrypted text)\" in the specified configuration env:"
+                        + System.lineSeparator() + System.lineSeparator() + "t java -jar app.jar  -env <env name>  -encrypt false -auth <my app config password>"
                         + System.lineSeparator() + System.lineSeparator() + "3. Manual Encrypt mode - In case you want to manually verify an encrypted sensitive data,  use the command below, compare the output with the encrypted value in the config file:"
                         + System.lineSeparator() + System.lineSeparator() + "\t  -encrypt <plain text> -auth <my app config password>")
                 .hasArg()//.argName("true|false or plain text to be encrypted")
@@ -144,7 +145,7 @@ public abstract class CommandLineRunner {
         }
 
         try {
-            if (cli.hasOption(ENCRYPT) && !cli.hasOption(DOMAIN)) {
+            if (cli.hasOption(ENCRYPT) && !cli.hasOption(ENV)) {
                 String plainPwd = cli.getOptionValue(ENCRYPT);
                 String encryptedPwd = SecurityUtil.encrypt(plainPwd, false);
                 System.out.println(encryptedPwd);
