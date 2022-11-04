@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.summerboot</groupId>
-    <artifactId>framework.core</artifactId>
+    <groupId>org.jexpress</groupId>
+    <artifactId>jexpress.core</artifactId>
     <version>2.1.5-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Summer Boot Core</name>
-    <description>Summer Boot (Core) focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
+    <name>jExpress</name>
+    <description>jExpress (Core) focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
     <url>https://github.com/SummerBootFramework/core</url>
     <organization>
-        <name>Summer Boot Org</name>
-        <url>https://summerboot.org/</url>
+        <name>jExpress Org</name>
+        <url>https://jexpress.org/</url>
     </organization>
     <developers>
         <developer>
@@ -28,7 +28,7 @@
             <name>Apache License, Version 2.0</name>
             <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
-            <comments>The Summer Boot licenses this framework to you under the Apache License, version 2.0 (the "License"); you may not use this framework except in compliance with the License and you have no policy prohibiting employee contributions back to this framework (unless the contributor to this framework is your current or retired employee).</comments>
+            <comments>The jExpress licenses this framework to you under the Apache License, version 2.0 (the "License"); you may not use this framework except in compliance with the License and you have no policy prohibiting employee contributions back to this framework (unless the contributor to this framework is your current or retired employee).</comments>
         </license>
     </licenses>
     <scm>
