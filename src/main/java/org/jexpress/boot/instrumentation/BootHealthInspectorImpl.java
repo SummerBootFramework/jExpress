@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
-public class JExpressHealthInspectorImpl implements HealthInspector {
+public class BootHealthInspectorImpl implements HealthInspector {
 
     /**
      *

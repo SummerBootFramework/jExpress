@@ -236,9 +236,9 @@ AppConfig.java
 ```
 #1. create a config class named 'AppConfig', use volatile to define your config items
 #2. Make AppConfig singleton, and AppConfig.instance is the singleton instance
-#3. make AppConfig subclass of AbstractJExpressConfig
+#3. make AppConfig subclass of BootJExpressConfig
 
-public class AppConfig extends AbstractJExpressConfig {
+public class AppConfig extends BootJExpressConfig {
     public static final AppConfig CFG = new AppConfig();
 
     private AppConfig() {
@@ -478,7 +478,7 @@ public class Main {
 }
 
 @Singleton
-public class HealthInspectorImpl extends JExpressHealthInspectorImpl {
+public class HealthInspectorImpl extends BootHealthInspectorImpl {
     @Inject
     private DataRepository db;
 
@@ -560,7 +560,7 @@ MyPostOfficeImpl.java
 
 ```
 @Singleton
-public class MyPostOfficeImpl extends JExpressPostOfficeImpl {
+public class MyPostOfficeImpl extends BootPostOfficeImpl {
 
     @Override
     protected String updateAlertTitle(String title) {

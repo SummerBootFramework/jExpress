@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.util.Properties;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
-import org.jexpress.boot.config.AbstractJExpressConfig;
-import static org.jexpress.boot.config.AbstractJExpressConfig.generateTemplate;
+import org.jexpress.boot.config.BootJExpressConfig;
+import static org.jexpress.boot.config.BootJExpressConfig.generateTemplate;
 import org.jexpress.boot.config.ConfigUtil;
 import org.jexpress.boot.config.annotation.Config;
 import org.jexpress.boot.config.annotation.Memo;
@@ -33,7 +33,7 @@ import org.jexpress.boot.config.annotation.Memo;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class GRPCServerConfig extends AbstractJExpressConfig {
+public class GRPCServerConfig extends BootJExpressConfig {
 
     public static void main(String[] args) {
         String t = generateTemplate(GRPCServerConfig.class);

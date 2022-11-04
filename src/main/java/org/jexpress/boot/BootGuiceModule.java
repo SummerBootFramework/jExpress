@@ -17,7 +17,7 @@ package org.jexpress.boot;
 
 import org.jexpress.boot.config.ConfigChangeListenerImpl;
 import org.jexpress.boot.config.ConfigChangeListener;
-import org.jexpress.boot.instrumentation.JExpressHealthInspectorImpl;
+import org.jexpress.boot.instrumentation.BootHealthInspectorImpl;
 import org.jexpress.boot.instrumentation.HTTPClientStatusListener;
 import org.jexpress.boot.instrumentation.HealthInspector;
 import org.jexpress.boot.instrumentation.NIOStatusListener;
@@ -25,7 +25,7 @@ import org.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.jexpress.boot.instrumentation.jmx.InstrumentationMgrImpl;
 import org.jexpress.boot.instrumentation.jmx.ServerStatus;
 import org.jexpress.boot.instrumentation.jmx.ServerStatusMBean;
-import org.jexpress.integration.smtp.JExpressPostOfficeImpl;
+import org.jexpress.integration.smtp.BootPostOfficeImpl;
 import org.jexpress.integration.smtp.PostOffice;
 import org.jexpress.nio.server.BootHttpRequestHandler;
 import com.google.inject.AbstractModule;
@@ -67,9 +67,9 @@ class BootGuiceModule extends AbstractModule {
         bind(InstrumentationMgr.class).to(InstrumentationMgrImpl.class);
 
         //2. Non-Functinal services
-        bind(HealthInspector.class).to(JExpressHealthInspectorImpl.class);
+        bind(HealthInspector.class).to(BootHealthInspectorImpl.class);
         bind(ConfigChangeListener.class).to(ConfigChangeListenerImpl.class);
-        bind(PostOffice.class).to(JExpressPostOfficeImpl.class);
+        bind(PostOffice.class).to(BootPostOfficeImpl.class);
 
         //3. NIO Controllers
         if (startNIO) {

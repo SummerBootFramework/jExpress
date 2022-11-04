@@ -15,7 +15,7 @@
  */
 package org.jexpress.integration.smtp;
 
-import org.jexpress.boot.config.AbstractJExpressConfig;
+import org.jexpress.boot.config.BootJExpressConfig;
 import org.jexpress.boot.config.ConfigUtil;
 import org.jexpress.boot.config.annotation.Config;
 import org.jexpress.boot.config.annotation.Memo;
@@ -32,7 +32,7 @@ import jakarta.mail.Session;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class SMTPConfig extends AbstractJExpressConfig {
+public class SMTPConfig extends BootJExpressConfig {
 
     public static final SMTPConfig CFG = new SMTPConfig();
 

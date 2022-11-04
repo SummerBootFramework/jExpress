@@ -33,7 +33,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
-import org.jexpress.boot.config.AbstractJExpressConfig;
+import org.jexpress.boot.config.BootJExpressConfig;
 import org.jexpress.boot.config.annotation.Config;
 import org.jexpress.boot.config.annotation.Memo;
 import io.netty.channel.ChannelHandler;
@@ -43,7 +43,7 @@ import org.jexpress.util.BeanUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class NioConfig extends AbstractJExpressConfig {
+public class NioConfig extends BootJExpressConfig {
 
     public static final NioConfig CFG = new NioConfig();
 

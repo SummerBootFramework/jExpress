@@ -15,7 +15,7 @@
  */
 package org.jexpress.nio.server;
 
-import org.jexpress.boot.config.AbstractJExpressConfig;
+import org.jexpress.boot.config.BootJExpressConfig;
 import org.jexpress.boot.config.ConfigUtil;
 import org.jexpress.boot.config.annotation.Config;
 import org.jexpress.boot.config.annotation.Memo;
@@ -54,7 +54,7 @@ import org.jexpress.nio.client.RPCResult;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class HttpConfig extends AbstractJExpressConfig {
+public class HttpConfig extends BootJExpressConfig {
 
     public static final HttpConfig CFG = new HttpConfig();
 

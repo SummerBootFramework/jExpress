@@ -15,7 +15,7 @@
  */
 package org.jexpress.security.auth;
 
-import org.jexpress.boot.config.AbstractJExpressConfig;
+import org.jexpress.boot.config.BootJExpressConfig;
 import org.jexpress.boot.config.ConfigUtil;
 import org.jexpress.boot.config.annotation.Config;
 import org.jexpress.boot.config.annotation.Memo;
@@ -45,7 +45,7 @@ import org.jexpress.security.EncryptorUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class AuthConfig extends AbstractJExpressConfig {
+public class AuthConfig extends BootJExpressConfig {
 
     public static final AuthConfig CFG = new AuthConfig();
 

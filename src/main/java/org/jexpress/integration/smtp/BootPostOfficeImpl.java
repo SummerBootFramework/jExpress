@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
-public class JExpressPostOfficeImpl implements PostOffice {
+public class BootPostOfficeImpl implements PostOffice {
 
     private static final ExecutorService POSTOFFICE = buildPostffice();
 

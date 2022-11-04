@@ -46,7 +46,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jexpress.boot.cli.CommandLineRunner;
-import org.jexpress.boot.config.AbstractJExpressConfig;
+import org.jexpress.boot.config.BootJExpressConfig;
 import org.jexpress.boot.config.ConfigChangeListener;
 import org.jexpress.boot.config.ConfigUtil;
 import org.jexpress.boot.config.ConfigUtil.ConfigLoadMode;
@@ -54,7 +54,7 @@ import org.jexpress.boot.instrumentation.HealthInspector;
 import org.jexpress.boot.instrumentation.HealthMonitor;
 import org.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.jexpress.i18n.I18n;
-import org.jexpress.integration.smtp.JExpressPostOfficeImpl;
+import org.jexpress.integration.smtp.BootPostOfficeImpl;
 import org.jexpress.integration.smtp.PostOffice;
 import org.jexpress.integration.smtp.SMTPConfig;
 import org.jexpress.nio.server.BootHttpPingHandler;
@@ -146,7 +146,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
     private String cfgEnvFolderPrefix;
     private Class controllerScanRootClass;
     //Plugin - bind
-    private Class<? extends PostOffice> bindingPostOfficeClass = JExpressPostOfficeImpl.class;
+    private Class<? extends PostOffice> bindingPostOfficeClass = BootPostOfficeImpl.class;
     private AbstractModule bindingAppModule;
     private Class<? extends ChannelHandler> bindingChannelHandlerClass;
     private String bindingChannelHandlerBindingName;
@@ -527,7 +527,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
                 System.err.println(cfgName + "is invalid config option");
                 System.exit(1);
             } else {
-                String t = AbstractJExpressConfig.generateTemplate(c);
+                String t = BootJExpressConfig.generateTemplate(c);
                 System.out.println(t);
                 System.exit(0);
             }
