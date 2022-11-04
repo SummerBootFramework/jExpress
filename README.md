@@ -1,8 +1,8 @@
-# jExpress Framework was initiated by a group of developers in 2004 to provide a high performance, free customizable but also lightweight Netty JAX-RS RESTful and gRPC service with JPA and other powerful reusable non-functional features, and was adopted by several Toronto law firms in 2011 to customize their back-end services.
+# Summer Boot Framework was initiated by a group of developers in 2004 to provide a high performance, free customizable but also lightweight Netty JAX-RS RESTful and gRPC service with JPA and other powerful reusable non-functional features, and was adopted by several Toronto law firms in 2011 to customize their back-end services.
 
-# Its sub-project, jExpress Core, focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
+# Its sub-project, jExpress, focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
 
-**Open Source History: jExpress Core was initially open sourced on MS MySpace in Sep 2006, due to the shutdown of MySpace this framework was migrated to a server sponsored by one of the law firms in October 2011, then migrated to GitLab in Dec 2016, eventually migrated to GitHub in Sep 2021.**  
+**Open Source History: jExpress was open sourced initially on MS MySpace in Sep 2006, due to the shutdown of MySpace this framework was migrated to a server sponsored by one of the law firms in October 2011, then migrated to GitLab in Dec 2016, eventually migrated to GitHub in Sep 2021.**  
 
 > Disclaimer: We really had a great time with GitLab until 2021 when we realized one of the contributor's employer was also using GitLab at that time, we decided to move to GitHub instead to avoid incur unnecessary hassles.
 

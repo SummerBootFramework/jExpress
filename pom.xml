@@ -1,26 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.jexpress</groupId>
-    <artifactId>jexpress.boot</artifactId>
+    <groupId>org.summerboot</groupId>
+    <artifactId>jexpress</artifactId>
     <version>2.1.5-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>jExpress</name>
-    <description>jExpress focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
-    <url>https://github.com/jExpressFramework</url>
+    <name>Summer Boot jExpress</name>
+    <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
+    <url>https://github.com/SummerBootFramework</url>
     <organization>
-        <name>jExpress Org</name>
-        <url>https://jexpress.org/</url>
+        <name>Summer Boot Org</name>
+        <url>https://summerboot.org</url>
     </organization>
     <developers>
         <developer>
-            <name>IT Development Team of Dw Law Office</name>
+            <name>IT Development - Dw Law Office</name>
             <email>info@dulawoffice.com</email>
             <url>https://www.dulawoffice.com/</url>
         </developer>
         <developer>
+            <name>jExpress Org</name>
+            <url>https://jexpress.org/</url>
+        </developer>
+        <developer>
             <name>Changski Tie Zheng Zhang 张铁铮</name>
             <email>changski_skb@outlook.com</email>
+            <url>https://www.linkedin.com/in/changski-zhang-97787b4/</url>
         </developer>
     </developers>
     <licenses>
@@ -32,9 +37,9 @@
         </license>
     </licenses>
     <scm>
-        <url>https://github.com/jExpressFramework/core</url>
-        <connection>scm:git:git@github.com:jExpressFramework/core.git</connection>        
-        <developerConnection>scm:git:git@github.com:jExpressFramework/core.git</developerConnection>
+        <url>https://github.com/SummerBootFramework/jExpress.git</url>
+        <connection>scm:git:git@github.com:SummerBootFramework/jExpress.git</connection>        
+        <developerConnection>scm:git:git@github.com:SummerBootFramework/jExpress.git</developerConnection>
     </scm>
     <!--    <build>
         <plugins>
