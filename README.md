@@ -34,8 +34,8 @@ pom.xml
 
 ```
 <dependency>
-	<groupId>org.summerboot</groupId>
-	<artifactId>framework.core</artifactId>
+	<groupId>org.jexpress</groupId>
+	<artifactId>jexpress.core</artifactId>
 </dependency>
 ```
 
@@ -44,13 +44,13 @@ Main.java
 ```bash
 public class Main {
     public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
+        JExpressApplication.bind(Main.class)
                 .bind_NIOHandler(HttpRequestHandler.class, "my_handler")
                 .run(args, "My Service 1.0");
     }
 }
 
-#1. HttpRequestHandler is your ChannelHandler implementation, if you just want to use default functions, just extends org.summerframework.nio.server.BootHttpRequestHandler
+#1. HttpRequestHandler is your ChannelHandler implementation, if you just want to use default functions, just extends org.jexpress.nio.server.BootHttpRequestHandler
 #2. create a RESTful API class with JAX-RS style, and annotate this class with @Controller 
 ```
 
@@ -211,7 +211,7 @@ java -jar my-service.jar -sample NioConfig,HttpConfig,SMTPConfig,AuthConfig
 Add the following, **once the config changed, the jExpress will automatically load it up and refresh the  AppConfig.CFG**
 
 ```
-.bind_SummerBootConfig("cfg_app.properties", AppConfig.CFG)
+.bind_JExpressConfig("cfg_app.properties", AppConfig.CFG)
 ```
 
 
@@ -221,8 +221,8 @@ Full version:
 ```bash
 public class Main {
     public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("cfg_app.properties", AppConfig.CFG)
+        JExpressApplication.bind(Main.class)
+        		.bind_JExpressConfig("cfg_app.properties", AppConfig.CFG)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .run(args, "My Service 1.0");
     }
@@ -236,9 +236,9 @@ AppConfig.java
 ```
 #1. create a config class named 'AppConfig', use volatile to define your config items
 #2. Make AppConfig singleton, and AppConfig.instance is the singleton instance
-#3. make AppConfig subclass of AbstractSummerBootConfig
+#3. make AppConfig subclass of AbstractJExpressConfig
 
-public class AppConfig extends AbstractSummerBootConfig {
+public class AppConfig extends AbstractJExpressConfig {
     public static final AppConfig CFG = new AppConfig();
 
     private AppConfig() {
@@ -433,8 +433,8 @@ Full version:
 ```bash
 public class Main {
     public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
+        JExpressApplication.bind(Main.class)
+        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck("/myservice", "ping")
                 .run(args, "My Service 1.0");
@@ -469,8 +469,8 @@ Full version:
 ```bash
 public class Main {
     public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
+        JExpressApplication.bind(Main.class)
+        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck(AppURI.CONTEXT_ROOT, AppURI.LOAD_BALANCER_HEALTH_CHECK, HealthInspectorImpl.class)
                 .run(args, "My Service 1.0");
@@ -478,7 +478,7 @@ public class Main {
 }
 
 @Singleton
-public class HealthInspectorImpl extends BootHealthInspectorImpl {
+public class HealthInspectorImpl extends JExpressHealthInspectorImpl {
     @Inject
     private DataRepository db;
 
@@ -546,8 +546,8 @@ full version:
 ```
 public class Main {
     public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
+        JExpressApplication.bind(Main.class)
+        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck("/myservice", "ping")
                 .bind_AlertMessenger(MyPostOfficeImpl.class)
@@ -560,7 +560,7 @@ MyPostOfficeImpl.java
 
 ```
 @Singleton
-public class MyPostOfficeImpl extends BootPostOfficeImpl {
+public class MyPostOfficeImpl extends JExpressPostOfficeImpl {
 
     @Override
     protected String updateAlertTitle(String title) {
@@ -620,12 +620,12 @@ This shows service begin process the client request after 4ms from I/O layer pro
 
 **2. Application Status/Event log** - l it contains application status related information (version, start event, configuration change event, TPS, etc.), below is a sample:
 
-> 2021-09-24 14:11:06,181 INFO org.summerframework.nio.server.NioServer.bind() [main] starting... Epoll=false, KQueue=false, multiplexer=AVAILABLE 
-> 2021-09-24 14:11:06,633 INFO org.summerframework.nio.server.NioServer.bind() [main] [OPENSSL] [TLSv1.2, TLSv1.3] (30s): [TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256, TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256] 
-> 2021-09-24 14:11:07,987 INFO org.summerframework.nio.server.NioServer.bind() [main] Server Summer.Boot.v2.0.11@DuXiaoPC (Client Auth: NONE) is listening on JDK https://0.0.0.0:8989/service 
-> 2021-09-24 14:11:07,988 INFO org.summerframework.boot.SummerApplication.start() [main] CourtFiling v1.0.0RC1u1_Summer.Boot.v2.0.11@DuXiaoPC_UTF-8 pid#29768@DuXiaoPC application launched (success), kill -9 or Ctrl+C to shutdown 
-> 2021-09-24 14:12:37,010 DEBUG org.summerframework.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=20, tps=20, activeChannel=2, totalChannel=10, totalHit=20 (ping0 + biz20), task=20, completed=20, queue=0, active=0, pool=9, core=9, max=9, largest=9 
-> 2021-09-24 14:12:38,001 DEBUG org.summerframework.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=4, tps=4, activeChannel=2, totalChannel=10, totalHit=24 (ping0 + biz24), task=24, completed=24, queue=0, active=0, pool=9, core=9, max=9, largest=9 
+> 2021-09-24 14:11:06,181 INFO org.jexpress.nio.server.NioServer.bind() [main] starting... Epoll=false, KQueue=false, multiplexer=AVAILABLE 
+> 2021-09-24 14:11:06,633 INFO org.jexpress.nio.server.NioServer.bind() [main] [OPENSSL] [TLSv1.2, TLSv1.3] (30s): [TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256, TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256] 
+> 2021-09-24 14:11:07,987 INFO org.jexpress.nio.server.NioServer.bind() [main] Server jExpress.Boot.v2.0.11@DuXiaoPC (Client Auth: NONE) is listening on JDK https://0.0.0.0:8989/service 
+> 2021-09-24 14:11:07,988 INFO org.jexpress.boot.JExpressApplication.start() [main] CourtFiling v1.0.0RC1u1_jExpress.Boot.v2.0.11@DuXiaoPC_UTF-8 pid#29768@DuXiaoPC application launched (success), kill -9 or Ctrl+C to shutdown 
+> 2021-09-24 14:12:37,010 DEBUG org.jexpress.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=20, tps=20, activeChannel=2, totalChannel=10, totalHit=20 (ping0 + biz20), task=20, completed=20, queue=0, active=0, pool=9, core=9, max=9, largest=9 
+> 2021-09-24 14:12:38,001 DEBUG org.jexpress.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=4, tps=4, activeChannel=2, totalChannel=10, totalHit=24 (ping0 + biz24), task=24, completed=24, queue=0, active=0, pool=9, core=9, max=9, largest=9 
 
 
 
@@ -645,7 +645,7 @@ This shows service begin process the client request after 4ms from I/O layer pro
 Add the following if you define all your error codes in AppErrorCode class:
 
 ```
-.bind_SummerBootConfig("cfg_db.properties", DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+.bind_JExpressConfig("cfg_db.properties", DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
 # false means do not load config file When in mock mode
 ```
 
@@ -654,9 +654,9 @@ Full version:
 ```bash
 public class Main {
     public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
-        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+        JExpressApplication.bind(Main.class)
+        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
+        		.bind_JExpressConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .run(args, "My Service 1.0");
     }
@@ -677,7 +677,7 @@ public class GuiceModule extends AbstractModule {
     }
 
     private boolean isMock(Mock mockItem) {
-        return SummerApplication.isMockMode(mockItem.name()) || mockItems.contains(mockItem);
+        return JExpressApplication.isMockMode(mockItem.name()) || mockItems.contains(mockItem);
     }
 
     @Override
@@ -735,9 +735,9 @@ Full version:
 ```bash
 public class Main {
     public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance)
-        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+        JExpressApplication.bind(Main.class)
+        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
+        		.bind_JExpressConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
                 .run(args, "My Service 1.0");
@@ -789,9 +789,9 @@ Full version:
 ```bash
 public class Main {
     public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_SummerBootConfig("cfg_app.properties", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
-        		.bind_SummerBootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+        JExpressApplication.bind(Main.class)
+        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
+        		.bind_JExpressConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
                 .run(args, "My Service 1.0");
