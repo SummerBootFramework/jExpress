@@ -286,7 +286,7 @@ public class FormatterUtil {
         if (wrapper == null) {
             wrapper = "";
         }
-        final String regex = "(?i)" + keyword + "\\s*" + delimiter + "\\s*" + wrapper + "(\\w*\\s*\\w*(-\\w*)*\\.*!*@*#*\\$*\\^*&*\\**\\(*\\)*)*" + wrapper;
+        final String regex = "(?i)" + keyword + "\\s*" + delimiter + "\\s*" + wrapper + "(\\w*\\s*\\w*(-\\w*)*\\.*!*:*=*\\+*/*@*#*\\$*\\^*&*\\**\\(*\\)*)*" + wrapper;
         final String replacement = keyword + delimiter + replaceWith + wrapper;
         if (log == null) {
             log = LogManager.getLogger(FormatterUtil.class);

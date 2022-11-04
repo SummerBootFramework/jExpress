@@ -28,7 +28,7 @@ public interface BootConstant {
     String HOST = ApplicationUtil.getServerName(false);
 
     //version
-    String VERSION = "Summer.Boot.v2.1.5rc2@" + HOST;
+    String VERSION = "Summer.Boot.v2.1.5rc3@" + HOST;
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";

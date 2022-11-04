@@ -217,7 +217,7 @@
         <!-- Template Engine -->
         <freemarker.version>2.3.31</freemarker.version>
         <!-- Barcode -->
-        <zxing.version>3.5.0</zxing.version>
+        <zxing.version>3.5.1</zxing.version>
         <!-- PDF - PDFBox 
         <pdfbox.version>2.0.25</pdfbox.version>-->
         <!-- PDF - com.openhtmltopdf -->	       
