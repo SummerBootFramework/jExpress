@@ -562,7 +562,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
         cfgConfigDir = ConfigUtil.cfgRoot(envFolderPrefix, envName, configDirName);
         File folder = cfgConfigDir.toFile();
         if (!folder.isDirectory() || !folder.exists()) {
-            log.fatal("Could not find env: " + cfgConfigDir.getParent());
+            System.out.println("Could not find env: " + cfgConfigDir.getParent());
             System.exit(1);
         }
         String log4j2ConfigFile = Paths.get(cfgConfigDir.toString(), "log4j2.xml").toString();
