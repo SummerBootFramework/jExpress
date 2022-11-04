@@ -35,7 +35,7 @@ pom.xml
 ```
 <dependency>
 	<groupId>org.jexpress</groupId>
-	<artifactId>jexpress.core</artifactId>
+	<artifactId>jexpress.boot</artifactId>
 </dependency>
 ```
 
@@ -70,17 +70,12 @@ public class HttpRequestHandler extends BootHttpRequestHandler {
     protected Authenticator auth;
 
     @Inject
-    protected AppCache cache;
+    protected TokenCache cache;
 
     @Override //role-based validation
     protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws IOException {
-        if (processor.isRoleBased()) {
-            auth.verifyToken(httpRequestHeaders, null, context);
-            if (context.caller() == null) {
-                return false;
-            }
-        }
-        return true;
+        auth.verifyToken(httpRequestHeaders, null, context);
+        return context.caller() != null;
     }
 }
 
@@ -139,7 +134,7 @@ public class MyClass {
   +---lib
   |       *.jar
   |       
-  \---standalone_dev
+  \---env_dev
       +\---configuration
               cfg_app.properties
               cfg_auth.properties
@@ -151,7 +146,7 @@ public class MyClass {
               server.keystore
               server.truststore
   |       
-  \---standalone_production
+  \---env_prod
       +\---configuration
               cfg_app.properties
               cfg_auth.properties
@@ -179,13 +174,15 @@ public class MyClass {
 run with dev configuration
 
 ```
-java -jar my-service.jar -domain dev
+java -jar my-service.jar -env dev
 ```
 
 run with production configuration
 
 ```
-java -jar my-service.jar -domain production
+java -jar my-service.jar -env prod
+or 
+java -jar my-service.jar (when -env is not spedified, the prod is the default)
 ```
 
 
@@ -333,10 +330,10 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
     Your application launched as system service controlled by root admin, and runs with 
 
-    > “-domain <domain name> -authfile <path to root password file>”
+    > “-env <env name> -authfile <path to root password file>”
 
     ```
-    java -jar my-service.jar -domain <domain name> -authfile /etc/security/my-service.root_pwd
+    java -jar my-service.jar -env <env name> -authfile /etc/security/my-service.root_pwd
     ```
 
     Your root password is stored in file /etc/security/my-service.root_pwd, and has the following format:
@@ -365,16 +362,16 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
 - **Manual Batch Encrypt mode**: 
 
-  the commands below encrypt all values in the format of “DEC(plain text)” in the specified configuration domain:
+  the commands below encrypt all values in the format of “DEC(plain text)” in the specified configuration env:
 
   ```
-  java -jar my-service.jar -domain <domain name> -encrypt true -authfile <path to root pwd file>
+  java -jar my-service.jar -env <env name> -encrypt true -authfile <path to root pwd file>
   ```
 
    In case you happens to know the root password (you ware two hats, the app admin and root admin is same person), you can do the same by providing the root password directly:
 
   ```
-  java -jar my-service.jar -domain <domain name> -encrypt true -auth <my app root password>
+  java -jar my-service.jar -env <env name> -encrypt true -auth <my app root password>
   ```
 
   
@@ -383,10 +380,10 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
   You cannot decrypt without knowing the root password, that is to say, you cannot decrypt with root password file. 
 
-  The command below decrypts all values in the format of “ENC(encrypted text)” in the specified configuration domain:
+  The command below decrypts all values in the format of “ENC(encrypted text)” in the specified configuration env:
 
   ```
-  java -jar my-service.jar -domain <domain name> -encrypt false -auth <my app root password>
+  java -jar my-service.jar -env <env name> -encrypt false -auth <my app root password>
   ```
 
   
@@ -434,7 +431,7 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         JExpressApplication.bind(Main.class)
-        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
+        	.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck("/myservice", "ping")
                 .run(args, "My Service 1.0");
