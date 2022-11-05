@@ -57,15 +57,15 @@ import org.apache.tika.utils.ExceptionUtils;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
-public abstract class BootJExpressConfig implements JExpressConfig {
+public abstract class BootConfig implements JExpressConfig {
 
     @JsonIgnore
     protected volatile Logger log = null;
     protected File cfgFile;
     protected String configName = getClass().getSimpleName();
 
-    //public BootJExpressConfig(){}
-//    public BootJExpressConfig(String configName) {
+    //public BootConfig(){}
+//    public BootConfig(String configName) {
 //        this.configName = configName;
 //        if (StringUtils.isBlank(configName)) {
 //            this.configName = getClass().getSimpleName();

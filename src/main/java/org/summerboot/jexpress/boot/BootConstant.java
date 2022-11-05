@@ -28,7 +28,7 @@ public interface BootConstant {
     String HOST = ApplicationUtil.getServerName(false);
 
     //version
-    String VERSION = "jExpress.v2.1.5@" + HOST;
+    String VERSION = "Summer Boot jExpress v2.1.5@" + HOST;
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";

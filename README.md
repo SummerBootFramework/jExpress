@@ -208,7 +208,7 @@ java -jar my-service.jar -sample NioConfig,HttpConfig,SMTPConfig,AuthConfig
 Add the following, **once the config changed, the jExpress will automatically load it up and refresh the  AppConfig.CFG**
 
 ```
-.bind_JExpressConfig("cfg_app.properties", AppConfig.CFG)
+.bind_BootConfig("cfg_app.properties", AppConfig.CFG)
 ```
 
 
@@ -219,7 +219,7 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         JExpressApplication.bind(Main.class)
-        		.bind_JExpressConfig("cfg_app.properties", AppConfig.CFG)
+        		.bind_BootConfig("cfg_app.properties", AppConfig.CFG)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .run(args, "My Service 1.0");
     }
@@ -233,9 +233,9 @@ AppConfig.java
 ```
 #1. create a config class named 'AppConfig', use volatile to define your config items
 #2. Make AppConfig singleton, and AppConfig.instance is the singleton instance
-#3. make AppConfig subclass of BootJExpressConfig
+#3. make AppConfig subclass of BootConfig
 
-public class AppConfig extends BootJExpressConfig {
+public class AppConfig extends BootConfig {
     public static final AppConfig CFG = new AppConfig();
 
     private AppConfig() {
@@ -431,7 +431,7 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         JExpressApplication.bind(Main.class)
-        	.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
+        	.bind_BootConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck("/myservice", "ping")
                 .run(args, "My Service 1.0");
@@ -467,7 +467,7 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         JExpressApplication.bind(Main.class)
-        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
+        		.bind_BootConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck(AppURI.CONTEXT_ROOT, AppURI.LOAD_BALANCER_HEALTH_CHECK, HealthInspectorImpl.class)
                 .run(args, "My Service 1.0");
@@ -544,7 +544,7 @@ full version:
 public class Main {
     public static void main(String[] args) {
         JExpressApplication.bind(Main.class)
-        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
+        		.bind_BootConfig("cfg_app.properties", MyConfig.instance)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_Ping_HealthCheck("/myservice", "ping")
                 .bind_AlertMessenger(MyPostOfficeImpl.class)
@@ -642,7 +642,7 @@ This shows service begin process the client request after 4ms from I/O layer pro
 Add the following if you define all your error codes in AppErrorCode class:
 
 ```
-.bind_JExpressConfig("cfg_db.properties", DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+.bind_BootConfig("cfg_db.properties", DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
 # false means do not load config file When in mock mode
 ```
 
@@ -652,8 +652,8 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         JExpressApplication.bind(Main.class)
-        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
-        		.bind_JExpressConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+        		.bind_BootConfig("cfg_app.properties", MyConfig.instance)
+        		.bind_BootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .run(args, "My Service 1.0");
     }
@@ -733,8 +733,8 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         JExpressApplication.bind(Main.class)
-        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance)
-        		.bind_JExpressConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+        		.bind_BootConfig("cfg_app.properties", MyConfig.instance)
+        		.bind_BootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
                 .run(args, "My Service 1.0");
@@ -787,8 +787,8 @@ Full version:
 public class Main {
     public static void main(String[] args) {
         JExpressApplication.bind(Main.class)
-        		.bind_JExpressConfig("cfg_app.properties", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
-        		.bind_JExpressConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
+        		.bind_BootConfig("cfg_app.properties", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
+        		.bind_BootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
                 .bind_NIOHandler(HttpRequestHandler.class)
                 .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
                 .run(args, "My Service 1.0");

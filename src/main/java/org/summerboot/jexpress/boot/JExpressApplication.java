@@ -46,7 +46,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.cli.CommandLineRunner;
-import org.summerboot.jexpress.boot.config.BootJExpressConfig;
+import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.ConfigUtil.ConfigLoadMode;
@@ -280,8 +280,8 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param config the JExpressConfig instance
      * @return
      */
-    public <T extends JExpressApplication> T bind_JExpressConfig(String configFileName, JExpressConfig config) {
-        return bind_JExpressConfig(configFileName, config, null, false);
+    public <T extends JExpressApplication> T bind_BootConfig(String configFileName, JExpressConfig config) {
+        return bind_BootConfig(configFileName, config, null, false);
     }
 
     /**
@@ -295,7 +295,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param registerWhenMockIsEnabled
      * @return
      */
-    public <T extends JExpressApplication> T bind_JExpressConfig(String configFileName, JExpressConfig config, String mockName, boolean registerWhenMockIsEnabled) {
+    public <T extends JExpressApplication> T bind_BootConfig(String configFileName, JExpressConfig config, String mockName, boolean registerWhenMockIsEnabled) {
         if (registeredAppConfigs == null) {
             registeredAppConfigs = new ArrayList<>();
         }
@@ -525,7 +525,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
                 System.err.println(cfgName + "is invalid config option");
                 System.exit(1);
             } else {
-                String t = BootJExpressConfig.generateTemplate(c);
+                String t = BootConfig.generateTemplate(c);
                 System.out.println(t);
                 System.exit(0);
             }

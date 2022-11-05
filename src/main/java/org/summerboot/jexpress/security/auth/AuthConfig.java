@@ -15,7 +15,7 @@
  */
 package org.summerboot.jexpress.security.auth;
 
-import org.summerboot.jexpress.boot.config.BootJExpressConfig;
+import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.Memo;
@@ -45,7 +45,7 @@ import org.summerboot.jexpress.security.EncryptorUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class AuthConfig extends BootJExpressConfig {
+public class AuthConfig extends BootConfig {
 
     public static final AuthConfig CFG = new AuthConfig();
 

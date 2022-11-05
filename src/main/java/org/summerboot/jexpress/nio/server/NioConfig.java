@@ -33,7 +33,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
-import org.summerboot.jexpress.boot.config.BootJExpressConfig;
+import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.Memo;
 import io.netty.channel.ChannelHandler;
@@ -43,7 +43,7 @@ import org.summerboot.jexpress.util.BeanUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class NioConfig extends BootJExpressConfig {
+public class NioConfig extends BootConfig {
 
     public static final NioConfig CFG = new NioConfig();
 
@@ -219,10 +219,10 @@ public class NioConfig extends BootJExpressConfig {
     @Config(key = "nio.HttpFileUploadHandler", required = false)
     private volatile String fielUploadHandlerAnnotatedName = null;
 
-    @Config(key = "nio.HttpPingHandler", defaultValue = "org.jexpress.nio.server.BootHttpPingHandler")
+    @Config(key = "nio.HttpPingHandler", defaultValue = "org.summerboot.jexpress.nio.server.BootHttpPingHandler")
     private volatile String pingHandlerAnnotatedName = BootHttpPingHandler.class.getName();
 
-    @Config(key = "nio.HttpRequestHandler", defaultValue = "org.jexpress.nio.server.BootHttpRequestHandler")
+    @Config(key = "nio.HttpRequestHandler", defaultValue = "org.summerboot.jexpress.nio.server.BootHttpRequestHandler")
     private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.class.getName();
 
     @Config(key = "nio.WebSocket.Compress", defaultValue = "false")
