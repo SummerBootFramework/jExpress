@@ -35,7 +35,7 @@ import org.summerboot.jexpress.security.EncryptorUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public abstract class CommandLineRunner {
+public abstract class BootCLI {
 
     protected static final String USAGE = "?";
     protected static final String VERSION = "version";

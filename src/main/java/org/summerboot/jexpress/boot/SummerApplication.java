@@ -45,7 +45,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.cli.CommandLineRunner;
+import org.summerboot.jexpress.boot.cli.BootCLI;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
@@ -74,7 +74,7 @@ import org.summerboot.jexpress.boot.config.JExpressConfig;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-abstract public class JExpressApplication extends CommandLineRunner {
+abstract public class SummerApplication extends BootCLI {
 
     protected static Logger log;
 
@@ -86,8 +86,8 @@ abstract public class JExpressApplication extends CommandLineRunner {
     private static final String CLI_I8N = "i18n";
     private static String callerRootPackageName;
 
-    public static JExpressApplication bind(Class controllerScanRootClass) {
-        return new JExpressApplication(controllerScanRootClass) {
+    public static SummerApplication bind(Class controllerScanRootClass) {
+        return new SummerApplication(controllerScanRootClass) {
             @Override
             protected void locadCustomizedConfigs(Path configFolder) {
             }
@@ -176,11 +176,11 @@ abstract public class JExpressApplication extends CommandLineRunner {
         enable_cli_validConfigs.put(AuthConfig.class.getSimpleName(), AuthConfig.class);
     }
 
-    protected JExpressApplication() {
+    protected SummerApplication() {
         this.controllerScanRootClass = this.getClass();
     }
 
-    private JExpressApplication(Class controllerScanRootClass) {
+    private SummerApplication(Class controllerScanRootClass) {
         this.controllerScanRootClass = controllerScanRootClass;
     }
 
@@ -211,7 +211,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param postOfficeClass
      * @return
      */
-    public <T extends JExpressApplication> T bind_AlertMessenger(Class<? extends PostOffice> postOfficeClass) {
+    public <T extends SummerApplication> T bind_AlertMessenger(Class<? extends PostOffice> postOfficeClass) {
         this.bindingPostOfficeClass = postOfficeClass;
         return (T) this;
     }
@@ -223,12 +223,12 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param appModule
      * @return
      */
-    public <T extends JExpressApplication> T bind_GuiceModule(AbstractModule appModule) {
+    public <T extends SummerApplication> T bind_GuiceModule(AbstractModule appModule) {
         this.bindingAppModule = appModule;
         return (T) this;
     }
 
-    public <T extends JExpressApplication> T bind_NIOHandler(Class<? extends ChannelHandler> channelHandlerClass) {
+    public <T extends SummerApplication> T bind_NIOHandler(Class<? extends ChannelHandler> channelHandlerClass) {
         return bind_NIOHandler(channelHandlerClass, null);
     }
 
@@ -240,7 +240,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param channelHandlerBindingName
      * @return
      */
-    public <T extends JExpressApplication> T bind_NIOHandler(Class<? extends ChannelHandler> channelHandlerClass, String channelHandlerBindingName) {
+    public <T extends SummerApplication> T bind_NIOHandler(Class<? extends ChannelHandler> channelHandlerClass, String channelHandlerBindingName) {
         if (StringUtils.isBlank(channelHandlerBindingName)) {
             channelHandlerBindingName = channelHandlerClass.getName();
         }
@@ -280,7 +280,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param config the JExpressConfig instance
      * @return
      */
-    public <T extends JExpressApplication> T bind_BootConfig(String configFileName, JExpressConfig config) {
+    public <T extends SummerApplication> T bind_BootConfig(String configFileName, JExpressConfig config) {
         return bind_BootConfig(configFileName, config, null, false);
     }
 
@@ -295,7 +295,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param registerWhenMockIsEnabled
      * @return
      */
-    public <T extends JExpressApplication> T bind_BootConfig(String configFileName, JExpressConfig config, String mockName, boolean registerWhenMockIsEnabled) {
+    public <T extends SummerApplication> T bind_BootConfig(String configFileName, JExpressConfig config, String mockName, boolean registerWhenMockIsEnabled) {
         if (registeredAppConfigs == null) {
             registeredAppConfigs = new ArrayList<>();
         }
@@ -314,7 +314,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @throws IllegalAccessException
      * @throws JsonProcessingException
      */
-    public <T extends JExpressApplication> T enable_CLI_ListErrorCodes(Class errorCodeClass, boolean checkDuplicated) throws IllegalArgumentException, IllegalAccessException, JsonProcessingException {
+    public <T extends SummerApplication> T enable_CLI_ListErrorCodes(Class errorCodeClass, boolean checkDuplicated) throws IllegalArgumentException, IllegalAccessException, JsonProcessingException {
         this.enable_cli_errorCodeClass = errorCodeClass;
         if (errorCodeClass != null && checkDuplicated) {
             Map<Object, Set<String>> duplicated = ApplicationUtil.checkDuplicateFields(errorCodeClass, int.class);
@@ -338,7 +338,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @throws IllegalAccessException
      * @throws JsonProcessingException
      */
-    public <T extends JExpressApplication> T enable_CLI_ListPOIs(Class poiNameClass, boolean checkDuplicated) throws IllegalArgumentException, IllegalAccessException, JsonProcessingException {
+    public <T extends SummerApplication> T enable_CLI_ListPOIs(Class poiNameClass, boolean checkDuplicated) throws IllegalArgumentException, IllegalAccessException, JsonProcessingException {
         this.enable_cli_poiNameClass = poiNameClass;
         if (enable_cli_errorCodeClass != null && checkDuplicated) {
             Map<Object, Set<String>> duplicated = ApplicationUtil.checkDuplicateFields(poiNameClass, String.class);
@@ -358,7 +358,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param enumClass the enum contains mock items
      * @return
      */
-    public <T extends JExpressApplication> T enable_CLI_MockMode(Class<? extends Enum<?>> enumClass) {
+    public <T extends SummerApplication> T enable_CLI_MockMode(Class<? extends Enum<?>> enumClass) {
         return enable_CLI_MockMode(FormatterUtil.getEnumNames(enumClass));
     }
 
@@ -369,7 +369,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param mockItemNames the mock item names
      * @return
      */
-    public <T extends JExpressApplication> T enable_CLI_MockMode(String... mockItemNames) {
+    public <T extends SummerApplication> T enable_CLI_MockMode(String... mockItemNames) {
         if (mockItemNames == null || mockItemNames.length < 1) {
             return (T) this;
         }
@@ -384,7 +384,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param cs
      * @return
      */
-    public <T extends JExpressApplication> T enable_CLI_ViewConfig(Class... cs) {
+    public <T extends SummerApplication> T enable_CLI_ViewConfig(Class... cs) {
         for (Class c : cs) {
             enable_cli_validConfigs.put(c.getSimpleName(), c);
         }
@@ -401,7 +401,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * do the health check vis GET /myroot/myservice/ping
      * @return
      */
-    public <T extends JExpressApplication> T enable_Ping_HealthCheck(String contextRoot, String pingPath) {
+    public <T extends SummerApplication> T enable_Ping_HealthCheck(String contextRoot, String pingPath) {
         return enable_Ping_HealthCheck(contextRoot, pingPath, null);
     }
 
@@ -414,7 +414,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
      * @param healthInspectorClass
      * @return
      */
-    public <T extends JExpressApplication> T enable_Ping_HealthCheck(String contextRoot, String pingPath, Class<? extends HealthInspector> healthInspectorClass) {
+    public <T extends SummerApplication> T enable_Ping_HealthCheck(String contextRoot, String pingPath, Class<? extends HealthInspector> healthInspectorClass) {
         this.enable_ping_healthInspectorClass = healthInspectorClass;
         //if (enable_ping_healthInspectorClass != null) {
         NioServerContext.setWebApiContextRoot(contextRoot);
@@ -591,7 +591,7 @@ abstract public class JExpressApplication extends CommandLineRunner {
         String log4j2ConfigFile = Paths.get(cfgConfigDir.toString(), "log4j2.xml").toString();
         System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
         System.out.println(I18n.info.launchingLog.format(cfgDefaultRB, System.getProperty(BootConstant.LOG4J2_KEY)));
-        log = LogManager.getLogger(JExpressApplication.class);
+        log = LogManager.getLogger(SummerApplication.class);
 
         //5. determine if in mock mode
         if (cli.hasOption(CLI_MOCKMODE)) {

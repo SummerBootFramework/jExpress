@@ -43,7 +43,7 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
-import org.summerboot.jexpress.boot.JExpressApplication;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
@@ -127,7 +127,7 @@ public class JPAHibernateConfig implements JExpressConfig {
         if (error != null) {
             throw new IllegalArgumentException(error);
         }
-        String callerRootPackageName = JExpressApplication.getCallerRootPackageName();
+        String callerRootPackageName = SummerApplication.getCallerRootPackageName();
         String _rootPackageNames = callerRootPackageName + "," + props.getProperty(Environment.LOADED_CLASSES, "");//load JAP Entity classes from this root package names (CSV) for  O-R Mapping
         log.debug("_rootPackageNames={}", _rootPackageNames);
         String[] rootPackageNames = FormatterUtil.parseCsv(_rootPackageNames);
