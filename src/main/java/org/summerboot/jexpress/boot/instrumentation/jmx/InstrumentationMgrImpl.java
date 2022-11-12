@@ -49,10 +49,12 @@ public class InstrumentationMgrImpl implements InstrumentationMgr {
     @Inject
     private HTTPClientStatusListener httpclientListener;
 
+    protected static HttpConfig httpCfg = HttpConfig.instance(HttpConfig.class);
+
     @Override
     public void start(String beanName) throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
         NioServer.setStatusListener(nioListener);
-        HttpConfig.CFG.setStatusListener(httpclientListener);
+        httpCfg.setStatusListener(httpclientListener);
 
         mBeanServer = ManagementFactory.getPlatformMBeanServer();
         mbeanName = new ObjectName(beanName + ":name=Status");

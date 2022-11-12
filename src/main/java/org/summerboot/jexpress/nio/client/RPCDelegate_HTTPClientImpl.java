@@ -38,6 +38,8 @@ import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
  */
 public abstract class RPCDelegate_HTTPClientImpl {
 
+    protected static HttpConfig httpCfg = HttpConfig.instance(HttpConfig.class);
+
     /**
      *
      * @param data
@@ -57,12 +59,12 @@ public abstract class RPCDelegate_HTTPClientImpl {
     }
 
     protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext serviceContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException {
-        Map<String, String> httpClientDefaultRequestHeaders = HttpConfig.CFG.getHttpClientDefaultRequestHeaders();
+        Map<String, String> httpClientDefaultRequestHeaders = httpCfg.getHttpClientDefaultRequestHeaders();
         httpClientDefaultRequestHeaders.keySet().forEach(key -> {
             String value = httpClientDefaultRequestHeaders.get(key);
             reqBuilder.setHeader(key, value);
         });
-        reqBuilder.timeout(Duration.ofMillis(HttpConfig.CFG.getHttpClientTimeout()));
+        reqBuilder.timeout(Duration.ofMillis(httpCfg.getHttpClientTimeout()));
         HttpRequest req = reqBuilder.build();
 
         String reqbody = null;
@@ -125,7 +127,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
         HttpResponse httpResponse;
         context.timestampPOI(BootPOI.RPC_BEGIN);
         try {
-            httpResponse = HttpConfig.CFG.getHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
+            httpResponse = httpCfg.getHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             return onInterrupted(req, context, ex);

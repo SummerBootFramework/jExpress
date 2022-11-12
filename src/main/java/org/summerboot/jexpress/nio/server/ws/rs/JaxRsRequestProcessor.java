@@ -20,7 +20,6 @@ import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.security.auth.AuthConfig;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -77,23 +76,30 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     private final int parameterSize;
     public static final List<String> SupportedProducesWithReturnType = Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON_PATCH_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML);
 
-    public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String path) {
+    public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String path, final Set<String> declareRoles) {
         //1. Basic info
         this.javaInstance = javaInstance;
         this.javaMethod = javaMethod;
         Class controllerClass = javaInstance.getClass();
         String info = controllerClass.getName() + "." + javaMethod.getName();
+        //DeclareRoles drs = (DeclareRoles) controllerClass.getAnnotation(DeclareRoles.class);
+        //final Set<String> declareRoles = new HashSet();
+//        if (drs != null) {
+//            declareRoles = Set.copyOf(Lists.newArrayList(drs.value()));
+//        } else {
+//            declareRoles = Set.of();
+//        }
 
         //2. Parse @RolesAllowed, @PermitAll and @DenyAll - Method level preprocess - Authoritarian - Role based 
         RolesAllowed rolesAllowedAnnotation = javaMethod.getAnnotation(RolesAllowed.class);
         PermitAll permitAllAnnotation = javaMethod.getAnnotation(PermitAll.class);
         DenyAll denyAllAnnotation = javaMethod.getAnnotation(DenyAll.class);
         if (permitAllAnnotation != null && denyAllAnnotation != null || permitAllAnnotation != null && rolesAllowedAnnotation != null || denyAllAnnotation != null && rolesAllowedAnnotation != null) {
-            throw new UnsupportedOperationException("Only one security role is allowed: either @RolesAllowed, @PermitAll or @DenyAll in " + info);
+            throw new UnsupportedOperationException("Only one security role is allowed: either @RolesAllowed, @PermitAll or @DenyAll @ " + info);
         }
         if (permitAllAnnotation != null) {
             roleBased = true;
-            rolesAllowed = AuthConfig.CFG.getRoleNames();
+            rolesAllowed = declareRoles;
             permitAll = true;
         } else if (denyAllAnnotation != null) {
             roleBased = true;
@@ -107,6 +113,10 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             if (rolesAllowedAnnotation != null) {
                 roleBased = true;
                 rolesAllowed = Set.of(rolesAllowedAnnotation.value());
+                declareRoles.addAll(rolesAllowed);
+//                if(!declareRoles.containsAll(rolesAllowed)) {
+//                    throw new UnsupportedOperationException("@RolesAllowed value is not defined in @DeclareRoles @ " + info);
+//                }
             } else {
                 roleBased = false;
                 rolesAllowed = null;
@@ -163,7 +173,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 List<String> filter = new ArrayList<>(temp);
                 filter.removeAll(SupportedProducesWithReturnType);
                 if (!filter.isEmpty()) {
-                    throw new UnsupportedOperationException("\n\t@Produces(" + filter + ") is not supported with return type(" + retType + ") in " + info + ", supported @Produces values with return type are: " + SupportedProducesWithReturnType);
+                    throw new UnsupportedOperationException("\n\t@Produces(" + filter + ") is not supported with return type(" + retType + ") @ " + info + ", supported @Produces values with return type are: " + SupportedProducesWithReturnType);
                 }
             }
 

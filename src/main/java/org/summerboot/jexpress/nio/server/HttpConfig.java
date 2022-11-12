@@ -18,7 +18,6 @@ package org.summerboot.jexpress.nio.server;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.Memo;
 import org.summerboot.jexpress.security.SSLUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -48,19 +47,24 @@ import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.nio.client.RPCResult;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
+@ImportResource(SummerApplication.CFG_HTTP)
 public class HttpConfig extends BootConfig {
-
-    public static final HttpConfig CFG = new HttpConfig();
 
     public static void main(String[] args) {
         String t = generateTemplate(HttpConfig.class);
         System.out.println(t);
+    }
+
+    protected HttpConfig() {
     }
 
     @Override
@@ -82,7 +86,7 @@ public class HttpConfig extends BootConfig {
     private static final String HEADER_CLIENT_REQUEST = "httpclient.DefaultReqHttpHeaders.";
 
     //1. Default NIO Response HTTP Headers
-    @Memo(title = "1. Default Server Response HTTP Headers",
+    @ConfigHeader(title = "1. Default Server Response HTTP Headers",
             desc = "put generic HTTP response headers here",
             format = HEADER_SERVER_RESPONSE + "?=?",
             example = HEADER_SERVER_RESPONSE + "Access-Control-Allow-Origin=https://www.summerboot.org\n"
@@ -102,26 +106,26 @@ public class HttpConfig extends BootConfig {
     private final HttpHeaders serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
 
     //2. Web Server Mode
-    @Memo(title = "2. Web Server Mode")
-    @Config(key = "server.http.web.docroot", required = false, defaultValue = "docroot")
-    private volatile String docroot;
+    @ConfigHeader(title = "2. Web Server Mode")
+    @Config(key = "server.http.web.docroot")
+    private volatile String docroot = "docroot";
 
-    @Config(key = "server.http.web.resources", required = false, defaultValue = "web-resources/errorpages")
-    private volatile String webResources;
+    @Config(key = "server.http.web.resources")
+    private volatile String webResources = "web-resources/errorpages";
 
-    @Config(key = "server.http.web.welcomePage", required = false, defaultValue = "index.html")
-    private volatile String welcomePage;
+    @Config(key = "server.http.web.welcomePage")
+    private volatile String welcomePage = "index.html";
 
-    @Config(key = "server.http.web-server.tempupload", required = false, defaultValue = "tempupload")
-    private volatile String tempUoloadDir;
+    @Config(key = "server.http.web-server.tempupload")
+    private volatile String tempUoloadDir = "tempupload";
 
     private volatile boolean downloadMode;
     private volatile File rootFolder;
 
     //3.1 HTTP Client Security
-    @Memo(title = "3.1 HTTP Client Security")
-    @Config(key = "httpclient.ssl.protocol", required = false, defaultValue = "TLSv1.3")
-    private volatile String protocol;
+    @ConfigHeader(title = "3.1 HTTP Client Security")
+    @Config(key = "httpclient.ssl.protocol")
+    private volatile String protocol = "TLSv1.3";
 
     @JsonIgnore
     @Config(key = "httpclient.ssl.KeyStore", StorePwdKey = "httpclient.ssl.KeyStorePwd",
@@ -130,55 +134,57 @@ public class HttpConfig extends BootConfig {
     private volatile KeyManagerFactory kmf;
 
     @JsonIgnore
-    @Config(key = "httpclient.ssl.TrustStore", StorePwdKey = "httpclient.ssl.TrustStorePwd", required = false)
+    @Config(key = "httpclient.ssl.TrustStore", StorePwdKey = "httpclient.ssl.TrustStorePwd")
     private volatile TrustManagerFactory tmf;
 
-    @Config(key = "httpclient.ssl.HostnameVerification", required = false, defaultValue = "false")
+    @Config(key = "httpclient.ssl.HostnameVerification")
     private volatile Boolean hostnameVerification = false;
 
-    @Config(key = "httpclient.proxy.host", required = false)
+    @Config(key = "httpclient.proxy.host")
     private volatile String proxyHost;
     private volatile String currentProxyHost;
 
-    @Config(key = "httpclient.proxy.port", required = false, defaultValue = "8080")
-    private volatile int proxyPort;
+    @Config(key = "httpclient.proxy.port")
+    private volatile int proxyPort = 8080;
     private volatile int currentProxyPort;
 
-    @Config(key = "httpclient.proxy.userName", required = false)
+    @Config(key = "httpclient.proxy.userName")
     private volatile String proxyUserName;
 
     @JsonIgnore
-    @Config(key = "httpclient.proxy.userPwd", required = false, validate = Config.Validate.Encrypted)
+    @Config(key = "httpclient.proxy.userPwd", validate = Config.Validate.Encrypted)
     private volatile String proxyUserPwd;
 
     @JsonIgnore
     private volatile String proxyAuthorizationBasicValue;
 
-//    @Config(key = "httpclient.proxy.useAuthenticator", required = false, defaultValue = "false")
+//    @Config(key = "httpclient.proxy.useAuthenticator")
 //    private volatile boolean useAuthenticator = false;
-    @Config(key = "httpclient.redirectOption", required = false, defaultValue = "NEVER")
-    private volatile HttpClient.Redirect redirectOption;
+    @Config(key = "httpclient.redirectOption")
+    private volatile HttpClient.Redirect redirectOption = HttpClient.Redirect.NEVER;
 
-    @Config(key = "httpclient.fromJson.failOnUnknownProperties", defaultValue = "true")
+    @Config(key = "httpclient.fromJson.failOnUnknownProperties")
     private volatile boolean fromJsonFailOnUnknownProperties = true;
 
     //3.2 HTTP Client Performance
-    @Memo(title = "3.2 HTTP Client Performance")
+    @ConfigHeader(title = "3.2 HTTP Client Performance")
     private volatile HttpClient httpClient;
 
-    @Config(key = "httpclient.timeout.ms", required = false, defaultValue = "5000")
-    private volatile long httpClientTimeout;
+    @Config(key = "httpclient.timeout.ms")
+    private volatile long httpClientTimeout = 5000;
 
-    @Config(key = "httpclient.executor.CoreSize", required = false, defaultValue = "0",
+    private final int availableProcessors = Runtime.getRuntime().availableProcessors();
+
+    @Config(key = "httpclient.executor.CoreSize",
             desc = "HTTP Client will be disabled when core size is/below 0")
-    private volatile int httpClientCoreSize;// how many tasks running at the same time
+    private volatile int httpClientCoreSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentCore;
 
-    @Config(key = "httpclient.executor.MaxSize", required = false, defaultValue = "0")
-    private volatile int httpClientMaxSize;// how many tasks running at the same time
+    @Config(key = "httpclient.executor.MaxSize")
+    private volatile int httpClientMaxSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
-    @Config(key = "httpclient.executor.QueueSize", required = false, defaultValue = "2147483647")
+    @Config(key = "httpclient.executor.QueueSize")//2147483647
     private volatile int httpClientQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
     private volatile int currentQueue;
 
@@ -187,7 +193,7 @@ public class HttpConfig extends BootConfig {
     private ScheduledExecutorService ses;
 
     //3.3 HTTP Client Default Headers
-    @Memo(title = "3.3 HTTP Client Default Headers",
+    @ConfigHeader(title = "3.3 HTTP Client Default Headers",
             desc = "put generic HTTP Client request headers here",
             format = HEADER_CLIENT_REQUEST + "?=?",
             example = HEADER_CLIENT_REQUEST + "Accept=application/json\n"
@@ -287,9 +293,11 @@ public class HttpConfig extends BootConfig {
                         new LinkedBlockingQueue<>(currentQueue), Executors.defaultThreadFactory(), new AbortPolicyWithReport("HttpClientExecutor"));
 
                 HttpClient.Builder builder = HttpClient.newBuilder()
-                        .executor(tpe)
-                        .sslContext(sslContext)
-                        .version(HttpClient.Version.HTTP_2)
+                        .executor(tpe);
+                if (sslContext != null) {
+                    builder.sslContext(sslContext);
+                }
+                builder.version(HttpClient.Version.HTTP_2)
                         .followRedirects(redirectOption);
                 if (StringUtils.isNotBlank(proxyHost)) {
                     builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));

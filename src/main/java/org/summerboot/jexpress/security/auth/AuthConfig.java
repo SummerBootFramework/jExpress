@@ -18,7 +18,6 @@ package org.summerboot.jexpress.security.auth;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.Memo;
 import org.summerboot.jexpress.integration.ldap.LdapAgent;
 import org.summerboot.jexpress.integration.ldap.LdapSSLConnectionFactory;
 import org.summerboot.jexpress.security.JwtUtil;
@@ -36,22 +35,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.security.EncryptorUtil;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
+@ImportResource(SummerApplication.CFG_AUTH)
 public class AuthConfig extends BootConfig {
-
-    public static final AuthConfig CFG = new AuthConfig();
 
     public static void main(String[] args) {
         String t = generateTemplate(AuthConfig.class);
         System.out.println(t);
+    }
+
+    protected AuthConfig() {
     }
 
     @Override
@@ -59,52 +64,52 @@ public class AuthConfig extends BootConfig {
     }
 
     //1.1 LDAP settings
-    @Memo(title = "1.1 LDAP connection settings")
-    @Config(key = "ldap.type.AD", defaultValue = "false",
+    @ConfigHeader(title = "1.1 LDAP connection settings")
+    @Config(key = "ldap.type.AD",
             desc = "set it true only when LDAP is implemented by Microsoft Active Directory (AD)\n"
             + "false when use others like Open LDAP, IBM Tivoli, Apache")
     private volatile boolean typeAD = false;
 
-    @Config(key = "ldap.host", required = false,
+    @Config(key = "ldap.host",
             desc = "LDAP will be disabled when host is not provided")
     private volatile String ldapHost;
 
-    @Config(key = "ldap.port", required = false,
+    @Config(key = "ldap.port",
             desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global voer SSL 3269")
     private volatile int ldapPort;
 
     @Config(key = "ldap.baseDN")
     private volatile String ldapBaseDN;
 
-    @Config(key = "ldap.bindingUserDN", required = false)
+    @Config(key = "ldap.bindingUserDN")
     private volatile String bindingUserDN;
 
     @JsonIgnore
     @Config(key = "ldap.bindingPassword", validate = Config.Validate.Encrypted, required = false)
     private volatile String bindingPassword;
-    @Config(key = "ldap.TenantGroupName", required = false)
+    @Config(key = "ldap.TenantGroupName")
     private volatile String ldapTenantGroupName;
 
     //1.2 LDAP Client keystore
-    @Memo(title = "1.2 LDAP Client keystore")
-    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3")
-    private volatile String ldapTLSProtocol;
+    @ConfigHeader(title = "1.2 LDAP Client keystore")
+    @Config(key = "ldap.ssl.protocol")
+    private volatile String ldapTLSProtocol = "TLSv1.3";
     @JsonIgnore
     @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
-            AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd", required = false)
+            AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd")
     private volatile KeyManagerFactory kmf;
 
     //1.3 LDAP Client truststore
-    @Memo(title = "1.3 LDAP Client truststore")
+    @ConfigHeader(title = "1.3 LDAP Client truststore")
     @JsonIgnore
-    @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd", required = false)
+    @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd")
     private volatile TrustManagerFactory tmf;
 
     private volatile Properties ldapConfig;
 
     //2. JWT
-    @Memo(title = "2. JWT")
-    @Config(key = "jwt.asymmetric.SigningKeyFile", required = false,
+    @ConfigHeader(title = "2. JWT")
+    @Config(key = "jwt.asymmetric.SigningKeyFile",
             desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size. To generate the keypair manually:\n"
             + "1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
             + "2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out public.pem \n"
@@ -117,7 +122,7 @@ public class AuthConfig extends BootConfig {
             desc = "The password of this private key")
     private volatile String privateKeyPwd;
 
-    @Config(key = "jwt.asymmetric.ParsingKeyFile", required = false,
+    @Config(key = "jwt.asymmetric.ParsingKeyFile",
             desc = "Path to the public key file corresponding to this private key")
     private volatile File publicKeyFile;
 
@@ -132,21 +137,34 @@ public class AuthConfig extends BootConfig {
     @JsonIgnore
     private volatile JwtParser jwtParser;
 
-    @Config(key = "jwt.ttl.minutes", defaultValue = "1440")
-    private volatile int jwtTTLMinutes;
+    @Config(key = "jwt.ttl.minutes")
+    private volatile int jwtTTLMinutes = 1440;
 
-    @Config(key = "jwt.issuer", required = false)
+    @Config(key = "jwt.issuer")
     private volatile String jwtIssuer;
 
     //3. Role mapping
-    @Memo(title = "3. Role mapping",
+    @ConfigHeader(title = "3. Role mapping",
             desc = "Map the role with user group (no matter the group is defined in LDAP or DB)",
             format = "roles.<role name>.groups=csv list\n"
             + "roles.<role name>.users=csv list",
             example = "the following example maps one group(AppAdmin_Group) and two users(johndoe, janejoe) to a role(AppAdmin)\n"
             + "roles.AppAdmin.groups=AppAdmin_Group\n"
-            + "roles.AppAdmin.users=johndoe, janejoe")
-    private Map<String, RoleMapping> roles;
+            + "roles.AppAdmin.users=johndoe, janejoe",
+            callbackmethodname4Dump = "generateTemplate_DumpRoleMapping")
+    private Map<String, RoleMapping> roles = new HashMap();
+
+    /**
+     * called by @ConfigHeader.callbackmethodname4Dump value
+     *
+     * @param sb
+     */
+    protected void generateTemplate_DumpRoleMapping(StringBuilder sb) {
+        for (String role : declareRoles) {
+            sb.append("#roles.").append(role).append(".groups=\n");
+            sb.append("#roles.").append(role).append(".users=\n");
+        }
+    }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException, OperatorCreationException, GeneralSecurityException {
@@ -184,11 +202,6 @@ public class AuthConfig extends BootConfig {
         // 3. Cache TTL
         //jwtTTL = TimeUnit.MINUTES.toMillis(jwtTTLMinutes);
         //userTTL = TimeUnit.MINUTES.toMillis(userTTL);
-        String error = helper.getError();
-        if (error != null) {
-            throw new IllegalArgumentException(error);
-        }
-
         // 4. Role mapping
         Set<Object> keys = props.keySet();
         Map<String, RoleMapping> rolesTemp = new HashMap();
@@ -197,6 +210,9 @@ public class AuthConfig extends BootConfig {
             if (name.startsWith("roles.")) {
                 String[] names = name.split("\\.");
                 String roleName = names[1];
+                if (!declareRoles.contains(roleName)) {
+                    helper.addError("Undefined role: (\"" + roleName + "\") is not defined in any @Controller @RolesAllowed(" + declareRoles + ") - line: " + key + "=" + props.getProperty(key.toString()));
+                }
                 RoleMapping.Type type = RoleMapping.Type.valueOf(names[2]);
                 RoleMapping rm = rolesTemp.get(roleName);
                 if (rm == null) {
@@ -207,6 +223,11 @@ public class AuthConfig extends BootConfig {
             }
         });
         roles = Map.copyOf(rolesTemp);
+
+        String error = helper.getError();
+        if (error != null) {
+            throw new IllegalArgumentException(error);
+        }
     }
 
     public String getLdapHost() {
@@ -268,7 +289,15 @@ public class AuthConfig extends BootConfig {
         return roles;
     }
 
-    public Set<String> getRoleNames() {
-        return Set.copyOf(roles.keySet());
+    //@Deprecated - should use annotation jakarta.annotation.security.DeclareRoles
+//    public Set<String> getRoleNames() {
+//        return Set.copyOf(roles.keySet());
+//    }
+    private final Set<String> declareRoles = new TreeSet();
+
+    public void addDeclareRoles(Set<String> scanedDeclareRoles) {
+        this.declareRoles.addAll(Set.copyOf(scanedDeclareRoles));
     }
+    
+
 }

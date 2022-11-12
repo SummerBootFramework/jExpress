@@ -15,11 +15,10 @@
  */
 package org.summerboot.jexpress.nio.server.ws.rs;
 
-import org.summerboot.jexpress.nio.server.annotation.Controller;
+import org.summerboot.jexpress.boot.annotation.Controller;
 import io.netty.handler.codec.http.HttpMethod;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import jakarta.ws.rs.DELETE;
@@ -34,6 +33,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.HashSet;
+import org.summerboot.jexpress.boot.annotation.Ping;
+import org.summerboot.jexpress.nio.server.NioServerContext;
+import org.summerboot.jexpress.security.auth.AuthConfig;
 
 /**
  *
@@ -41,13 +44,19 @@ import java.lang.reflect.Proxy;
  */
 public class JaxRsRequestProcessorManager {
 
-    public static void registerControllers(@Controller Map<String, Object> controllers) {
+    public static void registerControllers(@Controller Map<String, Object> controllers, StringBuilder memo) {
         if (controllers == null || controllers.isEmpty()) {
             return;
         }
+        final Set<String> declareRoles = new HashSet();
+        final AuthConfig authCfg = AuthConfig.instance(AuthConfig.class);
         Map<HttpMethod, Map<String, RequestProcessor>> stringMap = new HashMap<>();
         Map<HttpMethod, Map<String, RequestProcessor>> regexMap = new HashMap<>();
         Set<String> errors = new HashSet<>();
+        String loadBalancingEndpoint = null;
+        int pingCount = 0;
+        StringBuilder sb = new StringBuilder();
+        sb.append("Conflict of @Ping annotaion, should be only one @Ping in a @Controller class @GET method, but found multiple:");
         for (String name : controllers.keySet()) {
             Object javaInstance = controllers.get(name);
             Class controllerClass = javaInstance.getClass();
@@ -80,6 +89,14 @@ public class JaxRsRequestProcessorManager {
                 GET amg = javaMethod.getAnnotation(GET.class);
                 if (amg != null) {
                     httpMethods.add(HttpMethod.GET);
+                    Ping p = javaMethod.getAnnotation(Ping.class);
+                    if (p != null) {
+                        pingCount++;
+                        loadBalancingEndpoint = path;
+                        sb.append("\n\t").append(controllerClass.getName()).append(".").append(javaMethod.getName()).append("()");
+                        memo.append("\n\t- ").append("* GET").append(" ").append(path).append(" (").append(javaInstance).append(".").append(javaMethod.getName()).append(" )");
+                        continue;
+                    }
                 }
                 POST amp = javaMethod.getAnnotation(POST.class);
                 if (amp != null) {
@@ -111,9 +128,10 @@ public class JaxRsRequestProcessorManager {
                 for (HttpMethod httpMethod : httpMethods) {
                     JaxRsRequestProcessor processor;
                     try {
-                        processor = new JaxRsRequestProcessor(javaInstance, javaMethod, httpMethod, path);
+                        processor = new JaxRsRequestProcessor(javaInstance, javaMethod, httpMethod, path, declareRoles);
+                        memo.append("\n\t- ").append(httpMethod).append(" ").append(path).append(" (").append(javaInstance).append(".").append(javaMethod.getName()).append(" )");
                     } catch (Throwable ex) {
-                        errors.add("failed to create processor for " + controllerClass.getName() + "." + javaMethod.getName() + "\n\t" + ex.toString());
+                        errors.add("failed to create processor for " + controllerClass.getName() + "." + javaMethod.getName() + "\n\t" + ex);
                         continue;
                     }
                     Map<HttpMethod, Map<String, RequestProcessor>> rootMap;
@@ -137,10 +155,19 @@ public class JaxRsRequestProcessorManager {
                 }
             }
         }
+        if (pingCount > 1) {
+            errors.add(sb.toString());
+        }
         if (!errors.isEmpty()) {
             System.err.println("Invalid Java methods: \n" + errors);
             System.exit(1);
         }
+        if (loadBalancingEndpoint != null) {
+            NioServerContext.setLoadBalancingEndpoint(loadBalancingEndpoint);
+        }
+        authCfg.addDeclareRoles(declareRoles);
+        memo.append("\n\t- * LoadBalancingEndpoint=").append(loadBalancingEndpoint);
+        memo.append("\n\t- * DeclareRoles=").append(declareRoles);
         processorMapString = stringMap;
         processorMapRegex = regexMap;
     }
@@ -149,6 +176,9 @@ public class JaxRsRequestProcessorManager {
     private static Map<HttpMethod, Map<String, RequestProcessor>> processorMapRegex;
 
     public static RequestProcessor getRequestProcessor(final HttpMethod httptMethod, final String httpRequestPath) {
+        if (processorMapString == null) {
+            return null;
+        }
         RequestProcessor processor = null;
         Map<String, RequestProcessor> subMap = processorMapString.get(httptMethod);
         if (subMap != null) {

@@ -45,9 +45,9 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
 
     public BootHttpPingHandler(/*String pingURL*/) {
         super(FullHttpRequest.class, false);
-        if (StringUtils.isNotBlank(NioServerContext.getWebApiContextRoot())
-                && StringUtils.isNotBlank(NioServerContext.getLoadBalancerHealthCheckPath())) {
-            pingURL = NioServerContext.getWebApiContextRoot() + NioServerContext.getLoadBalancerHealthCheckPath();
+        String endpointCfg = NioServerContext.getLoadBalancingEndpoint();
+        if (StringUtils.isNotBlank(endpointCfg)) {
+            pingURL = endpointCfg;
         } else {
             pingURL = null;
         }

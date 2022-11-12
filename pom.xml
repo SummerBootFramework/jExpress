@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.1.5</version>
+    <version>2.2.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
@@ -185,7 +185,7 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.84.Final</netty.version>
+        <netty.version>4.1.85.Final</netty.version>
         <netty-tcnative.version>2.0.54.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.50.2</grpc.version>
@@ -193,7 +193,7 @@
         
         
         <!-- MIME-Type -->
-        <tika.version>2.5.0</tika.version>
+        <tika.version>2.6.0</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>3.1.0</rs-api.version>
         <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
@@ -204,7 +204,7 @@
         In FasterXML jackson-databind before 2.14.0-rc1, resource exhaustion can occur because of a lack of a check in primitive value deserializers to avoid deep wrapper array nesting, 
         when the UNWRAP_SINGLE_VALUE_ARRAYS feature is enabled.
         -->
-        <jackson.version>[2.14.0-rc2,)</jackson.version>
+        <jackson.version>2.14.0</jackson.version>
         <!-- Bean Validation -->
         <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
         <el.Implementation.version>4.0.2</el.Implementation.version>

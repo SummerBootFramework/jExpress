@@ -36,7 +36,9 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,16 +55,50 @@ import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
  */
 public class ReflectionUtil {
 
+    /**
+     *
+     * @param <T>
+     * @param interfaceClass
+     * @param rootPackageName
+     * @return
+     */
     public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, String rootPackageName) {
         Reflections reflections = new Reflections(rootPackageName);
         Set<Class<? extends T>> classes = reflections.getSubTypesOf(interfaceClass);
         return classes;
     }
 
+    /**
+     *
+     * @param annotation
+     * @param rootPackageName
+     * @return
+     */
     public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, String rootPackageName) {
         Reflections reflections = new Reflections(rootPackageName);
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(annotation);
         return classes;
+    }
+
+    /**
+     *
+     * @param targetClass
+     * @return all interfaces of the targetClass
+     */
+    public static List<Class> getAllInterfaces(Class targetClass) {
+        List<Class> ret = new ArrayList();
+        while (targetClass != null) {
+            Class[] ca = targetClass.getInterfaces();
+            if (ca != null) {
+                for (Class c : ca) {
+                    if (c != null) {
+                        ret.add(c);
+                    }
+                }
+            }
+            targetClass = targetClass.getSuperclass();
+        }
+        return ret;
     }
 
     /**
@@ -282,6 +318,8 @@ public class ReflectionUtil {
             return Enum.valueOf((Class<Enum>) targetClass, value);
         } else if (targetClass.equals(OffsetDateTime.class)) {
             return OffsetDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+        } else if (targetClass.equals(ZonedDateTime.class)) {
+            return ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
         } else if (targetClass.equals(LocalDateTime.class)) {
             return LocalDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME);
         } else {

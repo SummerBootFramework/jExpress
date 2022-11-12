@@ -49,6 +49,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ServiceContext {
 
+    private static final HttpConfig httpCfg = HttpConfig.instance(HttpConfig.class);
+
     //private ChannelHandlerContext ctx;
     private final SocketAddress localIP;
     private final SocketAddress remoteIP;
@@ -481,7 +483,7 @@ public class ServiceContext {
     public ServiceContext file(File file) {
         if (!precheckFile(file, downloadMode)) {
             String errorFileName = status.code() + (downloadMode ? ".txt" : ".html");
-            file = new File(HttpConfig.CFG.getDocroot() + File.separator + HttpConfig.CFG.getWebResources()
+            file = new File(httpCfg.getDocroot() + File.separator + httpCfg.getWebResources()
                     + File.separator + errorFileName).getAbsoluteFile();
         }
         this.txt = null;

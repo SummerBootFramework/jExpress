@@ -33,6 +33,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.config.BootConfig;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -41,10 +42,9 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.SetParams;
 
 /**
- * 1. download  redis-cell from https://github.com/brandur/redis-cell/releases
- * 2. unzip
- * 3. redis-cli>module load /path/to/libredis_cell.so
- * 
+ * 1. download redis-cell from https://github.com/brandur/redis-cell/releases 2.
+ * unzip 3. redis-cli>module load /path/to/libredis_cell.so
+ *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
@@ -86,9 +86,13 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected static final Logger log = LogManager.getLogger(BootCache_RedisImple.class.getName());
 
-    private static final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), Executors.defaultThreadFactory(), new AbortPolicyWithReport("Cahce.BackofficeExecutor"));
+    protected static final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), Executors.defaultThreadFactory(), new AbortPolicyWithReport("Cahce.BackofficeExecutor"));
 
-    private static final RuntimeException REDIS_MASTER_NULL_EX = new RuntimeException("Redis master is null");
+    protected static final RuntimeException REDIS_MASTER_NULL_EX = new RuntimeException("Redis master is null");
+
+    protected static RedisConfig redisCfg = BootConfig.instance(RedisConfig.class);
+
+    protected static SMTPConfig smtpCfg = SMTPConfig.instance(SMTPConfig.class);
 
     protected class Holder<T> {
 
@@ -121,7 +125,7 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected void executeEx(JedisCall caller, int currentRetry, int maxRetry) {
         boolean success = false;
-        try (Jedis jedis = RedisConfig.CFG.getMaster();) {
+        try (Jedis jedis = redisCfg.getMaster();) {
             if (jedis == null) {
                 //System.out.println("e 1 retry " + currentRetry);
                 onRedisDown(REDIS_MASTER_NULL_EX);
@@ -167,22 +171,22 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
             String newNode;
             do {
                 Thread.currentThread().setPriority(10);
-                newNode = RedisConfig.CFG.autoFailover(ex);
+                newNode = redisCfg.autoFailover(ex);
                 long elapsedMinutes = (System.currentTimeMillis() - lastAlertTs) / 60000;
-                if (elapsedMinutes >= RedisConfig.CFG.getSendAlertIntervalMinutes()) {
-                    onNoticeRedisDown(RedisConfig.CFG.info(), ex);
+                if (elapsedMinutes >= redisCfg.getSendAlertIntervalMinutes()) {
+                    onNoticeRedisDown(redisCfg.info(), ex);
                     lastAlertTs = System.currentTimeMillis();
                 }
                 if (newNode == null) {
                     try {
-                        TimeUnit.MINUTES.sleep(RedisConfig.CFG.getReconnectRetryIntervalMinutes());
+                        TimeUnit.MINUTES.sleep(redisCfg.getReconnectRetryIntervalMinutes());
                     } catch (InterruptedException ex1) {
                         Thread.currentThread().interrupt();
                         log.warn("Redis.autoFailover failed to sleep", ex1);
                     }
                 }
             } while (newNode == null);
-            onNoticeAutoFailover(RedisConfig.CFG.info(), newNode);
+            onNoticeAutoFailover(redisCfg.info(), newNode);
         };
         if (tpe.getActiveCount() < 1) {
             try {
@@ -200,13 +204,13 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected void onNoticeRedisDown(String info, Throwable ex) {
         if (po != null) {
-            po.sendAlertAsync(SMTPConfig.CFG.getEmailToAppSupport(), "Redis is Down", info, ex, false);
+            po.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Redis is Down", info, ex, false);
         }
     }
 
     protected void onNoticeAutoFailover(String info, String newNode) {
         if (po != null) {
-            po.sendAlertAsync(SMTPConfig.CFG.getEmailToAppSupport(), "Redis Auto Failover to " + newNode, info, null, false);
+            po.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Redis Auto Failover to " + newNode, info, null, false);
         }
     }
 

@@ -25,23 +25,25 @@ import java.util.List;
 import java.util.Properties;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.Memo;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@ImportResource(SummerApplication.CFG_GRPCCLIENT)
 public class GRPCClientConfig extends BootConfig {
 
     public static void main(String[] args) {
         String t = generateTemplate(GRPCClientConfig.class);
         System.out.println(t);
     }
-    public static final GRPCClientConfig CFG = new GRPCClientConfig();
 
     protected final static String ID = "gRpc.client";
 
@@ -49,27 +51,30 @@ public class GRPCClientConfig extends BootConfig {
     }
 
     //1. gRPC connection
-    @Memo(title = "1. " + ID + " provider")
-    @Config(key = ID + ".url")
+    @ConfigHeader(title = "1. " + ID + " provider")
+    @Config(key = ID + ".url", defaultValue = "tcp://127.0.0.1:8081",
+            desc = "tcp://127.0.0.1:8081\n"
+            + "tls://127.0.0.1:8443\n"
+            + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
     @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")//"TLSv1.2, TLSv1.3"
     protected String[] sslProtocols = {"TLSv1.3"};
-    @Config(key = ID + ".ssl.ciphers", required = false)
+    @Config(key = ID + ".ssl.ciphers")
     protected List ciphers;
 
     //2. TRC (The Remote Caller) keystore
-    @Memo(title = "2. " + ID + " keystore")
+    @ConfigHeader(title = "2. " + ID + " keystore")
     @Config(key = ID + ".ssl.KeyStore", StorePwdKey = ID + ".ssl.KeyStorePwd",
-            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd", required = false)
+            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd")
     @JsonIgnore
     protected volatile KeyManagerFactory kmf;
 
     //3. TRC (The Remote Caller) truststore
-    @Memo(title = "3. " + ID + " truststore")
-    @Config(key = ID + ".ssl.TrustStore", StorePwdKey = ID + ".ssl.TrustStorePwd", required = false)
+    @ConfigHeader(title = "3. " + ID + " truststore")
+    @Config(key = ID + ".ssl.TrustStore", StorePwdKey = ID + ".ssl.TrustStorePwd")
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
-    @Config(key = ID + ".ssl.overrideAuthority", required = false)
+    @Config(key = ID + ".ssl.overrideAuthority")
     protected volatile String overrideAuthority;
 
     @JsonIgnore

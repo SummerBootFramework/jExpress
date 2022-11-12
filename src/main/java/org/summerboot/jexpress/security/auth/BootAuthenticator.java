@@ -48,6 +48,7 @@ import org.apache.commons.lang3.StringUtils;
 public abstract class BootAuthenticator implements Authenticator {
 
     protected AuthenticatorListener listener;
+    protected AuthConfig authCfg = AuthConfig.instance(AuthConfig.class);
 
     /**
      *
@@ -86,8 +87,8 @@ public abstract class BootAuthenticator implements Authenticator {
         JwtBuilder builder = marshalCaller(caller);
 
         //4. create JWT
-        //String token = JwtUtil.createJWT(AuthConfig.CFG.getJwtSignatureAlgorithm(),
-        Key signingKey = AuthConfig.CFG.getJwtSigningKey();
+        //String token = JwtUtil.createJWT(authCfg.getJwtSignatureAlgorithm(),
+        Key signingKey = authCfg.getJwtSigningKey();
         String token = JwtUtil.createJWT(signingKey, builder, TimeUnit.MINUTES, validForMinutes);
         if (listener != null) {
             listener.onLoginSuccess(caller.getUid(), token);
@@ -117,7 +118,7 @@ public abstract class BootAuthenticator implements Authenticator {
     @Override
     public JwtBuilder marshalCaller(Caller caller) {
         String jti = String.valueOf(caller.getId());
-        String issuer = AuthConfig.CFG.getJwtIssuer();
+        String issuer = authCfg.getJwtIssuer();
         String subject = caller.getUid();
         Set<String> groups = caller.getGroups();
         String groupsCsv = groups == null || groups.size() < 1
@@ -254,7 +255,7 @@ public abstract class BootAuthenticator implements Authenticator {
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
-                Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtParser(), authToken).getBody();
+                Claims claims = JwtUtil.parseJWT(authCfg.getJwtParser(), authToken).getBody();
                 String jti = claims.getId();
                 context.callerId(jti);
                 if (cache != null && cache.isOnBlacklist(jti)) {// because jti is used as blacklist key in logout
@@ -301,7 +302,7 @@ public abstract class BootAuthenticator implements Authenticator {
     @Override
     public void logout(String authToken, AuthTokenCache cache, ServiceContext context) {
         try {
-            Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtParser(), authToken).getBody();
+            Claims claims = JwtUtil.parseJWT(authCfg.getJwtParser(), authToken).getBody();
             String jti = claims.getId();
             String uid = claims.getSubject();
             Date exp = claims.getExpiration();

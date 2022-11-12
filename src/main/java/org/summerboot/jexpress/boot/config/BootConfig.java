@@ -28,7 +28,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.Memo;
 import org.summerboot.jexpress.util.ReflectionUtil;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
@@ -38,19 +37,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tika.utils.ExceptionUtils;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 
 /**
  *
@@ -58,7 +60,28 @@ import org.apache.tika.utils.ExceptionUtils;
  */
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
 public abstract class BootConfig implements JExpressConfig {
-
+    
+    private static final Map<Class, JExpressConfig> cache = new HashMap();
+    
+    public static <T extends JExpressConfig> T instance(Class<T> subclass) {
+        JExpressConfig instance = cache.get(subclass);
+        if (instance != null) {
+            return (T) instance;
+        }
+        try {
+            Constructor<? extends JExpressConfig> cons = subclass.getDeclaredConstructor();
+            cons.setAccessible(true);
+            T ret = (T) cons.newInstance();
+            cache.put(subclass, ret);
+            return ret;
+        } catch (Throwable ex) {
+            throw new RuntimeException("Failed to instance " + subclass, ex);
+        }
+    }
+    
+    protected BootConfig() {
+    }
+    
     @JsonIgnore
     protected volatile Logger log = null;
     protected File cfgFile;
@@ -75,12 +98,12 @@ public abstract class BootConfig implements JExpressConfig {
     public String name() {
         return configName;
     }
-
+    
     @Override
     public File getCfgFile() {
         return cfgFile;
     }
-
+    
     @Override
     public JExpressConfig temp() {
         JExpressConfig ret = null;
@@ -110,7 +133,7 @@ public abstract class BootConfig implements JExpressConfig {
         }
         return ret;
     }
-
+    
     @Override
     public String info() {
         try {
@@ -173,82 +196,84 @@ public abstract class BootConfig implements JExpressConfig {
         try {
             loadCustomizedConfigs(cfgFile, isReal, helper, props);
         } catch (Throwable ex) {
-            helper.addError("failed to init customized configs:" + ExceptionUtils.getStackTrace(ex));
+            ex.printStackTrace();
+            helper.addError("failed to init customized configs:" + ex);
         }
-
+        
         String error = helper.getError();
         if (error != null) {
             throw new IllegalArgumentException(error);
         }
     }
-
+    
     protected abstract void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception;
-
+    
     protected void loadField(Field field, String configFolder, ConfigUtil helper, Properties props, boolean autoDecrypt) throws IllegalAccessException {
-        Config configSettings = field.getAnnotation(Config.class);
-        if (configSettings == null) {
+        Config cfgAnnotation = field.getAnnotation(Config.class);
+        if (cfgAnnotation == null) {
             return;
         }
-        final String key = configSettings.key();
-        String value = props.getProperty(key);
+        final String annotationKeyValue = cfgAnnotation.key();
+        String valueInCfgFile = props.getProperty(annotationKeyValue);
         field.setAccessible(true);
-        if (StringUtils.isBlank(value)) {
-            String defaultValue = configSettings.defaultValue();
-            boolean hasDefaultValue = StringUtils.isNotBlank(defaultValue);
+        if (StringUtils.isBlank(valueInCfgFile)) {
+            String annotationDefaultValue = cfgAnnotation.defaultValue();
+            boolean hasDefaultValue = StringUtils.isNotBlank(annotationDefaultValue);
             if (hasDefaultValue) {
-                value = defaultValue;
+                valueInCfgFile = annotationDefaultValue;
             } else {
-                if (configSettings.required()) {
-                    helper.addError("missing \"" + key + "\"");
-                } else {
+                if (cfgAnnotation.required()) {
+                    helper.addError("missing \"" + annotationKeyValue + "\"");
+                }
+                /*else {
                     Object nullValue = ReflectionUtil.toStandardJavaType(null, field.getType(), false, false, null);
                     field.set(this, nullValue);
-                }
+                }*/
                 return;
             }
         }
-        Config.Validate validate = configSettings.validate();
+        Config.Validate validate = cfgAnnotation.validate();
         boolean isEncrypted = validate.equals(Config.Validate.Encrypted);
         if (isEncrypted) {
-            if (value.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
+            if (valueInCfgFile.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && valueInCfgFile.endsWith(")")) {
                 try {
-                    value = SecurityUtil.decrypt(value, true);
+                    valueInCfgFile = SecurityUtil.decrypt(valueInCfgFile, true);
                 } catch (GeneralSecurityException ex) {
                     throw new IllegalArgumentException("Failed to decrypt", ex);
                 }
             } else {
-                helper.addError("invalid \"" + key + "\" - require encrypted format, missing warpper: ENC(encrypted value)");
+                helper.addError("invalid \"" + annotationKeyValue + "\" - require encrypted format, missing warpper: ENC(encrypted value)");
                 return;
             }
         }
         boolean isEmailRecipients = validate.equals(Config.Validate.EmailRecipients);
-
+        
         Class fieldClass = field.getType();
         if (fieldClass.equals(KeyManagerFactory.class)) {
-            String key_storeFile = key;
-            String key_storePwd = configSettings.StorePwdKey();
-            String key_keyAlias = configSettings.AliasKey();
-            String key_keyPwd = configSettings.AliasPwdKey();
+            String key_storeFile = annotationKeyValue;
+            String key_storePwd = cfgAnnotation.StorePwdKey();
+            String key_keyAlias = cfgAnnotation.AliasKey();
+            String key_keyPwd = cfgAnnotation.AliasPwdKey();
             KeyManagerFactory kmf = helper.getAsKeyManagerFactory(props, configFolder,
                     key_storeFile, key_storePwd, key_keyAlias, key_keyPwd);
             field.set(this, kmf);
         } else if (fieldClass.equals(TrustManagerFactory.class)) {
-            String key_storeFile = key;
-            String key_storePwd = configSettings.StorePwdKey();
+            String key_storeFile = annotationKeyValue;
+            String key_storePwd = cfgAnnotation.StorePwdKey();
             TrustManagerFactory tmf = helper.getAsTrustManagerFactory(props, configFolder,
                     key_storeFile, key_storePwd);
             field.set(this, tmf);
         } else {
-            if (value != null && (fieldClass.equals(File.class) || fieldClass.equals(Path.class))) {
-                File file = new File(value);
+            if (valueInCfgFile != null && (fieldClass.equals(File.class) || fieldClass.equals(Path.class))) {
+                File file = new File(valueInCfgFile);
                 if (!file.isAbsolute()) {
-                    value = configFolder + File.separator + value;
+                    valueInCfgFile = configFolder + File.separator + valueInCfgFile;
                 }
             }
-            ReflectionUtil.loadField(this, field, value, autoDecrypt, isEmailRecipients);
+            ReflectionUtil.loadField(this, field, valueInCfgFile, autoDecrypt, isEmailRecipients);
         }
     }
-
+    
     protected String updateFilePath(File domainDir, String fileName) {
         if (StringUtils.isBlank(fileName)) {
             return fileName;
@@ -259,7 +284,7 @@ public abstract class BootConfig implements JExpressConfig {
             return new File(domainDir.getAbsolutePath() + File.separator + fileName).getAbsolutePath();
         }
     }
-
+    
     public void updateConfigFile(Map<String, String> updatedCfgs) throws IOException {
         if (updatedCfgs == null || updatedCfgs.isEmpty()) {
             return;
@@ -279,22 +304,35 @@ public abstract class BootConfig implements JExpressConfig {
             }
             sb.append(line).append(System.lineSeparator());
         }
-
+        
         try (FileOutputStream output = new FileOutputStream(cfgFile);
                 FileChannel foc = output.getChannel();) {
             foc.write(ByteBuffer.wrap(sb.toString().getBytes(StandardCharsets.UTF_8)));
         }
     }
-
-    public static String generateTemplate(Class c) {
+    
+    public static String generateTemplate(Class configClass) {
+        Object objectInstance = null;
+        if (objectInstance == null) {
+            try {
+                Constructor cons = configClass.getDeclaredConstructor();
+                cons.setAccessible(true);
+                objectInstance = cons.newInstance();
+                if (objectInstance instanceof JExpressConfig) {
+                    objectInstance = instance(configClass);
+                }
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+        }
         StringBuilder sb = new StringBuilder();
-
-        Field[] fields = c.getDeclaredFields();
+        
+        Field[] fields = configClass.getDeclaredFields();
         for (Field field : fields) {
             // desc
-            Memo memo = field.getAnnotation(Memo.class);
-            if (memo != null) {
-                List<String> list = parse(memo);
+            ConfigHeader header = field.getAnnotation(ConfigHeader.class);
+            if (header != null) {
+                List<String> list = parse(header);
                 int maxSize = 0;
                 for (String s : list) {
                     maxSize = Math.max(maxSize, getLength(s));
@@ -322,7 +360,20 @@ public abstract class BootConfig implements JExpressConfig {
                     sb.append("#");
                 }
                 sb.append("\n");
+                
+                String callbackFunc = header.callbackmethodname4Dump();
+                if (StringUtils.isNotBlank(callbackFunc)) {
+                    Class[] cArg = {StringBuilder.class};//new Class[1];
+                    try {
+                        Method cbMethod = configClass.getDeclaredMethod(callbackFunc, cArg);
+                        cbMethod.setAccessible(true);
+                        cbMethod.invoke(objectInstance, sb);
+                    } catch (IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException | InvocationTargetException ex) {
+                        sb.append(ex).append("\n");
+                    }
+                }
             }
+
             //config
             Config cfg = field.getAnnotation(Config.class);
             if (cfg != null) {
@@ -338,6 +389,17 @@ public abstract class BootConfig implements JExpressConfig {
                 boolean isRequired = cfg.required();
                 boolean hasDefaultValue = false;
                 String dv = cfg.defaultValue();
+                if (StringUtils.isBlank(dv) && objectInstance != null) {
+                    try {
+                        field.setAccessible(true);
+                        Object dfv = field.get(objectInstance);
+                        if (dfv != null) {
+                            dv = dfv.toString();//String.valueOf(dfv);
+                        }
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
+                    }
+                }
                 if (StringUtils.isNotBlank(dv)) {
                     hasDefaultValue = true;
                 }
@@ -356,7 +418,7 @@ public abstract class BootConfig implements JExpressConfig {
                     sb.append(")");
                 }
                 sb.append("\n");
-
+                
                 int i = 0;
                 String[] keys = {cfg.StorePwdKey(), cfg.AliasKey(), cfg.AliasPwdKey()};
                 for (String skey : keys) {
@@ -377,20 +439,20 @@ public abstract class BootConfig implements JExpressConfig {
                 }
             }
         }
-
+        
         return sb.toString();
     }
-
-    private static List<String> parse(Memo memo) {
+    
+    private static List<String> parse(ConfigHeader memo) {
         List<String> ret = new ArrayList<>();
         lineBreak(memo.title(), null, ret);
         lineBreak(memo.desc(), null, ret);
         lineBreak(memo.format(), "Format: ", ret);
         lineBreak(memo.example(), "Example: ", ret);
-
+        
         return ret;
     }
-
+    
     private static String[] lineBreak(String s, String prefix, List<String> list) {
         if (StringUtils.isBlank(s)) {
             return null;
@@ -410,7 +472,7 @@ public abstract class BootConfig implements JExpressConfig {
         }
         return ret;
     }
-
+    
     private static int getLength(String s) {
         return StringUtils.isBlank(s) ? 0 : s.trim().length();
     }
