@@ -1,6 +1,8 @@
-# Summer Boot Framework was initiated by a group of developers in 2004 to provide a high performance, free customizable but also lightweight Netty JAX-RS RESTful and gRPC service with JPA and other powerful reusable non-functional features, and was adopted by several Toronto law firms in 2011 to customize their back-end services.
+# Summer Boot Framework was initiated by a group of developers in 2004 to provide a high performance, free customizable but also lightweight Netty JAX-RS RESTful and gRPC service with JPA and other powerful reusable non-functional features, and since 2011 was adopted by several Toronto law firms to customize their back-end services.
 
-# Its sub-project, jExpress, focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
+# Its sub-project, jExpress (a.k.a. Summer Boot Framework Core), focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
+
+![Summer Boot Overview](SummerBootOverview.png)
 
 **Open Source History: jExpress was open sourced initially on MS MySpace in Sep 2006, due to the shutdown of MySpace this framework was migrated to a server sponsored by one of the law firms in October 2011, then migrated to GitLab in Dec 2016, eventually migrated to GitHub in Sep 2021.**  
 
