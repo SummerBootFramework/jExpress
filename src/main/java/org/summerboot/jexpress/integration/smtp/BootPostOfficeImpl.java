@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import com.google.inject.Singleton;
 import java.util.Collection;
@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BootPostOfficeImpl implements PostOffice {
 
     private static final ExecutorService POSTOFFICE = buildPostffice();
+    protected static AlertEmailConfig smtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
 
     protected static ExecutorService buildPostffice() {
         ExecutorService postoffice = new ThreadPoolExecutor(2, 2,
@@ -53,7 +54,12 @@ public class BootPostOfficeImpl implements PostOffice {
         return postoffice;
     }
 
-    private String appVersion = BootConstant.PID;
+    private String appVersion = SummerApplication.VERSION;
+
+    @Override
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
+    }
 
     protected Logger log = LogManager.getLogger(getClass());
 
@@ -64,7 +70,7 @@ public class BootPostOfficeImpl implements PostOffice {
      * @return
      */
     protected String updateAlertTitle(String title) {
-        return "[ALERT@" + appVersion + "] " + title;
+        return "Alert@" + SummerApplication.HOST + " " + appVersion + " - " + title;
     }
 
     /**
@@ -114,13 +120,13 @@ public class BootPostOfficeImpl implements PostOffice {
                 if (rootCause != null) {
                     key = key + rootCause.getClass().getName();
                 }
-                if (debounced(key, SMTPConfig.CFG.getEmailAlertDebouncingInterval())) {
+                if (debounced(key, smtpCfg.getEmailAlertDebouncingInterval())) {
                     return;
                 }
             }
             Email email = Email.compose(updateAlertTitle(title), updateAlertContent(content, cause), Email.Format.text).to(to);
             try {
-                email.send();
+                email.send(smtpCfg.getMailSession());
             } catch (Throwable ex) {
                 log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
             }
@@ -150,14 +156,14 @@ public class BootPostOfficeImpl implements PostOffice {
                 if (async) {
                     Runnable postman = () -> {
                         try {
-                            email.send();
+                            email.send(smtpCfg.getMailSession());
                         } catch (Throwable ex) {
                             log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
                         }
                     };
                     POSTOFFICE.execute(postman);
                 } else {
-                    email.send();
+                    email.send(smtpCfg.getMailSession());
                 }
                 success = true;
             } catch (Throwable ex) {
@@ -199,8 +205,7 @@ public class BootPostOfficeImpl implements PostOffice {
     public List<Err> ping(String... emails) {
         Set<String> r = Set.of(emails);
         Err e = null;
-        //String[] emails = AppConfig.CFG.getEmailToAppSupport();
-        boolean success = sendEmailSync(r, "[Ping] " + BootConstant.VERSION, "just to test if you can receive this email.", false);
+        boolean success = sendEmailSync(r, "[Ping] " + appVersion, "just to test if you can receive this email.", false);
         if (!success) {
             e = new Err(BootErrorCode.ACCESS_ERROR_SMTP, "Mail Access Error", "failed to send test email to app support", null);
         }
@@ -210,11 +215,6 @@ public class BootPostOfficeImpl implements PostOffice {
             errors.add(e);
         }
         return errors;
-    }
-
-    @Override
-    public void setAppVersion(String appVersion) {
-        this.appVersion = appVersion;
     }
 
 }

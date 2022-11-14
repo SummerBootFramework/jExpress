@@ -19,7 +19,7 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.SMTPConfig;
+import org.summerboot.jexpress.integration.smtp.AlertEmailConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import com.google.inject.Inject;
@@ -50,13 +50,17 @@ import org.summerboot.jexpress.util.FormatterUtil;
  * @version 2.0
  */
 @Singleton
-public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
+abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
+
+    public static final String BINDING_NAME = "jExpressHttpRequestHandler";
 
     @Inject
     protected PostOffice po;
 
     @Inject
     protected HealthInspector healthInspector;
+
+    protected static AlertEmailConfig cmtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
 
     @Override
     protected void service(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
@@ -124,13 +128,30 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         }
     }
 
-    protected boolean authenticationCheck(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception {
-        return true;
-    }
+    /**
+     * create User object based on token in the header, then set User object to
+     * context
+     *
+     * @param processor
+     * @param httpRequestHeaders
+     * @param httpRequestPath
+     * @param context
+     * @return true if good to preProcess (caller is verified), otherwise false
+     * @throws Exception
+     */
+    abstract protected boolean authenticationCheck(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception;
 
-    protected boolean preProcess(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception {
-        return true;
-    }
+    /**
+     * do any validation checks before processing
+     *
+     * @param processor
+     * @param httpRequestHeaders
+     * @param httpRequestPath
+     * @param context
+     * @return true if good to process request, otherwise false
+     * @throws Exception
+     */
+    abstract protected boolean preProcess(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception;
 
     protected void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
             final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
@@ -138,11 +159,11 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
     }
 
     protected void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_LDAP, "Cannot access LDAP", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_LDAP, "Cannot access LDAP", ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     protected void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, "Cannot access database", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, "Cannot access database", ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     /**
@@ -179,7 +200,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     protected void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
         HealthMonitor.setHealthStatus(false, ex.toString(), getHealthInspector());
-        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure", ex, SMTPConfig.CFG.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure", ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     protected HealthInspector getHealthInspector() {
@@ -188,12 +209,12 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     protected void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
         Thread.currentThread().interrupt();
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
 
     }
 
     protected void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure/Bug?", ex, SMTPConfig.CFG.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure/Bug?", ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
     protected void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {

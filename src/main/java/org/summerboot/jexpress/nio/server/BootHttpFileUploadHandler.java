@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.nio.server;
 
+import org.summerboot.jexpress.nio.client.HttpClientConfig;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.multipart.MultipartUtil;
@@ -64,11 +65,13 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
     private static final HttpDataFactory HDF = new DefaultHttpDataFactory(USER_DISK);
     //private static final Authenticator auth = new AuthenticatorImple_LDAP();
 
+    protected static NioConfig uploadCfg = NioConfig.instance(NioConfig.class);
+
     static {
         DiskFileUpload.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
-        DiskFileUpload.baseDirectory = HttpConfig.CFG.getTempUoloadDir(); // system temp directory
+        DiskFileUpload.baseDirectory = uploadCfg.getTempUoloadDir(); // system temp directory
         DiskAttribute.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
-        DiskAttribute.baseDirectory = HttpConfig.CFG.getTempUoloadDir(); // system temp directory
+        DiskAttribute.baseDirectory = uploadCfg.getTempUoloadDir(); // system temp directory
     }
 
     public BootHttpFileUploadHandler() {

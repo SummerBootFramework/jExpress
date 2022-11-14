@@ -42,14 +42,14 @@ import org.apache.commons.lang3.StringUtils;
 @Deprecated
 public class EmailBuilder {
 
-    private static final SMTPConfig CFG = new SMTPConfig();
+    protected static AlertEmailConfig smtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
 
     public static void config(File cfgFile) throws IOException, GeneralSecurityException {
 
     }
 
     public static String configInfo() {
-        return CFG.toString();
+        return smtpCfg.toString();
     }
 
     public static class EmailAttachment implements Serializable {
@@ -212,7 +212,7 @@ public class EmailBuilder {
     }
 
     public MimeMessage buildMimeMessage() throws MessagingException {
-        return buildMimeMessage(CFG.getMailSession());
+        return buildMimeMessage(smtpCfg.getMailSession());
     }
 
     public MimeMessage buildMimeMessage(Session emailSession) throws MessagingException {

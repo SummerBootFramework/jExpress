@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -41,6 +42,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  *
@@ -89,24 +91,48 @@ public class ConfigUtil {
         }
     }
 
-    public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, int CfgMonitorInterval) throws Exception {
+    public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, int CfgMonitorInterval, File cfgConfigDir) throws Exception {
         // 1. load configs
         int updated = 0;
         Map<File, Runnable> cfgUpdateTasks = new HashMap();
         for (String fileName : configs.keySet()) {
             File configFile = Paths.get(configFolder.toString(), fileName).toFile();
-            updated += loadConfig(mode, log, defaultRB, configFile, configs.get(fileName), cfgUpdateTasks);
+            updated += loadConfig(mode, log, defaultRB, configFile, configs.get(fileName), cfgUpdateTasks, cfgConfigDir);
         }
         // 2. monitor the change of config files
-        if (!mode.isCliMode()) {
+        if (!mode.isCliMode() && CfgMonitorInterval > 0) {
             ConfigurationMonitor.listener.start(configFolder.toFile(), CfgMonitorInterval, cfgUpdateTasks);
         }
         return updated;
     }
 
-    public static int loadConfig(ConfigLoadMode mode, Logger log, Locale defaultRB, File configFile, JExpressConfig cfg, Map<File, Runnable> cfgUpdateTasks) throws Exception {
+    public static void createConfigFile(Class<? extends JExpressConfig> c, File cfgConfigDir, String cfgName, boolean cliMode) throws IOException {
+        String configContent = BootConfig.generateTemplate(c);
+//        if (StringUtils.isBlank(configContent)) {
+//            return;
+//        }
+        ImportResource ir = (ImportResource) c.getAnnotation(ImportResource.class);
+        String fileName = ir == null ? cfgName : ir.value();
+        if (cliMode) {
+            fileName = fileName + ".sample";
+        }
+
+        File cfgFile = new File(cfgConfigDir, fileName).getAbsoluteFile();
+        if (cliMode) {
+            System.out.print("saveing " + c.getName() + " to " + cfgFile);
+        }
+        Files.writeString(cfgFile.toPath(), configContent);
+        if (cliMode) {
+            System.out.println(" done!");
+        }
+    }
+
+    public static int loadConfig(ConfigLoadMode mode, Logger log, Locale defaultRB, File configFile, JExpressConfig cfg, Map<File, Runnable> cfgUpdateTasks, File cfgConfigDir) throws Exception {
         if (!configFile.exists()) {
-            return 0;
+            if (cfgConfigDir == null || !cfgConfigDir.isDirectory() || !cfgConfigDir.canWrite()) {
+                return 0;
+            }
+            createConfigFile(cfg.getClass(), cfgConfigDir, null, false);
         }
         //ConfigurationMonitor.listener.stop();
         int updated = updatePasswords(configFile, null, mode.isEncryptMode());

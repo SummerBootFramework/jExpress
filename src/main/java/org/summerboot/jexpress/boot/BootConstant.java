@@ -21,20 +21,20 @@ import org.summerboot.jexpress.util.ApplicationUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface BootConstant {
+interface BootConstant {
 
     //runtime info
     String PID = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
     String HOST = ApplicationUtil.getServerName(false);
 
     //version
-    String VERSION = "Summer Boot jExpress v2.1.5@" + HOST;
+    String VERSION = "SummerBoot.jExpress 2.2.0";
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
-    
+
     String CFG_AUTH = "cfg_auth.properties";
-    String CFG_HTTP = "cfg_http.properties";
+    String CFG_ALERT = "cfg_alert.properties";
     String CFG_NIO = "cfg_nio.properties";
-    String CFG_SMTP = "cfg_smtp.properties";
+    String CFG_GRPC = "cfg_grpc.properties";
 }

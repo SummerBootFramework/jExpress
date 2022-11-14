@@ -52,8 +52,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.net.ssl.SSLException;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
-import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 /**
@@ -62,14 +63,15 @@ import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
  */
 public class NioServer {
 
-    private static final Logger log = LogManager.getLogger(NioServer.class.getName());
+    protected static final Logger log = LogManager.getLogger(NioServer.class.getName());
+    protected static NioConfig nioCfg = NioConfig.instance(NioConfig.class);
 
-    private static EventLoopGroup bossGroup;// the pool to accept new connection requests
-    private static EventLoopGroup workerGroup;// the pool to process IO logic
+    protected static EventLoopGroup bossGroup;// the pool to accept new connection requests
+    protected static EventLoopGroup workerGroup;// the pool to process IO logic
     //private static EventExecutorGroup sharedNioExecutorGroup;// a thread pool to handle time-consuming business
-    private static final ScheduledExecutorService QPS_SERVICE = Executors.newSingleThreadScheduledExecutor();
+    protected static final ScheduledExecutorService QPS_SERVICE = Executors.newSingleThreadScheduledExecutor();
 
-    private static NIOStatusListener listener = null;
+    protected static NIOStatusListener listener = null;
 
     public static void setStatusListener(NIOStatusListener l) {
         listener = l;
@@ -82,27 +84,26 @@ public class NioServer {
      * @throws InterruptedException
      */
     public static void bind() throws GeneralSecurityException, IOException, InterruptedException {
-        bind(NioConfig.CFG.getBindingAddresses());
+        bind(nioCfg.getBindingAddresses());
     }
 
     /**
      *
      * @param bindingAddresses
-     * @throws GeneralSecurityException
-     * @throws IOException
      * @throws InterruptedException
+     * @throws SSLException
      */
-    public static void bind(Map<String, Integer> bindingAddresses) throws GeneralSecurityException, IOException, InterruptedException {
+    public static void bind(Map<String, Integer> bindingAddresses) throws InterruptedException, SSLException {
         if (bindingAddresses == null || bindingAddresses.isEmpty()) {
-            log.info("Skip NIO server due to no bindingAddresses in config file: " + NioConfig.CFG.getCfgFile());
+            log.info("Skip HTTP server due to no bindingAddresses in config file: " + nioCfg.getCfgFile());
             return;
         }
-        if (NioConfig.CFG.getRequestHandler() == null) {
-            log.warn("Skip NIO server due to no RequestHandler in config file: " + NioConfig.CFG.getCfgFile());
+        if (nioCfg.getRequestHandler() == null) {
+            log.warn("Skip HTTP server due to no RequestHandler in config file: " + nioCfg.getCfgFile());
             return;
         }
 
-        IoMultiplexer multiplexer = NioConfig.CFG.getMultiplexer();
+        IoMultiplexer multiplexer = nioCfg.getMultiplexer();
         log.info("starting... Epoll=" + Epoll.isAvailable() + ", KQueue=" + KQueue.isAvailable() + ", multiplexer=" + multiplexer);
         System.setProperty("io.netty.recycler.maxCapacity", "0");
         System.setProperty("io.netty.allocator.tinyCacheSize", "0");
@@ -112,20 +113,20 @@ public class NioServer {
         // Configure SSL.
         SSLContext jdkSslContext = null;
         SslContext nettySslContext = null;
-        KeyManagerFactory kmf = NioConfig.CFG.getKmf();
-        TrustManagerFactory tmf = NioConfig.CFG.getTmf();
+        KeyManagerFactory kmf = nioCfg.getKmf();
+        TrustManagerFactory tmf = nioCfg.getTmf();
         ClientAuth clientAuth = kmf != null && tmf != null ? ClientAuth.REQUIRE : ClientAuth.NONE;
         if (kmf != null) {
             List<String> ciphers;
-            String[] cipherSuites = NioConfig.CFG.getSslCipherSuites();
+            String[] cipherSuites = nioCfg.getSslCipherSuites();
             if (cipherSuites != null && cipherSuites.length > 0) {
-                ciphers = Arrays.asList(NioConfig.CFG.getSslCipherSuites());
+                ciphers = Arrays.asList(nioCfg.getSslCipherSuites());
             } else {
                 ciphers = Http2SecurityUtil.CIPHERS;
             }
-            SslProvider sp = NioConfig.CFG.getSslProvider();
+            SslProvider sp = nioCfg.getSslProvider();
 //            if (sp == null) {
-//                jdkSslContext = SSLContext.getInstance(NioConfig.CFG.getSslProtocols()[0]);
+//                jdkSslContext = SSLContext.getInstance(instance.getSslProtocols()[0]);
 //                jdkSslContext.init(kmf.getKeyManagers(), tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers(), SecureRandom.getInstanceStrong());
 //            } else {
             nettySslContext = SslContextBuilder.forServer(kmf)
@@ -133,17 +134,17 @@ public class NioServer {
                     .clientAuth(clientAuth)
                     .sslProvider(sp)
                     .sessionTimeout(0)
-                    .protocols(NioConfig.CFG.getSslProtocols())
+                    .protocols(nioCfg.getSslProtocols())
                     .ciphers(ciphers, SupportedCipherSuiteFilter.INSTANCE)
                     .build();
 //            }
-            log.info(StringUtils.join("[" + sp + "] " + Arrays.asList(NioConfig.CFG.getSslProtocols())) + " (" + NioConfig.CFG.getSslHandshakeTimeout() + "s): " + ciphers);
+            log.info(StringUtils.join("[" + sp + "] " + Arrays.asList(nioCfg.getSslProtocols())) + " (" + nioCfg.getSslHandshakeTimeout() + "s): " + ciphers);
         }
 
         // Configure the server.
         //boss and work groups
-        int bossSize = NioConfig.CFG.getNioEventLoopGroupAcceptorSize();
-        int workerSize = NioConfig.CFG.getNioEventLoopGroupWorkerSize();
+        int bossSize = nioCfg.getNioEventLoopGroupAcceptorSize();
+        int workerSize = nioCfg.getNioEventLoopGroupWorkerSize();
         Class<? extends ServerChannel> serverChannelClass;
         if (Epoll.isAvailable() && (IoMultiplexer.AVAILABLE.equals(multiplexer) || IoMultiplexer.EPOLL.equals(multiplexer))) {
             bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize);
@@ -165,24 +166,25 @@ public class NioServer {
         if (multiplexer == IoMultiplexer.EPOLL) {
             boot.option(EpollChannelOption.SO_REUSEPORT, true);
         }
-        boot.option(ChannelOption.SO_BACKLOG, NioConfig.CFG.getSoBacklog())
-                .option(ChannelOption.SO_REUSEADDR, NioConfig.CFG.isSoReuseAddr())
+        boot.option(ChannelOption.SO_BACKLOG, nioCfg.getSoBacklog())
+                .option(ChannelOption.SO_REUSEADDR, nioCfg.isSoReuseAddr())
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                .childOption(ChannelOption.SO_REUSEADDR, NioConfig.CFG.isSoReuseAddr())
-                .childOption(ChannelOption.SO_KEEPALIVE, NioConfig.CFG.isSoKeepAlive())
-                .childOption(ChannelOption.TCP_NODELAY, NioConfig.CFG.isSoTcpNodelay())
-                .childOption(ChannelOption.SO_LINGER, NioConfig.CFG.getSoLinger())
-                .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, NioConfig.CFG.getSoConnectionTimeout() * 1000)
-                .childOption(ChannelOption.SO_RCVBUF, NioConfig.CFG.getSoRcvBuf())
-                .childOption(ChannelOption.SO_SNDBUF, NioConfig.CFG.getSoSndBuf())
+                .childOption(ChannelOption.SO_REUSEADDR, nioCfg.isSoReuseAddr())
+                .childOption(ChannelOption.SO_KEEPALIVE, nioCfg.isSoKeepAlive())
+                .childOption(ChannelOption.TCP_NODELAY, nioCfg.isSoTcpNodelay())
+                .childOption(ChannelOption.SO_LINGER, nioCfg.getSoLinger())
+                .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, nioCfg.getSoConnectionTimeout() * 1000)
+                .childOption(ChannelOption.SO_RCVBUF, nioCfg.getSoRcvBuf())
+                .childOption(ChannelOption.SO_SNDBUF, nioCfg.getSoSndBuf())
                 //.childOption(ChannelOption.SINGLE_EVENTEXECUTOR_PER_GROUP, false)
                 .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);// need to call ReferenceCountUtil.release(msg) after use. 使用内存池之后，内存的申请和释放必须成对出现，即retain()和release()要成对出现，否则会导致内存泄露。 值得注意的是，如果使用内存池，完成ByteBuf的解码工作之后必须显式的调用ReferenceCountUtil.release(msg)对接收缓冲区ByteBuf进行内存释放，否则它会被认为仍然在使用中，这样会导致内存泄露。
 
         boot.group(bossGroup, workerGroup)
                 .channel(serverChannelClass)
                 //.handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new NioServerHttpInitializer(jdkSslContext, nettySslContext, clientAuth.equals(ClientAuth.REQUIRE), NioConfig.CFG));
+                .childHandler(new NioServerHttpInitializer(jdkSslContext, nettySslContext, clientAuth.equals(ClientAuth.REQUIRE), nioCfg));
 
+        String appInfo = SummerApplication.VERSION + " " + SummerApplication.PID;
         for (String bindAddr : bindingAddresses.keySet()) {
             // info
             String sslMode;
@@ -199,11 +201,15 @@ public class NioServer {
             ChannelFuture f = boot.bind(bindAddr, listeningPort).sync();
             f.channel().closeFuture().addListener((ChannelFutureListener) (ChannelFuture f1) -> {
                 //shutdown();
-                System.out.println("Server " + BootConstant.VERSION + " (" + sslMode + ") is stopped");
+                System.out.println("Server " + appInfo + " (" + sslMode + ") is stopped");
             });
-            log.info(() -> "Server " + BootConstant.VERSION + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + NioServerContext.getWebApiContextRoot());
+            final String pingURI = NioServerContext.getLoadBalancingEndpoint() == null
+                    ? ""
+                    : NioServerContext.getLoadBalancingEndpoint();
+            log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + pingURI);
+
             if (listener != null) {
-                listener.onNIOBindNewPort(BootConstant.VERSION, sslMode, protocol, bindAddr, listeningPort, NioServerContext.getWebApiContextRoot());
+                listener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, NioServerContext.getLoadBalancingEndpoint());
             }
         }
 
@@ -225,7 +231,7 @@ public class NioServer {
                 }
                 //lastBizHit[0] = bizHit;
                 lastBizHitRef.set(bizHit);
-                ThreadPoolExecutor tpe = NioConfig.CFG.getBizExecutor();
+                ThreadPoolExecutor tpe = nioCfg.getBizExecutor();
                 int active = tpe.getActiveCount();
                 int queue = tpe.getQueue().size();
                 if (hps > 0 || tps > 0 || active > 0 || queue > 0 || HealthMonitor.isServicePaused()) {
@@ -261,7 +267,7 @@ public class NioServer {
             workerGroup.shutdownGracefully();
         }
 
-//        EventExecutorGroup childExecutor = CFG.getNioSharedChildExecutor();
+//        EventExecutorGroup childExecutor = instance.getNioSharedChildExecutor();
 //        if (childExecutor != null) {
 //            childExecutor.shutdownGracefully();
 //        }

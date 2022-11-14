@@ -15,7 +15,7 @@
  */
 package org.summerboot.jexpress.nio.server.domain;
 
-import org.summerboot.jexpress.nio.server.HttpConfig;
+import org.summerboot.jexpress.nio.client.HttpClientConfig;
 import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.security.auth.Caller;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -48,6 +48,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ServiceContext {
+
+    private static final NioConfig nioCfg = NioConfig.instance(NioConfig.class);
 
     //private ChannelHandlerContext ctx;
     private final SocketAddress localIP;
@@ -467,7 +469,7 @@ public class ServiceContext {
 //    public ServiceContext visualizeError() {
 //        if (ERRPR_PAGES.contains(status.code())) {
 //            String errorFileName = status.code() + ".html";
-//            File errorFile = new File(HttpConfig.CFG.getDocroot() + File.separator + HttpConfig.CFG.getWebResources()
+//            File errorFile = new File(HttpClientConfig.CFG.getDocroot() + File.separator + HttpClientConfig.CFG.getWebResources()
 //                     + File.separator + errorFileName).getAbsoluteFile();
 //            file(errorFile, false);
 //        }
@@ -481,7 +483,7 @@ public class ServiceContext {
     public ServiceContext file(File file) {
         if (!precheckFile(file, downloadMode)) {
             String errorFileName = status.code() + (downloadMode ? ".txt" : ".html");
-            file = new File(HttpConfig.CFG.getDocroot() + File.separator + HttpConfig.CFG.getWebResources()
+            file = new File(nioCfg.getDocroot() + File.separator + nioCfg.getWebResources()
                     + File.separator + errorFileName).getAbsoluteFile();
         }
         this.txt = null;

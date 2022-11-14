@@ -16,9 +16,7 @@
 package org.summerboot.jexpress.boot.config.annotation;
 
 import java.lang.annotation.Documented;
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
@@ -27,7 +25,7 @@ import java.lang.annotation.Target;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Target({METHOD, FIELD, ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 @Retention(RUNTIME)
 @Documented
 public @interface Config {
@@ -36,7 +34,7 @@ public @interface Config {
 
     String key();
 
-    boolean required() default true;
+    boolean required() default false;
 
     //String requiredWhen() default "";
     String defaultValue() default "";

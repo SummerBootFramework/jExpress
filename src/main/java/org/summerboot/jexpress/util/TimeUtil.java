@@ -15,10 +15,15 @@
  */
 package org.summerboot.jexpress.util;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -97,22 +102,32 @@ public class TimeUtil {
 
     }
 
-    public static LocalDateTime toLocalDateTime(long utcTs) {
-        return toLocalDateTime(utcTs, ZoneId.systemDefault());
+    public static LocalDateTime toLocalDateTime(long epochTs) {
+        return toLocalDateTime(epochTs, ZoneId.systemDefault());
     }
 
-    public static LocalDateTime toLocalDateTime(long utcTs, ZoneId zoneId) {
+    public static LocalDateTime toLocalDateTime(long epochTs, ZoneId zoneId) {
         if (zoneId == null) {
             zoneId = ZoneId.systemDefault();
         }
-        return Instant.ofEpochMilli(utcTs).atZone(zoneId).toLocalDateTime();
+        return Instant.ofEpochMilli(epochTs).atZone(zoneId).toLocalDateTime();
     }
 
-    public static OffsetDateTime toOffsetDateTime(long utcTs, ZoneId zoneId) {
+    public static OffsetDateTime toOffsetDateTime(long epochTs, ZoneId zoneId) {
         if (zoneId == null) {
             zoneId = ZoneId.systemDefault();
         }
-        return Instant.ofEpochMilli(utcTs).atZone(zoneId).toOffsetDateTime();
+        return Instant.ofEpochMilli(epochTs).atZone(zoneId).toOffsetDateTime();
+    }
+
+    public static OffsetDateTime toOffsetDateTime(LocalDate localDate, ZoneId zoneId) {
+        ZonedDateTime zdt = toZonedDateTime(localDate, zoneId);
+        return zdt.withZoneSameInstant(zoneId).toOffsetDateTime();
+    }
+    
+    public static ZonedDateTime toZonedDateTime(LocalDate localDate, ZoneId zoneId) {
+        LocalDateTime localDateTime = localDate.atStartOfDay();        
+        return ZonedDateTime.of(localDateTime, ZoneId.systemDefault());   
     }
 
     protected static Random RANDOM = new Random();
@@ -153,4 +168,113 @@ public class TimeUtil {
 //            System.out.println(q);
 //        }
 //    }
+    public static class TimeDto {
+
+        @JsonIgnoreProperties
+        private ZoneId zoneId;
+
+        @JsonIgnoreProperties
+        private long epochTs;
+
+        //@JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        //@JsonSerialize(using = LocalDateTimeSerializer.class)
+        //@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYYY-MM-DDThh:mm:ss.sTZD")//DateTimeFormatter.ISO_INSTANT
+        //@JsonProperty("EffectiveDate")
+        //@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYYY-MM-DD'T'hh:mm:ss.sTZD")
+        @JsonIgnoreProperties
+        private Timestamp timestamp;
+
+        //@JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        //@JsonSerialize(using = LocalDateTimeSerializer.class)
+        @JsonIgnoreProperties
+        private LocalDateTime localDateTime;
+
+        @JsonIgnoreProperties
+        private OffsetDateTime offsetDateTime;
+
+        @JsonIgnoreProperties
+        private ZonedDateTime zonedDateTime;
+
+        public TimeDto() {
+        }
+
+        /**
+         *
+         * @param epochTs
+         * @param zoneIdName "America/Toronto"
+         */
+        public TimeDto(long epochTs, String zoneIdName) {
+            this(epochTs, ZoneId.of(zoneIdName));
+        }
+
+        /**
+         *
+         * @param epochTs
+         * @param zoneId
+         */
+        public TimeDto(long epochTs, ZoneId zoneId) {
+            this.zoneId = zoneId;
+            this.epochTs = epochTs;
+            timestamp = new Timestamp(epochTs);
+            localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochTs), zoneId);        //TimeZone.getDefault().toZoneId()); 
+            offsetDateTime = Instant.ofEpochMilli(epochTs).atZone(zoneId).toOffsetDateTime();
+            zonedDateTime = Instant.ofEpochMilli(epochTs).atZone(zoneId);
+        }
+
+        public void sync() {
+            timestamp = new Timestamp(epochTs);
+            localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochTs), zoneId);        //TimeZone.getDefault().toZoneId()); 
+            offsetDateTime = Instant.ofEpochMilli(epochTs).atZone(zoneId).toOffsetDateTime();
+            zonedDateTime = Instant.ofEpochMilli(epochTs).atZone(zoneId);
+        }
+
+        public ZoneId getZoneId() {
+            return zoneId;
+        }
+
+        public void setZoneId(ZoneId zoneId) {
+            this.zoneId = zoneId;
+        }
+
+        public long getEpochTs() {
+            return epochTs;
+        }
+
+        public void setEpochTs(long epochTs) {
+            this.epochTs = epochTs;
+        }
+
+        public Timestamp getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(Timestamp timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        public LocalDateTime getLocalDateTime() {
+            return localDateTime;
+        }
+
+        public void setLocalDateTime(LocalDateTime localDateTime) {
+            this.localDateTime = localDateTime;
+        }
+
+        public OffsetDateTime getOffsetDateTime() {
+            return offsetDateTime;
+        }
+
+        public void setOffsetDateTime(OffsetDateTime offsetDateTime) {
+            this.offsetDateTime = offsetDateTime;
+        }
+
+        public ZonedDateTime getZonedDateTime() {
+            return zonedDateTime;
+        }
+
+        public void setZonedDateTime(ZonedDateTime zonedDateTime) {
+            this.zonedDateTime = zonedDateTime;
+        }
+
+    }
 }

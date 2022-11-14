@@ -13,34 +13,21 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.config;
+package org.summerboot.jexpress.integration.smtp;
 
-import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.AlertEmailConfig;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import java.io.File;
+import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
+ * Volatile Bean　Pattern
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Singleton
-public class ConfigChangeListenerImpl implements ConfigChangeListener {
+@ImportResource(SummerApplication.CFG_ALERT)
+public class AlertEmailConfig extends SMTPClientConfig {
 
-    @Inject
-    protected PostOffice po;
-
-    protected static AlertEmailConfig smtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
-
-    @Override
-    public void onBefore(File configFile, JExpressConfig cfg) {
-        po.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Config Changed - before", cfg.info(), null, false);
+    public static void main(String[] args) {
+        String t = generateTemplate(AlertEmailConfig.class);
+        System.out.println(t);
     }
-
-    @Override
-    public void onAfter(File configFile, JExpressConfig cfg, Throwable ex) {
-        po.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Config Changed - after", cfg.info(), ex, false);
-    }
-
 }

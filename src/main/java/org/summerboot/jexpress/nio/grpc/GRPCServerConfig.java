@@ -22,24 +22,26 @@ import java.io.IOException;
 import java.util.Properties;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import static org.summerboot.jexpress.boot.config.BootConfig.generateTemplate;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.Memo;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@ImportResource(SummerApplication.CFG_GRPC)
 public class GRPCServerConfig extends BootConfig {
 
     public static void main(String[] args) {
         String t = generateTemplate(GRPCServerConfig.class);
         System.out.println(t);
     }
-    public static final GRPCServerConfig CFG = new GRPCServerConfig();
 
     protected final static String ID = "gRpc.server";
 
@@ -50,46 +52,48 @@ public class GRPCServerConfig extends BootConfig {
         CPU_Bound, IO_Bound, Mixed
     }
 
-    //1. gRPC server config
-    @Memo(title = "1. " + ID + " provider")
-    @Config(key = ID + ".binding.addr")
-    private volatile String bindingAddr;
-    @Config(key = ID + ".binding.port")
-    private volatile int bindingPort;
+    private final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
-    @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "CPU_Bound",
+    //1. gRPC server config
+    @ConfigHeader(title = "1. " + ID + " provider")
+    @Config(key = ID + ".binding.addr")
+    private volatile String bindingAddr = "127.0.0.1";
+    @Config(key = ID + ".binding.port")
+    private volatile int bindingPort = 8081;
+
+    @Config(key = ID + ".pool.BizExecutor.mode",
             desc = "valid value = CPU (default), IO, Mixed")
     private volatile ThreadingMode threadingMode = ThreadingMode.CPU_Bound;
 
-    @Config(key = ID + ".pool.coreSize", required = false)
-    private volatile int poolCoreSize;
+    @Config(key = ID + ".pool.coreSize")
+    private volatile int poolCoreSize = availableProcessors + 1;
 
-    @Config(key = ID + ".pool.maxSize", required = false)
-    private volatile int poolMaxSizeMaxSize;
+    @Config(key = ID + ".pool.maxSize")
+    private volatile int poolMaxSizeMaxSize = availableProcessors + 1;
 
-    @Config(key = ID + ".pool.queueSize", defaultValue = "2147483647")
+    @Config(key = ID + ".pool.queueSize")//2147483647
     private volatile int poolQueueSize = Integer.MAX_VALUE;
 
-    @Config(key = ID + ".pool.keepAliveSeconds", defaultValue = "60")
+    @Config(key = ID + ".pool.keepAliveSeconds")
     private volatile long keepAliveSeconds = 60;
 
-    @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
+    @Config(key = "nio.server.health.InspectionIntervalSeconds")
     private volatile int healthInspectionIntervalSeconds = 5;
 
     //2. TRC (The Remote Callee) keystore
-    @Memo(title = "2. " + ID + " keystore")
+    @ConfigHeader(title = "2. " + ID + " keystore")
     @Config(key = ID + ".ssl.KeyStore", StorePwdKey = ID + ".ssl.KeyStorePwd",
-            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd", required = false)
+            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd")
     @JsonIgnore
     protected volatile KeyManagerFactory kmf;
 
     //3. TRC (The Remote Callee) truststore
-    @Memo(title = "3. " + ID + " truststore")
-    @Config(key = ID + ".ssl.TrustStore", StorePwdKey = ID + ".ssl.TrustStorePwd", required = false)
+    @ConfigHeader(title = "3. " + ID + " truststore")
+    @Config(key = ID + ".ssl.TrustStore", StorePwdKey = ID + ".ssl.TrustStorePwd")
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
-    @Config(key = ID + ".ssl.overrideAuthority", required = false)
+    @Config(key = ID + ".ssl.overrideAuthority")
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {

@@ -30,29 +30,17 @@ public class NioServerContext {//package access only, not a public class
     protected static final AtomicLong COUNTER_HIT = new AtomicLong(0);
     protected static final AtomicLong COUNTER_SENT = new AtomicLong(0);
 
-    protected static String webApiContextRoot = null;
-    protected static String loadBalancerHealthCheckPath = null;
+    protected static String loadBalancingEndpoint = null;
 
-    public static String getWebApiContextRoot() {
-        return webApiContextRoot;
+    public static String getLoadBalancingEndpoint() {
+        return loadBalancingEndpoint;
     }
 
-    public static void setWebApiContextRoot(String contextRoot) {
-        if (webApiContextRoot != null) {
-            throw new UnsupportedOperationException("Context Root has been set, and cannot be changed");
+    public static void setLoadBalancingEndpoint(String endpoint) {
+        if (loadBalancingEndpoint != null) {
+            throw new UnsupportedOperationException("Load Balancing Endpoint has been set, and cannot be changed");
         }
-        webApiContextRoot = contextRoot;
-    }
-
-    public static String getLoadBalancerHealthCheckPath() {
-        return loadBalancerHealthCheckPath;
-    }
-
-    public static void setLoadBalancerHealthCheckPath(String pingPath) {
-        if (loadBalancerHealthCheckPath != null) {
-            throw new UnsupportedOperationException("Ping path has been set, and cannot be changed");
-        }
-        loadBalancerHealthCheckPath = pingPath;
+        loadBalancingEndpoint = endpoint;
     }
 
 }
