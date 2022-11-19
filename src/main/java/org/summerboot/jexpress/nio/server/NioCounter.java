@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class NioServerContext {//package access only, not a public class
+public class NioCounter {//package access only, not a public class
 
     protected static final AtomicLong COUNTER_PING_HIT = new AtomicLong(0);
     protected static final AtomicLong COUNTER_BIZ_HIT = new AtomicLong(0);
@@ -29,18 +29,4 @@ public class NioServerContext {//package access only, not a public class
     protected static final AtomicLong COUNTER_ACTIVE_CHANNEL = new AtomicLong(0);
     protected static final AtomicLong COUNTER_HIT = new AtomicLong(0);
     protected static final AtomicLong COUNTER_SENT = new AtomicLong(0);
-
-    protected static String loadBalancingEndpoint = null;
-
-    public static String getLoadBalancingEndpoint() {
-        return loadBalancingEndpoint;
-    }
-
-    public static void setLoadBalancingEndpoint(String endpoint) {
-        if (loadBalancingEndpoint != null) {
-            throw new UnsupportedOperationException("Load Balancing Endpoint has been set, and cannot be changed");
-        }
-        loadBalancingEndpoint = endpoint;
-    }
-
 }

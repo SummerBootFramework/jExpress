@@ -16,7 +16,7 @@
 package org.summerboot.jexpress.boot.config;
 
 import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.AlertEmailConfig;
+import org.summerboot.jexpress.integration.smtp.EmailAlertConfig;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.File;
@@ -31,7 +31,7 @@ public class ConfigChangeListenerImpl implements ConfigChangeListener {
     @Inject
     protected PostOffice po;
 
-    protected static AlertEmailConfig smtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
+    protected static EmailAlertConfig smtpCfg = EmailAlertConfig.instance(EmailAlertConfig.class);
 
     @Override
     public void onBefore(File configFile, JExpressConfig cfg) {

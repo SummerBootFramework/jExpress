@@ -67,13 +67,13 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         //a new client is connected
-        long tc = NioServerContext.COUNTER_ACTIVE_CHANNEL.incrementAndGet();
+        long tc = NioCounter.COUNTER_ACTIVE_CHANNEL.incrementAndGet();
         log.trace(() -> tc + " - " + info(ctx));
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        NioServerContext.COUNTER_ACTIVE_CHANNEL.decrementAndGet();
+        NioCounter.COUNTER_ACTIVE_CHANNEL.decrementAndGet();
     }
 
     @Override
@@ -101,8 +101,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             NioHttpUtil.sendError(ctx, HttpResponseStatus.BAD_REQUEST, BootErrorCode.NIO_BAD_REQUEST, "failed to decode request", null);
             return;
         }
-        NioServerContext.COUNTER_HIT.incrementAndGet();
-        final long hitIndex = NioServerContext.COUNTER_BIZ_HIT.incrementAndGet();
+        NioCounter.COUNTER_HIT.incrementAndGet();
+        final long hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
 //        if (HttpUtil.is100ContinueExpected(req)) {
 //            ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE, Unpooled.EMPTY_BUFFER));
 //        }
@@ -150,7 +150,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
             } finally {
                 long responseTime = System.currentTimeMillis() - start;
-                NioServerContext.COUNTER_SENT.incrementAndGet();
+                NioCounter.COUNTER_SENT.incrementAndGet();
                 Level level = context.level();
                 String report = null;
                 if (log.isEnabled(level)) {

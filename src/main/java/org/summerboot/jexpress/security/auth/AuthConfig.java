@@ -40,6 +40,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
@@ -57,6 +58,14 @@ public class AuthConfig extends BootConfig {
     }
 
     protected AuthConfig() {
+    }
+
+    @Override
+    public AuthConfig temp() {
+        AuthConfig ret = (AuthConfig) super.temp();
+        AuthConfig current = AuthConfig.instance(AuthConfig.class);
+        ret.addDeclareRoles(current.getDeclareRoles());
+        return ret;
     }
 
     @Override

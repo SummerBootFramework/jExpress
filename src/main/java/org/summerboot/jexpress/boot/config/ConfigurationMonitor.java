@@ -83,12 +83,12 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     @Override
     public void onStart(FileAlterationObserver fao) {
-        log.trace(() -> "start " + fao);
+        //log.trace(() -> "start " + fao.getDirectory());
     }
 
     @Override
     public void onStop(FileAlterationObserver fao) {
-        log.trace(() -> "stop " + fao);
+        //log.trace(() -> "stop " + fao.getDirectory());
     }
 
     @Override

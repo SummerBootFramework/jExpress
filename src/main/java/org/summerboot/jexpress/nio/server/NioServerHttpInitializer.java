@@ -45,6 +45,7 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
     private final boolean verifyClient;
     private final NioConfig cfg;
     private final boolean isHttpService;
+    private final String loadBalancingEndpoint;
 
     /**
      *
@@ -53,12 +54,13 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
      * @param is2WaySSL
      * @param cfg
      */
-    NioServerHttpInitializer(SSLContext jdkSSLContext, SslContext nettySslContext, boolean verifyClient, NioConfig cfg) {
+    NioServerHttpInitializer(SSLContext jdkSSLContext, SslContext nettySslContext, boolean verifyClient, NioConfig cfg, String loadBalancingEndpoint) {
         this.jdkSslContext = jdkSSLContext;
         this.nettySslContext = nettySslContext;
         this.verifyClient = verifyClient;
         this.cfg = cfg;
         isHttpService = cfg.isHttpService();
+        this.loadBalancingEndpoint = loadBalancingEndpoint;
     }
 
     private void configureSsl(SocketChannel ch, ChannelPipeline p) {
@@ -114,7 +116,7 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
 //    private static final int DEFAULT_MAX_CHUNK_SIZE = 8192;
     @Override
     public void initChannel(SocketChannel ch) {
-        long tc = NioServerContext.COUNTER_TOTAL_CHANNEL.incrementAndGet();
+        long tc = NioCounter.COUNTER_TOTAL_CHANNEL.incrementAndGet();
         log.debug(() -> tc + "[" + this.hashCode() + "]" + ch);
 
         ChannelPipeline p = ch.pipeline();
@@ -144,9 +146,11 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
         // If the business logic is fully asynchronous or finished very quickly, no need to specify a group.
         //p.addLast(cfg.getNioSharedChildExecutor(), "bizexe", cfg.getRequestHandler());
         //p.addLast("sslhandshake", shh);
-        ChannelHandler chl = cfg.getPingHandler();
-        if (chl != null) {
-            p.addLast("biz-pingHandler", chl);
+        if (loadBalancingEndpoint != null) {
+            ChannelHandler chl = cfg.getPingHandler();
+            if (chl != null) {
+                p.addLast("biz-pingHandler", chl);
+            }
         }
         if (cfg.isCompressWebSocket()) {
             p.addLast(new WebSocketServerCompressionHandler());

@@ -76,7 +76,7 @@ public abstract class BootAuthenticator implements Authenticator {
 
         //2. authenticate caller against LDAP or DB
         context.timestampPOI(BootPOI.LDAP_BEGIN);
-        Caller caller = authenticateCaller(uid, pwd, listener);
+        Caller caller = login(uid, pwd, listener);
         context.timestampPOI(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
@@ -84,7 +84,7 @@ public abstract class BootAuthenticator implements Authenticator {
         }
 
         //3. format JWT
-        JwtBuilder builder = marshalCaller(caller);
+        JwtBuilder builder = toJwt(caller);
 
         //4. create JWT
         //String token = JwtUtil.createJWT(authCfg.getJwtSignatureAlgorithm(),
@@ -106,7 +106,7 @@ public abstract class BootAuthenticator implements Authenticator {
      * @throws IOException
      * @throws NamingException
      */
-    abstract protected Caller authenticateCaller(String uid, String password, AuthenticatorListener listener) throws IOException, NamingException;
+    abstract protected Caller login(String uid, String password, AuthenticatorListener listener) throws IOException, NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -116,7 +116,7 @@ public abstract class BootAuthenticator implements Authenticator {
      * @return formatted auth token builder
      */
     @Override
-    public JwtBuilder marshalCaller(Caller caller) {
+    public JwtBuilder toJwt(Caller caller) {
         String jti = String.valueOf(caller.getId());
         String issuer = authCfg.getJwtIssuer();
         String subject = caller.getUid();
@@ -158,7 +158,7 @@ public abstract class BootAuthenticator implements Authenticator {
      * @return Caller
      */
     @Override
-    public Caller unmarshalCaller(Claims claims) {
+    public Caller fromJwt(Claims claims) {
         String jti = claims.getId();
         String issuer = claims.getIssuer();
         String subject = claims.getSubject();
@@ -262,7 +262,7 @@ public abstract class BootAuthenticator implements Authenticator {
                     Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, "AUTH_EXPIRED_TOKEN", "Blacklisted AuthToken", null);
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
-                    caller = unmarshalCaller(claims);
+                    caller = fromJwt(claims);
                     if (listener != null && !listener.verify(caller, claims)) {
                         Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, "AUTH_INVALID_TOKEN", "Rejected AuthToken", null);
                         context.error(e).status(HttpResponseStatus.UNAUTHORIZED);

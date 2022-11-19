@@ -17,7 +17,7 @@ package org.summerboot.jexpress.integration.cache;
 
 import org.summerboot.jexpress.integration.cache.domain.FlashSale;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.AlertEmailConfig;
+import org.summerboot.jexpress.integration.smtp.EmailAlertConfig;
 import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -92,7 +92,7 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected static RedisConfig redisCfg = BootConfig.instance(RedisConfig.class);
 
-    protected static AlertEmailConfig smtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
+    protected static EmailAlertConfig smtpCfg = EmailAlertConfig.instance(EmailAlertConfig.class);
 
     protected class Holder<T> {
 

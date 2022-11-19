@@ -16,28 +16,23 @@
 package org.summerboot.jexpress.boot;
 
 import com.google.inject.Module;
-import com.google.inject.Guice;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.util.Modules;
-import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.ConfigUtil.ConfigLoadMode;
+import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.AlertEmailConfig;
-import org.summerboot.jexpress.nio.server.NioConfig;
+import org.summerboot.jexpress.integration.smtp.EmailAlertConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
 import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.FormatterUtil;
 
 /**
  *
@@ -137,25 +132,10 @@ abstract public class SummerApplication extends BootCLI {
      * @param args
      */
     public static void run(Class callerClass, Module userOverrideModule, String[] args) {
-        String unittestWorkingDir = null;
         SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
-
-            @Override
-            protected void buildCLIOptions(Options options) {
-            }
-
-            @Override
-            protected void runCLI(CommandLine cli, File cfgConfigDir) {
-            }
-
-            @Override
-            protected void locadCustomizedConfigs(File configFolder) {
-            }
-
-            @Override
-            protected void beforeStart(File configFolder, CommandLine cli) throws Exception {
-            }
         };
+//        app.addPredefinedUseImplTags("aa", "bb")
+//                .bindBootConfig("aa.properties", config, "aa", true);
         app.init().start();
     }
 
@@ -180,76 +160,75 @@ abstract public class SummerApplication extends BootCLI {
      */
     public static SummerApplication unittest(Class callerClass, Module userOverrideModule, String... args) {
         SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
-
-            @Override
-            protected void buildCLIOptions(Options options) {
-            }
-
-            @Override
-            protected void runCLI(CommandLine cli, File cfgConfigDir) {
-            }
-
-            @Override
-            protected void locadCustomizedConfigs(File configFolder) {
-            }
-
-            @Override
-            protected void beforeStart(File configFolder, CommandLine cli) throws Exception {
-            }
         };
-        app.init();
-        return app;
+        return app.init();
     }
-
-    private final Module userOverrideModule;
-    private Injector guiceInjector;
 
     protected SummerApplication() {
         this(null, null);
     }
 
     private SummerApplication(Class callerClass, Module userOverrideModule, String... args) {
-        super(callerClass, args);
-        this.userOverrideModule = userOverrideModule;
-    }
-
-    public Injector getGuiceInjector() {
-        return guiceInjector;
+        super(callerClass, userOverrideModule, args);
     }
 
     /**
-     * IoC container initialization should happened after CLI and load
-     * configuration, it will called when BootCLI.CLI_USE_IMPL result is ready
+     * To add use impl tags before init()
      *
-     * @param userSpecifiedImplTags
+     * @param <T>
+     * @param enumClass the enum contains impl tag items
+     * @return
      */
-    @Override
-    protected void onUserSpecifiedImplTagsReady(Set<String> userSpecifiedImplTags) {
-        BootGuiceModule defaultBootModule = new BootGuiceModule(this, callerClass, scanedComponentBbindingMap, userSpecifiedImplTags, memo);
-        Module guiceModule = userOverrideModule == null
-                ? defaultBootModule
-                : Modules.override(defaultBootModule).with(userOverrideModule);
-//        if (bindingChannelHandlerClass != null) {
-//            Module enabledModule = new Module() {
-//                @Override
-//                protected void configure() {
-//                    if (bindingChannelHandlerClass != null) {
-//                        bind(ChannelHandler.class).annotatedWith(Names.named(bindingChannelHandlerBindingName)).to(bindingChannelHandlerClass);
-//                    }
-//                }
-//            };
-//            guiceModule = Modules.override(guiceModule).with(enabledModule);
-//        }
-        if (userOverrideModule == null) {
-            memo.append("\n\t- init default Ioc @Conponent");
-        } else {
-            memo.append("\n\t- init user overridden Ioc @Conponent via").append(userOverrideModule.getClass().getName());
-        }
-
-        // Guice.createInjector(module) --> BootGuiceModule.configure() --> this will trigger BootCLI.callbackGuice_scanAnnotation_Controller
-        guiceInjector = Guice.createInjector(guiceModule);
-        NioConfig.instance(NioConfig.class).setGuiceInjector(guiceInjector);
+    public <T extends SummerApplication> T addPredefinedUseImplTags(Class<? extends Enum<?>> enumClass) {
+        return addPredefinedUseImplTags(FormatterUtil.getEnumNames(enumClass));
     }
+
+    /**
+     * To add use impl tags before init()
+     *
+     * @param <T>
+     * @param mockItemNames the impl tag item names
+     * @return
+     */
+    public <T extends SummerApplication> T addPredefinedUseImplTags(String... mockItemNames) {
+        if (mockItemNames == null || mockItemNames.length < 1) {
+            return (T) this;
+        }
+        availableImplTagOptions.addAll(Set.of(mockItemNames));
+        memo.append("\n\t- availableImplTagOptions=").append(availableImplTagOptions);
+        return (T) this;
+    }
+
+    /**
+     * To bind a configuration file implemented by a JExpressConfig instance
+     * before init(), which will be loaded and managed by SummerBoot Application
+     *
+     * @param <T>
+     * @param configFileName
+     * @param config
+     * @param checkImplTagUsed
+     * @param loadWhenImplTagUsed
+     * @return
+     */
+    public <T extends SummerApplication> T bindBootConfig(String configFileName, JExpressConfig config, String checkImplTagUsed, boolean loadWhenImplTagUsed) {
+        memo.append("\n\t- bindBootConfig: configFileName=").append(configFileName).append(", config=").append(config.getClass().getName()).append(", implTag=").append(checkImplTagUsed).append(", loadWhenImplTagUsed=").append(loadWhenImplTagUsed);
+        String key = config.getClass().getSimpleName();
+        ConfigMetadata metadata = new ConfigMetadata(configFileName, config.getClass(), config, checkImplTagUsed, loadWhenImplTagUsed);
+        scanedJExpressConfigs.put(key, metadata);
+        return (T) this;
+    }
+
+    @Inject
+    protected ConfigChangeListener configChangeListener;
+
+    @Inject
+    protected InstrumentationMgr instrumentationMgr;
+
+    @Inject
+    protected HealthInspector healthInspector;
+
+    @Inject
+    protected PostOffice postOffice;
 
     /**
      *
@@ -266,8 +245,10 @@ abstract public class SummerApplication extends BootCLI {
          * all configs depend on BootCLI.CLI_CONFIG_TAG result
          * AuthConfig depends on Ioc scan result: JaxRsRequestProcessor scan @DeclareRoles to verify Role-Mapping in configuration file
          */
-        loadBootConfigs(ConfigLoadMode.app_run, configChangeListener);
-        locadCustomizedConfigs(cfgConfigDir);
+        loadBootConfigFiles(ConfigLoadMode.app_run, configChangeListener);
+        for (SummerRunner summerRunner : summerRunners) {
+            summerRunner.locadCustomizedConfigs(userSpecifiedConfigDir);
+        }
         if (configChangeListener != null) {
             ConfigUtil.setConfigChangeListener(configChangeListener);
         }
@@ -284,37 +265,23 @@ abstract public class SummerApplication extends BootCLI {
     }
 
     /**
-     * callback to initialize based on customized config files in configDir
-     *
-     * @param configFolder
-     */
-    abstract protected void locadCustomizedConfigs(File configFolder);
-
-    @Inject
-    protected PostOffice postOffice;
-
-    @Inject
-    protected HealthInspector healthInspector;
-
-    @Inject
-    protected ConfigChangeListener configChangeListener;
-
-    @Inject
-    protected InstrumentationMgr instrumentationMgr;
-
-    /**
      * run application with ping enabled, URI as webApiContextRoot +
      * loadBalancerHealthCheckPath
      *
      */
     public void start() {
+        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_VERSION).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_VERSION));
+        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_PACKAGE_NAME).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME));
+        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_NAME).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_NAME));
+        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_LOGGINGPATH).append("=").append(System.getProperty(SummerApplication.SYS_PROP_LOGGINGPATH));
+
         memo.append("\n\t- start: PostOffice=").append(postOffice.getClass().getName());
         memo.append("\n\t- start: HealthInspector=").append(healthInspector.getClass().getName());
-        memo.append("\n\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
+        //memo.append("\n\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
         memo.append("\n\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
-        log.debug(() -> memo.toString());
+        log.trace(() -> memo.toString());
         //1. init email
-        final AlertEmailConfig smtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
+        final EmailAlertConfig smtpCfg = EmailAlertConfig.instance(EmailAlertConfig.class);
         if (postOffice != null) {
             postOffice.setAppVersion(super.appVersionLong);
             //gracefully shutdown
@@ -326,15 +293,12 @@ abstract public class SummerApplication extends BootCLI {
             );
         }
         try {
-            //2. preLaunch
-            beforeStart(cfgConfigDir, cli);
-
-            //3. initialize JMX instrumentation
+            //2. initialize JMX instrumentation
             if (instrumentationMgr != null/* && isJMXRequired()*/) {
                 instrumentationMgr.start(BootConstant.VERSION);
             }
 
-            //4. health inspection
+            //3. health inspection
             StringBuilder sb = new StringBuilder();
             sb.append(System.lineSeparator()).append(HealthMonitor.PROMPT);
             if (healthInspector != null) {
@@ -357,13 +321,18 @@ abstract public class SummerApplication extends BootCLI {
                 log.warn(sb);
             }
 
+            //4. preLaunch
+            for (SummerRunner summerRunner : summerRunners) {
+                summerRunner.run(cli, userSpecifiedConfigDir, guiceInjector, healthInspector, postOffice);
+            }
+            
             //5. run HTTP listening
             if (hasControllers) {
                 NioServer.bind();
             }
 
             //6. announcement
-            log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, super.appVersionLong + " pid#" + BootConstant.PID));
+            log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersionLong + " pid#" + BootConstant.PID));
 
             String fullConfigInfo = sb.toString();
             if (postOffice != null) {
@@ -385,13 +354,4 @@ abstract public class SummerApplication extends BootCLI {
             System.exit(1);
         }
     }
-
-    /**
-     * callback before NIO binding
-     *
-     * @param configFolder
-     * @param cli
-     * @throws java.lang.Exception
-     */
-    abstract protected void beforeStart(File configFolder, final CommandLine cli) throws Exception;
 }

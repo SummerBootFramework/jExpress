@@ -15,9 +15,12 @@
  */
 package org.summerboot.jexpress.nio.server;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.HttpHeaders;
+import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.security.auth.Authenticator;
 
 /**
  *
@@ -27,9 +30,19 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 @Singleton
 public class DefaultHttpRequestHandler extends BootHttpRequestHandler {
 
+    @Inject
+    protected AuthTokenCache tokenCache;
+
+    @Inject
+    protected Authenticator auth;
+
     @Override
     protected boolean authenticationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
-        return true;
+        if (auth == null) {
+            return true;
+        }
+        auth.verifyBearerToken(httpRequestHeaders, tokenCache, null, context);
+        return context.caller() != null;
     }
 
     @Override

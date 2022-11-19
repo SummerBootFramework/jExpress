@@ -42,7 +42,7 @@ import org.apache.commons.lang3.StringUtils;
 @Deprecated
 public class EmailBuilder {
 
-    protected static AlertEmailConfig smtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
+    protected static EmailAlertConfig smtpCfg = EmailAlertConfig.instance(EmailAlertConfig.class);
 
     public static void config(File cfgFile) throws IOException, GeneralSecurityException {
 

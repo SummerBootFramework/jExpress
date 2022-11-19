@@ -24,10 +24,10 @@ import org.summerboot.jexpress.boot.config.annotation.ImportResource;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @ImportResource(SummerApplication.CFG_ALERT)
-public class AlertEmailConfig extends SMTPClientConfig {
+public class EmailAlertConfig extends SMTPClientConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(AlertEmailConfig.class);
+        String t = generateTemplate(EmailAlertConfig.class);
         System.out.println(t);
     }
 }

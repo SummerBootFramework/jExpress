@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.nio.client.HttpClientConfig;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.multipart.MultipartUtil;
@@ -65,7 +64,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
     private static final HttpDataFactory HDF = new DefaultHttpDataFactory(USER_DISK);
     //private static final Authenticator auth = new AuthenticatorImple_LDAP();
 
-    protected static NioConfig uploadCfg = NioConfig.instance(NioConfig.class);
+    protected static final NioConfig uploadCfg = NioConfig.instance(NioConfig.class);
 
     static {
         DiskFileUpload.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
@@ -114,8 +113,8 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
             request = (HttpRequest) httpObject;
             isMultipart = MultipartUtil.isMultipart(request);
             if (isMultipart) {
-                NioServerContext.COUNTER_HIT.incrementAndGet();
-                hitIndex = NioServerContext.COUNTER_BIZ_HIT.incrementAndGet();
+                NioCounter.COUNTER_HIT.incrementAndGet();
+                hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
                 fileSizeQuota = precheck(ctx, request);
                 if (fileSizeQuota < 1) {
                     ReferenceCountUtil.release(httpObject);

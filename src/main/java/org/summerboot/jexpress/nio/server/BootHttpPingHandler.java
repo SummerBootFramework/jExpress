@@ -29,6 +29,7 @@ import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 /**
@@ -45,7 +46,7 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
 
     public BootHttpPingHandler(/*String pingURL*/) {
         super(FullHttpRequest.class, false);
-        String endpointCfg = NioServerContext.getLoadBalancingEndpoint();
+        String endpointCfg = System.getProperty(SummerApplication.SYS_PROP_PING_URI);//Although System.getProperty is a synchronized API, this is a @Singleton, TODO: use injector
         if (StringUtils.isNotBlank(endpointCfg)) {
             pingURL = endpointCfg;
         } else {
@@ -60,7 +61,7 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
             HttpRequest req = (HttpRequest) httpObject;
             if (HttpMethod.GET.equals(req.method()) && pingURL.equals(req.uri())) {
                 isPingRequest = true;
-                NioServerContext.COUNTER_PING_HIT.incrementAndGet();
+                NioCounter.COUNTER_PING_HIT.incrementAndGet();
                 try {
                     HttpResponseStatus status = HealthMonitor.isServiceAvaliable() ? HttpResponseStatus.OK : HttpResponseStatus.SERVICE_UNAVAILABLE;
                     NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, null, null, null, true);

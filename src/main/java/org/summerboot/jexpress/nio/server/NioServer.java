@@ -179,10 +179,11 @@ public class NioServer {
                 //.childOption(ChannelOption.SINGLE_EVENTEXECUTOR_PER_GROUP, false)
                 .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);// need to call ReferenceCountUtil.release(msg) after use. 使用内存池之后，内存的申请和释放必须成对出现，即retain()和release()要成对出现，否则会导致内存泄露。 值得注意的是，如果使用内存池，完成ByteBuf的解码工作之后必须显式的调用ReferenceCountUtil.release(msg)对接收缓冲区ByteBuf进行内存释放，否则它会被认为仍然在使用中，这样会导致内存泄露。
 
+        String loadBalancingEndpoint = System.getProperty(SummerApplication.SYS_PROP_PING_URI);
         boot.group(bossGroup, workerGroup)
                 .channel(serverChannelClass)
                 //.handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new NioServerHttpInitializer(jdkSslContext, nettySslContext, clientAuth.equals(ClientAuth.REQUIRE), nioCfg));
+                .childHandler(new NioServerHttpInitializer(jdkSslContext, nettySslContext, clientAuth.equals(ClientAuth.REQUIRE), nioCfg, loadBalancingEndpoint));
 
         String appInfo = SummerApplication.VERSION + " " + SummerApplication.PID;
         for (String bindAddr : bindingAddresses.keySet()) {
@@ -203,13 +204,10 @@ public class NioServer {
                 //shutdown();
                 System.out.println("Server " + appInfo + " (" + sslMode + ") is stopped");
             });
-            final String pingURI = NioServerContext.getLoadBalancingEndpoint() == null
-                    ? ""
-                    : NioServerContext.getLoadBalancingEndpoint();
-            log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + pingURI);
+            log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingEndpoint == null ? "" : loadBalancingEndpoint));
 
             if (listener != null) {
-                listener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, NioServerContext.getLoadBalancingEndpoint());
+                listener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, loadBalancingEndpoint);
             }
         }
 
@@ -219,12 +217,12 @@ public class NioServer {
         if (listener != null || log.isDebugEnabled()) {
             int interval = 1;
             QPS_SERVICE.scheduleAtFixedRate(() -> {
-                long hps = NioServerContext.COUNTER_HIT.getAndSet(0);
-                long tps = NioServerContext.COUNTER_SENT.getAndSet(0);
+                long hps = NioCounter.COUNTER_HIT.getAndSet(0);
+                long tps = NioCounter.COUNTER_SENT.getAndSet(0);
                 if (listener == null && !log.isDebugEnabled()) {
                     return;
                 }
-                long bizHit = NioServerContext.COUNTER_BIZ_HIT.get();
+                long bizHit = NioCounter.COUNTER_BIZ_HIT.get();
                 //if (lastBizHit[0] == bizHit && !servicePaused) {
                 if (lastBizHitRef.get() == bizHit && !HealthMonitor.isServicePaused()) {
                     return;
@@ -235,8 +233,8 @@ public class NioServer {
                 int active = tpe.getActiveCount();
                 int queue = tpe.getQueue().size();
                 if (hps > 0 || tps > 0 || active > 0 || queue > 0 || HealthMonitor.isServicePaused()) {
-                    long totalChannel = NioServerContext.COUNTER_TOTAL_CHANNEL.get();
-                    long activeChannel = NioServerContext.COUNTER_ACTIVE_CHANNEL.get();
+                    long totalChannel = NioCounter.COUNTER_TOTAL_CHANNEL.get();
+                    long activeChannel = NioCounter.COUNTER_ACTIVE_CHANNEL.get();
                     long pool = tpe.getPoolSize();
                     int core = tpe.getCorePoolSize();
                     //int queueRemainingCapacity = tpe.getQueue().remainingCapacity();
@@ -244,7 +242,7 @@ public class NioServer {
                     long largest = tpe.getLargestPoolSize();
                     long task = tpe.getTaskCount();
                     long completed = tpe.getCompletedTaskCount();
-                    long pingHit = NioServerContext.COUNTER_PING_HIT.get();
+                    long pingHit = NioCounter.COUNTER_PING_HIT.get();
                     long totalHit = bizHit + pingHit;
                     log.debug(() -> "hps=" + hps + ", tps=" + tps + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
                     if (listener != null) {

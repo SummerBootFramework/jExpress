@@ -15,8 +15,10 @@
  */
 package org.summerboot.jexpress.boot;
 
-import com.google.inject.Inject;
-import io.grpc.ServerServiceDefinition;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.util.Modules;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -26,23 +28,23 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.management.ManagementFactory;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InaccessibleObjectException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.TreeSet;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -50,25 +52,17 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.annotation.Component;
-import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.Unique;
-import org.summerboot.jexpress.boot.annotation.Version;
+import org.summerboot.jexpress.boot.annotation.Order;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
-import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
+import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.auth.AuthConfig;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
@@ -76,18 +70,7 @@ import org.summerboot.jexpress.util.ReflectionUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public abstract class BootCLI implements BootConstant {
-
-    protected static Logger log;
-
-    /*
-     * Only for JPAHibernateConfig access to scan @Entity
-     */
-    private static String callerRootPackageName;
-
-    public static String getCallerRootPackageName() {
-        return callerRootPackageName;
-    }
+abstract public class BootCLI extends BootDeployee {
 
     /*
      * CLI commands
@@ -97,6 +80,8 @@ public abstract class BootCLI implements BootConstant {
     protected static final String CLI_CONFIG_MONITOR_INTERVAL = "monitorInterval";
     protected static final String CLI_I8N = "i18n";
     protected static final String CLI_USE_IMPL = "use";//To specify which implementation will be used via @Component.checkImplTagUsed
+    @Deprecated
+    protected static final String CLI_CONFIG_TAG = "domain";
     protected static final String CLI_CONFIG_DIR = "cfgdir";
     protected static final String CLI_CONFIG_DEMO = "cfgdemo";
     protected static final String CLI_LIST_UNIQUE = "unique";
@@ -106,334 +91,42 @@ public abstract class BootCLI implements BootConstant {
     protected static final String CLI_ENCRYPT = "encrypt";
     protected static final String CLI_DECRYPT = "decrypt";
     protected static final File CURRENT_DIR = new File("").getAbsoluteFile();
-    protected static String appVersionLong = BootConstant.VERSION;
 
-    public static String version() {
-        return appVersionLong;
-    }
+    private final Module userOverrideModule;
+    protected Injector guiceInjector;
+
 
     /*
      * CLI results
      */
-    protected int userSpecifiedCfgMonitorIntervalSec = 30;
     protected Locale userSpecifiedResourceBundle;
-    protected final Set<String> userSpecifiedImplTags = new HashSet<>();
+    protected File userSpecifiedConfigDir;
+    private int userSpecifiedCfgMonitorIntervalSec = 30;
+    private final Set<String> userSpecifiedImplTags = new HashSet<>();
 
-    /*
-     * Annotation scan results as CLI inputs
-     */
-    private final Set<String> availableImplTagOptions = new HashSet();
-    private final List<String> availableUniqueTagOptions = new ArrayList();
-    private final Map<String, ConfigMetadata> scanedJExpressConfigs = new LinkedHashMap<>();
-
-    /*
-     * Annotation scan results as BootGuiceModule input
-     * Format: bindingClass <--> {ImplTag <--> [componentClasses list]}
-     */
-    protected final Map<Class, Map<String, List<Class>>> scanedComponentBbindingMap = new HashMap();
-
-    protected final Class callerClass;
-    protected String appVersionShort = BootConstant.VERSION;
-    protected final StringBuilder memo = new StringBuilder();
-    private boolean hasGRPCImpl = false;
-    private boolean hasAuthImpl = false;
-
-    protected boolean hasControllers = false;
-    protected Boolean jmxRequired;
-    protected String jvmStartCommand;
-    protected File cfgConfigDir;
-
-    protected BootCLI(Class callerClass, String... args) {
-        this.callerClass = callerClass == null
-                ? this.getClass()
-                : callerClass;
-        deployee(this.callerClass, args);
+    protected BootCLI(Class callerClass, Module userOverrideModule, String... args) {
+        super(callerClass);
+        this.userOverrideModule = userOverrideModule;
+        cli(args);
     }
 
-    /**
-     * callback by Guice Module.
-     * <p>
-     * triggered by
-     * <code>Guice.createInjector(module) --> BootGuiceModule.configure()</code>
-     * to load all classes annotated with @Controller
-     *
-     *
-     * @param controllers
-     */
-    @Inject
-    protected void callbackGuice_scanAnnotation_Controller(@Controller Map<String, Object> controllers) {
-        //1. scan and register controllers
-        hasControllers = !controllers.isEmpty();
-        JaxRsRequestProcessorManager.registerControllers(controllers, memo);
-
-        //2. check is there any declared roles so that the auth config should be used
-        final AuthConfig authCfg = AuthConfig.instance(AuthConfig.class);
-        hasAuthImpl = !authCfg.getDeclareRoles().isEmpty();
+    public Injector getGuiceInjector() {
+        return guiceInjector;
     }
 
-    private void deployee(Class callerClass, String... args) {
-        memo.append("\n\t- deployee callerClass=").append(this.callerClass.getName());
-        jvmStartCommand = scanJVM_StartCommand();
-        scanAnnotation_Version(callerClass);
-        callerRootPackageName = ReflectionUtil.getRootPackageName(callerClass);
-        System.setProperty("approotpackage", callerRootPackageName);
-        System.setProperty("appappname", appVersionShort);
-        memo.append("\n\t- callerRootPackageName=").append(callerRootPackageName);
-        String error = scanAnnotation_Unique(callerRootPackageName, memo);
-        if (error != null) {
-            System.out.println(error);
-            System.exit(1);
-        }
-        scanAnnotation_ConfigImportResource("org", callerRootPackageName);
-        scanAnnotation_Component(callerRootPackageName);
-        scanImpl_gRPC();
-        runCLI_init(args);
-        if (runCLI_ThenExit()) {
+    private void cli(String... args) {
+        initCLI(args);
+        if (runCLI_Utils()) {
             System.exit(0);
         }
-        runCLI_LoadBootApplicationConfig();
-    }
-
-    /**
-     * Sun property pointing the main class and its arguments. Might not be
-     * defined on non Hotspot VM implementations.
-     */
-    protected static final String SUN_JAVA_COMMAND = "sun.java.command";
-
-    /**
-     *
-     * @return
-     */
-    protected String scanJVM_StartCommand() {
-        //try {
-        String OS = System.getProperty("os.name").toLowerCase();
-        boolean isWindows = OS.contains("win");
-        // java binary
-        String java = System.getProperty("java.home") + "/bin/java";
-        // vm arguments
-        List<String> vmArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-        StringBuffer vmArgsOneLine = new StringBuffer();
-        for (String arg : vmArguments) {
-            // if it's the agent argument : we ignore it otherwise the
-            // address of the old application and the new one will be in conflict
-            if (!arg.contains("-agentlib")) {
-                vmArgsOneLine.append(arg);
-                vmArgsOneLine.append(" ");
-            }
-            if (arg.contains("com.sun.management.jmxremote.port")) {
-                jmxRequired = true;
-            }
-        }
-        // run the command to execute, bindingMetaAdd the vm args
-        final StringBuilder cmd = isWindows
-                ? new StringBuilder("\"" + java + "\" " + vmArgsOneLine)
-                : new StringBuilder(java + " " + vmArgsOneLine);
-
-        // program main and program arguments
-        String[] mainCommand = System.getProperty(SUN_JAVA_COMMAND).split(" ");
-        // program main is a jar
-        if (mainCommand[0].endsWith(".jar")) {
-            // if it's a jar, bindingMetaAdd -jar mainJar
-            cmd.append("-jar ").append(new File(mainCommand[0]).getPath());
-        } else {
-            // else it's a .class, bindingMetaAdd the classpath and mainClass
-            cmd.append("-cp \"").append(System.getProperty("java.class.path")).append("\" ").append(mainCommand[0]);
-        }
-        // finally bindingMetaAdd program arguments
-        for (int i = 1; i < mainCommand.length; i++) {
-            cmd.append(" ");
-            cmd.append(mainCommand[i]);
-        }
-        return cmd.toString();
-    }
-
-    private void scanAnnotation_Version(Class callerClass) {
-        Version v = (Version) callerClass.getAnnotation(Version.class);
-        if (v != null) {
-            appVersionShort = v.logFileName();
-            if (StringUtils.isBlank(appVersionShort)) {
-                appVersionShort = v.value()[0];
-            }
-            appVersionLong = Arrays.toString(v.value());
-        } else {
-            appVersionShort = "app";
-        }
-        memo.append("\n\t- callerVersion=").append(appVersionLong);
-    }
-
-    /**
-     *
-     * @param rootPackageName
-     * @param sb
-     * @param displayByTags
-     * @return error message
-     */
-    private String scanAnnotation_Unique(String rootPackageName, StringBuilder sb, String... displayByTags) {
-        Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Unique.class, rootPackageName);
-        for (Class classWithUniqueValues : classes) {
-            Unique u = (Unique) classWithUniqueValues.getAnnotation(Unique.class);
-            String tag = u.name();
-            availableUniqueTagOptions.add(tag);
-            Class uniqueType = u.type();
-            List<String> tags = List.of(displayByTags);
-            try {
-                Map<Object, Set<String>> duplicated = ApplicationUtil.checkDuplicateFields(classWithUniqueValues, uniqueType);
-                if (!duplicated.isEmpty()) {
-                    String report = BeanUtil.toJson(duplicated, true, false);
-                    return "Duplicated " + uniqueType.getSimpleName() + " values in " + classWithUniqueValues.getSimpleName() + " " + report;
-                } else if (tags.contains(tag)) {
-                    Map<String, Integer> results = new HashMap();
-                    ReflectionUtil.loadFields(classWithUniqueValues, uniqueType, results, false);
-                    Map<Object, String> sorted = results
-                            .entrySet()
-                            .stream()
-                            .sorted(Map.Entry.comparingByValue())
-                            .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
-                    String json = BeanUtil.toJson(sorted, true, false);
-                    sb.append("\n").append(tag).append("=").append(json);
-                }
-            } catch (Throwable ex) {
-                throw new RuntimeException("check unique faile on package " + rootPackageName + ".*", ex);
-            }
-        }
-        return null;
-    }
-
-    private void scanAnnotation_ConfigImportResource(String... rootPackageNames) {
-        Set<String> pakcages = Set.copyOf(List.of(rootPackageNames));
-        Set<Class<? extends JExpressConfig>> classesAll = new HashSet();//to remove duplicated
-        for (String rootPackageName : pakcages) {
-            Set<Class<? extends JExpressConfig>> jExpressConfigClasses = ReflectionUtil.getAllImplementationsByInterface(JExpressConfig.class, rootPackageName);
-            classesAll.addAll(jExpressConfigClasses);
-        }
-
-        for (Class jExpressConfigClass : classesAll) {
-            int mod = jExpressConfigClass.getModifiers();
-            if (Modifier.isAbstract(mod) || Modifier.isInterface(mod)) {
-                continue;
-            }
-            String key = jExpressConfigClass.getSimpleName();
-            if (scanedJExpressConfigs.containsKey(key)) {
-                continue;
-            }
-            String configFileName = null;
-            ImportResource ir = (ImportResource) jExpressConfigClass.getAnnotation(ImportResource.class);
-            if (ir != null) {
-                configFileName = ir.value();
-                String checkImplTagUsed = ir.checkImplTagUsed();
-                boolean loadWhenImplTagUsed = ir.loadWhenImplTagUsed();
-
-                ConfigMetadata metadata = new ConfigMetadata(configFileName, jExpressConfigClass, null, checkImplTagUsed, loadWhenImplTagUsed);
-                //availableAppConfigs.add(rc);
-                scanedJExpressConfigs.put(key, metadata);
-                memo.append("\n\t- scan.bindBootConfig: configFileName=").append(configFileName).append(", class=").append(jExpressConfigClass.getName()).append(", implTag=").append(checkImplTagUsed).append(", loadWhenImplTagUsed=").append(loadWhenImplTagUsed);
-            }
-            memo.append("\n\t- cfg=").append(jExpressConfigClass.getName()).append(", file=").append(configFileName);
-        }
-    }
-
-    /**
-     * To bind a configuration file implemented by a JExpressConfig instance,
-     * which will be loaded and managed by SummerBoot Application
-     *
-     * @param <T>
-     * @param configFileName
-     * @param config
-     * @param checkImplTagUsed
-     * @param loadWhenImplTagUsed
-     * @return
-     */
-    public <T extends SummerApplication> T bindBootConfig(String configFileName, JExpressConfig config, String checkImplTagUsed, boolean loadWhenImplTagUsed) {
-        memo.append("\n\t- bindBootConfig: configFileName=").append(configFileName).append(", config=").append(config.getClass().getName()).append(", implTag=").append(checkImplTagUsed).append(", loadWhenImplTagUsed=").append(loadWhenImplTagUsed);
-        String key = config.getClass().getSimpleName();
-        ConfigMetadata metadata = new ConfigMetadata(configFileName, config.getClass(), config, checkImplTagUsed, loadWhenImplTagUsed);
-        scanedJExpressConfigs.put(key, metadata);
-        return (T) this;
-    }
-
-    protected List<String> scanAnnotation_Component(String... rootPackageNames) {
-        Set<Class<?>> classesAll = new HashSet();//to remove duplicated
-        for (String rootPackageName : rootPackageNames) {
-            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Component.class, rootPackageName);
-            classesAll.addAll(classes);
-        }
-
-        List<String> tags = new ArrayList();
-        StringBuilder sb = new StringBuilder();
-        for (Class componentClass : classesAll) {
-            Component a = (Component) componentClass.getAnnotation(Component.class);
-            String implTag = a.implTag();
-            Class bindingClass = a.bind();
-            List<Class> interfaces = ReflectionUtil.getAllInterfaces(componentClass);
-            if (bindingClass == Component.DEFAULT || bindingClass == null) {//bindingClass not specified by using the default one
-                if (interfaces.size() == 1) {//happy path
-                    bindingClass = interfaces.get(0);
-                } else {
-                    sb.append("\nClass").append(componentClass).append(" needs to specify bind class @Component(bind=TheMissing.class) due to it has multiple Interfaces:").append(interfaces);
-                    continue;
-                }
-            } else {
-                if (!interfaces.contains(bindingClass)) {
-                    sb.append("\nClass").append(componentClass).append(" specifies @Component(bind=").append(bindingClass.getSimpleName()).append(".class), but the bind class is not in its Interfaces:").append(interfaces);
-                    continue;
-                } // else also happy path
-            }
-            tags.add(implTag);
-            scanAnnotation_Component_Add2BindingMap(bindingClass, implTag, componentClass);
-        }
-        scanAnnotation_Component_ValidateBindingMap(sb);
-        if (!sb.isEmpty()) {
-            System.out.println("IOC Code error:" + sb);
-            System.exit(1);
-        }
-        List<String> componentImplTags = tags.stream()
-                .distinct()
-                .collect(Collectors.toList());
-        componentImplTags.removeAll(Collections.singleton(null));
-        componentImplTags.removeAll(Collections.singleton(""));
-        availableImplTagOptions.addAll(componentImplTags);
-        return componentImplTags;
-    }
-
-    private void scanAnnotation_Component_Add2BindingMap(Class bindingClass, String implTag, Class componentClass) {
-        memo.append("\n\t- adding to guiceModule.bind(").append(bindingClass.getName()).append(").to(").append(componentClass.getName()).append("), implTag=").append(implTag);
-        Map<String, List<Class>> componentMap = scanedComponentBbindingMap.get(bindingClass);
-        if (componentMap == null) {
-            componentMap = new HashMap();
-            scanedComponentBbindingMap.put(bindingClass, componentMap);
-        }
-        List<Class> componentList = componentMap.get(implTag);
-        if (componentList == null) {
-            componentList = new ArrayList();
-            componentMap.put(implTag, componentList);
-        }
-        componentList.add(componentClass);
-    }
-
-    private void scanAnnotation_Component_ValidateBindingMap(StringBuilder sb) {
-        for (Class bindingClass : scanedComponentBbindingMap.keySet()) {
-            Map<String, List<Class>> componentMap = scanedComponentBbindingMap.get(bindingClass);
-            for (String mockTag : componentMap.keySet()) {
-                List<Class> componentList = componentMap.get(mockTag);
-                int size = componentList.size();
-                if (size != 1) {
-                    sb.append("\nIOC ").append(bindingClass).append(" required a single bean, but ").append(size).append(" were found with the same mockTag(").append(mockTag).append("): ").append(componentList);
-                }
-            }
-        }
-    }
-
-    private void scanImpl_gRPC() {
-        Set<Class<? extends ServerServiceDefinition>> gRPC_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(ServerServiceDefinition.class, callerRootPackageName);
-        hasGRPCImpl = gRPC_ImplClasses != null && !gRPC_ImplClasses.isEmpty();
+        runCLI_GetApplicationConfig();
     }
 
     protected CommandLine cli;
     protected final Options cliOptions = new Options();
     protected final HelpFormatter cliHelpFormatter = new HelpFormatter();
 
-    protected void runCLI_init(String[] args) {
-        checkEnvTag(args);
+    protected void initCLI(String[] args) {
         memo.append("\n\t- CLI.init: args=").append(Arrays.asList(args));
         Option arg = Option.builder(USAGE)
                 .desc("Usage/Help")
@@ -465,6 +158,7 @@ public abstract class BootCLI implements BootConstant {
             cliOptions.addOption(arg);
         }
 
+        cliOptions.addOption(Option.builder(CLI_CONFIG_TAG).hasArg().argName("tag").desc("Deprecated, use -" + CLI_CONFIG_DIR).build());
         arg = Option.builder(CLI_CONFIG_DIR)
                 .desc("the path to load the configuration files, or load from current folder when not specified")
                 .hasArg().argName("path")
@@ -521,7 +215,10 @@ public abstract class BootCLI implements BootConstant {
                 .build();
         cliOptions.addOption(arg);
 
-        buildCLIOptions(cliOptions);
+        List<SummerCLI> summerCLIs = scanImplementation_SummerCLI();
+        for (SummerCLI summerCLI : summerCLIs) {
+            summerCLI.initCLI(cliOptions);
+        }
 
         try {
             CommandLineParser parser = new DefaultParser();
@@ -533,9 +230,46 @@ public abstract class BootCLI implements BootConstant {
         }
     }
 
-    abstract protected void buildCLIOptions(Options options);
+    protected List<SummerCLI> scanImplementation_SummerCLI() {
+        List<SummerCLI> summerCLIs = new ArrayList();
+        Set<Class<? extends SummerCLI>> summerCLI_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerCLI.class, callerRootPackageName);
+        //prepare ordering
+        Set<Integer> orderSet = new TreeSet();
+        Map<Integer, List<SummerCLI>> orderMapping = new HashMap();
+        //process scan result
+        for (Class<? extends SummerCLI> c : summerCLI_ImplClasses) {
+            //get order
+            int order = 0;
+            Order o = (Order) c.getAnnotation(Order.class);
+            if (o != null) {
+                order = o.value();
+            }
+            //get data, cannot inject due to injector is not initialized yet
+            final SummerCLI instance;
+            try {
+                Constructor<? extends SummerCLI> cc = c.getConstructor();
+                cc.setAccessible(true);
+                instance = cc.newInstance();
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                throw new InaccessibleObjectException("Failed to call default constructor of " + c.getName());
+            }
 
-    protected boolean runCLI_ThenExit() {
+            //sort data by order
+            orderSet.add(order);
+            List<SummerCLI> sameOoderCLIs = orderMapping.get(order);
+            if (sameOoderCLIs == null) {
+                sameOoderCLIs = new ArrayList();
+                orderMapping.put(order, sameOoderCLIs);
+            }
+            sameOoderCLIs.add(instance);
+        }
+        for (int order : orderSet) {
+            summerCLIs.addAll(orderMapping.get(order));
+        }
+        return summerCLIs;
+    }
+
+    protected boolean runCLI_Utils() {
         boolean exit = false;
         //usage
         if (cli.hasOption(USAGE)) {
@@ -570,7 +304,7 @@ public abstract class BootCLI implements BootConstant {
         return exit;
     }
 
-    protected void runCLI_LoadBootApplicationConfig() {
+    protected void runCLI_GetApplicationConfig() {
         /*
          * [IoC] - set user selected implementations to override the default
          * should be invoked before onUserSpecifiedImplTagsReady was initialezed to avoid caller invoks LogManager.static{}
@@ -619,24 +353,19 @@ public abstract class BootCLI implements BootConstant {
         }
 
         /*
-         * [Config File] Location - determine the configuration path: cfgConfigDir
-
-        memo.append("\n\t- CLI.run: workingDir=").append(unittestWorkingDir);
-        if (StringUtils.isBlank(unittestWorkingDir)) {
-            unittestWorkingDir = "";
-        } else {
-            unittestWorkingDir = unittestWorkingDir + File.separator;
-        }*/
-        cfgConfigDir = null;//to clear the state
+         * [Config File] Location - determine the configuration path: userSpecifiedConfigDir
+         */
+        userSpecifiedConfigDir = null;//to clear the state
         if (cli.hasOption(CLI_CONFIG_DIR)) {
             String cfgDir = cli.getOptionValue(CLI_CONFIG_DIR).trim();
-            cfgConfigDir = new File(cfgDir).getAbsoluteFile();
-        } else if (envTag != null) {//@Deprecated backward compatible
+            userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
+        } else if (cli.hasOption(CLI_CONFIG_TAG)) {
+            String envTag = cli.getOptionValue(CLI_CONFIG_TAG).trim();
             String cfgDir = /*unittestWorkingDir +*/ "standalone_" + envTag + File.separator + "configuration";
-            cfgConfigDir = new File(cfgDir).getAbsoluteFile();
+            userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
             System.setProperty("domainName", envTag);
         }
-        if (cfgConfigDir == null) {
+        if (userSpecifiedConfigDir == null) {
             //show config on demand
             if (cli.hasOption(CLI_CONFIG_DEMO)) {
                 String cfgName = cli.getOptionValue(CLI_CONFIG_DEMO);
@@ -656,24 +385,24 @@ public abstract class BootCLI implements BootConstant {
                 System.exit(0);
             }
             //use current folder when user not specified
-            cfgConfigDir = CURRENT_DIR;
+            userSpecifiedConfigDir = CURRENT_DIR;
         }
-        if (cfgConfigDir != null && (!cfgConfigDir.exists() || !cfgConfigDir.isDirectory() || !cfgConfigDir.canRead())) {
-            System.out.println("Could access configuration path as a folder: " + cfgConfigDir);
+        if (userSpecifiedConfigDir != null && (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead())) {
+            System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
             System.exit(1);
         }
-        if (cfgConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
+        if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
             //set log folder outside user specified config folder
-            System.setProperty("loggingPath", cfgConfigDir.getAbsolutePath());
+            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
         } else {
             //set log folder outside user specified config folder
-            System.setProperty("loggingPath", cfgConfigDir.getParent());
+            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
         }
 
         /*
          * [Config File] Log4J - init
          */
-        Path logFilePath = Paths.get(cfgConfigDir.toString(), "log4j2.xml");
+        Path logFilePath = Paths.get(userSpecifiedConfigDir.toString(), "log4j2.xml");
         if (!Files.exists(logFilePath)) {
             StringBuilder log4j2XML = new StringBuilder();
             try (InputStream ioStream = this.getClass()
@@ -696,25 +425,28 @@ public abstract class BootCLI implements BootConstant {
         System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
         memo.append("\n\t- ").append(I18n.info.launchingLog.format(userSpecifiedResourceBundle, System.getProperty(BootConstant.LOG4J2_KEY)));
         log = LogManager.getLogger(SummerApplication.class);
-        log.info("Configuration path = {}", cfgConfigDir);
-        log.info(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorIntervalSec + ", StartCommand>" + jvmStartCommand);
-        /*should be invoked after log4j was initialized to avoid caller invokes LogManager.static{}*/
+        log.debug("Configuration path = {}", userSpecifiedConfigDir);
+        log.trace(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorIntervalSec + ", StartCommand>" + jvmStartCommand);
+
+        /*
+         * should be invoked after log4j was initialized to avoid caller invokes LogManager.static{}
+         */
         onUserSpecifiedImplTagsReady(userSpecifiedImplTags);//trigger subclass to init IoC container
 
         /*
          * [Config File] - encrypt/decrypt
          */
         if (cli.hasOption(CLI_ENCRYPT)) {
-            int updated = loadBootConfigs(ConfigUtil.ConfigLoadMode.cli_encrypt, null);
-            System.out.println(System.lineSeparator() + "\t " + updated + " config files have been decrypted in " + cfgConfigDir.getAbsolutePath());
+            int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_encrypt, null);
+            System.out.println(System.lineSeparator() + "\t " + updated + " config files have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
         } else if (cli.hasOption(CLI_DECRYPT)) {
             if (cli.hasOption(CLI_ADMIN_PWD_FILE)) {
                 System.err.println(System.lineSeparator() + "\t error: -" + CLI_ADMIN_PWD_FILE + " is not allowed for decryption, please private password with -" + CLI_ADMIN_PWD + " option when decrypt data");
                 System.exit(1);
             }
-            int updated = loadBootConfigs(ConfigUtil.ConfigLoadMode.cli_decrypt, null);
-            System.out.println(System.lineSeparator() + "\t " + updated + " config files have been decrypted in " + cfgConfigDir.getAbsolutePath());
+            int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt, null);
+            System.out.println(System.lineSeparator() + "\t " + updated + " config files have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
         }
 
@@ -726,15 +458,15 @@ public abstract class BootCLI implements BootConstant {
             for (String cfgName : scanedJExpressConfigs.keySet()) {
                 Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
                 try {
-                    ConfigUtil.createConfigFile(c, cfgConfigDir, cfgName, true);
+                    ConfigUtil.createConfigFile(c, userSpecifiedConfigDir, cfgName, true);
                 } catch (IOException ex) {
-                    System.out.println(ex + "\n\tFailed to generate config file (" + cfgName + ") in " + cfgConfigDir.getAbsolutePath());
+                    System.out.println(ex + "\n\tFailed to generate config file (" + cfgName + ") in " + userSpecifiedConfigDir.getAbsolutePath());
                     ex.printStackTrace();
                     System.exit(1);
                 }
                 i++;
             }
-            System.out.println("Total generated " + i + " configuration files in " + cfgConfigDir.getAbsolutePath());
+            System.out.println("Total generated " + i + " configuration files in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
         }
 
@@ -747,11 +479,50 @@ public abstract class BootCLI implements BootConstant {
         } else {
             userSpecifiedResourceBundle = null;
         }
-
-        runCLI(cli, cfgConfigDir);
     }
 
-    abstract protected void runCLI(CommandLine cli, File cfgConfigDir);
+    //abstract protected void runCLI(CommandLine cli, File cfgConfigDir);
+    protected boolean isUserSpecifiedImplTags(String mockItemName) {
+        return userSpecifiedImplTags.contains(mockItemName);
+    }
+
+    /**
+     * Triggered by CLI CLI_USE_IMPL, then to trigger subclass to init IoC
+     * container. IoC container initialization should happened after CLI and
+     * load configuration, it will called when BootCLI.CLI_USE_IMPL result is
+     * ready
+     *
+     * @param userSpecifiedImplTags
+     */
+    protected void onUserSpecifiedImplTagsReady(Set<String> userSpecifiedImplTags) {
+        BootGuiceModule defaultModule = new BootGuiceModule(this, callerClass, memo);
+        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedImplTags, memo);
+        Module bootModule = Modules.override(defaultModule).with(scanedModule);
+        Module applicationModule = userOverrideModule == null
+                ? bootModule
+                : Modules.override(bootModule).with(userOverrideModule);
+//        if (bindingChannelHandlerClass != null) {
+//            Module enabledModule = new Module() {
+//                @Override
+//                protected void configure() {
+//                    if (bindingChannelHandlerClass != null) {
+//                        bind(ChannelHandler.class).annotatedWith(Names.named(bindingChannelHandlerBindingName)).to(bindingChannelHandlerClass);
+//                    }
+//                }
+//            };
+//            guiceModule = Modules.override(guiceModule).with(enabledModule);
+//        }
+        if (userOverrideModule == null) {
+            memo.append("\n\t- init default Ioc @Conponent");
+        } else {
+            memo.append("\n\t- init user overridden Ioc @Conponent via").append(userOverrideModule.getClass().getName());
+        }
+
+        // Guice.createInjector(module) --> ScanedGuiceModule.configure() --> this will trigger BootCLI.onGuiceInjectorCreated_ControllersInjected
+        guiceInjector = Guice.createInjector(applicationModule);
+        NioConfig.instance(NioConfig.class).setGuiceInjector(guiceInjector);
+        scanImplementation_SummerRunner(guiceInjector);
+    }
 
     /**
      * initialize based on config files in configDir
@@ -760,18 +531,25 @@ public abstract class BootCLI implements BootConstant {
      * @param cfgChangeListener
      * @return
      */
-    protected int loadBootConfigs(ConfigUtil.ConfigLoadMode mode, ConfigChangeListener cfgChangeListener) {
+    protected int loadBootConfigFiles(ConfigUtil.ConfigLoadMode mode, ConfigChangeListener cfgChangeListener) {
         Map<String, JExpressConfig> configs = new LinkedHashMap<>();
         int updated = 0;
 
         switch (mode) {
             case app_run:
+                if (!hasControllers) {
+                    memo.append("\n\t- cfg.loading.skip: no @Controller found, skip=").append(NioConfig.class.getSimpleName());
+                    scanedJExpressConfigs.remove(NioConfig.class.getSimpleName());
+                }
                 if (!hasGRPCImpl) {
+                    memo.append("\n\t- cfg.loading.skip: no gRPC Server stub found, skip=").append(GRPCServerConfig.class.getSimpleName());
                     scanedJExpressConfigs.remove(GRPCServerConfig.class.getSimpleName());
                 }
                 if (!hasAuthImpl) {
+                    memo.append("\n\t- cfg.loading.skip: no @DeclareRoles or @RolesAllowed found in any @Controller, skip=").append(AuthConfig.class.getSimpleName());
                     scanedJExpressConfigs.remove(AuthConfig.class.getSimpleName());
                 }
+                break;
         }
         try {
             //1. get main configurations
@@ -781,12 +559,13 @@ public abstract class BootCLI implements BootConstant {
                     if (instance == null) {
                         instance = BootConfig.instance(registeredAppConfig.cfgClass);
                     }
+                    memo.append("\n\t- cfg.loading=").append(instance.getClass().getName()).append(", file=").append(registeredAppConfig.configFileName);
                     configs.put(registeredAppConfig.configFileName, instance);
                 }
             }
 
             //2. load configurations
-            updated = ConfigUtil.loadConfigs(mode, log, userSpecifiedResourceBundle, cfgConfigDir.toPath(), configs, userSpecifiedCfgMonitorIntervalSec, cfgConfigDir);
+            updated = ConfigUtil.loadConfigs(mode, log, userSpecifiedResourceBundle, userSpecifiedConfigDir.toPath(), configs, userSpecifiedCfgMonitorIntervalSec, userSpecifiedConfigDir);
             //3. regist listener if provided
             if (cfgChangeListener != null) {
                 ConfigUtil.setConfigChangeListener(cfgChangeListener);
@@ -798,75 +577,33 @@ public abstract class BootCLI implements BootConstant {
         return updated;
     }
 
-    private boolean isUserSpecifiedImplTags(String mockItemName) {
-        return userSpecifiedImplTags.contains(mockItemName);
-    }
-
-    /**
-     * Triggered by CLI CLI_USE_IMPL, then to trigger subclass to init IoC
-     * container.
-     *
-     * @param userSpecifiedImplTags
-     */
-    abstract protected void onUserSpecifiedImplTagsReady(Set<String> userSpecifiedImplTags);
-
-    private static class ConfigMetadata {
-
-        final Class cfgClass;
-        final String configFileName;
-        final JExpressConfig instance;
-        final String checkImplTagUsed;
-        final boolean loadWhenImplTagUsed;
-
-        ConfigMetadata(String configFileName, Class cfgClass, JExpressConfig instance, String checkImplTagUsed, boolean loadWhenImplTagUsed) {
-            this.configFileName = configFileName;
-            this.cfgClass = cfgClass;
-            this.instance = instance;
-            this.checkImplTagUsed = checkImplTagUsed;
-            this.loadWhenImplTagUsed = loadWhenImplTagUsed;
-        }
-    }
-
-    /**
-     * To add use impl tags
-     *
-     * @param <T>
-     * @param enumClass the enum contains impl tag items
-     * @return
-     */
-    public <T extends BootCLI> T addCliUseImplTags(Class<? extends Enum<?>> enumClass) {
-        return addCliUseImplTags(FormatterUtil.getEnumNames(enumClass));
-    }
-
-    /**
-     * To add use impl tags
-     *
-     * @param <T>
-     * @param mockItemNames the impl tag item names
-     * @return
-     */
-    public <T extends BootCLI> T addCliUseImplTags(String... mockItemNames) {
-        if (mockItemNames == null || mockItemNames.length < 1) {
-            return (T) this;
-        }
-        availableImplTagOptions.addAll(Set.of(mockItemNames));
-        memo.append("\n\t- availableImplTagOptions=").append(availableImplTagOptions);
-        return (T) this;
-    }
-
-    @Deprecated
-    private String envTag;
-
-    @Deprecated
-    private void checkEnvTag(String[] args) {
-        envTag = null;
-        for (int i = 0; i < args.length; i++) {
-            if ("-domain".equals(args[i])) {
-                if ((i + 1) < args.length) {
-                    envTag = args[i + 1];
-                }
-                break;
+    protected void scanImplementation_SummerRunner(Injector injector) {
+        Set<Class<? extends SummerRunner>> summerRunner_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerRunner.class, callerRootPackageName);
+        //prepare ordering
+        Set<Integer> orderSet = new TreeSet();
+        Map<Integer, List<SummerRunner>> orderMapping = new HashMap();
+        //process scan result
+        for (Class<? extends SummerRunner> c : summerRunner_ImplClasses) {
+            //get order
+            int order = 0;
+            Order o = (Order) c.getAnnotation(Order.class);
+            if (o != null) {
+                order = o.value();
             }
+            //get data
+            final SummerRunner instance = injector.getInstance(c);
+
+            //sort data by order
+            orderSet.add(order);
+            List<SummerRunner> sameOoderRunners = orderMapping.get(order);
+            if (sameOoderRunners == null) {
+                sameOoderRunners = new ArrayList();
+                orderMapping.put(order, sameOoderRunners);
+            }
+            sameOoderRunners.add(instance);
+        }
+        for (int order : orderSet) {
+            summerRunners.addAll(orderMapping.get(order));
         }
     }
 }

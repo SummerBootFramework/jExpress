@@ -36,8 +36,9 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.annotation.Ping;
-import org.summerboot.jexpress.nio.server.NioServerContext;
+import org.summerboot.jexpress.nio.server.NioCounter;
 import org.summerboot.jexpress.security.auth.AuthConfig;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
@@ -71,7 +72,10 @@ public class JaxRsRequestProcessorManager {
             processors = new ArrayList();
             duplicatedProcessors.put(key, processors);
         }
-        if (processors.isEmpty()) {
+
+        boolean a = key.equals(Ping.class.getName());
+        boolean b = m.getDeclaringClass().equals(BootController.class);
+        if (processors.isEmpty() || key.equals(Ping.class.getName()) && !m.getDeclaringClass().equals(BootController.class)) {
             processors.add(new ProcessorMeta(key, m, instance));
             return true;
         }
@@ -139,13 +143,13 @@ public class JaxRsRequestProcessorManager {
                     httpMethods.add(HttpMethod.GET);
                     Ping ping = javaMethod.getAnnotation(Ping.class);
                     if (ping != null) {
-                        boolean isNew = addProcessor("@Ping", javaMethod, javaInstance);
+                        boolean isNew = addProcessor(Ping.class.getName(), javaMethod, javaInstance);
                         if (!isNew) {
                             continue;
                         }
                         loadBalancingEndpoint = path;
-                        sb.append("\n\t").append(controllerClass.getName()).append(".").append(javaMethod.getName()).append("()");
-                        memo.append("\n\t- ").append("* GET").append(" ").append(path).append(" (").append(javaInstance).append(".").append(javaMethod.getName()).append(" )");
+                        sb.append("\n\t").append(javaMethod.getDeclaringClass().getName()).append(".").append(javaMethod.getName()).append("()");
+                        memo.append("\n\t- ").append("* GET").append(" ").append(path).append(" (").append(javaMethod.getDeclaringClass().getName()).append(".").append(javaMethod.getName()).append(" )");
                         continue;
                     }
                 }
@@ -211,12 +215,15 @@ public class JaxRsRequestProcessorManager {
             }
         }
         checkDuplicated(errors);
-        if (!errors.isEmpty()) {
+        //Java 17 if (!errors.isEmpty()) {
+        String error = errors.toString();
+        if (!error.isBlank()) {
             System.err.println("Invalid Java methods: \n" + errors);
             System.exit(1);
         }
         if (loadBalancingEndpoint != null) {
-            NioServerContext.setLoadBalancingEndpoint(loadBalancingEndpoint);
+            // NioCounter.setLoadBalancingEndpoint(loadBalancingEndpoint);
+            System.setProperty(SummerApplication.SYS_PROP_PING_URI, loadBalancingEndpoint);
         }
         final AuthConfig authCfg = AuthConfig.instance(AuthConfig.class);
         authCfg.addDeclareRoles(declareRoles);

@@ -49,7 +49,7 @@ public class HealthMonitor {
         );
     }
 
-    public static final String PROMPT = "Self Inspection Result: ";
+    public static final String PROMPT = "\tSelf Inspection Result: ";
 
     private static void startHealthInspectionSingleton(int inspectionIntervalSeconds, HealthInspector healthInspector) {
         if (healthInspector == null || inspectionIntervalSeconds < 1) {

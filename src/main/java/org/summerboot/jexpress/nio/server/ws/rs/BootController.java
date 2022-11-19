@@ -1,11 +1,26 @@
-package org.summerboot.jexpress.nio.server;
+/*
+ * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ *
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License and you have no
+ * policy prohibiting employee contributions back to this file (unless the contributor to this
+ * file is your current or retired employee). You may obtain a copy of the License at:
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package org.summerboot.jexpress.nio.server.ws.rs;
 
 import co.elastic.apm.api.CaptureTransaction;
+import com.google.inject.Inject;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -44,13 +59,14 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.annotation.Ping;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 /**
  *
- * @author Changski Tie Zheng Zhang, Annie Liu
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
 @Controller
@@ -78,14 +94,23 @@ import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 //@SecurityScheme(name = "OAuth2", type = SecuritySchemeType.OAUTH2, flows = @OAuthFlows())
 abstract public class BootController {
 
-//    @Inject
-    protected AuthTokenCache cache = null;
+    @Inject
+    protected AuthTokenCache authTokenCache;    
+    //abstract protected AuthTokenCache getAuthTokenCache();
+
     @Inject
     protected HealthInspector healthInspector;
 
-    //@Inject
+    @Inject
     protected Authenticator auth;
+    //abstract protected Authenticator getAuthenticator();
 
+    /**
+     * method with @Ping annotation will be handled by BootHttpPingHandler
+     */
+    @GET
+    @Path(Config.CURRENT_VERSION + Config.LOAD_BALANCER_HEALTH_CHECK)
+    @Ping
     @Operation(
             tags = {"Load Balancing"},
             summary = "ping service status",
@@ -99,13 +124,14 @@ abstract public class BootController {
                 )
             }
     )
-    @GET
-    @Path(Config.LOAD_BALANCER_HEALTH_CHECK)
-    @Ping
     public void ping() {
-        //to generate API only, the ping service is handled by framework
+        //method with @Ping annotation will be handled by BootHttpPingHandler
     }
 
+    @GET
+    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
+    @RolesAllowed({Config.ROLE_ADMIN})
+    @CaptureTransaction("admin.version")
     @Operation(
             tags = {"Admin"},
             summary = "get version",
@@ -127,18 +153,23 @@ abstract public class BootController {
             security = {
                 @SecurityRequirement(name = "BearerAuth")}
     )
-    @GET
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
-    @RolesAllowed({Config.ROLE_ADMIN})
-    @CaptureTransaction("admin.version")
     public void version(@Parameter(hidden = true) final ServiceContext context) {
         context.txt(getVersion()).status(HttpResponseStatus.OK);
     }
 
+    private String version;
+
     protected String getVersion() {
-        return SummerApplication.version();
+        if (version == null) {
+            version = System.getProperty(SummerApplication.SYS_PROP_APP_VERSION);//Although System.getProperty is a synchronized API, this is  a singleton
+        }
+        return version;
     }
 
+    @GET
+    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
+    @RolesAllowed({Config.ROLE_ADMIN})
+    @CaptureTransaction("admin.inspect")
     @Operation(
             tags = {"Admin"},
             summary = "do inspection",
@@ -159,11 +190,12 @@ abstract public class BootController {
             security = {
                 @SecurityRequirement(name = "BearerAuth")}
     )
-    @GET
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
-    @RolesAllowed({Config.ROLE_ADMIN})
-    @CaptureTransaction("admin.inspect")
     public void inspect(@Parameter(hidden = true) final ServiceContext context) {
+        //HealthInspector healthInspector = getHealthInspector();        
+        if (healthInspector == null) {
+            context.error(new Err(BootErrorCode.ACCESS_ERROR, "NOT_IMPLEMENTED", "HealthInspector not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            return;
+        }
         List<Err> error = healthInspector.ping(true);
         if (error == null || error.isEmpty()) {
             context.txt("inspection passed").errors(null).status(HttpResponseStatus.OK);
@@ -172,6 +204,10 @@ abstract public class BootController {
         }
     }
 
+    @PUT
+    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
+    @RolesAllowed({Config.ROLE_ADMIN})
+    @CaptureTransaction("admin.changeStatus")
     @Operation(
             tags = {"Admin"},
             summary = "Graceful shutdown by changing service status",
@@ -191,15 +227,15 @@ abstract public class BootController {
             security = {
                 @SecurityRequirement(name = "BearerAuth")}
     )
-    @PUT
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
-    @RolesAllowed({Config.ROLE_ADMIN})
-    @CaptureTransaction("admin.changeStatus")
     public void changeStatus(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final ServiceContext context) throws IOException {
         HealthMonitor.setPauseStatus(pause, "request by " + context.caller());
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
+    @CaptureTransaction("user.login")
     @Operation(
             tags = {"User"},
             summary = "login",
@@ -221,19 +257,24 @@ abstract public class BootController {
                 )
             }
     )
-    @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
-    @CaptureTransaction("user.login")
     public void login(@Parameter(required = true) @Nonnull @FormParam("j_username") String uid,
             @FormParam("j_password") String pwd,
             @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
+        //Authenticator auth = getAuthenticator();
+        if (auth == null) {
+            context.error(new Err(BootErrorCode.ACCESS_ERROR, "NOT_IMPLEMENTED", "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            return;
+        }
         String jwt = auth.authenticate(uid, pwd, AuthConfig.instance(AuthConfig.class).getJwtTTLMinutes(), context);
         if (jwt != null) {
             context.responseHeader(Config.X_AUTH_TOKEN, jwt);
         }
     }
 
+    @DELETE
+    @Path(Config.CURRENT_VERSION + Config.API_USER_LOGOUT)
+    @PermitAll
+    @CaptureTransaction("user.logout")
     @Operation(
             tags = {"User"},
             summary = "logout",
@@ -253,12 +294,14 @@ abstract public class BootController {
             security = {
                 @SecurityRequirement(name = "BearerAuth")}
     )
-    @DELETE
-    @Path(Config.CURRENT_VERSION + Config.API_USER_LOGOUT)
-    @PermitAll
-    @CaptureTransaction("user.logout")
     public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final ServiceContext context) {
-        auth.logout(request.getHttpHeaders(), cache, context);
+        //Authenticator auth = getAuthenticator();
+        if (auth == null) {
+            context.error(new Err(BootErrorCode.ACCESS_ERROR, "NOT_IMPLEMENTED", "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            return;
+        }
+        //AuthTokenCache authTokenCache = getAuthTokenCache();
+        auth.logout(request.getHttpHeaders(),authTokenCache , context);
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
@@ -325,7 +368,7 @@ interface Config {
 
     String ROLE_ADMIN = "AppAdmin";
 
-    String CURRENT_VERSION ="";// "/admin";
+    String CURRENT_VERSION = "";// "/admin";
 
     //Anonymous Non-Functional API
     String LOAD_BALANCER_HEALTH_CHECK = "/ping";

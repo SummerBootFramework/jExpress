@@ -131,7 +131,7 @@ public class JPAHibernateConfig implements JExpressConfig {
         }
         //scan @Entity
         //settings.put(Environment.LOADED_CLASSES, entityClasses);
-        String callerRootPackageName = SummerApplication.getCallerRootPackageName();
+        String callerRootPackageName = System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME);//SummerApplication.getCallerRootPackageName();
         String csvPackageNames = props.getProperty(Environment.LOADED_CLASSES, "");
         scanAnnotation_Entity(callerRootPackageName + "," + csvPackageNames, packages);
 

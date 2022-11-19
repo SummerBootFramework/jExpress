@@ -141,7 +141,7 @@ public class ConfigUtil {
             return updated;
         }
         cfg.load(configFile, true);
-        log.info(() -> cfg.info());
+        log.debug(() -> cfg.info());
         cfgUpdateTasks.put(configFile, () -> {
             Throwable cause = null;
             if (listener != null) {

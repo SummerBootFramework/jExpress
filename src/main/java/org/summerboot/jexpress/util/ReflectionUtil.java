@@ -84,9 +84,10 @@ public class ReflectionUtil {
     /**
      *
      * @param targetClass
+     * @param includeSuperClasses
      * @return all interfaces of the targetClass
      */
-    public static List<Class> getAllInterfaces(Class targetClass) {
+    public static List<Class> getAllInterfaces(Class targetClass, boolean includeSuperClasses) {
         List<Class> ret = new ArrayList();
         while (targetClass != null) {
             Class[] ca = targetClass.getInterfaces();
@@ -97,7 +98,22 @@ public class ReflectionUtil {
                     }
                 }
             }
-            targetClass = targetClass.getSuperclass();
+            targetClass = includeSuperClasses ? targetClass.getSuperclass() : null;
+        }
+        return ret;
+    }
+
+    /**
+     *
+     * @param targetClass
+     * @return
+     */
+    public static List<Class> getAllSuperClasses(Class targetClass) {
+        List<Class> ret = new ArrayList();
+        Class parent = targetClass.getSuperclass();
+        while (parent != null) {
+            ret.add(parent);
+            parent = parent.getSuperclass();
         }
         return ret;
     }
@@ -426,8 +442,8 @@ public class ReflectionUtil {
             if (includOverriddenSuperMethod) {
                 ret.addAll(Arrays.asList(methods));
             } else {
-                for(Method m:methods) {
-                    if(ret.contains(m)) {
+                for (Method m : methods) {
+                    if (ret.contains(m)) {
                         continue;
                     }
                     ret.add(m);

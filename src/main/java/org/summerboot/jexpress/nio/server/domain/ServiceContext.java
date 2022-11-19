@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.nio.server.domain;
 
-import org.summerboot.jexpress.nio.client.HttpClientConfig;
 import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.security.auth.Caller;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -186,6 +185,7 @@ public class ServiceContext {
 
     public ServiceContext reset() {
         status = HttpResponseStatus.OK;
+        autoConvertBlank200To204 = true;
         // 1.4 data
         data = null;
         txt = "";
@@ -230,7 +230,14 @@ public class ServiceContext {
     }
 
     public ServiceContext status(HttpResponseStatus status) {
+        return status(status, null);
+    }
+
+    public ServiceContext status(HttpResponseStatus status, Boolean autoConvertBlank200To204) {
         this.status = status;
+        if (autoConvertBlank200To204 != null) {
+            this.autoConvertBlank200To204 = autoConvertBlank200To204;
+        }
         return this;
     }
 
@@ -483,7 +490,7 @@ public class ServiceContext {
     public ServiceContext file(File file) {
         if (!precheckFile(file, downloadMode)) {
             String errorFileName = status.code() + (downloadMode ? ".txt" : ".html");
-            file = new File(nioCfg.getDocroot() + File.separator + nioCfg.getWebResources()
+            file = new File(nioCfg.getDocrootDir() + File.separator + nioCfg.getWebResources()
                     + File.separator + errorFileName).getAbsoluteFile();
         }
         this.txt = null;
@@ -712,11 +719,6 @@ public class ServiceContext {
     //@JsonInclude(JsonInclude.Include.NON_NULL)
     public List<Memo> memo() {
         return memo;
-    }
-
-    public ServiceContext autoConvertBlank200To204(boolean auto) {
-        this.autoConvertBlank200To204 = auto;
-        return this;
     }
 
     public boolean autoConvertBlank200To204() {

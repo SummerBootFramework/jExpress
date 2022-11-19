@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BootPostOfficeImpl implements PostOffice {
 
     private static final ExecutorService POSTOFFICE = buildPostffice();
-    protected static AlertEmailConfig smtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
+    protected static EmailAlertConfig smtpCfg = EmailAlertConfig.instance(EmailAlertConfig.class);
 
     protected static ExecutorService buildPostffice() {
         ExecutorService postoffice = new ThreadPoolExecutor(2, 2,

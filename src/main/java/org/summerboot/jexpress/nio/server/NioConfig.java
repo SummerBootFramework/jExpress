@@ -36,8 +36,12 @@ import javax.net.ssl.TrustManagerFactory;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -237,8 +241,8 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.HttpPingHandler")
     private volatile String pingHandlerAnnotatedName = BootHttpPingHandler.class.getName();
 
-    //@Config(key = "nio.HttpRequestHandler", defaultValue = BootHttpRequestHandler.BINDING_NAME)
-    private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.BINDING_NAME;//BootHttpRequestHandler.class.getName();
+    @Config(key = "nio.HttpRequestHandler")
+    private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.BINDING_NAME;
 
     @Config(key = "nio.WebSocket.Compress")
     private volatile boolean compressWebSocket = false;
@@ -314,7 +318,7 @@ public class NioConfig extends BootConfig {
     private volatile String welcomePage = "index.html";
 
     @Config(key = "server.http.web-server.tempupload")
-    private volatile String tempUoloadDir = "tempupload";
+    private volatile String tempUoload = "tempupload";
 
     private volatile boolean downloadMode;
     private volatile File rootFolder;
@@ -343,15 +347,18 @@ public class NioConfig extends BootConfig {
         return serverDefaultResponseHeaders;
     }
 
+    private String docrootDir;
+    private String tempUoloadDir;
+
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
         // 7. Web Server Mode       
         rootFolder = cfgFile.getParentFile().getParentFile();
-        docroot = rootFolder.getName() + File.separator + docroot;
+        docrootDir = null;
+        docrootDir = rootFolder.getName() + File.separator + docroot;
         downloadMode = StringUtils.isBlank(welcomePage);
-        tempUoloadDir = rootFolder.getAbsolutePath() + File.separator + tempUoloadDir;
-        //Path dir = Paths.get(tempUoloadDir).toAbsolutePath();
-        //Files.createDirectories(dir);
+        tempUoloadDir = null;
+        tempUoloadDir = rootFolder.getAbsolutePath() + File.separator + tempUoload;
 //        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r--------");
 //        FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions.asFileAttribute(permissions);
 //        Files.createDirectory(dir, fileAttributes);
@@ -429,6 +436,8 @@ public class NioConfig extends BootConfig {
                 try {
                     INJECTOR.getInstance(
                             Key.get(ChannelHandler.class, Names.named(fielUploadHandlerAnnotatedName)));
+                    Path dir = Paths.get(tempUoloadDir).toAbsolutePath();
+                    Files.createDirectories(dir);
                 } catch (Throwable ex) {
                     helper.addError("invalid HttpFileUpload Channel Handler name(" + fielUploadHandlerAnnotatedName + "): " + ex.toString());
                 }
@@ -495,7 +504,7 @@ public class NioConfig extends BootConfig {
         return tpe;
     }
 
-    private final static BootHttpFileUploadHandler DefaultFileUploadRejector = new BootHttpFileUploadRejector();
+    private final static ChannelInboundHandler DefaultFileUploadRejector = new BootHttpFileUploadRejector();
 
     public void setGuiceInjector(Injector _injector) {
         INJECTOR = _injector;
@@ -748,8 +757,8 @@ public class NioConfig extends BootConfig {
         return rootFolder;
     }
 
-    public String getDocroot() {
-        return docroot;
+    public String getDocrootDir() {
+        return docrootDir;
     }
 
     public String getWebResources() {

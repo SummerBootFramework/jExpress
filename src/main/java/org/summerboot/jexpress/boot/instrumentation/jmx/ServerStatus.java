@@ -74,7 +74,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
     }
 
     @Override
-    public void onNIOBindNewPort(String version, String sslMode, String protocol, String bindAddr, int listeningPort, String webApiContextRoot) {
+    public void onNIOBindNewPort(String version, String sslMode, String protocol, String bindAddr, int listeningPort, String loadBalancingEndpoint) {
         //log.info(() -> "Server " + version + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + webApiContextRoot);
     }
 

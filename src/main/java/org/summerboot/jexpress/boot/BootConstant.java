@@ -37,4 +37,16 @@ interface BootConstant {
     String CFG_ALERT = "cfg_alert.properties";
     String CFG_NIO = "cfg_nio.properties";
     String CFG_GRPC = "cfg_grpc.properties";
+
+    /*
+     * Pass by System.setProperty() instead of making them public static, any better idea?
+     * ‘java.lang.System.getProperty()’ API underlyingly uses ‘java.util.Hashtable.get()’ API. 
+     * Please be advised that ‘java.util.Hashtable.get()’ is a synchronized API. 
+     * It means only one thread can invoke the ‘java.util.Hashtable.get()’ method at any given time. 
+     */
+    String SYS_PROP_APP_VERSION = "version";//used by BootController.version()
+    String SYS_PROP_APP_PACKAGE_NAME = "appPackage";//used by both log4j2.xml ${sys:appPackage} and JPAHibernateConfig to scan @Entity
+    String SYS_PROP_APP_NAME = "appappName";//used by log4j2.xml ${sys:appappName}
+    String SYS_PROP_LOGGINGPATH = "logDir";//used by log4j2.xml ${sys:loggingPath}
+    String SYS_PROP_PING_URI = "pingURI";//used by NioServer.bind() and BootHttpPingHandler. TODO: use injector
 }

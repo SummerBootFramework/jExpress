@@ -19,7 +19,7 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.AlertEmailConfig;
+import org.summerboot.jexpress.integration.smtp.EmailAlertConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import com.google.inject.Inject;
@@ -52,7 +52,7 @@ import org.summerboot.jexpress.util.FormatterUtil;
 @Singleton
 abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
-    public static final String BINDING_NAME = "jExpressHttpRequestHandler";
+    public static final String BINDING_NAME = "BootHttpRequestHandler";
 
     @Inject
     protected PostOffice po;
@@ -60,7 +60,7 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
     @Inject
     protected HealthInspector healthInspector;
 
-    protected static AlertEmailConfig cmtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
+    protected static EmailAlertConfig cmtpCfg = EmailAlertConfig.instance(EmailAlertConfig.class);
 
     @Override
     protected void service(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
