@@ -31,6 +31,7 @@ import java.util.Set;
  */
 public class User implements Serializable, Caller, Comparable<User> {
 
+    protected static AuthConfig authCfg = AuthConfig.cfg;
     protected Long tenantId = 0L;
     protected String tenantName;
     protected Long id = 0L;
@@ -118,7 +119,7 @@ public class User implements Serializable, Caller, Comparable<User> {
 
     @Override
     public boolean isInRole(String role) {
-        RoleMapping rm = AuthConfig.CFG.getRole(role);
+        RoleMapping rm = authCfg.getRole(role);
         if (rm == null) {
             return false;
         }

@@ -50,9 +50,9 @@ public interface Authenticator extends HealthInspector {
      */
     String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws IOException, NamingException;
 
-    JwtBuilder marshalCaller(Caller caller);
+    JwtBuilder toJwt(Caller caller);
 
-    Caller unmarshalCaller(Claims claims);
+    Caller fromJwt(Claims claims);
 
     /**
      * Retrieve token based on RFC 6750 - The OAuth 2.0 Authorization Framework

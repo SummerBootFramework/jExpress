@@ -18,27 +18,33 @@ package org.summerboot.jexpress.integration.smtp;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.Memo;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
+import java.util.HashSet;
+import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  * Volatile Bean　Pattern
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class SMTPConfig extends BootConfig {
-
-    public static final SMTPConfig CFG = new SMTPConfig();
+@ImportResource(SummerApplication.CFG_SMTP)
+public class SMTPClientConfig extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(SMTPConfig.class);
+        String t = generateTemplate(SMTPClientConfig.class);
         System.out.println(t);
+    }
+    
+    public static final SMTPClientConfig cfg = new SMTPClientConfig();
+
+    private SMTPClientConfig() {
     }
 
     @Override
@@ -49,53 +55,56 @@ public class SMTPConfig extends BootConfig {
     private volatile Session mailSession;
 
     //1. SMTP Settings
-    @Memo(title = "1. SMTP Settings")
+    @ConfigHeader(title = "1. SMTP Settings")
     @JsonIgnore
     @Config(key = "mail.smtp.host")
     protected volatile String smtpHost = "smtp.gmail.com";
 
     @JsonIgnore
-    @Config(key = "mail.smtp.port", required = false)
+    @Config(key = "mail.smtp.port",
+            desc = "Port 25: The original standard SMTP port\n"
+            + "Port 587: The standard secure SMTP port")
     protected volatile int smtpPort = 587;
 
     @JsonIgnore
-    @Config(key = "mail.smtp.auth", required = false)
+    @Config(key = "mail.smtp.auth")
     protected volatile boolean smtpAuth = true;
 
     @JsonIgnore
-    @Config(key = "mail.smtp.starttls.enable", required = false)
+    @Config(key = "mail.smtp.starttls.enable")
     protected volatile boolean smtpStarttls = true;
 
     @JsonIgnore
     @Config(key = "mail.smtp.userName", desc = "Display name")
-    protected volatile String smtpUserDisplayName;
+    protected volatile String smtpUserDisplayName = "John Doe";
 
     @JsonIgnore
     @Config(key = "mail.smtp.user", desc = "Email account")
-    protected volatile String smtpUser;
+    protected volatile String smtpUser = "johndoe@???.com";
 
     @JsonIgnore
-    @Config(key = "mail.smtp.pwd", validate = Config.Validate.Encrypted, required = false)
+    @Config(key = "mail.smtp.pwd", validate = Config.Validate.Encrypted)
     protected volatile String smtpPassword;
 
     //2. Alert Recipients
-    @Memo(title = "2. Alert Recipients",
+    @ConfigHeader(title = "2. Alert Recipients",
             format = "CSV format",
             example = "johndoe@test.com, janedoe@test.com")
-    @Config(key = "email.to.AppSupport", required = false)
+    @Config(key = "email.to.AppSupport", validate = Config.Validate.EmailRecipients,
+            desc = "The default alert email recipients")
     protected volatile Set<String> emailToAppSupport;
 
-    @Config(key = "email.to.Development", required = false,
+    @Config(key = "email.to.Development", validate = Config.Validate.EmailRecipients,
             desc = "use AppSupport if not provided")
     protected volatile Set<String> emailToDevelopment;
 
-    @Config(key = "email.to.ReportViewer", required = false,
+    @Config(key = "email.to.ReportViewer", validate = Config.Validate.EmailRecipients,
             desc = "use AppSupport if not provided")
     protected volatile Set<String> emailToReportViewer;
 
-    @Config(key = "debouncing.emailalert_minute", defaultValue = "30",
+    @Config(key = "debouncing.emailalert_minute",
             desc = "Alert message with the same title will not be sent out within this minutes")
-    protected volatile int emailAlertDebouncingInterval;
+    protected volatile int emailAlertDebouncingInterval = 30;
 
     //3. mail session for Json display only
     private Properties mailSessionProp;

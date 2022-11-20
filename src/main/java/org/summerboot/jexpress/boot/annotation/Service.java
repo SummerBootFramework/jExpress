@@ -13,15 +13,30 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.instrumentation;
+package org.summerboot.jexpress.boot.annotation;
+
+import com.google.inject.BindingAnnotation;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface NIOStatusListener {
+@Target(value = {ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
+@Retention(value = RetentionPolicy.RUNTIME)
+@Documented
+@BindingAnnotation
+public @interface Service {
+    String NO_TAG = "";
+    String NO_NAMED = "";
 
-    void onNIOAccessReportUpdate(long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest);
+    Class[] binding() default {};
 
-    void onNIOBindNewPort(String VERSION, String sslMode, String protocol, String bindAddr, int listeningPort, String loadBalancingEndpoint);
+    String implTag() default NO_TAG;
+
+    String named() default NO_NAMED;
 }

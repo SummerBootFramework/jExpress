@@ -13,15 +13,31 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.instrumentation;
+package org.summerboot.jexpress.security.auth;
+
+import java.io.IOException;
+import java.util.List;
+import javax.naming.NamingException;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface NIOStatusListener {
+public class AuthenticatorMockImpl extends BootAuthenticator {
 
-    void onNIOAccessReportUpdate(long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest);
+    @Override
+    protected Caller login(String uid, String password, AuthenticatorListener listener) throws IOException, NamingException {
+        if (!uid.equals(password)) {
+            return null;
+        }
+        long userId = uid.hashCode();
+        User user = new User(userId, uid);
+        return user;
+    }
 
-    void onNIOBindNewPort(String VERSION, String sslMode, String protocol, String bindAddr, int listeningPort, String loadBalancingEndpoint);
+    @Override
+    public List ping(Object... param) {
+        return null;
+    }
+
 }
