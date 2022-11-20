@@ -48,7 +48,6 @@ import org.summerboot.jexpress.boot.config.JExpressConfig;
  */
 public class RedisConfig implements JExpressConfig {
 
-    public static final RedisConfig CFG = new RedisConfig();
     private static final String PK = "primary";
 
     private static volatile Logger log = null;
@@ -58,6 +57,11 @@ public class RedisConfig implements JExpressConfig {
     private volatile List<String> nodes;
     private volatile int reconnectRetryIntervalMinutes;
     private volatile int sendAlertIntervalMinutes;
+
+    public static final RedisConfig cfg = new RedisConfig();
+
+    public RedisConfig() {
+    }
 
     @Override
     public File getCfgFile() {

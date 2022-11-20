@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{ISO8601}{Canada/Eastern} %p %c{}.%M() [%t] %m %ex%n"/>
+        </Console>
+	
+        <!-- 
+            1. Requires JVM arg: -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector 
+            2. Required total disk spece: around 200MB
+            3. Archive logs: by DAY and split them by MINUTE
+            4. Default log level is tuned for development
+        -->
+        <RollingRandomAccessFile
+            name="StatusLogFile"
+            fileName="${sys:logDir}/log/${sys:appappName}_status_${hostName}.log"
+            filePattern="${sys:logDir}/log/$${date:yyyy-MM-dd}/${sys:appappName}_status_${hostName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
+            immediateFlush="false"
+            ignoreExceptions="false">
+            <PatternLayout pattern="%d %p %c{}.%M() [%t] %m %ex%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="2MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="50" />
+        </RollingRandomAccessFile>  
+        <RollingRandomAccessFile
+            name="RequestLogFile"
+            fileName="${sys:logDir}/log/${sys:appappName}_requests_${hostName}.log"
+            filePattern="${sys:logDir}/log/$${date:yyyy-MM-dd}/${sys:appappName}_requests_${hostName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
+            immediateFlush="false"
+            ignoreExceptions="false">
+            <PatternLayout pattern="%d %p %c{}.%M() [%t] %m %ex%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="500" />
+        </RollingRandomAccessFile>
+    </Appenders>
+    <Loggers>
+        <Root level="warn" includeLocation="true">
+            <AppenderRef ref="StatusLogFile"/>
+            <!-- -->
+            <AppenderRef ref="Console"/>
+        </Root>
+        <Logger level="info" name="com.hazelcast" includeLocation="true"/>
+        <Logger level="warn" name="io.netty" includeLocation="true"/>
+        <Logger level="trace" name="org.summerboot.jexpress.boot" includeLocation="true"/>
+        <Logger level="info" name="org.summerboot.jexpress.nio.client.HttpClientConfig" includeLocation="true"/>
+        <Logger level="info" name="org.summerboot.jexpress.nio.server.NioServerHttpInitializer" includeLocation="true"/> 
+        <Logger level="debug" name="org.summerboot.jexpress.nio.server.NioServer" includeLocation="true"/>
+        
+        <Logger level="info" name="org.summerboot.jexpress.nio.server.DefaultHttpRequestHandler" includeLocation="false" additivity="false">
+            <AppenderRef ref="RequestLogFile"/>
+            <!-- -->
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger level="debug" name="org.summerboot.jexpress.integration.ldap" includeLocation="true" additivity="false">
+            <AppenderRef ref="RequestLogFile"/>
+            <!-- -->
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger level="debug" name="org.hibernate.SQL" includeLocation="true" additivity="false">
+            <AppenderRef ref="RequestLogFile"/>
+            <!-- -->
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger level="debug" name="org.hibernate.type" includeLocation="true" additivity="false">
+            <AppenderRef ref="RequestLogFile"/>
+            <!-- -->
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <Logger level="debug" name="${sys:appPackage}" includeLocation="true" additivity="false">
+            <AppenderRef ref="RequestLogFile"/>
+            <!-- -->
+            <AppenderRef ref="Console"/>
+        </Logger>
+    </Loggers>
+</Configuration>

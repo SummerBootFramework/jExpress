@@ -80,7 +80,7 @@ public class FormatterUtil {
     }
 
     public static <T extends Object> String toCSV(Collection<T> a) {
-        return a.stream().map(String::valueOf).collect(Collectors.joining(","));
+        return a.stream().map(String::valueOf).collect(Collectors.joining(", "));
     }
 
     public static String[] getEnumNames(Class<? extends Enum<?>> e) {

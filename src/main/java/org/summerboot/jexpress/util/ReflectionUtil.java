@@ -36,7 +36,10 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,16 +56,66 @@ import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
  */
 public class ReflectionUtil {
 
+    /**
+     *
+     * @param <T>
+     * @param interfaceClass
+     * @param rootPackageName
+     * @return
+     */
     public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, String rootPackageName) {
         Reflections reflections = new Reflections(rootPackageName);
         Set<Class<? extends T>> classes = reflections.getSubTypesOf(interfaceClass);
         return classes;
     }
 
+    /**
+     *
+     * @param annotation
+     * @param rootPackageName
+     * @return
+     */
     public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, String rootPackageName) {
         Reflections reflections = new Reflections(rootPackageName);
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(annotation);
         return classes;
+    }
+
+    /**
+     *
+     * @param targetClass
+     * @param includeSuperClasses
+     * @return all interfaces of the targetClass
+     */
+    public static List<Class> getAllInterfaces(Class targetClass, boolean includeSuperClasses) {
+        List<Class> ret = new ArrayList();
+        while (targetClass != null) {
+            Class[] ca = targetClass.getInterfaces();
+            if (ca != null) {
+                for (Class c : ca) {
+                    if (c != null) {
+                        ret.add(c);
+                    }
+                }
+            }
+            targetClass = includeSuperClasses ? targetClass.getSuperclass() : null;
+        }
+        return ret;
+    }
+
+    /**
+     *
+     * @param targetClass
+     * @return
+     */
+    public static List<Class> getAllSuperClasses(Class targetClass) {
+        List<Class> ret = new ArrayList();
+        Class parent = targetClass.getSuperclass();
+        while (parent != null) {
+            ret.add(parent);
+            parent = parent.getSuperclass();
+        }
+        return ret;
     }
 
     /**
@@ -282,6 +335,8 @@ public class ReflectionUtil {
             return Enum.valueOf((Class<Enum>) targetClass, value);
         } else if (targetClass.equals(OffsetDateTime.class)) {
             return OffsetDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+        } else if (targetClass.equals(ZonedDateTime.class)) {
+            return ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
         } else if (targetClass.equals(LocalDateTime.class)) {
             return LocalDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME);
         } else {
@@ -359,8 +414,43 @@ public class ReflectionUtil {
         }
     }
 
+    private static final String MY_PACKAGE_ROOT = "org.";
+
     public static String getRootPackageName(Class callerClass) {
         String packageName = callerClass.getPackageName();
+        if (packageName.startsWith(MY_PACKAGE_ROOT)) {
+            int offset = MY_PACKAGE_ROOT.length();
+            return packageName.substring(0, packageName.indexOf(".", offset));
+        }
         return packageName.substring(0, packageName.indexOf("."));
+    }
+
+    public static List<Field> getDeclaredAndSuperClassesFields(Class targetClass) {
+        List<Field> ret = new ArrayList();
+        do {
+            Field[] fields = targetClass.getDeclaredFields();
+            ret.addAll(Arrays.asList(fields));
+            targetClass = targetClass.getSuperclass();
+        } while (targetClass != null);
+        return ret;
+    }
+
+    public static List<Method> getDeclaredAndSuperClassesMethods(Class targetClass, boolean includOverriddenSuperMethod) {
+        List<Method> ret = new ArrayList();
+        do {
+            Method[] methods = targetClass.getDeclaredMethods();
+            if (includOverriddenSuperMethod) {
+                ret.addAll(Arrays.asList(methods));
+            } else {
+                for (Method m : methods) {
+                    if (ret.contains(m)) {
+                        continue;
+                    }
+                    ret.add(m);
+                }
+            }
+            targetClass = targetClass.getSuperclass();
+        } while (targetClass != null);
+        return ret;
     }
 }

@@ -1,6 +1,8 @@
-# Summer Boot Framework was initiated by a group of developers in 2004 to provide a high performance, free customizable but also lightweight Netty JAX-RS RESTful and gRPC service with JPA and other powerful reusable non-functional features, and was adopted by several Toronto law firms in 2011 to customize their back-end services.
+# Summer Boot Framework was initiated by a group of developers in 2004 to provide a high performance, free customizable but also lightweight Netty JAX-RS RESTful and gRPC service with JPA and other powerful reusable non-functional features, and since 2011 was adopted by several Toronto law firms to customize their back-end services.
 
-# Its sub-project, jExpress, focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
+# Its sub-project, jExpress (a.k.a. Summer Boot Framework Core), focuses on solving the following non-functional and operational maintainability requirements, which are (probably) not yet available in Spring Boot.
+
+![Summer Boot Overview](SummerBootOverview.png)
 
 **Open Source History: jExpress was open sourced initially on MS MySpace in Sep 2006, due to the shutdown of MySpace this framework was migrated to a server sponsored by one of the law firms in October 2011, then migrated to GitLab in Dec 2016, eventually migrated to GitHub in Sep 2021.**  
 
@@ -16,7 +18,7 @@
 
 - To solve the performance bottleneck of traditional multi-threading mode at I/O layer
 
-- Quickly develop a RESTful Web Services with JAX-RS
+- Quickly develop a RESTful Web Services with JAX-RS with minimal code required 
 
   
 
@@ -28,166 +30,101 @@
 
   
 
-**1.3 Sample Code**
+**1.3 Sample Code** - https://github.com/SummerBootFramework/jExpressDemo-HelloSummer
 
 pom.xml
 
 ```
 <dependency>
-	<groupId>org.summerboot</groupId>
-	<artifactId>jexpress</artifactId>
+    <groupId>org.summerboot</groupId>
+    <artifactId>jexpress</artifactId>
 </dependency>
 ```
 
 Main.java
 
 ```bash
+import org.summerboot.jexpress.boot.SummerApplication;
+
 public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-                .bind_NIOHandler(HttpRequestHandler.class, "my_handler")
-                .run(args, "My Service 1.0");
+
+    public static void main(String... args) {
+        SummerApplication.run();
     }
 }
-
-#1. HttpRequestHandler is your ChannelHandler implementation, if you just want to use default functions, just extends org.summerboot.jexpress.nio.server.BootHttpRequestHandler
-#2. create a RESTful API class with JAX-RS style, and annotate this class with @Controller 
-```
-
-cfg_nio.properties
-
-```
-nio.HttpRequestHandler=my_handler
-```
-
-HttpRequestHandler.java
-
-```
-@Singleton
-public class HttpRequestHandler extends BootHttpRequestHandler {
-
-    @Inject
-    protected Authenticator auth;
-
-    @Inject
-    protected TokenCache cache;
-
-    @Override //role-based validation
-    protected boolean authenticateCaller(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws IOException {
-        auth.verifyToken(httpRequestHeaders, null, context);
-        return context.caller() != null;
-    }
-}
-
 ```
 
 A RESTful API class with JAX-RS style, and annotate this class with @Controller 
 
 ```
-@Singleton
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.nio.server.ws.rs.BootController;
+
 @Controller
-@Path(MY_CONTEXT_ROOT + "/mock")
-@Consumes(MediaType.APPLICATION_JSON)
-public class MyClass {
-    @POST
-    @PUT
-    @Path("/xml/{sset}/{year}/{foo2}")// mock/xml/4,3,2/2012;  author  =   Changski   ;  country =  加拿大     /123
-    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML})
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML})
-    public Foo test_JAX_RS(Foo foo,
-            String body,
-            @CookieParam("ck") String cv, @CookieParam("ck") Cookie ck,
-            @PathParam("sset") SortedSet<Foo2> ss, @PathParam("foo2") Foo2 foo2,
-            @PathParam("year") int y, @MatrixParam("country") String c, @MatrixParam("author") String a,
-            final ServiceContext context) {
-        context.status(HttpResponseStatus.OK);
-        if (foo != null) {
-            foo.bar = cv;
-        }
-        return foo;
+@Path("/hellosummer")
+public class MyController extends BootController {
+
+    @GET
+    @Path("/hello/{name}")
+    public String hello(@PathParam("name") String myName) {
+        return "Hello " + myName;
     }
 }
 ```
 
 
 
-## 2. Domain Configuration
+## 2. Auto or CLI Generated Configuration Files
 
 **2.1 Intent**
 
-- When you have multiple configuration sets, you need a point from which you can control the configuration
-
-  
+- Keep configuration files clean and in sync with your code
 
 **2.2 Motivation**
 
-- During the development, you have dev environment setup and configurations ready for development env. And then you need to have another set of configuration for QA environment, and then another set of configuration for production.
+- With the development of more functions, like document maintenance, the configuration file may be inconsistent with the code
+- You need a way to dump a clean configurations template from code
 
-- You don't want to just copy/paste/rename
+**2.3 Auto generated configuration files - for all applications**
 
-  Folder structure is like below:
+- log4j2.xml
 
-   ```bash
-  my-service
-  |   my-service.jar
-  |   
-  +---lib
-  |       *.jar
-  |       
-  \---env_dev
-      +\---configuration
-              cfg_app.properties
-              cfg_auth.properties
-              cfg_smtp.properties
-              cfg_db.properties
-              cfg_http.properties
-              cfg_nio.properties
-              log4j2.xml
-              server.keystore
-              server.truststore
-  |       
-  \---env_prod (this is the default one)
-      +\---configuration
-              cfg_app.properties
-              cfg_auth.properties
-              cfg_smtp.properties
-              cfg_db.properties
-              cfg_http.properties
-              cfg_nio.properties
-              log4j2.xml
-              server.keystore
-              server.truststore
-   ```
+  > 1. Requires JVM arg: -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector 
+  > 2. Required total disk spece: around 200MB
+  > 3. Archive logs: by DAY and split them by MINUTE
+  > 4. Default log level is tuned for development
 
-  There are five pre-defined configurations:
+- cfg_smtp.properties
 
-  > see section 11 (CLI -  generate configuration file) to get the configuration template
+  > for sending email alert
 
-  1. cfg_auth.properties - manage the role-based access
-  2. cfg_smtp.properties - manage the Auto-Alert (see section 7)
-  3. cfg_http.properties - manage the Java 11 HTTP Client
-  4. cfg_nio.properties - manage the Netty NIO
-  5. cfg_db.properties - manage the JPA, the format is pure JPA properties
+- cfg_auth.properties
 
-**2.3 Sample Code**
+  > Authentication: Sign JWT and parse  JWT
+  >
+  > Authorization: Role and User Group mapping
 
-run with dev configuration
+**2.4 Auto generated configuration files - application type based**
 
-```
-java -jar my-service.jar -env dev
-```
+- cfg_nio.properties
 
-run with production configuration
+  > generated when application contains @Controller (running as RESTFul API service)
 
-```
-java -jar my-service.jar -env prod
-or 
-java -jar my-service.jar (when -env is not spedified, the prod is the default)
-```
+- cfg_grpc.properties
+
+  > generated when application contains gRPC service (running as gRPC service)
+
+- All other application specific configurations, which
+
+  > 1. annotated with @ImportResource
+  > 2. extends org.summerboot.jexpress.boot.config.BootConfig or implements org.summerboot.jexpress.boot.config.JExpressConfig
 
 
 
-java -jar my-service.jar -sample NioConfig,HttpConfig,SMTPConfig,AuthConfig
+
 
 ## 3. Hot Configuration
 
@@ -205,96 +142,70 @@ java -jar my-service.jar -sample NioConfig,HttpConfig,SMTPConfig,AuthConfig
 
 **3.3 Sample Code**
 
-Add the following, **once the config changed, the jExpress will automatically load it up and refresh the  AppConfig.CFG**
-
-```
-.bind_BootConfig("cfg_app.properties", AppConfig.CFG)
-```
-
-
-
-Full version:
-
-```bash
-public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_BootConfig("cfg_app.properties", AppConfig.CFG)
-                .bind_NIOHandler(HttpRequestHandler.class)
-                .run(args, "My Service 1.0");
-    }
-}
-```
-
-
+Once the configuration files changed, the jExpress will automatically load it up and refresh the singleton instance**
 
 AppConfig.java
 
 ```
-#1. create a config class named 'AppConfig', use volatile to define your config items
-#2. Make AppConfig singleton, and AppConfig.instance is the singleton instance
-#3. make AppConfig subclass of BootConfig
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.summerboot.jexpress.boot.config.annotation.Config;
+import org.summerboot.jexpress.boot.config.BootConfig;
+import java.io.File;
+import java.util.Properties;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
+@ImportResource("cfg_app.properties")
 public class AppConfig extends BootConfig {
-    public static final AppConfig CFG = new AppConfig();
+    
+    public static void main(String[] args) {
+        String template = AppConfig.generateTemplate(AppConfig.class);
+        System.out.println(template);
+    }
+
+    public static AppConfig instance = AppConfig.instance(AppConfig.class);
 
     private AppConfig() {
     }
 
-	//1. server binding
-    @Memo(title = "1. server binding")
-    @Config(key = "server.binding.addr")
-    private volatile String bindingAddr;
-    @Config(key = "server.binding.port")
-    private volatile int bindingPort;
+    @ConfigHeader(title = "My Header description")
+    @JsonIgnore
+    @Config(key = "my.key.name", validate = Config.Validate.Encrypted, required = true)
+    protected volatile String licenseKey;
 
-    //2. Server keystore
-    @Memo(title = "2. Server keystore")
-    @Config(key = "server.ssl.KeyStore", StorePwdKey = "server.ssl.KeyStorePwd",
-            AliasKey = "server.ssl.KeyAlias", AliasPwdKey = "server.ssl.KeyPwd", required = false)
-    @JsonIgnore
-    private volatile KeyManagerFactory kmf;
-    
-    @JsonIgnore
-    @Config(key = "vendor.password", validate = Config.Validate.Encrypted)
-    protected volatile String sbsVendorPassword;
-    
-    @Memo(title = "3. Email Alert")
-    @Config(key = "email.to.support", validate = Config.Validate.EmailRecipients,
-            desc = "CSV format: user1@email.com, user2@email.com")
-    protected volatile Set<String> emailToList;
-    
-    ...
-    
-    the getter and setter methods...
+    @Override
+    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
+    }
+
+    @Override
+    public void shutdown() {
+    }
+
+    public String getLicenseKey() {
+        return licenseKey;
+    }
 }
 ```
 
-cfg_app.properties
+
+
+During application start, it will generate cfg_app.properties if not exist, although the following code will generate cfg_app.properties template at any time:
 
 ```
-#####################
-# 1. server binding #
-#####################
-server.binding.addr=0.0.0.0
-server.binding.port=5678
+public static void main(String[] args) {
+        String template = AppConfig.generateTemplate(AppConfig.class);
+        System.out.println(template);
+} 
+```
 
+cfg_app.properties:
 
-###########################
-# 2. Server keystore      #
-###########################
-server.ssl.KeyStore=server.keystore
-server.ssl.KeyStorePwd=ENC(xf3jrVGMrv2SzBGtDte2bQ==)
-server.ssl.KeyAlias=mydomain
-server.ssl.KeyPwd=ENC(xf3jrVGMrv2SzBGtDte2bQ==)
-
-vendor.password=ENC(xf3jrVGMrv2SzBGtDte2bQ==)
-
-###########################
-# 3. Email Alert          #
-###########################
-## CSV format: user1@email.com, user2@email.com
-email.to.support=johndoe@email.com, janedoe@email.com
+```bash
+#########################
+# My Header description #
+#########################
+my.key.name=DEC(plain password)
 ```
 
 
@@ -330,10 +241,10 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
     Your application launched as system service controlled by root admin, and runs with 
 
-    > “-env <env name> -authfile <path to root password file>”
+    > “-cfgdir <path to config folder> -authfile <path to root password file>”
 
     ```
-    java -jar my-service.jar -env <env name> -authfile /etc/security/my-service.root_pwd
+    java -jar my-service.jar -cfgdir dev/configuration -authfile /etc/security/my-service.root_pwd
     ```
 
     Your root password is stored in file /etc/security/my-service.root_pwd, and has the following format:
@@ -365,13 +276,13 @@ email.to.support=johndoe@email.com, janedoe@email.com
   the commands below encrypt all values in the format of “DEC(plain text)” in the specified configuration env:
 
   ```
-  java -jar my-service.jar -env <env name> -encrypt true -authfile <path to root pwd file>
+  java -jar my-service.jar -cfgdir <path to config folder> -encrypt -authfile <path to root pwd file>
   ```
 
    In case you happens to know the root password (you ware two hats, the app admin and root admin is same person), you can do the same by providing the root password directly:
 
   ```
-  java -jar my-service.jar -env <env name> -encrypt true -auth <my app root password>
+  java -jar my-service.jar -cfgdir <path to config folder> -encrypt -auth <my app root password>
   ```
 
   
@@ -383,17 +294,7 @@ email.to.support=johndoe@email.com, janedoe@email.com
   The command below decrypts all values in the format of “ENC(encrypted text)” in the specified configuration env:
 
   ```
-  java -jar my-service.jar -env <env name> -encrypt false -auth <my app root password>
-  ```
-
-  
-
-- **Manual Encrypt mode:** In case you want to manually verify an encrypted sensitive data
-
-  use the command below, compare the output with the encrypted value in the config file:
-
-  ```
-  java -jar my-service.jar -encrypt <plain text> -auth <my app root password>
+  java -jar my-service.jar -cfgdir <path to config folder> -decrypt -auth <my app root password>
   ```
 
   
@@ -419,22 +320,36 @@ email.to.support=johndoe@email.com, janedoe@email.com
 
 **5.3 Sample Code**
 
-Add the following to enable ping on https://host:port/myservice/ping
+Add the following to enable ping on https://host:port/hellosummer/ping
 
 ```
-.enable_Ping_HealthCheck("/myservice", "ping")
+@Ping
 ```
 
 Full version:
 
 ```bash
-public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        	.bind_BootConfig("cfg_app.properties", MyConfig.instance)
-                .bind_NIOHandler(HttpRequestHandler.class)
-                .enable_Ping_HealthCheck("/myservice", "ping")
-                .run(args, "My Service 1.0");
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.nio.server.ws.rs.BootController;
+import org.summerboot.jexpress.boot.annotation.Ping;
+
+@Controller
+@Path("/hellosummer")
+public class WebController extends BootController {
+
+    @GET
+    @Path("ping")
+    @Ping
+    public void ping() {
+    }
+    
+    @GET
+    @Path("/hello/{name}")
+    public String hello(@PathParam("sce") String name) {
+        return "Hello " + name;
     }
 }
 ```
@@ -458,32 +373,30 @@ public class Main {
 Add the following:
 
 ```
-.enable_Ping_HealthCheck(AppURI.CONTEXT_ROOT, AppURI.LOAD_BALANCER_HEALTH_CHECK, HealthInspectorImpl.class)
+@Service(binding = HealthInspector.class)
 ```
 
 Full version:
 
 ```bash
-public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_BootConfig("cfg_app.properties", MyConfig.instance)
-                .bind_NIOHandler(HttpRequestHandler.class)
-                .enable_Ping_HealthCheck(AppURI.CONTEXT_ROOT, AppURI.LOAD_BALANCER_HEALTH_CHECK, HealthInspectorImpl.class)
-                .run(args, "My Service 1.0");
-    }
-}
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.boot.instrumentation.BootHealthInspectorImpl;
+import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ServiceError;
 
-@Singleton
+@Service(binding = HealthInspector.class)
 public class HealthInspectorImpl extends BootHealthInspectorImpl {
-    @Inject
-    private DataRepository db;
 
     @Override
     protected void healthCheck(@Nonnull ServiceError error, @Nullable Logger callerLog) {
-        error.addErrors(db.ping());
+    	if(error detected) {
+	        error.addError(new Err(123, "error tag", "error meessage", null));
+	    }
     }
-
 }
 ```
 
@@ -535,36 +448,7 @@ debouncing.emailalert_minute=30
 add the following:
 
 ```
-.bind_AlertMessenger(MyPostOfficeImpl.class)
-```
-
-full version:
-
-```
-public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_BootConfig("cfg_app.properties", MyConfig.instance)
-                .bind_NIOHandler(HttpRequestHandler.class)
-                .enable_Ping_HealthCheck("/myservice", "ping")
-                .bind_AlertMessenger(MyPostOfficeImpl.class)
-                .run(args, "My Service 1.0");
-    }
-}
-```
-
-MyPostOfficeImpl.java
-
-```
-@Singleton
-public class MyPostOfficeImpl extends BootPostOfficeImpl {
-
-    @Override
-    protected String updateAlertTitle(String title) {
-        return "[ALERT] " + title;
-    }
-}
-
+nothing, the only thing need to do is the updated the cfg_smtp.properties
 ```
 
 
@@ -722,23 +606,42 @@ java -jar my-service.jar -mock db
 Add the following if you define all your error codes in AppErrorCode class:
 
 ```
-Class errorCodeClass = AppErrorCode.class;
-boolean checkDuplicated = true;
-.enable_CLI_ListErrorCodes(errorCodeClass, checkDuplicated)
+@Unique(name="ErrorCode", type = int.class)
 ```
 
 Full version:
 
 ```bash
-public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_BootConfig("cfg_app.properties", MyConfig.instance)
-        		.bind_BootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
-                .bind_NIOHandler(HttpRequestHandler.class)
-                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
-                .run(args, "My Service 1.0");
-    }
+import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.boot.annotation.Unique;
+
+@Unique(name="ErrorCode", type = int.class)
+public interface AppErrorCode extends BootErrorCode {
+
+    int APP_UNEXPECTED_FAILURE = 1001;
+    int BAD_REQUEST = 1002;
+    int AUTH_CUSTOMER_NOT_FOUND = 1003;
+    int DB_SP_ERROR = 1004;
+}
+```
+
+Add the following if you define all your String codes in AppPOI class:
+
+```
+@Unique(name = "POI", type = String.class)
+```
+
+Full version:
+
+```bash
+import org.summerboot.jexpress.boot.BootPOI;
+import org.summerboot.jexpress.boot.annotation.Unique;
+
+@Unique(name = "POI", type = String.class)
+public interface AppPOI extends BootPOI {
+
+    String FILE_BEGIN = "file.begin";
+    String FILE_END = "file.end";
 }
 ```
 
@@ -750,67 +653,12 @@ java -jar my-service.jar -?
 
 you will see the following:
 
->  -errorcode         list application error code
+>  -unique <item>         list unique: [ErrorCode, POI]
 
 the command below will show you a list of error codes, or error message indicates the duplicated ones:
 
 ```
-java -jar my-service.jar -errorcode
-```
-
-
-
-
-
-## 11. CLI -  generate configuration file
-
-**11.1 Intent**
-
-- Keep configuration files clean and in sync with your code
-
-**11.2 Motivation**
-
-- With the development of more functions, like document maintenance, the configuration file may be inconsistent with the code
-- You need a way to dump a clean configurations template from code
-
-**11.3 Sample Code**
-
-Add the following if you want to enable dumping a template of MyConfig
-
-```
-.enable_CLI_ViewConfig(MyConfig.class)
-```
-
-Full version:
-
-```bash
-public class Main {
-    public static void main(String[] args) {
-        SummerApplication.bind(Main.class)
-        		.bind_BootConfig("cfg_app.properties", MyConfig.instance).enable_CLI_ViewConfig(MyConfig.class)
-        		.bind_BootConfig(Constant.CFG_FILE_DB, DatabaseConfig.CFG, GuiceModule.Mock.db.name(), false)
-                .bind_NIOHandler(HttpRequestHandler.class)
-                .enable_CLI_ListErrorCodes(AppErrorCode.class, true)
-                .run(args, "My Service 1.0");
-    }
-}
-```
-
-
-
-run the following command:
-
-```
-java -jar my-service.jar -?
-```
-
-you will see the following:
-
-> -sample <config>   view config sample, valid values <NioConfig,HttpConfig,SMTPConfig,AuthConfig,AppConfig>
-
-the command below will show you a clean template of AppConfig:
-
-```
-java -jar my-service.jar -sample AppConfig
+java -jar my-service.jar -unique ErrorCode
+java -jar my-service.jar -unique POI
 ```
 
