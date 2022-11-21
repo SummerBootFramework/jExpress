@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import jakarta.persistence.EntityManager;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,18 +54,27 @@ import org.summerboot.jexpress.boot.config.JExpressConfig;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class JPAHibernateConfig implements JExpressConfig {
+abstract public class JPAHibernateConfig implements JExpressConfig {
 
     private static volatile Logger log = null;
 
-    public static final JPAHibernateConfig CFG = new JPAHibernateConfig();
     @JsonIgnore
     private volatile SessionFactory sessionFactory;
 
     private File cfgFile;
     private final Properties props = new Properties();
     private final Map<String, Object> settings = new HashMap<>();
-    private volatile List<Class<?>> entityClasses = new ArrayList();
+    private final List<Class<?>> entityClasses = new ArrayList();
+
+    protected JPAHibernateConfig() {
+    }
+
+    /**
+     * used by temp()
+     * @param temp 
+     */
+    private JPAHibernateConfig(Object temp) {
+    }
 
     @Override
     public File getCfgFile() {
@@ -86,7 +97,21 @@ public class JPAHibernateConfig implements JExpressConfig {
 
     @Override
     public JExpressConfig temp() {
-        return new JPAHibernateConfig();
+        JExpressConfig ret = null;
+        Class c = this.getClass();
+        try {
+            Constructor<JExpressConfig> cons = c.getDeclaredConstructor(Object.class);
+            cons.setAccessible(true);
+            Object param = null;
+            ret = (JExpressConfig) cons.newInstance(param);
+        } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            if (log == null) {
+                log = LogManager.getLogger(getClass());
+            }
+            log.warn("failed to create temp " + c.getName(), ex);
+
+        }
+        return ret;
     }
 
     @Override
@@ -127,24 +152,11 @@ public class JPAHibernateConfig implements JExpressConfig {
         if (error != null) {
             throw new IllegalArgumentException(error);
         }
-        String callerRootPackageName = SummerApplication.getCallerRootPackageName();
-        String _rootPackageNames = callerRootPackageName + "," + props.getProperty(Environment.LOADED_CLASSES, "");//load JAP Entity classes from this root package names (CSV) for  O-R Mapping
-        log.debug("_rootPackageNames={}", _rootPackageNames);
-        String[] rootPackageNames = FormatterUtil.parseCsv(_rootPackageNames);
-        List<String> rootPackageNameList = new ArrayList();
-        rootPackageNameList.addAll(Arrays.asList(rootPackageNames));
-        rootPackageNameList.addAll(Arrays.asList(packages));
-        rootPackageNameList = rootPackageNameList.stream()
-                .distinct()
-                .collect(Collectors.toList());
-        rootPackageNameList.removeAll(Collections.singleton(""));
-        rootPackageNameList.removeAll(Collections.singleton(null));
-        log.debug("rootPackageNameList:{}", rootPackageNameList);
-        for (String rootPackageName : rootPackageNameList) {
-            Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName);
-            entityClasses.addAll(tempEntityClasses);
-            //settings.put(Environment.LOADED_CLASSES, entityClasses);
-        }
+        //scan @Entity
+        //settings.put(Environment.LOADED_CLASSES, entityClasses);
+        String callerRootPackageName = System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME);//SummerApplication.getCallerRootPackageName();
+        String csvPackageNames = props.getProperty(Environment.LOADED_CLASSES, "");
+        scanAnnotation_Entity(callerRootPackageName + "," + csvPackageNames, packages);
 
         //build EMF
         //EntityManagerFactory emf = new EntityManagerFactoryBuilderImpl(new PersistenceUnitInfoDescriptor(null), settings).build();
@@ -168,6 +180,24 @@ public class JPAHibernateConfig implements JExpressConfig {
         }
         if (settings.get(Environment.PASS) != null) {
             settings.put(Environment.PASS, "****");// protect password from being logged
+        }
+    }
+
+    private void scanAnnotation_Entity(String csvPackageNames, String... packages) {
+        log.debug("_rootPackageNames={}", csvPackageNames);
+        String[] rootPackageNames = FormatterUtil.parseCsv(csvPackageNames);
+        List<String> rootPackageNameList = new ArrayList();
+        rootPackageNameList.addAll(Arrays.asList(rootPackageNames));
+        rootPackageNameList.addAll(Arrays.asList(packages));
+        rootPackageNameList = rootPackageNameList.stream()
+                .distinct()
+                .collect(Collectors.toList());
+        rootPackageNameList.removeAll(Collections.singleton(""));
+        rootPackageNameList.removeAll(Collections.singleton(null));
+        log.debug("rootPackageNameList:{}", rootPackageNameList);
+        for (String rootPackageName : rootPackageNameList) {
+            Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName);
+            entityClasses.addAll(tempEntityClasses);
         }
     }
 

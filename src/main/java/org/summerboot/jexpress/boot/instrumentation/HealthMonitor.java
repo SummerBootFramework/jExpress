@@ -38,6 +38,8 @@ public class HealthMonitor {
 
     private static final ThreadPoolExecutor POOL_HealthInspector;
 
+    protected static NioConfig nioCfg = NioConfig.cfg;
+
     static {
         POOL_HealthInspector = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>(1), Executors.defaultThreadFactory(), new ThreadPoolExecutor.DiscardPolicy());
@@ -46,8 +48,8 @@ public class HealthMonitor {
         }, "ShutdownHook.HealthInspector")
         );
     }
-    
-    public static final String PROMPT = "Self Inspection Result: ";
+
+    public static final String PROMPT = "\tSelf Inspection Result: ";
 
     private static void startHealthInspectionSingleton(int inspectionIntervalSeconds, HealthInspector healthInspector) {
         if (healthInspector == null || inspectionIntervalSeconds < 1) {
@@ -106,7 +108,7 @@ public class HealthMonitor {
     private static boolean serviceAvaliable = true;
 
     public static void setHealthStatus(boolean newStatus, String reason, HealthInspector healthInspector) {
-        setHealthStatus(newStatus, reason, healthInspector, NioConfig.CFG.getHealthInspectionIntervalSeconds());
+        setHealthStatus(newStatus, reason, healthInspector, nioCfg.getHealthInspectionIntervalSeconds());
     }
 
     public static void setHealthStatus(boolean newStatus, String reason, HealthInspector healthInspector, int healthInspectionIntervalSeconds) {

@@ -48,6 +48,7 @@ import org.apache.commons.lang3.StringUtils;
 public abstract class BootAuthenticator implements Authenticator {
 
     protected AuthenticatorListener listener;
+    protected AuthConfig authCfg = AuthConfig.cfg;
 
     /**
      *
@@ -75,7 +76,7 @@ public abstract class BootAuthenticator implements Authenticator {
 
         //2. authenticate caller against LDAP or DB
         context.timestampPOI(BootPOI.LDAP_BEGIN);
-        Caller caller = authenticateCaller(uid, pwd, listener);
+        Caller caller = login(uid, pwd, listener);
         context.timestampPOI(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
@@ -83,11 +84,11 @@ public abstract class BootAuthenticator implements Authenticator {
         }
 
         //3. format JWT
-        JwtBuilder builder = marshalCaller(caller);
+        JwtBuilder builder = toJwt(caller);
 
         //4. create JWT
-        //String token = JwtUtil.createJWT(AuthConfig.CFG.getJwtSignatureAlgorithm(),
-        Key signingKey = AuthConfig.CFG.getJwtSigningKey();
+        //String token = JwtUtil.createJWT(authCfg.getJwtSignatureAlgorithm(),
+        Key signingKey = authCfg.getJwtSigningKey();
         String token = JwtUtil.createJWT(signingKey, builder, TimeUnit.MINUTES, validForMinutes);
         if (listener != null) {
             listener.onLoginSuccess(caller.getUid(), token);
@@ -105,7 +106,7 @@ public abstract class BootAuthenticator implements Authenticator {
      * @throws IOException
      * @throws NamingException
      */
-    abstract protected Caller authenticateCaller(String uid, String password, AuthenticatorListener listener) throws IOException, NamingException;
+    abstract protected Caller login(String uid, String password, AuthenticatorListener listener) throws IOException, NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -115,9 +116,9 @@ public abstract class BootAuthenticator implements Authenticator {
      * @return formatted auth token builder
      */
     @Override
-    public JwtBuilder marshalCaller(Caller caller) {
+    public JwtBuilder toJwt(Caller caller) {
         String jti = String.valueOf(caller.getId());
-        String issuer = AuthConfig.CFG.getJwtIssuer();
+        String issuer = authCfg.getJwtIssuer();
         String subject = caller.getUid();
         Set<String> groups = caller.getGroups();
         String groupsCsv = groups == null || groups.size() < 1
@@ -157,7 +158,7 @@ public abstract class BootAuthenticator implements Authenticator {
      * @return Caller
      */
     @Override
-    public Caller unmarshalCaller(Claims claims) {
+    public Caller fromJwt(Claims claims) {
         String jti = claims.getId();
         String issuer = claims.getIssuer();
         String subject = claims.getSubject();
@@ -254,14 +255,14 @@ public abstract class BootAuthenticator implements Authenticator {
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
-                Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtParser(), authToken).getBody();
+                Claims claims = JwtUtil.parseJWT(authCfg.getJwtParser(), authToken).getBody();
                 String jti = claims.getId();
                 context.callerId(jti);
                 if (cache != null && cache.isOnBlacklist(jti)) {// because jti is used as blacklist key in logout
                     Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, "AUTH_EXPIRED_TOKEN", "Blacklisted AuthToken", null);
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
-                    caller = unmarshalCaller(claims);
+                    caller = fromJwt(claims);
                     if (listener != null && !listener.verify(caller, claims)) {
                         Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, "AUTH_INVALID_TOKEN", "Rejected AuthToken", null);
                         context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
@@ -301,7 +302,7 @@ public abstract class BootAuthenticator implements Authenticator {
     @Override
     public void logout(String authToken, AuthTokenCache cache, ServiceContext context) {
         try {
-            Claims claims = JwtUtil.parseJWT(AuthConfig.CFG.getJwtParser(), authToken).getBody();
+            Claims claims = JwtUtil.parseJWT(authCfg.getJwtParser(), authToken).getBody();
             String jti = claims.getId();
             String uid = claims.getSubject();
             Date exp = claims.getExpiration();
