@@ -13,28 +13,26 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.config.annotation;
+package org.summerboot.jexpress.boot.annotation;
 
+import com.google.inject.BindingAnnotation;
 import java.lang.annotation.Documented;
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Target({METHOD, FIELD, ANNOTATION_TYPE})
-@Retention(RUNTIME)
+@Target(value = {ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
+@Retention(value = RetentionPolicy.RUNTIME)
 @Documented
-public @interface Memo {
+@BindingAnnotation
+public @interface Version {
 
-    String title() default "";
-    String desc() default "";
-    String format() default "";
-    String example() default "";
+    String[] value();
 
+    String logFileName() default "";// which is value[0]
 }

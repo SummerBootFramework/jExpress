@@ -26,6 +26,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class SimpleLocalCacheImpl implements SimpleLocalCache {
 
+    protected final Map<Object, CacheEntity> debouncingData = new ConcurrentHashMap<>();
+
+    protected void clean(long now) {
+        debouncingData.keySet().forEach(key -> {
+            CacheEntity ce = debouncingData.get(key);
+            if (ce == null || ce.getTtlMillis() < now) {
+                debouncingData.remove(key);
+            }
+        });
+    }
+
     /**
      *
      * @param key
@@ -98,14 +109,4 @@ public class SimpleLocalCacheImpl implements SimpleLocalCache {
         }
     }
 
-    protected final Map<Object, CacheEntity> debouncingData = new ConcurrentHashMap<>();
-
-    protected void clean(long now) {
-        debouncingData.keySet().forEach(key -> {
-            CacheEntity ce = debouncingData.get(key);
-            if (ce == null || ce.getTtlMillis() < now) {
-                debouncingData.remove(key);
-            }
-        });
-    }
 }

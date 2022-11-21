@@ -15,12 +15,10 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.nio.server.annotation.Controller;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.security.auth.Caller;
-import com.google.inject.Inject;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -55,6 +53,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
     protected Logger log = LogManager.getLogger(this.getClass());
 
+    protected static NioConfig nioCfg = NioConfig.cfg;
+
     public NioServerHttpRequestHandler() {
         super(FullHttpRequest.class, false);//set AutoRelease to false to enable keepalive
     }
@@ -67,13 +67,13 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         //a new client is connected
-        long tc = NioServerContext.COUNTER_ACTIVE_CHANNEL.incrementAndGet();
+        long tc = NioCounter.COUNTER_ACTIVE_CHANNEL.incrementAndGet();
         log.trace(() -> tc + " - " + info(ctx));
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        NioServerContext.COUNTER_ACTIVE_CHANNEL.decrementAndGet();
+        NioCounter.COUNTER_ACTIVE_CHANNEL.decrementAndGet();
     }
 
     @Override
@@ -101,9 +101,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             NioHttpUtil.sendError(ctx, HttpResponseStatus.BAD_REQUEST, BootErrorCode.NIO_BAD_REQUEST, "failed to decode request", null);
             return;
         }
-        final NioConfig cfg = NioConfig.CFG;
-        NioServerContext.COUNTER_HIT.incrementAndGet();
-        final long hitIndex = NioServerContext.COUNTER_BIZ_HIT.incrementAndGet();
+        NioCounter.COUNTER_HIT.incrementAndGet();
+        final long hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
 //        if (HttpUtil.is100ContinueExpected(req)) {
 //            ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE, Unpooled.EMPTY_BUFFER));
 //        }
@@ -129,10 +128,9 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         }
         ReferenceCountUtil.release(req);
         final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequestUri, StandardCharsets.UTF_8);
-
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             String acceptCharset = requestHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
             if (StringUtils.isNotBlank(acceptCharset)) {
                 context.charsetName(acceptCharset);//.contentType(ServiceContext.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
@@ -152,13 +150,13 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
             } finally {
                 long responseTime = System.currentTimeMillis() - start;
-                NioServerContext.COUNTER_SENT.incrementAndGet();
+                NioCounter.COUNTER_SENT.incrementAndGet();
                 Level level = context.level();
                 String report = null;
                 if (log.isEnabled(level)) {
                     Caller caller = context.caller();
                     ServiceError error = context.error();
-                    boolean overtime = responseTime > cfg.getBizTimeoutWarnThreshold();
+                    boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThreshold();
                     if (overtime && level.isLessSpecificThan(Level.WARN)) {
                         level = Level.WARN;
                     }
@@ -178,8 +176,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     }
                     sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
                     //line4
-                    context.reportPOI(cfg, sb);
-                    verboseClientServerCommunication(cfg, requestHeaders, httpPostRequestBody, context, sb);
+                    context.reportPOI(nioCfg, sb);
+                    verboseClientServerCommunication(nioCfg, requestHeaders, httpPostRequestBody, context, sb);
                     context.reportMemo(sb);
                     sb.append(System.lineSeparator());
                     report = beforeLogging(sb.toString());
@@ -194,10 +192,10 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             }
         };
         try {
-            cfg.getBizExecutor().execute(asyncTask);
+            nioCfg.getBizExecutor().execute(asyncTask);
         } catch (RejectedExecutionException ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             Err e = new Err(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many requests", ex);
             context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
@@ -214,7 +212,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             log.fatal(sb.toString());
         } catch (Throwable ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(HttpConfig.CFG.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             Err e = new Err(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
@@ -327,7 +325,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 }
 //                target = context.errorCode();
 //                if (s == null) {
-//                    isInFilter = target >= cfg.getFilterCodeRangeFrom() && target <= cfg.getFilterCodeRangeTo();
+//                    isInFilter = target >= instance.getFilterCodeRangeFrom() && target <= instance.getFilterCodeRangeTo();
 //                } else {
 //                    isInFilter = s.contains(target);
 //                }
@@ -362,21 +360,6 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
     abstract protected void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
             final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception;
-
-    /**
-     * callback by Guice injection
-     * <p>
-     * triggered by
-     * <code>bindControllers(binder(), "ca.projectname", Controller.class);</code>
-     * to load all classes annotated with @Controller
-     *
-     *
-     * @param controllers
-     */
-    @Inject
-    protected void guiceCallback_RegisterControllers(@Controller Map<String, Object> controllers) {
-        JaxRsRequestProcessorManager.registerControllers(controllers);
-    }
 
     protected RequestProcessor getRequestProcessor(final HttpMethod httptMethod, final String httpRequestPath) {
         return JaxRsRequestProcessorManager.getRequestProcessor(httptMethod, httpRequestPath);

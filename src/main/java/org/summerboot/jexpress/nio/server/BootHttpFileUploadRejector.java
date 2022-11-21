@@ -15,37 +15,69 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.security.auth.Caller;
+import com.google.inject.Singleton;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpHeaders;
-import java.io.File;
-import java.util.Map;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.util.ReferenceCountUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.nio.server.multipart.MultipartUtil;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @ChannelHandler.Sharable
-public class BootHttpFileUploadRejector extends BootHttpFileUploadHandler {
+@Singleton
+public class BootHttpFileUploadRejector extends SimpleChannelInboundHandler<HttpObject> {
 
-    @Override
-    protected boolean isValidRequestPath(String httpRequestPath) {
-        return false;
+    protected static Logger log = LogManager.getLogger(BootHttpFileUploadHandler.class.getName());
+
+    private static final boolean AUTO_RELEASE = false;
+
+    public BootHttpFileUploadRejector() {
+        super(AUTO_RELEASE);
     }
 
     @Override
-    protected Caller authenticate(final HttpHeaders httpHeaders, ServiceContext context) {
-        return null;
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable ex) {
+        if (ex instanceof DecoderException) {
+            log.warn(ctx.channel().remoteAddress() + ": " + ex);
+        } else {
+            log.warn(ctx.channel().remoteAddress() + ": " + ex, ex);
+        }
+        if (ex instanceof OutOfMemoryError) {
+            ctx.close();
+        }
+        //ctx.close();
     }
 
     @Override
-    protected long getCallerFileUploadSizeLimit_Bytes(Caller caller) {
-        return 0;
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        ctx.fireChannelInactive();
     }
 
     @Override
-    protected void onFileUploaded(ChannelHandlerContext ctx, String fileName, File file, Map<String, String> params, Caller caller) {
+    protected void channelRead0(final ChannelHandlerContext ctx, final HttpObject httpObject) throws Exception {
+        boolean isMultipart = false;
+        if (httpObject instanceof HttpRequest) {
+            HttpRequest request = (HttpRequest) httpObject;
+            isMultipart = MultipartUtil.isMultipart(request);
+            if (isMultipart) {
+                ReferenceCountUtil.release(httpObject);
+                //NioHttpUtil.sendError(ctx, HttpResponseStatus.FORBIDDEN, BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT, "file upload not supported", null);
+                //TimeUnit.MILLISECONDS.sleep(1000);// give it time to flush the error message to client
+                ctx.channel().close();// the only way to stop uploading is to close socket 
+                return;
+            }
+        }
+        if (!isMultipart) {
+            //pass to next Handler
+            ctx.fireChannelRead(httpObject);
+        }
     }
 }

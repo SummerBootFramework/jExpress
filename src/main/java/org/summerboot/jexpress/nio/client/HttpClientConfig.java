@@ -13,17 +13,14 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.nio.server;
+package org.summerboot.jexpress.nio.client;
 
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.Memo;
 import org.summerboot.jexpress.security.SSLUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.HttpHeaders;
 import java.io.File;
 import java.net.http.HttpClient;
 import java.util.ArrayList;
@@ -48,19 +45,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
-import org.summerboot.jexpress.nio.client.RPCResult;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class HttpConfig extends BootConfig {
-
-    public static final HttpConfig CFG = new HttpConfig();
+//@ImportResource(SummerApplication.CFG_HTTP)
+abstract public class HttpClientConfig extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(HttpConfig.class);
+        String t = generateTemplate(HttpClientConfig.class);
         System.out.println(t);
+    }
+
+    protected HttpClientConfig() {
     }
 
     @Override
@@ -78,50 +78,10 @@ public class HttpConfig extends BootConfig {
         }
     }
 
-    private static final String HEADER_SERVER_RESPONSE = "server.DefaultResponseHttpHeaders.";
-    private static final String HEADER_CLIENT_REQUEST = "httpclient.DefaultReqHttpHeaders.";
-
-    //1. Default NIO Response HTTP Headers
-    @Memo(title = "1. Default Server Response HTTP Headers",
-            desc = "put generic HTTP response headers here",
-            format = HEADER_SERVER_RESPONSE + "?=?",
-            example = HEADER_SERVER_RESPONSE + "Access-Control-Allow-Origin=https://www.summerboot.org\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Headers=X-Requested-With, Content-Type, Origin, Authorization\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Methods=PUT,GET,POST,DELETE,OPTIONS,PATCH\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Credentials=false\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Credentials=false\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Max-Age=3600\n"
-            + HEADER_SERVER_RESPONSE + "Content-Security-Policy=default-src 'self';script-src 'self' www.google-analytics.com www.google.com www.gstatic. js.stripe.com ajax.cloudflare.com;style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;img-src 'self' www.google-analytics.com stats.g.doubleclick.net www.gstatic.com;font-src 'self' cdnjs.cloudflare.com fonts.gstatic.com;base-uri 'self';child-src www.google.com js.stripe.com;form-action 'self';frame-ancestors 'none';report-uri=\"https://www.summerboot.org/report-uri\"\n"
-            + HEADER_SERVER_RESPONSE + "X-XSS-Protection=1; mode=block\n"
-            + HEADER_SERVER_RESPONSE + "Strict-Transport-Security=max-age=31536000;includeSubDomains;preload\n"
-            + HEADER_SERVER_RESPONSE + "X-Frame-Options=sameorigin\n"
-            + HEADER_SERVER_RESPONSE + "Expect-CT=max-age=86400, enforce, report-uri=\"https://www.summerboot.org/report-uri\"\n"
-            + HEADER_SERVER_RESPONSE + "X-Content-Type-Options=nosniff\n"
-            + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ")
-
-    private final HttpHeaders serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
-
-    //2. Web Server Mode
-    @Memo(title = "2. Web Server Mode")
-    @Config(key = "server.http.web.docroot", required = false, defaultValue = "docroot")
-    private volatile String docroot;
-
-    @Config(key = "server.http.web.resources", required = false, defaultValue = "web-resources/errorpages")
-    private volatile String webResources;
-
-    @Config(key = "server.http.web.welcomePage", required = false, defaultValue = "index.html")
-    private volatile String welcomePage;
-
-    @Config(key = "server.http.web-server.tempupload", required = false, defaultValue = "tempupload")
-    private volatile String tempUoloadDir;
-
-    private volatile boolean downloadMode;
-    private volatile File rootFolder;
-
     //3.1 HTTP Client Security
-    @Memo(title = "3.1 HTTP Client Security")
-    @Config(key = "httpclient.ssl.protocol", required = false, defaultValue = "TLSv1.3")
-    private volatile String protocol;
+    @ConfigHeader(title = "1. HTTP Client Security")
+    @Config(key = "httpclient.ssl.protocol")
+    private volatile String protocol = "TLSv1.3";
 
     @JsonIgnore
     @Config(key = "httpclient.ssl.KeyStore", StorePwdKey = "httpclient.ssl.KeyStorePwd",
@@ -130,55 +90,57 @@ public class HttpConfig extends BootConfig {
     private volatile KeyManagerFactory kmf;
 
     @JsonIgnore
-    @Config(key = "httpclient.ssl.TrustStore", StorePwdKey = "httpclient.ssl.TrustStorePwd", required = false)
+    @Config(key = "httpclient.ssl.TrustStore", StorePwdKey = "httpclient.ssl.TrustStorePwd")
     private volatile TrustManagerFactory tmf;
 
-    @Config(key = "httpclient.ssl.HostnameVerification", required = false, defaultValue = "false")
+    @Config(key = "httpclient.ssl.HostnameVerification")
     private volatile Boolean hostnameVerification = false;
 
-    @Config(key = "httpclient.proxy.host", required = false)
+    @Config(key = "httpclient.proxy.host")
     private volatile String proxyHost;
     private volatile String currentProxyHost;
 
-    @Config(key = "httpclient.proxy.port", required = false, defaultValue = "8080")
-    private volatile int proxyPort;
+    @Config(key = "httpclient.proxy.port")
+    private volatile int proxyPort = 8080;
     private volatile int currentProxyPort;
 
-    @Config(key = "httpclient.proxy.userName", required = false)
+    @Config(key = "httpclient.proxy.userName")
     private volatile String proxyUserName;
 
     @JsonIgnore
-    @Config(key = "httpclient.proxy.userPwd", required = false, validate = Config.Validate.Encrypted)
+    @Config(key = "httpclient.proxy.userPwd", validate = Config.Validate.Encrypted)
     private volatile String proxyUserPwd;
 
     @JsonIgnore
     private volatile String proxyAuthorizationBasicValue;
 
-//    @Config(key = "httpclient.proxy.useAuthenticator", required = false, defaultValue = "false")
+//    @Config(key = "httpclient.proxy.useAuthenticator")
 //    private volatile boolean useAuthenticator = false;
-    @Config(key = "httpclient.redirectOption", required = false, defaultValue = "NEVER")
-    private volatile HttpClient.Redirect redirectOption;
+    @Config(key = "httpclient.redirectOption")
+    private volatile HttpClient.Redirect redirectOption = HttpClient.Redirect.NEVER;
 
-    @Config(key = "httpclient.fromJson.failOnUnknownProperties", defaultValue = "true")
+    @Config(key = "httpclient.fromJson.failOnUnknownProperties")
     private volatile boolean fromJsonFailOnUnknownProperties = true;
 
     //3.2 HTTP Client Performance
-    @Memo(title = "3.2 HTTP Client Performance")
+    @ConfigHeader(title = "2. HTTP Client Performance")
     private volatile HttpClient httpClient;
 
-    @Config(key = "httpclient.timeout.ms", required = false, defaultValue = "5000")
-    private volatile long httpClientTimeout;
+    @Config(key = "httpclient.timeout.ms")
+    private volatile long httpClientTimeout = 5000;
 
-    @Config(key = "httpclient.executor.CoreSize", required = false, defaultValue = "0",
+    private final int availableProcessors = Runtime.getRuntime().availableProcessors();
+
+    @Config(key = "httpclient.executor.CoreSize",
             desc = "HTTP Client will be disabled when core size is/below 0")
-    private volatile int httpClientCoreSize;// how many tasks running at the same time
+    private volatile int httpClientCoreSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentCore;
 
-    @Config(key = "httpclient.executor.MaxSize", required = false, defaultValue = "0")
-    private volatile int httpClientMaxSize;// how many tasks running at the same time
+    @Config(key = "httpclient.executor.MaxSize")
+    private volatile int httpClientMaxSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
-    @Config(key = "httpclient.executor.QueueSize", required = false, defaultValue = "2147483647")
+    @Config(key = "httpclient.executor.QueueSize")//2147483647
     private volatile int httpClientQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
     private volatile int currentQueue;
 
@@ -186,8 +148,9 @@ public class HttpConfig extends BootConfig {
     @JsonIgnore
     private ScheduledExecutorService ses;
 
+    private static final String HEADER_CLIENT_REQUEST = "httpclient.DefaultReqHttpHeaders.";
     //3.3 HTTP Client Default Headers
-    @Memo(title = "3.3 HTTP Client Default Headers",
+    @ConfigHeader(title = "3. HTTP Client Default Headers",
             desc = "put generic HTTP Client request headers here",
             format = HEADER_CLIENT_REQUEST + "?=?",
             example = HEADER_CLIENT_REQUEST + "Accept=application/json\n"
@@ -211,15 +174,10 @@ public class HttpConfig extends BootConfig {
 //        if (serverDefaultResponseHeaders != null) {
 //            serverDefaultResponseHeaders.clear();
 //        }
-        serverDefaultResponseHeaders.clear();
+
         httpClientDefaultRequestHeaders.clear();
         keys.forEach((name) -> {
-            if (name.startsWith(HEADER_SERVER_RESPONSE)) {
-                String[] names = name.split("\\.");
-                String headerName = names[2];
-                String headerValue = props.getProperty(name);
-                serverDefaultResponseHeaders.set(headerName, headerValue);
-            } else if (name.startsWith(HEADER_CLIENT_REQUEST)) {
+            if (name.startsWith(HEADER_CLIENT_REQUEST)) {
                 String[] names = name.split("\\.");
                 String headerName = names[2];
                 String headerValue = props.getProperty(name);
@@ -227,21 +185,6 @@ public class HttpConfig extends BootConfig {
             }
         });
 
-        // 2. Web Server Mode       
-        rootFolder = cfgFile.getParentFile().getParentFile();
-        docroot = rootFolder.getName() + File.separator + docroot;
-        downloadMode = StringUtils.isBlank(welcomePage);
-        tempUoloadDir = rootFolder.getAbsolutePath() + File.separator + tempUoloadDir;
-        //Path dir = Paths.get(tempUoloadDir).toAbsolutePath();
-        //Files.createDirectories(dir);
-
-//        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r--------");
-//        FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions.asFileAttribute(permissions);
-//        Files.createDirectory(dir, fileAttributes);
-//        File dir = new File(tempUoloadDir);
-//        if(!dir.exists()) {
-//            dir.mkdirs();
-//        }
         RPCResult.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, fromJsonFailOnUnknownProperties);
 
         // 3.1 HTTP Client keystore        
@@ -287,9 +230,11 @@ public class HttpConfig extends BootConfig {
                         new LinkedBlockingQueue<>(currentQueue), Executors.defaultThreadFactory(), new AbortPolicyWithReport("HttpClientExecutor"));
 
                 HttpClient.Builder builder = HttpClient.newBuilder()
-                        .executor(tpe)
-                        .sslContext(sslContext)
-                        .version(HttpClient.Version.HTTP_2)
+                        .executor(tpe);
+                if (sslContext != null) {
+                    builder.sslContext(sslContext);
+                }
+                builder.version(HttpClient.Version.HTTP_2)
                         .followRedirects(redirectOption);
                 if (StringUtils.isNotBlank(proxyHost)) {
                     builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
@@ -333,7 +278,7 @@ public class HttpConfig extends BootConfig {
                         if (listener != null) {
                             listener.onHTTPClientAccessReportUpdate(task, completed, queue, active, pool, core, max, largest);
                         }
-                        log.info(() -> "HTTPClient task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
+                        logger.info(() -> "HTTPClient task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
                     }
                 }, 0, 1, TimeUnit.SECONDS);
             }
@@ -345,30 +290,6 @@ public class HttpConfig extends BootConfig {
                 sesold.shutdown();
             }
         }
-    }
-
-    public File getRootFolder() {
-        return rootFolder;
-    }
-
-    public HttpHeaders getServerDefaultResponseHeaders() {
-        return serverDefaultResponseHeaders;
-    }
-
-    public String getDocroot() {
-        return docroot;
-    }
-
-    public String getWebResources() {
-        return webResources;
-    }
-
-    public String getWelcomePage() {
-        return welcomePage;
-    }
-
-    public boolean isDownloadMode() {
-        return downloadMode;
     }
 
     // 3. HttpClient
@@ -435,9 +356,5 @@ public class HttpConfig extends BootConfig {
 
     public String getTpeInfo() {
         return String.valueOf(tpe);
-    }
-
-    public String getTempUoloadDir() {
-        return tempUoloadDir;
     }
 }
