@@ -108,6 +108,7 @@ public class I18nLabel {
         } else {
             snPrefix = rootPrefix + "_" + sn;
         }
+        //List<Field> fields = ReflectionUtil.getDeclaredAndSuperClassesFields(rootI18nClass);
         Field[] fields = rootI18nClass.getDeclaredFields();
         for (Field field : fields) {
             try {

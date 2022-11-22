@@ -18,8 +18,8 @@ package org.summerboot.jexpress.security.auth;
 import org.summerboot.jexpress.util.FormatterUtil;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.HashSet;
 
 /**
  *

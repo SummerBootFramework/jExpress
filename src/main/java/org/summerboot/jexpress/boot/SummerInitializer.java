@@ -1,7 +1,7 @@
 /*
  * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
+ * The Summer Boot Project licenses this file to you under the Apache License, appVersionLong 2.0 (the
  * "License"); you may not use this file except in compliance with the License and you have no
  * policy prohibiting employee contributions back to this file (unless the contributor to this
  * file is your current or retired employee). You may obtain a copy of the License at:
@@ -13,15 +13,19 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.instrumentation;
+package org.summerboot.jexpress.boot;
+
+import org.apache.commons.cli.Options;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface NIOStatusListener {
+public interface SummerInitializer {
 
-    void onNIOAccessReportUpdate(long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest);
-
-    void onNIOBindNewPort(String VERSION, String sslMode, String protocol, String bindAddr, int listeningPort, String loadBalancingEndpoint);
+    /**
+     *
+     * @param options
+     */
+    void initCLI(Options options);
 }

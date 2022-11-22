@@ -64,11 +64,13 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
     private static final HttpDataFactory HDF = new DefaultHttpDataFactory(USER_DISK);
     //private static final Authenticator auth = new AuthenticatorImple_LDAP();
 
+    protected static final NioConfig uploadCfg = NioConfig.cfg;
+
     static {
         DiskFileUpload.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
-        DiskFileUpload.baseDirectory = HttpConfig.CFG.getTempUoloadDir(); // system temp directory
+        DiskFileUpload.baseDirectory = uploadCfg.getTempUoloadDir(); // system temp directory
         DiskAttribute.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
-        DiskAttribute.baseDirectory = HttpConfig.CFG.getTempUoloadDir(); // system temp directory
+        DiskAttribute.baseDirectory = uploadCfg.getTempUoloadDir(); // system temp directory
     }
 
     public BootHttpFileUploadHandler() {
@@ -111,8 +113,8 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
             request = (HttpRequest) httpObject;
             isMultipart = MultipartUtil.isMultipart(request);
             if (isMultipart) {
-                NioServerContext.COUNTER_HIT.incrementAndGet();
-                hitIndex = NioServerContext.COUNTER_BIZ_HIT.incrementAndGet();
+                NioCounter.COUNTER_HIT.incrementAndGet();
+                hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
                 fileSizeQuota = precheck(ctx, request);
                 if (fileSizeQuota < 1) {
                     ReferenceCountUtil.release(httpObject);

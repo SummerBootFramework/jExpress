@@ -13,15 +13,26 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.instrumentation;
+package org.summerboot.jexpress.integration.cache;
+
+import com.google.inject.Singleton;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ * @version 2.0
  */
-public interface NIOStatusListener {
+@Singleton
+public class AuthTokenCacheLocalImpl extends SimpleLocalCacheImpl implements AuthTokenCache {
 
-    void onNIOAccessReportUpdate(long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest);
+    @Override
+    public void putOnBlacklist(String key, String value, long expireInSeconds) {
+        put(key, value, (int) expireInSeconds);
+    }
 
-    void onNIOBindNewPort(String VERSION, String sslMode, String protocol, String bindAddr, int listeningPort, String loadBalancingEndpoint);
+    @Override
+    public boolean isOnBlacklist(String key) {
+        String v = get(key);
+        return v != null;
+    }
 }

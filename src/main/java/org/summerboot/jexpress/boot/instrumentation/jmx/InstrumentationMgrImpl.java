@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.boot.instrumentation.jmx;
 
-import org.summerboot.jexpress.nio.server.HttpConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
 import com.google.inject.Inject;
 import java.lang.management.ManagementFactory;
@@ -28,7 +27,6 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import com.google.inject.Singleton;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
-import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
 
 /**
  *
@@ -46,19 +44,17 @@ public class InstrumentationMgrImpl implements InstrumentationMgr {
     @Inject
     private NIOStatusListener nioListener;
 
-    @Inject
-    private HTTPClientStatusListener httpclientListener;
-
+    //protected static HttpClientConfig httpCfg = HttpClientConfig.instance(HttpClientConfig.class);
     @Override
     public void start(String beanName) throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
         NioServer.setStatusListener(nioListener);
-        HttpConfig.CFG.setStatusListener(httpclientListener);
+        //httpCfg.setStatusListener(httpclientListener);
 
         mBeanServer = ManagementFactory.getPlatformMBeanServer();
         mbeanName = new ObjectName(beanName + ":name=Status");
         //ServerStatusMBean mbean = Main.injector.getInstance(ServerStatusMBean.class);
         mBeanServer.registerMBean(mbean, mbeanName);
-        ObjectName poolName = new ObjectName("com.zaxxer.hikari:type=Pool (foo)");
+        //ObjectName poolName = new ObjectName("com.zaxxer.hikari:type=Pool (foo)");
         //HikariPoolMXBean poolProxy = JMX.newMXBeanProxy(mBeanServer, poolName, HikariPoolMXBean.class);
         //int idleConnections = poolProxy.getIdleConnections();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
