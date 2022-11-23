@@ -39,7 +39,7 @@ public abstract class AbstractEntity implements Serializable {
 
     @Version
     @Column(name = "version")
-    protected int version;
+    protected long version;
 
     @Column(name = "createdTs", nullable = false, updatable = false)
     protected OffsetDateTime createdTs = OffsetDateTime.now();
@@ -68,7 +68,7 @@ public abstract class AbstractEntity implements Serializable {
      *
      * @return the value of version
      */
-    public int getVersion() {
+    public long getVersion() {
         return version;
     }
 
@@ -99,9 +99,7 @@ public abstract class AbstractEntity implements Serializable {
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 97 * hash + Objects.hashCode(this.id);
-        hash = 97 * hash + this.version;
+        int hash = 7;
         return hash;
     }
 

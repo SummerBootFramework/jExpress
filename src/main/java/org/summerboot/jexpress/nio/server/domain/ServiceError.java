@@ -43,6 +43,11 @@ public class ServiceError {
     }
 
     public ServiceError(int errorCode, String errorTag, String errorDesc, Throwable ex) {
+        //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
+        this("" + errorCode, errorTag, errorDesc, ex);
+    }
+
+    public ServiceError(String errorCode, String errorTag, String errorDesc, Throwable ex) {
         if (errors == null) {
             errors = new ArrayList();
         }

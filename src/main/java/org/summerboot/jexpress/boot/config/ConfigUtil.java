@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -41,13 +42,14 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ConfigUtil {
-
+    
     public static Path cfgRoot(String domainFolderPrefix, String domainName, String configDirName) {
 //        String f = StringUtils.isBlank(runtimeDomain)
 //                ? runtimeRootDirName + File.separator + configDirName
@@ -65,48 +67,77 @@ public class ConfigUtil {
 //        return p.toFile();
 //    }
     private static ConfigChangeListener listener;
-
+    
     public static void setConfigChangeListener(ConfigChangeListener l) {
         listener = l;
     }
-
+    
     public static enum ConfigLoadMode {
         cli_encrypt(true, true), cli_decrypt(false, true), app_run(true, false);
-
-        private boolean encryptMode, cliMode;
-
+        
+        private final boolean encryptMode;
+        private final boolean cliMode;
+        
         private ConfigLoadMode(boolean encryptMode, boolean cliMode) {
             this.encryptMode = encryptMode;
             this.cliMode = cliMode;
         }
-
+        
         public boolean isEncryptMode() {
             return encryptMode;
         }
-
+        
         public boolean isCliMode() {
             return cliMode;
         }
     }
-
-    public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, int CfgMonitorInterval) throws Exception {
+    
+    public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, int CfgMonitorInterval, File cfgConfigDir) throws Exception {
         // 1. load configs
         int updated = 0;
         Map<File, Runnable> cfgUpdateTasks = new HashMap();
         for (String fileName : configs.keySet()) {
             File configFile = Paths.get(configFolder.toString(), fileName).toFile();
-            updated += loadConfig(mode, log, defaultRB, configFile, configs.get(fileName), cfgUpdateTasks);
+            updated += loadConfig(mode, log, defaultRB, configFile, configs.get(fileName), cfgUpdateTasks, cfgConfigDir);
         }
         // 2. monitor the change of config files
-        if (!mode.isCliMode()) {
+        if (!mode.isCliMode() && CfgMonitorInterval > 0) {
             ConfigurationMonitor.listener.start(configFolder.toFile(), CfgMonitorInterval, cfgUpdateTasks);
         }
         return updated;
     }
-
-    public static int loadConfig(ConfigLoadMode mode, Logger log, Locale defaultRB, File configFile, JExpressConfig cfg, Map<File, Runnable> cfgUpdateTasks) throws Exception {
-        if (!configFile.exists()) {
+    
+    public static void createConfigFile(Class<? extends JExpressConfig> c, File cfgConfigDir, String cfgName, boolean cliMode) throws IOException {
+        String configContent = BootConfig.generateTemplate(c);
+//        if (StringUtils.isBlank(configContent)) {
+//            return;
+//        }
+        ImportResource ir = (ImportResource) c.getAnnotation(ImportResource.class);
+        String fileName = ir == null ? cfgName : ir.value();
+        if (cliMode) {
+            fileName = fileName + ".sample";
+        }
+        
+        File cfgFile = new File(cfgConfigDir, fileName).getAbsoluteFile();
+        if (cliMode) {
+            System.out.print("saveing " + c.getName() + " to " + cfgFile);
+        }
+        Files.writeString(cfgFile.toPath(), configContent);
+        if (cliMode) {
+            System.out.println(" done!");
+        }
+    }
+    
+    public static int loadConfig(ConfigLoadMode mode, Logger log, Locale defaultRB, File configFile, JExpressConfig cfg, Map<File, Runnable> cfgUpdateTasks, File cfgConfigDir) throws Exception {
+        if (cfg == null) {
+            log.warn("null instance for " + configFile);
             return 0;
+        }
+        if (!configFile.exists()) {
+            if (cfgConfigDir == null || !cfgConfigDir.isDirectory() || !cfgConfigDir.canWrite()) {
+                return 0;
+            }
+            createConfigFile(cfg.getClass(), cfgConfigDir, null, false);
         }
         //ConfigurationMonitor.listener.stop();
         int updated = updatePasswords(configFile, null, mode.isEncryptMode());
@@ -115,7 +146,7 @@ public class ConfigUtil {
             return updated;
         }
         cfg.load(configFile, true);
-        log.info(() -> cfg.info());
+        log.debug(() -> cfg.info());
         cfgUpdateTasks.put(configFile, () -> {
             Throwable cause = null;
             if (listener != null) {
@@ -149,14 +180,14 @@ public class ConfigUtil {
         );
         return updated;
     }
-
+    
     private StringBuilder sb = null;
     private final String cfgFile;
-
+    
     public ConfigUtil(String cfgFile) {
         this.cfgFile = cfgFile;
     }
-
+    
     public void addError(String e) {
         if (sb == null) {
             sb = new StringBuilder();
@@ -164,7 +195,7 @@ public class ConfigUtil {
         }
         sb.append(System.lineSeparator() + "\t").append(e);
     }
-
+    
     public String getError() {
         return sb == null ? null : sb.toString();
     }
@@ -349,7 +380,7 @@ public class ConfigUtil {
         }
         return FormatterUtil.EMPTY_STR_ARRAY;
     }
-
+    
     public Long[] getAsRangeLong(Properties props, String key, Set<Long> filterCodeSet) {
         String[] a = getAsCSV(props, key, null);
         if (a.length < 1) {
@@ -374,7 +405,7 @@ public class ConfigUtil {
         }
         return ret;
     }
-
+    
     public Double[] getAsRangeDouble(Properties props, String key, Set<Double> filterCodeSet) {
         String[] a = getAsCSV(props, key, null);
         if (a.length < 1) {
@@ -399,10 +430,10 @@ public class ConfigUtil {
         }
         return ret;
     }
-
+    
     public static final String ENCRYPTED_WARPER_PREFIX = "ENC";
     public static final String DECRYPTED_WARPER_PREFIX = "DEC";
-
+    
     public String getAsPassword(Properties props, String key) {
         String v = props.getProperty(key);
         if (StringUtils.isBlank(v)) {
@@ -422,7 +453,7 @@ public class ConfigUtil {
         }
         return pwd;
     }
-
+    
     public static int updatePasswords(File configFile, File destFile, boolean encrypt) throws IOException, GeneralSecurityException {
         if (!configFile.exists()) {
             return 0;
@@ -453,7 +484,7 @@ public class ConfigUtil {
         }
         return updated;
     }
-
+    
     public Map<String, Integer> getAsBindingAddress(Properties props, String key) {
         try {
             String v = props.getProperty(key).trim();
@@ -467,7 +498,7 @@ public class ConfigUtil {
             return null;
         }
     }
-
+    
     public KeyManagerFactory getAsKeyManagerFactory(Properties props, String configFolder, String keyFile, String storePwd, String keyAlias, String keyPwd) {
         String keyFileValue = props.getProperty(keyFile);
         if (StringUtils.isBlank(keyFileValue)) {
@@ -479,17 +510,17 @@ public class ConfigUtil {
         try {
             String pwd = getAsPassword(props, storePwd);
             char[] pwdStore = pwd == null ? null : pwd.toCharArray();
-
+            
             pwd = getAsPassword(props, keyPwd);
             char[] pwdKey = StringUtils.isBlank(alias) || pwd == null ? null : pwd.toCharArray();
-
+            
             kmf = SSLUtil.buildKeyManagerFactory(sslKeyStorePath, pwdStore, alias, pwdKey);
         } catch (Throwable ex) {
             addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString());
         }
         return kmf;
     }
-
+    
     public TrustManagerFactory getAsTrustManagerFactory(Properties props, String configFolder, String keyFile, String storePwd) {
         String trustStorePath = props.getProperty(keyFile);
         if (StringUtils.isBlank(trustStorePath)) {
