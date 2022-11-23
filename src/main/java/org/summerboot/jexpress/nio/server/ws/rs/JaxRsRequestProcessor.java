@@ -20,7 +20,6 @@ import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.security.auth.AuthConfig;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -28,6 +27,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import jakarta.annotation.security.DeclareRoles;
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -46,6 +46,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import java.util.HashSet;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 
@@ -77,23 +78,27 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     private final int parameterSize;
     public static final List<String> SupportedProducesWithReturnType = Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON_PATCH_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML);
 
-    public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String path) {
+    public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String path, final Set<String> declareRoles) {
         //1. Basic info
         this.javaInstance = javaInstance;
         this.javaMethod = javaMethod;
         Class controllerClass = javaInstance.getClass();
         String info = controllerClass.getName() + "." + javaMethod.getName();
+        DeclareRoles drs = (DeclareRoles) controllerClass.getAnnotation(DeclareRoles.class);
+        if (drs != null) {
+            declareRoles.addAll(Arrays.asList(drs.value()));
+        }
 
         //2. Parse @RolesAllowed, @PermitAll and @DenyAll - Method level preprocess - Authoritarian - Role based 
         RolesAllowed rolesAllowedAnnotation = javaMethod.getAnnotation(RolesAllowed.class);
         PermitAll permitAllAnnotation = javaMethod.getAnnotation(PermitAll.class);
         DenyAll denyAllAnnotation = javaMethod.getAnnotation(DenyAll.class);
         if (permitAllAnnotation != null && denyAllAnnotation != null || permitAllAnnotation != null && rolesAllowedAnnotation != null || denyAllAnnotation != null && rolesAllowedAnnotation != null) {
-            throw new UnsupportedOperationException("Only one security role is allowed: either @RolesAllowed, @PermitAll or @DenyAll in " + info);
+            throw new UnsupportedOperationException("Only one security role is allowed: either @RolesAllowed, @PermitAll or @DenyAll @ " + info);
         }
         if (permitAllAnnotation != null) {
             roleBased = true;
-            rolesAllowed = AuthConfig.CFG.getRoleNames();
+            rolesAllowed = declareRoles;
             permitAll = true;
         } else if (denyAllAnnotation != null) {
             roleBased = true;
@@ -107,6 +112,10 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             if (rolesAllowedAnnotation != null) {
                 roleBased = true;
                 rolesAllowed = Set.of(rolesAllowedAnnotation.value());
+                declareRoles.addAll(rolesAllowed);
+//                if(!declareRoles.containsAll(rolesAllowed)) {
+//                    throw new UnsupportedOperationException("@RolesAllowed value is not defined in @DeclareRoles @ " + info);
+//                }
             } else {
                 roleBased = false;
                 rolesAllowed = null;
@@ -163,7 +172,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 List<String> filter = new ArrayList<>(temp);
                 filter.removeAll(SupportedProducesWithReturnType);
                 if (!filter.isEmpty()) {
-                    throw new UnsupportedOperationException("\n\t@Produces(" + filter + ") is not supported with return type(" + retType + ") in " + info + ", supported @Produces values with return type are: " + SupportedProducesWithReturnType);
+                    throw new UnsupportedOperationException("\n\t@Produces(" + filter + ") is not supported with return type(" + retType + ") @ " + info + ", supported @Produces values with return type are: " + SupportedProducesWithReturnType);
                 }
             }
 
@@ -262,24 +271,22 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (roleBased) {
             boolean isAuthorized = false;
             Caller caller = context.caller();
-            if (caller != null) {
-                if (permitAll) {
+            if (caller == null) {
+                context.status(HttpResponseStatus.UNAUTHORIZED)
+                        .error(new Err(BootErrorCode.AUTH_INVALID_USER, "Authentication Required", "Unkown caller", null));
+                return false;
+            }
+
+            for (String role : rolesAllowed) {
+                if (caller.isInRole(role)) {
                     isAuthorized = true;
-                } else {
-                    for (String role : rolesAllowed) {
-                        if (caller.isInRole(role)) {
-                            isAuthorized = true;
-                            break;
-                        }
-                    }
+                    break;
                 }
             }
+
             if (!isAuthorized) {
-                if (badRequestErrorCode < 1) {
-                    badRequestErrorCode = BootErrorCode.AUTH_NO_PERMISSION;
-                }
                 context.status(HttpResponseStatus.FORBIDDEN)
-                        .error(new Err(badRequestErrorCode, "Authorization Failed", "Caller is not in role: " + rolesAllowed, null));
+                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, "Authorization Failed", "Caller is not in role: " + rolesAllowed, null));
                 return false;
             }
         }

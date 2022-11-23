@@ -19,7 +19,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import jakarta.activation.DataHandler;
@@ -33,6 +32,7 @@ import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 import jakarta.mail.util.ByteArrayDataSource;
+import java.util.TreeSet;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -41,6 +41,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class Email {
 
+    //protected static AlertEmailConfig smtpCfg = AlertEmailConfig.instance(AlertEmailConfig.class);
     public static Email compose(String subject, String body, Format format) {
         return new Email(subject, body, format);
     }
@@ -145,7 +146,7 @@ public class Email {
         if (recipients == null || recipients.isEmpty()) {
             return this;
         }
-        this.toList = new HashSet<>(recipients);
+        this.toList = new TreeSet<>(recipients);
         return this;
     }
 
@@ -164,7 +165,7 @@ public class Email {
         if (recipients == null || recipients.isEmpty()) {
             return this;
         }
-        this.ccList = new HashSet<>(recipients);
+        this.ccList = new TreeSet<>(recipients);
         return this;
     }
 
@@ -183,7 +184,7 @@ public class Email {
         if (recipients == null || recipients.isEmpty()) {
             return this;
         }
-        this.bccList = new HashSet<>(recipients);
+        this.bccList = new TreeSet<>(recipients);
         return this;
     }
 
@@ -243,17 +244,6 @@ public class Email {
         if (msg != null) {
             Transport.send(msg);
         }
-    }
-
-    public void send() throws MessagingException {
-        MimeMessage msg = buildMimeMessage();
-        if (msg != null) {
-            Transport.send(msg);
-        }
-    }
-
-    public MimeMessage buildMimeMessage() throws MessagingException {
-        return buildMimeMessage(SMTPConfig.CFG.getMailSession());
     }
 
     public MimeMessage buildMimeMessage(Session emailSession) throws MessagingException {

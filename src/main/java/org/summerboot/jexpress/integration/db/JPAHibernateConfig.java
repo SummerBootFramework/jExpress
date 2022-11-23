@@ -17,14 +17,11 @@ package org.summerboot.jexpress.integration.db;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.util.BeanUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.persistence.Entity;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -36,7 +33,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
@@ -44,53 +40,38 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
 import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
-import org.summerboot.jexpress.boot.config.JExpressConfig;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class JPAHibernateConfig implements JExpressConfig {
+abstract public class JPAHibernateConfig extends BootConfig {
 
-    private static volatile Logger log = null;
-
-    public static final JPAHibernateConfig CFG = new JPAHibernateConfig();
+    //private static volatile Logger log = null;
     @JsonIgnore
     private volatile SessionFactory sessionFactory;
 
-    private File cfgFile;
+    //private File cfgFile;
     private final Properties props = new Properties();
     private final Map<String, Object> settings = new HashMap<>();
-    private volatile List<Class<?>> entityClasses = new ArrayList();
+    private final List<Class<?>> entityClasses = new ArrayList();
 
-    @Override
-    public File getCfgFile() {
-        return cfgFile;
+    protected JPAHibernateConfig() {
+    }
+
+    /**
+     * used by temp()
+     *
+     * @param temp
+     */
+    private JPAHibernateConfig(Object temp) {
     }
 
     @Override
-    public String name() {
-        return "DB Config";
-    }
-
-    @Override
-    public String info() {
-        try {
-            return BeanUtil.toJson(this, true, false);
-        } catch (JsonProcessingException ex) {
-            return ex.toString();
-        }
-    }
-
-    @Override
-    public JExpressConfig temp() {
-        return new JPAHibernateConfig();
-    }
-
-    @Override
-    public void load(File cfgFile, boolean isReal) throws IOException, GeneralSecurityException {
+    public void load(File cfgFile, boolean isReal) throws IOException {
         load(cfgFile);
     }
 
@@ -99,11 +80,10 @@ public class JPAHibernateConfig implements JExpressConfig {
      * @param cfgFile
      * @param packages in which contains the @Entity classes
      * @throws IOException
-     * @throws GeneralSecurityException
      */
-    public void load(File cfgFile, String... packages) throws IOException, GeneralSecurityException {
-        if (log == null) {
-            log = LogManager.getLogger(getClass());
+    public void load(File cfgFile, String... packages) throws IOException {
+        if (logger == null) {
+            logger = LogManager.getLogger(getClass());
         }
         this.cfgFile = cfgFile.getAbsoluteFile();
         try (InputStream is = new FileInputStream(cfgFile);) {
@@ -127,24 +107,11 @@ public class JPAHibernateConfig implements JExpressConfig {
         if (error != null) {
             throw new IllegalArgumentException(error);
         }
-        String callerRootPackageName = SummerApplication.getCallerRootPackageName();
-        String _rootPackageNames = callerRootPackageName + "," + props.getProperty(Environment.LOADED_CLASSES, "");//load JAP Entity classes from this root package names (CSV) for  O-R Mapping
-        log.debug("_rootPackageNames={}", _rootPackageNames);
-        String[] rootPackageNames = FormatterUtil.parseCsv(_rootPackageNames);
-        List<String> rootPackageNameList = new ArrayList();
-        rootPackageNameList.addAll(Arrays.asList(rootPackageNames));
-        rootPackageNameList.addAll(Arrays.asList(packages));
-        rootPackageNameList = rootPackageNameList.stream()
-                .distinct()
-                .collect(Collectors.toList());
-        rootPackageNameList.removeAll(Collections.singleton(""));
-        rootPackageNameList.removeAll(Collections.singleton(null));
-        log.debug("rootPackageNameList:{}", rootPackageNameList);
-        for (String rootPackageName : rootPackageNameList) {
-            Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName);
-            entityClasses.addAll(tempEntityClasses);
-            //settings.put(Environment.LOADED_CLASSES, entityClasses);
-        }
+        //scan @Entity
+        //settings.put(Environment.LOADED_CLASSES, entityClasses);
+        String callerRootPackageName = System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME);//SummerApplication.getCallerRootPackageName();
+        String csvPackageNames = props.getProperty(Environment.LOADED_CLASSES, "");
+        scanAnnotation_Entity(callerRootPackageName + "," + csvPackageNames, packages);
 
         //build EMF
         //EntityManagerFactory emf = new EntityManagerFactoryBuilderImpl(new PersistenceUnitInfoDescriptor(null), settings).build();
@@ -159,15 +126,33 @@ public class JPAHibernateConfig implements JExpressConfig {
         sessionFactory = metadata.getSessionFactoryBuilder().build();
 
         if (old != null) {
-            log.warn("close current db connection due to config changed");
+            logger.warn("close current db connection due to config changed");
             try {
                 old.close();
             } catch (Throwable ex) {
-                log.warn("failed to close current db connection", ex);
+                logger.warn("failed to close current db connection", ex);
             }
         }
         if (settings.get(Environment.PASS) != null) {
             settings.put(Environment.PASS, "****");// protect password from being logged
+        }
+    }
+
+    private void scanAnnotation_Entity(String csvPackageNames, String... packages) {
+        logger.debug("_rootPackageNames={}", csvPackageNames);
+        String[] rootPackageNames = FormatterUtil.parseCsv(csvPackageNames);
+        List<String> rootPackageNameList = new ArrayList();
+        rootPackageNameList.addAll(Arrays.asList(rootPackageNames));
+        rootPackageNameList.addAll(Arrays.asList(packages));
+        rootPackageNameList = rootPackageNameList.stream()
+                .distinct()
+                .collect(Collectors.toList());
+        rootPackageNameList.removeAll(Collections.singleton(""));
+        rootPackageNameList.removeAll(Collections.singleton(null));
+        logger.debug("rootPackageNameList:{}", rootPackageNameList);
+        for (String rootPackageName : rootPackageNameList) {
+            Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName);
+            entityClasses.addAll(tempEntityClasses);
         }
     }
 

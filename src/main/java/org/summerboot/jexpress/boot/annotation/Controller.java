@@ -13,12 +13,11 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.nio.server.annotation;
+package org.summerboot.jexpress.boot.annotation;
 
 import com.google.inject.BindingAnnotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
-import static java.lang.annotation.ElementType.PARAMETER;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -27,7 +26,7 @@ import java.lang.annotation.Target;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Target(value = {ElementType.TYPE, PARAMETER, ElementType.METHOD})
+@Target(value = {ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(value = RetentionPolicy.RUNTIME)
 @Documented
 @BindingAnnotation

@@ -23,10 +23,11 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ * @param <T>
  */
 public class Err<T> {
 
-    private int errorCode;
+    private String errorCode;
     private String errorTag;
     private String errorDesc;
     private String cause;
@@ -38,6 +39,11 @@ public class Err<T> {
     }
 
     public Err(int errorCode, String errorTag, String errorDesc, Throwable ex) {
+        //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
+        this("" + errorCode, errorTag, errorDesc, ex);
+    }
+
+    public Err(String errorCode, String errorTag, String errorDesc, Throwable ex) {
         this.errorCode = errorCode;
         this.errorTag = errorTag;
         this.errorDesc = errorDesc;
@@ -63,46 +69,6 @@ public class Err<T> {
         return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + "\", \"cause\": \"" + cause + "\"}";
     }
 
-//    @Override
-//    public int hashCode() {
-//        int hash = 7;
-//        hash = 97 * hash + this.errorCode;
-//        hash = 97 * hash + Objects.hashCode(this.errorTag);
-//        hash = 97 * hash + Objects.hashCode(this.errorDesc);
-//        hash = 97 * hash + Objects.hashCode(this.cause);
-//        hash = 97 * hash + Objects.hashCode(this.ex);
-//        return hash;
-//    }
-//
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (this == obj) {
-//            return true;
-//        }
-//        if (obj == null) {
-//            return false;
-//        }
-//        if (getClass() != obj.getClass()) {
-//            return false;
-//        }
-//        final Error other = (Error) obj;
-//        if (this.errorCode != other.errorCode) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.errorTag, other.errorTag)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.errorDesc, other.errorDesc)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.cause, other.cause)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.ex, other.ex)) {
-//            return false;
-//        }
-//        return true;
-//    }
     public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
         try {
@@ -112,7 +78,7 @@ public class Err<T> {
         }
     }
 
-    public int getErrorCode() {
+    public String getErrorCode() {
         return errorCode;
     }
 
@@ -129,6 +95,10 @@ public class Err<T> {
     }
 
     public void setErrorCode(int errorCode) {
+        this.errorCode = "" + errorCode;
+    }
+
+    public void setErrorCode(String errorCode) {
         this.errorCode = errorCode;
     }
 
