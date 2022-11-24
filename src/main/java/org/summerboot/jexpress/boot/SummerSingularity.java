@@ -87,10 +87,10 @@ abstract public class SummerSingularity implements BootConstant {
         primaryClass = callerClass == null
                 ? this.getClass()
                 : callerClass;
-        //aParallelUniverse();
+        aParallelUniverse();
     }
 
-    protected <T extends SummerApplication> T aParallelUniverse() {
+    private <T extends SummerApplication> T aParallelUniverse() {
         memo.append("\n\t- deployee callerClass=").append(primaryClass.getName());
         callerRootPackageName = ReflectionUtil.getRootPackageName(primaryClass);
         jvmStartCommand = scanJVM_StartCommand();
