@@ -19,10 +19,8 @@ import com.google.inject.Module;
 import com.google.inject.Inject;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Set;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
@@ -31,7 +29,6 @@ import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
 import org.summerboot.jexpress.util.BeanUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
 
 /**
  * In Code We Trust
@@ -134,9 +131,7 @@ abstract public class SummerApplication extends SummerBigBang {
     public static void run(Class callerClass, Module userOverrideModule, String[] args) {
         SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
         };
-//        app.addPredefinedUseImplTags("aa", "bb")
-//                .bindBootConfig("aa.properties", config, "aa", true);
-        app.aParallelUniverse().bigBang(args).start();
+        app.start();
     }
 
     /**
@@ -161,60 +156,11 @@ abstract public class SummerApplication extends SummerBigBang {
     public static SummerApplication unittest(Class callerClass, Module userOverrideModule, String... args) {
         SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
         };
-        return app.aParallelUniverse().bigBang(args);
+        return app;
     }
 
-//    protected SummerApplication() {
-//        this(null, null);
-//    }
     private SummerApplication(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass, userOverrideModule, args);
-    }
-
-    /**
-     * To add use impl tags before init()
-     *
-     * @param <T>
-     * @param enumClass the enum contains impl tag items
-     * @return
-     */
-    public <T extends SummerApplication> T addPredefinedUseImplTags(Class<? extends Enum<?>> enumClass) {
-        return addPredefinedUseImplTags(FormatterUtil.getEnumNames(enumClass));
-    }
-
-    /**
-     * To add use impl tags before init()
-     *
-     * @param <T>
-     * @param mockItemNames the impl tag item names
-     * @return
-     */
-    public <T extends SummerApplication> T addPredefinedUseImplTags(String... mockItemNames) {
-        if (mockItemNames == null || mockItemNames.length < 1) {
-            return (T) this;
-        }
-        availableImplTagOptions.addAll(Set.of(mockItemNames));
-        memo.append("\n\t- availableImplTagOptions=").append(availableImplTagOptions);
-        return (T) this;
-    }
-
-    /**
-     * To bind a configuration file implemented by a JExpressConfig instance
-     * before init(), which will be loaded and managed by SummerBoot Application
-     *
-     * @param <T>
-     * @param configFileName
-     * @param config
-     * @param checkImplTagUsed
-     * @param loadWhenImplTagUsed
-     * @return
-     */
-    public <T extends SummerApplication> T bindBootConfig(String configFileName, JExpressConfig config, String checkImplTagUsed, boolean loadWhenImplTagUsed) {
-        memo.append("\n\t- bindBootConfig: configFileName=").append(configFileName).append(", config=").append(config.getClass().getName()).append(", implTag=").append(checkImplTagUsed).append(", loadWhenImplTagUsed=").append(loadWhenImplTagUsed);
-        String key = config.getClass().getSimpleName();
-        ConfigMetadata metadata = new ConfigMetadata(configFileName, config.getClass(), config, checkImplTagUsed, loadWhenImplTagUsed);
-        scanedJExpressConfigs.put(key, metadata);
-        return (T) this;
     }
 
     @Inject

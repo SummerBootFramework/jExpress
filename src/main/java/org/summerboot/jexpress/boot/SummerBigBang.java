@@ -112,14 +112,14 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected SummerBigBang(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass);
         this.userOverrideModule = userOverrideModule;
-        //bigBang(args);
+        bigBang(args);
     }
 
     public Injector getGuiceInjector() {
         return guiceInjector;
     }
 
-    protected <T extends SummerApplication> T bigBang(String... args) {
+    private <T extends SummerApplication> T bigBang(String... args) {
         bigBang_LetThereBeCLI(args);
         bigBang_AndThereWasCLI();
 
