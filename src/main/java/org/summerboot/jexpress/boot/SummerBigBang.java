@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
+import io.grpc.BindableService;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -547,7 +548,6 @@ abstract public class SummerBigBang extends SummerSingularity {
 
             //2. load configurations
             updated = ConfigUtil.loadConfigs(mode, log, userSpecifiedResourceBundle, userSpecifiedConfigDir.toPath(), configs, userSpecifiedCfgMonitorIntervalSec, userSpecifiedConfigDir);
-
         } catch (Throwable ex) {
             log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             System.exit(1);

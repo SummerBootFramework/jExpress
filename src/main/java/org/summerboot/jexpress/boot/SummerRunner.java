@@ -27,14 +27,48 @@ import org.summerboot.jexpress.integration.smtp.PostOffice;
  */
 public interface SummerRunner {
 
+    class RunnerContext {
+
+        private final CommandLine cli;
+        private final File configDir;
+        private final Injector guiceInjector;
+        private final HealthInspector healthInspector;
+        private final PostOffice postOffice;
+
+        public RunnerContext(CommandLine cli, File configDir, Injector guiceInjector, HealthInspector healthInspector, PostOffice postOffice) {
+            this.cli = cli;
+            this.configDir = configDir;
+            this.guiceInjector = guiceInjector;
+            this.healthInspector = healthInspector;
+            this.postOffice = postOffice;
+        }
+
+        public CommandLine getCli() {
+            return cli;
+        }
+
+        public File getConfigDir() {
+            return configDir;
+        }
+
+        public Injector getGuiceInjector() {
+            return guiceInjector;
+        }
+
+        public HealthInspector getHealthInspector() {
+            return healthInspector;
+        }
+
+        public PostOffice getPostOffice() {
+            return postOffice;
+        }
+
+    }
+
     /**
      *
-     * @param cli
-     * @param configDir
-     * @param guiceInjector
-     * @param healthInspector
-     * @param postOffice
+     * @param context
      * @throws Exception
      */
-    void run(CommandLine cli, File configDir, Injector guiceInjector, HealthInspector healthInspector, PostOffice postOffice) throws Exception;
+    void run(RunnerContext context) throws Exception;
 }
