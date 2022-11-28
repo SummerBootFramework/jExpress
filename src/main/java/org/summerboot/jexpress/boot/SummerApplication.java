@@ -17,6 +17,9 @@ package org.summerboot.jexpress.boot;
 
 import com.google.inject.Module;
 import com.google.inject.Inject;
+import io.grpc.BindableService;
+import io.grpc.ServerBuilder;
+import io.grpc.ServerServiceDefinition;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
@@ -27,8 +30,12 @@ import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
+import org.summerboot.jexpress.nio.grpc.Counter;
+import org.summerboot.jexpress.nio.grpc.GRPCServer;
+import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
 import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.nio.grpc.StatusReporter;
 
 /**
  * In Code We Trust
@@ -122,6 +129,13 @@ abstract public class SummerApplication extends SummerBigBang {
         run(callerClass, userOverrideModule, args);
     }
 
+    public static void run(Class callerClass, Module userOverrideModule, String argsStr) {
+        String[] args = argsStr.split(" ");
+        SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
+        };
+        app.start();
+    }
+
     /**
      *
      * @param callerClass
@@ -197,6 +211,10 @@ abstract public class SummerApplication extends SummerBigBang {
         memo.append("\n\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
         log.trace(() -> memo.toString());
 
+        if (configChangeListener != null) {
+            ConfigUtil.setConfigChangeListener(configChangeListener);
+        }
+
         //1. init email
         final SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
         if (postOffice != null) {
@@ -238,15 +256,37 @@ abstract public class SummerApplication extends SummerBigBang {
                 log.warn(sb);
             }
 
-            //4. preLaunch
+            //4. runner.run            
+            SummerRunner.RunnerContext context = new SummerRunner.RunnerContext(cli, userSpecifiedConfigDir, guiceInjector, healthInspector, postOffice);
             for (SummerRunner summerRunner : summerRunners) {
-                summerRunner.run(cli, userSpecifiedConfigDir, guiceInjector, healthInspector, postOffice);
-            }
-            if (configChangeListener != null) {
-                ConfigUtil.setConfigChangeListener(configChangeListener);
+                summerRunner.run(context);
             }
 
-            //5. run HTTP listening
+            //5a. start server: gRPC
+            log.trace("hasGRPCImpl.bs=" + gRPCBindableServiceImplClasses);
+            log.trace("hasGRPCImpl.ssd=" + gRPCServerServiceDefinitionImplClasses);
+            if (hasGRPCImpl) {
+                //2. init gRPC server
+                GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
+                GRPCServer gRPCServer = new GRPCServer(gRPCCfg.getBindingAddr(), gRPCCfg.getBindingPort(), gRPCCfg.getKmf(), gRPCCfg.getTmf());
+                Counter gRPCCounter = gRPCServer.configThreadPool(gRPCCfg.getPoolCoreSize(), gRPCCfg.getPoolMaxSizeMaxSize(), gRPCCfg.getPoolQueueSize(), gRPCCfg.getKeepAliveSeconds());
+
+                ServerBuilder serverBuilder = gRPCServer.serverBuilder();
+                for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
+                    BindableService impl = guiceInjector.getInstance(c);
+                    serverBuilder.addService(impl);
+                    if (impl instanceof StatusReporter) {
+                        ((StatusReporter) impl).setCounter(gRPCCounter);
+                    }
+                }
+                for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
+                    ServerServiceDefinition impl = guiceInjector.getInstance(c);
+                    serverBuilder.addService(impl);
+                }
+                gRPCServer.start();
+            }
+
+            //5b. start server: HTTP
             log.trace("hasControllers=" + hasControllers);
             if (hasControllers) {
                 NioServer.bind();

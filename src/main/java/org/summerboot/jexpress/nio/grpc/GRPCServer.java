@@ -45,6 +45,9 @@ public class GRPCServer {
     protected static final Logger log = LogManager.getLogger(GRPCServer.class.getName());
 
     public static ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
+        if(kmf==null) {
+            return null;
+        }
         TlsServerCredentials.Builder tlsBuilder = TlsServerCredentials.newBuilder().keyManager(kmf.getKeyManagers());
         if (tmf != null) {
             tlsBuilder.trustManager(tmf.getTrustManagers());
@@ -98,8 +101,8 @@ public class GRPCServer {
 
     /**
      *
-     * @param poolCoreSize - the number of threads to keep in the pool, even
-     * if they are idle, unless allowCoreThreadTimeOutis set
+     * @param poolCoreSize - the number of threads to keep in the pool, even if
+     * they are idle, unless allowCoreThreadTimeOutis set
      * @param poolMaxSizeMaxSize - the maximum number of threads to allow in the
      * pool
      * @param poolQueueSize - the size of the waiting list
@@ -169,7 +172,11 @@ public class GRPCServer {
         return serverBuilder;
     }
 
-    public void start(boolean isBlock) throws IOException, InterruptedException {
+    public void start() throws IOException {
+        start(false);
+    }
+
+    public void start(boolean isBlock) throws IOException {
         if (server != null) {
             stop();
         }
@@ -181,7 +188,11 @@ public class GRPCServer {
                     stop();
                 }, "GRPCServer.shutdown and stop listening on " + bindingAddr + ":" + port));
         if (isBlock) {
-            server.awaitTermination();
+            try {
+                server.awaitTermination();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

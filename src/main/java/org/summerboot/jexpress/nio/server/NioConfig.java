@@ -81,10 +81,10 @@ public class NioConfig extends BootConfig {
     //1. NIO Network Listeners
     @ConfigHeader(title = "1. NIO Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
-            example = "192.168.1.10:8443, 127.0.0.1:8444, 0.0.0.0:8445")
+            example = "192.168.1.10:8311, 127.0.0.1:8311, 0.0.0.0:8311")
 
-    @Config(key = "nio.server.bindings", defaultValue = "0.0.0.0:8211")
-    private volatile Map<String, Integer> bindingAddresses = Map.of("0.0.0.0", 8211);
+    @Config(key = "nio.server.bindings", defaultValue = "0.0.0.0:8311")
+    private volatile Map<String, Integer> bindingAddresses = Map.of("0.0.0.0", 8311);
 
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")

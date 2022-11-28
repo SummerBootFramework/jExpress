@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.boot;
 
 import io.grpc.BindableService;
+import io.grpc.ServerServiceDefinition;
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
 import java.io.File;
@@ -45,6 +46,7 @@ import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.boot.annotation.GrpcService;
 
 /**
  * In Code We Trust
@@ -73,6 +75,8 @@ abstract public class SummerSingularity implements BootConstant {
     protected final List<String> availableUniqueTagOptions = new ArrayList();
     protected final Map<String, ConfigMetadata> scanedJExpressConfigs = new LinkedHashMap<>();
     protected final Set<String> availableImplTagOptions = new HashSet();
+    protected final Set<Class<? extends BindableService>> gRPCBindableServiceImplClasses = new HashSet();
+    protected final Set<Class<ServerServiceDefinition>> gRPCServerServiceDefinitionImplClasses = new HashSet();
     protected boolean hasControllers = false;
     protected boolean hasGRPCImpl = false;
     protected boolean hasAuthImpl = false;
@@ -249,10 +253,19 @@ abstract public class SummerSingularity implements BootConstant {
         }
     }
 
-    protected void scanImplementation_gRPC(String callerRootPackageName) {
-        //ServerServiceDefinition
-        Set<Class<? extends BindableService>> gRPC_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(BindableService.class, callerRootPackageName);
-        hasGRPCImpl = gRPC_ImplClasses != null && !gRPC_ImplClasses.isEmpty();
+    protected void scanImplementation_gRPC(String... pakcages) {
+        //gRPCBindableServiceImplClasses.addAll(ReflectionUtil.getAllImplementationsByInterface(BindableService.class, callerRootPackageName));
+        for (String rootPackageName : pakcages) {
+            Set<Class<?>> gRPCServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcService.class, rootPackageName);
+            for (Class gRPCServerClass : gRPCServerClasses) {
+                if (BindableService.class.isAssignableFrom(gRPCServerClass)) {
+                    gRPCBindableServiceImplClasses.add(gRPCServerClass);
+                } else if (ServerServiceDefinition.class.equals(gRPCServerClass)) {
+                    gRPCServerServiceDefinitionImplClasses.add(gRPCServerClass);
+                }
+            }
+        }
+        hasGRPCImpl = !gRPCServerServiceDefinitionImplClasses.isEmpty() || !gRPCBindableServiceImplClasses.isEmpty();
     }
 
     protected List<String> scanAnnotation_Service(String... rootPackageNames) {

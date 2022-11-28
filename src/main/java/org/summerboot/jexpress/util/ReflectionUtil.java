@@ -27,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -41,6 +42,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,7 +80,13 @@ public class ReflectionUtil {
     public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, String rootPackageName) {
         Reflections reflections = new Reflections(rootPackageName);
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(annotation);
-        return classes;
+        Set<Class<?>> ret = new HashSet();
+        for (Class c : classes) {
+            if (c.isAnnotationPresent(annotation)) {
+                ret.add(c);
+            }
+        }
+        return ret;
     }
 
     /**
@@ -164,6 +172,7 @@ public class ReflectionUtil {
 //        Class targetClass = field.getType();
 //        Type genericType = field.getGenericType();
         Type[] argTypes = DEFAULT_ARG_TYPES;
+        Class[] upperBoundClasses = {};
         if (genericType instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) genericType;
             Type fieldRawType = parameterizedType.getRawType();
@@ -171,6 +180,16 @@ public class ReflectionUtil {
                 targetClass = (Class) fieldRawType;
             }
             argTypes = parameterizedType.getActualTypeArguments();
+            upperBoundClasses = new Class[argTypes.length];
+            for (int i = 0; i < argTypes.length; i++) {
+                Type upperBoundType = argTypes[i];
+                if (upperBoundType instanceof WildcardType) {
+                    //String classT = argTypes[0].getTypeName();
+                    upperBoundClasses[i] = (Class) ((WildcardType) upperBoundType).getUpperBounds()[0];
+                } else if (upperBoundType instanceof Class) {
+                    upperBoundClasses[i] = (Class) upperBoundType;
+                }
+            }
         }
 
         if (targetClass.isArray()) {
@@ -189,7 +208,7 @@ public class ReflectionUtil {
             if (valuesStr == null || valuesStr.length < 1) {
                 return null;
             }
-            Class classT = (Class) argTypes[0];
+            Class classT = upperBoundClasses[0];//(Class) argTypes[0];
             Object array = Array.newInstance(classT, valuesStr.length);
             for (int i = 0; i < valuesStr.length; i++) {
                 Array.set(array, i, toStandardJavaType(valuesStr[i], classT, autoDecrypt, isEmailRecipients, enumConvert));
@@ -200,7 +219,7 @@ public class ReflectionUtil {
             if (valuesStr == null || valuesStr.length < 1) {
                 return null;
             }
-            Class classT = (Class) argTypes[0];
+            Class classT = upperBoundClasses[0];//(Class) argTypes[0];
             Object array = Array.newInstance(classT, valuesStr.length);
             for (int i = 0; i < valuesStr.length; i++) {
                 Array.set(array, i, toStandardJavaType(valuesStr[i], classT, autoDecrypt, isEmailRecipients, enumConvert));
@@ -211,7 +230,7 @@ public class ReflectionUtil {
             if (valuesStr == null || valuesStr.length < 1) {
                 return null;
             }
-            Class classT = (Class) argTypes[0];
+            Class classT = upperBoundClasses[0];//(Class) argTypes[0];
             Object array = Array.newInstance(classT, valuesStr.length);
             for (int i = 0; i < valuesStr.length; i++) {
                 Array.set(array, i, toStandardJavaType(valuesStr[i], classT, autoDecrypt, isEmailRecipients, enumConvert));
@@ -222,8 +241,8 @@ public class ReflectionUtil {
             if (stringMap == null || stringMap.isEmpty()) {
                 return null;
             }
-            Class classT1 = (Class) argTypes[0];
-            Class classT2 = (Class) argTypes[1];
+            Class classT1 = upperBoundClasses[0];//(Class) argTypes[0];
+            Class classT2 = upperBoundClasses[1];//(Class) argTypes[1];
             Map ret = new HashMap();
             for (var k : stringMap.keySet()) {
                 String v = stringMap.get(k);
@@ -232,6 +251,16 @@ public class ReflectionUtil {
                 ret.put(keyT, valueT);
             }
             return Map.copyOf(ret);
+        } else if (targetClass.equals(Class.class)) {
+            try {
+                Class ret = Class.forName(value);
+                if (upperBoundClasses[0] != null && !upperBoundClasses[0].isAssignableFrom(ret)) {
+                    throw new IllegalArgumentException("invalid Class name: " + value + ", expected a type of " + upperBoundClasses[0].getName());
+                }
+                return ret;
+            } catch (ClassNotFoundException ex) {
+                throw new IllegalArgumentException("invalid Class name: " + value, ex);
+            }
         } else {
             Object v = toStandardJavaType(value, targetClass, autoDecrypt, isEmailRecipients, enumConvert);
             return v;

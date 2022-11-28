@@ -61,7 +61,7 @@ public class GRPCServerConfig extends BootConfig {
     @Config(key = ID + ".binding.addr")
     private volatile String bindingAddr = "127.0.0.1";
     @Config(key = ID + ".binding.port")
-    private volatile int bindingPort = 8081;
+    private volatile int bindingPort = 8424;
 
     @Config(key = ID + ".pool.BizExecutor.mode",
             desc = "valid value = CPU (default), IO, Mixed")
