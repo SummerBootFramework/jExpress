@@ -59,13 +59,17 @@ public class InstrumentationMgrImpl implements InstrumentationMgr {
         //int idleConnections = poolProxy.getIdleConnections();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println(Thread.currentThread().getName() + ": shutdown JMX");
-            try {
-                mBeanServer.unregisterMBean(mbeanName);
-            } catch (InstanceNotFoundException | MBeanRegistrationException ex) {
-                ex.printStackTrace(System.err);
-            }
+            shutdown();
         }, "ShutdownHook.JMX")
         );
+    }
+
+    @Override
+    public void shutdown() {
+        try {
+            mBeanServer.unregisterMBean(mbeanName);
+        } catch (InstanceNotFoundException | MBeanRegistrationException ex) {
+        }
     }
 
 }

@@ -69,7 +69,7 @@ public class NioServer {
     protected static EventLoopGroup bossGroup;// the pool to accept new connection requests
     protected static EventLoopGroup workerGroup;// the pool to process IO logic
     //private static EventExecutorGroup sharedNioExecutorGroup;// a thread pool to handle time-consuming business
-    protected static final ScheduledExecutorService QPS_SERVICE = Executors.newSingleThreadScheduledExecutor();
+    protected static ScheduledExecutorService QPS_SERVICE;// = Executors.newSingleThreadScheduledExecutor();
 
     protected static NIOStatusListener listener = null;
 
@@ -216,6 +216,7 @@ public class NioServer {
         lastBizHitRef.set(-1L);
         if (listener != null || log.isDebugEnabled()) {
             int interval = 1;
+            QPS_SERVICE = Executors.newSingleThreadScheduledExecutor();
             QPS_SERVICE.scheduleAtFixedRate(() -> {
                 long hps = NioCounter.COUNTER_HIT.getAndSet(0);
                 long tps = NioCounter.COUNTER_SENT.getAndSet(0);
@@ -254,7 +255,7 @@ public class NioServer {
         }
     }
 
-    static void shutdown() {
+    public static void shutdown() {
         String tn = Thread.currentThread().getName();
         if (bossGroup != null && !bossGroup.isShutdown()) {
             System.out.println(tn + ": shutdown bossGroup");

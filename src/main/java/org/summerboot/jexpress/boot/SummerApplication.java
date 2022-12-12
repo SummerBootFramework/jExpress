@@ -108,10 +108,12 @@ abstract public class SummerApplication extends SummerBigBang {
 
     /**
      *
+     * @param <T>
      * @param args
      * @param userOverrideModule
+     * @return
      */
-    public static void run(Module userOverrideModule, String[] args) {
+    public static <T extends SummerApplication> T run(Module userOverrideModule, String[] args) {
         Class callerClass = null;
         StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
         for (StackTraceElement stackTraceElement : stackTrace) {
@@ -126,51 +128,62 @@ abstract public class SummerApplication extends SummerBigBang {
         if (callerClass == null) {
             throw new RuntimeException("Failed to find the caller class");
         }
-        run(callerClass, userOverrideModule, args);
-    }
-
-    public static void run(Class callerClass, Module userOverrideModule, String argsStr) {
-        String[] args = argsStr.split(" ");
-        SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
-        };
-        app.start();
+        return run(callerClass, userOverrideModule, args);
     }
 
     /**
      *
-     * @param callerClass
-     * @param userOverrideModule
-     * @param args
-     */
-    public static void run(Class callerClass, Module userOverrideModule, String[] args) {
-        SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
-        };
-        app.start();
-    }
-
-    /**
-     *
+     * @param <T>
      * @param callerClass
      * @param userOverrideModule
      * @param argsStr
      * @return
      */
-    public static SummerApplication unittest(Class callerClass, Module userOverrideModule, String argsStr) {
+    public static <T extends SummerApplication> T run(Class callerClass, Module userOverrideModule, String argsStr) {
+        String[] args = argsStr.split(" ");
+        return run(callerClass, userOverrideModule, args);
+    }
+
+    /**
+     *
+     * @param <T>
+     * @param callerClass
+     * @param userOverrideModule
+     * @param args
+     * @return
+     */
+    public static <T extends SummerApplication> T run(Class callerClass, Module userOverrideModule, String[] args) {
+        SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
+        };
+        app.start();
+        return (T) app;
+    }
+
+    /**
+     *
+     * @param <T>
+     * @param callerClass
+     * @param userOverrideModule
+     * @param argsStr
+     * @return
+     */
+    public static <T extends SummerApplication> T unittest(Class callerClass, Module userOverrideModule, String argsStr) {
         String[] args = argsStr.split(" ");
         return unittest(callerClass, userOverrideModule, args);
     }
 
     /**
      *
+     * @param <T>
      * @param callerClass
      * @param userOverrideModule
      * @param args
      * @return
      */
-    public static SummerApplication unittest(Class callerClass, Module userOverrideModule, String... args) {
+    public static <T extends SummerApplication> T unittest(Class callerClass, Module userOverrideModule, String... args) {
         SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
         };
-        return app;
+        return (T) app;
     }
 
     private SummerApplication(Class callerClass, Module userOverrideModule, String... args) {
@@ -188,6 +201,8 @@ abstract public class SummerApplication extends SummerBigBang {
 
     @Inject
     protected PostOffice postOffice;
+
+    private GRPCServer gRPCServer;
 
     @Override
     protected Class getAddtionalI18n() {
@@ -268,7 +283,7 @@ abstract public class SummerApplication extends SummerBigBang {
             if (hasGRPCImpl) {
                 //2. init gRPC server
                 GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
-                GRPCServer gRPCServer = new GRPCServer(gRPCCfg.getBindingAddr(), gRPCCfg.getBindingPort(), gRPCCfg.getKmf(), gRPCCfg.getTmf());
+                gRPCServer = new GRPCServer(gRPCCfg.getBindingAddr(), gRPCCfg.getBindingPort(), gRPCCfg.getKmf(), gRPCCfg.getTmf());
                 Counter gRPCCounter = gRPCServer.configThreadPool(gRPCCfg.getPoolCoreSize(), gRPCCfg.getPoolMaxSizeMaxSize(), gRPCCfg.getPoolQueueSize(), gRPCCfg.getKeepAliveSeconds());
 
                 ServerBuilder serverBuilder = gRPCServer.serverBuilder();
@@ -312,6 +327,16 @@ abstract public class SummerApplication extends SummerBigBang {
         } catch (Throwable ex) {
             log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             System.exit(1);
+        }
+    }
+
+    public void stop() {
+        if (gRPCServer != null) {
+            gRPCServer.shutdown();
+        }
+        NioServer.shutdown();
+        if (instrumentationMgr != null) {
+            instrumentationMgr.shutdown();
         }
     }
 }

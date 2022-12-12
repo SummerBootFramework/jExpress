@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
-import io.grpc.BindableService;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -113,14 +112,25 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected SummerBigBang(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass);
         this.userOverrideModule = userOverrideModule;
-        bigBang(args);
+        singularity();
+        aParallelUniverse(args);
     }
 
     public Injector getGuiceInjector() {
         return guiceInjector;
     }
 
-    private <T extends SummerApplication> T bigBang(String... args) {
+    private void singularity() {
+        guiceInjector = null;
+        summerInitializers.clear();
+        summerRunners.clear();
+        userSpecifiedResourceBundle = null;
+        userSpecifiedConfigDir = null;
+        userSpecifiedCfgMonitorIntervalSec = 30;
+        userSpecifiedImplTags.clear();
+    }
+
+    private <T extends SummerApplication> T aParallelUniverse(String... args) {
         bigBang_LetThereBeCLI(args);
         bigBang_AndThereWasCLI();
 
