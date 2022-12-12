@@ -234,7 +234,7 @@ abstract public class SummerApplication extends SummerBigBang {
         final SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
         if (postOffice != null) {
             postOffice.setAppVersion(super.appVersionLong);
-            //gracefully GRPCServer
+            //gracefully shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 if (postOffice != null) {
                     postOffice.sendAlertSync(smtpCfg.getEmailToAppSupport(), "Shutdown at " + OffsetDateTime.now() + " - " + super.appVersionLong, "EOM", null, false);
