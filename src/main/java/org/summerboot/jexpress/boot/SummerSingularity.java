@@ -58,13 +58,13 @@ abstract public class SummerSingularity implements BootConstant {
     protected static Logger log;
 
     protected final StringBuilder memo = new StringBuilder();
+    protected final Class primaryClass;
 
     /*
      * Scan Results
      */
     protected String jvmStartCommand;
-    protected Boolean jmxRequired;
-    protected Class primaryClass;
+    protected boolean jmxRequired;
     protected String callerRootPackageName;//also used by JPAHibernateConfig access to scan @Entity
     protected String appVersionLong = BootConstant.VERSION;
     protected String appVersionShort = BootConstant.VERSION;
@@ -91,10 +91,31 @@ abstract public class SummerSingularity implements BootConstant {
         primaryClass = callerClass == null
                 ? this.getClass()
                 : callerClass;
-        aParallelUniverse();
+        singularity();
+        bigBang();
     }
 
-    private <T extends SummerApplication> T aParallelUniverse() {
+    private void singularity() {
+        memo.setLength(0);
+        // reset Scan Results
+        jvmStartCommand = null;
+        jmxRequired = false;
+        callerRootPackageName = null;
+        appVersionLong = BootConstant.VERSION;
+        appVersionShort = BootConstant.VERSION;
+
+        //reset Annotation scan results as CLI inputs
+        availableUniqueTagOptions.clear();
+        scanedJExpressConfigs.clear();
+        availableImplTagOptions.clear();
+        gRPCBindableServiceImplClasses.clear();
+        gRPCServerServiceDefinitionImplClasses.clear();
+        hasControllers = false;
+        hasGRPCImpl = false;
+        hasAuthImpl = false;
+    }
+
+    private <T extends SummerApplication> T bigBang() {
         memo.append("\n\t- deployee callerClass=").append(primaryClass.getName());
         callerRootPackageName = ReflectionUtil.getRootPackageName(primaryClass);
         jvmStartCommand = scanJVM_StartCommand();

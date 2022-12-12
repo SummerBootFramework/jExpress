@@ -45,7 +45,7 @@ public class GRPCServer {
     protected static final Logger log = LogManager.getLogger(GRPCServer.class.getName());
 
     public static ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
-        if(kmf==null) {
+        if (kmf == null) {
             return null;
         }
         TlsServerCredentials.Builder tlsBuilder = TlsServerCredentials.newBuilder().keyManager(kmf.getKeyManagers());
@@ -178,15 +178,16 @@ public class GRPCServer {
 
     public void start(boolean isBlock) throws IOException {
         if (server != null) {
-            stop();
+            shutdown();
         }
 
         server = serverBuilder.build().start();
-        log.info("*** GRPCServer is listening on " + bindingAddr + ":" + port);
+        String schema = serverCredentials == null ? "tcp" : "tls";
+        log.info("*** GRPCServer is listening on " + schema + "//" + bindingAddr + ":" + port);
         Runtime.getRuntime().addShutdownHook(
                 new Thread(() -> {
-                    stop();
-                }, "GRPCServer.shutdown and stop listening on " + bindingAddr + ":" + port));
+                    shutdown();
+                }, "GRPCServer.shutdown and stop listening on " + schema + "//" + bindingAddr + ":" + port));
         if (isBlock) {
             try {
                 server.awaitTermination();
@@ -196,7 +197,7 @@ public class GRPCServer {
         }
     }
 
-    public void stop() {
+    public void shutdown() {
         if (server == null) {
             return;
         }

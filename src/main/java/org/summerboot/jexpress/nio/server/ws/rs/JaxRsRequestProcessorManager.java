@@ -38,8 +38,6 @@ import java.util.HashSet;
 import java.util.List;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.annotation.Ping;
-import org.summerboot.jexpress.nio.server.NioCounter;
-import org.summerboot.jexpress.security.auth.AuthConfig;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
 /**
@@ -100,6 +98,7 @@ public class JaxRsRequestProcessorManager {
         if (controllers == null || controllers.isEmpty()) {
             return;
         }
+        duplicatedProcessors.clear();
         final Set<String> declareRoles = new HashSet();
         Map<HttpMethod, Map<String, RequestProcessor>> stringMap = new HashMap<>();
         Map<HttpMethod, Map<String, RequestProcessor>> regexMap = new HashMap<>();

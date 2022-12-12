@@ -28,4 +28,5 @@ public interface InstrumentationMgr {
 
     void start(String beanName) throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException;
 
+    void shutdown();
 }
