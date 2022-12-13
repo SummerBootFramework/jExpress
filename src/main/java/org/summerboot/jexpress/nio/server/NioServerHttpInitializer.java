@@ -21,6 +21,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
@@ -59,14 +60,14 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
         this.nettySslContext = nettySslContext;
         this.verifyClient = verifyClient;
         this.cfg = cfg;
-        isHttpService = cfg.isHttpService();
+        this.isHttpService = cfg.isHttpService();
         this.loadBalancingEndpoint = loadBalancingEndpoint;
     }
 
-    private void configureSsl(SocketChannel ch, ChannelPipeline p) {
+    private void configureSsl(SocketChannel socketChannel, ChannelPipeline pipeline) {
         SslHandler sslHandler = null;
         if (nettySslContext != null) {
-            sslHandler = nettySslContext.newHandler(ch.alloc());
+            sslHandler = nettySslContext.newHandler(socketChannel.alloc());
             if (cfg.isVerifyCertificateHost()) {
                 SSLEngine sslEngine = sslHandler.engine();
                 SSLParameters sslParameters = sslEngine.getSSLParameters();
@@ -107,7 +108,7 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
             }
         }
         if (sslHandler != null) {
-            p.addLast("ssl", sslHandler);
+            pipeline.addLast("ssl", sslHandler);
         }
     }
 
@@ -115,48 +116,61 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
 //    private static final int DEFAULT_MAX_HEADER_SIZE = 8192;
 //    private static final int DEFAULT_MAX_CHUNK_SIZE = 8192;
     @Override
-    public void initChannel(SocketChannel ch) {
+    public void initChannel(SocketChannel socketChannel) {
         long tc = NioCounter.COUNTER_TOTAL_CHANNEL.incrementAndGet();
-        log.debug(() -> tc + "[" + this.hashCode() + "]" + ch);
+        log.debug(() -> tc + "[" + this.hashCode() + "]" + socketChannel);
 
-        ChannelPipeline p = ch.pipeline();
-        configureSsl(ch, p);
+        ChannelPipeline channelPipeline = socketChannel.pipeline();
+        configureSsl(socketChannel, channelPipeline);
 
         //Client Heartbeat not in my control: 
         if (cfg.getReaderIdleTime() > 0) {
-            p.addLast("tcp-pong", new HeartbeatRecIdleStateHandler(cfg.getReaderIdleTime()));
+            channelPipeline.addLast("tcp-pong", new HeartbeatRecIdleStateHandler(cfg.getReaderIdleTime()));
         }
         if (cfg.getWriterIdleTime() > 0) {
-            p.addLast("tcp-ping", new HeartbeatSentIdleStateHandler(cfg.getWriterIdleTime()));
+            channelPipeline.addLast("tcp-ping", new HeartbeatSentIdleStateHandler(cfg.getWriterIdleTime()));
         }
         if (isHttpService) {
-            //HTTP based handlers
-            p.addLast("http-codec", new HttpServerCodec(cfg.getHttpServerCodec_MaxInitialLineLength(),
+            //1. HTTP based handlers
+            channelPipeline.addLast("http-codec", new HttpServerCodec(cfg.getHttpServerCodec_MaxInitialLineLength(),
                     cfg.getHttpServerCodec_MaxHeaderSize(),
                     cfg.getHttpServerCodec_MaxChunkSize()));// to support both HTTP encode and decode in one handler for performance
             //p.addLast(new HttpContentCompressor());
-            ChannelHandler chl = cfg.getHttpFileUploadHandler();
-            if (chl != null) {
-                p.addLast("biz-fileUploadHandler", chl);// to support file upload, must beforeHttpObjectAggregator and  ChunkedWriteHandler
+            ChannelHandler ch = cfg.getHttpFileUploadHandler();
+            if (ch != null) {
+                channelPipeline.addLast("biz-fileUploadHandler", ch);// to support file upload, must beforeHttpObjectAggregator and  ChunkedWriteHandler
             }
-            p.addLast("http-aggregator", new HttpObjectAggregator(cfg.getHttpObjectAggregatorMaxContentLength()));// to merge multple messages into single request or response
-            p.addLast("http-chunked", new ChunkedWriteHandler());// to support large file transfer
-        }
-        // Tell the pipeline to run My Business Logic Handler's event handler methods in a different thread than an I/O thread, so that the I/O thread is not blocked by a time-consuming task.
-        // If the business logic is fully asynchronous or finished very quickly, no need to specify a group.
-        //p.addLast(cfg.getNioSharedChildExecutor(), "bizexe", cfg.getRequestHandler());
-        //p.addLast("sslhandshake", shh);
-        if (loadBalancingEndpoint != null) {
-            ChannelHandler chl = cfg.getPingHandler();
-            if (chl != null) {
-                p.addLast("biz-pingHandler", chl);
-            }
-        }
-        if (cfg.isCompressWebSocket()) {
-            p.addLast(new WebSocketServerCompressionHandler());
-        }
-        p.addLast("biz-requestHandler", cfg.getRequestHandler());
+            channelPipeline.addLast("http-aggregator", new HttpObjectAggregator(cfg.getHttpObjectAggregatorMaxContentLength()));// to merge multple messages into single request or response
+            channelPipeline.addLast("http-chunked", new ChunkedWriteHandler());// to support large file transfer
 
+            //2. 
+            String webSocketURI = cfg.getWebSocketHandlerAnnotatedName();
+            if (webSocketURI != null) {
+                channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI));
+                if (cfg.isCompressWebSocket()) {
+                    channelPipeline.addLast(new WebSocketServerCompressionHandler());
+                }
+                ch = cfg.getWebSockettHandler();
+                if (ch != null) {
+                    channelPipeline.addLast(ch);
+                }
+            }
+
+            //3. Tell the pipeline to run My Business Logic Handler's event handler methods in a different thread than an I/O thread, so that the I/O thread is not blocked by a time-consuming task.
+            // If the business logic is fully asynchronous or finished very quickly, no need to specify a group.
+            //p.addLast(cfg.getNioSharedChildExecutor(), "bizexe", cfg.getRequestHandler());
+            //p.addLast("sslhandshake", shh);
+            if (loadBalancingEndpoint != null) {
+                ch = cfg.getPingHandler();
+                if (ch != null) {
+                    channelPipeline.addLast("biz-pingHandler", ch);
+                }
+            }
+            ch = cfg.getRequestHandler();
+            if (ch != null) {
+                channelPipeline.addLast("biz-requestHandler", ch);
+            }
+        }
     }
 
 }

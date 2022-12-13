@@ -246,8 +246,11 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.HttpRequestHandler")
     private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.BINDING_NAME;
 
+    @Config(key = "nio.WebSocketHandler")
+    private volatile String webSocketHandlerAnnotatedName = null;
+
     @Config(key = "nio.WebSocket.Compress")
-    private volatile boolean compressWebSocket = false;
+    private volatile boolean compressWebSocket = true;
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
@@ -427,37 +430,35 @@ public class NioConfig extends BootConfig {
         }
 
         //4.3 Netty Channel Handler
-//        if (useDefaultHTTPHandler && StringUtils.isBlank(requestHandlerAnnotatedName)) {
-//            requestHandlerAnnotatedName = BootHttpRequestHandler.class.getName();
-//        }
-//        if (useDefaultHTTPHandler && StringUtils.isBlank(pingHandlerAnnotatedName)) {
-//            pingHandlerAnnotatedName = BootHttpPingHandler.class.getName();
-//        }
         if (INJECTOR != null) {
-            if (fielUploadHandlerAnnotatedName != null) {
+            if (StringUtils.isNotBlank(fielUploadHandlerAnnotatedName)) {
                 try {
-                    INJECTOR.getInstance(
-                            Key.get(ChannelHandler.class, Names.named(fielUploadHandlerAnnotatedName)));
+                    INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(fielUploadHandlerAnnotatedName)));
                     Path dir = Paths.get(tempUoloadDir).toAbsolutePath();
                     Files.createDirectories(dir);
                 } catch (Throwable ex) {
                     helper.addError("invalid HttpFileUpload Channel Handler name(" + fielUploadHandlerAnnotatedName + "): " + ex.toString());
                 }
             }
-            if (pingHandlerAnnotatedName != null) {
+            if (StringUtils.isNotBlank(pingHandlerAnnotatedName)) {
                 try {
-                    INJECTOR.getInstance(
-                            Key.get(ChannelHandler.class, Names.named(pingHandlerAnnotatedName)));
+                    INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(pingHandlerAnnotatedName)));
                 } catch (Throwable ex) {
                     helper.addError("invalid Ping Channel Handler name(" + pingHandlerAnnotatedName + "): " + ex.toString());
                 }
             }
-            if (requestHandlerAnnotatedName != null) {
+            if (StringUtils.isNotBlank(requestHandlerAnnotatedName)) {
                 try {
-                    INJECTOR.getInstance(
-                            Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
+                    INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
                 } catch (Throwable ex) {
                     helper.addError("invalid Request Channel Handler name(" + requestHandlerAnnotatedName + "): " + ex.toString());
+                }
+            }
+            if (StringUtils.isNotBlank(webSocketHandlerAnnotatedName)) {
+                try {
+                    INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(webSocketHandlerAnnotatedName)));
+                } catch (Throwable ex) {
+                    helper.addError("invalid Request Channel Handler name(" + webSocketHandlerAnnotatedName + "): " + ex.toString());
                 }
             }
         }
@@ -534,6 +535,14 @@ public class NioConfig extends BootConfig {
             return null;
         }
         return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
+    }
+
+    @JsonIgnore
+    public ChannelHandler getWebSockettHandler() {
+        if (webSocketHandlerAnnotatedName == null) {
+            return null;
+        }
+        return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(webSocketHandlerAnnotatedName)));
     }
 
     public boolean isCompressWebSocket() {
@@ -693,6 +702,10 @@ public class NioConfig extends BootConfig {
 
     public String getRequestHandlerAnnotatedName() {
         return requestHandlerAnnotatedName;
+    }
+
+    public String getWebSocketHandlerAnnotatedName() {
+        return webSocketHandlerAnnotatedName;
     }
 
     public VerboseTargetUserType getFilterUserType() {
