@@ -250,7 +250,10 @@ public class NioConfig extends BootConfig {
     private volatile String webSocketHandlerAnnotatedName = null;
 
     @Config(key = "nio.WebSocket.Compress")
-    private volatile boolean compressWebSocket = true;
+    private volatile boolean webSocketCompress = true;
+
+    @Config(key = "nio.WebSocket.maxFrameSize")
+    private volatile int webSocketMaxFrameSize = 5242880;
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
@@ -545,8 +548,12 @@ public class NioConfig extends BootConfig {
         return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(webSocketHandlerAnnotatedName)));
     }
 
-    public boolean isCompressWebSocket() {
-        return compressWebSocket;
+    public boolean isWebSocketCompress() {
+        return webSocketCompress;
+    }
+
+    public int getWebSocketMaxFrameSize() {
+        return webSocketMaxFrameSize;
     }
 
     public Map<String, Integer> getBindingAddresses() {

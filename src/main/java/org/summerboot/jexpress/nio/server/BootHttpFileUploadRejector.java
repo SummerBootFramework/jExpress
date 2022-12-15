@@ -35,7 +35,7 @@ import org.summerboot.jexpress.nio.server.multipart.MultipartUtil;
 @Singleton
 public class BootHttpFileUploadRejector extends SimpleChannelInboundHandler<HttpObject> {
 
-    protected static Logger log = LogManager.getLogger(BootHttpFileUploadHandler.class.getName());
+    protected static Logger log = LogManager.getLogger(BootHttpFileUploadRejector.class.getName());
 
     private static final boolean AUTO_RELEASE = false;
 

@@ -146,8 +146,11 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
             //2. 
             String webSocketURI = cfg.getWebSocketHandlerAnnotatedName();
             if (webSocketURI != null) {
-                channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI));
-                if (cfg.isCompressWebSocket()) {
+                String subprotocols = null;
+                boolean allowExtensions = false;
+                int maxFrameSize = cfg.getWebSocketMaxFrameSize();
+                channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI, subprotocols, allowExtensions, maxFrameSize));
+                if (cfg.isWebSocketCompress()) {
                     channelPipeline.addLast(new WebSocketServerCompressionHandler());
                 }
                 ch = cfg.getWebSockettHandler();

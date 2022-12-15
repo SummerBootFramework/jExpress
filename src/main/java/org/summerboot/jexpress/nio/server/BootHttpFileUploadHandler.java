@@ -57,7 +57,7 @@ import io.netty.handler.codec.DecoderException;
  */
 public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHandler<HttpObject> {
 
-    protected static Logger log = LogManager.getLogger(BootHttpFileUploadHandler.class.getName());
+    protected Logger log = LogManager.getLogger(this.getClass());
 
     private static final boolean AUTO_RELEASE = false;
     private static final boolean USER_DISK = true;

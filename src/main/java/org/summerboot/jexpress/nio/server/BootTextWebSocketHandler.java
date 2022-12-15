@@ -15,11 +15,16 @@
  */
 package org.summerboot.jexpress.nio.server;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -53,7 +58,7 @@ import org.summerboot.jexpress.security.auth.Caller;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 2.0
  */
-abstract public class BootTextWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
+abstract public class BootTextWebSocketHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
 
     protected Logger log = LogManager.getLogger(this.getClass());
     protected static final TextWebSocketFrame MSG_AUTH_FAILED = new TextWebSocketFrame("401 Unauthorized");
@@ -63,6 +68,34 @@ abstract public class BootTextWebSocketHandler extends SimpleChannelInboundHandl
     protected static final AttributeKey KEY_CALLER = AttributeKey.valueOf("caller");
 
     @Override
+    protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame msg) throws Exception {
+        if (msg instanceof TextWebSocketFrame) {
+            channelRead0(ctx, (TextWebSocketFrame) msg);
+        } else if (msg instanceof BinaryWebSocketFrame) {
+            channelRead0(ctx, (BinaryWebSocketFrame) msg);
+        }
+    }
+
+    protected void channelRead0(ChannelHandlerContext ctx, BinaryWebSocketFrame msg) throws Exception {
+        ByteBuf bb = msg.content();
+        byte[] data = ByteBufUtil.getBytes(bb);
+        Runnable asyncTask = () -> {
+            Caller caller = (Caller) ctx.channel().attr(KEY_CALLER).get();
+            if (caller == null) {
+                clients.remove(ctx.channel());
+                ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
+                ctx.close();
+                log.info("Binary auth failed " + ctx.channel().remoteAddress());
+                return;
+            }
+            String responseText = onMessage(ctx, caller, data);
+            if (responseText != null) {
+                sendToChannel(ctx, responseText);
+            }
+        };
+        NioConfig.cfg.getBizExecutor().execute(asyncTask);
+    }
+
     protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
         String txt = msg.text();
         Runnable asyncTask = () -> {
@@ -73,10 +106,14 @@ abstract public class BootTextWebSocketHandler extends SimpleChannelInboundHandl
                     clients.remove(ctx.channel());
                     ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
                     ctx.close();
-                    log.info("auth failed " + ctx.channel().remoteAddress() + ": " + txt);
+                    log.info("Text auth failed " + ctx.channel().remoteAddress() + ": " + txt);
                     return;
                 }
                 ctx.channel().attr(KEY_CALLER).set(caller);
+                String message = onCallerConnected(ctx, caller);
+                if (message != null) {
+                    sendToAllChannels(message, true);
+                }
                 return;
             }
 
@@ -90,6 +127,8 @@ abstract public class BootTextWebSocketHandler extends SimpleChannelInboundHandl
 
     abstract protected Caller auth(String token);
 
+    abstract protected String onCallerConnected(ChannelHandlerContext ctx, Caller caller);
+
     /**
      *
      * @param ctx
@@ -99,12 +138,31 @@ abstract public class BootTextWebSocketHandler extends SimpleChannelInboundHandl
      */
     abstract protected String onMessage(ChannelHandlerContext ctx, Caller caller, String txt);
 
+    abstract protected String onMessage(ChannelHandlerContext ctx, Caller caller, byte[] data);
+
     public static void sendToChannel(ChannelHandlerContext ctx, String message) {
         ctx.writeAndFlush(new TextWebSocketFrame(message));
     }
 
+    public static void sendToChannel(ChannelHandlerContext ctx, byte[] data) {
+        ctx.writeAndFlush(new BinaryWebSocketFrame(Unpooled.copiedBuffer(data)));
+    }
+
     public static void sendToAllChannels(String message, boolean auth) {
         TextWebSocketFrame responseMessage = new TextWebSocketFrame(message);
+        if (auth) {
+            clients.stream()
+                    .filter(channel -> channel.attr(KEY_CALLER).get() != null)
+                    .forEach(channel -> channel.writeAndFlush(responseMessage.retainedDuplicate()));
+        } else {
+            clients.stream()
+                    .forEach(channel -> channel.writeAndFlush(responseMessage.retainedDuplicate()));
+        }
+
+    }
+
+    public static void sendToAllChannels(byte[] data, boolean auth) {
+        BinaryWebSocketFrame responseMessage = new BinaryWebSocketFrame(Unpooled.copiedBuffer(data));
         if (auth) {
             clients.stream()
                     .filter(channel -> channel.attr(KEY_CALLER).get() != null)
