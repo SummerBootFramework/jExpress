@@ -185,10 +185,10 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.85.Final</netty.version>
+        <netty.version>4.1.86.Final</netty.version>
         <netty-tcnative.version>2.0.54.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.51.0</grpc.version>
+        <grpc.version>1.51.1</grpc.version>
         <protobuf.version>3.21.11</protobuf.version>
         <!-- Web JAX-RS -->        
         <swagger.core.version>2.2.7</swagger.core.version>

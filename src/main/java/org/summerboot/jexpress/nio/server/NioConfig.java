@@ -503,7 +503,7 @@ public class NioConfig extends BootConfig {
         }
     }
 
-    ThreadPoolExecutor getBizExecutor() {
+    public ThreadPoolExecutor getBizExecutor() {
         return tpe;
     }
 

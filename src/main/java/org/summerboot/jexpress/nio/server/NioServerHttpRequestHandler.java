@@ -115,6 +115,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 //        }
         final HttpMethod httpMethod = req.method();
         final String httpRequestUri = req.uri();
+
         final boolean isKeepAlive = HttpUtil.isKeepAlive(req);
         final String requestMetaInfo = requestMetaInfo(ctx, hitIndex, httpMethod, httpRequestUri, isKeepAlive, dataSize);
         log.debug(() -> requestMetaInfo);
