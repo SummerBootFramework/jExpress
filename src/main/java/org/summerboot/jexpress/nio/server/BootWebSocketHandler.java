@@ -36,29 +36,29 @@ import org.summerboot.jexpress.security.auth.Caller;
  *
  * <pre>
  * {@code
- *
- * add to cfg_nio.properties: nio.WebSocketHandler=/mywebsocket/demo
- *
- * @ChannelHandler.Sharable
- * @Singleton
- * @Service(binding = ChannelHandler.class, named = "/mywebsocket/demo")
- * public class MyHandler extends BootTextWebSocketHandler {
- *
- *  @Override
- *  protected Caller auth(String token) {
- *      return new User(0, token);
- *  }
- *
- * }
- *
- * }
+
+ add to cfg_nio.properties: nio.WebSocketHandler=/mywebsocket/demo
+
+ @ChannelHandler.Sharable
+ @Singleton
+ @Service(binding = ChannelHandler.class, named = "/mywebsocket/demo")
+ public class MyHandler extends BootWebSocketHandler {
+
+  @Override
+  protected Caller auth(String token) {
+      return new User(0, token);
+  }
+
+ }
+
+ }
  * </pre>
  *
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 2.0
  */
-abstract public class BootTextWebSocketHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
+abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
 
     protected Logger log = LogManager.getLogger(this.getClass());
     protected static final TextWebSocketFrame MSG_AUTH_FAILED = new TextWebSocketFrame("401 Unauthorized");
