@@ -32,9 +32,11 @@ import org.summerboot.jexpress.security.auth.Caller;
  * <pre>
  * {@code
  *
+ * add to cfg_nio.properties: nio.WebSocketHandler=/mywebsocket/demo
+ *
  * @ChannelHandler.Sharable
  * @Singleton
- * @Service(binding = ChannelHandler.class, named = "/mywebsocket/aa")
+ * @Service(binding = ChannelHandler.class, named = "/mywebsocket/demo")
  * public class MyHandler extends BootTextWebSocketHandler {
  *
  *  @Override
