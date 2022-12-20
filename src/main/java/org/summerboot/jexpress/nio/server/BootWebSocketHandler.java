@@ -36,22 +36,22 @@ import org.summerboot.jexpress.security.auth.Caller;
  *
  * <pre>
  * {@code
-
- add to cfg_nio.properties: nio.WebSocketHandler=/mywebsocket/demo
-
- @ChannelHandler.Sharable
- @Singleton
- @Service(binding = ChannelHandler.class, named = "/mywebsocket/demo")
- public class MyHandler extends BootWebSocketHandler {
-
-  @Override
-  protected Caller auth(String token) {
-      return new User(0, token);
-  }
-
- }
-
- }
+ *
+ * add to cfg_nio.properties: nio.WebSocketHandler=/mywebsocket/demo
+ *
+ * @ChannelHandler.Sharable
+ * @Singleton
+ * @Service(binding = ChannelHandler.class, named = "/mywebsocket/demo")
+ * public class MyHandler extends BootWebSocketHandler {
+ *
+ * @Override
+ * protected Caller auth(String token) {
+ * return new User(0, token);
+ * }
+ *
+ * }
+ *
+ * }
  * </pre>
  *
  *
@@ -148,30 +148,25 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
         ctx.writeAndFlush(new BinaryWebSocketFrame(Unpooled.copiedBuffer(data)));
     }
 
-    public static void sendToAllChannels(String message, boolean auth) {
-        TextWebSocketFrame responseMessage = new TextWebSocketFrame(message);
-        if (auth) {
-            clients.stream()
-                    .filter(channel -> channel.attr(KEY_CALLER).get() != null)
-                    .forEach(channel -> channel.writeAndFlush(responseMessage.retainedDuplicate()));
-        } else {
-            clients.stream()
-                    .forEach(channel -> channel.writeAndFlush(responseMessage.retainedDuplicate()));
-        }
-
+    public static void sendToAllChannels(String text, boolean auth) {
+        TextWebSocketFrame message = new TextWebSocketFrame(text);
+        sendToAllChannels(message, auth);
     }
 
     public static void sendToAllChannels(byte[] data, boolean auth) {
-        BinaryWebSocketFrame responseMessage = new BinaryWebSocketFrame(Unpooled.copiedBuffer(data));
+        BinaryWebSocketFrame message = new BinaryWebSocketFrame(Unpooled.copiedBuffer(data));
+        sendToAllChannels(message, auth);
+    }
+
+    public static void sendToAllChannels(WebSocketFrame message, boolean auth) {
         if (auth) {
             clients.stream()
                     .filter(channel -> channel.attr(KEY_CALLER).get() != null)
-                    .forEach(channel -> channel.writeAndFlush(responseMessage.retainedDuplicate()));
+                    .forEach(channel -> channel.writeAndFlush(message.retainedDuplicate()));
         } else {
             clients.stream()
-                    .forEach(channel -> channel.writeAndFlush(responseMessage.retainedDuplicate()));
+                    .forEach(channel -> channel.writeAndFlush(message.retainedDuplicate()));
         }
-
     }
 
     @Override

@@ -246,7 +246,7 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.HttpRequestHandler")
     private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.BINDING_NAME;
 
-    @Config(key = "nio.WebSocketHandler")
+    @Config(key = "nio.WebSocket.Handler")
     private volatile String webSocketHandlerAnnotatedName = null;
 
     @Config(key = "nio.WebSocket.Compress")
@@ -254,6 +254,12 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.WebSocket.maxFrameSize")
     private volatile int webSocketMaxFrameSize = 5242880;
+
+    @Config(key = "nio.WebSocket.Subprotocols")
+    private volatile String webSocketSubprotocols = null;
+
+    @Config(key = "nio.WebSocket.AllowExtensions")
+    private volatile boolean webSocketAllowExtensions = true;
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
@@ -554,6 +560,14 @@ public class NioConfig extends BootConfig {
 
     public int getWebSocketMaxFrameSize() {
         return webSocketMaxFrameSize;
+    }
+
+    public String getWebSocketSubprotocols() {
+        return webSocketSubprotocols;
+    }
+
+    public boolean isWebSocketAllowExtensions() {
+        return webSocketAllowExtensions;
     }
 
     public Map<String, Integer> getBindingAddresses() {
