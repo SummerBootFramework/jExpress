@@ -50,7 +50,7 @@ public class RedisConfig implements JExpressConfig {
 
     private static final String PK = "primary";
 
-    private static volatile Logger log = null;
+    private static Logger log = LogManager.getLogger(RedisConfig.class);
     private File cfgFile;
     private volatile List<JedisPool> jedisPools;
     private volatile JedisPool masterPool;

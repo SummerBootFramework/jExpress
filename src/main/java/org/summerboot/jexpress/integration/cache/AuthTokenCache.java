@@ -33,7 +33,7 @@ public interface AuthTokenCache extends HealthInspector {
         Err e = null;
         try {
             String key = "jwt123";
-            putOnBlacklist(key, "uid123", 1000);
+            putOnBlacklist(key, "uid123", 1);
             boolean isOnBlacklist = isOnBlacklist(key);
             if (!isOnBlacklist) {
                 e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Data Error", "failed to read", null);

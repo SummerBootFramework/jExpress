@@ -270,7 +270,7 @@ public class NioServer {
 //        if (childExecutor != null) {
 //            childExecutor.shutdownGracefully();
 //        }
-        if (!QPS_SERVICE.isShutdown()) {
+        if (QPS_SERVICE!= null && !QPS_SERVICE.isShutdown()) {
             System.out.println(tn + ": shutdown QPS_SERVICE");
             QPS_SERVICE.shutdownNow();
         }
