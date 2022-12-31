@@ -13,7 +13,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.integration.db;
+package org.summerboot.jexpress.integration.jpa;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
@@ -23,7 +23,7 @@ import jakarta.persistence.MappedSuperclass;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @MappedSuperclass
-public class AbstractEntityEx extends AbstractEntity {
+public abstract class AbstractEntityEx extends AbstractEntity {
 
     @Column(name = "createdBy", nullable = true, updatable = false)
     protected String createdBy;

@@ -13,7 +13,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.integration.db;
+package org.summerboot.jexpress.integration.jpa;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
@@ -62,13 +62,13 @@ abstract public class JPAHibernateConfig extends BootConfig {
     protected JPAHibernateConfig() {
     }
 
-    /**
+    /*
      * used by temp()
      *
      * @param temp
-     */
+    
     private JPAHibernateConfig(Object temp) {
-    }
+    } */
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
@@ -90,8 +90,12 @@ abstract public class JPAHibernateConfig extends BootConfig {
             logger = LogManager.getLogger(getClass());
         }
         this.cfgFile = cfgFile.getAbsoluteFile();
+
         try (InputStream is = new FileInputStream(cfgFile);) {
             props.load(is);
+        }
+        if (!cfgFile.canRead() || props.isEmpty()) {
+            throw new IOException("Failed to load DB config file " + cfgFile);
         }
 
         settings.clear();
