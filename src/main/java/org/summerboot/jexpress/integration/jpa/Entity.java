@@ -13,47 +13,24 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.integration.db;
+package org.summerboot.jexpress.integration.jpa;
 
-import java.io.Serializable;
-import java.util.Objects;
-import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Version;
-import java.time.OffsetDateTime;
+import java.util.Objects;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @MappedSuperclass
-public abstract class AbstractEntity implements Serializable {
+public abstract class Entity extends AbstractEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
-
-    @Version
-    @Column(name = "version")
-    protected long version;
-
-    @Column(name = "createdTs", nullable = false, updatable = false)
-    protected OffsetDateTime createdTs = OffsetDateTime.now();
-
-    @Column(name = "updatedTs", nullable = false, updatable = true)
-    protected OffsetDateTime updatedTs = OffsetDateTime.now();
-
-    protected AbstractEntity() {
-    }
-
-    @PreUpdate
-    protected void updateTimestamp() {
-        updatedTs = OffsetDateTime.now();
-    }
 
     public Long getId() {
         return id;
@@ -63,43 +40,10 @@ public abstract class AbstractEntity implements Serializable {
         this.id = id;
     }
 
-    /**
-     * Get the value of version
-     *
-     * @return the value of version
-     */
-    public long getVersion() {
-        return version;
-    }
-
-    /**
-     * Set the value of version
-     *
-     * @param version new value of version
-     */
-    public void setVersion(int version) {
-        this.version = version;
-    }
-
-    public OffsetDateTime getCreatedTs() {
-        return createdTs;
-    }
-
-    public void setCreatedTs(OffsetDateTime createdTs) {
-        this.createdTs = createdTs;
-    }
-
-    public OffsetDateTime getUpdatedTs() {
-        return updatedTs;
-    }
-
-    public void setUpdatedTs(OffsetDateTime updatedTs) {
-        this.updatedTs = updatedTs;
-    }
-
     @Override
     public int hashCode() {
         int hash = 7;
+        hash = 97 * hash + Objects.hashCode(this.id);
         return hash;
     }
 
@@ -114,11 +58,7 @@ public abstract class AbstractEntity implements Serializable {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final AbstractEntity other = (AbstractEntity) obj;
-        if (this.version != other.version) {
-            return false;
-        }
+        final EntityEx other = (EntityEx) obj;
         return Objects.equals(this.id, other.id);
     }
-
 }
