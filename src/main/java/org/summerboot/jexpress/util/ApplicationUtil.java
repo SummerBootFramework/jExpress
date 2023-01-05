@@ -15,12 +15,19 @@
  */
 package org.summerboot.jexpress.util;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  *
@@ -62,5 +69,46 @@ public class ApplicationUtil {
             }
         }
         return System.getProperty("hostName");
+    }
+
+    public static Set<String> getClassNamesFromJarFile(File jarFile) throws IOException {
+        Set<String> classNames = new HashSet<>();
+        JarFile jar = new JarFile(jarFile);
+        Enumeration<JarEntry> jarEntries = jar.entries();
+        while (jarEntries.hasMoreElements()) {
+            JarEntry jarEntry = jarEntries.nextElement();
+            String entryName = jarEntry.getName();
+            if (entryName.endsWith(".class")) {
+                String className = entryName.replace(".class", "").replaceAll("/", ".");
+                classNames.add(className);
+            }
+        }
+        return classNames;
+    }
+
+    public static Set<Class> loadClassFromJarFile(File jarFile, boolean failOnUndefinedClasses) throws IOException {
+        String jarURL = "file:/" + jarFile.getAbsolutePath();
+        URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{new URL(jarURL)}, Thread.currentThread().getContextClassLoader());
+        Set<Class> classes = new HashSet<>();
+        StringBuilder sb = new StringBuilder();
+        Set<String> classNames = getClassNamesFromJarFile(jarFile);
+        for (String className : classNames) {
+            try {
+                Class loadedClass = urlClassLoader.loadClass(className);
+                classes.add(loadedClass);
+            } catch (ClassNotFoundException | NoClassDefFoundError ex) {
+                sb.append("\n\t").append(ex.toString());
+            }
+        }
+        if (!sb.isEmpty() && failOnUndefinedClasses) {
+            throw new NoClassDefFoundError(sb.toString());
+        }
+        return classes;
+    }
+
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        File jarFile = new File("D:\\projects\\Quickcat\\Quickcat-ejb\\dist\\Quickcat-ejb.jar");
+        Set<Class> classSet = loadClassFromJarFile(jarFile, true);
+        System.out.println(classSet.size());
     }
 }
