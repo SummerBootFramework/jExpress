@@ -187,7 +187,7 @@
 
         <!-- NIO Netty -->
         <netty.version>4.1.86.Final</netty.version>
-        <netty-tcnative.version>2.0.54.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.55.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.51.1</grpc.version>
         <protobuf.version>3.21.12</protobuf.version>
@@ -574,6 +574,8 @@
             <scope>provided</scope>
         </dependency>
         
+        
+
         <!-- PDF - iText -->
         <!-- https://mvnrepository.com/artifact/com.itextpdf/itext7-core AGPL 3.0-->
         <dependency>
