@@ -18,6 +18,8 @@ package org.summerboot.jexpress.util.pdf;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder;
 import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.openhtmltopdf.render.Box;
+import com.openhtmltopdf.render.PageBox;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,6 +47,16 @@ import org.apache.pdfbox.rendering.PDFRenderer;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class PDFBox {
+
+    /**
+     * user space units per inch
+     */
+    private static final float POINTS_PER_INCH = 72;
+
+    /**
+     * user space units per millimeter
+     */
+    private static final float POINTS_PER_MM = 75.5875f;
 
     private static final Map<String, PDFont> FONTS = new HashMap();
 
@@ -153,12 +165,6 @@ public class PDFBox {
         return spp;
     }
 
-    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
-        return html2PDF(html, baseDir, protectionPolicy, info, pdfVersion,
-                //BaseRendererBuilder.PAGE_SIZE_LETTER_WIDTH, BaseRendererBuilder.PAGE_SIZE_LETTER_HEIGHT, BaseRendererBuilder.PAGE_SIZE_LETTER_UNITS);
-                BaseRendererBuilder.PAGE_SIZE_LETTER_WIDTH, BaseRendererBuilder.PAGE_SIZE_LETTER_HEIGHT, null);
-    }
-
     public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion,
             float pageWidth, float pageHeight, BaseRendererBuilder.PageSizeUnits units) throws IOException {
         PdfRendererBuilder builder = new PdfRendererBuilder();
@@ -171,6 +177,65 @@ public class PDFBox {
         if (units != null) {
             builder.useDefaultPageSize(pageWidth, pageHeight, units);
         }
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
+            builder.toStream(baos);
+            try (PdfBoxRenderer renderer = builder.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {
+                //security
+                if (protectionPolicy == null) {
+                    protectionPolicy = buildStandardProtectionPolicy(null, null);
+                }
+                doc.protect(protectionPolicy);
+                doc.setVersion(pdfVersion);
+//                //info
+//                if (info != null) {
+//                    doc.setDocumentInformation(info);
+//                }
+                //build PDF
+                renderer.layout();//com.openhtmltopdf.load INFO:: Loading font(ArialUnicodeMS) from PDFont supplier now.
+                renderer.createPDF();//com.openhtmltopdf.general INFO:: Using fast-mode renderer. Prepare to fly.
+            }
+
+            return baos.toByteArray();
+        }
+    }
+
+    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
+        float pageWidth, pageHeight;
+        BaseRendererBuilder.PageSizeUnits units = BaseRendererBuilder.PageSizeUnits.MM;
+        PdfRendererBuilder builderTemp = new PdfRendererBuilder();
+        useFonts(builderTemp, null);
+        builderTemp.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
+        if (info != null) {
+            builderTemp.withProducer(info.getProducer());
+        }
+        builderTemp.useFastMode();
+        try (PdfBoxRenderer renderer = builderTemp.buildPdfRenderer();) {
+            renderer.layout();
+            // The root box is <html>, the first child is <body>, then <div>.
+            Box box = renderer.getRootBox();
+            pageWidth = box.getWidth();
+            pageHeight = box.getHeight();
+            List<PageBox> pageList = box.getLayer().getPages();
+            int pageCount = pageList.size();
+            if (pageCount > 1) {
+                pageHeight = pageHeight * pageCount;
+            }
+            pageWidth = pageWidth / POINTS_PER_MM;
+            pageHeight = pageHeight / POINTS_PER_MM;
+            html = html.replaceFirst("1mm;", pageHeight+"mm;");
+        }
+
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        useFonts(builder, null);
+        builder.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
+        if (info != null) {
+            builder.withProducer(info.getProducer());
+        }
+        builder.useFastMode();
+
+        //builder.useDefaultPageSize(pageWidth, pageHeight, units);
+
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
             builder.toStream(baos);
             try (PdfBoxRenderer renderer = builder.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {
@@ -203,13 +268,13 @@ public class PDFBox {
     }
 
     /**
-     * 
+     *
      * @param pdfData
      * @param dpi
      * @param formatName a {@code String} containing the informal name of a
      * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
      * @return
-     * @throws IOException 
+     * @throws IOException
      */
     public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, String formatName) throws IOException {
         return pdf2Images(pdfData, dpi, ImageType.RGB, formatName);

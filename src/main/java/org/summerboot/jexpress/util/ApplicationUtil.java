@@ -105,10 +105,4 @@ public class ApplicationUtil {
         }
         return classes;
     }
-
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
-        File jarFile = new File("D:\\projects\\Quickcat\\Quickcat-ejb\\dist\\Quickcat-ejb.jar");
-        Set<Class> classSet = loadClassFromJarFile(jarFile, true);
-        System.out.println(classSet.size());
-    }
 }
