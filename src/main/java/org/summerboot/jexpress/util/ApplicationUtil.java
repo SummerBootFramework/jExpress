@@ -91,16 +91,19 @@ public class ApplicationUtil {
         URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{new URL(jarURL)}, Thread.currentThread().getContextClassLoader());
         Set<Class> classes = new HashSet<>();
         StringBuilder sb = new StringBuilder();
+        boolean onError = false;
         Set<String> classNames = getClassNamesFromJarFile(jarFile);
         for (String className : classNames) {
             try {
                 Class loadedClass = urlClassLoader.loadClass(className);
                 classes.add(loadedClass);
             } catch (ClassNotFoundException | NoClassDefFoundError ex) {
+                onError = true;
                 sb.append("\n\t").append(ex.toString());
             }
         }
-        if (!sb.isEmpty() && failOnUndefinedClasses) {
+        //Java 17 only if (!sb.isEmpty() && failOnUndefinedClasses) {
+        if (onError && failOnUndefinedClasses) {
             throw new NoClassDefFoundError(sb.toString());
         }
         return classes;
