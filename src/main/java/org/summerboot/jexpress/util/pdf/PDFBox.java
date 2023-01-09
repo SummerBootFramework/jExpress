@@ -210,7 +210,7 @@ public class PDFBox {
             builderTemp.withProducer(info.getProducer());
         }
         builderTemp.useFastMode();
-        try (PdfBoxRenderer renderer = builderTemp.buildPdfRenderer();) {
+        try (PdfBoxRenderer renderer = builderTemp.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {//need to close doc if use box
             renderer.layout();
             // The root box is <html>, the first child is <body>, then <div>.
             Box box = renderer.getRootBox();
