@@ -166,14 +166,14 @@ public abstract class BootAuthenticator implements Authenticator {
         Long tenantId = claims.get("tenantId", Long.class);
         String tenantName = claims.get("tenantName", String.class);
 
-        long id;
+        Long id;
+        String uid = subject;
         try {
-            id = Long.parseLong(jti);
+            id = Long.valueOf(jti);
         } catch (Throwable ex) {
-            id = -1;
+            id = null;
         }
-        String userName = subject;
-        User caller = new User(tenantId, tenantName, id, userName);
+        User caller = new User(tenantId, tenantName, id, uid);
 
         String userGroups = audience;
         if (StringUtils.isNotBlank(userGroups)) {

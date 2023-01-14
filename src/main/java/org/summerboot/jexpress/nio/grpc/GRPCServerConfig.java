@@ -51,7 +51,7 @@ public class GRPCServerConfig extends BootConfig {
     }
 
     public enum ThreadingMode {
-        CPU_Bound, IO_Bound, Mixed
+        CPU, IO, Mixed
     }
 
     private final int availableProcessors = Runtime.getRuntime().availableProcessors();
@@ -65,7 +65,7 @@ public class GRPCServerConfig extends BootConfig {
 
     @Config(key = ID + ".pool.BizExecutor.mode",
             desc = "valid value = CPU (default), IO, Mixed")
-    private volatile ThreadingMode threadingMode = ThreadingMode.CPU_Bound;
+    private volatile ThreadingMode threadingMode = ThreadingMode.CPU;
 
     @Config(key = ID + ".pool.coreSize")
     private volatile int poolCoreSize = availableProcessors + 1;
@@ -101,11 +101,11 @@ public class GRPCServerConfig extends BootConfig {
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
         int cpuCoreSize = Runtime.getRuntime().availableProcessors();
         switch (threadingMode) {
-            case CPU_Bound:// use CPU_Bound core + 1 when application is CPU_Bound bound
+            case CPU:// use CPU_Bound core + 1 when application is CPU_Bound bound
                 poolCoreSize = cpuCoreSize + 1;
                 poolMaxSizeMaxSize = poolCoreSize;
                 break;
-            case IO_Bound:// use CPU_Bound core x 2 + 1 when application is I/O bound
+            case IO:// use CPU_Bound core x 2 + 1 when application is I/O bound
                 poolCoreSize = cpuCoreSize * 2 + 1;
                 poolMaxSizeMaxSize = poolCoreSize;
                 break;
