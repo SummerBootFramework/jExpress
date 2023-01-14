@@ -42,14 +42,14 @@ public class User implements Serializable, Caller, Comparable<User> {
     protected int type = 1;
     protected Map prop = null;
 
-    public User(long tenantId, String tenantName, long id, String uid) {
+    public User(Long tenantId, String tenantName, Long id, String uid) {
         this.tenantId = tenantId;
         this.tenantName = tenantName;
         this.id = id;
         this.uid = uid;
     }
 
-    public User(long id, String uid) {
+    public User(Long id, String uid) {
         this.id = id;
         this.uid = uid;
     }
@@ -58,7 +58,7 @@ public class User implements Serializable, Caller, Comparable<User> {
     public String toString() {
         try {
             //return "User{" + "id=" + id + ", uid=" + uid + ", groups=" + groups + ", type=" + type + '}';
-            return BeanUtil.toJson(this);
+            return BeanUtil.toJson(this, false, true);
         } catch (JsonProcessingException ex) {
             return "User{" + "id=" + id + ", uid=" + uid + ", type=" + type + ", ex=" + ex + '}';
         }

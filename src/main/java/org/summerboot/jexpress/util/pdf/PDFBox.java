@@ -48,16 +48,7 @@ import org.apache.pdfbox.rendering.PDFRenderer;
  */
 public class PDFBox {
 
-    /**
-     * user space units per inch
-     */
-    private static final float POINTS_PER_INCH = 72;
-
-    /**
-     * user space units per millimeter
-     */
-    private static final float POINTS_PER_MM = 75.5875f;
-
+    public static final float POINTS_PER_MM = 75f;
     private static final Map<String, PDFont> FONTS = new HashMap();
 
     public static PDFont getFont(String name) {
@@ -200,34 +191,76 @@ public class PDFBox {
         }
     }
 
-    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion, boolean mergeToOnePage) throws IOException {
-        if (mergeToOnePage) {
-            float pageWidth, pageHeight;
-            BaseRendererBuilder.PageSizeUnits units = BaseRendererBuilder.PageSizeUnits.MM;
-            PdfRendererBuilder builderTemp = new PdfRendererBuilder();
-            useFonts(builderTemp, null);
-            builderTemp.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
-            if (info != null) {
-                builderTemp.withProducer(info.getProducer());
-            }
-            builderTemp.useFastMode();
-            try (PdfBoxRenderer renderer = builderTemp.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {//need to close doc if use box
-                renderer.layout();
-                // The root box is <html>, the first child is <body>, then <div>.
-                Box box = renderer.getRootBox();
-                pageWidth = box.getWidth();
-                pageHeight = box.getHeight();
-                List<PageBox> pageList = box.getLayer().getPages();
-                int pageCount = pageList.size();
-                if (pageCount > 1) {
-                    pageHeight = pageHeight * pageCount;
-                }
-                pageWidth = pageWidth / POINTS_PER_MM;
-                pageHeight = pageHeight / POINTS_PER_MM;
-                html = html.replaceFirst("1mm;", pageHeight + "mm;");
-            }
+    public static class LayoutInfo {
+
+        private final int pageCount;
+        private final int pageWidth;
+        private final int pageHeight;
+
+        public LayoutInfo(int pageCount, int pageWidth, int pageHeight) {
+            this.pageCount = pageCount;
+            this.pageWidth = pageWidth;
+            this.pageHeight = pageHeight;
         }
 
+        public int getPageCount() {
+            return pageCount;
+        }
+
+        public int getPageWidth() {
+            return pageWidth;
+        }
+
+        public int getPageHeight() {
+            return pageHeight;
+        }
+
+    }
+
+    /**
+     * <pre>{@code
+     * <html>
+     * <head>
+     * <style>
+     *  @page {
+     *      margin: 0px;
+     *      size: ${pageWidth}mm 1mm;
+     *  }
+     * </style>
+     * </head>
+     * </html>
+     *
+     * if (isSinglePage) {
+     *      PDFBox.LayoutInfo layoutInfo = PDFBox.layoutThenGetInfo(html, baseDir);
+     *      if (layoutInfo.getPageCount() > 1) {
+     *          float pageHeightMillimeters = layoutInfo.getPageHeight() * layoutInfo.getPageCount() / PDFBox.POINTS_PER_MM + 5;//add extral space
+     *          html = html.replaceFirst("1mm;", pageHeightMillimeters + "mm;");
+     *      }
+     * }
+     * }</pre>
+     *
+     * @param html
+     * @param baseDir
+     * @return
+     * @throws IOException
+     */
+    public static LayoutInfo layoutThenGetInfo(String html, File baseDir) throws IOException {
+        LayoutInfo ret;
+        PdfRendererBuilder builderTemp = new PdfRendererBuilder();
+        useFonts(builderTemp, null);
+        builderTemp.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
+        builderTemp.useFastMode();
+        try (PdfBoxRenderer renderer = builderTemp.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {//need to close doc if use box
+            renderer.layout();
+            // The root box is <html>, the first child is <body>, then <div>.
+            Box box = renderer.getRootBox();//1mm=76; 2mm=151;
+            List<PageBox> pageList = box.getLayer().getPages();//1mm=215p; 2mm=110p;
+            ret = new LayoutInfo(pageList.size(), box.getWidth(), box.getHeight());
+        }
+        return ret;
+    }
+
+    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         useFonts(builder, null);
         builder.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
