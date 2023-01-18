@@ -53,7 +53,7 @@ public class ScanedGuiceModule extends AbstractModule {
             Map<String, List<SummerSingularity.ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(interfaceClass);
             SummerSingularity.ServiceMetadata defaultImpl = null;
             SummerSingularity.ServiceMetadata tagMatchImpl = null;
-            SummerSingularity.ServiceMetadata bindingImpl = null;
+            SummerSingularity.ServiceMetadata bindingImpl;
             boolean needToBindOneToOne = false;
             for (String uniqueKey : taggeServicedMap.keySet()) {
                 SummerSingularity.ServiceMetadata serviceImpl = taggeServicedMap.get(uniqueKey).get(0);//validated by SummerSingularity.scanAnnotation_Service_ValidateBindingMap() for error msg

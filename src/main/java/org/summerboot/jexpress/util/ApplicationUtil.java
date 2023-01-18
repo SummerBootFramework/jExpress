@@ -86,10 +86,10 @@ public class ApplicationUtil {
         return classNames;
     }
 
-    public static Set<Class> loadClassFromJarFile(File jarFile, boolean failOnUndefinedClasses) throws IOException {
+    public static Set<Class<?>> loadClassFromJarFile(File jarFile, boolean failOnUndefinedClasses) throws IOException {
         String jarURL = "file:/" + jarFile.getAbsolutePath();
         URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{new URL(jarURL)}, Thread.currentThread().getContextClassLoader());
-        Set<Class> classes = new HashSet<>();
+        Set<Class<?>> classes = new HashSet<>();
         StringBuilder sb = new StringBuilder();
         boolean onError = false;
         Set<String> classNames = getClassNamesFromJarFile(jarFile);
