@@ -65,6 +65,7 @@ import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.auth.AuthConfig;
+import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
@@ -93,6 +94,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected static final String CLI_JWT = "jwt";
     protected static final String CLI_ENCRYPT = "encrypt";
     protected static final String CLI_DECRYPT = "decrypt";
+    protected static final String CLI_LIB_SERVICE_IMPL = "impl";
     protected static final File CURRENT_DIR = new File("").getAbsoluteFile();
 
     private final Module userOverrideModule;
@@ -241,9 +243,16 @@ abstract public class SummerBigBang extends SummerSingularity {
                         + System.lineSeparator() + System.lineSeparator() + "\t -encrypt -cfgdir <path> -" + CLI_ADMIN_PWD + " <password>")
                 .build();
         cliOptions.addOption(arg);
+
         arg = Option.builder(CLI_DECRYPT)
                 .desc("Decrypt config file content with all \"ENC(encrypted text)\" using password:"
                         + System.lineSeparator() + System.lineSeparator() + System.lineSeparator() + "\t -decrypt -cfgdir <path> -" + CLI_ADMIN_PWD + " <password>")
+                .build();
+        cliOptions.addOption(arg);
+
+        arg = Option.builder(CLI_LIB_SERVICE_IMPL)
+                .desc("load external @Service implementation jar file -"+CLI_LIB_SERVICE_IMPL+" <jar file> [failOnUndefinedClasses:boolean]")
+                .hasArgs().argName("jarfile")
                 .build();
         cliOptions.addOption(arg);
 
@@ -442,9 +451,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             StringBuilder log4j2XML = new StringBuilder();
             try (InputStream ioStream = this.getClass()
                     .getClassLoader()
-                    .getResourceAsStream("log4j2.xml.temp");
-                    InputStreamReader isr = new InputStreamReader(ioStream);
-                    BufferedReader br = new BufferedReader(isr);) {
+                    .getResourceAsStream("log4j2.xml.temp"); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     log4j2XML.append(line).append(System.lineSeparator());
@@ -498,6 +505,25 @@ abstract public class SummerBigBang extends SummerSingularity {
             }
             System.out.println("Total generated " + i + " configuration files in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
+        }
+
+        if (cli.hasOption(CLI_LIB_SERVICE_IMPL)) {
+            String[] jarOptions = cli.getOptionValues(CLI_LIB_SERVICE_IMPL);
+            File jarFile = new File(jarOptions[0]).getAbsoluteFile();
+
+            boolean failOnUndefinedClasses = true;
+            if (jarOptions.length > 1) {
+                String option = jarOptions[1];
+                failOnUndefinedClasses = Boolean.parseBoolean(option);
+            }
+            try {
+                Set<Class<?>> classes = ApplicationUtil.loadClassFromJarFile(jarFile, failOnUndefinedClasses);
+                super.scanAnnotation_Service(classes);
+            } catch (IOException ex) {
+                System.out.println(ex + "\n\tFailed to load " + CLI_LIB_SERVICE_IMPL + ": " + jarFile);
+                ex.printStackTrace();
+                System.exit(1);
+            }
         }
 
         /*

@@ -189,7 +189,7 @@
         <netty.version>4.1.87.Final</netty.version>
         <netty-tcnative.version>2.0.56.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.52.0</grpc.version>
+        <grpc.version>1.52.1</grpc.version>
         <protobuf.version>3.21.12</protobuf.version>
         <!-- Web JAX-RS -->        
         <swagger.core.version>2.2.8</swagger.core.version>
@@ -224,7 +224,7 @@
         <jedis.version>4.3.1</jedis.version>
 
         <!-- Template Engine -->
-        <freemarker.version>2.3.31</freemarker.version>
+        <freemarker.version>2.3.32</freemarker.version>
         <!-- Barcode -->
         <zxing.version>3.5.1</zxing.version>
         <!-- PDF - PDFBox 
@@ -232,8 +232,8 @@
         <!-- PDF - com.openhtmltopdf -->	       
         <openhtml.version>1.0.10</openhtml.version>
         <!-- PDF - iText -->
-        <itext7-core.version>7.2.4</itext7-core.version>
-        <itext7-html2pdf.version>4.0.4</itext7-html2pdf.version>
+        <itext7-core.version>7.2.5</itext7-core.version>
+        <itext7-html2pdf.version>4.0.5</itext7-html2pdf.version>
         
         <!-- Testing  -->
         <testng.version>7.7.1</testng.version>

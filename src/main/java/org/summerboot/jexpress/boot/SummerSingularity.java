@@ -212,7 +212,14 @@ abstract public class SummerSingularity implements BootConstant {
      */
     protected String scanAnnotation_Unique(String rootPackageName, StringBuilder sb, String... displayByTags) {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Unique.class, rootPackageName);
+        StringBuilder errors = new StringBuilder();
+        boolean error = false;
         for (Class classWithUniqueValues : classes) {
+            if (!classWithUniqueValues.isInterface()) {
+                error = true;
+                errors.append("\n\t @Unique can only apply on interfaces, ").append(classWithUniqueValues).append(" is not an interface");
+                continue;
+            }
             Unique u = (Unique) classWithUniqueValues.getAnnotation(Unique.class);
             String tag = u.name();
             availableUniqueTagOptions.add(tag);
@@ -237,6 +244,9 @@ abstract public class SummerSingularity implements BootConstant {
             } catch (Throwable ex) {
                 throw new RuntimeException("check unique failed on package " + rootPackageName + ".*", ex);
             }
+        }
+        if (error) {
+            throw new RuntimeException(errors.toString());
         }
         return null;
     }
@@ -296,10 +306,17 @@ abstract public class SummerSingularity implements BootConstant {
             classesAll.addAll(classes);
         }
 
+        return scanAnnotation_Service(classesAll);
+    }
+
+    protected List<String> scanAnnotation_Service(Set<Class<?>> classesAll) {
         List<String> tags = new ArrayList();
         StringBuilder sb = new StringBuilder();
         for (Class serviceImplClass : classesAll) {
             Service serviceAnnotation = (Service) serviceImplClass.getAnnotation(Service.class);
+            if (serviceAnnotation == null) {
+                continue;
+            }
             String named = serviceAnnotation.named().trim();
             String implTag = serviceAnnotation.implTag().trim();
             tags.add(implTag);
