@@ -294,4 +294,8 @@ public class FormatterUtil {
         log.trace(() -> "replace " + plain + "\n\t regex=" + regex + "\n\t with=" + replacement);
         return plain.replaceAll(regex, replacement);
     }
+
+    public static String[] splitByLength(String plain, int chunckSize) {
+        return plain.split("(?<=\\G.{" + chunckSize + "})");
+    }
 }

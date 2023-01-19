@@ -25,6 +25,7 @@ import org.summerboot.jexpress.security.SecurityUtil;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -94,7 +95,6 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected static final String CLI_JWT = "jwt";
     protected static final String CLI_ENCRYPT = "encrypt";
     protected static final String CLI_DECRYPT = "decrypt";
-    protected static final String CLI_LIB_SERVICE_IMPL = "impl";
     protected static final File CURRENT_DIR = new File("").getAbsoluteFile();
 
     private final Module userOverrideModule;
@@ -247,12 +247,6 @@ abstract public class SummerBigBang extends SummerSingularity {
         arg = Option.builder(CLI_DECRYPT)
                 .desc("Decrypt config file content with all \"ENC(encrypted text)\" using password:"
                         + System.lineSeparator() + System.lineSeparator() + System.lineSeparator() + "\t -decrypt -cfgdir <path> -" + CLI_ADMIN_PWD + " <password>")
-                .build();
-        cliOptions.addOption(arg);
-
-        arg = Option.builder(CLI_LIB_SERVICE_IMPL)
-                .desc("load external @Service implementation jar file -"+CLI_LIB_SERVICE_IMPL+" <jar file> [failOnUndefinedClasses:boolean]")
-                .hasArgs().argName("jarfile")
                 .build();
         cliOptions.addOption(arg);
 
@@ -435,12 +429,16 @@ abstract public class SummerBigBang extends SummerSingularity {
             System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
             System.exit(1);
         }
+        String modulesFolderName = "modules";
+        File modulesDir;
         if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
-            //set log folder outside user specified config folder
+            //set log folder inside user specified config folder
             System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
+            modulesDir = new File(userSpecifiedConfigDir.getAbsolutePath(), modulesFolderName).getAbsoluteFile();
         } else {
             //set log folder outside user specified config folder
             System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
+            modulesDir = new File(userSpecifiedConfigDir.getParentFile(), modulesFolderName).getAbsoluteFile();
         }
 
         /*
@@ -507,23 +505,12 @@ abstract public class SummerBigBang extends SummerSingularity {
             System.exit(0);
         }
 
-        if (cli.hasOption(CLI_LIB_SERVICE_IMPL)) {
-            String[] jarOptions = cli.getOptionValues(CLI_LIB_SERVICE_IMPL);
-            File jarFile = new File(jarOptions[0]).getAbsoluteFile();
-
-            boolean failOnUndefinedClasses = true;
-            if (jarOptions.length > 1) {
-                String option = jarOptions[1];
-                failOnUndefinedClasses = Boolean.parseBoolean(option);
-            }
-            try {
-                Set<Class<?>> classes = ApplicationUtil.loadClassFromJarFile(jarFile, failOnUndefinedClasses);
-                super.scanAnnotation_Service(classes);
-            } catch (IOException ex) {
-                System.out.println(ex + "\n\tFailed to load " + CLI_LIB_SERVICE_IMPL + ": " + jarFile);
-                ex.printStackTrace();
-                System.exit(1);
-            }
+        try {
+            loadModulesJars(modulesDir, true);
+        } catch (IOException ex) {
+            System.out.println(ex + "\n\tFailed to load jar files from " + modulesDir);
+            ex.printStackTrace();
+            System.exit(1);
         }
 
         /*
@@ -536,6 +523,29 @@ abstract public class SummerBigBang extends SummerSingularity {
             userSpecifiedResourceBundle = null;
         }
         I18n.init(getAddtionalI18n());
+    }
+
+    protected void loadModulesJars(File modulesDir, boolean failOnUndefinedClasses) throws IOException {
+        modulesDir.mkdirs();
+        if (!modulesDir.canRead() || !modulesDir.isDirectory()) {
+            memo.append("\n\t- loadModulesJars: invalid dir ").append(modulesDir);
+            return;
+        }
+        FileFilter fileFilter = file -> !file.isDirectory() && file.getName().endsWith(".jar");
+        File[] jarFiles = modulesDir.listFiles(fileFilter);
+        if (jarFiles == null || jarFiles.length < 1) {
+            memo.append("\n\t- loadModulesJars: no jar files found at ").append(modulesDir);
+            return;
+        }
+        Set<Class<?>> jarClasses = new HashSet<>();
+        for (File jarFile : jarFiles) {
+            memo.append("\n\t- loadModulesJars: loading jar file ").append(jarFile.getAbsolutePath());
+            Set<Class<?>> classes = ApplicationUtil.loadClassFromJarFile(jarFile, failOnUndefinedClasses);
+            memo.append("\n\t- loadModulesJars: loaded ").append(classes.size()).append(" classes from jar file ").append(jarFile.getAbsolutePath());
+            jarClasses.addAll(classes);
+        }
+        super.scanAnnotation_Service(jarClasses);
+        memo.append("\n\t- loadModulesJars: loaded ").append(jarClasses.size()).append(" classes from ").append(jarFiles.length).append(" jar files in ").append(modulesDir);
     }
 
     abstract protected Class getAddtionalI18n();
