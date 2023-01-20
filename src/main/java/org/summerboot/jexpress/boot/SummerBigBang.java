@@ -19,6 +19,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Stage;
 import com.google.inject.util.Modules;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
@@ -640,7 +641,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         }
 
         // Guice.createInjector(module) --> ScanedGuiceModule.configure() --> this will trigger SummerBigBang.onGuiceInjectorCreated_ControllersInjected
-        guiceInjector = Guice.createInjector(applicationModule);
+        guiceInjector = Guice.createInjector(Stage.PRODUCTION, applicationModule);
         NioConfig.cfg.setGuiceInjector(guiceInjector);
         scanImplementation_SummerRunner(guiceInjector);
     }
