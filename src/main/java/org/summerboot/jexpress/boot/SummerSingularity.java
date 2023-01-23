@@ -365,7 +365,7 @@ abstract public class SummerSingularity implements BootConstant {
                 .collect(Collectors.toList());
         serviceImplTags.removeAll(Collections.singleton(null));
         serviceImplTags.removeAll(Collections.singleton(""));
-        serviceImplTags.removeAll(Collections.singleton(Service.NO_TAG));
+        serviceImplTags.removeAll(Collections.singleton(Service.NOT_TAGGED));
         availableImplTagOptions.addAll(serviceImplTags);
         return serviceImplTags;
     }

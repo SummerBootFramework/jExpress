@@ -345,26 +345,6 @@ abstract public class SummerBigBang extends SummerSingularity {
             System.exit(0);
         }
         /*
-         * [IoC] - set user selected implementations to override the default
-         * should be invoked before genesis was initialezed to avoid caller invoks LogManager.static{}
-         */
-        if (cli.hasOption(CLI_USE_IMPL)) {
-            userSpecifiedImplTags.clear();
-            String[] mockItemList = cli.getOptionValues(CLI_USE_IMPL);
-
-            Set<String> mockInputValues = new HashSet(Arrays.asList(mockItemList));
-            mockInputValues.remove("");
-            if (availableImplTagOptions.containsAll(mockInputValues)) {
-                userSpecifiedImplTags.addAll(mockInputValues);
-            } else {
-                Set<String> invalidOptions = new HashSet(mockInputValues);
-                invalidOptions.removeAll(availableImplTagOptions);
-                System.out.println("invalid -" + CLI_USE_IMPL + " value: " + FormatterUtil.toCSV(invalidOptions) + ", valid -" + CLI_USE_IMPL + " values: " + FormatterUtil.toCSV(availableImplTagOptions));
-                System.exit(1);
-            }
-        }
-
-        /*
          * [Config File] Security - init app config password
          */
         if (cli.hasOption(CLI_ADMIN_PWD_FILE)) {
@@ -470,6 +450,17 @@ abstract public class SummerBigBang extends SummerSingularity {
         log.trace(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorIntervalSec + ", StartCommand>" + jvmStartCommand);
 
         /*
+         * load external modules
+         */
+        try {
+            loadModulesJars(modulesDir, true);
+        } catch (IOException ex) {
+            System.out.println(ex + "\n\tFailed to load jar files from " + modulesDir);
+            ex.printStackTrace();
+            System.exit(1);
+        }
+
+        /*
          * [Config File] - encrypt/decrypt
          */
         if (cli.hasOption(CLI_ENCRYPT)) {
@@ -484,6 +475,26 @@ abstract public class SummerBigBang extends SummerSingularity {
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
             System.out.println(System.lineSeparator() + "\t " + updated + " config files have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
+        }
+
+        /*
+         * [IoC] - set user selected implementations to override the default
+         * should be invoked before genesis was initialezed to avoid caller invoks LogManager.static{}
+         */
+        if (cli.hasOption(CLI_USE_IMPL)) {
+            userSpecifiedImplTags.clear();
+            String[] mockItemList = cli.getOptionValues(CLI_USE_IMPL);
+
+            Set<String> mockInputValues = new HashSet(Arrays.asList(mockItemList));
+            mockInputValues.remove("");
+            if (availableImplTagOptions.containsAll(mockInputValues)) {
+                userSpecifiedImplTags.addAll(mockInputValues);
+            } else {
+                Set<String> invalidOptions = new HashSet(mockInputValues);
+                invalidOptions.removeAll(availableImplTagOptions);
+                System.out.println("invalid -" + CLI_USE_IMPL + " value: " + FormatterUtil.toCSV(invalidOptions) + ", valid -" + CLI_USE_IMPL + " values: " + FormatterUtil.toCSV(availableImplTagOptions));
+                System.exit(1);
+            }
         }
 
         /*
@@ -504,14 +515,6 @@ abstract public class SummerBigBang extends SummerSingularity {
             }
             System.out.println("Total generated " + i + " configuration files in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
-        }
-
-        try {
-            loadModulesJars(modulesDir, true);
-        } catch (IOException ex) {
-            System.out.println(ex + "\n\tFailed to load jar files from " + modulesDir);
-            ex.printStackTrace();
-            System.exit(1);
         }
 
         /*

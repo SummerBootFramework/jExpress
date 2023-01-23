@@ -17,6 +17,7 @@ package org.summerboot.jexpress.boot;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,7 +55,8 @@ public class ScanedGuiceModule extends AbstractModule {
             SummerSingularity.ServiceMetadata defaultImpl = null;
             SummerSingularity.ServiceMetadata tagMatchImpl = null;
             SummerSingularity.ServiceMetadata bindingImpl;
-            boolean needToBindOneToOne = false;
+            boolean notNamed = false;
+            Map<String, SummerSingularity.ServiceMetadata> namedServiceImpls = new HashMap();
             for (String uniqueKey : taggeServicedMap.keySet()) {
                 SummerSingularity.ServiceMetadata serviceImpl = taggeServicedMap.get(uniqueKey).get(0);//validated by SummerSingularity.scanAnnotation_Service_ValidateBindingMap() for error msg
                 if (serviceImpl == null) {
@@ -65,35 +67,38 @@ public class ScanedGuiceModule extends AbstractModule {
                 memo.append("\n\t- Ioc.taggedservice.check: ").append(interfaceClass.getName()).append(", implTag=").append(uniqueKey).append(ARROW).append(serviceImpl).append(", isCliUseImplTag=").append(isCliUseImplTag);
 
                 String named = serviceImpl.getNamed();
-                boolean isOnToOne = Service.NO_NAMED.equals(named);
-                if (isOnToOne) {//non-named: one(interface) <--> one(Impl)
-                    needToBindOneToOne = true;
-                    if (Service.NO_TAG.equals(implTag)) {
+                notNamed = Service.NOT_NAMED.equals(named);
+                if (notNamed) {//non-named: one(interface) <--> one(Impl)
+                    if (Service.NOT_TAGGED.equals(implTag)) {
                         defaultImpl = serviceImpl;
                     }
                     if (isCliUseImplTag) {
                         tagMatchImpl = serviceImpl;
                     }
                 } else {//named: one(interface) <--> many(Impl)
-                    SummerSingularity.ServiceMetadata namedDefaultImpl = null;
-                    SummerSingularity.ServiceMetadata namedTagMatchImpl = null;
-                    if (Service.NO_TAG.equals(implTag)) {
-                        namedDefaultImpl = serviceImpl;
+                    //SummerSingularity.ServiceMetadata namedDefaultImpl = null;
+                    //SummerSingularity.ServiceMetadata namedTagMatchImpl = null;
+                    if (Service.NOT_TAGGED.equals(implTag)) {
+                        //namedDefaultImpl = serviceImpl;
+                        if (!namedServiceImpls.containsKey(named)) {
+                            namedServiceImpls.put(named, serviceImpl);//set only when there is no existing (as default)
+                        }
                     }
                     if (isCliUseImplTag) {
-                        namedTagMatchImpl = serviceImpl;
+                        //namedTagMatchImpl = serviceImpl;
+                        namedServiceImpls.put(named, serviceImpl);//override default, favor -use <impleTag> over default
                     }
-                    //favor -use <impleTag> over default
+                    /*//favor -use <impleTag> over default
                     SummerSingularity.ServiceMetadata namedBindingImpl = namedTagMatchImpl != null ? namedTagMatchImpl : namedDefaultImpl;
                     if (namedBindingImpl != null) {
                         Class implClass = namedBindingImpl.getServiceImplClass();
                         bind(interfaceClass).annotatedWith(Names.named(named)).to(implClass);
                         memo.append("\n\t- Ioc.taggedservice.override: ").append(interfaceClass).append(" bind to ").append(implClass).append(", named=").append(named);
                     }
-                    //continue;
+                    //continue;*/
                 }
             }
-            if (needToBindOneToOne) {
+            if (notNamed) {
                 // non-named: one(interface) <--> one(Impl)
                 //favor -use <impleTag> over default
                 bindingImpl = tagMatchImpl != null ? tagMatchImpl : defaultImpl;
@@ -103,6 +108,13 @@ public class ScanedGuiceModule extends AbstractModule {
                 Class implClass = bindingImpl.getServiceImplClass();
                 bind(interfaceClass).to(implClass);
                 memo.append("\n\t- Ioc.taggedservice.override: ").append(interfaceClass).append(" bind to ").append(implClass);
+            } else {
+                for (String named : namedServiceImpls.keySet()) {
+                    bindingImpl = namedServiceImpls.get(named);
+                    Class implClass = bindingImpl.getServiceImplClass();
+                    bind(interfaceClass).annotatedWith(Names.named(named)).to(implClass);
+                    memo.append("\n\t- Ioc.taggedservice.override: ").append(interfaceClass).append(" bind to ").append(implClass).append(", named=").append(named);
+                }
             }
         }
     }
