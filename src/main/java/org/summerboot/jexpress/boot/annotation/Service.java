@@ -31,12 +31,12 @@ import java.lang.annotation.Target;
 @Documented
 @BindingAnnotation
 public @interface Service {
-    String NO_TAG = "";
-    String NO_NAMED = "";
+    String NOT_TAGGED = "";
+    String NOT_NAMED = "";
 
     Class[] binding() default {};
 
-    String implTag() default NO_TAG;
+    String implTag() default NOT_TAGGED;
 
-    String named() default NO_NAMED;
+    String named() default NOT_NAMED;
 }
