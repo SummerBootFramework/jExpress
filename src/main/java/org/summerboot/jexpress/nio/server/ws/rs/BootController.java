@@ -71,8 +71,8 @@ import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 @Singleton
 @Controller
 //@Path(CONTEXT_ROOT)
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
+//@Consumes(MediaType.APPLICATION_JSON)
+//@Produces(MediaType.APPLICATION_JSON)
 @OpenAPIDefinition(//OAS v3
         info = @Info(
                 title = "Default Admin API",
@@ -130,6 +130,7 @@ abstract public class BootController {
 
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
+    @Produces(MediaType.TEXT_HTML)
     @RolesAllowed({Config.ROLE_ADMIN})
     @CaptureTransaction("admin.version")
     @Operation(
@@ -168,6 +169,7 @@ abstract public class BootController {
 
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
+    @Produces(MediaType.TEXT_HTML)
     @RolesAllowed({Config.ROLE_ADMIN})
     @CaptureTransaction("admin.inspect")
     @Operation(

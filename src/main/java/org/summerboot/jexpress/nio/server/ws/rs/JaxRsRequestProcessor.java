@@ -46,7 +46,6 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import java.util.HashSet;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 
@@ -354,6 +353,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                                 responseContentType = MediaType.APPLICATION_XML;
                             } else if (clientAcceptedContentType.contains("txt")) {
                                 responseContentType = MediaType.TEXT_HTML;
+                            } else {
+                                responseContentType = MediaType.APPLICATION_JSON;
                             }
                         }
                     }
