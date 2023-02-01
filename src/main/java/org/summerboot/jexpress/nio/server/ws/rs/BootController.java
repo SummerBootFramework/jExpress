@@ -15,7 +15,7 @@
  */
 package org.summerboot.jexpress.nio.server.ws.rs;
 
-import co.elastic.apm.api.CaptureTransaction;
+//import co.elastic.apm.api.CaptureTransaction;
 import com.google.inject.Inject;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.nio.server.domain.Err;
@@ -95,7 +95,7 @@ import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 abstract public class BootController {
 
     @Inject
-    protected AuthTokenCache authTokenCache;    
+    protected AuthTokenCache authTokenCache;
     //abstract protected AuthTokenCache getAuthTokenCache();
 
     @Inject
@@ -132,7 +132,7 @@ abstract public class BootController {
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
     @Produces(MediaType.TEXT_HTML)
     @RolesAllowed({Config.ROLE_ADMIN})
-    @CaptureTransaction("admin.version")
+    //@CaptureTransaction("admin.version")
     @Operation(
             tags = {"Admin"},
             summary = "get version",
@@ -171,7 +171,7 @@ abstract public class BootController {
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
     @Produces(MediaType.TEXT_HTML)
     @RolesAllowed({Config.ROLE_ADMIN})
-    @CaptureTransaction("admin.inspect")
+    //@CaptureTransaction("admin.inspect")
     @Operation(
             tags = {"Admin"},
             summary = "do inspection",
@@ -209,7 +209,7 @@ abstract public class BootController {
     @PUT
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
     @RolesAllowed({Config.ROLE_ADMIN})
-    @CaptureTransaction("admin.changeStatus")
+    //@CaptureTransaction("admin.changeStatus")
     @Operation(
             tags = {"Admin"},
             summary = "Graceful shutdown by changing service status",
@@ -237,7 +237,7 @@ abstract public class BootController {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
-    @CaptureTransaction("user.login")
+    //@CaptureTransaction("user.login")
     @Operation(
             tags = {"User"},
             summary = "login",
@@ -276,7 +276,7 @@ abstract public class BootController {
     @DELETE
     @Path(Config.CURRENT_VERSION + Config.API_USER_LOGOUT)
     @PermitAll
-    @CaptureTransaction("user.logout")
+    //@CaptureTransaction("user.logout")
     @Operation(
             tags = {"User"},
             summary = "logout",
@@ -303,7 +303,7 @@ abstract public class BootController {
             return;
         }
         //AuthTokenCache authTokenCache = getAuthTokenCache();
-        auth.logout(request.getHttpHeaders(),authTokenCache , context);
+        auth.logout(request.getHttpHeaders(), authTokenCache, context);
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
