@@ -228,6 +228,8 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.HttpService.enabled")
     private volatile boolean httpService = true;
+    @Config(key = "nio.JAX-RS.fromJson.ACCEPT_CASE_INSENSITIVE_PROPERTIES")
+    private volatile boolean fromJsonAcceptCaseInsensitiveProperties = false;
     @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties")
     private volatile boolean fromJsonFailOnUnknownProperties = true;
     @Config(key = "nio.JAX-RS.toJson.IgnoreNull")
@@ -471,7 +473,7 @@ public class NioConfig extends BootConfig {
                 }
             }
         }
-        BeanUtil.configure(fromJsonFailOnUnknownProperties, toJsonPretty, toJsonIgnoreNull);
+        BeanUtil.init(fromJsonFailOnUnknownProperties, fromJsonAcceptCaseInsensitiveProperties, toJsonPretty, toJsonIgnoreNull);
 
         //5.1 caller filter
         String key;
