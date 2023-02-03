@@ -16,8 +16,6 @@
 package org.summerboot.jexpress.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -25,7 +23,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -50,55 +47,27 @@ public class BeanUtil {
     public static ObjectMapper JacksonMapperIgnoreNull = new ObjectMapper()
             .setSerializationInclusion(Include.NON_NULL)
             .setSerializationInclusion(Include.NON_EMPTY);
-    public final static XmlMapper xmlMapper = new XmlMapper();
+    public static XmlMapper XMLMapper = new XmlMapper();
 
-    public static void registerModules(Module... modules) {
-        xmlMapper.registerModules(modules);
-        JacksonMapper.registerModules(modules);
-        JacksonMapperIgnoreNull.registerModules(modules);
+    public static void update(ObjectMapper objectMapper) {
+        objectMapper.registerModules(new JavaTimeModule());
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
     }
 
-    public static void configure(SerializationFeature f, boolean state) {
-        xmlMapper.configure(f, state);
-        JacksonMapper.configure(f, state);
-        JacksonMapperIgnoreNull.configure(f, state);
-    }
-
-    public static void configure(DeserializationFeature f, boolean state) {
-        xmlMapper.configure(f, state);
-        JacksonMapper.configure(f, state);
-        JacksonMapperIgnoreNull.configure(f, state);
-    }
-
-    public static void configure(JsonGenerator.Feature f, boolean state) {
-        xmlMapper.configure(f, state);
-        JacksonMapper.configure(f, state);
-        JacksonMapperIgnoreNull.configure(f, state);
-    }
-
-    public static void configure(JsonParser.Feature f, boolean state) {
-        xmlMapper.configure(f, state);
-        JacksonMapper.configure(f, state);
-        JacksonMapperIgnoreNull.configure(f, state);
-    }
-
-    public static void update() {
-        registerModules(new JavaTimeModule());
-        //configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true);
-        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
-    }
-
-    public static void init(boolean fromJsonFailOnUnknownProperties, boolean fromJsonAcceptCaseInsensitiveProperties, boolean toJsonPretty, boolean toJsonIgnoreNull) {
+    public static void init(boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive, boolean toJsonPretty, boolean toJsonIgnoreNull) {
         isFromJsonFailOnUnknownProperties = fromJsonFailOnUnknownProperties;
         isToJsonPretty = toJsonPretty;
         isToJsonIgnoreNull = toJsonIgnoreNull;
-        if (fromJsonAcceptCaseInsensitiveProperties) {
+        if (fromJsonCaseInsensitive) {
             JacksonMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
+            XMLMapper = XmlMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
         }
-        update();
+        update(JacksonMapper);
+        update(JacksonMapperIgnoreNull);
+        update(XMLMapper);
     }
 
     static {
@@ -208,11 +177,11 @@ public class BeanUtil {
     }
 
     public static <T extends Object> T fromXML(Class<T> targetClass, String xml) throws JsonProcessingException {
-        return (T) xmlMapper.readValue(xml, targetClass);
+        return (T) XMLMapper.readValue(xml, targetClass);
     }
 
     public static String toXML(Object obj) throws JsonProcessingException {
-        return xmlMapper.writeValueAsString(obj);
+        return XMLMapper.writeValueAsString(obj);
     }
 
     public static final ValidatorFactory ValidatorFactory = Validation.buildDefaultValidatorFactory();

@@ -15,16 +15,15 @@
  */
 package org.summerboot.jexpress.nio.client;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.http.HttpResponse;
@@ -40,41 +39,28 @@ import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
  */
 public class RPCResult<T, E extends ServiceErrorConvertible> {
 
-    public static final ObjectMapper DefaultJacksonMapper = new ObjectMapper()
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+    private static boolean isFromJsonFailOnUnknownProperties = true;
 
-    public static void registerModules(com.fasterxml.jackson.databind.Module... modules) {
-        DefaultJacksonMapper.registerModules(modules);
+    public static ObjectMapper DefaultJacksonMapper = new ObjectMapper();
+
+    public static void update(ObjectMapper objectMapper) {
+        objectMapper.registerModules(new JavaTimeModule());
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
     }
 
-    public static void configure(SerializationFeature f, boolean state) {
-        DefaultJacksonMapper.configure(f, state);
-    }
-
-    public static void configure(DeserializationFeature f, boolean state) {
-        DefaultJacksonMapper.configure(f, state);
-    }
-
-    public static void configure(JsonGenerator.Feature f, boolean state) {
-        DefaultJacksonMapper.configure(f, state);
-    }
-
-    public static void configure(JsonParser.Feature f, boolean state) {
-        DefaultJacksonMapper.configure(f, state);
-    }
-
-    public static void fromJsonFailOnUnknownProperties(boolean state) {
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, state);
+    public static void init(boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive) {
+        isFromJsonFailOnUnknownProperties = fromJsonFailOnUnknownProperties;
+        if (fromJsonCaseInsensitive) {
+            DefaultJacksonMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
+        }
+        update(DefaultJacksonMapper);
     }
 
     static {
-        registerModules(new JavaTimeModule());
-        //JacksonMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
-        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        init(true, false);
     }
 
     private final HttpResponse httpResponse;
@@ -159,9 +145,6 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
             return null;
         }
         R ret;
-        if (jacksonMapper == null) {
-            jacksonMapper = DefaultJacksonMapper;
-        }
         try {
             ret = responseClass == null
                     ? jacksonMapper.readValue(rpcResponseBody, responseType)
