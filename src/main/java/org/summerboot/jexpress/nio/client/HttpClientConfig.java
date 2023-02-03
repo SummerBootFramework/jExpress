@@ -119,6 +119,8 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.redirectOption")
     private volatile HttpClient.Redirect redirectOption = HttpClient.Redirect.NEVER;
 
+    @Config(key = "httpclient.fromJson.CaseInsensitive")
+    private volatile boolean fromJsonCaseInsensitive = false;
     @Config(key = "httpclient.fromJson.failOnUnknownProperties")
     private volatile boolean fromJsonFailOnUnknownProperties = true;
 
@@ -185,7 +187,7 @@ abstract public class HttpClientConfig extends BootConfig {
             }
         });
 
-        RPCResult.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, fromJsonFailOnUnknownProperties);
+        RPCResult.init(fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive);
 
         // 3.1 HTTP Client keystore        
         KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
@@ -328,6 +330,10 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public String getProxyAuthorizationBasicValue() {
         return proxyAuthorizationBasicValue;
+    }
+
+    public boolean isFromJsonCaseInsensitive() {
+        return fromJsonCaseInsensitive;
     }
 
     public boolean isFromJsonFailOnUnknownProperties() {
