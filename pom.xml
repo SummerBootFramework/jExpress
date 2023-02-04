@@ -187,7 +187,7 @@
 
         <!-- NIO Netty -->
         <netty.version>4.1.87.Final</netty.version>
-        <netty-tcnative.version>2.0.56.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.57.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.52.1</grpc.version>
         <protobuf.version>3.21.12</protobuf.version>
