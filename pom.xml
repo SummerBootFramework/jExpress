@@ -186,10 +186,10 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.87.Final</netty.version>
-        <netty-tcnative.version>2.0.57.Final</netty-tcnative.version>
+        <netty.version>4.1.89.Final</netty.version>
+        <netty-tcnative.version>2.0.58.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.52.1</grpc.version>
+        <grpc.version>1.53.0</grpc.version>
         <protobuf.version>3.21.12</protobuf.version>
         <!-- Web JAX-RS -->        
         <swagger.core.version>2.2.8</swagger.core.version>
@@ -197,17 +197,13 @@
         
         
         <!-- MIME-Type -->
-        <tika.version>2.6.0</tika.version>
+        <tika.version>2.7.0</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>3.1.0</rs-api.version>
         <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
         <reflections.version>0.10.2</reflections.version>
 
-        <!-- JSON/XML/Bean Validation 
-        Vulnerability Details : CVE-2022-42003 - Publish Date : 2022-10-02 Last Update Date : 2022-10-04
-        In FasterXML jackson-databind before 2.14.0-rc1, resource exhaustion can occur because of a lack of a check in primitive value deserializers to avoid deep wrapper array nesting, 
-        when the UNWRAP_SINGLE_VALUE_ARRAYS feature is enabled.
-        -->
+        <!-- JSON/XML/Bean Validation -->
         <jackson.version>2.14.2</jackson.version>
         <!-- Bean Validation -->
         <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
@@ -217,7 +213,7 @@
         <guice.version>5.1.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.1.6.Final</hibernate.version>
+        <hibernate.version>6.1.7.Final</hibernate.version>
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
@@ -402,7 +398,7 @@
             <!--            <scope>provided</scope>-->
         </dependency>
 
-        <!-- Open API -->
+        <!-- Open API --> 
         <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
