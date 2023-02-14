@@ -15,6 +15,8 @@
  */
 package org.summerboot.jexpress.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 import org.summerboot.jexpress.security.SecurityUtil;
 import com.google.common.collect.ImmutableSortedSet;
@@ -47,6 +49,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
@@ -260,6 +264,12 @@ public class ReflectionUtil {
                 return ret;
             } catch (ClassNotFoundException ex) {
                 throw new IllegalArgumentException("invalid Class name: " + value, ex);
+            }
+        } else if (targetClass.equals(JsonNode.class)) {
+            try {
+                return BeanUtil.JacksonMapper.readTree(value);
+            } catch (JsonProcessingException ex) {
+                throw new IllegalArgumentException("invalid json data: " + value, ex);
             }
         } else {
             Object v = toStandardJavaType(value, targetClass, autoDecrypt, isEmailRecipients, enumConvert);

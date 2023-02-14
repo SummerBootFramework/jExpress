@@ -39,6 +39,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -375,13 +376,7 @@ public class NioConfig extends BootConfig {
         downloadMode = StringUtils.isBlank(welcomePage);
         tempUoloadDir = null;
         tempUoloadDir = rootFolder.getAbsolutePath() + File.separator + tempUoload;
-//        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r--------");
-//        FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions.asFileAttribute(permissions);
-//        Files.createDirectory(dir, fileAttributes);
-//        File dir = new File(tempUoloadDir);
-//        if(!dir.exists()) {
-//            dir.mkdirs();
-//        }
+
         //8. Default NIO Response HTTP Headers
         serverDefaultResponseHeaders.clear();
         Set<String> _keys = props.keySet().stream().map(o -> o.toString()).collect(Collectors.toSet());
@@ -440,39 +435,6 @@ public class NioConfig extends BootConfig {
             }
         }
 
-        //4.3 Netty Channel Handler
-        if (INJECTOR != null) {
-            if (StringUtils.isNotBlank(fielUploadHandlerAnnotatedName)) {
-                try {
-                    INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(fielUploadHandlerAnnotatedName)));
-                    Path dir = Paths.get(tempUoloadDir).toAbsolutePath();
-                    Files.createDirectories(dir);
-                } catch (Throwable ex) {
-                    helper.addError("invalid HttpFileUpload Channel Handler name(" + fielUploadHandlerAnnotatedName + "): " + ex.toString());
-                }
-            }
-            if (StringUtils.isNotBlank(pingHandlerAnnotatedName)) {
-                try {
-                    INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(pingHandlerAnnotatedName)));
-                } catch (Throwable ex) {
-                    helper.addError("invalid Ping Channel Handler name(" + pingHandlerAnnotatedName + "): " + ex.toString());
-                }
-            }
-            if (StringUtils.isNotBlank(requestHandlerAnnotatedName)) {
-                try {
-                    INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
-                } catch (Throwable ex) {
-                    helper.addError("invalid Request Channel Handler name(" + requestHandlerAnnotatedName + "): " + ex.toString());
-                }
-            }
-            if (StringUtils.isNotBlank(webSocketHandlerAnnotatedName)) {
-                try {
-                    INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(webSocketHandlerAnnotatedName)));
-                } catch (Throwable ex) {
-                    helper.addError("invalid Request Channel Handler name(" + webSocketHandlerAnnotatedName + "): " + ex.toString());
-                }
-            }
-        }
         BeanUtil.init(fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull);
 
         //5.1 caller filter
@@ -522,6 +484,32 @@ public class NioConfig extends BootConfig {
 
     public void setGuiceInjector(Injector _injector) {
         INJECTOR = _injector;
+        if (StringUtils.isNotBlank(fielUploadHandlerAnnotatedName)) {
+//                Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r--------");
+//                FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions.asFileAttribute(permissions);
+//                Files.createDirectory(dir, fileAttributes);
+//                File dir = new File(tempUoloadDir);
+//                if (!dir.exists()) {
+//                    dir.mkdirs();
+//                }
+
+            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(fielUploadHandlerAnnotatedName)));
+            Path dir = Paths.get(tempUoloadDir).toAbsolutePath();
+            try {
+                Files.createDirectories(dir);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        if (StringUtils.isNotBlank(pingHandlerAnnotatedName)) {
+            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(pingHandlerAnnotatedName)));
+        }
+        if (StringUtils.isNotBlank(requestHandlerAnnotatedName)) {
+            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
+        }
+        if (StringUtils.isNotBlank(webSocketHandlerAnnotatedName)) {
+            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(webSocketHandlerAnnotatedName)));
+        }
     }
 
     @JsonIgnore
