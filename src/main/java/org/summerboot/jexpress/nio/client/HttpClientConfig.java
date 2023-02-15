@@ -129,7 +129,7 @@ abstract public class HttpClientConfig extends BootConfig {
     private volatile HttpClient httpClient;
 
     @Config(key = "httpclient.timeout.ms")
-    private volatile long httpClientTimeout = 5000;
+    private volatile long httpClientTimeoutMs = 5000;
 
     private final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
@@ -340,8 +340,8 @@ abstract public class HttpClientConfig extends BootConfig {
         return fromJsonFailOnUnknownProperties;
     }
 
-    public long getHttpClientTimeout() {
-        return httpClientTimeout;
+    public long getHttpClientTimeoutMs() {
+        return httpClientTimeoutMs;
     }
 
     public int getHttpClientCoreSize() {
