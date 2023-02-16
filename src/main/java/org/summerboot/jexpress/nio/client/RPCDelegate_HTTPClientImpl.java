@@ -59,21 +59,26 @@ public abstract class RPCDelegate_HTTPClientImpl {
         return sb.toString();
     }
 
-    protected void applyConfiguredHeaders(HttpRequest.Builder reqBuilder) {
+    /**
+     * set default headers; proxy auth; timeout
+     *
+     * @param reqBuilder
+     */
+    protected void configure(HttpRequest.Builder reqBuilder) {
         Map<String, String> httpClientDefaultRequestHeaders = httpCfg.getHttpClientDefaultRequestHeaders();
         httpClientDefaultRequestHeaders.keySet().forEach(key -> {
             String value = httpClientDefaultRequestHeaders.get(key);
             reqBuilder.setHeader(key, value);
         });
-        reqBuilder.timeout(Duration.ofMillis(httpCfg.getHttpClientTimeoutMs()));
         String proxyAuth = httpCfg.getProxyAuthorizationBasicValue();
         if (proxyAuth != null) {
             reqBuilder.setHeader("Proxy-Authorization", proxyAuth);
         }
+        reqBuilder.timeout(Duration.ofMillis(httpCfg.getHttpClientTimeoutMs()));
     }
 
     protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext serviceContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException {
-        applyConfiguredHeaders(reqBuilder);
+        configure(reqBuilder);
         HttpRequest req = reqBuilder.build();
 
         String reqbody = null;
