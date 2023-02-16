@@ -42,6 +42,9 @@ public abstract class RPCDelegate_HTTPClientImpl {
     abstract protected HttpClientConfig getHttpClientConfig();
 
     /**
+     * Convert form data in key-pairs (Map) to form request body (string), also
+     * need to set request header:
+     * Content-Type=application/x-www-form-urlencoded
      *
      * @param data
      * @return
