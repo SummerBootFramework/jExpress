@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.nio.server.domain;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.List;
 
 /**
@@ -25,7 +26,7 @@ public interface ServiceErrorConvertible {
 
     boolean isSingleError();
 
-    Err toSerivceError();
+    Err toSerivceError(HttpResponseStatus status);
 
-    List<Err> toSerivceErrors();
+    List<Err> toSerivceErrors(HttpResponseStatus status);
 }
