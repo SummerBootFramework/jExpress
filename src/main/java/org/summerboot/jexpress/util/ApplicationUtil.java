@@ -87,8 +87,9 @@ public class ApplicationUtil {
     }
 
     public static Set<Class<?>> loadClassFromJarFile(File jarFile, boolean failOnUndefinedClasses) throws IOException {
-        String jarURL = "file:/" + jarFile.getAbsolutePath();
-        URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{new URL(jarURL)}, Thread.currentThread().getContextClassLoader());
+        URL url = jarFile.getAbsoluteFile().toURI().toURL();
+        URL[] urls = {url};
+        URLClassLoader urlClassLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
         Set<Class<?>> classes = new HashSet<>();
         StringBuilder sb = new StringBuilder();
         boolean onError = false;
