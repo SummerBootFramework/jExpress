@@ -410,16 +410,15 @@ abstract public class SummerBigBang extends SummerSingularity {
             System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
             System.exit(1);
         }
-        String modulesFolderName = "modules";
-        File modulesDir;
+        File pluginDir;
         if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
             //set log folder inside user specified config folder
             System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
-            modulesDir = new File(userSpecifiedConfigDir.getAbsolutePath(), modulesFolderName).getAbsoluteFile();
+            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
         } else {
             //set log folder outside user specified config folder
             System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
-            modulesDir = new File(userSpecifiedConfigDir.getParentFile(), modulesFolderName).getAbsoluteFile();
+            pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
         }
 
         /*
@@ -453,9 +452,9 @@ abstract public class SummerBigBang extends SummerSingularity {
          * load external modules
          */
         try {
-            loadModulesJars(modulesDir, true);
+            loadPluginJars(pluginDir, true);
         } catch (IOException ex) {
-            System.out.println(ex + "\n\tFailed to load jar files from " + modulesDir);
+            System.out.println(ex + "\n\tFailed to load plugin jar files from " + pluginDir);
             ex.printStackTrace();
             System.exit(1);
         }
@@ -529,27 +528,27 @@ abstract public class SummerBigBang extends SummerSingularity {
         I18n.init(getAddtionalI18n());
     }
 
-    protected void loadModulesJars(File modulesDir, boolean failOnUndefinedClasses) throws IOException {
-        modulesDir.mkdirs();
-        if (!modulesDir.canRead() || !modulesDir.isDirectory()) {
-            memo.append("\n\t- loadModulesJars: invalid dir ").append(modulesDir);
+    protected void loadPluginJars(File pluginDir, boolean failOnUndefinedClasses) throws IOException {
+        pluginDir.mkdirs();
+        if (!pluginDir.canRead() || !pluginDir.isDirectory()) {
+            memo.append("\n\t- loadPluginJars: invalid dir ").append(pluginDir);
             return;
         }
         FileFilter fileFilter = file -> !file.isDirectory() && file.getName().endsWith(".jar");
-        File[] jarFiles = modulesDir.listFiles(fileFilter);
+        File[] jarFiles = pluginDir.listFiles(fileFilter);
         if (jarFiles == null || jarFiles.length < 1) {
-            memo.append("\n\t- loadModulesJars: no jar files found at ").append(modulesDir);
+            memo.append("\n\t- loadPluginJars: no jar files found at ").append(pluginDir);
             return;
         }
         Set<Class<?>> jarClasses = new HashSet<>();
         for (File jarFile : jarFiles) {
-            memo.append("\n\t- loadModulesJars: loading jar file ").append(jarFile.getAbsolutePath());
+            memo.append("\n\t- loadPluginJars: loading jar file ").append(jarFile.getAbsolutePath());
             Set<Class<?>> classes = ApplicationUtil.loadClassFromJarFile(jarFile, failOnUndefinedClasses);
-            memo.append("\n\t- loadModulesJars: loaded ").append(classes.size()).append(" classes from jar file ").append(jarFile.getAbsolutePath());
+            memo.append("\n\t- loadPluginJars: loaded ").append(classes.size()).append(" classes from jar file ").append(jarFile.getAbsolutePath());
             jarClasses.addAll(classes);
         }
         super.scanAnnotation_Service(jarClasses);
-        memo.append("\n\t- loadModulesJars: loaded ").append(jarClasses.size()).append(" classes from ").append(jarFiles.length).append(" jar files in ").append(modulesDir);
+        memo.append("\n\t- loadPluginJars: loaded ").append(jarClasses.size()).append(" classes from ").append(jarFiles.length).append(" jar files in ").append(pluginDir);
     }
 
     abstract protected Class getAddtionalI18n();
