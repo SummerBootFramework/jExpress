@@ -37,6 +37,8 @@ interface BootConstant {
     String CFG_SMTP = "cfg_smtp.properties";
     String CFG_NIO = "cfg_nio.properties";
     String CFG_GRPC = "cfg_grpc.properties";
+    
+    String DIR_PLUGIN = "plugin";
 
     /*
      * Pass by System.setProperty() instead of making them public static, any better idea?
