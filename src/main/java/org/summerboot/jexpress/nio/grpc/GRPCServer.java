@@ -182,7 +182,7 @@ public class GRPCServer {
         }
 
         server = serverBuilder.build().start();
-        String schema = serverCredentials == null ? "tcp" : "tls";
+        String schema = serverCredentials == null ? "grpc" : "grpcs";
         log.info("*** GRPCServer is listening on " + schema + "//" + bindingAddr + ":" + port);
         Runtime.getRuntime().addShutdownHook(
                 new Thread(() -> {

@@ -50,9 +50,9 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     //1. gRPC connection
     @ConfigHeader(title = "1. " + ID + " provider")
-    @Config(key = ID + ".url", defaultValue = "tcp://127.0.0.1:8424",
-            desc = "tcp://127.0.0.1:8424\n"
-            + "tls://127.0.0.1:8424\n"
+    @Config(key = ID + ".url", defaultValue = "grpc://127.0.0.1:8424",
+            desc = "grpc://127.0.0.1:8424\n"
+            + "grpcs://127.0.0.1:8424\n"
             + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
     @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")//"TLSv1.2, TLSv1.3"
