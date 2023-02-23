@@ -40,7 +40,8 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
 
     /**
      *
-     * @param uri The URI format should be one of tcp://host:port, tls://host:port, or unix:///path/to/uds.sock
+     * @param uri The URI format should be one of grpc://host:port,
+     * grpcs://host:port, or unix:///path/to/uds.sock
      * @param keyManagerFactory The Remote Caller identity
      * @param trustManagerFactory The Remote Caller trusted identities
      * @param overrideAuthority
@@ -59,11 +60,11 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                         .channelType(EpollDomainSocketChannel.class)
                         .usePlaintext();
                 break;
-            case "tcp":
+            case "grpc":
                 channelBuilder = NettyChannelBuilder.forAddress(uri.getHost(), uri.getPort());
                 channelBuilder.usePlaintext();
                 break;
-            case "tls":
+            case "grpcs":
                 channelBuilder = NettyChannelBuilder.forAddress(uri.getHost(), uri.getPort());
                 SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
                 sslBuilder.keyManager(keyManagerFactory);
@@ -88,13 +89,14 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                 break;
         }
         if (channelBuilder == null) {
-            throw new IllegalArgumentException("The URI format should be one of tcp://host:port, tls://host:port, or unix:///path/to/uds.sock");
+            throw new IllegalArgumentException("The URI format should be one of grpc://host:port, grpcs://host:port, or unix:///path/to/uds.sock");
         }
         return channelBuilder;
     }
 
     /**
-     * @param uri The URI format should be one of tcp://host:port or unix:///path/to/uds.sock
+     * @param uri The URI format should be one of grpc://host:port or
+     * unix:///path/to/uds.sock
      * @return
      * @throws SSLException
      */
@@ -108,7 +110,8 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
 
     /**
      *
-     * @param uri The URI format should be one of tcp://host:port or unix:///path/to/uds.sock
+     * @param uri The URI format should be one of grpc://host:port or
+     * unix:///path/to/uds.sock
      * @throws SSLException
      */
     public GRPCClient(URI uri) throws SSLException {
@@ -117,7 +120,8 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
 
     /**
      *
-     * @param uri The URI format should be one of tcp://host:port, tls://host:port, or unix:///path/to/uds.sock
+     * @param uri The URI format should be one of grpc://host:port,
+     * grpcs://host:port, or unix:///path/to/uds.sock
      * @param keyManagerFactory The Remote Caller identity
      * @param trustManagerFactory The Remote Caller trusted identities
      * @param overrideAuthority
@@ -127,29 +131,30 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
      */
     public GRPCClient(URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
             @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
-        this(uri, getNettyChannelBuilder(uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, tlsVersionProtocols));
+        this.uri = uri;
+        this.channelBuilder = getNettyChannelBuilder(uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, tlsVersionProtocols);
     }
 
     /**
      *
-     * @param uri The URI format should be one of tcp://host:port, tls://host:port, or unix:///path/to/uds.sock
      * @param channelBuilder
      */
-    public GRPCClient(URI uri, NettyChannelBuilder channelBuilder) {
-        this.uri = uri;
+    public GRPCClient(NettyChannelBuilder channelBuilder) {
+        uri = null;
         this.channelBuilder = channelBuilder;
     }
 
     public T connect() {
         disconnect();
         channel = channelBuilder.build();
+        String info = uri == null ? channel.toString() : uri.toString();
         Runtime.getRuntime().addShutdownHook(
                 new Thread(() -> {
                     try {
                         channel.shutdownNow();
                     } catch (Throwable ex) {
                     }
-                }, "GRPCClient.shutdown and disconnect from " + uri));
+                }, "GRPCClient.shutdown and disconnect from " + info));
         onConnected(channel);
         return (T) this;
     }
