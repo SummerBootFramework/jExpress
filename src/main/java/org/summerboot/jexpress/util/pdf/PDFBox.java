@@ -41,6 +41,7 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.rendering.RenderDestination;
 
 /**
  *
@@ -307,11 +308,12 @@ public class PDFBox {
      * @param dpi
      * @param formatName a {@code String} containing the informal name of a
      * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @param destination
      * @return
      * @throws IOException
      */
-    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, String formatName) throws IOException {
-        return pdf2Images(pdfData, dpi, ImageType.RGB, formatName);
+    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, String formatName, RenderDestination destination) throws IOException {
+        return pdf2Images(pdfData, dpi, ImageType.RGB, formatName, destination);
     }
 
     /**
@@ -321,11 +323,12 @@ public class PDFBox {
      * @param imageType
      * @param formatName a {@code String} containing the informal name of a
      * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @param destination
      * @return
      * @throws IOException
      */
-    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, String formatName) throws IOException {
-        List<BufferedImage> images = pdf2Images(pdfData, dpi, imageType);
+    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
+        List<BufferedImage> images = pdf2Images(pdfData, dpi, imageType, destination);
         List<byte[]> imageDatas = images2Bytes(images, formatName);
         return imageDatas;
 
@@ -338,26 +341,27 @@ public class PDFBox {
      * @param imageType
      * @param formatName a {@code String} containing the informal name of a
      * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @param destination
      * @return
      * @throws IOException
      */
-    public static List<byte[]> pdf2Images(File pdfFile, float dpi, ImageType imageType, String formatName) throws IOException {
-        List<BufferedImage> images = pdf2Images(pdfFile, dpi, imageType);
+    public static List<byte[]> pdf2Images(File pdfFile, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
+        List<BufferedImage> images = pdf2Images(pdfFile, dpi, imageType, destination);
         List<byte[]> imageDatas = images2Bytes(images, formatName);
         return imageDatas;
     }
 
-    public static List<BufferedImage> pdf2Images(byte[] pdfData, float dpi, ImageType imageType) throws IOException {
+    public static List<BufferedImage> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
         try (PDDocument document = PDDocument.load(pdfData);) {
-            return pdf2Images(document, dpi, imageType);
+            return pdf2Images(document, dpi, imageType, destination);
         }
     }
 
-    public static List<BufferedImage> pdf2Images(File pdfFile, float dpi, ImageType imageType) throws IOException {
+    public static List<BufferedImage> pdf2Images(File pdfFile, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
         try (PDDocument document = PDDocument.load(pdfFile);) {
-            return pdf2Images(document, dpi, imageType);
+            return pdf2Images(document, dpi, imageType, destination);
         }
     }
 
@@ -366,10 +370,11 @@ public class PDFBox {
      * @param document make sure the caller will close the document
      * @param dpi 300
      * @param imageType
+     * @param destination
      * @return
      * @throws IOException
      */
-    public static List<BufferedImage> pdf2Images(PDDocument document, float dpi, ImageType imageType) throws IOException {
+    public static List<BufferedImage> pdf2Images(PDDocument document, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
         //try(PDDocument document = PDDocument.load(pdfData);)
         //2: Instantiating the PDFRenderer Class
@@ -378,11 +383,12 @@ public class PDFBox {
         //BufferedImage image = renderer.renderImage(0);
         //4: save to file
         //ImageIO.write(image, "JPEG", new File("C:/PdfBox_Examples/myimage.jpg"));
+        RenderDestination d = RenderDestination.PRINT;
 
         int totalPages = document.getNumberOfPages();
         List<BufferedImage> images = new ArrayList();
         for (int currentPage = 0; currentPage < totalPages; currentPage++) {
-            BufferedImage image = renderer.renderImageWithDPI(currentPage, dpi, imageType);
+            BufferedImage image = renderer.renderImage(currentPage, dpi / 72f, imageType, d);
             images.add(image);
         }
         return images;
