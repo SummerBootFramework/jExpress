@@ -183,11 +183,11 @@ public class GRPCServer {
 
         server = serverBuilder.build().start();
         String schema = serverCredentials == null ? "grpc" : "grpcs";
-        log.info("*** GRPCServer is listening on " + schema + "//" + bindingAddr + ":" + port);
+        log.info("*** GRPCServer is listening on " + schema + "://" + bindingAddr + ":" + port);
         Runtime.getRuntime().addShutdownHook(
                 new Thread(() -> {
                     shutdown();
-                }, "GRPCServer.shutdown and stop listening on " + schema + "//" + bindingAddr + ":" + port));
+                }, "GRPCServer.shutdown and stop listening on " + schema + "://" + bindingAddr + ":" + port));
         if (isBlock) {
             try {
                 server.awaitTermination();
