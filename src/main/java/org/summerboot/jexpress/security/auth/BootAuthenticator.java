@@ -76,7 +76,7 @@ public abstract class BootAuthenticator implements Authenticator {
 
         //2. authenticate caller against LDAP or DB
         context.timestampPOI(BootPOI.LDAP_BEGIN);
-        Caller caller = login(uid, pwd, listener);
+        Caller caller = login(uid, pwd, listener, context);
         context.timestampPOI(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
@@ -106,7 +106,7 @@ public abstract class BootAuthenticator implements Authenticator {
      * @throws IOException
      * @throws NamingException
      */
-    abstract protected Caller login(String uid, String password, AuthenticatorListener listener) throws IOException, NamingException;
+    abstract protected Caller login(String uid, String password, AuthenticatorListener listener, final ServiceContext context) throws IOException, NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement

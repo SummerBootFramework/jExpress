@@ -54,8 +54,8 @@ import org.apache.logging.log4j.Logger;
  */
 public class LdapAgent implements Closeable {
 
-    private static final Logger log = LogManager.getLogger(LdapAgent.class);
-    private static final String DN = "dn";
+    protected static final Logger log = LogManager.getLogger(LdapAgent.class);
+    public static final String DN = "dn";
 
     protected final Properties cfg;
     protected final String baseDN;
@@ -242,9 +242,11 @@ public class LdapAgent implements Closeable {
         return md5Password;
     }
     private static final int SALT_LENGTH = 4;
+    
+    public static String PASSWORD_ALGORITHM = "SHA3-256"; 
 
     public static String generateSSHA(String password) throws NoSuchAlgorithmException {
-        return generateSSHA(password, "SHA3-256");
+        return generateSSHA(password, PASSWORD_ALGORITHM);
     }
 
     /**
@@ -300,7 +302,7 @@ public class LdapAgent implements Closeable {
         }
     }
 
-    public void changePassword(String uid, String currentPassword, String newPassword) throws NamingException, GeneralSecurityException {
+    public void changePassword(String uid, String currentPassword, String newPassword, String algorithm) throws NamingException, GeneralSecurityException {
         String dn = getDN(uid);
         if (currentPassword != null) {
             authenticate(dn, currentPassword);
@@ -308,7 +310,7 @@ public class LdapAgent implements Closeable {
         Object pwd = cfg.get(Context.SECURITY_CREDENTIALS);
         String rootCredential = String.valueOf(pwd);
         authenticate("cn=root," + baseDN, rootCredential);
-        BasicAttribute ba = new BasicAttribute("userPassword", generateSSHA(newPassword));
+        BasicAttribute ba = new BasicAttribute("userPassword", generateSSHA(newPassword, algorithm));
         ModificationItem[] mods = new ModificationItem[1];
         mods[0] = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, ba);
         m_ctx.modifyAttributes(dn, mods);
@@ -318,7 +320,7 @@ public class LdapAgent implements Closeable {
         return StringUtils.isBlank(s) ? "?" : s;
     }
 
-    public String createUser(String uid, String pwd, String company, String org, Map<String, String> profile) throws NamingException, GeneralSecurityException {
+    public String createUser(String uid, String pwd, String algorithm, String company, String org, Map<String, String> profile) throws NamingException, GeneralSecurityException {
         String userDN = this.getDN(uid);
         if (userDN != null) {
             throw new NamingException(uid + " exists");
@@ -340,7 +342,7 @@ public class LdapAgent implements Closeable {
         oc.add("organizationalPerson");
         //uid:pwd        
         entry.put(new BasicAttribute("uid", uid));
-        entry.put(new BasicAttribute("userPassword", generateSSHA(pwd)));
+        entry.put(new BasicAttribute("userPassword", generateSSHA(pwd, algorithm)));
         //profile attributes
 //        entry.put(new BasicAttribute("cn", name));
 //        entry.put(new BasicAttribute("sn", n2q(lastName)));

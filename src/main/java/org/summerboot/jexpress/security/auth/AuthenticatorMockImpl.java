@@ -18,6 +18,7 @@ package org.summerboot.jexpress.security.auth;
 import java.io.IOException;
 import java.util.List;
 import javax.naming.NamingException;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 /**
  *
@@ -26,7 +27,7 @@ import javax.naming.NamingException;
 public class AuthenticatorMockImpl extends BootAuthenticator {
 
     @Override
-    protected Caller login(String uid, String password, AuthenticatorListener listener) throws IOException, NamingException {
+    protected Caller login(String uid, String password, AuthenticatorListener listener, final ServiceContext context) throws IOException, NamingException {
         if (!uid.equals(password)) {
             return null;
         }
