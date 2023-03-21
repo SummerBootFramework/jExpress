@@ -118,14 +118,18 @@ public class TimeUtil {
         return Instant.ofEpochMilli(epochTs).atZone(zoneId).toOffsetDateTime();
     }
 
+    public static ZonedDateTime toZonedDateTime(ZoneId zoneId, long epochSec, int days, int hourOfDay, int minuteOfHour, int secondOfMinute) {
+        return ZonedDateTime.ofInstant(Instant.ofEpochSecond(epochSec), zoneId).plusDays(days).withHour(hourOfDay).withMinute(minuteOfHour).withSecond(secondOfMinute);
+    }
+
     public static OffsetDateTime toOffsetDateTime(LocalDate localDate, ZoneId zoneId) {
         ZonedDateTime zdt = toZonedDateTime(localDate, zoneId);
         return zdt.withZoneSameInstant(zoneId).toOffsetDateTime();
     }
-    
+
     public static ZonedDateTime toZonedDateTime(LocalDate localDate, ZoneId zoneId) {
-        LocalDateTime localDateTime = localDate.atStartOfDay();        
-        return ZonedDateTime.of(localDateTime, ZoneId.systemDefault());   
+        LocalDateTime localDateTime = localDate.atStartOfDay();
+        return ZonedDateTime.of(localDateTime, ZoneId.systemDefault());
     }
 
     protected static Random RANDOM = new Random();

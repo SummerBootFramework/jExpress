@@ -375,20 +375,11 @@ public class PDFBox {
      * @throws IOException
      */
     public static List<BufferedImage> pdf2Images(PDDocument document, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
-        //1: Loading an Existing PDF Document
-        //try(PDDocument document = PDDocument.load(pdfData);)
-        //2: Instantiating the PDFRenderer Class
         PDFRenderer renderer = new PDFRenderer(document);
-        //3: Rendering Image from the PDF Document
-        //BufferedImage image = renderer.renderImage(0);
-        //4: save to file
-        //ImageIO.write(image, "JPEG", new File("C:/PdfBox_Examples/myimage.jpg"));
-        RenderDestination d = RenderDestination.PRINT;
-
         int totalPages = document.getNumberOfPages();
         List<BufferedImage> images = new ArrayList();
         for (int currentPage = 0; currentPage < totalPages; currentPage++) {
-            BufferedImage image = renderer.renderImage(currentPage, dpi / 72f, imageType, d);
+            BufferedImage image = renderer.renderImage(currentPage, dpi / 72f, imageType, destination);
             images.add(image);
         }
         return images;
