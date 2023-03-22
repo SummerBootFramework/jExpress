@@ -273,7 +273,7 @@ public class LdapAgent implements Closeable {
         System.arraycopy(hash, 0, hashPlusSalt, 0, hash.length);
         System.arraycopy(salt, 0, hashPlusSalt, hash.length, salt.length);
 
-        return new StringBuilder()//.append("{SSHA}")
+        return new StringBuilder().append("{SSHA}")
                 .append(Base64.getEncoder().encodeToString(hashPlusSalt))
                 .toString();
     }
@@ -303,13 +303,9 @@ public class LdapAgent implements Closeable {
     }
 
     public void changePassword(String uid, String currentPassword, String newPassword, String algorithm) throws NamingException, GeneralSecurityException {
-        String dn = getDN(uid);
-        if (currentPassword != null) {
-            authenticate(dn, currentPassword);
-        }
-        Object pwd = cfg.get(Context.SECURITY_CREDENTIALS);
-        String rootCredential = String.valueOf(pwd);
-        authenticate("cn=root," + baseDN, rootCredential);
+        String dn = getDN(uid);        
+//        Object pwd = cfg.get(Context.SECURITY_CREDENTIALS);
+//        String rootCredential = String.valueOf(pwd);
         BasicAttribute ba = new BasicAttribute("userPassword", generateSSHA(newPassword, algorithm));
         ModificationItem[] mods = new ModificationItem[1];
         mods[0] = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, ba);
