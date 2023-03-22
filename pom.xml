@@ -217,7 +217,7 @@
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>4.3.1</jedis.version>
+        <jedis.version>4.3.2</jedis.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.32</freemarker.version>

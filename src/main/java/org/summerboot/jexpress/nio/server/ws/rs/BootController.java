@@ -94,6 +94,9 @@ import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 //@SecurityScheme(name = "OAuth2", type = SecuritySchemeType.OAUTH2, flows = @OAuthFlows())
 abstract public class BootController {
 
+    public static final String TAG_APP_ADMIN = "App Admin";
+    public static final String TAG_USER_AUTH = "App User Authentication";
+
     @Inject
     protected AuthTokenCache authTokenCache;
     //abstract protected AuthTokenCache getAuthTokenCache();
@@ -134,8 +137,8 @@ abstract public class BootController {
     @RolesAllowed({Config.ROLE_ADMIN})
     //@CaptureTransaction("admin.version")
     @Operation(
-            tags = {"Admin"},
-            summary = "get version",
+            tags = {TAG_APP_ADMIN},
+            summary = "Check application version",
             description = "get running application version information",
             //                        parameters = {
             //                            @Parameter(name = "", in = ParameterIn.HEADER, required = true, description = "")},
@@ -173,8 +176,8 @@ abstract public class BootController {
     @RolesAllowed({Config.ROLE_ADMIN})
     //@CaptureTransaction("admin.inspect")
     @Operation(
-            tags = {"Admin"},
-            summary = "do inspection",
+            tags = {TAG_APP_ADMIN},
+            summary = "Run application self inspection",
             description = "get running application health information",
             responses = {
                 @ApiResponse(responseCode = "200", description = "inspection success with current version"),
@@ -211,7 +214,7 @@ abstract public class BootController {
     @RolesAllowed({Config.ROLE_ADMIN})
     //@CaptureTransaction("admin.changeStatus")
     @Operation(
-            tags = {"Admin"},
+            tags = {TAG_APP_ADMIN},
             summary = "Graceful shutdown by changing service status",
             description = "pause service if pause param is true, otherwise resume service",
             responses = {
@@ -239,8 +242,8 @@ abstract public class BootController {
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
     //@CaptureTransaction("user.login")
     @Operation(
-            tags = {"User"},
-            summary = "login",
+            tags = {TAG_USER_AUTH},
+            summary = "User login",
             description = "User login",
             responses = {
                 @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
@@ -278,9 +281,9 @@ abstract public class BootController {
     @PermitAll
     //@CaptureTransaction("user.logout")
     @Operation(
-            tags = {"User"},
-            summary = "logout",
-            description = "User out",
+            tags = {TAG_USER_AUTH},
+            summary = "User logout",
+            description = "User logout",
             responses = {
                 @ApiResponse(responseCode = "204", description = "success"),
                 @ApiResponse(responseCode = "401", description = "caller is not in Admin role",

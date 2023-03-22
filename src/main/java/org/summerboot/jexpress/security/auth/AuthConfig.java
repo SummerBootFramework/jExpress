@@ -19,13 +19,15 @@ import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.integration.ldap.LdapAgent;
-import org.summerboot.jexpress.integration.ldap.LdapSSLConnectionFactory;
+import org.summerboot.jexpress.integration.ldap.LdapSSLConnectionFactory1;
 import org.summerboot.jexpress.security.JwtUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -36,6 +38,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -102,8 +106,12 @@ public class AuthConfig extends BootConfig {
 
     //1.2 LDAP Client keystore
     @ConfigHeader(title = "1.2 LDAP Client keystore")
+    @Config(key = "ldap.SSLConnectionFactoryClass", required = false)
+    private volatile String ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+
     @Config(key = "ldap.ssl.protocol")
     private volatile String ldapTLSProtocol = "TLSv1.3";
+
     @JsonIgnore
     @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
             AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd")
@@ -177,15 +185,26 @@ public class AuthConfig extends BootConfig {
     }
 
     @Override
-    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException, OperatorCreationException, GeneralSecurityException {
+    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException, OperatorCreationException, GeneralSecurityException {
         // 1. LDAP Client keystore
         if (ldapHost != null) {
             // 1.1 LDAP Client keystore
-            String ldapSSLConnectionFactoryClassName = null;
             boolean isSSL = kmf != null;
             if (isSSL) {
-                LdapSSLConnectionFactory.init(kmf == null ? null : kmf.getKeyManagers(), tmf == null ? null : tmf.getTrustManagers(), ldapTLSProtocol);
-                ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory.class.getName();
+                //LdapSSLConnectionFactory1.init(kmf == null ? null : kmf.getKeyManagers(), tmf == null ? null : tmf.getTrustManagers(), ldapTLSProtocol);
+                //ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+                String key = "ldap.SSLConnectionFactoryClass";
+                try {
+                    Class<?> sslFactoryClass = Class.forName(ldapSSLConnectionFactoryClassName);
+                    Method method = sslFactoryClass.getMethod("init", KeyManagerFactory.class, TrustManagerFactory.class, String.class);
+                    method.invoke(null, kmf, tmf, ldapTLSProtocol);
+                } catch (ClassNotFoundException ex) {
+                    helper.addError("invalid \"" + key + ", error=" + ex);
+                } catch (NoSuchMethodException ex) {
+                    helper.addError("invalid \"" + key + "missing method: public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol), error=" + ex);
+                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                    helper.addError("invalid \"" + key + "failed to invoke method: public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol), error=" + ex);
+                }
             }
             //1.2 LDAP info
             ldapConfig = LdapAgent.buildCfg(ldapHost, ldapPort, isSSL, ldapSSLConnectionFactoryClassName, ldapTLSProtocol, bindingUserDN, bindingPassword);
@@ -260,6 +279,10 @@ public class AuthConfig extends BootConfig {
         return ldapTenantGroupName;
     }
 
+    public String getLdapSSLConnectionFactoryClassName() {
+        return ldapSSLConnectionFactoryClassName;
+    }
+
     public String getLdapTLSProtocol() {
         return ldapTLSProtocol;
     }
@@ -297,6 +320,41 @@ public class AuthConfig extends BootConfig {
 
     public Map<String, RoleMapping> getRoles() {
         return roles;
+    }
+
+    @JsonIgnore
+    public String getBindingPassword() {
+        return bindingPassword;
+    }
+
+    @JsonIgnore
+    public KeyManagerFactory getKmf() {
+        return kmf;
+    }
+
+    @JsonIgnore
+    public TrustManagerFactory getTmf() {
+        return tmf;
+    }
+
+    @JsonIgnore
+    public File getPrivateKeyFile() {
+        return privateKeyFile;
+    }
+
+    @JsonIgnore
+    public String getPrivateKeyPwd() {
+        return privateKeyPwd;
+    }
+
+    @JsonIgnore
+    public File getPublicKeyFile() {
+        return publicKeyFile;
+    }
+
+    @JsonIgnore
+    public String getSymmetricKey() {
+        return symmetricKey;
     }
 
     //@Deprecated - should use annotation jakarta.annotation.security.DeclareRoles

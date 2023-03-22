@@ -23,17 +23,19 @@ import java.security.GeneralSecurityException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.SocketFactory;
 import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class LdapSSLConnectionFactory extends SocketFactory {
+public class LdapSSLConnectionFactory6 extends SocketFactory {
 
-    private static final AtomicReference<LdapSSLConnectionFactory> defaultFactory = new AtomicReference<>();
+    private static final AtomicReference<LdapSSLConnectionFactory6> defaultFactory = new AtomicReference<>();
 
     private SSLSocketFactory sf;
 
@@ -41,15 +43,15 @@ public class LdapSSLConnectionFactory extends SocketFactory {
     private static KeyManager[] KMS;
     private static TrustManager[] TMS;
 
-    public static void init(KeyManager[] kms, TrustManager[] tms, String protocol) {
-        KMS = kms;
-        TMS = tms;
+    public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol) {
+        KMS = kmf == null ? null : kmf.getKeyManagers();
+        TMS = tmf == null ? null : tmf.getTrustManagers();
         if (protocol != null) {
             TLS_PROTOCOL = protocol;
         }
     }
 
-    public LdapSSLConnectionFactory() {
+    public LdapSSLConnectionFactory6() {
         try {
             SSLContext sslCtx = SSLUtil.buildSSLContext(KMS, TMS, TLS_PROTOCOL);
             sf = sslCtx.getSocketFactory();
@@ -59,31 +61,31 @@ public class LdapSSLConnectionFactory extends SocketFactory {
     }
 
     public static SocketFactory getDefault() {
-        final LdapSSLConnectionFactory value = defaultFactory.get();
+        final LdapSSLConnectionFactory6 value = defaultFactory.get();
         if (value == null) {
-            defaultFactory.compareAndSet(null, new LdapSSLConnectionFactory());
+            defaultFactory.compareAndSet(null, new LdapSSLConnectionFactory6());
             return defaultFactory.get();
         }
         return value;
     }
 
     @Override
-    public Socket createSocket(final String s, final int i) throws IOException {
-        return sf.createSocket(s, i);
+    public Socket createSocket(final String host, final int port) throws IOException {
+        return sf.createSocket(host, port);
     }
 
     @Override
-    public Socket createSocket(final String s, final int i, final InetAddress inetAddress, final int i1) throws IOException {
-        return sf.createSocket(s, i, inetAddress, i1);
+    public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
+        return sf.createSocket(host, port, localHost, localPort);
     }
 
     @Override
-    public Socket createSocket(final InetAddress inetAddress, final int i) throws IOException {
-        return sf.createSocket(inetAddress, i);
+    public Socket createSocket(final InetAddress host, int port) throws IOException {
+        return sf.createSocket(host, port);
     }
 
     @Override
-    public Socket createSocket(final InetAddress inetAddress, final int i, final InetAddress inetAddress1, final int i1) throws IOException {
-        return sf.createSocket(inetAddress, i, inetAddress1, i1);
+    public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+        return sf.createSocket(address, port, localAddress, localPort);
     }
 }
