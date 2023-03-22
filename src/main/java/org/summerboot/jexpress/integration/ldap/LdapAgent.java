@@ -55,13 +55,15 @@ import org.apache.logging.log4j.Logger;
 public class LdapAgent implements Closeable {
 
     protected static final Logger log = LogManager.getLogger(LdapAgent.class);
-    public static final String DN = "dn";
 
-    protected final Properties cfg;
-    protected final String baseDN;
-    protected final boolean isAD;
-    protected final String tenantGroupName;
-    protected LdapContext m_ctx = null;//not thread safe
+    public static String replaceO(String dn, String newO) {
+        return dn.replaceFirst("(o=)([^,]*)", "$1" + newO);
+    }
+
+    public static String replaceOU(String dn, String newOU) {
+        return dn.replaceFirst("(ou=)([^,]*)", "$1" + newOU);
+
+    }
 
     public static Properties buildCfg(String host, int port, boolean isSSL, String ldapSSLConnectionFactoryClassName, String sslProtocol, String bindingUserDN, String bindingPassword) {
         Properties tempCfg = new Properties();
@@ -90,6 +92,18 @@ public class LdapAgent implements Closeable {
 //        tempCfg.put("com.sun.jndi.ldap.read.timeout", "20000");
 //        tempCfg.put("com.sun.jndi.ldap.connect.timeout", "15000");
         return tempCfg;
+    }
+
+    public static final String DN = "dn";
+
+    protected final Properties cfg;
+    protected final String baseDN;
+    protected final boolean isAD;
+    protected final String tenantGroupName;
+    protected LdapContext m_ctx = null;//not thread safe
+
+    public LdapContext getLdapContext() {
+        return m_ctx;
     }
 
     public LdapAgent(Properties cfg, String baseDN, boolean isAD, String tenantGroupName) throws NamingException, IOException {
@@ -176,14 +190,14 @@ public class LdapAgent implements Closeable {
     public List<Attributes> query(final String sFilter) throws NamingException {
         log.debug(() -> "base=" + baseDN + ", filter=" + sFilter);
         List<Attributes> ret = new ArrayList();
-        SearchControls ctlsUser = new SearchControls();
-        ctlsUser.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        NamingEnumeration<SearchResult> results = m_ctx.search(baseDN, sFilter, ctlsUser);
+        SearchControls ctrls = new SearchControls();
+        ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        NamingEnumeration<SearchResult> results = m_ctx.search(baseDN, sFilter, ctrls);
         while (results.hasMore()) {
             SearchResult sr = results.next();
             //String dn = sr.getName() + "," + sBase;
             String dn = sr.getNameInNamespace();
-            Attributes attr = m_ctx.getAttributes(dn);
+            Attributes attr = sr.getAttributes();//m_ctx.getAttributes(dn);
             ret.add(attr);
             attr.put(DN, dn);
         }
@@ -242,8 +256,8 @@ public class LdapAgent implements Closeable {
         return md5Password;
     }
     private static final int SALT_LENGTH = 4;
-    
-    public static String PASSWORD_ALGORITHM = "SHA3-256"; 
+
+    public static String PASSWORD_ALGORITHM = "SHA3-256";
 
     public static String generateSSHA(String password) throws NoSuchAlgorithmException {
         return generateSSHA(password, PASSWORD_ALGORITHM);
@@ -302,8 +316,8 @@ public class LdapAgent implements Closeable {
         }
     }
 
-    public void changePassword(String uid, String currentPassword, String newPassword, String algorithm) throws NamingException, GeneralSecurityException {
-        String dn = getDN(uid);        
+    public void changePassword(String uid, String newPassword, String algorithm) throws NamingException, GeneralSecurityException {
+        String dn = getDN(uid);
 //        Object pwd = cfg.get(Context.SECURITY_CREDENTIALS);
 //        String rootCredential = String.valueOf(pwd);
         BasicAttribute ba = new BasicAttribute("userPassword", generateSSHA(newPassword, algorithm));
@@ -379,11 +393,14 @@ public class LdapAgent implements Closeable {
         return dn;
     }
 
-    public void updateEntryAttrs(String userDN, Map<String, String> attributes) throws GeneralSecurityException, NamingException {
+    public int updateEntryAttrs(String entryDn, Map<String, String> attributes) throws GeneralSecurityException, NamingException {
+        if (attributes == null || attributes.isEmpty()) {
+            return 0;
+        }
         //String dn = getDN(userID);
         if (log.isDebugEnabled()) {
             StringBuilder sb = new StringBuilder();
-            sb.append("\n\tuserDN=").append(userDN);
+            sb.append("\n\tentryDn=").append(entryDn);
             attributes.forEach((key, value) -> {
                 sb.append("\n\t ").append(key).append("=").append(value);
             });
@@ -396,8 +413,9 @@ public class LdapAgent implements Closeable {
         int size = modList.size();
         if (size > 0) {
             ModificationItem[] mods = new ModificationItem[size];
-            m_ctx.modifyAttributes(userDN, modList.toArray(mods));
+            m_ctx.modifyAttributes(entryDn, modList.toArray(mods));
         }
+        return size;
     }
 
     public void deleteUser(String uid) throws NamingException, GeneralSecurityException {
