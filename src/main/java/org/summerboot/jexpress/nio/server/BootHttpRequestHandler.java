@@ -164,8 +164,13 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
         if (cause == null) {
             cause = ex;
         }
-        Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
-        context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        if (cause instanceof java.net.UnknownHostException) {
+            HealthMonitor.setHealthStatus(false, ex.toString(), getHealthInspector());
+            nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        } else {
+            Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
+            context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     protected void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
@@ -173,9 +178,13 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
         if (cause == null) {
             cause = ex;
         }
-        Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
-        context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        //nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, ex.getClass().getSimpleName() + ": " + ex.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        if (cause instanceof java.net.ConnectException) {
+            HealthMonitor.setHealthStatus(false, ex.toString(), getHealthInspector());
+            nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        } else {
+            Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
+            context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -211,8 +220,12 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
     }
 
     protected void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
+        Throwable cause = ExceptionUtils.getRootCause(ex);
+        if (cause == null) {
+            cause = ex;
+        }
         HealthMonitor.setHealthStatus(false, ex.toString(), getHealthInspector());
-        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure", ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     protected HealthInspector getHealthInspector() {
