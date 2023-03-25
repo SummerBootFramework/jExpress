@@ -33,18 +33,18 @@ public interface AuthTokenCache extends HealthInspector {
         Err e = null;
         try {
             String key = "jwt123";
-            putOnBlacklist(key, "uid123", 1);
-            boolean isOnBlacklist = isOnBlacklist(key);
+            blacklist(key, "uid123", 1000);
+            boolean isOnBlacklist = isBlacklist(key);
             if (!isOnBlacklist) {
-                e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Data Error", "failed to read", null);
+                e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Data Error - failed to read", null);
             }
             TimeUnit.MILLISECONDS.sleep(1500);
-            isOnBlacklist = isOnBlacklist(key);
+            isOnBlacklist = isBlacklist(key);
             if (isOnBlacklist) {
-                e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Access Error", "failed to expire", null);
+                e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Access Error - failed to expire", null);
             }
         } catch (Throwable ex) {
-            e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, "Cache Access Error", ex.toString(), ex);
+            e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Access Error - " + ex.toString(), ex);
         }
         List<Err> errors = null;
         if (e != null) {
@@ -54,7 +54,7 @@ public interface AuthTokenCache extends HealthInspector {
         return errors;
     }
 
-    void putOnBlacklist(String key, String value, long expireInSeconds);
+    void blacklist(String key, String value, long ttlMilliseconds);
 
-    boolean isOnBlacklist(String key);
+    boolean isBlacklist(String key);
 }

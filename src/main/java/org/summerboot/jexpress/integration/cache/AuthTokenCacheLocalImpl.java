@@ -26,12 +26,12 @@ import com.google.inject.Singleton;
 public class AuthTokenCacheLocalImpl extends SimpleLocalCacheImpl implements AuthTokenCache {
 
     @Override
-    public void putOnBlacklist(String key, String value, long expireInSeconds) {
-        put(key, value, (int) expireInSeconds);
+    public void blacklist(String key, String value, long ttlMilliseconds) {
+        put(key, value, ttlMilliseconds);
     }
 
     @Override
-    public boolean isOnBlacklist(String key) {
+    public boolean isBlacklist(String key) {
         String v = get(key);
         return v != null;
     }

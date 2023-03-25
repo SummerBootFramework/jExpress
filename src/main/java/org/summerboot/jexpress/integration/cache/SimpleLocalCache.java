@@ -21,7 +21,7 @@ package org.summerboot.jexpress.integration.cache;
  */
 public interface SimpleLocalCache {
 
-    void put(Object key, Object value, Integer ttlSec);
+    void put(Object key, Object value, Long ttlMilliseconds);
 
     <T extends Object> T get(Object key);
 

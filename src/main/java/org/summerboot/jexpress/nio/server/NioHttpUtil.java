@@ -48,12 +48,15 @@ import java.util.Base64;
 import java.util.regex.Pattern;
 import jakarta.activation.MimetypesFileTypeMap;
 import jakarta.ws.rs.core.MediaType;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 
 /**
  *
@@ -248,6 +251,24 @@ public class NioHttpUtil {
         return fileLength;
     }
 
+    public static final Map<String, File> WebResourceCache = new HashMap();
+
+    public static void sendWebResource(final ServiceRequest request, final ServiceContext response) {
+        String httpRequestPath = request.getHttpRequestPath();
+        sendWebResource(httpRequestPath, response);
+    }
+
+    public static void sendWebResource(final String httpRequestPath, final ServiceContext response) {
+        File webResourceFile = WebResourceCache.get(httpRequestPath);
+        if (webResourceFile == null) {
+            String filePath = NioConfig.cfg.getDocrootDir() + httpRequestPath;
+            filePath = filePath.replace('/', File.separatorChar);
+            webResourceFile = new File(filePath).getAbsoluteFile();
+            WebResourceCache.put(httpRequestPath, webResourceFile);
+        }
+        response.file(webResourceFile, false);
+    }
+
     public static String getFileContentType(File file) {
         String mimeType;
         try {
@@ -369,7 +390,6 @@ public class NioHttpUtil {
         buffer.release();
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
-
 }
 
 //        List<Integer> failed = rdlList.keySet()

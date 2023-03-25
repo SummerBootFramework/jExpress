@@ -155,15 +155,21 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
 
     protected void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
             final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
-        context.status(HttpResponseStatus.NOT_FOUND).error(new Err(BootErrorCode.AUTH_INVALID_URL, "path not found", httptMethod + " " + httpRequestPath, null));
+        Err e = new Err(BootErrorCode.AUTH_INVALID_URL, null, "path not found: " + httptMethod + " " + httpRequestPath, null);
+        context.error(e).status(HttpResponseStatus.NOT_FOUND);
     }
 
     protected void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_LDAP, "Cannot access LDAP", ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        Throwable cause = ExceptionUtils.getRootCause(ex);
+        if (cause == null) {
+            cause = ex;
+        }
+        Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
+        context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 
     protected void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, "Cannot access database", ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, ex.getClass().getSimpleName() + ": " + ex.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     /**
@@ -290,6 +296,6 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
 
     @Override
     public String beforeSendingError(String errorContent) {
-        return FormatterUtil.protectContent(errorContent, "java.net.UnknownHostException", ":", null, " ***");
+        return FormatterUtil.protectContent(errorContent, "UnknownHostException", ":", null, " ***");
     }
 }
