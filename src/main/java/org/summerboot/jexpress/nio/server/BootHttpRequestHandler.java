@@ -169,7 +169,13 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
     }
 
     protected void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, ex.getClass().getSimpleName() + ": " + ex.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        Throwable cause = ExceptionUtils.getRootCause(ex);
+        if (cause == null) {
+            cause = ex;
+        }
+        Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
+        context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        //nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.ACCESS_ERROR_DATABASE, ex.getClass().getSimpleName() + ": " + ex.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     /**
