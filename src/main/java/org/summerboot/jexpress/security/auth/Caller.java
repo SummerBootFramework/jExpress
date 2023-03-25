@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.security.auth;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Set;
 
 /**
@@ -31,6 +32,7 @@ public interface Caller {
 
     String getUid();
 
+    @JsonIgnore
     String getPassword();
 
     boolean isInGroup(String group);

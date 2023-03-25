@@ -261,19 +261,19 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
     }
 
     @Override
-    public void putOnBlacklist(String key, String value, long expireInSeconds) {
+    public void blacklist(String key, String value, long ttlMilliseconds) {
         if (key == null) {
             return;
         }
         execute(true, jedis -> {
-            if (expireInSeconds > 0) {
-                jedis.psetex(key, expireInSeconds * 1000, value == null ? "?" : value);
+            if (ttlMilliseconds > 0) {
+                jedis.psetex(key, ttlMilliseconds, value == null ? "?" : value);
             }
         });
     }
 
     @Override
-    public boolean isOnBlacklist(String key) {
+    public boolean isBlacklist(String key) {
         if (key == null) {
             return false;
         }

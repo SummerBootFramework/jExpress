@@ -117,7 +117,7 @@ public abstract class BootAuthenticator implements Authenticator {
      */
     @Override
     public JwtBuilder toJwt(Caller caller) {
-        String jti = String.valueOf(caller.getId());
+        String jti = caller.getTenantId() + "." + caller.getId() + "_" + caller.getUid() + "_" + System.currentTimeMillis();
         String issuer = authCfg.getJwtIssuer();
         String subject = caller.getUid();
         Set<String> groups = caller.getGroups();
@@ -251,29 +251,29 @@ public abstract class BootAuthenticator implements Authenticator {
     public Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
         Caller caller = null;
         if (authToken == null) {
-            Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_REQUIRE_TOKEN, "AUTH_REQUIRE_TOKEN", "Missing AuthToken", null);
+            Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_REQUIRE_TOKEN, null, "Missing AuthToken", null);
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
                 Claims claims = JwtUtil.parseJWT(authCfg.getJwtParser(), authToken).getBody();
                 String jti = claims.getId();
                 context.callerId(jti);
-                if (cache != null && cache.isOnBlacklist(jti)) {// because jti is used as blacklist key in logout
-                    Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, "AUTH_EXPIRED_TOKEN", "Blacklisted AuthToken", null);
+                if (cache != null && cache.isBlacklist(jti)) {// because jti is used as blacklist key in logout
+                    Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "AuthToken has been logout", null);
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
                     caller = fromJwt(claims);
                     if (listener != null && !listener.verify(caller, claims)) {
-                        Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, "AUTH_INVALID_TOKEN", "Rejected AuthToken", null);
+                        Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, null, "Rejected AuthToken", null);
                         context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                         caller = null;
                     }
                 }
             } catch (ExpiredJwtException ex) {
-                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, "AUTH_EXPIRED_TOKEN", "Expired AuthToken", null);
+                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Expired AuthToken", null);
                 context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             } catch (JwtException ex) {
-                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, "AUTH_INVALID_TOKEN - " + ex.getClass().getSimpleName(), "Invalid AuthToken - " + ex.getMessage(), null);
+                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, null, "Invalid AuthToken - " + ex.getMessage(), null);
                 context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             }
         }
@@ -308,7 +308,7 @@ public abstract class BootAuthenticator implements Authenticator {
             Date exp = claims.getExpiration();
             long expireInMilliseconds = exp.getTime() - System.currentTimeMillis();
             if (cache != null) {
-                cache.putOnBlacklist(jti, authToken, expireInMilliseconds);
+                cache.blacklist(jti, authToken, expireInMilliseconds);
             }
             if (listener != null) {
                 listener.onLogout(jti, authToken, expireInMilliseconds);

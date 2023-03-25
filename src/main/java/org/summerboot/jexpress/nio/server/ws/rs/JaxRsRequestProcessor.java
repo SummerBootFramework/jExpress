@@ -272,7 +272,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             Caller caller = context.caller();
             if (caller == null) {
                 context.status(HttpResponseStatus.UNAUTHORIZED)
-                        .error(new Err(BootErrorCode.AUTH_INVALID_USER, "Authentication Required", "Unkown caller", null));
+                        .error(new Err(BootErrorCode.AUTH_INVALID_USER, null, "Authentication Required - Unkown caller", null));
                 return false;
             }
 
@@ -285,7 +285,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 
             if (!isAuthorized) {
                 context.status(HttpResponseStatus.FORBIDDEN)
-                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, "Authorization Failed", "Caller is not in role: " + rolesAllowed, null));
+                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Authorization Failed - Caller is not in role: " + rolesAllowed, null));
                 return false;
             }
         }

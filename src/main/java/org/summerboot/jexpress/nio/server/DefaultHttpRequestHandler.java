@@ -28,6 +28,7 @@ import org.summerboot.jexpress.security.auth.Authenticator;
  * @version 2.0
  */
 @Singleton
+//@Service(binding = ChannelHandler.class, named = BootHttpRequestHandler.BINDING_NAME) // not needed, it is preconfigured in BootGuiceModule.java
 public class DefaultHttpRequestHandler extends BootHttpRequestHandler {
 
     @Inject

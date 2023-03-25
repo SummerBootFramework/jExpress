@@ -63,6 +63,7 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.annotation.Ping;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
+import org.summerboot.jexpress.security.auth.Caller;
 
 /**
  *
@@ -198,7 +199,7 @@ abstract public class BootController {
     public void inspect(@Parameter(hidden = true) final ServiceContext context) {
         //HealthInspector healthInspector = getHealthInspector();        
         if (healthInspector == null) {
-            context.error(new Err(BootErrorCode.ACCESS_ERROR, "NOT_IMPLEMENTED", "HealthInspector not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_ERROR, null, "HealthInspector not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return;
         }
         List<Err> error = healthInspector.ping(true);
@@ -249,7 +250,8 @@ abstract public class BootController {
                 @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
                         headers = {
                             @Header(name = Config.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
-                        }
+                        },
+                        content = @Content(schema = @Schema(implementation = Caller.class))
                 ),
                 @ApiResponse(responseCode = "401", description = "Invalid username or password",
                         content = @Content(schema = @Schema(implementation = ServiceError.class))
@@ -262,23 +264,24 @@ abstract public class BootController {
                 )
             }
     )
-    public void login(@Parameter(required = true) @Nonnull @FormParam("j_username") String uid,
+    public Caller login(@Parameter(required = true) @Nonnull @FormParam("j_username") String uid,
             @FormParam("j_password") String pwd,
             @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
         //Authenticator auth = getAuthenticator();
         if (auth == null) {
-            context.error(new Err(BootErrorCode.ACCESS_ERROR, "NOT_IMPLEMENTED", "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
-            return;
+            context.error(new Err(BootErrorCode.ACCESS_ERROR, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            return null;
         }
         String jwt = auth.authenticate(uid, pwd, AuthConfig.cfg.getJwtTTLMinutes(), context);
         if (jwt != null) {
             context.responseHeader(Config.X_AUTH_TOKEN, jwt);
         }
+        return context.caller();
     }
 
     @DELETE
     @Path(Config.CURRENT_VERSION + Config.API_USER_LOGOUT)
-    @PermitAll
+    //@PermitAll
     //@CaptureTransaction("user.logout")
     @Operation(
             tags = {TAG_USER_AUTH},
@@ -286,9 +289,6 @@ abstract public class BootController {
             description = "User logout",
             responses = {
                 @ApiResponse(responseCode = "204", description = "success"),
-                @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
                 @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
                         content = @Content(schema = @Schema(implementation = ServiceError.class))
                 ),
@@ -302,7 +302,7 @@ abstract public class BootController {
     public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final ServiceContext context) {
         //Authenticator auth = getAuthenticator();
         if (auth == null) {
-            context.error(new Err(BootErrorCode.ACCESS_ERROR, "NOT_IMPLEMENTED", "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_ERROR, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return;
         }
         //AuthTokenCache authTokenCache = getAuthTokenCache();

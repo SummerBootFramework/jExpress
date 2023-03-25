@@ -41,11 +41,11 @@ public class SimpleLocalCacheImpl implements SimpleLocalCache {
      *
      * @param key
      * @param value
-     * @param ttlSec
+     * @param ttlMilliseconds
      */
     @Override
-    public void put(Object key, Object value, Integer ttlSec) {
-        debouncingData.put(key, new CacheEntity(value, ttlSec));
+    public void put(Object key, Object value, Long ttlMilliseconds) {
+        debouncingData.put(key, new CacheEntity(value, ttlMilliseconds));
     }
 
     /**
@@ -93,11 +93,11 @@ public class SimpleLocalCacheImpl implements SimpleLocalCache {
         private final Object value;
         private final long ttlMillis;
 
-        public CacheEntity(Object value, Integer ttlSec) {
+        public CacheEntity(Object value, Long ttlMilliseconds) {
             this.value = value;
-            this.ttlMillis = ttlSec == null || ttlSec < 0
+            this.ttlMillis = ttlMilliseconds == null || ttlMilliseconds < 0
                     ? Long.MAX_VALUE
-                    : System.currentTimeMillis() + ttlSec * 1000;
+                    : System.currentTimeMillis() + ttlMilliseconds;
         }
 
         public Object getValue() {
