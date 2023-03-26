@@ -32,13 +32,13 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpTimeoutException;
-import java.nio.channels.UnresolvedAddressException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 import javax.naming.NamingException;
 import jakarta.persistence.PersistenceException;
+import java.nio.channels.UnresolvedAddressException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
@@ -109,14 +109,14 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
         } catch (RejectedExecutionException ex) {
             onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
         } catch (IOException | UnresolvedAddressException ex) {//SocketException, 
-            Throwable rc = ExceptionUtils.getRootCause(ex);
-            if (rc == null) {
-                rc = ex;
+            Throwable cause = ExceptionUtils.getRootCause(ex);
+            if (cause == null) {
+                cause = ex;
             }
-            if (rc instanceof RejectedExecutionException) {
-                onRejectedExecutionException(rc, httptMethod, httpRequestPath, context);
+            if (cause instanceof RejectedExecutionException) {
+                onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
             } else {
-                onIOException(rc, httptMethod, httpRequestPath, context);
+                onIOException(ex, httptMethod, httpRequestPath, context);
             }
         } catch (InterruptedException ex) {
             onInterruptedException(ex, httptMethod, httpRequestPath, context);
@@ -220,12 +220,8 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
     }
 
     protected void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
-        Throwable cause = ExceptionUtils.getRootCause(ex);
-        if (cause == null) {
-            cause = ex;
-        }
         HealthMonitor.setHealthStatus(false, ex.toString(), getHealthInspector());
-        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO Failure " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO issue: " + ex.getClass().getSimpleName() + ": " + ex.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     protected HealthInspector getHealthInspector() {

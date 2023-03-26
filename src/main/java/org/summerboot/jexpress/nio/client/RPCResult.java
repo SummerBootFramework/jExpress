@@ -152,7 +152,7 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
 
         } catch (Throwable ex) {
             if (context != null) {
-                Err e = new Err(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, "Unexpected RPC response format", ex.toString(), ex);
+                Err e = new Err(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, rpcResponseBody, ex);
                 context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
             }
             ret = null;
