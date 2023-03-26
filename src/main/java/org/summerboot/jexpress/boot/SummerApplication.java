@@ -183,6 +183,7 @@ abstract public class SummerApplication extends SummerBigBang {
     public static <T extends SummerApplication> T unittest(Class callerClass, Module userOverrideModule, String... args) {
         SummerApplication app = new SummerApplication(callerClass, userOverrideModule, args) {
         };
+        app.traceConfig();
         return (T) app;
     }
 
@@ -209,12 +210,7 @@ abstract public class SummerApplication extends SummerBigBang {
         return null;
     }
 
-    /**
-     * run application with ping enabled, URI as webApiContextRoot +
-     * loadBalancerHealthCheckPath
-     *
-     */
-    public void start() {
+    protected void traceConfig() {
         memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_VERSION).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_VERSION));
         memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_PACKAGE_NAME).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME));
         memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_NAME).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_NAME));
@@ -225,7 +221,15 @@ abstract public class SummerApplication extends SummerBigBang {
         //memo.append("\n\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
         memo.append("\n\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
         log.trace(() -> memo.toString());
+    }
 
+    /**
+     * run application with ping enabled, URI as webApiContextRoot +
+     * loadBalancerHealthCheckPath
+     *
+     */
+    public void start() {
+        traceConfig();
         if (configChangeListener != null) {
             ConfigUtil.setConfigChangeListener(configChangeListener);
         }
