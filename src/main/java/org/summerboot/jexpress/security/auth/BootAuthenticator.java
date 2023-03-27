@@ -249,6 +249,7 @@ public abstract class BootAuthenticator implements Authenticator {
      */
     @Override
     public Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
+        errorCode = errorCode == null ? getVerifyTokenErrorCode() : errorCode;
         Caller caller = null;
         if (authToken == null) {
             Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_REQUIRE_TOKEN, null, "Missing AuthToken", null);
@@ -280,6 +281,8 @@ public abstract class BootAuthenticator implements Authenticator {
         context.caller(caller);
         return caller;
     }
+
+    abstract protected Integer getVerifyTokenErrorCode();
 
     /**
      *
