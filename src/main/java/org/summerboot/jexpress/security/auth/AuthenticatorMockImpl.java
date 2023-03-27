@@ -41,4 +41,9 @@ public class AuthenticatorMockImpl extends BootAuthenticator {
         return null;
     }
 
+    @Override
+    protected Integer getVerifyTokenErrorCode() {
+        return null;
+    }
+
 }
