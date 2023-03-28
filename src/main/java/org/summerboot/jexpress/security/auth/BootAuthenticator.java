@@ -31,7 +31,6 @@ import io.jsonwebtoken.Jwts;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import java.io.IOException;
 import java.security.Key;
 import java.util.Date;
 import java.util.Set;
@@ -66,11 +65,10 @@ public abstract class BootAuthenticator implements Authenticator {
      * @param validForMinutes
      * @param context
      * @return
-     * @throws IOException
      * @throws NamingException
      */
     @Override
-    public String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws IOException, NamingException {
+    public String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws NamingException {
         //1. protect request body from being logged
         context.privacyReqContent(true);
 
@@ -103,10 +101,9 @@ public abstract class BootAuthenticator implements Authenticator {
      * @param password
      * @param listener
      * @return
-     * @throws IOException
      * @throws NamingException
      */
-    abstract protected Caller login(String uid, String password, AuthenticatorListener listener, final ServiceContext context) throws IOException, NamingException;
+    abstract protected Caller login(String uid, String password, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -249,7 +246,7 @@ public abstract class BootAuthenticator implements Authenticator {
      */
     @Override
     public Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
-        errorCode = errorCode == null ? getVerifyTokenErrorCode() : errorCode;
+        errorCode = errorCode == null ? overrideVerifyTokenErrorCode() : errorCode;
         Caller caller = null;
         if (authToken == null) {
             Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_REQUIRE_TOKEN, null, "Missing AuthToken", null);
@@ -282,7 +279,7 @@ public abstract class BootAuthenticator implements Authenticator {
         return caller;
     }
 
-    abstract protected Integer getVerifyTokenErrorCode();
+    abstract protected Integer overrideVerifyTokenErrorCode();
 
     /**
      *

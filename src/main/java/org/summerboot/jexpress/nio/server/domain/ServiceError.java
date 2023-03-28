@@ -18,6 +18,7 @@ package org.summerboot.jexpress.nio.server.domain;
 import org.summerboot.jexpress.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,15 +29,14 @@ import java.util.List;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ServiceError {
-
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The index of requests received by current server since start")
     private long ref;
+    
     @JsonIgnore
     private Object attachedData;
 
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "The optional error list")
     private List<Err> errors;
-
-    public ServiceError() {
-    }
 
     public ServiceError(long ref) {
         this.ref = ref;

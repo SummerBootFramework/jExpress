@@ -18,7 +18,6 @@ package org.summerboot.jexpress.security.auth;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.netty.handler.codec.http.HttpHeaders;
-import java.io.IOException;
 import javax.naming.NamingException;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
@@ -45,10 +44,9 @@ public interface Authenticator extends HealthInspector {
      * @param validForMinutes
      * @param context
      * @return JWT
-     * @throws java.io.IOException
      * @throws javax.naming.NamingException
      */
-    String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws IOException, NamingException;
+    String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws NamingException;
 
     JwtBuilder toJwt(Caller caller);
 

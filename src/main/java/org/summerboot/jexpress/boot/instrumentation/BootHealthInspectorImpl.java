@@ -37,7 +37,7 @@ public class BootHealthInspectorImpl implements HealthInspector {
      */
     @Override
     public List<Err> ping(Object... args) {
-        ServiceError error = new ServiceError();
+        ServiceError error = new ServiceError(-1);
         healthCheck(error, null);
         List<Err> errors = error.getErrors();
         return errors;

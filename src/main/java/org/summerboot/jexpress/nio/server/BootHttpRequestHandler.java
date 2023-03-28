@@ -39,6 +39,7 @@ import java.util.concurrent.RejectedExecutionException;
 import javax.naming.NamingException;
 import jakarta.persistence.PersistenceException;
 import java.nio.channels.UnresolvedAddressException;
+import javax.naming.AuthenticationException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
@@ -160,16 +161,21 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
     }
 
     protected void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context) {
-        Throwable cause = ExceptionUtils.getRootCause(ex);
-        if (cause == null) {
-            cause = ex;
-        }
-        if (cause instanceof java.net.UnknownHostException) {
-            HealthMonitor.setHealthStatus(false, ex.toString(), getHealthInspector());
-            nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
-        } else {
-            Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
+        if (ex instanceof AuthenticationException) {
+            Err e = new Err(BootErrorCode.AUTH_INVALID_USER, null, "Authentication failed", null);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        } else {
+            Throwable cause = ExceptionUtils.getRootCause(ex);
+            if (cause == null) {
+                cause = ex;
+            }
+            if (cause instanceof java.net.UnknownHostException) {
+                HealthMonitor.setHealthStatus(false, ex.toString(), getHealthInspector());
+                nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+            } else {
+                Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
+                context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            }
         }
     }
 

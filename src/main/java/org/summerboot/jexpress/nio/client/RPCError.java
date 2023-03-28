@@ -13,35 +13,32 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.security.auth;
+package org.summerboot.jexpress.nio.client;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.List;
-import javax.naming.NamingException;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class AuthenticatorMockImpl extends BootAuthenticator {
+public class RPCError implements ServiceErrorConvertible {
 
     @Override
-    protected Caller login(String uid, String password, AuthenticatorListener listener, final ServiceContext context) throws NamingException {
-        if (!uid.equals(password)) {
-            return null;
-        }
-        long userId = uid.hashCode();
-        User user = new User(userId, uid);
-        return user;
+    public boolean isSingleError() {
+        return true;
     }
 
     @Override
-    public List ping(Object... param) {
-        return null;
+    public Err toSerivceError(HttpResponseStatus status) {
+        return new Err(BootErrorCode.ACCESS_ERROR_RPC, null, "Default RPC error", null);
     }
 
     @Override
-    protected Integer overrideVerifyTokenErrorCode() {
+    public List<Err> toSerivceErrors(HttpResponseStatus status) {
         return null;
     }
 
