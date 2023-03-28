@@ -48,6 +48,7 @@ import java.util.Base64;
 import java.util.regex.Pattern;
 import jakarta.activation.MimetypesFileTypeMap;
 import jakarta.ws.rs.core.MediaType;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
@@ -57,6 +58,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
+import org.summerboot.jexpress.util.TimeUtil;
 
 /**
  *
@@ -69,6 +71,8 @@ public class NioHttpUtil {
     //security
     public static final String HTTP_HEADER_AUTH_TOKEN = "Authorization";// "X-Auth-Token";// "X_Authorization"; //RFC 7235, sec. 4.2
     public static final String HTTP_HEADER_AUTH_TYPE = "Bearer";// RFC6750, https://tools.ietf.org/html/rfc6750
+    protected static String HeaderName_ServerTimestamp = NioConfig.cfg.getHttpServiceResponseHeaderName_ServerTimestamp();
+    protected static String HeaderName_Reference = NioConfig.cfg.getHttpServiceResponseHeaderName_Reference();
 
     // <img src="data:image/png;base64,<base64 str here>" alt="Red dot" />
     // <object type="application/pdf" data="data:application/pdf;base64,<base64 str here>"/>
@@ -107,10 +111,18 @@ public class NioHttpUtil {
     }
 
     public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext, final ErrorAuditor errorAuditor) {
+        serviceContext.responseHeader(HeaderName_Reference, serviceContext.hit());
+        serviceContext.responseHeader(HeaderName_ServerTimestamp, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
         if (serviceContext.file() != null) {
             return sendFile(ctx, isKeepAlive, serviceContext);
         }
-        if (StringUtils.isBlank(serviceContext.txt()) && serviceContext.error() != null) {
+
+        HttpResponseStatus status = serviceContext.status();
+        if (StringUtils.isBlank(serviceContext.txt()) && status.code() >= 400) {
+            if (serviceContext.error() == null) {
+                serviceContext.error(null);
+            }
+
             String clientAcceptContentType = serviceContext.clientAcceptContentType();
             String textResponse;
             if (clientAcceptContentType != null && clientAcceptContentType.contains("xml")) {
@@ -126,14 +138,13 @@ public class NioHttpUtil {
             serviceContext.txt(textResponse);
         }
         if (StringUtils.isNotBlank(serviceContext.txt())) {
-            return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
+            return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
         }
         if (serviceContext.redirect() != null) {
-            NioHttpUtil.sendRedirect(ctx, serviceContext.redirect(), serviceContext.status());
+            NioHttpUtil.sendRedirect(ctx, serviceContext.redirect(), status);
             return 0;
         }
 
-        HttpResponseStatus status = serviceContext.status();
         if (serviceContext.autoConvertBlank200To204() && HttpResponseStatus.OK.equals(status)) {
             status = HttpResponseStatus.NO_CONTENT;
         }

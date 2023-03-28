@@ -229,6 +229,11 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.HttpService.enabled")
     private volatile boolean httpService = true;
+    @Config(key = "nio.HttpService.ResponseHeaderName.ServerTs")
+    private volatile String httpServiceResponseHeaderName_ServerTimestamp = "X-ServerTs";
+    @Config(key = "nio.HttpService.ResponseHeaderName.Reference")
+    private volatile String httpServiceResponseHeaderName_Reference = "X-Reference";
+
     @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive")
     private volatile boolean fromJsonCaseInsensitive = false;
     @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties")
@@ -686,6 +691,14 @@ public class NioConfig extends BootConfig {
 
     public boolean isHttpService() {
         return httpService;
+    }
+
+    public String getHttpServiceResponseHeaderName_ServerTimestamp() {
+        return httpServiceResponseHeaderName_ServerTimestamp;
+    }
+
+    public String getHttpServiceResponseHeaderName_Reference() {
+        return httpServiceResponseHeaderName_Reference;
     }
 
     public boolean isFromJsonCaseInsensitive() {

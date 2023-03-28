@@ -32,12 +32,16 @@ public interface Caller {
 
     String getUid();
 
+    String getDisplayName();
+
     @JsonIgnore
     String getPassword();
 
     boolean isInGroup(String group);
 
     boolean isInRole(String role);
+
+    boolean isEnabled();
 
     Set<String> getGroups();
 

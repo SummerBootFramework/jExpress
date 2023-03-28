@@ -30,16 +30,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.GeneralSecurityException;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -101,7 +97,11 @@ public class AuthConfig extends BootConfig {
     @JsonIgnore
     @Config(key = "ldap.bindingPassword", validate = Config.Validate.Encrypted, required = false)
     private volatile String bindingPassword;
-    @Config(key = "ldap.TenantGroupName")
+
+    @Config(key = "ldap.PasswordAlgorithm", required = false)
+    private volatile String passwordAlgorithm = "SHA3-256";
+
+    @Config(key = "ldap.TenantGroupName", required = false)
     private volatile String ldapTenantGroupName;
 
     //1.2 LDAP Client keystore
@@ -277,6 +277,14 @@ public class AuthConfig extends BootConfig {
 
     public String getLdapTenantGroupName() {
         return ldapTenantGroupName;
+    }
+
+    public String getPasswordAlgorithm() {
+        return passwordAlgorithm;
+    }
+
+    public void setPasswordAlgorithm(String passwordAlgorithm) {
+        this.passwordAlgorithm = passwordAlgorithm;
     }
 
     public String getLdapSSLConnectionFactoryClassName() {

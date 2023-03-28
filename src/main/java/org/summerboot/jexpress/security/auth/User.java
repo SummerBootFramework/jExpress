@@ -36,11 +36,13 @@ public class User implements Serializable, Caller, Comparable<User> {
     protected String tenantName;
     protected Long id = 0L;
     protected String uid;
+    protected String displayName;
     @JsonIgnore
     protected String password;
     protected Set<String> groups;
     protected int type = 1;
     protected Map prop = null;
+    protected boolean enabled = true;
 
     public User(Long tenantId, String tenantName, Long id, String uid) {
         this.tenantId = tenantId;
@@ -82,6 +84,15 @@ public class User implements Serializable, Caller, Comparable<User> {
     @Override
     public String getUid() {
         return uid;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     @Override
@@ -128,6 +139,15 @@ public class User implements Serializable, Caller, Comparable<User> {
             return true;
         }
         return rm.getGroups().stream().anyMatch((group) -> (isInGroup(group)));
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     @Override

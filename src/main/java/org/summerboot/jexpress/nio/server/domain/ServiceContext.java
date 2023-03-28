@@ -576,18 +576,24 @@ public class ServiceContext {
 //    }
     //@JsonInclude(JsonInclude.Include.NON_NULL)
     public ServiceError error() {
-        if (serviceError == null || serviceError.getErrors() == null || serviceError.getErrors().isEmpty()) {
-            return null;
-        }
+//        if (serviceError == null || serviceError.getErrors() == null || serviceError.getErrors().isEmpty()) {
+//            return null;
+//        }
         return serviceError;
     }
 
+    /**
+     * Set error
+     *
+     * @param error
+     * @return
+     */
     public ServiceContext error(Err error) {
-        if (error == null) {
-            return this;
-        }
         if (serviceError == null) {
             serviceError = new ServiceError(hit);
+        }
+        if (error == null) {
+            return this;
         }
         serviceError.addError(error);
         Throwable t = error.getEx();
@@ -601,6 +607,12 @@ public class ServiceContext {
         return this;
     }
 
+    /**
+     * Clear or set errors
+     *
+     * @param es
+     * @return
+     */
     public ServiceContext errors(Collection<Err> es) {
         if (es == null || es.isEmpty()) {
             if (serviceError != null && serviceError.getErrors() != null) {

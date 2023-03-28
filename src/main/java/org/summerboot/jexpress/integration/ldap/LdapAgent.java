@@ -16,9 +16,7 @@
 package org.summerboot.jexpress.integration.ldap;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -106,7 +104,7 @@ public class LdapAgent implements Closeable {
         return m_ctx;
     }
 
-    public LdapAgent(Properties cfg, String baseDN, boolean isAD, String tenantGroupName) throws NamingException, IOException {
+    public LdapAgent(Properties cfg, String baseDN, boolean isAD, String tenantGroupName) throws NamingException {
         this.cfg = cfg;
         this.baseDN = baseDN;
         this.isAD = isAD;
@@ -123,7 +121,7 @@ public class LdapAgent implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         if (m_ctx != null) {
             log.debug("processing...");
             try {
@@ -137,7 +135,7 @@ public class LdapAgent implements Closeable {
         }
     }
 
-    private void connect() throws NamingException, IOException {
+    private void connect() throws NamingException {
         close();
         log.debug(baseDN + ", isAD=" + isAD);
         m_ctx = new InitialLdapContext(cfg, null);
@@ -245,9 +243,9 @@ public class LdapAgent implements Closeable {
      * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
      * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
-     * @throws GeneralSecurityException
+     * @throws NoSuchAlgorithmException
      */
-    public static String hashMD5Password(String password, String algorithm) throws GeneralSecurityException {
+    public static String hashMD5Password(String password, String algorithm) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(algorithm);
         digest.update(password.getBytes(StandardCharsets.UTF_8));
         byte[] md5 = digest.digest();
@@ -301,8 +299,10 @@ public class LdapAgent implements Closeable {
 //            currentPassword = accessPassword;
 //        }
         try {
-            m_ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, dn);   // user dn
-            m_ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, currentPassword); // user password
+            m_ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, dn == null ? "" : dn);   // user dn
+            if (currentPassword != null) {
+                m_ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, currentPassword); // user password
+            }
             m_ctx.reconnect(null);
             Control[] controls = m_ctx.getResponseControls();
             if (controls != null) {
@@ -316,7 +316,7 @@ public class LdapAgent implements Closeable {
         }
     }
 
-    public void changePassword(String uid, String newPassword, String algorithm) throws NamingException, GeneralSecurityException {
+    public void changePassword(String uid, String newPassword, String algorithm) throws NamingException, NoSuchAlgorithmException {
         String dn = getDN(uid);
 //        Object pwd = cfg.get(Context.SECURITY_CREDENTIALS);
 //        String rootCredential = String.valueOf(pwd);
@@ -330,7 +330,7 @@ public class LdapAgent implements Closeable {
         return StringUtils.isBlank(s) ? "?" : s;
     }
 
-    public String createUser(String uid, String pwd, String algorithm, String company, String org, Map<String, String> profile) throws NamingException, GeneralSecurityException {
+    public String createUser(String uid, String pwd, String algorithm, String company, String org, Map<String, String> profile) throws NamingException, NoSuchAlgorithmException {
         String userDN = this.getDN(uid);
         if (userDN != null) {
             throw new NamingException(uid + " exists");
@@ -393,7 +393,7 @@ public class LdapAgent implements Closeable {
         return dn;
     }
 
-    public int updateEntryAttrs(String entryDn, Map<String, String> attributes) throws GeneralSecurityException, NamingException {
+    public int updateEntryAttrs(String entryDn, Map<String, String> attributes) throws NamingException {
         if (attributes == null || attributes.isEmpty()) {
             return 0;
         }
@@ -418,7 +418,7 @@ public class LdapAgent implements Closeable {
         return size;
     }
 
-    public void deleteUser(String uid) throws NamingException, GeneralSecurityException {
+    public void deleteUser(String uid) throws NamingException {
         log.debug(uid);
         List<Attributes> attrs = queryPerson("uid", uid);
         for (Attributes arrt : attrs) {
@@ -434,7 +434,7 @@ public class LdapAgent implements Closeable {
 //        }
     }
 
-    public void deleteEntry(String dn) throws NamingException, GeneralSecurityException {
+    public void deleteEntry(String dn) throws NamingException {
         log.debug(dn);
         if (dn != null) {
             updateUserGroups(dn);
@@ -442,7 +442,7 @@ public class LdapAgent implements Closeable {
         }
     }
 
-    public void updateUserGroups(String userDN, String... newGroupDnList) throws GeneralSecurityException, NamingException {
+    public void updateUserGroups(String userDN, String... newGroupDnList) throws NamingException {
         List<String>[] ret = parseAddedAndRemoved(getUserRoleGroups(userDN), newGroupDnList);
         List<String> addedList = ret[0];
         List<String> removedList = ret[1];
@@ -452,11 +452,11 @@ public class LdapAgent implements Closeable {
             log.debug(userDN + ".remove=" + toBeRemovedGroupDn);
             ModificationItem[] mods = new ModificationItem[1];
             mods[0] = new ModificationItem(DirContext.REMOVE_ATTRIBUTE, new BasicAttribute("uniqueMember", userDN));
-            try {
-                m_ctx.modifyAttributes(toBeRemovedGroupDn, mods);
-            } catch (Throwable ex) {
-                throw new GeneralSecurityException(ex.getMessage() + "\n\tremove: " + userDN + "\n\tfrom: " + toBeRemovedGroupDn, ex);
-            }
+//            try {
+            m_ctx.modifyAttributes(toBeRemovedGroupDn, mods);
+//            } catch (Throwable ex) {
+//                throw new NamingException(ex.getMessage() + "\n\tremove: " + userDN + "\n\tfrom: " + toBeRemovedGroupDn, ex);
+//            }
         }
 
         // add to new groups
@@ -464,11 +464,11 @@ public class LdapAgent implements Closeable {
             log.debug(userDN + ".add=" + groupDN);
             ModificationItem[] mods = new ModificationItem[1];
             mods[0] = new ModificationItem(DirContext.ADD_ATTRIBUTE, new BasicAttribute("uniqueMember", userDN));
-            try {
-                m_ctx.modifyAttributes(groupDN, mods);
-            } catch (Throwable ex) {
-                throw new GeneralSecurityException(ex.getMessage() + "\n\tadd: " + userDN + "\n\tto: " + groupDN, ex);
-            }
+//            try {
+            m_ctx.modifyAttributes(groupDN, mods);
+//            } catch (Throwable ex) {
+//                throw new NamingException(ex.getMessage() + "\n\tadd: " + userDN + "\n\tto: " + groupDN, ex);
+//            }
         }
     }
 
