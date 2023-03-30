@@ -50,12 +50,12 @@
         <Logger level="debug" name="org.summerboot.jexpress.nio.server.NioServer" includeLocation="true"/>
         <Logger level="debug" name="org.summerboot.jexpress.nio.grpc.GRPCServer" includeLocation="true"/>
         
-        <Logger level="info" name="org.summerboot.jexpress.nio.server.DefaultHttpRequestHandler" includeLocation="false" additivity="false">
+        <Logger level="info" name="org.summerboot.jexpress.nio.server.BootHttpRequestHandler" includeLocation="false" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
             <!-- -->
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger level="debug" name="org.summerboot.jexpress.integration.ldap" includeLocation="true" additivity="false">
+        <Logger level="warn" name="org.summerboot.jexpress.integration.ldap" includeLocation="true" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
             <!-- -->
             <AppenderRef ref="Console"/>
