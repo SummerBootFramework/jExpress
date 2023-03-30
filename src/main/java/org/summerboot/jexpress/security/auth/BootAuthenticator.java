@@ -42,9 +42,10 @@ import org.apache.commons.lang3.StringUtils;
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ * @param <T> authenticate(T metaData)
  */
 @Singleton
-public abstract class BootAuthenticator implements Authenticator {
+public abstract class BootAuthenticator<T> implements Authenticator {
 
     protected AuthenticatorListener listener;
     protected AuthConfig authCfg = AuthConfig.cfg;
@@ -68,13 +69,13 @@ public abstract class BootAuthenticator implements Authenticator {
      * @throws NamingException
      */
     @Override
-    public String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws NamingException {
+    public String login(String uid, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException {
         //1. protect request body from being logged
         context.privacyReqContent(true);
 
-        //2. authenticate caller against LDAP or DB
+        //2. login caller against LDAP or DB
         context.timestampPOI(BootPOI.LDAP_BEGIN);
-        Caller caller = login(uid, pwd, listener, context);
+        Caller caller = authenticate(uid, pwd, (T)metaData, listener, context);
         context.timestampPOI(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
@@ -99,11 +100,13 @@ public abstract class BootAuthenticator implements Authenticator {
      *
      * @param uid
      * @param password
+     * @param metaData
      * @param listener
+     * @param context
      * @return
      * @throws NamingException
      */
-    abstract protected Caller login(String uid, String password, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
+    abstract protected Caller authenticate(String uid, String password, T metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -279,7 +282,9 @@ public abstract class BootAuthenticator implements Authenticator {
         return caller;
     }
 
-    abstract protected Integer overrideVerifyTokenErrorCode();
+    protected Integer overrideVerifyTokenErrorCode() {
+        return null;
+    }
 
     /**
      *

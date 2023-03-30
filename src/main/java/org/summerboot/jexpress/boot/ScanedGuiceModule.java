@@ -100,12 +100,11 @@ public class ScanedGuiceModule extends AbstractModule {
             //1. non-named: one(interface) <--> one(Impl)
             //favor -use <impleTag> over default
             bindingImpl = tagMatchImpl != null ? tagMatchImpl : defaultImpl;
-            if (bindingImpl == null) {
-                continue;
+            if (bindingImpl != null) {
+                Class implClass_NotNamed = bindingImpl.getServiceImplClass();
+                bind(interfaceClass).to(implClass_NotNamed);
+                memo.append("\n\t- Ioc.taggedservice.override: ").append(interfaceClass).append(" bind to ").append(implClass_NotNamed);
             }
-            Class implClass_NotNamed = bindingImpl.getServiceImplClass();
-            bind(interfaceClass).to(implClass_NotNamed);
-            memo.append("\n\t- Ioc.taggedservice.override: ").append(interfaceClass).append(" bind to ").append(implClass_NotNamed);
             //2. named
             for (String named : namedServiceImpls.keySet()) {
                 bindingImpl = namedServiceImpls.get(named);

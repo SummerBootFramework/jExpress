@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import javax.naming.AuthenticationException;
 import javax.naming.Context;
 import javax.naming.NameAlreadyBoundException;
 import javax.naming.NamingEnumeration;
@@ -45,6 +46,8 @@ import javax.naming.ldap.LdapContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.security.auth.AuthenticatorListener;
+import org.summerboot.jexpress.security.auth.User;
 
 /**
  *
@@ -52,14 +55,22 @@ import org.apache.logging.log4j.Logger;
  */
 public class LdapAgent implements Closeable {
 
+    protected static String escape(String value) {
+        return LDAPEncoder.escapeDN(value);
+    }
+    protected static String escapeQuery(String value) {
+        //return LDAPEncoder.escapeLDAPSearchFilter(value);
+        return value;
+    }
+
     protected static final Logger log = LogManager.getLogger(LdapAgent.class);
 
     public static String replaceO(String dn, String newO) {
-        return dn.replaceFirst("(o=)([^,]*)", "$1" + newO);
+        return dn.replaceFirst("(o=)([^,]*)", "$1" + escape(newO));
     }
 
     public static String replaceOU(String dn, String newOU) {
-        return dn.replaceFirst("(ou=)([^,]*)", "$1" + newOU);
+        return dn.replaceFirst("(ou=)([^,]*)", "$1" + escape(newOU));
 
     }
 
@@ -75,7 +86,7 @@ public class LdapAgent implements Closeable {
         //tempCfg.put(Context.REFERRAL, "follow");
         //tempCfg.put(LdapContext.CONTROL_FACTORIES, "com.sun.jndi.ldap.ControlFactory");
         if (StringUtils.isNotBlank(bindingUserDN)) {
-            tempCfg.put(Context.SECURITY_PRINCIPAL, bindingUserDN);
+            tempCfg.put(Context.SECURITY_PRINCIPAL, escapeQuery(bindingUserDN));
         }
         if (StringUtils.isNotBlank(bindingPassword)) {
             tempCfg.put(Context.SECURITY_AUTHENTICATION, "simple");//"EXTERNAL" - Principal and credentials will be obtained from the connection
@@ -106,9 +117,9 @@ public class LdapAgent implements Closeable {
 
     public LdapAgent(Properties cfg, String baseDN, boolean isAD, String tenantGroupName) throws NamingException {
         this.cfg = cfg;
-        this.baseDN = baseDN;
+        this.baseDN = escape(baseDN);
         this.isAD = isAD;
-        this.tenantGroupName = tenantGroupName;
+        this.tenantGroupName = escape(tenantGroupName);
         connect();
     }
 
@@ -150,6 +161,9 @@ public class LdapAgent implements Closeable {
     }
 
     public String getDN(final String username) throws NamingException {
+        if (StringUtils.isBlank(username)) {
+            return null;
+        }
         String[] dn = queryPersonDN(isAD ? "sAMAccountName" : "uid", username);
         if (dn == null || dn.length < 1) {
             return null;
@@ -186,11 +200,12 @@ public class LdapAgent implements Closeable {
     }
 
     public List<Attributes> query(final String sFilter) throws NamingException {
-        log.debug(() -> "base=" + baseDN + ", filter=" + sFilter);
+        String filter = escapeQuery(sFilter);
+        log.debug(() -> "base=" + baseDN + "\n\t filter1=" + sFilter + "\n\t filter2=" + filter);
         List<Attributes> ret = new ArrayList();
         SearchControls ctrls = new SearchControls();
         ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        NamingEnumeration<SearchResult> results = m_ctx.search(baseDN, sFilter, ctrls);
+        NamingEnumeration<SearchResult> results = m_ctx.search(baseDN, filter, ctrls);
         while (results.hasMore()) {
             SearchResult sr = results.next();
             //String dn = sr.getName() + "," + sBase;
@@ -316,6 +331,30 @@ public class LdapAgent implements Closeable {
         }
     }
 
+    public User authenticateUser(String username, String password, AuthenticatorListener listener) throws NamingException {
+        String dn = getDN(username);
+        if (dn == null) {
+            if (listener != null) {
+                listener.onLoginUserNotFound(username);
+            }
+            return null;
+        }
+        List<Attributes> groupAttrs = getUserRoleGroups(dn);
+        try {
+            authenticate(dn, password);
+        } catch (AuthenticationException ex) {
+            if (listener != null) {
+                listener.onLoginRejected(username);
+            }
+            return null;
+        }
+        User user = new User(0L, username);
+        for (Attributes groupAttr : groupAttrs) {
+            user.addGroup(getAttr(groupAttr, "cn"));
+        }
+        return user;
+    }
+
     public void changePassword(String uid, String newPassword, String algorithm) throws NamingException, NoSuchAlgorithmException {
         String dn = getDN(uid);
 //        Object pwd = cfg.get(Context.SECURITY_CREDENTIALS);
@@ -327,7 +366,7 @@ public class LdapAgent implements Closeable {
     }
 
     public static String n2q(String s) {
-        return StringUtils.isBlank(s) ? "?" : s;
+        return StringUtils.isBlank(s) ? "?" : escape(s);
     }
 
     public String createUser(String uid, String pwd, String algorithm, String company, String org, Map<String, String> profile) throws NamingException, NoSuchAlgorithmException {
@@ -336,11 +375,14 @@ public class LdapAgent implements Closeable {
             throw new NamingException(uid + " exists");
         }
 
-        userDN = new StringBuilder().append("uid=").append(uid)
-                .append(",ou=").append(org)
-                .append(",o=").append(company)
-                .append(",ou=").append(tenantGroupName)
-                .append(",").append(baseDN).toString();
+        uid = escape(uid);
+        userDN = escape(
+                new StringBuilder().append("uid=").append(uid)
+                        .append(",ou=").append(org)
+                        .append(",o=").append(company)
+                        .append(",ou=").append(tenantGroupName)
+                        .append(",").append(baseDN).toString()
+        );
         //System.out.println("createUser=" + userDN);
         BasicAttributes entry = new BasicAttributes();
         //ObjectClass attributes
@@ -393,6 +435,35 @@ public class LdapAgent implements Closeable {
         return dn;
     }
 
+    public int addEntryAttrs(String entryDn, Map<String, String> attributes) throws NamingException {
+        if (attributes == null || attributes.isEmpty()) {
+            return 0;
+        }
+        //String dn = getDN(userID);
+        if (log.isDebugEnabled()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("\n\tentryDn=").append(entryDn);
+            attributes.forEach((key, value) -> {
+                sb.append("\n\t ").append(key).append("=").append(value);
+            });
+            log.debug(sb);
+        }
+        List<ModificationItem> modList = new ArrayList();
+        attributes.forEach((key, value) -> {
+            if (StringUtils.isBlank(value)) {
+                modList.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, new BasicAttribute(key, value)));
+            } else {
+                modList.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, new BasicAttribute(key, escape(value))));
+            }
+        });
+        int size = modList.size();
+        if (size > 0) {
+            ModificationItem[] mods = new ModificationItem[size];
+            m_ctx.modifyAttributes(entryDn, modList.toArray(mods));
+        }
+        return size;
+    }
+
     public int updateEntryAttrs(String entryDn, Map<String, String> attributes) throws NamingException {
         if (attributes == null || attributes.isEmpty()) {
             return 0;
@@ -408,7 +479,11 @@ public class LdapAgent implements Closeable {
         }
         List<ModificationItem> modList = new ArrayList();
         attributes.forEach((key, value) -> {
-            modList.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute(key, value)));
+            if (StringUtils.isBlank(value)) {
+                modList.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, new BasicAttribute(key, value)));
+            } else {
+                modList.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute(key, escape(value))));
+            }
         });
         int size = modList.size();
         if (size > 0) {

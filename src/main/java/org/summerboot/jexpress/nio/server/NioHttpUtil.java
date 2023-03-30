@@ -118,6 +118,7 @@ public class NioHttpUtil {
         }
 
         HttpResponseStatus status = serviceContext.status();
+        ResponseEncoder responseEncoder = serviceContext.responseEncoder();
         if (StringUtils.isBlank(serviceContext.txt()) && status.code() >= 400) {
             if (serviceContext.error() == null) {
                 serviceContext.error(null);
@@ -138,7 +139,7 @@ public class NioHttpUtil {
             serviceContext.txt(textResponse);
         }
         if (StringUtils.isNotBlank(serviceContext.txt())) {
-            return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true);
+            return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true, responseEncoder);
         }
         if (serviceContext.redirect() != null) {
             NioHttpUtil.sendRedirect(ctx, serviceContext.redirect(), status);
@@ -148,14 +149,17 @@ public class NioHttpUtil {
         if (serviceContext.autoConvertBlank200To204() && HttpResponseStatus.OK.equals(status)) {
             status = HttpResponseStatus.NO_CONTENT;
         }
-        return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true);
+        return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true, responseEncoder);
     }
 
     private static final String DEFAULT_CHARSET = "UTF-8";
 
-    public static long sendText(ChannelHandlerContext ctx, boolean isKeepAlive, HttpHeaders serviceHeaders, HttpResponseStatus status, String content, String contentType, String charsetName, boolean flush) {
+    public static long sendText(ChannelHandlerContext ctx, boolean isKeepAlive, HttpHeaders serviceHeaders, HttpResponseStatus status, String content, String contentType, String charsetName, boolean flush, ResponseEncoder responseEncoder) {
         if (content == null) {
             content = "";
+        }
+        if (responseEncoder != null) {
+            content = responseEncoder.encode(content);
         }
         //FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.wrappedBuffer(content.getBytes(CharsetUtil.UTF_8)));
         byte[] contentBytes;

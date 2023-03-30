@@ -272,7 +272,7 @@ abstract public class BootController {
             context.error(new Err(BootErrorCode.ACCESS_ERROR, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
         }
-        String jwt = auth.authenticate(uid, pwd, AuthConfig.cfg.getJwtTTLMinutes(), context);
+        String jwt = auth.login(uid, pwd, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
         if (jwt != null) {
             context.responseHeader(Config.X_AUTH_TOKEN, jwt);
         }
