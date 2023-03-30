@@ -19,15 +19,15 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.netty.handler.codec.http.HttpHeaders;
 import javax.naming.NamingException;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface Authenticator extends HealthInspector {
+public interface Authenticator {
 
     //<T extends BootCache> void setCache(T cache);
     /**
@@ -41,12 +41,13 @@ public interface Authenticator extends HealthInspector {
      *
      * @param uid
      * @param pwd
+     * @param metaData
      * @param validForMinutes
      * @param context
      * @return JWT
      * @throws javax.naming.NamingException
      */
-    String authenticate(String uid, String pwd, int validForMinutes, final ServiceContext context) throws NamingException;
+    String login(String uid, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException;
 
     JwtBuilder toJwt(Caller caller);
 
@@ -72,6 +73,18 @@ public interface Authenticator extends HealthInspector {
      * @return Caller
      */
     <T extends Caller> T verifyBearerToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
+    
+    /**
+     * do any validation checks before processing
+     *
+     * @param processor
+     * @param httpRequestHeaders
+     * @param httpRequestPath
+     * @param context
+     * @return true if good to process request, otherwise false
+     * @throws Exception
+     */
+    boolean preProcessCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
 
     /**
      *

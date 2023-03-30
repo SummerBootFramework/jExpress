@@ -101,8 +101,8 @@ public class AuthConfig extends BootConfig {
     @Config(key = "ldap.PasswordAlgorithm", required = false)
     private volatile String passwordAlgorithm = "SHA3-256";
 
-    @Config(key = "ldap.TenantGroupName", required = false)
-    private volatile String ldapTenantGroupName;
+    @Config(key = "ldap.schema.TenantGroup.ou", required = false)
+    private volatile String ldapScheamTenantGroupOU;
 
     //1.2 LDAP Client keystore
     @ConfigHeader(title = "1.2 LDAP Client keystore")
@@ -275,8 +275,8 @@ public class AuthConfig extends BootConfig {
         return bindingUserDN;
     }
 
-    public String getLdapTenantGroupName() {
-        return ldapTenantGroupName;
+    public String getLdapScheamTenantGroupOU() {
+        return ldapScheamTenantGroupOU;
     }
 
     public String getPasswordAlgorithm() {

@@ -43,6 +43,9 @@ import javax.naming.AuthenticationException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
+import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+import org.summerboot.jexpress.security.auth.Authenticator;
+import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
 
 /**
@@ -51,7 +54,7 @@ import org.summerboot.jexpress.util.FormatterUtil;
  * @version 2.0
  */
 @Singleton
-abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
+public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     public static final String BINDING_NAME = "BootHttpRequestHandler";
 
@@ -93,6 +96,9 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
 
             // step3. serve the request, most frequently called first
             context.timestampPOI(BootPOI.PROCESS_BEGIN);
+            if (auth != null && !auth.preProcessCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
+                return;
+            }
             if (!preProcess(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return;
             }
@@ -129,6 +135,12 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
         }
     }
 
+    @Inject
+    protected AuthTokenCache tokenCache;
+
+    @Inject
+    protected Authenticator auth;
+
     /**
      * create User object based on token in the header, then set User object to
      * context
@@ -137,10 +149,16 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
      * @param httpRequestHeaders
      * @param httpRequestPath
      * @param context
-     * @return true if good to preProcess (caller is verified), otherwise false
+     * @return true if good to preProcessCheck (caller is verified), otherwise false
      * @throws Exception
      */
-    abstract protected boolean authenticationCheck(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception;
+    protected boolean authenticationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+        if (auth == null) {
+            return true;//ignore token when auth is not implemented
+        }
+        auth.verifyBearerToken(httpRequestHeaders, tokenCache, null, context);
+        return context.caller() != null;
+    }
 
     /**
      * do any validation checks before processing
@@ -152,7 +170,9 @@ abstract public class BootHttpRequestHandler extends NioServerHttpRequestHandler
      * @return true if good to process request, otherwise false
      * @throws Exception
      */
-    abstract protected boolean preProcess(final RequestProcessor processor, final HttpHeaders httpRequestHeaders, final String httpRequestPath, final ServiceContext context) throws Exception;
+    protected boolean preProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+        return true;
+    }
 
     protected void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
             final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {

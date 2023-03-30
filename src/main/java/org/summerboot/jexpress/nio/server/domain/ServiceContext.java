@@ -40,6 +40,7 @@ import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.summerboot.jexpress.nio.server.ResponseEncoder;
 
 /**
  *
@@ -67,6 +68,7 @@ public class ServiceContext {
     private boolean autoConvertBlank200To204 = true;
     // 1.2 responseHeader
     private HttpHeaders responseHeaders;
+    private ResponseEncoder responseEncoder = null;
     // 1.3 content type    
     private String contentType;// = MediaType.APPLICATION_JSON;
     private String clientAcceptContentType;
@@ -326,6 +328,15 @@ public class ServiceContext {
                 responseHeaders.set(key, values);
             }
         });
+        return this;
+    }
+
+    public ResponseEncoder responseEncoder() {
+        return responseEncoder;
+    }
+
+    public ServiceContext responseEncoder(ResponseEncoder responseEncoder) {
+        this.responseEncoder = responseEncoder;
         return this;
     }
 

@@ -64,7 +64,7 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                 NioCounter.COUNTER_PING_HIT.incrementAndGet();
                 try {
                     HttpResponseStatus status = HealthMonitor.isServiceAvaliable() ? HttpResponseStatus.OK : HttpResponseStatus.SERVICE_UNAVAILABLE;
-                    NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, null, null, null, true);
+                    NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, null, null, null, true, null);
                 } finally {
                     ReferenceCountUtil.release(req);
                 }

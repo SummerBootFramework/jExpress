@@ -41,7 +41,6 @@ import org.summerboot.jexpress.integration.smtp.BootPostOfficeImpl;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
 import org.summerboot.jexpress.nio.server.BootHttpRequestHandler;
-import org.summerboot.jexpress.nio.server.DefaultHttpRequestHandler;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.AuthenticatorMockImpl;
 import org.summerboot.jexpress.util.ReflectionUtil;
@@ -104,8 +103,8 @@ public class BootGuiceModule extends AbstractModule {
         bind(PostOffice.class).to(BootPostOfficeImpl.class);
         memo.append("\n\t- Ioc.bind: ").append(PostOffice.class.getName()).append(ARROW).append(BootPostOfficeImpl.class.getName());
 
-        bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpRequestHandler.BINDING_NAME)).to(DefaultHttpRequestHandler.class);
-        memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(DefaultHttpRequestHandler.class.getName()).append(", named=").append(BootHttpRequestHandler.BINDING_NAME);
+        bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpRequestHandler.BINDING_NAME)).to(BootHttpRequestHandler.class);
+        memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpRequestHandler.class.getName()).append(", named=").append(BootHttpRequestHandler.BINDING_NAME);
 
         //5. Controllers
         scanAnnotation_BindInstance(binder(), Controller.class, callerRootPackageName);// triger SummerApplication.autoScan4GuiceCallback2RegisterControllers(@Controller Map<String, Object> controllers)

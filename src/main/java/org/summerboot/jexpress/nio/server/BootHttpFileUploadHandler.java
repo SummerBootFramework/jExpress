@@ -141,7 +141,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
                     if (isOverSized) {
                         reset();
                         ServiceError e = new ServiceError(BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT, null, String.valueOf(fileSizeQuota), null);
-                        NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, e.toJson(), null, null, true);
+                        NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, e.toJson(), null, null, true, null);
                     } else if (chunk instanceof LastHttpContent) {
                         onLastChunk(ctx);
                     }
@@ -256,7 +256,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
     private long precheck(ChannelHandlerContext ctx, HttpRequest req) {
         if (!isValidRequestPath(req.uri()) || !HttpMethod.POST.equals(req.method())) {
             ServiceError e = new ServiceError(BootErrorCode.NIO_HTTP_REQUEST_DECODER_FAILURE, null, "invalid request:" + req.method() + " " + req.uri(), null);
-            NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.BAD_REQUEST, e.toJson(), null, null, true);
+            NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.BAD_REQUEST, e.toJson(), null, null, true, null);
             return 0;
         }
 
@@ -272,7 +272,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
         caller = authenticate(httpHeaders, context);
         if (caller == null) {
             ServiceError e = new ServiceError(BootErrorCode.AUTH_INVALID_USER, null, "Unauthorized Caller", null);
-            NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.FORBIDDEN, e.toJson(), null, null, true);
+            NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.FORBIDDEN, e.toJson(), null, null, true, null);
             return 0;
         }
 
@@ -282,13 +282,13 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
             contentLength = Long.parseLong(cl);
         } catch (RuntimeException ex) {
             ServiceError e = new ServiceError(BootErrorCode.NIO_HTTP_REQUEST_DECODER_FAILURE, null, "Invalid header: " + HttpHeaderNames.CONTENT_LENGTH + "=" + cl, ex);
-            NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.BAD_REQUEST, e.toJson(), null, null, true);
+            NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.BAD_REQUEST, e.toJson(), null, null, true, null);
             return 0;
         }
         long maxAllowedSize = getCallerFileUploadSizeLimit_Bytes(caller);
         if (contentLength > maxAllowedSize) {
             ServiceError e = new ServiceError(BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT, null, String.valueOf(maxAllowedSize), null);
-            NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, e.toJson(), null, null, true);
+            NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, e.toJson(), null, null, true, null);
             return 0;
         }
         return maxAllowedSize;
