@@ -75,7 +75,7 @@ public abstract class BootAuthenticator<T> implements Authenticator {
 
         //2. login caller against LDAP or DB
         context.timestampPOI(BootPOI.LDAP_BEGIN);
-        Caller caller = authenticate(uid, pwd, (T)metaData, listener, context);
+        Caller caller = authenticate(uid, pwd, (T) metaData, listener, context);
         context.timestampPOI(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
@@ -119,7 +119,7 @@ public abstract class BootAuthenticator<T> implements Authenticator {
     public JwtBuilder toJwt(Caller caller) {
         String jti = caller.getTenantId() + "." + caller.getId() + "_" + caller.getUid() + "_" + System.currentTimeMillis();
         String issuer = authCfg.getJwtIssuer();
-        String subject = caller.getUid();
+        String userName = caller.getUid();
         Set<String> groups = caller.getGroups();
         String groupsCsv = groups == null || groups.size() < 1
                 ? null
@@ -129,8 +129,11 @@ public abstract class BootAuthenticator<T> implements Authenticator {
         Claims claims = Jwts.claims();
         claims.setId(jti)
                 .setIssuer(issuer)
-                .setSubject(subject)
+                .setSubject(userName)
                 .setAudience(audience);
+        if (caller.getId() != null) {
+            claims.put("callerId", caller.getId());
+        }
         if (caller.getTenantId() != null) {
             claims.put("tenantId", caller.getTenantId());
         }
@@ -159,21 +162,15 @@ public abstract class BootAuthenticator<T> implements Authenticator {
      */
     @Override
     public Caller fromJwt(Claims claims) {
-        String jti = claims.getId();
-        String issuer = claims.getIssuer();
-        String subject = claims.getSubject();
+        //String jti = claims.getId();
+        //String issuer = claims.getIssuer();
+        String userName = claims.getSubject();
         String audience = claims.getAudience();
+        Long userId = claims.get("callerId", Long.class);
         Long tenantId = claims.get("tenantId", Long.class);
         String tenantName = claims.get("tenantName", String.class);
 
-        Long id;
-        String uid = subject;
-        try {
-            id = Long.valueOf(jti);
-        } catch (Throwable ex) {
-            id = null;
-        }
-        User caller = new User(tenantId, tenantName, id, uid);
+        User caller = new User(tenantId, tenantName, userId, userName);
 
         String userGroups = audience;
         if (StringUtils.isNotBlank(userGroups)) {
@@ -197,6 +194,7 @@ public abstract class BootAuthenticator<T> implements Authenticator {
         caller.remove(Claims.ISSUER);
         caller.remove(Claims.NOT_BEFORE);
         caller.remove(Claims.SUBJECT);
+        caller.remove("callerId");
         caller.remove("tenantId");
         caller.remove("tenantName");
 

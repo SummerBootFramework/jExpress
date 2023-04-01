@@ -110,6 +110,7 @@ public class LdapAgent implements Closeable {
     protected final boolean isAD;
     protected final String tenantGroupName;
     protected LdapContext m_ctx = null;//not thread safe
+    protected String uidKey;
 
     public LdapContext getLdapContext() {
         return m_ctx;
@@ -120,7 +121,16 @@ public class LdapAgent implements Closeable {
         this.baseDN = escape(baseDN);
         this.isAD = isAD;
         this.tenantGroupName = escape(tenantGroupName);
+        uidKey = isAD ? "sAMAccountName" : "uid";
         connect();
+    }
+
+    public String getUidKey() {
+        return uidKey;
+    }
+
+    public void setUidKey(String uidKey) {
+        this.uidKey = uidKey;
     }
 
     public String getBaseDN() {
@@ -164,7 +174,7 @@ public class LdapAgent implements Closeable {
         if (StringUtils.isBlank(username)) {
             return null;
         }
-        String[] dn = queryPersonDN(isAD ? "sAMAccountName" : "uid", username);
+        String[] dn = queryPersonDN(uidKey, username);
         if (dn == null || dn.length < 1) {
             return null;
         }
@@ -332,14 +342,29 @@ public class LdapAgent implements Closeable {
     }
 
     public User authenticateUser(String username, String password, AuthenticatorListener listener) throws NamingException {
-        String dn = getDN(username);
+        List<Attributes> userAttrs = queryPerson(uidKey, username);//key =[uid, mail, email, employeeNumber, etc.]
+        int size = userAttrs.size();
+        String[] ret = new String[size];
+        for (int i = 0; i < size; i++) {
+            ret[i] = getAttr(userAttrs.get(i), DN);
+        }
+        String dn = ret[0];
         if (dn == null) {
             if (listener != null) {
                 listener.onLoginUserNotFound(username);
             }
             return null;
         }
+        Attributes userAttr = userAttrs.get(0);
+        String displayName = getAttr(userAttr, "displayName");
+        if (displayName == null) {
+            displayName = getAttr(userAttr, "cn");
+        }
+        if (displayName == null) {
+            displayName = username;
+        }
         List<Attributes> groupAttrs = getUserRoleGroups(dn);
+
         try {
             authenticate(dn, password);
         } catch (AuthenticationException ex) {
@@ -349,6 +374,7 @@ public class LdapAgent implements Closeable {
             return null;
         }
         User user = new User(0L, username);
+        user.setDisplayName(displayName);
         for (Attributes groupAttr : groupAttrs) {
             user.addGroup(getAttr(groupAttr, "cn"));
         }

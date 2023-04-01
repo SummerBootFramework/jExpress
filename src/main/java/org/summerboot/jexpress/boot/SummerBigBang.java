@@ -619,7 +619,7 @@ abstract public class SummerBigBang extends SummerSingularity {
      * @param userSpecifiedImplTags
      */
     protected void genesis(Class primaryClass, Set<String> userSpecifiedImplTags) {
-        BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, memo);
+        BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedImplTags, memo);
         ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedImplTags, memo);
         Module bootModule = Modules.override(defaultModule).with(scanedModule);
         Module applicationModule = userOverrideModule == null
@@ -652,7 +652,7 @@ abstract public class SummerBigBang extends SummerSingularity {
      * callback by Guice Module.
      * <p>
      * triggered by
-     * <code>Guice.createInjector(module) --> BootGuiceModule.configure()</code>
+     * <code>Guice.createInjector(module) --> BootGuiceModule.configure() --> BootGuiceModule.scanAnnotation_BindInstance(...)</code>
      * to load all classes annotated with @Controller
      *
      *

@@ -84,7 +84,7 @@ public interface Authenticator {
      * @return true if good to process request, otherwise false
      * @throws Exception
      */
-    boolean preProcessCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
+    boolean preAccessCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
 
     /**
      *
