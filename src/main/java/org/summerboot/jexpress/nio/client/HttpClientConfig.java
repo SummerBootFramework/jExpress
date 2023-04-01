@@ -20,7 +20,6 @@ import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.security.SSLUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import java.io.File;
 import java.net.http.HttpClient;
 import java.util.ArrayList;

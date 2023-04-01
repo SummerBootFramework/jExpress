@@ -24,6 +24,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigChangeListenerImpl;
@@ -41,6 +42,10 @@ import org.summerboot.jexpress.integration.smtp.BootPostOfficeImpl;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
 import org.summerboot.jexpress.nio.server.BootHttpRequestHandler;
+import org.summerboot.jexpress.nio.server.BootNioExceptionHandler;
+import org.summerboot.jexpress.nio.server.BootNioLifecycleHandler;
+import org.summerboot.jexpress.nio.server.NioExceptionHandler;
+import org.summerboot.jexpress.nio.server.NioLifecycle;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.AuthenticatorMockImpl;
 import org.summerboot.jexpress.util.ReflectionUtil;
@@ -54,13 +59,19 @@ public class BootGuiceModule extends AbstractModule {
     private final Object caller;
     private final Class callerClass;
     private final String callerRootPackageName;
+    private final Set<String> userSpecifiedImplTags;
     private final StringBuilder memo;
 
-    public BootGuiceModule(Object caller, Class callerClass, StringBuilder memo) {
+    public BootGuiceModule(Object caller, Class callerClass, Set<String> userSpecifiedImplTags, StringBuilder memo) {
         this.caller = caller;
         this.callerClass = callerClass == null ? caller.getClass() : callerClass;
         this.callerRootPackageName = ReflectionUtil.getRootPackageName(this.callerClass);
+        this.userSpecifiedImplTags = userSpecifiedImplTags;
         this.memo = memo;
+    }
+
+    protected boolean isCliUseImplTag(String implTag) {
+        return userSpecifiedImplTags.contains(implTag);
     }
 
     @Override
@@ -100,6 +111,12 @@ public class BootGuiceModule extends AbstractModule {
         bind(Authenticator.class).to(AuthenticatorMockImpl.class);
         memo.append("\n\t- Ioc.bind: ").append(Authenticator.class.getName()).append(ARROW).append(AuthenticatorMockImpl.class.getName());
 
+        bind(NioExceptionHandler.class).to(BootNioExceptionHandler.class);
+        memo.append("\n\t- Ioc.bind: ").append(NioExceptionHandler.class.getName()).append(ARROW).append(BootNioExceptionHandler.class.getName());
+
+        bind(NioLifecycle.class).to(BootNioLifecycleHandler.class);
+        memo.append("\n\t- Ioc.bind: ").append(NioLifecycle.class.getName()).append(ARROW).append(BootNioLifecycleHandler.class.getName());
+
         bind(PostOffice.class).to(BootPostOfficeImpl.class);
         memo.append("\n\t- Ioc.bind: ").append(PostOffice.class.getName()).append(ARROW).append(BootPostOfficeImpl.class.getName());
 
@@ -107,7 +124,7 @@ public class BootGuiceModule extends AbstractModule {
         memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpRequestHandler.class.getName()).append(", named=").append(BootHttpRequestHandler.BINDING_NAME);
 
         //5. Controllers
-        scanAnnotation_BindInstance(binder(), Controller.class, callerRootPackageName);// triger SummerApplication.autoScan4GuiceCallback2RegisterControllers(@Controller Map<String, Object> controllers)
+        scanAnnotation_BindInstance(binder(), Controller.class, callerRootPackageName);
 
         //6. caller's Main class (App.Main)
         if (caller != null) {
@@ -117,8 +134,10 @@ public class BootGuiceModule extends AbstractModule {
     }
 
     /**
-     * This method should be called within Google.Guice module, and will
-     * automatically trigger Google.Guice to call initControllerActions(...)
+     * This method will be called by Guice.createInjector(...) from
+     * SummerBigBang.genesis(...) to trigger
+     * SummerBigBang.onGuiceInjectorCreated_ControllersInjected(@Controller
+     * Map<String, Object> controllers)
      *
      * @param binder
      * @param rootPackageNames
@@ -130,11 +149,17 @@ public class BootGuiceModule extends AbstractModule {
         // binder.addBinding("NFC").to(NonFunctionalServiceController.class);
         // binder.addBinding("BIZ").to(BusinessServiceController.class);
 
-        Set<Class<?>> classesAll = new HashSet();//to remove duplicated
+        final Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         for (String rootPackageName : rootPackageNames) {
             Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(annotation, rootPackageName);
             //classesAll.addAll(classes);
             for (Class c : classes) {
+                Controller a = (Controller) c.getAnnotation(annotation);
+                String implTag = a.implTag();
+                if (StringUtils.isNotBlank(implTag) && !isCliUseImplTag(implTag)) {
+                    continue;
+                }
+
                 int mod = c.getModifiers();
                 if (Modifier.isAbstract(mod) || Modifier.isInterface(mod)) {
                     continue;

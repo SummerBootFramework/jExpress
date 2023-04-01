@@ -113,24 +113,24 @@ public class JaxRsRequestProcessorManager {
 //            Annotation[] as = controllerClass.getAnnotations();
 //            Annotation[] das = controllerClass.getDeclaredAnnotations();
             String rootPath = null;
-            Path rp = (Path) controllerClass.getAnnotation(Path.class);
-            if (rp != null) {
-                rootPath = rp.value().trim();
+            Path pathRoot = (Path) controllerClass.getAnnotation(Path.class);
+            if (pathRoot != null) {
+                rootPath = pathRoot.value().trim();
             }
             //for each HTTPMethod-JavaMethod generate a processor
             //Method[] methods = controllerClass.getDeclaredMethods();
             List<Method> methods = ReflectionUtil.getDeclaredAndSuperClassesMethods(controllerClass, true);
             for (Method javaMethod : methods) {
                 //@Path
-                Path ap = javaMethod.getAnnotation(Path.class);
-                if (ap == null) {
+                Path pathAnnotation = javaMethod.getAnnotation(Path.class);
+                if (pathAnnotation == null) {
                     continue;
                 }
                 final String path;
                 if (StringUtils.isBlank(rootPath)) {
-                    path = ap.value().trim();
+                    path = pathAnnotation.value().trim();
                 } else {
-                    path = rootPath + ap.value().trim();
+                    path = rootPath + pathAnnotation.value().trim();
                 }
                 if (path == null) {
                     continue;

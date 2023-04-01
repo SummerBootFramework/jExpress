@@ -131,6 +131,7 @@ abstract public class SummerSingularity implements BootConstant {
         }
         scanAnnotation_JExpressConfigImportResource("org.summerboot.jexpress", callerRootPackageName);
         scanImplementation_gRPC(callerRootPackageName);
+        scanAnnotation_Controller(callerRootPackageName);
         scanAnnotation_Service(callerRootPackageName);
         scanAnnotation_DeclareRoles(callerRootPackageName);
         return (T) this;
@@ -297,6 +298,27 @@ abstract public class SummerSingularity implements BootConstant {
             }
         }
         hasGRPCImpl = !gRPCServerServiceDefinitionImplClasses.isEmpty() || !gRPCBindableServiceImplClasses.isEmpty();
+    }
+
+    protected void scanAnnotation_Controller(String... rootPackageNames) {
+        Set<Class<?>> classesAll = new HashSet();//to remove duplicated
+        for (String rootPackageName : rootPackageNames) {
+            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, rootPackageName);
+            classesAll.addAll(classes);
+        }
+        List<String> tags = new ArrayList();
+        for (Class c : classesAll) {
+            Controller a = (Controller) c.getAnnotation(Controller.class);
+            String implTag = a.implTag();
+            tags.add(implTag);
+        }
+        List<String> serviceImplTags = tags.stream()
+                .distinct()
+                .collect(Collectors.toList());
+        serviceImplTags.removeAll(Collections.singleton(null));
+        serviceImplTags.removeAll(Collections.singleton(""));
+        serviceImplTags.removeAll(Collections.singleton(Controller.NOT_TAGGED));
+        availableImplTagOptions.addAll(serviceImplTags);
     }
 
     protected List<String> scanAnnotation_Service(String... rootPackageNames) {

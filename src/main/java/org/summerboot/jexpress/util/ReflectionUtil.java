@@ -45,13 +45,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
@@ -451,6 +451,17 @@ public class ReflectionUtil {
             Object varValue = field.get(null);
             results.put(varName, varValue);
         }
+    }
+
+    public static String loadFields(Class targetClass, Class fieldClass) throws IllegalArgumentException, IllegalAccessException, JsonProcessingException {
+        Map<String, Integer> results = new HashMap();
+        ReflectionUtil.loadFields(targetClass, fieldClass, results, false);
+        Map<Object, String> sorted = results
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
+        return BeanUtil.toJson(sorted, true, false);
     }
 
     private static final String MY_PACKAGE_ROOT = "org.";

@@ -111,8 +111,12 @@ public class NioHttpUtil {
     }
 
     public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext, final ErrorAuditor errorAuditor) {
-        serviceContext.responseHeader(HeaderName_Reference, serviceContext.hit());
-        serviceContext.responseHeader(HeaderName_ServerTimestamp, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
+        if (HeaderName_Reference != null) {
+            serviceContext.responseHeader(HeaderName_Reference, serviceContext.hit());
+        }
+        if (HeaderName_ServerTimestamp != null) {
+            serviceContext.responseHeader(HeaderName_ServerTimestamp, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
+        }
         if (serviceContext.file() != null) {
             return sendFile(ctx, isKeepAlive, serviceContext);
         }

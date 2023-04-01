@@ -31,4 +31,8 @@ import java.lang.annotation.Target;
 @Documented
 @BindingAnnotation
 public @interface Controller {
+
+    String NOT_TAGGED = "";
+
+    String implTag() default NOT_TAGGED;
 }
