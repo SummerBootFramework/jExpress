@@ -231,7 +231,7 @@ public class NioHttpUtil {
         try {
             randomAccessFile = new RandomAccessFile(file, "r");
             fileLength = randomAccessFile.length();
-            HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+            HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, serviceContext.status());
             HttpHeaders h = response.headers();
             h.set(serviceContext.responseHeaders());
 

@@ -52,7 +52,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.PathParam;
@@ -61,7 +60,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.SummerApplication;
-import org.summerboot.jexpress.boot.annotation.Ping;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.security.auth.Caller;
 
@@ -93,7 +91,7 @@ import org.summerboot.jexpress.security.auth.Caller;
 //@SecurityScheme(name = "ApiKeyAuth", type = SecuritySchemeType.APIKEY, in = SecuritySchemeIn.HEADER)
 //@SecurityScheme(name = "OpenID", type = SecuritySchemeType.OPENIDCONNECT, openIdConnectUrl = "https://example.com/.well-known/openid-configuration")
 //@SecurityScheme(name = "OAuth2", type = SecuritySchemeType.OAUTH2, flows = @OAuthFlows())
-abstract public class BootController {
+abstract public class BootController extends PingController {
 
     public static final String TAG_APP_ADMIN = "App Admin";
     public static final String TAG_USER_AUTH = "App User Authentication";
@@ -108,29 +106,6 @@ abstract public class BootController {
     @Inject
     protected Authenticator auth;
     //abstract protected Authenticator getAuthenticator();
-
-    /**
-     * method with @Ping annotation will be handled by BootHttpPingHandler
-     */
-    @GET
-    @Path(Config.CURRENT_VERSION + Config.LOAD_BALANCER_HEALTH_CHECK)
-    @Ping
-    @Operation(
-            tags = {"Load Balancing"},
-            summary = "ping service status",
-            description = "Load Balancer（F5, Nginx, etc） will do the health check via this ping service, if Http Status is not 200(OK), the load Balancer will stop sending new request to this service.<br>"
-            + "Below is an example of F5 config: Basically it’s one monitor that does the check to each member in the pool . It will mark each server within the pool member down if it does not receive a 200. <br>"
-            + "<i>GET /myservices/myapp/ping HTTP/1.1\\r\\nConnection: Close\\r\\n\\r\\n</i>",
-            responses = {
-                @ApiResponse(responseCode = "200", description = "The service status is healthy"),
-                @ApiResponse(responseCode = "5XX", description = "The service status is unhealthy if response code is not 200",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                )
-            }
-    )
-    public void ping() {
-        //method with @Ping annotation will be handled by BootHttpPingHandler
-    }
 
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)

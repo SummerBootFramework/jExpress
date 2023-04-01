@@ -530,7 +530,6 @@ public class ServiceContext {
             }
             responseHeaders.set(HttpHeaderNames.CONTENT_DISPOSITION, "attachment;filename=" + fileName + ";filename*=UTF-8''" + fileName);
         }
-        this.status(HttpResponseStatus.OK);
         return this;
     }
 
