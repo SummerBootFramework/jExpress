@@ -286,7 +286,7 @@ public class NioHttpUtil {
             webResourceFile = new File(filePath).getAbsoluteFile();
             WebResourceCache.put(httpRequestPath, webResourceFile);
         }
-        response.file(webResourceFile, false).level(Level.FATAL);
+        response.file(webResourceFile, false).level(Level.TRACE);
     }
 
     public static String getFileContentType(File file) {
