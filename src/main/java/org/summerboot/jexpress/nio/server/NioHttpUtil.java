@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
@@ -285,7 +286,7 @@ public class NioHttpUtil {
             webResourceFile = new File(filePath).getAbsoluteFile();
             WebResourceCache.put(httpRequestPath, webResourceFile);
         }
-        response.file(webResourceFile, false);
+        response.file(webResourceFile, false).level(Level.FATAL);
     }
 
     public static String getFileContentType(File file) {

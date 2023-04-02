@@ -34,8 +34,11 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.function.Function;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.annotation.Ping;
 import org.summerboot.jexpress.util.ReflectionUtil;
@@ -197,7 +200,7 @@ public class JaxRsRequestProcessorManager {
                     }
                     subMap = rootMap.get(httpMethod);
                     if (subMap == null) {
-                        subMap = new HashMap<>();
+                        subMap = new TreeMap<>(Comparator.comparingInt(String::length).reversed().thenComparing(Function.identity()));
                         rootMap.put(httpMethod, subMap);
                     }
                     String key = processor.getDeclaredPath();

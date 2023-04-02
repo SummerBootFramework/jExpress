@@ -150,16 +150,25 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
             } finally {
-                long responseTime = System.currentTimeMillis() - start;
                 NioCounter.COUNTER_SENT.incrementAndGet();
+                long responseTime = System.currentTimeMillis() - start;
+                boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThreshold();
+                HttpResponseStatus status = context.status();
                 Level level = context.level();
+                if ((overtime || status.code() >= 400) && level.isLessSpecificThan(Level.WARN)) {
+                    level = Level.WARN;
+                }
                 String report = null;
                 if (log.isEnabled(level)) {
                     Caller caller = context.caller();
                     ServiceError error = context.error();
-                    boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThreshold();
-                    if (overtime && level.isLessSpecificThan(Level.WARN)) {
-                        level = Level.WARN;
+                    int errorCount = 0;
+                    if (error != null) {
+                        if (error.getErrors() == null) {
+                            errorCount = 1;
+                        } else {
+                            errorCount = Math.max(1, error.getErrors().size());
+                        }
                     }
 
                     //responsed#1=200 OK, error=0, r2q=7ms, r2r=60ms, caller=aaa#bbb, received#1=GET /a
@@ -167,8 +176,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     //line1
                     sb.append("request_").append(hitIndex).append(".caller=").append(caller == null ? context.callerId() : caller);
                     //line2,3
-                    sb.append("\n\t").append(requestMetaInfo).append("\n\tresponsed_").append(hitIndex).append("=").append(context.status())
-                            .append(", error=").append(error == null ? 0 : error.getErrors().size())
+                    sb.append("\n\t").append(requestMetaInfo).append("\n\tresponsed_").append(hitIndex).append("=").append(status)
+                            .append(", error=").append(errorCount)
                             .append(", queuing=").append(queuingTime).append("ms, process=").append(processTime);
                     if (overtime) {
                         sb.append("ms, response.ot=");

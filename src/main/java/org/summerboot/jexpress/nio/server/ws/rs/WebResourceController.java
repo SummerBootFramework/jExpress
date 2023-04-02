@@ -52,7 +52,7 @@ abstract public class WebResourceController {
     }
 
     @GET
-    @Path("/image/{path: .*}")
+    @Path("/images/{path: .*}")
     public void requestImage(final ServiceRequest request, final ServiceContext response) {
         NioHttpUtil.sendWebResource(request, response);
     }*/

@@ -42,9 +42,9 @@ public class BootNioLifecycleHandler implements NioLifecycle {
     }
 
     protected void protectAuthToken(RequestProcessor processor, HttpHeaders httpRequestHeaders) {
-        if (processor != null && processor.isRoleBased()) {
-            httpRequestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
-        }
+        //if (processor != null && processor.isRoleBased()) {
+        httpRequestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
+        //}
     }
 
     @Override
