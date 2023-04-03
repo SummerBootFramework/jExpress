@@ -295,6 +295,16 @@ public class FormatterUtil {
         return plain.replaceAll(regex, replacement);
     }
 
+    public static String protectJsonString(String json, String key, String replaceWith) {
+        final String regex = "(\"" + key + "\"\\s*:\\s*\")[^\"]*(\")";
+        return json.replaceAll(regex, "$1" + replaceWith + "$2");
+    }
+
+    public static String proctectJsonNumber(String json, String key, String replaceWith) {
+        String regex = "(\"" + key + "\"\\s*:\\s*)(\\d+)";
+        return json.replaceAll(regex, "$1" + replaceWith);
+    }
+
     public static String[] splitByLength(String plain, int chunckSize) {
         return plain.split("(?<=\\G.{" + chunckSize + "})");
     }
