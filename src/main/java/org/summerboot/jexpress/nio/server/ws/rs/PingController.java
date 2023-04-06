@@ -33,9 +33,9 @@ abstract public class PingController {
     /**
      * method with @Ping annotation will be handled by BootHttpPingHandler
      */
+    @Ping
     @GET
     @Path(Config.CURRENT_VERSION + Config.LOAD_BALANCER_HEALTH_CHECK)
-    @Ping
     @Operation(
             tags = {"Load Balancing"},
             summary = "ping service status",
