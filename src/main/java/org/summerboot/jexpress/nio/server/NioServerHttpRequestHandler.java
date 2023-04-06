@@ -152,46 +152,50 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             } finally {
                 NioCounter.COUNTER_SENT.incrementAndGet();
                 long responseTime = System.currentTimeMillis() - start;
-                boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThreshold();
-                HttpResponseStatus status = context.status();
-                Level level = context.level();
-                if ((overtime || status.code() >= 400) && level.isLessSpecificThan(Level.WARN)) {
-                    level = Level.WARN;
-                }
                 String report = null;
-                if (log.isEnabled(level)) {
-                    Caller caller = context.caller();
-                    ServiceError error = context.error();
-                    int errorCount = 0;
-                    if (error != null) {
-                        if (error.getErrors() == null) {
-                            errorCount = 1;
-                        } else {
-                            errorCount = Math.max(1, error.getErrors().size());
+                try {
+                    boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThreshold();
+                    HttpResponseStatus status = context.status();
+                    Level level = context.level();
+                    if ((overtime || status.code() >= 400) && level.isLessSpecificThan(Level.WARN)) {
+                        level = Level.WARN;
+                    }
+                    if (log.isEnabled(level)) {
+                        Caller caller = context.caller();
+                        ServiceError error = context.error();
+                        int errorCount = 0;
+                        if (error != null) {
+                            if (error.getErrors() == null) {
+                                errorCount = 1;
+                            } else {
+                                errorCount = Math.max(1, error.getErrors().size());
+                            }
                         }
-                    }
 
-                    //responsed#1=200 OK, error=0, r2q=7ms, r2r=60ms, caller=aaa#bbb, received#1=GET /a
-                    StringBuilder sb = new StringBuilder();
-                    //line1
-                    sb.append("request_").append(hitIndex).append(".caller=").append(caller == null ? context.callerId() : caller);
-                    //line2,3
-                    sb.append("\n\t").append(requestMetaInfo).append("\n\tresponsed_").append(hitIndex).append("=").append(status)
-                            .append(", error=").append(errorCount)
-                            .append(", queuing=").append(queuingTime).append("ms, process=").append(processTime);
-                    if (overtime) {
-                        sb.append("ms, response.ot=");
-                    } else {
-                        sb.append("ms, response=");
+                        //responsed#1=200 OK, error=0, r2q=7ms, r2r=60ms, caller=aaa#bbb, received#1=GET /a
+                        StringBuilder sb = new StringBuilder();
+                        //line1
+                        sb.append("request_").append(hitIndex).append(".caller=").append(caller == null ? context.callerId() : caller);
+                        //line2,3
+                        sb.append("\n\t").append(requestMetaInfo).append("\n\tresponsed_").append(hitIndex).append("=").append(status)
+                                .append(", error=").append(errorCount)
+                                .append(", queuing=").append(queuingTime).append("ms, process=").append(processTime);
+                        if (overtime) {
+                            sb.append("ms, response.ot=");
+                        } else {
+                            sb.append("ms, response=");
+                        }
+                        sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
+                        //line4
+                        context.reportPOI(nioCfg, sb);
+                        verboseClientServerCommunication(nioCfg, requestHeaders, httpPostRequestBody, context, sb);
+                        context.reportMemo(sb);
+                        sb.append(System.lineSeparator());
+                        report = beforeLogging(sb.toString());
+                        log.log(level, report, context.cause());
                     }
-                    sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
-                    //line4
-                    context.reportPOI(nioCfg, sb);
-                    verboseClientServerCommunication(nioCfg, requestHeaders, httpPostRequestBody, context, sb);
-                    context.reportMemo(sb);
-                    sb.append(System.lineSeparator());
-                    report = beforeLogging(sb.toString());
-                    log.log(level, report, context.cause());
+                } catch (Throwable ex) {
+                    log.error("loggin failed", ex);
                 }
                 try {
                     afterLogging(requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, report, ioEx);
