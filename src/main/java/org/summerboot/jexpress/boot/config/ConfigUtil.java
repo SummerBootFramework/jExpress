@@ -49,7 +49,7 @@ import org.summerboot.jexpress.boot.config.annotation.ImportResource;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ConfigUtil {
-    
+
     public static Path cfgRoot(String domainFolderPrefix, String domainName, String configDirName) {
 //        String f = StringUtils.isBlank(runtimeDomain)
 //                ? runtimeRootDirName + File.separator + configDirName
@@ -67,31 +67,31 @@ public class ConfigUtil {
 //        return p.toFile();
 //    }
     private static ConfigChangeListener listener;
-    
+
     public static void setConfigChangeListener(ConfigChangeListener l) {
         listener = l;
     }
-    
+
     public static enum ConfigLoadMode {
         cli_encrypt(true, true), cli_decrypt(false, true), app_run(true, false);
-        
+
         private final boolean encryptMode;
         private final boolean cliMode;
-        
+
         private ConfigLoadMode(boolean encryptMode, boolean cliMode) {
             this.encryptMode = encryptMode;
             this.cliMode = cliMode;
         }
-        
+
         public boolean isEncryptMode() {
             return encryptMode;
         }
-        
+
         public boolean isCliMode() {
             return cliMode;
         }
     }
-    
+
     public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, int CfgMonitorInterval, File cfgConfigDir) throws Exception {
         // 1. load configs
         int updated = 0;
@@ -106,7 +106,7 @@ public class ConfigUtil {
         }
         return updated;
     }
-    
+
     public static void createConfigFile(Class<? extends JExpressConfig> c, File cfgConfigDir, String cfgName, boolean cliMode) throws IOException {
         String configContent = BootConfig.generateTemplate(c);
 //        if (StringUtils.isBlank(configContent)) {
@@ -117,7 +117,7 @@ public class ConfigUtil {
         if (cliMode) {
             fileName = fileName + ".sample";
         }
-        
+
         File cfgFile = new File(cfgConfigDir, fileName).getAbsoluteFile();
         if (cliMode) {
             System.out.print("saveing " + c.getName() + " to " + cfgFile);
@@ -127,7 +127,7 @@ public class ConfigUtil {
             System.out.println(" done!");
         }
     }
-    
+
     public static int loadConfig(ConfigLoadMode mode, Logger log, Locale defaultRB, File configFile, JExpressConfig cfg, Map<File, Runnable> cfgUpdateTasks, File cfgConfigDir) throws Exception {
         if (cfg == null) {
             log.warn("null instance for " + configFile);
@@ -180,14 +180,14 @@ public class ConfigUtil {
         );
         return updated;
     }
-    
+
     private StringBuilder sb = null;
     private final String cfgFile;
-    
+
     public ConfigUtil(String cfgFile) {
         this.cfgFile = cfgFile;
     }
-    
+
     public void addError(String e) {
         if (sb == null) {
             sb = new StringBuilder();
@@ -195,7 +195,7 @@ public class ConfigUtil {
         }
         sb.append(System.lineSeparator() + "\t").append(e);
     }
-    
+
     public String getError() {
         return sb == null ? null : sb.toString();
     }
@@ -380,7 +380,7 @@ public class ConfigUtil {
         }
         return FormatterUtil.EMPTY_STR_ARRAY;
     }
-    
+
     public Long[] getAsRangeLong(Properties props, String key, Set<Long> filterCodeSet) {
         String[] a = getAsCSV(props, key, null);
         if (a.length < 1) {
@@ -405,7 +405,7 @@ public class ConfigUtil {
         }
         return ret;
     }
-    
+
     public Double[] getAsRangeDouble(Properties props, String key, Set<Double> filterCodeSet) {
         String[] a = getAsCSV(props, key, null);
         if (a.length < 1) {
@@ -430,10 +430,10 @@ public class ConfigUtil {
         }
         return ret;
     }
-    
+
     public static final String ENCRYPTED_WARPER_PREFIX = "ENC";
     public static final String DECRYPTED_WARPER_PREFIX = "DEC";
-    
+
     public String getAsPassword(Properties props, String key) {
         String v = props.getProperty(key);
         if (StringUtils.isBlank(v)) {
@@ -453,7 +453,7 @@ public class ConfigUtil {
         }
         return pwd;
     }
-    
+
     public static int updatePasswords(File configFile, File destFile, boolean encrypt) throws IOException, GeneralSecurityException {
         if (!configFile.exists()) {
             return 0;
@@ -477,14 +477,13 @@ public class ConfigUtil {
             if (destFile == null) {
                 destFile = configFile;
             }
-            try (FileOutputStream output = new FileOutputStream(destFile);
-                    FileChannel foc = output.getChannel();) {
+            try (FileOutputStream output = new FileOutputStream(destFile); FileChannel foc = output.getChannel();) {
                 foc.write(ByteBuffer.wrap(sb.toString().getBytes(StandardCharsets.UTF_8)));
             }
         }
         return updated;
     }
-    
+
     public Map<String, Integer> getAsBindingAddress(Properties props, String key) {
         try {
             String v = props.getProperty(key).trim();
@@ -498,35 +497,36 @@ public class ConfigUtil {
             return null;
         }
     }
-    
+
     public KeyManagerFactory getAsKeyManagerFactory(Properties props, String configFolder, String keyFile, String storePwd, String keyAlias, String keyPwd) {
         String keyFileValue = props.getProperty(keyFile);
         if (StringUtils.isBlank(keyFileValue)) {
             return null;
         }
-        String sslKeyStorePath = configFolder + File.separator + keyFileValue;
+        String sslKeyStorePath = getFile(configFolder, keyFileValue).getAbsolutePath();
         String alias = props.getProperty(keyAlias);
         KeyManagerFactory kmf = null;
         try {
             String pwd = getAsPassword(props, storePwd);
             char[] pwdStore = pwd == null ? null : pwd.toCharArray();
-            
+
             pwd = getAsPassword(props, keyPwd);
             char[] pwdKey = StringUtils.isBlank(alias) || pwd == null ? null : pwd.toCharArray();
-            
+
             kmf = SSLUtil.buildKeyManagerFactory(sslKeyStorePath, pwdStore, alias, pwdKey);
         } catch (Throwable ex) {
             addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString());
         }
         return kmf;
     }
-    
+
     public TrustManagerFactory getAsTrustManagerFactory(Properties props, String configFolder, String keyFile, String storePwd) {
         String trustStorePath = props.getProperty(keyFile);
         if (StringUtils.isBlank(trustStorePath)) {
             return null;
         }
-        String sslKeyStorePath = configFolder + File.separator + trustStorePath;
+
+        String sslKeyStorePath = getFile(configFolder, trustStorePath).getAbsolutePath();
         TrustManagerFactory tmf = null;
         try {
             String pwd = getAsPassword(props, storePwd);
@@ -536,5 +536,13 @@ public class ConfigUtil {
             addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString());
         }
         return tmf;
+    }
+
+    public File getFile(String configFolder, String filepath) {
+        File file = new File(filepath);
+        if (!file.isAbsolute()) {
+            file = new File(configFolder + File.separator + filepath);
+        }
+        return file.getAbsoluteFile();
     }
 }
