@@ -43,6 +43,8 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import io.netty.handler.codec.DecoderException;
+import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
+import org.summerboot.jexpress.util.FormatterUtil;
 
 /**
  *
@@ -54,6 +56,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     protected Logger log = LogManager.getLogger(this.getClass());
 
     protected static NioConfig nioCfg = NioConfig.cfg;
+    protected String protectedContectReplaceWith = "***";
 
     public NioServerHttpRequestHandler() {
         super(FullHttpRequest.class, false);//set AutoRelease to false to enable keepalive
@@ -139,16 +142,17 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             long responseContentLength = -1;
             Throwable ioEx = null;
             long processTime = -1;
+            ProcessorSettings processorSettings = null;
             try {
-                service(ctx, requestHeaders, httpMethod, queryStringDecoder.path(), queryStringDecoder.parameters(), httpPostRequestBody, context);
+                processorSettings = service(ctx, requestHeaders, httpMethod, queryStringDecoder.path(), queryStringDecoder.parameters(), httpPostRequestBody, context);
                 processTime = System.currentTimeMillis() - start;
-                responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
+                responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
                 context.timestampPOI(BootPOI.SERVICE_END);
             } catch (Throwable ex) {
                 ioEx = ex;
                 Err e = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send context to client", ex);
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
-                responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
+                responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
             } finally {
                 NioCounter.COUNTER_SENT.incrementAndGet();
                 long responseTime = System.currentTimeMillis() - start;
@@ -191,16 +195,32 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         verboseClientServerCommunication(nioCfg, requestHeaders, httpPostRequestBody, context, sb);
                         context.reportMemo(sb);
                         sb.append(System.lineSeparator());
-                        report = beforeLogging(sb.toString());
+                        report = sb.toString();
+                        ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
+                        if (logSettings != null) {
+                            List<String> protectedJsonNumberFields = logSettings.getProtectedJsonNumberFields();
+                            if (protectedJsonNumberFields != null) {
+                                for (String protectedJsonNumberField : protectedJsonNumberFields) {
+                                    report = FormatterUtil.protectJsonNumber(report, protectedJsonNumberField, protectedContectReplaceWith);
+                                }
+                            }
+                            List<String> protectedJsonStringFields = logSettings.getProtectedJsonStringFields();
+                            if (protectedJsonStringFields != null) {
+                                for (String protectedJsonStringField : protectedJsonStringFields) {
+                                    report = FormatterUtil.protectJsonString(report, protectedJsonStringField, protectedContectReplaceWith);
+                                }
+                            }
+                        }
+                        report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
                         log.log(level, report, context.cause());
                     }
                 } catch (Throwable ex) {
-                    log.error("loggin failed", ex);
+                    log.fatal("logging failed \n{}", report, ex);
                 }
                 try {
-                    afterLogging(requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, report, ioEx);
+                    afterLogging(report, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
                 } catch (Throwable ex) {
-                    log.error("report failed", ex);
+                    log.error("afterLogging failed", ex);
                 }
                 //context.clear();
             }
@@ -212,7 +232,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             Err e = new Err(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many requests", ex);
             context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
-            long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
+            long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
 
             StringBuilder sb = new StringBuilder();
             sb.append("request_").append(hitIndex).append("=").append(ex.toString())
@@ -229,7 +249,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             Err e = new Err(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
-            long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this);
+            long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
             StringBuilder sb = new StringBuilder();
             sb.append("request_").append(hitIndex).append("=").append(ex.toString())
                     .append("ms\n\t").append(requestMetaInfo).append("\n\tresponsed#").append(hitIndex)
@@ -355,29 +375,22 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
         // 3c. verbose aspect
         // 3.1 request responseHeader
-        if (!context.privacyReqHeader() && cfg.isVerboseReqHeader()) {
-            sb.append("\n\t1.client_req.headers=").append(httpHeaders);
-        }
+        sb.append("\n\t1.client_req.headers=").append((context.logRequestHeader() && cfg.isVerboseReqHeader()) ? httpHeaders : "***");
         // 3.2 request body
-        if (!context.privacyReqContent() && cfg.isVerboseReqContent()) {
-            sb.append("\n\t2.client_req.body=").append(httpPostRequestBody);
-        }
+        sb.append("\n\t2.client_req.body=").append((context.logRequestBody() && cfg.isVerboseReqContent()) ? httpPostRequestBody : "***");
         // 3.3 context responseHeader
-        if (!context.privacyRespHeader() && cfg.isVerboseRespHeader()) {
-            sb.append("\n\t3.server_resp.headers=").append(context.responseHeaders());
-        }
+        sb.append("\n\t3.server_resp.headers=").append((context.logResponseHeader() && cfg.isVerboseRespHeader()) ? context.responseHeaders() : "***");
         // 3.4 context body
-        if (!context.privacyRespContent() && cfg.isVerboseRespContent()) {
-            sb.append("\n\t4.server_resp.body=").append(context.txt());
-        }
+        sb.append("\n\t4.server_resp.body=").append((context.logResponseBody() && cfg.isVerboseRespContent()) ? context.txt() : "***");
     }
 
-    abstract protected void service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
+    abstract protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
 
-    abstract protected String beforeLogging(String originallLogContent);
+    abstract protected String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
+            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
 
-    abstract protected void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception;
+    abstract protected void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
+            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
 
     protected RequestProcessor getRequestProcessor(final HttpMethod httptMethod, final String httpRequestPath) {
         return JaxRsRequestProcessorManager.getRequestProcessor(httptMethod, httpRequestPath);

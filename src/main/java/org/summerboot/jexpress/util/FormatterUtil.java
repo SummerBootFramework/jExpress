@@ -300,7 +300,7 @@ public class FormatterUtil {
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
 
-    public static String proctectJsonNumber(String json, String key, String replaceWith) {
+    public static String protectJsonNumber(String json, String key, String replaceWith) {
         String regex = "(\"" + key + "\"\\s*:\\s*)(\\d+)";
         return json.replaceAll(regex, "$1" + replaceWith);
     }

@@ -351,7 +351,7 @@ public class LdapAgent implements Closeable {
         String dn = ret[0];
         if (dn == null) {
             if (listener != null) {
-                listener.onLoginUserNotFound(username);
+                listener.onLoginUserNotFound(username, password);
             }
             return null;
         }
@@ -369,7 +369,7 @@ public class LdapAgent implements Closeable {
             authenticate(dn, password);
         } catch (AuthenticationException ex) {
             if (listener != null) {
-                listener.onLoginRejected(username);
+                listener.onLoginRejected(username, password);
             }
             return null;
         }

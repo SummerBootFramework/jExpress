@@ -60,6 +60,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.security.auth.Caller;
 
@@ -68,7 +69,7 @@ import org.summerboot.jexpress.security.auth.Caller;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
-@Controller
+//@Controller
 //@Path(CONTEXT_ROOT)
 //@Consumes(MediaType.APPLICATION_JSON)
 //@Produces(MediaType.APPLICATION_JSON)
@@ -217,6 +218,7 @@ abstract public class BootController extends PingController {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
     //@CaptureTransaction("user.login")
+    @Log(requestBody = false, responseHeader = false)
     @Operation(
             tags = {TAG_USER_AUTH},
             summary = "User login",
@@ -242,14 +244,15 @@ abstract public class BootController extends PingController {
     public Caller login(@Parameter(required = true) @Nonnull @FormParam("j_username") String uid,
             @FormParam("j_password") String pwd,
             @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
-        //Authenticator auth = getAuthenticator();
         if (auth == null) {
             context.error(new Err(BootErrorCode.ACCESS_ERROR, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
         }
         String jwt = auth.login(uid, pwd, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
-        if (jwt != null) {
-            context.responseHeader(Config.X_AUTH_TOKEN, jwt);
+        if (jwt == null) {
+            context.status(HttpResponseStatus.UNAUTHORIZED);
+        } else {
+            context.responseHeader(Config.X_AUTH_TOKEN, jwt).status(HttpResponseStatus.CREATED);
         }
         return context.caller();
     }

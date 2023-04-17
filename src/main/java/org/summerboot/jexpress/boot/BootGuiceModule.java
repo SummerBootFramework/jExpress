@@ -44,8 +44,8 @@ import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
 import org.summerboot.jexpress.nio.server.BootHttpRequestHandler;
 import org.summerboot.jexpress.nio.server.BootNioExceptionHandler;
 import org.summerboot.jexpress.nio.server.BootNioLifecycleHandler;
-import org.summerboot.jexpress.nio.server.NioExceptionHandler;
-import org.summerboot.jexpress.nio.server.NioLifecycle;
+import org.summerboot.jexpress.nio.server.NioExceptionListener;
+import org.summerboot.jexpress.nio.server.NioLifecycleListener;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.AuthenticatorMockImpl;
 import org.summerboot.jexpress.util.ReflectionUtil;
@@ -111,11 +111,11 @@ public class BootGuiceModule extends AbstractModule {
         bind(Authenticator.class).to(AuthenticatorMockImpl.class);
         memo.append("\n\t- Ioc.bind: ").append(Authenticator.class.getName()).append(ARROW).append(AuthenticatorMockImpl.class.getName());
 
-        bind(NioExceptionHandler.class).to(BootNioExceptionHandler.class);
-        memo.append("\n\t- Ioc.bind: ").append(NioExceptionHandler.class.getName()).append(ARROW).append(BootNioExceptionHandler.class.getName());
+        bind(NioExceptionListener.class).to(BootNioExceptionHandler.class);
+        memo.append("\n\t- Ioc.bind: ").append(NioExceptionListener.class.getName()).append(ARROW).append(BootNioExceptionHandler.class.getName());
 
-        bind(NioLifecycle.class).to(BootNioLifecycleHandler.class);
-        memo.append("\n\t- Ioc.bind: ").append(NioLifecycle.class.getName()).append(ARROW).append(BootNioLifecycleHandler.class.getName());
+        bind(NioLifecycleListener.class).to(BootNioLifecycleHandler.class);
+        memo.append("\n\t- Ioc.bind: ").append(NioLifecycleListener.class.getName()).append(ARROW).append(BootNioLifecycleHandler.class.getName());
 
         bind(PostOffice.class).to(BootPostOfficeImpl.class);
         memo.append("\n\t- Ioc.bind: ").append(PostOffice.class.getName()).append(ARROW).append(BootPostOfficeImpl.class.getName());

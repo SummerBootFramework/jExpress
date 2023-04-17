@@ -58,6 +58,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.util.TimeUtil;
 
@@ -72,8 +73,8 @@ public class NioHttpUtil {
     //security
     public static final String HTTP_HEADER_AUTH_TOKEN = "Authorization";// "X-Auth-Token";// "X_Authorization"; //RFC 7235, sec. 4.2
     public static final String HTTP_HEADER_AUTH_TYPE = "Bearer";// RFC6750, https://tools.ietf.org/html/rfc6750
-    protected static String HeaderName_ServerTimestamp = NioConfig.cfg.getHttpServiceResponseHeaderName_ServerTimestamp();
-    protected static String HeaderName_Reference = NioConfig.cfg.getHttpServiceResponseHeaderName_Reference();
+//    protected static String HeaderName_ServerTimestamp = NioConfig.cfg.getHttpServiceResponseHeaderName_ServerTimestamp();
+//    protected static String HeaderName_Reference = NioConfig.cfg.getHttpServiceResponseHeaderName_Reference();
 
     // <img src="data:image/png;base64,<base64 str here>" alt="Red dot" />
     // <object type="application/pdf" data="data:application/pdf;base64,<base64 str here>"/>
@@ -111,13 +112,18 @@ public class NioHttpUtil {
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
 
-    public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext, final ErrorAuditor errorAuditor) {
-        if (HeaderName_Reference != null) {
-            serviceContext.responseHeader(HeaderName_Reference, serviceContext.hit());
+    public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings) {
+        if (processorSettings != null) {
+            String key = processorSettings.getHttpServiceResponseHeaderName_Reference();
+            if (key != null) {
+                serviceContext.responseHeader(key, serviceContext.hit());
+            }
+            key = processorSettings.getHttpServiceResponseHeaderName_ServerTimestamp();
+            if (key != null) {
+                serviceContext.responseHeader(key, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
+            }
         }
-        if (HeaderName_ServerTimestamp != null) {
-            serviceContext.responseHeader(HeaderName_ServerTimestamp, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
-        }
+
         if (serviceContext.file() != null) {
             return sendFile(ctx, isKeepAlive, serviceContext);
         }

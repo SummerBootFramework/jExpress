@@ -26,8 +26,8 @@ import java.lang.annotation.Target;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Target(value = {ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
-@Retention(value = RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
 @Documented
 @BindingAnnotation
 public @interface Controller {
@@ -35,4 +35,8 @@ public @interface Controller {
     String NOT_TAGGED = "";
 
     String implTag() default NOT_TAGGED;
+
+    String responseHeader_ServerTs() default "X-ServerTs";
+
+    String responseHeader_Reference() default "X-Reference";
 }

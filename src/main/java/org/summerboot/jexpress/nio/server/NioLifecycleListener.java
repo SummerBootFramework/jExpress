@@ -27,7 +27,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
-public interface NioLifecycle {
+public interface NioLifecycleListener {
 
     /**
      * step0 - do any validation checks before processing
@@ -39,7 +39,7 @@ public interface NioLifecycle {
      * @return true if good to process request, otherwise false
      * @throws Exception
      */
-    boolean preProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
+    boolean beofreProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
 
     /**
      * step1
@@ -53,7 +53,7 @@ public interface NioLifecycle {
      * @param httpPostRequestBody
      * @param context
      */
-    void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath,
+    void afterProcess(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath,
             Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context);
 
     /**
@@ -67,14 +67,7 @@ public interface NioLifecycle {
     /**
      * step3
      *
-     * @param log
-     * @return
-     */
-    String beforeLogging(String log);
-
-    /**
-     * step4
-     *
+     * @param originallLogContent
      * @param httpHeaders
      * @param httpMethod
      * @param httpRequestUri
@@ -84,10 +77,28 @@ public interface NioLifecycle {
      * @param processTime
      * @param responseTime
      * @param responseContentLength
+     * @param ioEx
+     * @return
+     */
+    String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
+            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx);
+
+    /**
+     * step4
+     *
      * @param logContent
+     * @param httpHeaders
+     * @param httpMethod
+     * @param httpRequestUri
+     * @param httpPostRequestBody
+     * @param context
+     * @param queuingTime
+     * @param processTime
+     * @param responseTime
+     * @param responseContentLength
      * @param ioEx
      * @throws Exception
      */
-    void afterLogging(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception;
+    void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
+            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
 }
