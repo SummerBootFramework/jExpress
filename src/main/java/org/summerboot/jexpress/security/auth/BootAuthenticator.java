@@ -74,9 +74,9 @@ public abstract class BootAuthenticator<T> implements Authenticator {
         //context.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
 
         //2. login caller against LDAP or DB
-        context.timestampPOI(BootPOI.LDAP_BEGIN);
+        context.poi(BootPOI.LDAP_BEGIN);
         Caller caller = authenticate(uid, pwd, (T) metaData, listener, context);
-        context.timestampPOI(BootPOI.LDAP_END);
+        context.poi(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
             return null;

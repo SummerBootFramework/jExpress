@@ -375,21 +375,21 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 return;
             }
             try {
-                context.timestampPOI(BootPOI.BIZ_BEGIN);
+                context.poi(BootPOI.BIZ_BEGIN);
                 ret = javaMethod.invoke(javaInstance, paramValues);
             } catch (InvocationTargetException ex) {
                 throw ex.getCause();
             } finally {
-                context.timestampPOI(BootPOI.BIZ_END);
+                context.poi(BootPOI.BIZ_END);
             }
         } else {
             try {
-                context.timestampPOI(BootPOI.BIZ_BEGIN);
+                context.poi(BootPOI.BIZ_BEGIN);
                 ret = javaMethod.invoke(javaInstance);
             } catch (InvocationTargetException ex) {
                 throw ex.getCause();
             } finally {
-                context.timestampPOI(BootPOI.BIZ_END);
+                context.poi(BootPOI.BIZ_END);
             }
         }
         //3. process return object

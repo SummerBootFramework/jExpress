@@ -89,7 +89,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
             // step2. caller authentication, will do authorizationCheck in next step(ControllerAction.process(...))
             if (processor.isRoleBased()) {
-                context.timestampPOI(BootPOI.AUTH_BEGIN);
+                context.poi(BootPOI.AUTH_BEGIN);
                 if (!authenticationCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
                     context.status(HttpResponseStatus.UNAUTHORIZED);
                     return processorSettings;
@@ -101,7 +101,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             }
 
             // step3. serve the request, most frequently called first
-            context.timestampPOI(BootPOI.PROCESS_BEGIN);
+            context.poi(BootPOI.PROCESS_BEGIN);
             if (authenticator != null && !authenticator.customizedAuthorizationCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return processorSettings;
             }
@@ -137,7 +137,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             nioExceptionListener.onUnexpectedException(ex, processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
         } finally {
             nioLifecycleListener.afterProcess(processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
-            context.timestampPOI(BootPOI.PROCESS_END);
+            context.poi(BootPOI.PROCESS_END);
         }
         return processorSettings;
     }
