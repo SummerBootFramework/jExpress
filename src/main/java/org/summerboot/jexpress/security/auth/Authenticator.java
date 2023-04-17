@@ -39,7 +39,7 @@ public interface Authenticator {
     /**
      * Success HTTP Status: 201 Created
      *
-     * @param uid
+     * @param username
      * @param pwd
      * @param metaData
      * @param validForMinutes
@@ -47,7 +47,19 @@ public interface Authenticator {
      * @return JWT
      * @throws javax.naming.NamingException
      */
-    String login(String uid, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException;
+    String login(String username, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException;
+
+    /**
+     * Extra authorization checks before processing
+     *
+     * @param processor
+     * @param httpRequestHeaders
+     * @param httpRequestPath
+     * @param context
+     * @return true if good to process request, otherwise false
+     * @throws Exception
+     */
+    boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
 
     JwtBuilder toJwt(Caller caller);
 
@@ -73,18 +85,6 @@ public interface Authenticator {
      * @return Caller
      */
     <T extends Caller> T verifyBearerToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
-    
-    /**
-     * do any validation checks before processing
-     *
-     * @param processor
-     * @param httpRequestHeaders
-     * @param httpRequestPath
-     * @param context
-     * @return true if good to process request, otherwise false
-     * @throws Exception
-     */
-    boolean preAccessCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
 
     /**
      *

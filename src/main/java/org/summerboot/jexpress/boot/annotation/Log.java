@@ -13,21 +13,34 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.security.auth;
+package org.summerboot.jexpress.boot.annotation;
 
-import io.jsonwebtoken.Claims;
+import com.google.inject.BindingAnnotation;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface AuthenticatorListener {
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@BindingAnnotation
+public @interface Log {
 
-    void onLoginSuccess(String username, String token);
+    boolean requestHeader() default true;
 
-    void onLoginRejected(String username, String password);
+    boolean requestBody() default true;
 
-    void onLoginUserNotFound(String username, String password);
+    boolean responseHeader() default true;
 
-    void onLogout(Claims claims, String token, long expireInMilliseconds);
+    boolean responseBody() default true;
+
+    String[] hideJsonStringFields() default {};
+
+    String[] hideJsonNumberFields() default {};
 }

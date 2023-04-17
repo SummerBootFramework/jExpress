@@ -91,10 +91,10 @@ public class ServiceContext {
     private Throwable cause;
     // 2.2 logging control
     private Level level = Level.INFO;
-    private boolean privacyReqHeader = false;
-    private boolean privacyRespHeader = false;
-    private boolean privacyReqContent = false;
-    private boolean privacyRespContent = false;
+    private boolean logRequestHeader = true;
+    private boolean logResponseHeader = true;
+    private boolean logRequestBody = true;
+    private boolean logResponseBody = true;
 
     public static ServiceContext build(long hit) {
         return new ServiceContext(null, hit, System.currentTimeMillis(), null, null, null, null);
@@ -106,8 +106,8 @@ public class ServiceContext {
 
     @Override
     public String toString() {
-        //return "ServiceContext{" + "status=" + status + ", responseHeader=" + responseHeader + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errorCode=" + errorCode + ", errorTag=" + errorTag + ", cause=" + cause + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
-        return "ServiceContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + privacyReqHeader + ", logRespHeader=" + privacyRespHeader + ", logReqContent=" + privacyReqContent + ", logRespContent=" + privacyRespContent + '}';
+        //return "ServiceContext{" + "status=" + status + ", responseHeader=" + responseHeader + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errorCode=" + errorCode + ", errorTag=" + errorTag + ", cause=" + cause + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
+        return "ServiceContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
     }
 
     private ServiceContext(ChannelHandlerContext ctx, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
@@ -202,10 +202,10 @@ public class ServiceContext {
         cause = null;
         // 2.2 logging control
         level = Level.INFO;
-        privacyReqHeader = false;
-        privacyRespHeader = false;
-        privacyReqContent = false;
-        privacyRespContent = false;
+        logRequestHeader = false;
+        logResponseHeader = false;
+        logRequestBody = false;
+        logResponseBody = false;
         return this;
     }
 
@@ -679,40 +679,40 @@ public class ServiceContext {
         return this;
     }
 
-    public ServiceContext privacyReqHeader(boolean enabled) {
-        this.privacyReqHeader = enabled;
+    public ServiceContext logRequestHeader(boolean enabled) {
+        this.logRequestHeader = enabled;
         return this;
     }
 
-    public boolean privacyReqHeader() {
-        return privacyReqHeader;
+    public boolean logRequestHeader() {
+        return logRequestHeader;
     }
 
-    public ServiceContext privacyReqContent(boolean enabled) {
-        this.privacyReqContent = enabled;
+    public ServiceContext logRequestBody(boolean enabled) {
+        this.logRequestBody = enabled;
         return this;
     }
 
-    public boolean privacyReqContent() {
-        return privacyReqContent;
+    public boolean logRequestBody() {
+        return logRequestBody;
     }
 
-    public ServiceContext privacyRespHeader(boolean enabled) {
-        this.privacyRespHeader = enabled;
+    public ServiceContext logResponseHeader(boolean enabled) {
+        this.logResponseHeader = enabled;
         return this;
     }
 
-    public boolean privacyRespHeader() {
-        return privacyRespHeader;
+    public boolean logResponseHeader() {
+        return logResponseHeader;
     }
 
-    public ServiceContext privacyRespContent(boolean enabled) {
-        this.privacyRespContent = enabled;
+    public ServiceContext logResponseBody(boolean enabled) {
+        this.logResponseBody = enabled;
         return this;
     }
 
-    public boolean privacyRespContent() {
-        return privacyRespContent;
+    public boolean logResponseBody() {
+        return logResponseBody;
     }
 
     public ServiceContext timestampPOI(String marker) {

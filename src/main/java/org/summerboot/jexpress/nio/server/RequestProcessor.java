@@ -21,6 +21,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
+import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 
 /**
  *
@@ -29,6 +30,8 @@ import java.util.Map;
 public interface RequestProcessor {
 
     <T extends Annotation> T getAnnotation(Class<T> annotationClass);
+
+    ProcessorSettings getProcessorSettings();
 
     String getDeclaredPath();
 

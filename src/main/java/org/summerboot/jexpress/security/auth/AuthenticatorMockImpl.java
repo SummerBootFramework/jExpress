@@ -37,7 +37,7 @@ public class AuthenticatorMockImpl extends BootAuthenticator<Long> {
     }
 
     @Override
-    public boolean preAccessCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
         return true;
     }
 

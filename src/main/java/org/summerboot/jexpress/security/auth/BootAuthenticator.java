@@ -71,7 +71,7 @@ public abstract class BootAuthenticator<T> implements Authenticator {
     @Override
     public String login(String uid, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException {
         //1. protect request body from being logged
-        context.privacyReqContent(true);
+        //context.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
 
         //2. login caller against LDAP or DB
         context.timestampPOI(BootPOI.LDAP_BEGIN);
@@ -92,13 +92,13 @@ public abstract class BootAuthenticator<T> implements Authenticator {
         if (listener != null) {
             listener.onLoginSuccess(caller.getUid(), token);
         }
-        context.caller(caller).status(HttpResponseStatus.CREATED).privacyRespHeader(true);
+        context.caller(caller);
         return token;
     }
 
     /**
      *
-     * @param uid
+     * @param usename
      * @param password
      * @param metaData
      * @param listener
@@ -106,7 +106,7 @@ public abstract class BootAuthenticator<T> implements Authenticator {
      * @return
      * @throws NamingException
      */
-    abstract protected Caller authenticate(String uid, String password, T metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
+    abstract protected Caller authenticate(String usename, String password, T metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -262,11 +262,6 @@ public abstract class BootAuthenticator<T> implements Authenticator {
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
                     caller = fromJwt(claims);
-                    if (listener != null && !listener.verify(caller, claims)) {
-                        Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, null, "Rejected AuthToken", null);
-                        context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
-                        caller = null;
-                    }
                 }
             } catch (ExpiredJwtException ex) {
                 Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Expired AuthToken", null);
@@ -314,7 +309,7 @@ public abstract class BootAuthenticator<T> implements Authenticator {
                 cache.blacklist(jti, authToken, expireInMilliseconds);
             }
             if (listener != null) {
-                listener.onLogout(jti, authToken, expireInMilliseconds);
+                listener.onLogout(claims, authToken, expireInMilliseconds);
             }
         } catch (ExpiredJwtException ex) {
             //ignore

@@ -47,7 +47,10 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 
 /**
  *
@@ -56,26 +59,33 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
 public class JaxRsRequestProcessor implements RequestProcessor {
 
     //basic info
-    private final Object javaInstance;
-    private final Method javaMethod;
-    private final String declaredPath;
-    private final Set<String> rolesAllowed;
-    private final boolean roleBased;
-    private final boolean permitAll;
-    private final List<String> consumes;
-    private final List<String> produces;
-    private final String produce_ExplicitType;
-    private final String produce_DefaultType;
+    protected final Object javaInstance;
+    protected final Method javaMethod;
+    protected final String declaredPath;
+    protected final Set<String> rolesAllowed;
+    protected final boolean roleBased;
+    protected final boolean permitAll;
+    protected final List<String> consumes;
+    protected final List<String> produces;
+    protected final String produce_ExplicitType;
+    protected final String produce_DefaultType;
 
     //param info    
     private final List<JaxRsRequestParameter> parameterList;
-    private final boolean usingMatrixParam;
-    private final boolean usingPathParam;
+    protected final boolean usingMatrixParam;
+    protected final boolean usingPathParam;
     private final Map<String, MetaPathParam> pathParamMap;
     private final List<MetaMatrixParam> metaMatrixParamList;
-    private final Pattern regexPattern;
-    private final int parameterSize;
+    protected final Pattern regexPattern;
+    protected final int parameterSize;
     public static final List<String> SupportedProducesWithReturnType = Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON_PATCH_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML);
+
+    //logging info
+    protected final ProcessorSettings processorSettings;
+//    protected final boolean logRequestHeader;
+//    protected final boolean logRequestBody;
+//    protected final boolean logResponseHeader;
+//    protected final boolean logResponseBody;
 
     public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String path, final Set<String> declareRoles) {
         //1. Basic info
@@ -238,6 +248,65 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         this.pathParamMap = usingPathParam ? Map.copyOf(pathParamMapTemp) : null;
         this.declaredPath = (usingPathParam || usingMatrixParam) ? sb.toString() : path;
         this.regexPattern = (usingPathParam || usingMatrixParam) ? Pattern.compile(this.declaredPath) : null;
+
+        //logging info
+        Log classLevelLogAnnotation = (Log) controllerClass.getAnnotation(Log.class);
+//        Class ctrlClass = controllerClass;
+//        while (classLevelLogAnnotation == null && ctrlClass.getSuperclass() != null) {
+//            ctrlClass = ctrlClass.getSuperclass();
+//            classLevelLogAnnotation = (Log) ctrlClass.getAnnotation(Log.class);
+//        }
+
+        processorSettings = new ProcessorSettings();
+        updateLogSettings(classLevelLogAnnotation);//init with class level settings
+        Log methodLevelLogAnnotation = javaMethod.getAnnotation(Log.class);
+        updateLogSettings(methodLevelLogAnnotation);//override root settings with method level settings
+        if (processorSettings.getLogSettings() != null) {
+            processorSettings.getLogSettings().removeDuplicates();
+        }
+        Controller controllerAnnotation = (Controller) controllerClass.getAnnotation(Controller.class);
+        if (controllerAnnotation != null) {
+            processorSettings.setHttpServiceResponseHeaderName_Reference(controllerAnnotation.responseHeader_Reference());
+            processorSettings.setHttpServiceResponseHeaderName_ServerTimestamp(controllerAnnotation.responseHeader_ServerTs());
+        }
+    }
+
+    private void updateLogSettings(Log log) {
+        if (log == null) {
+            return;
+        }
+        ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
+        if (logSettings == null) {
+            logSettings = processorSettings.new LogSettings();
+            processorSettings.setLogSettings(logSettings);
+        }
+        logSettings.setLogRequestHeader(log.requestHeader());
+        logSettings.setLogRequestBody(log.requestBody());
+        logSettings.setLogResponseHeader(log.responseHeader());
+        logSettings.setLogResponseBody(log.responseBody());
+        String[] protectedJsonFields = log.hideJsonNumberFields();
+        if (protectedJsonFields != null && protectedJsonFields.length > 0) {
+            List<String> list = logSettings.getProtectedJsonNumberFields();
+            if (list == null) {
+                list = new ArrayList();
+                logSettings.setProtectedJsonNumberFields(list);
+            }
+            list.addAll(Arrays.asList(protectedJsonFields));
+        }
+        String[] protectedJsonStringFields = log.hideJsonStringFields();
+        if (protectedJsonStringFields != null && protectedJsonStringFields.length > 0) {
+            List<String> list = logSettings.getProtectedJsonStringFields();
+            if (list == null) {
+                list = new ArrayList();
+                logSettings.setProtectedJsonStringFields(list);
+            }
+            list.addAll(Arrays.asList(protectedJsonStringFields));
+        }
+    }
+
+    @Override
+    public ProcessorSettings getProcessorSettings() {
+        return processorSettings;
     }
 
     @Override

@@ -45,7 +45,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
  * @version 1.0
  */
 @Singleton
-public class BootNioExceptionHandler implements NioExceptionHandler {
+public class BootNioExceptionHandler implements NioExceptionListener {
 
     @Inject
     protected HealthInspector healthInspector;

@@ -29,15 +29,15 @@ import org.summerboot.jexpress.util.FormatterUtil;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
-public class BootNioLifecycleHandler implements NioLifecycle {
+public class BootNioLifecycleHandler implements NioLifecycleListener {
 
     @Override
-    public boolean preProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+    public boolean beofreProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
         return true;
     }
 
     @Override
-    public void afterService(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
+    public void afterProcess(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
         protectAuthToken(processor, httpRequestHeaders);
     }
 
@@ -53,11 +53,13 @@ public class BootNioLifecycleHandler implements NioLifecycle {
     }
 
     @Override
-    public String beforeLogging(String log) {
-        return log;
+    public String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
+            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
+        return originallLogContent;
     }
 
     @Override
-    public void afterLogging(HttpHeaders httpHeaders, HttpMethod httpMethod, String httpRequestUri, String httpPostRequestBody, ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, String logContent, Throwable ioEx) throws Exception {
+    public void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
+            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
     }
 }
