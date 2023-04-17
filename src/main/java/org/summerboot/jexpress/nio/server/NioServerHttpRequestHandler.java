@@ -147,7 +147,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 processorSettings = service(ctx, requestHeaders, httpMethod, queryStringDecoder.path(), queryStringDecoder.parameters(), httpPostRequestBody, context);
                 processTime = System.currentTimeMillis() - start;
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
-                context.timestampPOI(BootPOI.SERVICE_END);
+                context.poi(BootPOI.SERVICE_END);
             } catch (Throwable ex) {
                 ioEx = ex;
                 Err e = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send context to client", ex);
@@ -196,18 +196,20 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         context.reportMemo(sb);
                         sb.append(System.lineSeparator());
                         report = sb.toString();
-                        ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
-                        if (logSettings != null) {
-                            List<String> protectedJsonNumberFields = logSettings.getProtectedJsonNumberFields();
-                            if (protectedJsonNumberFields != null) {
-                                for (String protectedJsonNumberField : protectedJsonNumberFields) {
-                                    report = FormatterUtil.protectJsonNumber(report, protectedJsonNumberField, protectedContectReplaceWith);
+                        if (processorSettings != null) {
+                            ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
+                            if (logSettings != null) {
+                                List<String> protectedJsonNumberFields = logSettings.getProtectedJsonNumberFields();
+                                if (protectedJsonNumberFields != null) {
+                                    for (String protectedJsonNumberField : protectedJsonNumberFields) {
+                                        report = FormatterUtil.protectJsonNumber(report, protectedJsonNumberField, protectedContectReplaceWith);
+                                    }
                                 }
-                            }
-                            List<String> protectedJsonStringFields = logSettings.getProtectedJsonStringFields();
-                            if (protectedJsonStringFields != null) {
-                                for (String protectedJsonStringField : protectedJsonStringFields) {
-                                    report = FormatterUtil.protectJsonString(report, protectedJsonStringField, protectedContectReplaceWith);
+                                List<String> protectedJsonStringFields = logSettings.getProtectedJsonStringFields();
+                                if (protectedJsonStringFields != null) {
+                                    for (String protectedJsonStringField : protectedJsonStringFields) {
+                                        report = FormatterUtil.protectJsonString(report, protectedJsonStringField, protectedContectReplaceWith);
+                                    }
                                 }
                             }
                         }

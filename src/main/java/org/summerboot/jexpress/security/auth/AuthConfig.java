@@ -164,8 +164,8 @@ public class AuthConfig extends BootConfig {
     //3. Role mapping
     @ConfigHeader(title = "3. Role mapping",
             desc = "Map the role with user group (no matter the group is defined in LDAP or DB)",
-            format = "roles.<role name>.groups=csv list\n"
-            + "roles.<role name>.users=csv list",
+            format = "roles.<role name>.groups=csv list of groups\n"
+            + "roles.<role name>.users=csv list of users",
             example = "the following example maps one group(AppAdmin_Group) and two users(johndoe, janejoe) to a role(AppAdmin)\n"
             + "roles.AppAdmin.groups=AppAdmin_Group\n"
             + "roles.AppAdmin.users=johndoe, janejoe",

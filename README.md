@@ -32,7 +32,7 @@
 
 **1.3 Sample Code** - https://github.com/SummerBootFramework/jExpressDemo-HelloSummer
 
-pom.xml
+add the jExpress dependency to pom.xml
 
 ```
 <dependency>
@@ -40,6 +40,25 @@ pom.xml
     <artifactId>jexpress</artifactId>
 </dependency>
 ```
+
+or in your pom.xml file you can add the Maven 2 snapshot repository if you want to try out the SNAPSHOT versions:
+
+```
+<repositories>
+    <repository>
+        <id>maven.snapshots</id>
+        <name>Maven Snapshot Repository</name>
+        <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+```
+
 
 Main.java
 
@@ -57,21 +76,228 @@ public class Main {
 A RESTful API class with JAX-RS style, and annotate this class with @Controller 
 
 ```
+import com.google.inject.Singleton;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import java.util.List;
 import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.boot.annotation.Log;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
+@Singleton
 @Controller
 @Path("/hellosummer")
 public class MyController {
 
     @GET
-    @Path("/hello/{name}")
-    public String hello(@PathParam("name") String myName) {
+    @Path("/account/{name}")
+    @Produces({MediaType.TEXT_PLAIN})
+    public String hello(@NotNull @PathParam("name") String myName) {// both Nonnull or NotNull works    
         return "Hello " + myName;
     }
+
+    @POST
+    @Path("/account/{name}")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public ResponseDto hello_no_validation_unprotected_logging(@PathParam("name") String myName, RequestDto request) {
+        return new ResponseDto();
+    }
+
+    /**
+     * Three features:
+     * <p> 1. auto validation by @Valid and @NotNull annotation 
+     * <p> 2. protected user credit card and privacy information from being logged by @Log annotation
+     * <p> 3. mark performance POI (point of interest) by using ServiceContext.poi(key), see section#8.3
+     *
+     * @param myName
+     * @param request
+     * @param context
+     * @return
+     */
+    @POST
+    @Path("/hello/{name}")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"})
+    public ResponseDto hello_auto_validation_protected_logging_markWithPOI(@NotNull @PathParam("name") String myName, @NotNull @Valid RequestDto request, final ServiceContext context) {
+        context.poi("DB begin");// about POI, see section8.3
+        // DB access and it takes time ...
+        context.poi("DB end");
+
+        context.poi("gRPC begin");// about POI, see section8.3
+        // gRPC access and it takes time ...
+        context.poi("gRPC end");
+
+		context.status(HttpResponseStatus.CREATED);// override default HTTP response status
+        return new ResponseDto();
+    }
+
+    public static class RequestDto {
+
+        @NotNull
+        private String creditCardNumber;
+
+        @Valid
+        @NotEmpty
+        private List<String> shoppingList;
+    }
+
+    public static class ResponseDto {
+
+        private String clientPrivacy;
+    }
 }
+```
+
+**1.4 Sample Code: -use \<implTag\>**
+
+Use @Controller.**implTag** field as below, this controller class will only be available with -**use RoleBased** parameter to launch the application, see *<u>section#9</u>*
+
+```
+@Controller(implTag="RoleBased")
+```
+
+**1.5 Sample Code: PING** see *section#5*
+
+Make the controller enable the ping api at /hellosummer**/ping**, due to ping will occur every 5 seconds, you do not want to log it at all.
+
+Extends **PingController** or **BootController** as below
+
+```
+import org.summerboot.jexpress.nio.server.ws.rs.PingController;
+
+@Controller
+@Path("/hellosummer")
+public class MyController extends PingController {
+	...
+}
+```
+
+or
+
+```
+import org.summerboot.jexpress.nio.server.ws.rs.BootController;
+
+@Controller
+@Path("/hellosummer")
+public class MyController extends BootController {
+	...
+}
+```
+
+or use @Ping on a GET method, you need to add OpenAPI doc by yourself or copy it from **PingController**
+
+```
+import org.summerboot.jexpress.boot.annotation.Ping;
+
+@Controller
+@Path("/hellosummer")
+public class MyController  {
+	@GET
+    @Path("/ping)
+    @Ping
+    public void hello() {
+    }
+}
+```
+
+**1.6 Sample Code: Role Based access**
+
+step1: Extends **BootController** as below
+
+```
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
+import org.summerboot.jexpress.nio.server.ws.rs.BootController;
+
+@Controller
+@Path("/hellosummer")
+public class MyController extends BootController {
+	@GET
+    @Path("/hello/anonymous")
+    public void anonymous() {
+    }
+
+    @GET
+    @Path("/helloAdmin/user")
+    @PermitAll
+    public void loginedUserOnly() {
+    }
+
+    @GET
+    @Path("/helloAdmin/admin")
+    @RolesAllowed({"AppAdmin"})
+    public void adminOnly() {
+    }
+    
+    @GET
+    @Path("/helloAdmin/employee")
+    @RolesAllowed({"Employee"})
+    public void employeeOnly() {
+    }
+}
+```
+
+step2: define an Authenticator service with annotation @Service(binding = Authenticator.class)
+
+simply extends **BootAuthenticator**
+
+```
+import com.google.inject.Singleton;
+import io.netty.handler.codec.http.HttpHeaders;
+import javax.naming.NamingException;
+import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.security.auth.Authenticator;
+import org.summerboot.jexpress.security.auth.AuthenticatorListener;
+import org.summerboot.jexpress.security.auth.BootAuthenticator;
+import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.security.auth.User;
+
+@Singleton
+@Service(binding = Authenticator.class)
+public class AuthenticatorImpl extends BootAuthenticator<MyClass> {
+
+    @Override
+    protected Caller authenticate(String usename, String password, MyClass metaData, AuthenticatorListener listener, ServiceContext context) throws NamingException {
+    	// verify username and password against LDAP
+        long tenantId = 1;
+        String tenantName = "jExpress Org";
+        long userId = 456;
+        User user = new User(tenantId, tenantName, userId, usename);
+        user.addGroup("AdminGroup");//user group will be mapped to role in step#3
+        user.addGroup("EmployeeGroup");//user group will be mapped to role in step#3
+        return user;
+    }
+
+    @Override
+    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+        return true;
+    }
+
+}
+```
+
+step3: define Role-Group mapping in **cfg_auth.properties**
+
+Format of **role-group mapping**: *roles.\<role name\>.groups*=csv list of groups
+Format of **role-user mapping**: *roles.\<role name\>.users*=csv list of users
+
+```
+roles.AppAdmin.groups=AdminGroup
+#roles.AppAdmin.users=admin1, admin2
+roles.Employee.groups=EmployeeGroup
+#roles.Employee.users=employee1, employee2
 ```
 
 
@@ -150,30 +376,28 @@ public class MyController {
 
 Once the configuration files changed, the jExpress will automatically load it up and refresh the singleton instance**
 
-AppConfig.java
+MyConfig.java
 
 ```
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.BootConfig;
 import java.io.File;
 import java.util.Properties;
-import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.boot.config.BootConfig;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
 
 @ImportResource("cfg_app.properties")
-public class AppConfig extends BootConfig {
+public class MyConfig extends BootConfig {
 
+    public static final MyConfig cfg = MyConfig.instance(MyConfig.class);
 
+	or use the following:
 
-    public static AppConfig cfg = AppConfig.instance(AppConfig.class);
+	public static final MyConfig cfg = new MyConfig();
 
-	or
-
-	public static AppConfig cfg = new AppConfig();
-
-    private AppConfig() {
+    private MyConfig() {
     }
 
     @ConfigHeader(title = "My Header description")
@@ -182,7 +406,7 @@ public class AppConfig extends BootConfig {
     protected volatile String licenseKey;
 
     @Override
-    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
+    protected void loadCustomizedConfigs(File cfgFile, boolean isNotMock, ConfigUtil helper, Properties props) throws Exception {
     }
 
     @Override
@@ -201,7 +425,7 @@ During application start, it will generate cfg_app.properties if not exist, alth
 
 ```
 public static void main(String[] args) {
-        String template = AppConfig.generateTemplate(AppConfig.class);
+        String template = MyConfig.generateTemplate(MyConfig.class);
         System.out.println(template);
 } 
 ```
@@ -649,3 +873,23 @@ java -jar my-service.jar -unique ErrorCode
 java -jar my-service.jar -unique POI
 ```
 
+
+
+
+
+## 11. Plugin -  run with external jar files in plugin foler
+
+**10.1 Intent**
+
+- Once the application is on production, need a way to add new features or override existing logic without changing the exiting code
+
+**10.2 Motivation**
+
+- Make the application focus on interface, and its implements could be developed as external jar files
+- Make the visitor pattern available at the application level
+
+**10.3 Supported types**
+
+- Services with @service
+- Configurations with @ImportResource (TODO)
+- Web API Controllers with @Controller (TODO)

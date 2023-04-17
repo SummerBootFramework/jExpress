@@ -715,7 +715,7 @@ public class ServiceContext {
         return logResponseBody;
     }
 
-    public ServiceContext timestampPOI(String marker) {
+    public ServiceContext poi(String marker) {
 //        if (poi == null) {
 //            //poi = new LinkedHashMap();
 //            poi = new ArrayList();

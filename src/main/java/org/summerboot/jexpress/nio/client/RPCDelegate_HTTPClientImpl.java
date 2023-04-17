@@ -142,14 +142,14 @@ public abstract class RPCDelegate_HTTPClientImpl {
         }
         //2. call remote sever
         HttpResponse httpResponse;
-        context.timestampPOI(BootPOI.RPC_BEGIN);
+        context.poi(BootPOI.RPC_BEGIN);
         try {
             httpResponse = httpCfg.getHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             return onInterrupted(req, context, ex);
         } finally {
-            context.timestampPOI(BootPOI.RPC_END);
+            context.poi(BootPOI.RPC_END);
         }
 
         // 3a. check remote success or not
