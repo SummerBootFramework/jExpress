@@ -36,6 +36,7 @@ import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.nio.grpc.StatusReporter;
+import org.summerboot.jexpress.util.ApplicationUtil;
 
 /**
  * In Code We Trust
@@ -68,10 +69,11 @@ abstract public class SummerApplication extends SummerBigBang {
      * @param userOverrideModule
      */
     public static void run(Module userOverrideModule) {
-        String[] mainCommand = System.getProperty(SUN_JAVA_COMMAND).split(" ");
-        String[] args = new String[mainCommand.length - 1];
+        String[] mainCommand = ApplicationUtil.getApplicationArgs();
+        int size = mainCommand.length;
+        String[] args = size > 0 ? new String[size - 1] : ApplicationUtil.EMPTY_ARGS;
         String mainClassName = mainCommand[0];
-        for (int i = 1; i < mainCommand.length; i++) {
+        for (int i = 1; i < size; i++) {
             args[i - 1] = mainCommand[i];
         }
         Class callerClass = null;
