@@ -19,8 +19,6 @@ import io.grpc.BindableService;
 import io.grpc.ServerServiceDefinition;
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
-import java.io.File;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -118,7 +116,9 @@ abstract public class SummerSingularity implements BootConstant {
     private <T extends SummerApplication> T bigBang() {
         memo.append("\n\t- deployee callerClass=").append(primaryClass.getName());
         callerRootPackageName = ReflectionUtil.getRootPackageName(primaryClass);
-        jvmStartCommand = scanJVM_StartCommand();
+        StringBuilder sb = new StringBuilder();
+        jmxRequired = ApplicationUtil.scanJVM_StartCommand(sb);
+        jvmStartCommand = sb.toString();
         scanAnnotation_Version(primaryClass);
         System.setProperty(SYS_PROP_APP_PACKAGE_NAME, callerRootPackageName);//used by log4j2.xml
         System.setProperty(SYS_PROP_APP_NAME, appVersionShort);//used by log4j2.xml
@@ -135,59 +135,6 @@ abstract public class SummerSingularity implements BootConstant {
         scanAnnotation_Service(callerRootPackageName);
         scanAnnotation_DeclareRoles(callerRootPackageName);
         return (T) this;
-    }
-
-    /**
-     * Sun property pointing the main class and its arguments. Might not be
-     * defined on non Hotspot VM implementations.
-     */
-    protected static final String SUN_JAVA_COMMAND = "sun.java.command";
-
-    /**
-     *
-     * @return
-     */
-    protected String scanJVM_StartCommand() {
-        //try {
-        String OS = System.getProperty("os.name").toLowerCase();
-        boolean isWindows = OS.contains("win");
-        // java binary
-        String java = System.getProperty("java.home") + "/bin/java";
-        // vm arguments
-        List<String> vmArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-        StringBuffer vmArgsOneLine = new StringBuffer();
-        for (String arg : vmArguments) {
-            // if it's the agent argument : we ignore it otherwise the
-            // address of the old application and the new one will be in conflict
-            if (!arg.contains("-agentlib")) {
-                vmArgsOneLine.append(arg);
-                vmArgsOneLine.append(" ");
-            }
-            if (arg.contains("com.sun.management.jmxremote.port")) {
-                jmxRequired = true;
-            }
-        }
-        // run the command to execute, bindingMetaAdd the vm args
-        final StringBuilder cmd = isWindows
-                ? new StringBuilder("\"" + java + "\" " + vmArgsOneLine)
-                : new StringBuilder(java + " " + vmArgsOneLine);
-
-        // program main and program arguments
-        String[] mainCommand = System.getProperty(SUN_JAVA_COMMAND).split(" ");
-        // program main is a jar
-        if (mainCommand[0].endsWith(".jar")) {
-            // if it's a jar, bindingMetaAdd -jar mainJar
-            cmd.append("-jar ").append(new File(mainCommand[0]).getPath());
-        } else {
-            // else it's a .class, bindingMetaAdd the classpath and mainClass
-            cmd.append("-cp \"").append(System.getProperty("java.class.path")).append("\" ").append(mainCommand[0]);
-        }
-        // finally bindingMetaAdd program arguments
-        for (int i = 1; i < mainCommand.length; i++) {
-            cmd.append(" ");
-            cmd.append(mainCommand[i]);
-        }
-        return cmd.toString();
     }
 
     protected void scanAnnotation_Version(Class callerClass) {

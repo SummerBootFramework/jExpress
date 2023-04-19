@@ -40,4 +40,6 @@ public interface BootPOI {
     
     String RPC_BEGIN = "rpc.begin";
     String RPC_END = "rpc.end";
+    String GRPC_BEGIN = "gRPC.begin";
+    String GRPC_END = "gRPC.end";
 }

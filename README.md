@@ -106,15 +106,15 @@ public class MyController {
 
     @POST
     @Path("/account/{name}")
-    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Content-Type: application/json or Content-Type: application/xml
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Accept: application/json or Accept: application/xml
     public ResponseDto hello_no_validation_unprotected_logging(@PathParam("name") String myName, RequestDto request) {
         return new ResponseDto();
     }
 
     /**
      * Three features:
-     * <p> 1. auto validation by @Valid and @NotNull annotation 
+     * <p> 1. auto validate JSON request by @Valid and @NotNull annotation
      * <p> 2. protected user credit card and privacy information from being logged by @Log annotation
      * <p> 3. mark performance POI (point of interest) by using ServiceContext.poi(key), see section#8.3
      *
@@ -125,8 +125,8 @@ public class MyController {
      */
     @POST
     @Path("/hello/{name}")
-    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Content-Type: application/json or Content-Type: application/xml
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Accept: application/json or Accept: application/xml
     @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"})
     public ResponseDto hello_auto_validation_protected_logging_markWithPOI(@NotNull @PathParam("name") String myName, @NotNull @Valid RequestDto request, final ServiceContext context) {
         context.poi("DB begin");// about POI, see section8.3
@@ -212,7 +212,7 @@ public class MyController  {
 
 **1.6 Sample Code: Role Based access**
 
-step1: Extends **BootController** as below
+**step1**: Extends **BootController** as below
 
 ```
 import jakarta.annotation.security.PermitAll;
@@ -247,7 +247,7 @@ public class MyController extends BootController {
 }
 ```
 
-step2: define an Authenticator service with annotation @Service(binding = Authenticator.class)
+**step2**: define an Authenticator service with annotation @Service(binding = Authenticator.class)
 
 simply extends **BootAuthenticator**
 
@@ -266,17 +266,21 @@ import org.summerboot.jexpress.security.auth.User;
 
 @Singleton
 @Service(binding = Authenticator.class)
-public class AuthenticatorImpl extends BootAuthenticator<MyClass> {
+public class MyAuthenticator extends BootAuthenticator<Long> {
 
     @Override
-    protected Caller authenticate(String usename, String password, MyClass metaData, AuthenticatorListener listener, ServiceContext context) throws NamingException {
-    	// verify username and password against LDAP
+    protected Caller authenticate(String usename, String password, Long metaData, AuthenticatorListener listener, ServiceContext context) throws NamingException {
+        // verify username and password against LDAP
+        if ("wrongpwd".equals(password)) {
+            return null;
+        }
+        // build a caller to return
         long tenantId = 1;
         String tenantName = "jExpress Org";
         long userId = 456;
         User user = new User(tenantId, tenantName, userId, usename);
-        user.addGroup("AdminGroup");//user group will be mapped to role in step#3
-        user.addGroup("EmployeeGroup");//user group will be mapped to role in step#3
+        user.addGroup("AdminGroup");
+        user.addGroup("EmployeeGroup");
         return user;
     }
 
@@ -288,7 +292,7 @@ public class AuthenticatorImpl extends BootAuthenticator<MyClass> {
 }
 ```
 
-step3: define Role-Group mapping in **cfg_auth.properties**
+**step3**: define Role-Group mapping in **cfg_auth.properties**
 
 Format of **role-group mapping**: *roles.\<role name\>.groups*=csv list of groups
 Format of **role-user mapping**: *roles.\<role name\>.users*=csv list of users
@@ -382,27 +386,27 @@ MyConfig.java
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.util.Properties;
+import org.summerboot.jexpress.boot.config.BootConfig;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
-import org.summerboot.jexpress.boot.config.BootConfig;
-import org.summerboot.jexpress.boot.config.ConfigUtil;
 
+/**
+ *
+ * @author Changski Tie Zheng Zhang
+ */
 @ImportResource("cfg_app.properties")
 public class MyConfig extends BootConfig {
 
-    public static final MyConfig cfg = MyConfig.instance(MyConfig.class);
-
-	or use the following:
-
-	public static final MyConfig cfg = new MyConfig();
+    public static final MyConfig cfg = new MyConfig();
 
     private MyConfig() {
     }
 
     @ConfigHeader(title = "My Header description")
     @JsonIgnore
-    @Config(key = "my.key.name", validate = Config.Validate.Encrypted, required = true)
+    @Config(key = "my.licenseKey", validate = Config.Validate.Encrypted, required = true)
     protected volatile String licenseKey;
 
     @Override
@@ -606,7 +610,7 @@ Add the following:
 
 ```
 @Service(binding = HealthInspector.class)
-YourClass extends BootHealthInspectorImpl
+Class MyHealthInspector extends BootHealthInspectorImpl
 ```
 
 Full version:
@@ -622,7 +626,7 @@ import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 
 @Service(binding = HealthInspector.class)
-public class HealthInspectorImpl extends BootHealthInspectorImpl {
+public class MyHealthInspector extends BootHealthInspectorImpl {
 
     @Override
     protected void healthCheck(@Nonnull ServiceError error, @Nullable Logger callerLog) {
@@ -890,6 +894,4 @@ java -jar my-service.jar -unique POI
 
 **10.3 Supported types**
 
-- Services with @service
-- Configurations with @ImportResource (TODO)
-- Web API Controllers with @Controller (TODO)
+- Service implementations with @service
