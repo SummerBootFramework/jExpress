@@ -28,7 +28,7 @@ interface BootConstant {
     String HOST = ApplicationUtil.getServerName(false);
 
     //version
-    String VERSION = "SummerBoot.jExpress 2.3.3";
+    String VERSION = "SummerBoot.jExpress 2.3.4";
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";

@@ -44,6 +44,8 @@ import org.summerboot.jexpress.util.ApplicationUtil;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 abstract public class SummerApplication extends SummerBigBang {
+    
+    public static boolean ErrorCodeAsInt = false;
 
     /**
      * Might not work on Non Hotspot VM implementations.

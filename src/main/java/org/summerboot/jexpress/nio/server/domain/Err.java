@@ -18,6 +18,8 @@ package org.summerboot.jexpress.nio.server.domain;
 import org.summerboot.jexpress.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
@@ -27,6 +29,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  */
 public class Err<T> {
 
+    @JsonSerialize(using = ErrorCodeSerializer.class)
+    @JsonDeserialize(using = ErrorCodeDeserializer.class)
     private String errorCode;
     private String errorTag;
     private String errorDesc;
@@ -80,6 +84,11 @@ public class Err<T> {
 
     public String getErrorCode() {
         return errorCode;
+    }
+
+    @JsonIgnore
+    public int getErrorCodeInt() {
+        return Integer.parseInt(errorCode);
     }
 
     public String getErrorTag() {
