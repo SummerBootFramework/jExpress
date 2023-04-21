@@ -32,7 +32,7 @@
 
 **1.3 Sample Code** - https://github.com/SummerBootFramework/jExpressDemo-HelloSummer
 
-add the jExpress dependency to pom.xml
+**step1** - add the jExpress dependency to pom.xml
 
 ```
 <dependency>
@@ -59,8 +59,7 @@ or in your pom.xml file you can add the Maven 2 snapshot repository if you want 
 </repositories>
 ```
 
-
-Main.java
+**step2** - a main class to launch the application
 
 ```
 import org.summerboot.jexpress.boot.SummerApplication;
@@ -73,7 +72,77 @@ public class Main {
 }
 ```
 
-A RESTful API class with JAX-RS style, and annotate this class with @Controller 
+or if you need to initialize or run anything before application starts
+
+```
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.SummerRunner;
+import org.summerboot.jexpress.boot.annotation.Order;
+
+@Order(1)// incase you have more than one SummerRunner implementations and would like to sepcify the order to be called
+public class MainRunner1 implements SummerRunner {
+
+    private static final Logger log = LogManager.getLogger(MainRunner2.class);
+
+    @Override
+    public void run(RunnerContext context) throws Exception {
+        log.warn("beforeStart=" + context.getConfigDir());
+    }
+}
+
+@Order(2)// incase you have more than one SummerRunner implementations and would like to sepcify the order to be called
+public class MainRunner2 implements SummerRunner {
+    @Override
+    public void run(RunnerContext context) throws Exception {
+    }
+}
+```
+
+or put everything together
+
+```
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import java.io.File;
+import org.apache.commons.cli.Options;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.SummerRunner;
+import org.summerboot.jexpress.boot.annotation.Order;
+import org.summerboot.jexpress.boot.SummerInitializer;
+
+public class Main implements SummerInitializer, SummerRunner {
+
+    // do NOT init log here, log4j not initialiezed yet and will be available since method run(RunnerContext context)
+    private static Logger log;// = LogManager.getLogger(MainRunner.class); 
+
+    @Override
+    public void initCLI(Options options) {
+    }
+
+    @Override
+    public void initApp(File configDir) {
+    }
+
+    @Override
+    public void run(RunnerContext context) throws Exception {
+        log = LogManager.getLogger(MainRunner.class);
+        log.debug("beforeStart=" + context.getConfigDir());
+        SummerInitializer plugin = context.getGuiceInjector().getInstance(Key.get(SummerInitializer.class, Names.named("aa")));
+        plugin.initCLI(null);
+    }
+    
+    public static void main(String... args) {
+        SummerApplication.run();
+    }
+}
+```
+
+
+
+**step3** - A RESTful API class with JAX-RS style, and annotate this class with @Controller 
 
 ```
 import com.google.inject.Singleton;
@@ -157,6 +226,38 @@ public class MyController {
     }
 }
 ```
+
+**Below is the log of *hello_no_validation_unprotected_logging()*,** 
+
+> 2023-04-20T19:48:12,523 INFO org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [pool-4-thread-1] request_1.caller=null
+> 	request_1=POST /hellosummer/account1/123, dataSize=71, KeepAlive=true, chn=[id: 0xac275188, L:/127.0.0.1:8311 - R:/127.0.0.1:22517], ctx=475223663, hdl=org.summerboot.jexpress.nio.server.BootHttpRequestHandler@578198d9
+> 	responsed_1=200 OK, error=0, queuing=7ms, process=34ms, response=36ms, cont.len=68bytes
+> 	POI: service.begin=7ms, process.begin=8ms, biz.begin=33ms, biz.end=33ms, process.end=34ms, service.end=36ms, 
+> 	1.client_req.headers=DefaultHttpHeaders[Connection: keep-alive, Accept: application/json, Content-Type: application/json, Content-Length: 71, Host: localhost:8311, User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.2)]
+> 	2.client_req.body={
+> **"creditCardNumber" : "123456",**
+> "shoppingList" : [ "a", "b" ]
+> }
+> 	3.server_resp.headers=DefaultHttpHeaders[X-Reference: 1, X-ServerTs: 2023-04-20T19:48:12.519-04:00]
+> 	4.server_resp.body={**"clientPrivacy":"secret: mylicenseKey"**,"clientNonPrivacy":"shared"}
+> 	Memo: n/a
+
+**Below is the log of with @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"})**
+
+> 2023-04-20T19:53:47,167 INFO org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [pool-4-thread-2] request_2.caller=null
+> 	request_2=POST /hellosummer/account2/123, dataSize=71, KeepAlive=true, chn=[id: 0x3748e908, L:/127.0.0.1:8311 - R:/127.0.0.1:22619], ctx=950626969, hdl=org.summerboot.jexpress.nio.server.BootHttpRequestHandler@578198d9
+> 	responsed_2=201 Created, error=0, queuing=1ms, process=217ms, response=219ms, cont.len=68bytes
+> 	POI: service.begin=1ms, process.begin=1ms, biz.begin=217ms, db.begin=217ms, db.end=217ms, gRPC.begin=217ms, gRPC.end=217ms, biz.end=217ms, process.end=217ms, service.end=219ms, 
+> 	1.client_req.headers=DefaultHttpHeaders[Connection: keep-alive, Accept: application/json, Content-Type: application/json, Content-Length: 71, Host: localhost:8311, User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.2)]
+> 	2.client_req.body={
+>   **"creditCardNumber" : "\*\*\*"**,
+>   "shoppingList" : [ "a", "b" ]**
+> }
+> 	3.server_resp.headers=DefaultHttpHeaders[X-Reference: 2, X-ServerTs: 2023-04-20T19:53:47.159-04:00]**
+> 	4.server_resp.body={**"clientPrivacy":"\*\*\*"**,"clientNonPrivacy":"shared"}
+> 	Memo: n/a
+
+
 
 **1.4 Sample Code: -use \<implTag\>**
 
