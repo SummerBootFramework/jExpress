@@ -127,17 +127,17 @@ public class ApplicationUtil {
         return duplicates;
     }
 
-    public static String getServerName(boolean exitWhenFail) {
+    public static String getServerName(String key, boolean exitWhenFail) {
         try {
-            System.setProperty("hostName", InetAddress.getLocalHost().getHostName());
+            System.setProperty(key, InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException ex) {
-            System.setProperty("hostName", null);
+            System.setProperty(key, null);
             ex.printStackTrace(System.err);
             if (exitWhenFail) {
                 System.exit(-1);
             }
         }
-        return System.getProperty("hostName");
+        return System.getProperty(key);
     }
 
     public static Set<String> getClassNamesFromJarFile(File jarFile) throws IOException {
@@ -158,9 +158,10 @@ public class ApplicationUtil {
     public static Set<Class<?>> loadClassFromJarFile(File jarFile, boolean failOnUndefinedClasses) throws IOException {
         URL url = jarFile.getAbsoluteFile().toURI().toURL();
         URL[] urls = {url};
-        URLClassLoader urlClassLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
+        ClassLoader appClassLoader = ClassLoader.getSystemClassLoader();//Thread.currentThread().getContextClassLoader()
+        URLClassLoader urlClassLoader = new URLClassLoader(urls, appClassLoader);
         Set<Class<?>> classes = new HashSet<>();
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(jarFile.getAbsolutePath());
         boolean onError = false;
         Set<String> classNames = getClassNamesFromJarFile(jarFile);
         for (String className : classNames) {
@@ -172,6 +173,7 @@ public class ApplicationUtil {
                 sb.append("\n\t").append(ex.toString());
             }
         }
+
         //Java 17 only if (!sb.isEmpty() && failOnUndefinedClasses) {
         if (onError && failOnUndefinedClasses) {
             throw new NoClassDefFoundError(sb.toString());

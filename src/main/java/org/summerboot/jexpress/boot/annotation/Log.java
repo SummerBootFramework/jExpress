@@ -43,4 +43,6 @@ public @interface Log {
     String[] hideJsonStringFields() default {};
 
     String[] hideJsonNumberFields() default {};
+
+    String[] hideJsonArrayFields() default {};
 }

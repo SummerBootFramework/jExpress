@@ -69,12 +69,17 @@ public class ProcessorSettings {
 
         private List<String> protectedJsonNumberFields;
 
+        private List<String> protectedJsonArrayFields;
+
         public void removeDuplicates() {
             if (protectedJsonStringFields != null) {
                 protectedJsonStringFields = protectedJsonStringFields.stream().distinct().collect(Collectors.toList());
             }
             if (protectedJsonNumberFields != null) {
                 protectedJsonNumberFields = protectedJsonNumberFields.stream().distinct().collect(Collectors.toList());
+            }
+            if (protectedJsonArrayFields != null) {
+                protectedJsonArrayFields = protectedJsonArrayFields.stream().distinct().collect(Collectors.toList());
             }
         }
 
@@ -125,6 +130,15 @@ public class ProcessorSettings {
         public void setProtectedJsonNumberFields(List<String> protectedJsonNumberFields) {
             this.protectedJsonNumberFields = protectedJsonNumberFields;
         }
+
+        public List<String> getProtectedJsonArrayFields() {
+            return protectedJsonArrayFields;
+        }
+
+        public void setProtectedJsonArrayFields(List<String> protectedJsonArrayFields) {
+            this.protectedJsonArrayFields = protectedJsonArrayFields;
+        }
+
     }
 
 }

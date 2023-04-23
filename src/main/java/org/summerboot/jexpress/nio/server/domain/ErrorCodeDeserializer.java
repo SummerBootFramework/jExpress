@@ -30,7 +30,7 @@ public class ErrorCodeDeserializer extends JsonDeserializer<String> {
 
     @Override
     public String deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
-        if (SummerApplication.ErrorCodeAsInt) {
+        if (SummerApplication.SystemErrorCodeAsInt) {
             int intValue = jp.getValueAsInt();
             return String.valueOf(intValue);
         } else {

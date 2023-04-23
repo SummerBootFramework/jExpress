@@ -24,19 +24,12 @@ import com.google.inject.util.Modules;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
 import io.jsonwebtoken.SignatureAlgorithm;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,7 +48,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.logging.log4j.LogManager;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Order;
 import org.summerboot.jexpress.boot.config.BootConfig;
@@ -67,7 +59,6 @@ import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.auth.AuthConfig;
-import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
@@ -86,9 +77,6 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected static final String CLI_CONFIG_MONITOR_INTERVAL = "monitorInterval";
     protected static final String CLI_I8N = "i18n";
     protected static final String CLI_USE_IMPL = "use";//To specify which implementation will be used via @Component.checkImplTagUsed
-    @Deprecated
-    protected static final String CLI_CONFIG_TAG = "domain";
-    protected static final String CLI_CONFIG_DIR = "cfgdir";
     protected static final String CLI_CONFIG_DEMO = "cfgdemo";
     protected static final String CLI_LIST_UNIQUE = "list";
     protected static final String CLI_ADMIN_PWD_FILE = "authfile";
@@ -96,7 +84,6 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected static final String CLI_JWT = "jwt";
     protected static final String CLI_ENCRYPT = "encrypt";
     protected static final String CLI_DECRYPT = "decrypt";
-    protected static final File CURRENT_DIR = new File("").getAbsoluteFile();
 
     private final Module userOverrideModule;
     protected Injector guiceInjector;
@@ -108,12 +95,11 @@ abstract public class SummerBigBang extends SummerSingularity {
      * CLI results
      */
     protected Locale userSpecifiedResourceBundle;
-    protected File userSpecifiedConfigDir;
     private int userSpecifiedCfgMonitorIntervalSec = 30;
     protected final Set<String> userSpecifiedImplTags = new HashSet<>();
 
     protected SummerBigBang(Class callerClass, Module userOverrideModule, String... args) {
-        super(callerClass);
+        super(callerClass, args);
         this.userOverrideModule = userOverrideModule;
         singularity();
         aParallelUniverse(args);
@@ -128,7 +114,6 @@ abstract public class SummerBigBang extends SummerSingularity {
         summerInitializers.clear();
         summerRunners.clear();
         userSpecifiedResourceBundle = null;
-        userSpecifiedConfigDir = null;
         userSpecifiedCfgMonitorIntervalSec = 30;
         userSpecifiedImplTags.clear();
     }
@@ -372,92 +357,27 @@ abstract public class SummerBigBang extends SummerSingularity {
         }
 
         /*
-         * [Config File] Location - determine the configuration path: userSpecifiedConfigDir
+         * show config on demand
          */
-        userSpecifiedConfigDir = null;//to clear the state
-        if (cli.hasOption(CLI_CONFIG_DIR)) {
-            String cfgDir = cli.getOptionValue(CLI_CONFIG_DIR).trim();
-            userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
-        } else if (cli.hasOption(CLI_CONFIG_TAG)) {
-            String envTag = cli.getOptionValue(CLI_CONFIG_TAG).trim();
-            String cfgDir = /*unittestWorkingDir +*/ "standalone_" + envTag + File.separator + "configuration";
-            userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
-            System.setProperty("domainName", envTag);
-        }
-        if (userSpecifiedConfigDir == null) {
-            //show config on demand
-            if (cli.hasOption(CLI_CONFIG_DEMO)) {
-                String cfgName = cli.getOptionValue(CLI_CONFIG_DEMO);
-                if (cfgName == null) {
-                    String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
-                    System.err.println("Missing config option, valid values <" + validOptions + ">");
-                    System.exit(1);
-                }
-                Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
-                if (c == null) {
-                    String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
-                    System.err.println(cfgName + "is an invalid config option, valid values <" + validOptions + ">");
-                    System.exit(1);
-                }
-                String t = BootConfig.generateTemplate(c);
-                System.out.println(t);
-                System.exit(0);
-            }
-            //use current folder when user not specified
-            userSpecifiedConfigDir = CURRENT_DIR;
-        }
-        if (userSpecifiedConfigDir != null && (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead())) {
-            System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
-            System.exit(1);
-        }
-        File pluginDir;
-        if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
-            //set log folder inside user specified config folder
-            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
-            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
-        } else {
-            //set log folder outside user specified config folder
-            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
-            pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
-        }
-
-        /*
-         * [Config File] Log4J - init
-         */
-        Path logFilePath = Paths.get(userSpecifiedConfigDir.toString(), "log4j2.xml");
-        if (!Files.exists(logFilePath)) {
-            StringBuilder log4j2XML = new StringBuilder();
-            try (InputStream ioStream = this.getClass()
-                    .getClassLoader()
-                    .getResourceAsStream("log4j2.xml.temp"); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    log4j2XML.append(line).append(System.lineSeparator());
-                }
-                Files.writeString(logFilePath, log4j2XML);
-            } catch (IOException ex) {
-                System.out.println(ex + "\n\tCould generate log4j.xml at " + logFilePath);
-                ex.printStackTrace();
+        if (cli.hasOption(CLI_CONFIG_DEMO) && !cli.hasOption(CLI_CONFIG_DIR) && !cli.hasOption(CLI_CONFIG_TAG)) {
+            String cfgName = cli.getOptionValue(CLI_CONFIG_DEMO);
+            if (cfgName == null) {
+                String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+                System.err.println("Missing config option, valid values <" + validOptions + ">");
                 System.exit(1);
             }
+            Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
+            if (c == null) {
+                String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+                System.err.println(cfgName + "is an invalid config option, valid values <" + validOptions + ">");
+                System.exit(1);
+            }
+            String t = BootConfig.generateTemplate(c);
+            System.out.println(t);
+            System.exit(0);
         }
-        String log4j2ConfigFile = logFilePath.toString();
-        System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
-        memo.append("\n\t- ").append(I18n.info.launchingLog.format(userSpecifiedResourceBundle, System.getProperty(BootConstant.LOG4J2_KEY)));
-        log = LogManager.getLogger(SummerApplication.class);
-        log.debug("Configuration path = {}", userSpecifiedConfigDir);
-        log.trace(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorIntervalSec + ", StartCommand>" + jvmStartCommand);
 
-        /*
-         * load external modules
-         */
-        try {
-            loadPluginJars(pluginDir, true);
-        } catch (IOException ex) {
-            System.out.println(ex + "\n\tFailed to load plugin jar files from " + pluginDir);
-            ex.printStackTrace();
-            System.exit(1);
-        }
+        log.trace(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorIntervalSec + ", StartCommand>" + jvmStartCommand);
 
         /*
          * [Config File] - encrypt/decrypt
@@ -526,29 +446,6 @@ abstract public class SummerBigBang extends SummerSingularity {
             userSpecifiedResourceBundle = null;
         }
         I18n.init(getAddtionalI18n());
-    }
-
-    protected void loadPluginJars(File pluginDir, boolean failOnUndefinedClasses) throws IOException {
-        pluginDir.mkdirs();
-        if (!pluginDir.canRead() || !pluginDir.isDirectory()) {
-            memo.append("\n\t- loadPluginJars: invalid dir ").append(pluginDir);
-            return;
-        }
-        FileFilter fileFilter = file -> !file.isDirectory() && file.getName().endsWith(".jar");
-        File[] jarFiles = pluginDir.listFiles(fileFilter);
-        if (jarFiles == null || jarFiles.length < 1) {
-            memo.append("\n\t- loadPluginJars: no jar files found at ").append(pluginDir);
-            return;
-        }
-        Set<Class<?>> jarClasses = new HashSet<>();
-        for (File jarFile : jarFiles) {
-            memo.append("\n\t- loadPluginJars: loading jar file ").append(jarFile.getAbsolutePath());
-            Set<Class<?>> classes = ApplicationUtil.loadClassFromJarFile(jarFile, failOnUndefinedClasses);
-            memo.append("\n\t- loadPluginJars: loaded ").append(classes.size()).append(" classes from jar file ").append(jarFile.getAbsolutePath());
-            jarClasses.addAll(classes);
-        }
-        super.scanAnnotation_Service(jarClasses);
-        memo.append("\n\t- loadPluginJars: loaded ").append(jarClasses.size()).append(" classes from ").append(jarFiles.length).append(" jar files in ").append(pluginDir);
     }
 
     abstract protected Class getAddtionalI18n();
