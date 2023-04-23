@@ -134,7 +134,7 @@ public class BootGuiceModule extends AbstractModule {
     }
 
     /**
-     * This method will be called by 
+     * This method will be called by
      * <pre>
      * Guice.createInjector(...) from SummerBigBang.genesis(...) to trigger SummerBigBang.onGuiceInjectorCreated_ControllersInjected(@Controller {@code Map<String, Object>} controllers)
      * </pre>

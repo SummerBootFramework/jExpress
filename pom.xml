@@ -193,8 +193,8 @@
         <grpc.version>1.54.1</grpc.version>
         <protobuf.version>3.22.3</protobuf.version>
         <!-- Web JAX-RS -->        
-        <swagger.core.version>2.2.8</swagger.core.version>
-        <!--        <elastic-apm.version>1.36.0</elastic-apm.version>-->
+        <swagger.core.version>2.2.9</swagger.core.version>
+        <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
         
         
         <!-- MIME-Type -->

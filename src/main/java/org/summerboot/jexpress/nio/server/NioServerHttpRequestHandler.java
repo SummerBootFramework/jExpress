@@ -176,12 +176,12 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                             }
                         }
 
-                        //responsed#1=200 OK, error=0, r2q=7ms, r2r=60ms, caller=aaa#bbb, received#1=GET /a
+                        //response#1=200 OK, error=0, r2q=7ms, r2r=60ms, caller=aaa#bbb, received#1=GET /a
                         StringBuilder sb = new StringBuilder();
                         //line1
                         sb.append("request_").append(hitIndex).append(".caller=").append(caller == null ? context.callerId() : caller);
                         //line2,3
-                        sb.append("\n\t").append(requestMetaInfo).append("\n\tresponsed_").append(hitIndex).append("=").append(status)
+                        sb.append("\n\t").append(requestMetaInfo).append("\n\tresponse_").append(hitIndex).append("=").append(status)
                                 .append(", error=").append(errorCount)
                                 .append(", queuing=").append(queuingTime).append("ms, process=").append(processTime);
                         if (overtime) {
@@ -211,6 +211,12 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                                         report = FormatterUtil.protectJsonString(report, protectedJsonStringField, protectedContectReplaceWith);
                                     }
                                 }
+                                List<String> protectedJsonArrayFields = logSettings.getProtectedJsonArrayFields();
+                                if (protectedJsonArrayFields != null) {
+                                    for (String protectedJsonArrayField : protectedJsonArrayFields) {
+                                        report = FormatterUtil.protectJsonArray(report, protectedJsonArrayField, protectedContectReplaceWith);
+                                    }
+                                }
                             }
                         }
                         report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
@@ -238,7 +244,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
             StringBuilder sb = new StringBuilder();
             sb.append("request_").append(hitIndex).append("=").append(ex.toString())
-                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponsed#").append(hitIndex)
+                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(hitIndex)
                     .append("=").append(context.status())
                     .append(", errorCode=").append(e.getErrorCode())
                     .append(", queuing=").append(queuingTime)
@@ -254,7 +260,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
             StringBuilder sb = new StringBuilder();
             sb.append("request_").append(hitIndex).append("=").append(ex.toString())
-                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponsed#").append(hitIndex)
+                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(hitIndex)
                     .append("=").append(context.status())
                     .append(", errorCode=").append(e.getErrorCode())
                     .append(", queuing=").append(queuingTime)

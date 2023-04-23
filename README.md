@@ -75,26 +75,34 @@ public class Main {
 or if you need to initialize or run anything before application starts
 
 ```
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import java.io.File;
+import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.SummerRunner;
 import org.summerboot.jexpress.boot.annotation.Order;
+import org.summerboot.jexpress.boot.SummerInitializer;
 
-@Order(1)// incase you have more than one SummerRunner implementations and would like to sepcify the order to be called
-public class MainRunner1 implements SummerRunner {
+@Order(1)
+public class MainRunner implements SummerInitializer, SummerRunner {
 
-    private static final Logger log = LogManager.getLogger(MainRunner2.class);
+    private static final Logger log = LogManager.getLogger(MainRunner.class);
 
     @Override
-    public void run(RunnerContext context) throws Exception {
-        log.warn("beforeStart=" + context.getConfigDir());
+    public void initCLI(Options options) {
+        log.info("");
     }
-}
 
-@Order(2)// incase you have more than one SummerRunner implementations and would like to sepcify the order to be called
-public class MainRunner2 implements SummerRunner {
+    @Override
+    public void initApp(File configDir) {
+        log.info(configDir);
+    }
+
     @Override
     public void run(RunnerContext context) throws Exception {
+        log.debug("beforeStart");
     }
 }
 ```
@@ -115,23 +123,21 @@ import org.summerboot.jexpress.boot.SummerInitializer;
 
 public class Main implements SummerInitializer, SummerRunner {
 
-    // do NOT init log here, log4j not initialiezed yet and will be available since method run(RunnerContext context)
-    private static Logger log;// = LogManager.getLogger(MainRunner.class); 
+    private static final Logger log = LogManager.getLogger(Main.class); 
 
     @Override
     public void initCLI(Options options) {
+    	log.info("");
     }
 
     @Override
     public void initApp(File configDir) {
+    	log.info(configDir);
     }
 
     @Override
     public void run(RunnerContext context) throws Exception {
-        log = LogManager.getLogger(MainRunner.class);
-        log.debug("beforeStart=" + context.getConfigDir());
-        SummerInitializer plugin = context.getGuiceInjector().getInstance(Key.get(SummerInitializer.class, Names.named("aa")));
-        plugin.initCLI(null);
+        log.debug("beforeStart");
     }
     
     public static void main(String... args) {
@@ -196,7 +202,7 @@ public class MyController {
     @Path("/hello/{name}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Content-Type: application/json or Content-Type: application/xml
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Accept: application/json or Accept: application/xml
-    @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"})
+    @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"}, hideJsonArrayFields = "secretList")
     public ResponseDto hello_auto_validation_protected_logging_markWithPOI(@NotNull @PathParam("name") String myName, @NotNull @Valid RequestDto request, final ServiceContext context) {
         context.poi("DB begin");// about POI, see section8.3
         // DB access and it takes time ...
@@ -222,7 +228,8 @@ public class MyController {
 
     public static class ResponseDto {
 
-        private String clientPrivacy;
+        private String clientPrivacy;        
+        private final List<String> secretList = List.of("aa", "bb");
     }
 }
 ```
@@ -239,10 +246,10 @@ public class MyController {
 > "shoppingList" : [ "a", "b" ]
 > }
 > 	3.server_resp.headers=DefaultHttpHeaders[X-Reference: 1, X-ServerTs: 2023-04-20T19:48:12.519-04:00]
-> 	4.server_resp.body={**"clientPrivacy":"secret: mylicenseKey"**,"clientNonPrivacy":"shared"}
+> 	4.server_resp.body={**"clientPrivacy":"secret: mylicenseKey"**,"clientNonPrivacy":"shared",**"secretList":["aa","bb"]**}
 > 	Memo: n/a
 
-**Below is the log of with @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"})**
+**Below is the log of with @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"}, hideJsonArrayFields = "secretList")**
 
 > 2023-04-20T19:53:47,167 INFO org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [pool-4-thread-2] request_2.caller=null
 > 	request_2=POST /hellosummer/account2/123, dataSize=71, KeepAlive=true, chn=[id: 0x3748e908, L:/127.0.0.1:8311 - R:/127.0.0.1:22619], ctx=950626969, hdl=org.summerboot.jexpress.nio.server.BootHttpRequestHandler@578198d9
@@ -254,7 +261,7 @@ public class MyController {
 >   "shoppingList" : [ "a", "b" ]**
 > }
 > 	3.server_resp.headers=DefaultHttpHeaders[X-Reference: 2, X-ServerTs: 2023-04-20T19:53:47.159-04:00]**
-> 	4.server_resp.body={**"clientPrivacy":"\*\*\*"**,"clientNonPrivacy":"shared"}
+> 	4.server_resp.body={**"clientPrivacy":"\*\*\*"**,"clientNonPrivacy":"shared",**"secretList":[\*\*\*]**}
 > 	Memo: n/a
 
 
@@ -992,7 +999,11 @@ java -jar my-service.jar -unique POI
 
 - Make the application focus on interface, and its implements could be developed as external jar files
 - Make the visitor pattern available at the application level
+- You can even put all your logic in one or multiple external jar files developed by different teams as plugins 
 
 **10.3 Supported types**
 
+- Web Controllers @Controller
 - Service implementations with @service
+- JExpressConfig configurations implementations with @ImportResource
+- Classes with @Unique

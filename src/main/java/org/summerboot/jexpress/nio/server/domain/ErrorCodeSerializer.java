@@ -29,7 +29,7 @@ public class ErrorCodeSerializer extends JsonSerializer<String> {
 
     @Override
     public void serialize(String value, JsonGenerator jg, SerializerProvider sp) throws IOException {
-        if (SummerApplication.ErrorCodeAsInt) {
+        if (SummerApplication.SystemErrorCodeAsInt) {
             int intValue = Integer.parseInt(value);
             jg.writeNumber(intValue);
         } else {

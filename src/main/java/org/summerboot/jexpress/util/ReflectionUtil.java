@@ -62,6 +62,15 @@ import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
  */
 public class ReflectionUtil {
 
+    private static final Set<Class<?>> PluginClasses = new HashSet();
+
+    public static void setPluginClasses(Set<Class<?>> pluginClasses) {
+        PluginClasses.clear();
+        if (pluginClasses != null && !pluginClasses.isEmpty()) {
+            PluginClasses.addAll(pluginClasses);
+        }
+    }
+
     /**
      *
      * @param <T>
@@ -72,6 +81,11 @@ public class ReflectionUtil {
     public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, String rootPackageName) {
         Reflections reflections = new Reflections(rootPackageName);
         Set<Class<? extends T>> classes = reflections.getSubTypesOf(interfaceClass);
+        for (Class c : PluginClasses) {
+            if (interfaceClass.isAssignableFrom(c)) {
+                classes.add(c);
+            }
+        }
         return classes;
     }
 
@@ -84,6 +98,7 @@ public class ReflectionUtil {
     public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, String rootPackageName) {
         Reflections reflections = new Reflections(rootPackageName);
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(annotation);
+        classes.addAll(PluginClasses);
         Set<Class<?>> ret = new HashSet();
         for (Class c : classes) {
             if (c.isAnnotationPresent(annotation)) {

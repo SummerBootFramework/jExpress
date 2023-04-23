@@ -45,10 +45,10 @@ import org.summerboot.jexpress.util.ApplicationUtil;
  */
 abstract public class SummerApplication extends SummerBigBang {
     
-    public static boolean ErrorCodeAsInt = false;
+    public static boolean SystemErrorCodeAsInt = false;
 
     /**
-     * Might not work on Non Hotspot VM implementations.
+     * Might not work on Non HotSpot VM implementations.
      */
     public static void run() {
         Module userOverrideModule = null;

@@ -296,13 +296,28 @@ public class FormatterUtil {
     }
 
     public static String protectJsonString(String json, String key, String replaceWith) {
-        final String regex = "(\"" + key + "\"\\s*:\\s*\")[^\"]*(\")";
+        final String regex = "(\"" + key + "\"\\s*:\\s*\")[^\"]*(\")";//("key"\s*:\s*")[^"]*(")
+        return json.replaceAll(regex, "$1" + replaceWith + "$2");
+    }
+    
+    public static String protectJsonString_InString(String json, String key, String replaceWith) {
+        final String regex = "(\"" + key + "\\\\\"\\s*:\\s*\\\\\")[^\"]*(\")";
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
 
     public static String protectJsonNumber(String json, String key, String replaceWith) {
         String regex = "(\"" + key + "\"\\s*:\\s*)(\\d+)";
         return json.replaceAll(regex, "$1" + replaceWith);
+    }
+    
+    public static String protectJsonNumber_InString(String json, String key, String replaceWith) {
+        String regex = "(\"" + key + "\\\\\"\\s*:\\s*)(\\d+)";
+        return json.replaceAll(regex, "$1" + replaceWith);
+    }
+    
+    public static String protectJsonArray(String json, String key, String replaceWith) {
+        final String regex = "(\"" + key + "\"\\s*:\\s*\\[)[^\\[]*(\\])";
+        return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
 
     public static String[] splitByLength(String plain, int chunckSize) {
