@@ -159,7 +159,7 @@ abstract public class JPAHibernateConfig extends BootConfig {
         rootPackageNameList.removeAll(Collections.singleton(null));
         logger.debug("rootPackageNameList:{}", rootPackageNameList);
         for (String rootPackageName : rootPackageNameList) {
-            Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName);
+            Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName, false);
             entityClasses.addAll(tempEntityClasses);
         }
     }

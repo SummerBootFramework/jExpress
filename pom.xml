@@ -205,7 +205,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.14.2</jackson.version>
+        <jackson.version>2.15.0</jackson.version>
         <!-- Bean Validation -->
         <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
         <el.Implementation.version>4.0.2</el.Implementation.version>

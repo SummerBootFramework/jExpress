@@ -67,11 +67,11 @@ import org.summerboot.jexpress.i18n.I18n;
 abstract public class SummerSingularity implements BootConstant {
 
     protected static Logger log;
-    @Deprecated
-    protected static final String CLI_CONFIG_TAG = "domain";
+    protected static final String CLI_CONFIG_DOMAIN = "domain";
     protected static final String CLI_CONFIG_DIR = "cfgdir";
     protected static final File CURRENT_DIR = new File("").getAbsoluteFile();
     protected File userSpecifiedConfigDir;
+    protected File pluginDir;
 
     protected final StringBuilder memo = new StringBuilder();
     protected final Class primaryClass;
@@ -114,6 +114,12 @@ abstract public class SummerSingularity implements BootConstant {
 
     private void singularity() {
         memo.setLength(0);
+        userSpecifiedConfigDir = null;
+        pluginDir = null;
+        System.setProperty(SYS_PROP_APP_PACKAGE_NAME, "");// used by log4j2.xml
+        System.setProperty(SYS_PROP_APP_NAME, "");// used by log4j2.xml
+        System.setProperty(SYS_PROP_APP_VERSION, "");// used by BootController.version()    
+        System.setProperty(BootConstant.LOG4J2_KEY, "");
         // reset Scan Results
         jvmStartCommand = null;
         jmxRequired = false;
@@ -135,15 +141,29 @@ abstract public class SummerSingularity implements BootConstant {
     private <T extends SummerApplication> T bigBang(String[] args) {
         memo.append("\n\t- deployee callerClass=").append(primaryClass.getName());
         callerRootPackageName = ReflectionUtil.getRootPackageName(primaryClass);
+        memo.append("\n\t- callerRootPackageName=").append(callerRootPackageName);
         StringBuilder sb = new StringBuilder();
         jmxRequired = ApplicationUtil.scanJVM_StartCommand(sb);
         jvmStartCommand = sb.toString();
+
         scanAnnotation_Version(primaryClass);
-        System.setProperty(SYS_PROP_APP_PACKAGE_NAME, callerRootPackageName);//used by log4j2.xml
-        System.setProperty(SYS_PROP_APP_NAME, appVersionShort);//used by log4j2.xml
-        System.setProperty(SYS_PROP_APP_VERSION, appVersionLong);//used by BootController.version()
-        memo.append("\n\t- callerRootPackageName=").append(callerRootPackageName);
+        System.setProperty(SYS_PROP_APP_PACKAGE_NAME, callerRootPackageName);// used by log4j2.xml
+        System.setProperty(SYS_PROP_APP_NAME, appVersionShort);// used by log4j2.xml as log file name
+        System.setProperty(SYS_PROP_APP_VERSION, appVersionLong);// used by BootController.version()    
         scanArgsToInitializePluginFromConfigDir(args);
+        log = LogManager.getLogger(SummerApplication.class);// init log
+        log.debug("Configuration path = {}", userSpecifiedConfigDir);
+        /*
+         * load external modules
+         */
+        try {
+            scanPluginJars(pluginDir, true);// depends -domain or -cfgdir
+        } catch (IOException ex) {
+            System.out.println(ex + "\n\tFailed to load plugin jar files from " + pluginDir);
+            ex.printStackTrace();
+            System.exit(1);
+        }
+
         String error = scanAnnotation_Unique(callerRootPackageName, memo);
         if (error != null) {
             System.out.println(error);
@@ -171,6 +191,96 @@ abstract public class SummerSingularity implements BootConstant {
         memo.append("\n\t- callerVersion=").append(appVersionLong);
     }
 
+    protected void scanArgsToInitializePluginFromConfigDir(String[] args) {
+        /*
+         * [Config File] Location - determine the configuration path: userSpecifiedConfigDir
+         */
+        userSpecifiedConfigDir = null;//to clear the state
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                String cli = args[i];
+                if (("-" + CLI_CONFIG_DIR).equals(cli)) {
+                    String cfgDir = args[++i];
+                    userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
+                    break;
+                } else if (("-" + CLI_CONFIG_DOMAIN).equals(cli)) {
+                    String envTag = args[++i];
+                    String cfgDir = /*unittestWorkingDir +*/ "standalone_" + envTag + File.separator + "configuration";
+                    userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
+                    System.setProperty("domainName", envTag);
+                    break;
+                }
+            }
+        }
+
+        if (userSpecifiedConfigDir == null) {
+            userSpecifiedConfigDir = CURRENT_DIR;
+        }
+        if (userSpecifiedConfigDir != null && (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead())) {
+            System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
+            System.exit(1);
+        }
+
+        if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
+            //set log folder inside user specified config folder
+            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
+            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
+        } else {
+            //set log folder outside user specified config folder
+            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
+            pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
+        }
+
+        /*
+         * [Config File] Log4J - init
+         */
+        Path logFilePath = Paths.get(userSpecifiedConfigDir.toString(), "log4j2.xml");
+        if (!Files.exists(logFilePath)) {
+            StringBuilder log4j2XML = new StringBuilder();
+            try (InputStream ioStream = this.getClass()
+                    .getClassLoader()
+                    .getResourceAsStream("log4j2.xml.temp"); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    log4j2XML.append(line).append(System.lineSeparator());
+                }
+                Files.writeString(logFilePath, log4j2XML);
+            } catch (IOException ex) {
+                System.out.println(ex + "\n\tCould generate log4j.xml at " + logFilePath);
+                ex.printStackTrace();
+                System.exit(1);
+            }
+        }
+        String log4j2ConfigFile = logFilePath.toString();
+        System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
+        Locale userSpecifiedResourceBundle = null;
+        memo.append("\n\t- ").append(I18n.info.launchingLog.format(userSpecifiedResourceBundle, System.getProperty(BootConstant.LOG4J2_KEY)));
+
+    }
+
+    protected void scanPluginJars(File pluginDir, boolean failOnUndefinedClasses) throws IOException {
+        pluginDir.mkdirs();
+        if (!pluginDir.canRead() || !pluginDir.isDirectory()) {
+            memo.append("\n\t- loadPluginJars: invalid dir ").append(pluginDir);
+            return;
+        }
+        FileFilter fileFilter = file -> !file.isDirectory() && file.getName().endsWith(".jar");
+        File[] jarFiles = pluginDir.listFiles(fileFilter);
+        if (jarFiles == null || jarFiles.length < 1) {
+            memo.append("\n\t- loadPluginJars: no jar files found at ").append(pluginDir);
+            return;
+        }
+        Set<Class<?>> pluginClasses = new HashSet<>();
+        for (File jarFile : jarFiles) {
+            memo.append("\n\t- loadPluginJars: loading jar file ").append(jarFile.getAbsolutePath());
+            Set<Class<?>> classes = ApplicationUtil.loadClassFromJarFile(jarFile, failOnUndefinedClasses);
+            memo.append("\n\t- loadPluginJars: loaded ").append(classes.size()).append(" classes from jar file ").append(jarFile.getAbsolutePath());
+            pluginClasses.addAll(classes);
+        }
+        ReflectionUtil.setPluginClasses(pluginClasses);
+        memo.append("\n\t- loadPluginJars: loaded ").append(pluginClasses.size()).append(" classes from ").append(jarFiles.length).append(" jar files in ").append(pluginDir);
+    }
+
     /**
      *
      * @param rootPackageName
@@ -179,7 +289,7 @@ abstract public class SummerSingularity implements BootConstant {
      * @return error message
      */
     protected String scanAnnotation_Unique(String rootPackageName, StringBuilder sb, String... displayByTags) {
-        Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Unique.class, rootPackageName);
+        Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Unique.class, rootPackageName, false);
         StringBuilder errors = new StringBuilder();
         boolean error = false;
         for (Class classWithUniqueValues : classes) {
@@ -219,118 +329,6 @@ abstract public class SummerSingularity implements BootConstant {
         return null;
     }
 
-    protected void scanArgsToInitializePluginFromConfigDir(String[] args) {
-        /*
-         * [Config File] Location - determine the configuration path: userSpecifiedConfigDir
-         */
-        userSpecifiedConfigDir = null;//to clear the state
-        if (args != null) {
-            for (int i = 0; i < args.length; i++) {
-                String cli = args[i];
-                if (("-" + CLI_CONFIG_DIR).equals(cli)) {
-                    String cfgDir = args[++i];
-                    userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
-                    break;
-                } else if (("-" + CLI_CONFIG_TAG).equals(cli)) {
-                    String envTag = args[++i];
-                    String cfgDir = /*unittestWorkingDir +*/ "standalone_" + envTag + File.separator + "configuration";
-                    userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
-                    System.setProperty("domainName", envTag);
-                    break;
-                }
-            }
-        }
-
-        if (userSpecifiedConfigDir == null) {
-            userSpecifiedConfigDir = CURRENT_DIR;
-        }
-        if (userSpecifiedConfigDir != null && (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead())) {
-            System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
-            System.exit(1);
-        }
-        File pluginDir;
-        if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
-            //set log folder inside user specified config folder
-            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
-            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
-        } else {
-            //set log folder outside user specified config folder
-            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
-            pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
-        }
-
-        /*
-         * [Config File] Log4J - init
-         */
-        Path logFilePath = Paths.get(userSpecifiedConfigDir.toString(), "log4j2.xml");
-        if (!Files.exists(logFilePath)) {
-            StringBuilder log4j2XML = new StringBuilder();
-            try (InputStream ioStream = this.getClass()
-                    .getClassLoader()
-                    .getResourceAsStream("log4j2.xml.temp"); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    log4j2XML.append(line).append(System.lineSeparator());
-                }
-                Files.writeString(logFilePath, log4j2XML);
-            } catch (IOException ex) {
-                System.out.println(ex + "\n\tCould generate log4j.xml at " + logFilePath);
-                ex.printStackTrace();
-                System.exit(1);
-            }
-        }
-        String log4j2ConfigFile = logFilePath.toString();
-        System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
-        Locale userSpecifiedResourceBundle = null;
-        memo.append("\n\t- ").append(I18n.info.launchingLog.format(userSpecifiedResourceBundle, System.getProperty(BootConstant.LOG4J2_KEY)));
-        log = LogManager.getLogger(SummerApplication.class);
-        log.debug("Configuration path = {}", userSpecifiedConfigDir);
-
-        /*
-         * load external modules
-         */
-        try {
-            loadPluginJars(pluginDir, true);
-        } catch (IOException ex) {
-            System.out.println(ex + "\n\tFailed to load plugin jar files from " + pluginDir);
-            ex.printStackTrace();
-            System.exit(1);
-        }
-    }
-
-    protected void loadPluginJars(File pluginDir, boolean failOnUndefinedClasses) throws IOException {
-        pluginDir.mkdirs();
-        if (!pluginDir.canRead() || !pluginDir.isDirectory()) {
-            memo.append("\n\t- loadPluginJars: invalid dir ").append(pluginDir);
-            return;
-        }
-        FileFilter fileFilter = file -> !file.isDirectory() && file.getName().endsWith(".jar");
-        File[] jarFiles = pluginDir.listFiles(fileFilter);
-        if (jarFiles == null || jarFiles.length < 1) {
-            memo.append("\n\t- loadPluginJars: no jar files found at ").append(pluginDir);
-            return;
-        }
-        Set<Class<?>> pluginClasses = new HashSet<>();
-        for (File jarFile : jarFiles) {
-            memo.append("\n\t- loadPluginJars: loading jar file ").append(jarFile.getAbsolutePath());
-            Set<Class<?>> classes = ApplicationUtil.loadClassFromJarFile(jarFile, failOnUndefinedClasses);
-            memo.append("\n\t- loadPluginJars: loaded ").append(classes.size()).append(" classes from jar file ").append(jarFile.getAbsolutePath());
-            pluginClasses.addAll(classes);
-        }
-        ReflectionUtil.setPluginClasses(pluginClasses);
-
-//        ClassLoader appClassLoader = ClassLoader.getSystemClassLoader();
-//        try {
-//            Class c = appClassLoader.loadClass("org.jexpress.demo.app.MockService");
-//            boolean l = c.isLocalClass();
-//        } catch (ClassNotFoundException ex) {
-//            ex.printStackTrace();
-//        }
-        //class org.jexpress.demo.app.ErrorCode
-        //scanAnnotation_Service(pluginClasses);
-        memo.append("\n\t- loadPluginJars: loaded ").append(pluginClasses.size()).append(" classes from ").append(jarFiles.length).append(" jar files in ").append(pluginDir);
-    }
-
     protected void scanAnnotation_JExpressConfigImportResource(String... rootPackageNames) {
         Set<String> pakcages = Set.copyOf(List.of(rootPackageNames));
         Set<Class<? extends JExpressConfig>> classesAll = new HashSet();//to remove duplicated
@@ -367,7 +365,7 @@ abstract public class SummerSingularity implements BootConstant {
     protected void scanImplementation_gRPC(String... pakcages) {
         //gRPCBindableServiceImplClasses.addAll(ReflectionUtil.getAllImplementationsByInterface(BindableService.class, callerRootPackageName));
         for (String rootPackageName : pakcages) {
-            Set<Class<?>> gRPCServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcService.class, rootPackageName);
+            Set<Class<?>> gRPCServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcService.class, rootPackageName, false);
             for (Class gRPCServerClass : gRPCServerClasses) {
                 if (BindableService.class.isAssignableFrom(gRPCServerClass)) {
                     gRPCBindableServiceImplClasses.add(gRPCServerClass);
@@ -382,7 +380,7 @@ abstract public class SummerSingularity implements BootConstant {
     protected void scanAnnotation_Controller(String... rootPackageNames) {
         Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         for (String rootPackageName : rootPackageNames) {
-            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, rootPackageName);
+            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, rootPackageName, false);
             classesAll.addAll(classes);
         }
         List<String> tags = new ArrayList();
@@ -406,7 +404,7 @@ abstract public class SummerSingularity implements BootConstant {
     protected List<String> scanAnnotation_Service(String... rootPackageNames) {
         Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         for (String rootPackageName : rootPackageNames) {
-            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Service.class, rootPackageName);
+            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Service.class, rootPackageName, false);
             classesAll.addAll(classes);
         }
 
@@ -506,18 +504,18 @@ abstract public class SummerSingularity implements BootConstant {
         Set<String> declareRoles = new TreeSet();
         Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         for (String rootPackageName : rootPackageNames) {
-            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, rootPackageName);
+            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, rootPackageName, false);
             classesAll.addAll(classes);
         }
         hasControllers = !classesAll.isEmpty();
-        //@DeclareRoles
+        // @DeclareRoles
         for (Class c : classesAll) {
             DeclareRoles drs = (DeclareRoles) c.getAnnotation(DeclareRoles.class);
             if (drs != null) {
                 String[] roles = drs.value();
                 declareRoles.addAll(Arrays.asList(roles));
             }
-            //@RolesAllowed
+            // @RolesAllowed
             List<Method> methods = ReflectionUtil.getDeclaredAndSuperClassesMethods(c, true);
             for (Method javaMethod : methods) {
                 RolesAllowed ra = javaMethod.getAnnotation(RolesAllowed.class);

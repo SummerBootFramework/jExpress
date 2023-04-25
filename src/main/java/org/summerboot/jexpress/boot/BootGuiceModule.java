@@ -151,7 +151,7 @@ public class BootGuiceModule extends AbstractModule {
 
         final Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         for (String rootPackageName : rootPackageNames) {
-            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(annotation, rootPackageName);
+            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(annotation, rootPackageName, false);
             //classesAll.addAll(classes);
             for (Class c : classes) {
                 Controller a = (Controller) c.getAnnotation(annotation);

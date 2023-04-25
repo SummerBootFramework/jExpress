@@ -79,8 +79,13 @@ public class ReflectionUtil {
      * @return
      */
     public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, String rootPackageName) {
-        Reflections reflections = new Reflections(rootPackageName);
-        Set<Class<? extends T>> classes = reflections.getSubTypesOf(interfaceClass);
+        Set<Class<? extends T>> classes;
+        if (StringUtils.isBlank(rootPackageName)) {
+            classes = new HashSet();
+        } else {
+            Reflections reflections = new Reflections(rootPackageName);
+            classes = reflections.getSubTypesOf(interfaceClass);
+        }
         for (Class c : PluginClasses) {
             if (interfaceClass.isAssignableFrom(c)) {
                 classes.add(c);
@@ -93,13 +98,19 @@ public class ReflectionUtil {
      *
      * @param annotation
      * @param rootPackageName
+     * @param honorInherited
      * @return
      */
-    public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, String rootPackageName) {
-        Reflections reflections = new Reflections(rootPackageName);
-        Set<Class<?>> classes = reflections.getTypesAnnotatedWith(annotation);
+    public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, String rootPackageName, boolean honorInherited) {
+        Set<Class<?>> classes;
+        if (StringUtils.isBlank(rootPackageName)) {
+            classes = new HashSet();
+        } else {
+            Reflections reflections = new Reflections(rootPackageName);
+            classes = reflections.getTypesAnnotatedWith(annotation, honorInherited);
+        }
         classes.addAll(PluginClasses);
-        Set<Class<?>> ret = new HashSet();
+        Set<Class<?>> ret = new HashSet();// honorInherited not working as expected, that will cause classes could contain subclasses with no such annotation
         for (Class c : classes) {
             if (c.isAnnotationPresent(annotation)) {
                 ret.add(c);
