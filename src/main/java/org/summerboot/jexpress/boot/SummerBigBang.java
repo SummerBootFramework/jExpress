@@ -124,7 +124,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         /*
          * 2. load configs： 
-         * all configs depend on SummerBigBang.CLI_CONFIG_TAG result
+         * all configs depend on SummerBigBang.CLI_CONFIG_DOMAIN result
          * AuthConfig depends on Ioc scan result: JaxRsRequestProcessor scan @DeclareRoles to verify Role-Mapping in configuration file
          */
         loadBootConfigFiles(ConfigUtil.ConfigLoadMode.app_run);
@@ -178,7 +178,11 @@ abstract public class SummerBigBang extends SummerSingularity {
             cliOptions.addOption(arg);
         }
 
-        cliOptions.addOption(Option.builder(CLI_CONFIG_TAG).hasArg().argName("tag").desc("Deprecated, use -" + CLI_CONFIG_DIR).build());
+        arg = Option.builder(CLI_CONFIG_DOMAIN)
+                .desc("Start the program using the configuration in the ../standalone_<domain_name> directory. For example, if you specify --domain foo, the program will load the configuration files from the ../standalone_foo directory. If this option is not specified, the program will start using the default configuration files.")
+                .hasArg().argName("domain")
+                .build();
+        cliOptions.addOption(arg);
         arg = Option.builder(CLI_CONFIG_DIR)
                 .desc("the path to load the configuration files, or load from current folder when not specified")
                 .hasArg().argName("path")
@@ -359,7 +363,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * show config on demand
          */
-        if (cli.hasOption(CLI_CONFIG_DEMO) && !cli.hasOption(CLI_CONFIG_DIR) && !cli.hasOption(CLI_CONFIG_TAG)) {
+        if (cli.hasOption(CLI_CONFIG_DEMO) && !cli.hasOption(CLI_CONFIG_DIR) && !cli.hasOption(CLI_CONFIG_DOMAIN)) {
             String cfgName = cli.getOptionValue(CLI_CONFIG_DEMO);
             if (cfgName == null) {
                 String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
