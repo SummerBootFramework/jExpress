@@ -175,7 +175,7 @@
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-cli.version>1.5.0</commons-cli.version>
         <commons-io.version>2.11.0</commons-io.version>
-<!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
+        <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.20.0</log4j-api.version>
         <log4j-disruptor.version>3.4.4</log4j-disruptor.version>
@@ -258,7 +258,7 @@
             <version>${commons-io.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>org.owasp.encoder</groupId>
             <artifactId>encoder</artifactId>
             <version>${owasp.encoder.version}</version>
@@ -283,8 +283,14 @@
             <groupId>com.lmax</groupId>
             <artifactId>disruptor</artifactId>
             <version>${log4j-disruptor.version}</version>
+        </dependency>        
+        <!-- JDK Logging Adapter https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-jul -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-jul</artifactId>
+            <version>${log4j-api.version}</version>
+            <scope>runtime</scope>
         </dependency>
-
 
         <!-- Mail -->
         <!-- https://mvnrepository.com/artifact/com.sun.mail/jakarta.mail -->
