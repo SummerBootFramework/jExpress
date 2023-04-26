@@ -21,6 +21,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.summerboot.jexpress.boot.BootConstant;
 
 /**
  *
@@ -35,4 +36,8 @@ public @interface Version {
     String[] value();
 
     String logFileName() default "";// which is value[0]
+
+    String LogManager() default BootConstant.LOG4J2_JDKADAPTER_VALUE;
+
+    boolean SystemErrorCodeAsInt() default false;
 }

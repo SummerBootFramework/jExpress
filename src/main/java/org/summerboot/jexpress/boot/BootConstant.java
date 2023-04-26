@@ -28,6 +28,8 @@ public interface BootConstant {
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
+    String LOG4J2_JDKADAPTER_KEY = "java.util.logging.manager";
+    String LOG4J2_JDKADAPTER_VALUE = "org.apache.logging.log4j.jul.LogManager";
 
     String CFG_AUTH = "cfg_auth.properties";
     String CFG_SMTP = "cfg_smtp.properties";

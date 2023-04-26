@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import static org.summerboot.jexpress.boot.BootConstant.SYS_PROP_LOGGINGPATH;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Unique;
 import org.summerboot.jexpress.boot.annotation.Version;
@@ -113,12 +112,15 @@ abstract public class SummerSingularity implements BootConstant {
     }
 
     private void singularity() {
+        SummerApplication.SystemErrorCodeAsInt = false;
         memo.setLength(0);
         userSpecifiedConfigDir = null;
         pluginDir = null;
-        System.setProperty(SYS_PROP_APP_PACKAGE_NAME, "");// used by log4j2.xml
-        System.setProperty(SYS_PROP_APP_NAME, "");// used by log4j2.xml
-        System.setProperty(SYS_PROP_APP_VERSION, "");// used by BootController.version()    
+        System.getProperties().remove(LOG4J2_KEY);
+        System.getProperties().remove(LOG4J2_JDKADAPTER_KEY);
+        System.getProperties().remove(SYS_PROP_APP_PACKAGE_NAME, "");// used by log4j2.xml
+        System.getProperties().remove(SYS_PROP_APP_NAME, "");// used by log4j2.xml
+        System.getProperties().remove(SYS_PROP_APP_VERSION, "");// used by BootController.version()    
         System.setProperty(BootConstant.LOG4J2_KEY, "");
         // reset Scan Results
         jvmStartCommand = null;
@@ -180,6 +182,11 @@ abstract public class SummerSingularity implements BootConstant {
     protected void scanAnnotation_Version(Class callerClass) {
         Version v = (Version) callerClass.getAnnotation(Version.class);
         if (v != null) {
+            String logManager = v.LogManager();
+            if (StringUtils.isNotBlank(logManager)) {
+                System.setProperty(LOG4J2_JDKADAPTER_KEY, logManager);// https://logging.apache.org/log4j/log4j-2.3.2/log4j-jul/index.html
+            }
+            SummerApplication.SystemErrorCodeAsInt = v.SystemErrorCodeAsInt();
             appVersionShort = v.logFileName();
             if (StringUtils.isBlank(appVersionShort)) {
                 appVersionShort = v.value()[0];
