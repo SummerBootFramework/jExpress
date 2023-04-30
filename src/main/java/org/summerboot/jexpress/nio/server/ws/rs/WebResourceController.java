@@ -22,7 +22,8 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 
 /**
- *
+ * 404 error will be responsed as html when extends WebResourceController
+ * 
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 abstract public class WebResourceController {
