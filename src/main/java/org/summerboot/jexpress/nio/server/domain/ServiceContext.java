@@ -24,10 +24,16 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
 import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -40,6 +46,7 @@ import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
 
 /**
@@ -498,11 +505,48 @@ public class ServiceContext {
         return this.file(file);
     }
 
+    public static void main(String[] args) {
+        HttpResponseStatus s = HttpResponseStatus.BAD_REQUEST;
+        System.out.println(s.reasonPhrase());
+    }
+
+    private File buildErrorFile(HttpResponseStatus status, boolean isDownloadMode) {
+        int errorCode = status.code();
+        String errorFileName = errorCode + (isDownloadMode ? ".txt" : ".html");
+        String errorPageFolderName = nioCfg.getErrorPageFolderName();
+        File errorFile;
+        if (StringUtils.isBlank(errorPageFolderName)) {
+            errorFile = new File(nioCfg.getDocrootDir() + File.separator + errorFileName).getAbsoluteFile();
+        } else {
+            errorFile = new File(nioCfg.getDocrootDir() + File.separator + errorPageFolderName + File.separator + errorFileName).getAbsoluteFile();
+        }
+        if (!errorFile.exists()) {
+            errorFile.getParentFile().mkdirs();
+            String title = System.getProperty(SummerApplication.SYS_PROP_APP_NAME);
+            String errorDesc = status.reasonPhrase();
+            StringBuilder sb = new StringBuilder();
+            Path errorFilePath = errorFile.getAbsoluteFile().toPath();
+            try (InputStream ioStream = this.getClass()
+                    .getClassLoader()
+                    .getResourceAsStream("HttpErrorTemplate" + (isDownloadMode ? ".txt" : ".html")); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line).append(System.lineSeparator());
+                }
+                String errorFileContent = sb.toString().replace("${title}", title).replace("${code}", "" + errorCode).replace("${desc}", errorDesc);
+                //errorFileContent = errorFileContent..replace("${title}", title);
+                Files.writeString(errorFilePath, errorFileContent);
+            } catch (IOException ex) {
+                Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "Failed to generate error page:" + errorFile.getName(), ex);
+                this.error(e);
+            }
+        }
+        return errorFile;
+    }
+
     public ServiceContext file(File file) {
         if (!precheckFile(file, downloadMode)) {
-            String errorFileName = status.code() + (downloadMode ? ".txt" : ".html");
-            file = new File(nioCfg.getDocrootDir() + File.separator + nioCfg.getWebResources()
-                    + File.separator + errorFileName).getAbsoluteFile();
+            file = buildErrorFile(status, downloadMode);
         }
         this.txt = null;
         this.redirect = null;

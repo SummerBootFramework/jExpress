@@ -329,8 +329,8 @@ public class NioConfig extends BootConfig {
     @Config(key = "server.http.web.docroot")
     private volatile String docroot = "docroot";
 
-    @Config(key = "server.http.web.resources")
-    private volatile String webResources = "web-resources/errorpages";
+    @Config(key = "server.http.web.docroot.errorPageFolderName")
+    private volatile String errorPageFolderName = "errorpages";
 
     @Config(key = "server.http.web.welcomePage")
     private volatile String welcomePage = "index.html";
@@ -792,8 +792,8 @@ public class NioConfig extends BootConfig {
         return docrootDir;
     }
 
-    public String getWebResources() {
-        return webResources;
+    public String getErrorPageFolderName() {
+        return errorPageFolderName;
     }
 
     public String getWelcomePage() {
