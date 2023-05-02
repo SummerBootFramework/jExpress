@@ -58,6 +58,7 @@ public class LdapAgent implements Closeable {
     protected static String escape(String value) {
         return LDAPEncoder.escapeDN(value);
     }
+
     protected static String escapeQuery(String value) {
         //return LDAPEncoder.escapeLDAPSearchFilter(value);
         return value;
@@ -348,7 +349,7 @@ public class LdapAgent implements Closeable {
         for (int i = 0; i < size; i++) {
             ret[i] = getAttr(userAttrs.get(i), DN);
         }
-        String dn = ret[0];
+        String dn = size > 0 ? ret[0] : null;
         if (dn == null) {
             if (listener != null) {
                 listener.onLoginUserNotFound(username, password);
