@@ -1,7 +1,7 @@
 /*
  * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, appVersionLong 2.0 (the
+ * The Summer Boot Project licenses this file to you under the Apache License, appVersion 2.0 (the
  * "License"); you may not use this file except in compliance with the License and you have no
  * policy prohibiting employee contributions back to this file (unless the contributor to this
  * file is your current or retired employee). You may obtain a copy of the License at:
@@ -217,7 +217,7 @@ abstract public class SummerApplication extends SummerBigBang {
     protected void traceConfig() {
         memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_VERSION).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_VERSION));
         memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_PACKAGE_NAME).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME));
-        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_NAME).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_NAME));
+        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_LOGFILENAME).append("=").append(System.getProperty(SummerApplication.SYS_PROP_LOGFILENAME));
         memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_LOGGINGPATH).append("=").append(System.getProperty(SummerApplication.SYS_PROP_LOGGINGPATH));
 
         memo.append("\n\t- start: PostOffice=").append(postOffice.getClass().getName());
@@ -241,11 +241,11 @@ abstract public class SummerApplication extends SummerBigBang {
         //1. init email
         final SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
         if (postOffice != null) {
-            postOffice.setAppVersion(super.appVersionLong);
+            postOffice.setAppVersion(super.appVersion);
             //gracefully shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 if (postOffice != null) {
-                    postOffice.sendAlertSync(smtpCfg.getEmailToAppSupport(), "Shutdown at " + OffsetDateTime.now() + " - " + super.appVersionLong, "EOM", null, false);
+                    postOffice.sendAlertSync(smtpCfg.getEmailToAppSupport(), "Shutdown at " + OffsetDateTime.now() + " - " + super.appVersion, "EOM", null, false);
                 }
             }, "ShutdownHook.BootApp")
             );
@@ -316,7 +316,7 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             //6. announcement
-            log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersionLong + " pid#" + BootConstant.PID));
+            log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID));
 
             String fullConfigInfo = sb.toString();
             if (postOffice != null) {

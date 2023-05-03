@@ -1,7 +1,7 @@
 /*
  * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, appVersionLong 2.0 (the
+ * The Summer Boot Project licenses this file to you under the Apache License, appVersion 2.0 (the
  * "License"); you may not use this file except in compliance with the License and you have no
  * policy prohibiting employee contributions back to this file (unless the contributor to this
  * file is your current or retired employee). You may obtain a copy of the License at:
@@ -81,8 +81,8 @@ abstract public class SummerSingularity implements BootConstant {
     protected String jvmStartCommand;
     protected boolean jmxRequired;
     protected String callerRootPackageName;//also used by JPAHibernateConfig access to scan @Entity
-    protected String appVersionLong = BootConstant.VERSION;
-    protected String appVersionShort = BootConstant.VERSION;
+    protected String appVersion = BootConstant.VERSION;
+    protected String logFileName = BootConstant.VERSION;
 
     /*
      * Annotation scan results as CLI inputs
@@ -119,15 +119,15 @@ abstract public class SummerSingularity implements BootConstant {
         System.getProperties().remove(LOG4J2_KEY);
         System.getProperties().remove(LOG4J2_JDKADAPTER_KEY);
         System.getProperties().remove(SYS_PROP_APP_PACKAGE_NAME, "");// used by log4j2.xml
-        System.getProperties().remove(SYS_PROP_APP_NAME, "");// used by log4j2.xml
+        System.getProperties().remove(SYS_PROP_LOGFILENAME, "");// used by log4j2.xml
         System.getProperties().remove(SYS_PROP_APP_VERSION, "");// used by BootController.version()    
         System.setProperty(BootConstant.LOG4J2_KEY, "");
         // reset Scan Results
         jvmStartCommand = null;
         jmxRequired = false;
         callerRootPackageName = null;
-        appVersionLong = BootConstant.VERSION;
-        appVersionShort = BootConstant.VERSION;
+        appVersion = BootConstant.VERSION;
+        logFileName = BootConstant.VERSION;
 
         //reset Annotation scan results as CLI inputs
         availableUniqueTagOptions.clear();
@@ -150,8 +150,8 @@ abstract public class SummerSingularity implements BootConstant {
 
         scanAnnotation_Version(primaryClass);
         System.setProperty(SYS_PROP_APP_PACKAGE_NAME, callerRootPackageName);// used by log4j2.xml
-        System.setProperty(SYS_PROP_APP_NAME, appVersionShort);// used by log4j2.xml as log file name
-        System.setProperty(SYS_PROP_APP_VERSION, appVersionLong);// used by BootController.version()    
+        System.setProperty(SYS_PROP_LOGFILENAME, logFileName);// used by log4j2.xml as log file name
+        System.setProperty(SYS_PROP_APP_VERSION, appVersion);// used by BootController.version()    
         scanArgsToInitializePluginFromConfigDir(args);
         log = LogManager.getLogger(SummerApplication.class);// init log
         log.debug("Configuration path = {}", userSpecifiedConfigDir);
@@ -187,15 +187,24 @@ abstract public class SummerSingularity implements BootConstant {
                 System.setProperty(LOG4J2_JDKADAPTER_KEY, logManager);// https://logging.apache.org/log4j/log4j-2.3.2/log4j-jul/index.html
             }
             SummerApplication.SystemErrorCodeAsInt = v.SystemErrorCodeAsInt();
-            appVersionShort = v.logFileName();
-            if (StringUtils.isBlank(appVersionShort)) {
-                appVersionShort = v.value()[0];
+            logFileName = v.logFileName();
+            if (StringUtils.isBlank(logFileName)) {
+                logFileName = v.value()[0];
             }
-            appVersionLong = Arrays.toString(v.value());
+            appVersion = v.value()[0];
+            System.setProperty(SYS_PROP_ERROR_PAGE_TITLE, appVersion);
+            int versionCount = v.value().length;
+            if (versionCount > 1) {
+                appVersion = appVersion + " (";
+                for (int i = 1; i < versionCount; i++) {
+                    appVersion = appVersion + v.value()[i] + " ";
+                }
+                appVersion = appVersion + ")";
+            }
         } else {
-            appVersionShort = "app";
+            logFileName = "app";
         }
-        memo.append("\n\t- callerVersion=").append(appVersionLong);
+        memo.append("\n\t- callerVersion=").append(appVersion);
     }
 
     protected void scanArgsToInitializePluginFromConfigDir(String[] args) {

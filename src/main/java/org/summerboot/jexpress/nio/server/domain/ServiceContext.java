@@ -522,7 +522,7 @@ public class ServiceContext {
         }
         if (!errorFile.exists()) {
             errorFile.getParentFile().mkdirs();
-            String title = System.getProperty(SummerApplication.SYS_PROP_APP_NAME);
+            String title = System.getProperty(SummerApplication.SYS_PROP_ERROR_PAGE_TITLE);
             String errorDesc = status.reasonPhrase();
             StringBuilder sb = new StringBuilder();
             Path errorFilePath = errorFile.getAbsoluteFile().toPath();

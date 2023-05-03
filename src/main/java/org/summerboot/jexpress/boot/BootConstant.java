@@ -24,7 +24,7 @@ import org.summerboot.jexpress.util.ApplicationUtil;
 public interface BootConstant {
 
     //version
-    String VERSION = "SummerBoot.jExpress 2.3.5";
+    String VERSION = "SummerBoot.jExpress 2.3.6";
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
@@ -45,9 +45,10 @@ public interface BootConstant {
      * It means only one thread can invoke the ‘java.util.Hashtable.get()’ method at any given time. 
      */
     String SYS_PROP_APP_VERSION = "version";//used by BootController.version()
+    String SYS_PROP_ERROR_PAGE_TITLE = "ErrorPageTitle";//used by ServiceContext.buildErrorFile()
     String SYS_PROP_APP_PACKAGE_NAME = "appPackage";//used by both log4j2.xml ${sys:appPackage} and JPAHibernateConfig to scan @Entity
     String SYS_PROP_HOST_NAME = "hostName";//used by log4j2.xml ${hostName}
-    String SYS_PROP_APP_NAME = "appappName";//used by log4j2.xml ${sys:appappName}
+    String SYS_PROP_LOGFILENAME = "appappName";//used by log4j2.xml ${sys:appappName} as log file name
     String SYS_PROP_LOGGINGPATH = "logDir";//used by log4j2.xml ${sys:loggingPath}
     String SYS_PROP_PING_URI = "pingURI";//used by NioServer.bind() and BootHttpPingHandler. TODO: use injector
 

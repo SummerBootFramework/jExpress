@@ -1,7 +1,7 @@
 /*
  * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, appVersionLong 2.0 (the
+ * The Summer Boot Project licenses this file to you under the Apache License, appVersion 2.0 (the
  * "License"); you may not use this file except in compliance with the License and you have no
  * policy prohibiting employee contributions back to this file (unless the contributor to this
  * file is your current or retired employee). You may obtain a copy of the License at:
@@ -250,7 +250,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             cli = parser.parse(cliOptions, args);
         } catch (ParseException ex) {
             System.out.println(ex.getMessage());
-            cliHelpFormatter.printHelp(appVersionLong, cliOptions);
+            cliHelpFormatter.printHelp(appVersion, cliOptions);
             System.exit(1);
         }
     }
@@ -299,12 +299,12 @@ abstract public class SummerBigBang extends SummerSingularity {
         //usage
         if (cli.hasOption(USAGE)) {
             continueCLI = false;
-            cliHelpFormatter.printHelp(appVersionLong, cliOptions);
+            cliHelpFormatter.printHelp(appVersion, cliOptions);
         }
         //callerVersion
         if (cli.hasOption(CLI_VERSION)) {
             continueCLI = false;
-            System.out.println(appVersionLong);
+            System.out.println(appVersion);
         }
         // generate CLI_JWT root signing key
         if (cli.hasOption(CLI_JWT)) {
