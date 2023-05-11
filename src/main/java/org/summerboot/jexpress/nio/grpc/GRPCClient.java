@@ -16,6 +16,8 @@
 package org.summerboot.jexpress.nio.grpc;
 
 import io.grpc.ManagedChannel;
+import io.grpc.NameResolverProvider;
+import io.grpc.NameResolverRegistry;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.channel.epoll.EpollDomainSocketChannel;
@@ -40,6 +42,7 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
 
     /**
      *
+     * @param nameResolverProvider for client side load balancing
      * @param uri The URI format should be one of grpc://host:port,
      * grpcs://host:port, or unix:///path/to/uds.sock
      * @param keyManagerFactory The Remote Caller identity
@@ -50,9 +53,10 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
      * @return
      * @throws javax.net.ssl.SSLException
      */
-    public static NettyChannelBuilder getNettyChannelBuilder(URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+    public static NettyChannelBuilder getNettyChannelBuilder(NameResolverProvider nameResolverProvider, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
             @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
         NettyChannelBuilder channelBuilder = null;
+        String target = uri.toString();//"grpcs://"+uri.getAuthority()+"/service";// "grpcs:///"
         switch (uri.getScheme()) {
             case "unix": //https://github.com/grpc/grpc-java/issues/1539
                 channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
@@ -61,11 +65,22 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                         .usePlaintext();
                 break;
             case "grpc":
-                channelBuilder = NettyChannelBuilder.forAddress(uri.getHost(), uri.getPort());
+                if (nameResolverProvider == null) {
+                    channelBuilder = NettyChannelBuilder.forAddress(uri.getHost(), uri.getPort());
+                } else {
+                    NameResolverRegistry.getDefaultRegistry().register(nameResolverProvider);// use client side load balancing
+                    channelBuilder = NettyChannelBuilder.forTarget(target);
+                }
+
                 channelBuilder.usePlaintext();
                 break;
             case "grpcs":
-                channelBuilder = NettyChannelBuilder.forAddress(uri.getHost(), uri.getPort());
+                if (nameResolverProvider == null) {
+                    channelBuilder = NettyChannelBuilder.forAddress(uri.getHost(), uri.getPort());
+                } else {
+                    NameResolverRegistry.getDefaultRegistry().register(nameResolverProvider);// use client side load balancing
+                    channelBuilder = NettyChannelBuilder.forTarget(target);
+                }
                 SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
                 sslBuilder.keyManager(keyManagerFactory);
                 if (trustManagerFactory == null) {//ignore Server Certificate
@@ -91,35 +106,41 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
         if (channelBuilder == null) {
             throw new IllegalArgumentException("The URI format should be one of grpc://host:port, grpcs://host:port, or unix:///path/to/uds.sock");
         }
+        channelBuilder.defaultLoadBalancingPolicy("round_robin");// default
+        //channelBuilder.nameResolverFactory(resolverFactory);
         return channelBuilder;
     }
 
     /**
+     * @param nameResolverProvider for client side load balancing
      * @param uri The URI format should be one of grpc://host:port or
      * unix:///path/to/uds.sock
      * @return
      * @throws SSLException
      */
-    public static NettyChannelBuilder NettyChannelBuilder(URI uri) throws SSLException {
-        return getNettyChannelBuilder(uri, null, null, null, null);
+    public static NettyChannelBuilder NettyChannelBuilder(NameResolverProvider nameResolverProvider, URI uri) throws SSLException {
+        return getNettyChannelBuilder(nameResolverProvider, uri, null, null, null, null);
     }
 
+    protected final NameResolverProvider nameResolverProvider;
     protected final URI uri;
     protected final NettyChannelBuilder channelBuilder;
     protected ManagedChannel channel;
 
     /**
      *
+     * @param nameResolverProvider for client side load balancing
      * @param uri The URI format should be one of grpc://host:port or
      * unix:///path/to/uds.sock
      * @throws SSLException
      */
-    public GRPCClient(URI uri) throws SSLException {
-        this(uri, null, null, null, null);
+    public GRPCClient(NameResolverProvider nameResolverProvider, URI uri) throws SSLException {
+        this(nameResolverProvider, uri, null, null, null, null);
     }
 
     /**
      *
+     * @param nameResolverProvider for client side load balancing
      * @param uri The URI format should be one of grpc://host:port,
      * grpcs://host:port, or unix:///path/to/uds.sock
      * @param keyManagerFactory The Remote Caller identity
@@ -129,10 +150,11 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
      * @param tlsVersionProtocols "TLSv1.2", "TLSv1.3"
      * @throws SSLException
      */
-    public GRPCClient(URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+    public GRPCClient(NameResolverProvider nameResolverProvider, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
             @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
+        this.nameResolverProvider = nameResolverProvider;
         this.uri = uri;
-        this.channelBuilder = getNettyChannelBuilder(uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, tlsVersionProtocols);
+        this.channelBuilder = getNettyChannelBuilder(nameResolverProvider, uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, tlsVersionProtocols);
     }
 
     /**
@@ -140,14 +162,16 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
      * @param channelBuilder
      */
     public GRPCClient(NettyChannelBuilder channelBuilder) {
-        uri = null;
+        this.nameResolverProvider = null;
+        this.uri = null;
         this.channelBuilder = channelBuilder;
     }
 
     public T connect() {
         disconnect();
         channel = channelBuilder.build();
-        String info = uri == null ? channel.toString() : uri.toString();
+        //String info = uri == null ? channel.toString() : uri.toString();
+        String info = channel.authority();
         Runtime.getRuntime().addShutdownHook(
                 new Thread(() -> {
                     try {
@@ -175,5 +199,8 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                 channel = null;
             }
         }
+//        if(nameResolverProvider!=null) {
+//            NameResolverRegistry.getDefaultRegistry().deregister(nameResolverProvider);
+//        }
     }
 }
