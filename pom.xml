@@ -188,10 +188,10 @@
 
         <!-- NIO Netty -->
         <netty.version>4.1.92.Final</netty.version>
-        <netty-tcnative.version>2.0.60.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.61.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.54.1</grpc.version>
-        <protobuf.version>3.22.3</protobuf.version>
+        <grpc.version>1.55.1</grpc.version>
+        <protobuf.version>3.23.0</protobuf.version>
         <!-- Web JAX-RS -->        
         <swagger.core.version>2.2.9</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
@@ -218,7 +218,7 @@
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>4.3.2</jedis.version>
+        <jedis.version>4.4.0</jedis.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.32</freemarker.version>

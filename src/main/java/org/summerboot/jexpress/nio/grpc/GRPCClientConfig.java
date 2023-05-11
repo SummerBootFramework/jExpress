@@ -17,11 +17,14 @@ package org.summerboot.jexpress.nio.grpc;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.grpc.NameResolverProvider;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -48,13 +51,23 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected GRPCClientConfig() {
     }
 
+    //1. NIO Network Listeners
+    @ConfigHeader(title = "1. " + ID + " provider",
+            format = "ip1:port1, ip2:port2, ..., ipN:portN",
+            example = "192.168.1.10:8424, 127.0.0.1:8425, 0.0.0.0:8426")
+    @Config(key = ID + ".LoadBalancing.servers")
+    private volatile Map<String, Integer> loadBalancing;
+
+    private volatile NameResolverProvider nameResolverProvider;
+
     //1. gRPC connection
-    @ConfigHeader(title = "1. " + ID + " provider")
-    @Config(key = ID + ".url", defaultValue = "grpc://127.0.0.1:8424",
+    @Config(key = ID + ".target.url", defaultValue = "grpcs:///",
             desc = "grpc://127.0.0.1:8424\n"
             + "grpcs://127.0.0.1:8424\n"
+            + "grpcs:///\n"
             + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
+
     @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")//"TLSv1.2, TLSv1.3"
     protected String[] sslProtocols = {"TLSv1.3"};
     @Config(key = ID + ".ssl.ciphers")
@@ -80,11 +93,26 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        channelBuilder = GRPCClient.getNettyChannelBuilder(uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
+        if (loadBalancing != null) {
+            InetSocketAddress[] addresses = loadBalancing.entrySet()
+                    .stream()
+                    .map(entry -> new InetSocketAddress(entry.getKey(), entry.getValue()))
+                    .toArray(InetSocketAddress[]::new);
+            nameResolverProvider = new BootLoadBalancerProvider(uri.getScheme(), addresses);
+        }
+        channelBuilder = GRPCClient.getNettyChannelBuilder(nameResolverProvider, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
     }
 
     @Override
     public void shutdown() {
+    }
+
+    public Map<String, Integer> getLoadBalancing() {
+        return loadBalancing;
+    }
+
+    public NameResolverProvider getNameResolverProvider() {
+        return nameResolverProvider;
     }
 
     public URI getUri() {
