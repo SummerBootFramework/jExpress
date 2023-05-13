@@ -461,8 +461,14 @@ public class ServiceContext {
     public boolean precheckFile(File file, boolean isDownloadMode) {
         this.file = null;
         String filePath = file.getAbsolutePath();
-        String realPath = file.getAbsoluteFile().toPath().normalize().toString();
         memo("file." + (isDownloadMode ? "download" : "view"), filePath);
+        String realPath;
+        try {
+            realPath = file.getAbsoluteFile().toPath().normalize().toString();
+        } catch (Throwable ex) {
+            memo("file.toPath failed", ex.toString());
+            return false;
+        }
 
         if (!file.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
@@ -480,6 +486,7 @@ public class ServiceContext {
             this.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
         }
+
         return true;
     }
 

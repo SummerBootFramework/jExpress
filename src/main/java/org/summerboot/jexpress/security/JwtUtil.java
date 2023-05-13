@@ -24,6 +24,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.security.KeyPair;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -59,65 +60,65 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(decodedKey);
     }
 
-    @Deprecated
-    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, String keyAlgorithm, String jwtSigningKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
-        JwtBuilder builder = Jwts.builder()
-                .setId(id)
-                .setIssuer(issuer)
-                .setSubject(subject)
-                .setAudience(audience);
-        return createJWT_091(signatureAlgorithm, keyAlgorithm, jwtSigningKey, builder, TimeUnit.SECONDS, ttlSeconds);
-    }
+//    @Deprecated
+//    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, String keyAlgorithm, String jwtSigningKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
+//        JwtBuilder builder = Jwts.builder()
+//                .setId(id)
+//                .setIssuer(issuer)
+//                .setSubject(subject)
+//                .setAudience(audience);
+//        return createJWT_091(signatureAlgorithm, keyAlgorithm, jwtSigningKey, builder, TimeUnit.SECONDS, ttlSeconds);
+//    }
+//
+//    @Deprecated
+//    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, String keyAlgorithm, String jwtSigningKey, JwtBuilder builder, TimeUnit timeUnit, int ttl) {
+//        byte[] key = Base64.getDecoder().decode(jwtSigningKey);
+//        return createJWT_091(signatureAlgorithm, keyAlgorithm, key, builder, timeUnit, ttl);
+//    }
+//
+//    @Deprecated
+//    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, String keyAlgorithm, byte[] jwtSigningKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
+//        JwtBuilder builder = Jwts.builder()
+//                .setId(id)
+//                .setIssuer(issuer)
+//                .setSubject(subject)
+//                .setAudience(audience);
+//        return createJWT_091(signatureAlgorithm, keyAlgorithm, jwtSigningKey, builder, TimeUnit.SECONDS, ttlSeconds);
+//    }
 
-    @Deprecated
-    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, String keyAlgorithm, String jwtSigningKey, JwtBuilder builder, TimeUnit timeUnit, int ttl) {
-        byte[] key = Base64.getDecoder().decode(jwtSigningKey);
-        return createJWT_091(signatureAlgorithm, keyAlgorithm, key, builder, timeUnit, ttl);
-    }
-
-    @Deprecated
-    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, String keyAlgorithm, byte[] jwtSigningKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
-        JwtBuilder builder = Jwts.builder()
-                .setId(id)
-                .setIssuer(issuer)
-                .setSubject(subject)
-                .setAudience(audience);
-        return createJWT_091(signatureAlgorithm, keyAlgorithm, jwtSigningKey, builder, TimeUnit.SECONDS, ttlSeconds);
-    }
-
-    @Deprecated
-    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, String keyAlgorithm, byte[] jwtSigningKey, JwtBuilder builder, TimeUnit timeUnit, int ttl) {
-        Key privateKey = new SecretKeySpec(jwtSigningKey, 0, jwtSigningKey.length, keyAlgorithm);
-        return createJWT_091(signatureAlgorithm, privateKey, builder, timeUnit, ttl);
-    }
-
-    @Deprecated
-    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, Key privateKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
-        JwtBuilder builder = Jwts.builder()
-                .setId(id)
-                .setIssuer(issuer)
-                .setSubject(subject)
-                .setAudience(audience);
-        return createJWT_091(signatureAlgorithm, privateKey, builder, TimeUnit.SECONDS, ttlSeconds);
-    }
-
-    @Deprecated
-    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, Key privateKey, JwtBuilder builder, TimeUnit timeUnit, int ttl) {
-        //0. We will sign our JWT with our ApiKey secret
-        //byte[] apiKeySecretBytes = parseSigningKey(jwtRootSigningKeyString);
-        //The JWT signature algorithm we will be using to sign the token
-        //Key signingKey = new SecretKeySpec(jwtSigningKey, signatureAlgorithm.getJcaName());
-
-        //1. set ecpire time
-        setJwtExpireTime(builder, timeUnit, ttl);
-
-        //2. Let's set the JWT Claims
-        builder.setIssuedAt(new Date());
-        builder.signWith(signatureAlgorithm, privateKey);
-
-        //3. Builds the JWT and serializes it to a compact, URL-safe string
-        return builder.compact();
-    }
+//    @Deprecated
+//    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, String keyAlgorithm, byte[] jwtSigningKey, JwtBuilder builder, TimeUnit timeUnit, int ttl) {
+//        Key privateKey = new SecretKeySpec(jwtSigningKey, 0, jwtSigningKey.length, keyAlgorithm);
+//        return createJWT_091(signatureAlgorithm, privateKey, builder, timeUnit, ttl);
+//    }
+//
+//    @Deprecated
+//    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, Key privateKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
+//        JwtBuilder builder = Jwts.builder()
+//                .setId(id)
+//                .setIssuer(issuer)
+//                .setSubject(subject)
+//                .setAudience(audience);
+//        return createJWT_091(signatureAlgorithm, privateKey, builder, TimeUnit.SECONDS, ttlSeconds);
+//    }
+//
+//    @Deprecated
+//    public static String createJWT_091(SignatureAlgorithm signatureAlgorithm, Key privateKey, JwtBuilder builder, TimeUnit timeUnit, Duration ttl) {
+//        //0. We will sign our JWT with our ApiKey secret
+//        //byte[] apiKeySecretBytes = parseSigningKey(jwtRootSigningKeyString);
+//        //The JWT signature algorithm we will be using to sign the token
+//        //Key signingKey = new SecretKeySpec(jwtSigningKey, signatureAlgorithm.getJcaName());
+//
+//        //1. set ecpire time
+//        setJwtExpireTime(builder, ttl);
+//
+//        //2. Let's set the JWT Claims
+//        builder.setIssuedAt(new Date());
+//        builder.signWith(signatureAlgorithm, privateKey);
+//
+//        //3. Builds the JWT and serializes it to a compact, URL-safe string
+//        return builder.compact();
+//    }
 
     public static String createJWT(String keyAlgorithm, String jwtSigningKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
         JwtBuilder builder = Jwts.builder()
@@ -125,12 +126,12 @@ public class JwtUtil {
                 .setIssuer(issuer)
                 .setSubject(subject)
                 .setAudience(audience);
-        return createJWT(keyAlgorithm, jwtSigningKey, builder, TimeUnit.SECONDS, ttlSeconds);
+        return createJWT(keyAlgorithm, jwtSigningKey, builder, Duration.ofSeconds(ttlSeconds));
     }
 
-    public static String createJWT(String keyAlgorithm, String jwtSigningKey, JwtBuilder builder, TimeUnit timeUnit, int ttl) {
+    public static String createJWT(String keyAlgorithm, String jwtSigningKey, JwtBuilder builder, Duration ttl) {
         byte[] key = Base64.getDecoder().decode(jwtSigningKey);
-        return createJWT(keyAlgorithm, key, builder, timeUnit, ttl);
+        return createJWT(keyAlgorithm, key, builder, ttl);
     }
 
     public static String createJWT(String keyAlgorithm, byte[] jwtSigningKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
@@ -139,19 +140,19 @@ public class JwtUtil {
                 .setIssuer(issuer)
                 .setSubject(subject)
                 .setAudience(audience);
-        return createJWT(keyAlgorithm, jwtSigningKey, builder, TimeUnit.SECONDS, ttlSeconds);
+        return createJWT(keyAlgorithm, jwtSigningKey, builder, Duration.ofSeconds(ttlSeconds));
     }
 
-    public static String createJWT(String keyAlgorithm, byte[] jwtSigningKey, JwtBuilder builder, TimeUnit timeUnit, int ttl) {
+    public static String createJWT(String keyAlgorithm, byte[] jwtSigningKey, JwtBuilder builder, Duration ttl) {
         Key privateKey = new SecretKeySpec(jwtSigningKey, 0, jwtSigningKey.length, keyAlgorithm);
-        return createJWT(privateKey, builder, timeUnit, ttl);
+        return createJWT(privateKey, builder, ttl);
     }
 
-    public static void setJwtExpireTime(JwtBuilder builder, TimeUnit timeUnit, int ttl) {
-        if (ttl <= 0) {
+    public static void setJwtExpireTime(JwtBuilder builder, Duration ttl) {
+        if (ttl == null || ttl.isZero() || ttl.isNegative()) {
             return;
         }
-        long ttlMilsec = timeUnit.toMillis(ttl);
+        long ttlMilsec = ttl.toMillis();
         if (ttlMilsec > 0) {// no expire if toMillis overflow
             long expireTimeMilsec = System.currentTimeMillis() + ttlMilsec;
             if (expireTimeMilsec > 0) {// no expire if (nowMillis + ttlMillis) overflow
@@ -167,17 +168,17 @@ public class JwtUtil {
                 .setIssuer(issuer)
                 .setSubject(subject)
                 .setAudience(audience);
-        return createJWT(privateKey, builder, TimeUnit.SECONDS, ttlSeconds);
+        return createJWT(privateKey, builder, Duration.ofSeconds(ttlSeconds));
     }
 
-    public static String createJWT(Key privateKey, JwtBuilder builder, TimeUnit timeUnit, int ttl) {
+    public static String createJWT(Key privateKey, JwtBuilder builder, Duration ttl) {
         //0. We will sign our JWT with our ApiKey secret
         //byte[] apiKeySecretBytes = parseSigningKey(jwtRootSigningKeyString);
         //The JWT signature algorithm we will be using to sign the token
         //Key signingKey = new SecretKeySpec(jwtSigningKey, signatureAlgorithm.getJcaName());
 
         //1. set ecpire time
-        setJwtExpireTime(builder, timeUnit, ttl);
+        setJwtExpireTime(builder, ttl);
 
         //2. Let's set the JWT Claims
         builder.setIssuedAt(new Date());
