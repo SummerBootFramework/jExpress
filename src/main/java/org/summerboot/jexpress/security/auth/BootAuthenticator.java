@@ -32,6 +32,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -88,7 +89,7 @@ public abstract class BootAuthenticator<T> implements Authenticator {
         //4. create JWT
         //String token = JwtUtil.createJWT(authCfg.getJwtSignatureAlgorithm(),
         Key signingKey = authCfg.getJwtSigningKey();
-        String token = JwtUtil.createJWT(signingKey, builder, TimeUnit.MINUTES, validForMinutes);
+        String token = JwtUtil.createJWT(signingKey, builder, Duration.ofMinutes(validForMinutes));
         if (listener != null) {
             listener.onLoginSuccess(caller.getUid(), token);
         }

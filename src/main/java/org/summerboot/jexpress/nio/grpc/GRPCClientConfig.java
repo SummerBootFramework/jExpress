@@ -56,7 +56,10 @@ abstract public class GRPCClientConfig extends BootConfig {
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8424, 127.0.0.1:8425, 0.0.0.0:8426")
     @Config(key = ID + ".LoadBalancing.servers")
-    private volatile Map<String, Integer> loadBalancing;
+    private volatile Map<String, Integer> loadBalancingServers;
+
+    @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN")
+    private volatile GRPCClient.LoadBalancingPolicy loadBalancingPolicy;
 
     private volatile NameResolverProvider nameResolverProvider;
 
@@ -93,22 +96,26 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        if (loadBalancing != null) {
-            InetSocketAddress[] addresses = loadBalancing.entrySet()
+        if (loadBalancingServers != null) {
+            InetSocketAddress[] addresses = loadBalancingServers.entrySet()
                     .stream()
                     .map(entry -> new InetSocketAddress(entry.getKey(), entry.getValue()))
                     .toArray(InetSocketAddress[]::new);
             nameResolverProvider = new BootLoadBalancerProvider(uri.getScheme(), addresses);
         }
-        channelBuilder = GRPCClient.getNettyChannelBuilder(nameResolverProvider, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
+        channelBuilder = GRPCClient.getNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
     }
 
     @Override
     public void shutdown() {
     }
 
-    public Map<String, Integer> getLoadBalancing() {
-        return loadBalancing;
+    public Map<String, Integer> getLoadBalancingServers() {
+        return loadBalancingServers;
+    }
+
+    public GRPCClient.LoadBalancingPolicy getLoadBalancingPolicy() {
+        return loadBalancingPolicy;
     }
 
     public NameResolverProvider getNameResolverProvider() {
