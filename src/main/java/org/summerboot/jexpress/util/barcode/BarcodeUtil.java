@@ -23,10 +23,13 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageConfig;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
+import com.google.zxing.pdf417.encoder.Compaction;
+import com.google.zxing.pdf417.encoder.Dimensions;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import org.summerboot.jexpress.util.FormatterUtil;
 
@@ -44,7 +47,7 @@ public class BarcodeUtil {
 //        Files.write(f.toPath(), data);
 //    }
     public static final int ARGB_BLACK = 0xff000000;
-    public static final int ARGB_WHITE = 0xfffffae7;//0xfffffae7;
+    public static final int ARGB_WHITE = 0xffffffff;//0xfffffae7;
     public static final int ARGB_TRANSPARENT = 0x00ffffff;//0xfffffae7;
     public static final Map<EncodeHintType, ?> DEFAULT_COFNIG = Map.of(
             EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8,
@@ -120,5 +123,36 @@ public class BarcodeUtil {
 //        return image;
         MatrixToImageConfig config = new MatrixToImageConfig(onColor, offColor);
         return MatrixToImageWriter.toBufferedImage(matrix, config);
+    }
+
+    public static byte[] buildPDF417PNG(byte[] dataToEncode, int width, int height) throws IOException {
+        String contents = new String(dataToEncode, StandardCharsets.ISO_8859_1);
+        int minCols = 11, maxCols = 11, minRows = 3, maxRows = 90;
+        Dimensions dimensions = new Dimensions(minCols, maxCols, minRows, maxRows);
+        Map hints = new HashMap();
+        hints.put(EncodeHintType.MARGIN, "0");
+        hints.put(EncodeHintType.ERROR_CORRECTION, "4");
+        hints.put(EncodeHintType.PDF417_DIMENSIONS, dimensions);
+        hints.put(EncodeHintType.PDF417_COMPACTION, Compaction.BYTE);
+        hints.put(EncodeHintType.PDF417_COMPACT, "true");
+        return buildPDF417PNG(contents, width, height, hints);
+    }
+
+    public static byte[] buildPDF417PNG(String contents, int width, int height) throws IOException {
+        int minCols = 5, maxCols = 5, minRows = 3, maxRows = 90;
+        Dimensions dimensions = new Dimensions(minCols, maxCols, minRows, maxRows);
+        Map hints = new HashMap();
+        hints.put(EncodeHintType.MARGIN, "0");
+        hints.put(EncodeHintType.ERROR_CORRECTION, "4");
+        hints.put(EncodeHintType.PDF417_DIMENSIONS, dimensions);
+        hints.put(EncodeHintType.PDF417_COMPACTION, Compaction.TEXT);
+        return buildPDF417PNG(contents, width, height, hints);
+    }
+
+    public static byte[] buildPDF417PNG(String contents, int width, int height, Map hints) throws IOException {
+        BitMatrix bm = generateBarcode(contents, BarcodeFormat.PDF_417, width, height, hints);
+        int onColor = ARGB_BLACK;
+        int offColor = ARGB_WHITE;
+        return toByteArray(bm, "png", onColor, offColor);
     }
 }
