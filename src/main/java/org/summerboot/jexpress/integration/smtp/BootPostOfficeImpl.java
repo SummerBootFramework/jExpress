@@ -117,6 +117,9 @@ public class BootPostOfficeImpl implements PostOffice {
             if (debouncing) {
                 String key = title;
                 Throwable rootCause = ExceptionUtils.getRootCause(cause);
+                if (rootCause == null) {
+                    rootCause = cause;
+                }
                 if (rootCause != null) {
                     key = key + rootCause.getClass().getName();
                 }

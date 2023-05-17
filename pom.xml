@@ -198,7 +198,7 @@
         
         
         <!-- MIME-Type -->
-        <tika.version>2.7.0</tika.version>
+        <tika.version>2.8.0</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>3.1.0</rs-api.version>
         <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
