@@ -18,6 +18,7 @@ package org.summerboot.jexpress.nio.server.domain;
 import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.security.auth.Caller;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -48,6 +49,7 @@ import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
+import org.summerboot.jexpress.util.BeanUtil;
 
 /**
  *
@@ -466,13 +468,14 @@ public class ServiceContext {
         try {
             realPath = file.getAbsoluteFile().toPath().normalize().toString();
         } catch (Throwable ex) {
-            memo("file.toPath failed", ex.toString());
+            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "Invalid file path: " + filePath, ex);
+            this.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
 
         if (!file.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "File not exists: " + filePath, null);
             this.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
@@ -481,7 +484,7 @@ public class ServiceContext {
                 || file.isDirectory() || !file.isFile()
                 || file.isHidden() || !file.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "Malicious file reqeust: " + filePath, null);
             // 2. build JSON response with same app error code, and keep the default INFO log level.
             this.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
@@ -510,11 +513,6 @@ public class ServiceContext {
     public ServiceContext file(File file, boolean isDownloadMode) {
         this.downloadMode = isDownloadMode;
         return this.file(file);
-    }
-
-    public static void main(String[] args) {
-        HttpResponseStatus s = HttpResponseStatus.BAD_REQUEST;
-        System.out.println(s.reasonPhrase());
     }
 
     private File buildErrorFile(HttpResponseStatus status, boolean isDownloadMode) {
@@ -559,9 +557,9 @@ public class ServiceContext {
         this.redirect = null;
         this.file = file;
         this.contentType = NioHttpUtil.getFileContentType(file);
-        if (!downloadMode) {
-            serviceError = null;
-        }
+//        if (!downloadMode) {
+//            serviceError = null;
+//        }
 
         if (responseHeaders == null) {
             responseHeaders = new DefaultHttpHeaders(true);
@@ -820,9 +818,18 @@ public class ServiceContext {
 
     }
 
+    public ServiceContext reportError(StringBuilder sb) throws JsonProcessingException {
+        if (this.serviceError == null || file == null) {// log error only for file request
+            return this;
+        }
+        sb.append("\n\n\tError: ");
+        sb.append(BeanUtil.toJson(this.serviceError, true, true));
+        return this;
+    }
+
     public ServiceContext reportMemo(StringBuilder sb) {
         if (memo == null || memo.isEmpty()) {
-            sb.append("\n\tMemo: n/a");
+            //sb.append("\n\tMemo: n/a");
             return this;
         }
         sb.append("\n\n\tMemo: ");
