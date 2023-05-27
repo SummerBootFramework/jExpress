@@ -15,10 +15,12 @@
  */
 package org.summerboot.jexpress.nio.grpc;
 
+import com.google.inject.ConfigurationException;
 import io.grpc.Grpc;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerCredentials;
+import io.grpc.ServerInterceptor;
 import io.grpc.TlsServerCredentials;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import java.io.IOException;
@@ -33,6 +35,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.SummerRunner;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
@@ -61,12 +64,14 @@ public class GRPCServer {
     protected final int port;
     protected final ServerCredentials serverCredentials;
     protected final ServerBuilder serverBuilder;
+    protected ServerInterceptor serverInterceptor;
 
     protected ScheduledExecutorService statusReporter = null;
     protected ThreadPoolExecutor tpe = null;
     protected static NIOStatusListener listener = null;
     protected boolean servicePaused = false;
-    protected final Counter counter = new Counter();
+    protected final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
+    protected SummerRunner.RunnerContext context;
 
     public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
         this(bindingAddr, port, initTLS(kmf, tmf));
@@ -86,13 +91,37 @@ public class GRPCServer {
         //serverBuilder.addService(implBase);
     }
 
+    public ServerInterceptor getServerInterceptor() {
+        return serverInterceptor;
+    }
+
+    public void setContext(SummerRunner.RunnerContext context) {
+        this.context = context;
+        try {
+            serverInterceptor = context.getGuiceInjector().getInstance(ServerInterceptor.class);
+        } catch (ConfigurationException ex) {
+
+        }
+        if (serverInterceptor != null) {
+            serverBuilder.intercept(serverInterceptor);
+        }
+    }
+
+    public ServerBuilder getServerBuilder() {
+        return serverBuilder;
+    }
+
+    public GRPCServiceCounter getServiceCounter() {
+        return serviceCounter;
+    }
+
     public static void setListener(NIOStatusListener listener) {
         GRPCServer.listener = listener;
     }
 
-    public Counter configThreadPool() {
+    public GRPCServiceCounter configThreadPool() {
         final int coreSize = Runtime.getRuntime().availableProcessors();
-        int poolCoreSize = coreSize + 1;// how many tasks running at the same time
+        int poolCoreSize = coreSize * 2 + 1;// how many tasks running at the same time
         int poolMaxSizeMaxSize = poolCoreSize;// how many tasks running at the same time
         long keepAliveSeconds = 60L;
         int poolQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
@@ -111,7 +140,7 @@ public class GRPCServer {
      * tasks before terminating.
      * @return
      */
-    public Counter configThreadPool(int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds) {
+    public GRPCServiceCounter configThreadPool(int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds) {
         ThreadPoolExecutor old = tpe;
         tpe = new ThreadPoolExecutor(poolCoreSize, poolMaxSizeMaxSize, keepAliveSeconds, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(poolQueueSize),
@@ -132,15 +161,15 @@ public class GRPCServer {
             if (listener == null && !log.isDebugEnabled()) {
                 return;
             }
-            long bizHit = counter.getBiz();
+            long bizHit = serviceCounter.getBiz();
             //if (lastBizHit[0] == bizHit && !servicePaused) {
             if (lastBizHitRef.get() == bizHit && !servicePaused) {
                 return;
             }
             lastBizHitRef.set(bizHit);
-            long hps = counter.getHitAndReset();
-            long tps = counter.getProcessedAndReset();
-            long pingHit = counter.getPing();
+            long hps = serviceCounter.getHitAndReset();
+            long tps = serviceCounter.getProcessedAndReset();
+            long pingHit = serviceCounter.getPing();
             long totalHit = bizHit + pingHit;
 
             int active = tpe.getActiveCount();
@@ -165,17 +194,19 @@ public class GRPCServer {
         if (old2 != null) {
             old2.shutdownNow();
         }
-        return counter;
-    }
-
-    public ServerBuilder serverBuilder() {
-        return serverBuilder;
+        return serviceCounter;
     }
 
     public void start() throws IOException {
         start(false);
     }
 
+    /**
+     * openssl s_client -connect server:port -alpn h2
+     *
+     * @param isBlock
+     * @throws IOException
+     */
     public void start(boolean isBlock) throws IOException {
         if (server != null) {
             shutdown();

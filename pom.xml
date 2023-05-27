@@ -174,7 +174,7 @@
         <!-- Commons -->
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-cli.version>1.5.0</commons-cli.version>
-        <commons-io.version>2.11.0</commons-io.version>
+        <commons-io.version>2.12.0</commons-io.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.20.0</log4j-api.version>
@@ -187,13 +187,13 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.92.Final</netty.version>
+        <netty.version>4.1.93.Final</netty.version>
         <netty-tcnative.version>2.0.61.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.55.1</grpc.version>
-        <protobuf.version>3.23.0</protobuf.version>
+        <protobuf.version>3.23.1</protobuf.version>
         <!-- Web JAX-RS -->        
-        <swagger.core.version>2.2.9</swagger.core.version>
+        <swagger.core.version>2.2.10</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
         
         
@@ -205,20 +205,20 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.15.0</jackson.version>
+        <jackson.version>2.15.1</jackson.version>
         <!-- Bean Validation -->
         <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
         <el.Implementation.version>4.0.2</el.Implementation.version>
 
         <!-- IOC Injection -->
-        <guice.version>7.0.0</guice.version>
+        <guice.version>5.1.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.2.2.Final</hibernate.version>
+        <hibernate.version>6.2.3.Final</hibernate.version>
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>4.4.0</jedis.version>
+        <jedis.version>4.4.1</jedis.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.32</freemarker.version>
@@ -233,7 +233,7 @@
         <itext7-html2pdf.version>4.0.5</itext7-html2pdf.version>
         
         <!-- Testing  -->
-        <testng.version>7.7.1</testng.version>
+        <testng.version>7.8.0</testng.version>
     </properties>
 
     <dependencies>

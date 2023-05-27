@@ -142,6 +142,9 @@ public abstract class BootConfig implements JExpressConfig {
             return ex.getMessage();
         }
     }
+    
+    protected void reset() {
+    }
 
     /**
      * Load config settings with @Config, supported Java types:
@@ -163,6 +166,7 @@ public abstract class BootConfig implements JExpressConfig {
      */
     @Override
     public void load(File cfgFile, boolean isReal) throws IOException {
+        reset();
         String configFolder = cfgFile.getParent();
         this.cfgFile = cfgFile.getAbsoluteFile();
         if (configName == null) {

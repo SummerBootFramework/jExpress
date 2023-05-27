@@ -438,12 +438,19 @@ public class ServiceContext {
     public boolean precheckFolder(File folder) {
         this.file = null;
         String filePath = folder.getAbsolutePath();
-        String realPath = folder.getAbsoluteFile().toPath().normalize().toString();
+        String realPath;
+        try {
+            realPath = file.getAbsoluteFile().toPath().normalize().toString();
+        } catch (Throwable ex) {
+            Err e = new Err(BootErrorCode.NIO_BAD_REQUEST, null, "Invalid file path: " + filePath, ex);
+            this.status(HttpResponseStatus.BAD_REQUEST).error(e);
+            return false;
+        }
         memo("folder.view", filePath);
 
         if (!folder.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "File not exists: " + filePath, null);
             this.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
@@ -452,7 +459,7 @@ public class ServiceContext {
                 || !folder.isDirectory() || folder.isFile()
                 || folder.isHidden() || !folder.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "Malicious file reqeust: " + filePath, null);
             // 2. build JSON response with same app error code, and keep the default INFO log level.
             this.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
@@ -468,8 +475,8 @@ public class ServiceContext {
         try {
             realPath = file.getAbsoluteFile().toPath().normalize().toString();
         } catch (Throwable ex) {
-            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "Invalid file path: " + filePath, ex);
-            this.status(HttpResponseStatus.NOT_FOUND).error(e);
+            Err e = new Err(BootErrorCode.NIO_BAD_REQUEST, null, "Invalid file path: " + filePath, ex);
+            this.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return false;
         }
 

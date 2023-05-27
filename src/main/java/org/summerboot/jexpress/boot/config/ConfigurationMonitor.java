@@ -36,6 +36,8 @@ public class ConfigurationMonitor implements FileAlterationListener {
     private static final Logger log = LogManager.getLogger(ConfigurationMonitor.class.getName());
 
     public static final ConfigurationMonitor listener = new ConfigurationMonitor();
+    
+    public static final String APUSE_FILE_NAME = "pause";
 
     private volatile boolean running;
     private Map<File, Runnable> cfgUpdateTasks;
@@ -45,7 +47,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
     }
 
     public void start(File folder, int intervalSec, Map<File, Runnable> cfgUpdateTasks) throws Exception {
-        File pauseFile = Paths.get(folder.getAbsolutePath(), "pause").toFile();
+        File pauseFile = Paths.get(folder.getAbsolutePath(), APUSE_FILE_NAME).toFile();
         HealthMonitor.setPauseStatus(pauseFile.exists(), "by file detection " + pauseFile.getAbsolutePath());
         if (running) {
             return;

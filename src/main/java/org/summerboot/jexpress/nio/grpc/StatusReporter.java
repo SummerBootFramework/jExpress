@@ -21,5 +21,5 @@ package org.summerboot.jexpress.nio.grpc;
  */
 public interface StatusReporter {
 
-    void setCounter(Counter counter);
+    void setCounter(GRPCServiceCounter counter);
 }

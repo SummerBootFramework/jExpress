@@ -388,7 +388,7 @@ abstract public class SummerBigBang extends SummerSingularity {
          */
         if (cli.hasOption(CLI_ENCRYPT)) {
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_encrypt);
-            System.out.println(System.lineSeparator() + "\t " + updated + " config files have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
+            System.out.println(System.lineSeparator() + "\t " + updated + " config items have been encrypted in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
         } else if (cli.hasOption(CLI_DECRYPT)) {
             if (cli.hasOption(CLI_ADMIN_PWD_FILE)) {
@@ -396,7 +396,7 @@ abstract public class SummerBigBang extends SummerSingularity {
                 System.exit(1);
             }
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
-            System.out.println(System.lineSeparator() + "\t " + updated + " config files have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
+            System.out.println(System.lineSeparator() + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
         }
 

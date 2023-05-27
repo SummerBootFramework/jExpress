@@ -66,9 +66,12 @@ public class InstrumentationMgrImpl implements InstrumentationMgr {
 
     @Override
     public void shutdown() {
-        try {
-            mBeanServer.unregisterMBean(mbeanName);
-        } catch (InstanceNotFoundException | MBeanRegistrationException ex) {
+        if (mBeanServer != null) {
+            try {
+
+                mBeanServer.unregisterMBean(mbeanName);
+            } catch (InstanceNotFoundException | MBeanRegistrationException ex) {
+            }
         }
     }
 

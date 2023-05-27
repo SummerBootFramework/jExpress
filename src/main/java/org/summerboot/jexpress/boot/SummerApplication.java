@@ -30,7 +30,7 @@ import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.nio.grpc.Counter;
+import org.summerboot.jexpress.nio.grpc.GRPCServiceCounter;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
@@ -44,15 +44,18 @@ import org.summerboot.jexpress.util.ApplicationUtil;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 abstract public class SummerApplication extends SummerBigBang {
-    
+
     public static boolean SystemErrorCodeAsInt = false;
 
     /**
      * Might not work on Non HotSpot VM implementations.
+     *
+     * @param <T>
+     * @return
      */
-    public static void run() {
+    public static <T extends SummerApplication> T run() {
         Module userOverrideModule = null;
-        run(userOverrideModule);
+        return run(userOverrideModule);
     }
 
     /**
@@ -68,9 +71,11 @@ abstract public class SummerApplication extends SummerBigBang {
     /**
      * Might not work on Non Hotspot VM implementations.
      *
+     * @param <T>
      * @param userOverrideModule
+     * @return
      */
-    public static void run(Module userOverrideModule) {
+    public static <T extends SummerApplication> T run(Module userOverrideModule) {
         String[] mainCommand = ApplicationUtil.getApplicationArgs();
         int size = mainCommand.length;
         String[] args = size > 0 ? new String[size - 1] : ApplicationUtil.EMPTY_ARGS;
@@ -98,16 +103,18 @@ abstract public class SummerApplication extends SummerBigBang {
         if (callerClass == null) {
             throw new RuntimeException("Failed to find the caller class");
         }
-        run(callerClass, userOverrideModule, args);
+        return run(callerClass, userOverrideModule, args);
     }
 
     /**
      *
+     * @param <T>
      * @param args
+     * @return
      */
-    public static void run(String[] args) {
+    public static <T extends SummerApplication> T run(String[] args) {
         Module userOverrideModule = null;
-        run(userOverrideModule, args);
+        return run(userOverrideModule, args);
     }
 
     /**
@@ -209,21 +216,30 @@ abstract public class SummerApplication extends SummerBigBang {
 
     private GRPCServer gRPCServer;
 
+    private boolean memoLogged = false;
+
+    public GRPCServer getgRPCServer() {
+        return gRPCServer;
+    }
+
     @Override
     protected Class getAddtionalI18n() {
         return null;
     }
 
     protected void traceConfig() {
-        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_VERSION).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_VERSION));
-        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_PACKAGE_NAME).append("=").append(System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME));
-        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_LOGFILENAME).append("=").append(System.getProperty(SummerApplication.SYS_PROP_LOGFILENAME));
-        memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_LOGGINGPATH).append("=").append(System.getProperty(SummerApplication.SYS_PROP_LOGGINGPATH));
+        if (!memoLogged) {
+            memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_VERSION).append(" = ").append(System.getProperty(SummerApplication.SYS_PROP_APP_VERSION));
+            memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME));
+            memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(SummerApplication.SYS_PROP_LOGFILENAME));
+            memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_LOGGINGPATH).append(" = ").append(System.getProperty(SummerApplication.SYS_PROP_LOGGINGPATH));
 
-        memo.append("\n\t- start: PostOffice=").append(postOffice.getClass().getName());
-        memo.append("\n\t- start: HealthInspector=").append(healthInspector.getClass().getName());
-        //memo.append("\n\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
-        memo.append("\n\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
+            memo.append("\n\t- start: PostOffice=").append(postOffice.getClass().getName());
+            memo.append("\n\t- start: HealthInspector=").append(healthInspector.getClass().getName());
+            //memo.append("\n\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
+            memo.append("\n\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
+            memoLogged = true;
+        }
         log.trace(() -> memo.toString());
     }
 
@@ -292,14 +308,16 @@ abstract public class SummerApplication extends SummerBigBang {
                 //2. init gRPC server
                 GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
                 gRPCServer = new GRPCServer(gRPCCfg.getBindingAddr(), gRPCCfg.getBindingPort(), gRPCCfg.getKmf(), gRPCCfg.getTmf());
-                Counter gRPCCounter = gRPCServer.configThreadPool(gRPCCfg.getPoolCoreSize(), gRPCCfg.getPoolMaxSizeMaxSize(), gRPCCfg.getPoolQueueSize(), gRPCCfg.getKeepAliveSeconds());
+                gRPCServer.setContext(context);
 
-                ServerBuilder serverBuilder = gRPCServer.serverBuilder();
+                GRPCServiceCounter gRPCServiceCounter = gRPCServer.configThreadPool(gRPCCfg.getPoolCoreSize(), gRPCCfg.getPoolMaxSizeMaxSize(), gRPCCfg.getPoolQueueSize(), gRPCCfg.getKeepAliveSeconds());
+
+                ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
                 for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
                     BindableService impl = guiceInjector.getInstance(c);
                     serverBuilder.addService(impl);
                     if (impl instanceof StatusReporter) {
-                        ((StatusReporter) impl).setCounter(gRPCCounter);
+                        ((StatusReporter) impl).setCounter(gRPCServiceCounter);
                     }
                 }
                 for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
@@ -323,6 +341,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 postOffice.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Started at " + OffsetDateTime.now(), fullConfigInfo, null, false);
             }
         } catch (java.net.BindException ex) {
+            ex.printStackTrace();
             log.fatal("\nIn order to check which application is listening on a port, you can use the following command from the command line:\n"
                     + "\n"
                     + "For Microsoft Windows:\n"
@@ -333,12 +352,13 @@ abstract public class SummerApplication extends SummerBigBang {
                     + "    netstat -anpe | grep \"80\" | grep \"LISTEN\" \n", ex);
             System.exit(1);
         } catch (Throwable ex) {
+            ex.printStackTrace();
             log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             System.exit(1);
         }
     }
 
-    public void stop() {
+    public void shutdown() {
         if (gRPCServer != null) {
             gRPCServer.shutdown();
         }
