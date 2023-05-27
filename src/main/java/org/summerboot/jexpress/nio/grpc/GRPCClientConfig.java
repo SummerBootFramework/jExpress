@@ -58,15 +58,15 @@ abstract public class GRPCClientConfig extends BootConfig {
     @Config(key = ID + ".LoadBalancing.servers")
     private volatile Map<String, Integer> loadBalancingServers;
 
-    @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN")
+    @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN", desc = "available options: ROUND_ROBIN, PICK_FIRST")
     private volatile GRPCClient.LoadBalancingPolicy loadBalancingPolicy;
 
     private volatile NameResolverProvider nameResolverProvider;
 
     //1. gRPC connection
-    @Config(key = ID + ".target.url", defaultValue = "grpcs:///",
+    @Config(key = ID + ".target.url", defaultValue = "grpc:///",
             desc = "grpc://127.0.0.1:8424\n"
-            + "grpcs://127.0.0.1:8424\n"
+            + "grpc://127.0.0.1:8424\n"
             + "grpcs:///\n"
             + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
@@ -93,6 +93,12 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     @JsonIgnore
     protected volatile NettyChannelBuilder channelBuilder;
+
+    @Override
+    protected void reset() {
+        nameResolverProvider = null;
+        channelBuilder = null;
+    }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {

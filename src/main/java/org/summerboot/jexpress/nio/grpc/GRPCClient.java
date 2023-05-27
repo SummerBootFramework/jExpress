@@ -89,9 +89,9 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                     }
                     channelBuilder = NettyChannelBuilder.forAddress(host, port);
                 } else {
-                    NameResolverRegistry.getDefaultRegistry().register(nameResolverProvider);// use client side load balancing
-                    channelBuilder = NettyChannelBuilder.forTarget(target);
-                    channelBuilder.defaultLoadBalancingPolicy(loadBalancingPolicy.getValue());// default is round_robin
+                    NameResolverRegistry.getDefaultRegistry().register(nameResolverProvider);// use client side load balancing                    
+                    String policy = loadBalancingPolicy.getValue();
+                    channelBuilder = NettyChannelBuilder.forTarget(target).defaultLoadBalancingPolicy(policy);
                 }
                 break;
         }

@@ -104,35 +104,47 @@ public class FormatterUtil {
         return ret;
     }
 
-    private static final Pattern REGEX_DEC_PATTERN = Pattern.compile(DECRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
-    private static final Pattern REGEX_ENC_PATTERN = Pattern.compile(ENCRYPTED_WARPER_PREFIX + "\\(([^)]+)\\)");
+    public static final String REGEX_FIRST_AND_LAST_B = "\\(.*\\)";
+
+    public static final Pattern REGEX_DEC_PATTERN = Pattern.compile(DECRYPTED_WARPER_PREFIX + REGEX_FIRST_AND_LAST_B);
+
+    public static final Pattern REGEX_ENC_PATTERN = Pattern.compile(ENCRYPTED_WARPER_PREFIX + REGEX_FIRST_AND_LAST_B);
 
     public static String updateProtectedLine(String line, boolean encrypt) throws GeneralSecurityException {
         Matcher matcher = encrypt
                 ? REGEX_DEC_PATTERN.matcher(line)
                 : REGEX_ENC_PATTERN.matcher(line);
-        List<String> matches = new ArrayList<>();
-        while (matcher.find()) {
-            matches.add(matcher.group(1));
-        }
-        if (matches.isEmpty()) {
-            return null;
-        }
-        for (String match : matches) {
-            //try {
+        if (matcher.find()) {
+            String match = matcher.group();
             String converted;
             if (encrypt) {
                 converted = SecurityUtil.encrypt(match, true);
-                line = line.replace(DECRYPTED_WARPER_PREFIX + "(" + match + ")", ENCRYPTED_WARPER_PREFIX + "(" + converted + ")");
+                return line.replace(match, ENCRYPTED_WARPER_PREFIX + "(" + converted + ")");
             } else {
                 converted = SecurityUtil.decrypt(match, true);
-                line = line.replace(ENCRYPTED_WARPER_PREFIX + "(" + match + ")", DECRYPTED_WARPER_PREFIX + "(" + converted + ")");
+                return line.replace(match, DECRYPTED_WARPER_PREFIX + "(" + converted + ")");
             }
-            //} catch (Throwable ex) {
-            //    System.err.println(ex + " - " + match + ": " + line);
-            //}
         }
-        return line;
+        return null;
+    }
+
+    @Deprecated
+    public static String updateProtectedLine_(String line, boolean encrypt) throws GeneralSecurityException {
+        String ret = null;
+        int eq = line.indexOf("=");
+        if (eq < 0) {
+            return null;
+        }
+        String key = line.substring(0, eq).trim();
+        String value = line.substring(++eq).trim();
+        if (encrypt && value.startsWith(DECRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
+            String encrypted = SecurityUtil.encrypt(value, true);
+            ret = key + "=" + ENCRYPTED_WARPER_PREFIX + "(" + encrypted + ")";
+        } else if (!encrypt && value.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
+            String decrypted = SecurityUtil.decrypt(value, true);
+            ret = key + "=" + DECRYPTED_WARPER_PREFIX + "(" + decrypted + ")";
+        }
+        return ret;
     }
 
     public static String b2n(String s) {
@@ -299,7 +311,7 @@ public class FormatterUtil {
         final String regex = "(\"" + key + "\"\\s*:\\s*\")[^\"]*(\")";//("key"\s*:\s*")[^"]*(")
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
-    
+
     public static String protectJsonString_InString(String json, String key, String replaceWith) {
         final String regex = "(\"" + key + "\\\\\"\\s*:\\s*\\\\\")[^\"]*(\")";
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
@@ -309,12 +321,12 @@ public class FormatterUtil {
         String regex = "(\"" + key + "\"\\s*:\\s*)(\\d+)";
         return json.replaceAll(regex, "$1" + replaceWith);
     }
-    
+
     public static String protectJsonNumber_InString(String json, String key, String replaceWith) {
         String regex = "(\"" + key + "\\\\\"\\s*:\\s*)(\\d+)";
         return json.replaceAll(regex, "$1" + replaceWith);
     }
-    
+
     public static String protectJsonArray(String json, String key, String replaceWith) {
         final String regex = "(\"" + key + "\"\\s*:\\s*\\[)[^\\[]*(\\])";
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
