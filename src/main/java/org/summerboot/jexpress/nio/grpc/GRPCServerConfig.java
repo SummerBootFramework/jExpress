@@ -58,12 +58,12 @@ public class GRPCServerConfig extends BootConfig {
 
     //1. gRPC server config
     @ConfigHeader(title = "1. " + ID + " provider")
-    @Config(key = ID + ".binding.addr")
-    private volatile String bindingAddr = "127.0.0.1";
-    @Config(key = ID + ".binding.port")
-    private volatile int bindingPort = 8424;
+    @Config(key = ID + ".binding.addr", defaultValue = "127.0.0.1")
+    private volatile String bindingAddr;
+    @Config(key = ID + ".binding.port", defaultValue = "8424")
+    private volatile int bindingPort;
 
-    @Config(key = ID + ".pool.BizExecutor.mode",
+    @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "CPU",
             desc = "valid value = CPU (default), IO, Mixed")
     private volatile ThreadingMode threadingMode = ThreadingMode.CPU;
 
@@ -73,14 +73,14 @@ public class GRPCServerConfig extends BootConfig {
     @Config(key = ID + ".pool.maxSize")
     private volatile int poolMaxSizeMaxSize = availableProcessors + 1;
 
-    @Config(key = ID + ".pool.queueSize")//2147483647
-    private volatile int poolQueueSize = Integer.MAX_VALUE;
+    @Config(key = ID + ".pool.queueSize", defaultValue = "" + Integer.MAX_VALUE)//2147483647
+    private volatile int poolQueueSize;
 
-    @Config(key = ID + ".pool.keepAliveSeconds")
-    private volatile long keepAliveSeconds = 60;
+    @Config(key = ID + ".pool.keepAliveSeconds", defaultValue = "60")
+    private volatile long keepAliveSeconds;
 
-    @Config(key = "nio.server.health.InspectionIntervalSeconds")
-    private volatile int healthInspectionIntervalSeconds = 5;
+    @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
+    private volatile int healthInspectionIntervalSeconds;
 
     //2. TRC (The Remote Callee) keystore
     @ConfigHeader(title = "2. " + ID + " keystore")
@@ -96,6 +96,11 @@ public class GRPCServerConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
     @Config(key = ID + ".ssl.overrideAuthority")
+
+    @Override
+    protected void reset() {
+        int a = 0;
+    }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
