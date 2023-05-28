@@ -71,8 +71,8 @@ abstract public class GRPCClientConfig extends BootConfig {
             + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
 
-    @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")//"TLSv1.2, TLSv1.3"
-    protected String[] sslProtocols = {"TLSv1.3"};
+    @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")// "TLSv1.2, TLSv1.3"
+    protected String[] sslProtocols;
     @Config(key = ID + ".ssl.ciphers")
     protected List ciphers;
 
@@ -96,13 +96,14 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     @Override
     protected void reset() {
+        loadBalancingServers = null;
         nameResolverProvider = null;
         channelBuilder = null;
     }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        if (loadBalancingServers != null) {
+        if (loadBalancingServers != null && !loadBalancingServers.isEmpty()) {
             InetSocketAddress[] addresses = loadBalancingServers.entrySet()
                     .stream()
                     .map(entry -> new InetSocketAddress(entry.getKey(), entry.getValue()))

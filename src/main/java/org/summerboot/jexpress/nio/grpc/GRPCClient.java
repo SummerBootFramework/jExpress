@@ -29,6 +29,8 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import java.net.URI;
 import jakarta.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
@@ -54,6 +56,8 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
         }
 
     }
+
+    private static final List<NameResolverProvider> NR_Providers = new ArrayList();
 
     /**
      *
@@ -81,17 +85,22 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                         .usePlaintext();
                 break;
             default:
-                if (nameResolverProvider == null) {
+                if (nameResolverProvider != null) {
+                    NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();
+                    for (NameResolverProvider nrp : NR_Providers) {
+                        nameResolverRegistry.deregister(nrp);
+                    }
+                    nameResolverRegistry.register(nameResolverProvider);// use client side load balancing        
+                    NR_Providers.add(nameResolverProvider);
+                    String policy = loadBalancingPolicy.getValue();
+                    channelBuilder = NettyChannelBuilder.forTarget(target).defaultLoadBalancingPolicy(policy);
+                } else {
                     String host = uri.getHost();
                     int port = uri.getPort();
                     if (host == null) {
-                        throw new IllegalArgumentException("The URI format should be <scheme>://[host:port]/[service], like grpc:///, grpc://host:port, grpcs://host:port, or unix:///path/to/uds.sock. gRpc.client.LoadBalancing.servers should be provided when host/port are not provided.");
+                        throw new IllegalArgumentException("The URI format should contains host information, like <scheme>://[host:port]/[service], like grpc:///, grpc://host:port, grpcs://host:port, or unix:///path/to/uds.sock. gRpc.client.LoadBalancing.servers should be provided when host/port are not provided.");
                     }
                     channelBuilder = NettyChannelBuilder.forAddress(host, port);
-                } else {
-                    NameResolverRegistry.getDefaultRegistry().register(nameResolverProvider);// use client side load balancing                    
-                    String policy = loadBalancingPolicy.getValue();
-                    channelBuilder = NettyChannelBuilder.forTarget(target).defaultLoadBalancingPolicy(policy);
                 }
                 break;
         }
