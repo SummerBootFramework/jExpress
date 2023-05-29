@@ -83,9 +83,10 @@ public class NioConfig extends BootConfig {
     @ConfigHeader(title = "1. NIO Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8311, 127.0.0.1:8311, 0.0.0.0:8311")
-
     @Config(key = "nio.server.bindings", defaultValue = "0.0.0.0:8311")
     private volatile List<InetSocketAddress> bindingAddresses;
+    @Config(key = "nio.server.autostart", defaultValue = "true")
+    private volatile boolean autoStart;
 
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")
@@ -563,6 +564,10 @@ public class NioConfig extends BootConfig {
 
     public List<InetSocketAddress> getBindingAddresses() {
         return bindingAddresses;
+    }
+
+    public boolean isAutoStart() {
+        return autoStart;
     }
 
     public KeyManagerFactory getKmf() {
