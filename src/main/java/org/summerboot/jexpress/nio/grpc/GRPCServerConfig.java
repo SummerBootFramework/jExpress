@@ -99,7 +99,6 @@ public class GRPCServerConfig extends BootConfig {
 
     @Override
     protected void reset() {
-        int a = 0;
     }
 
     @Override

@@ -31,7 +31,9 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -404,6 +406,9 @@ public class ReflectionUtil {
             return ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
         } else if (targetClass.equals(LocalDateTime.class)) {
             return LocalDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME);
+        } else if (targetClass.equals(InetSocketAddress.class) || targetClass.equals(SocketAddress.class)) {
+            String[] ap = value.trim().split(FormatterUtil.REGEX_BINDING_MAP);
+            return new InetSocketAddress(ap[0], Integer.parseInt(ap[1]));
         } else {
 //            //1. try JSON
 //            try {

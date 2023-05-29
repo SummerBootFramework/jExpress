@@ -37,6 +37,8 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.List;
@@ -93,7 +95,7 @@ public class NioServer {
      * @throws InterruptedException
      * @throws SSLException
      */
-    public static void bind(Map<String, Integer> bindingAddresses) throws InterruptedException, SSLException {
+    public static void bind(List<InetSocketAddress> bindingAddresses) throws InterruptedException, SSLException {
         if (bindingAddresses == null || bindingAddresses.isEmpty()) {
             log.info("Skip HTTP server due to no bindingAddresses in config file: " + nioCfg.getCfgFile());
             return;
@@ -186,7 +188,8 @@ public class NioServer {
                 .childHandler(new NioServerHttpInitializer(jdkSslContext, nettySslContext, clientAuth.equals(ClientAuth.REQUIRE), nioCfg, loadBalancingEndpoint));
 
         String appInfo = SummerApplication.VERSION + " " + SummerApplication.PID;
-        for (String bindAddr : bindingAddresses.keySet()) {
+        //for (String bindAddr : bindingAddresses.keySet()) {
+        for(InetSocketAddress addr:bindingAddresses) {
             // info
             String sslMode;
             String protocol;
@@ -197,7 +200,8 @@ public class NioServer {
                 sslMode = "Client Auth: " + clientAuth;
                 protocol = multiplexer + " https://";
             }
-            int listeningPort = bindingAddresses.get(bindAddr);
+            String bindAddr = addr.getAddress().getHostAddress();
+            int listeningPort = addr.getPort();
             // bind
             ChannelFuture f = boot.bind(bindAddr, listeningPort).sync();
             f.channel().closeFuture().addListener((ChannelFutureListener) (ChannelFuture f1) -> {

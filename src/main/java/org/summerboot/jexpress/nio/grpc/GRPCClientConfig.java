@@ -22,9 +22,9 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -56,7 +56,7 @@ abstract public class GRPCClientConfig extends BootConfig {
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8424, 127.0.0.1:8425, 0.0.0.0:8426")
     @Config(key = ID + ".LoadBalancing.servers")
-    private volatile Map<String, Integer> loadBalancingServers;
+    private volatile List<InetSocketAddress> loadBalancingServers;
 
     @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN", desc = "available options: ROUND_ROBIN, PICK_FIRST")
     private volatile GRPCClient.LoadBalancingPolicy loadBalancingPolicy;
@@ -104,11 +104,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
         if (loadBalancingServers != null && !loadBalancingServers.isEmpty()) {
-            InetSocketAddress[] addresses = loadBalancingServers.entrySet()
-                    .stream()
-                    .map(entry -> new InetSocketAddress(entry.getKey(), entry.getValue()))
-                    .toArray(InetSocketAddress[]::new);
-            nameResolverProvider = new BootLoadBalancerProvider(uri.getScheme(), addresses);
+            nameResolverProvider = new BootLoadBalancerProvider(uri.getScheme(), loadBalancingServers);
         }
         channelBuilder = GRPCClient.getNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
     }
@@ -117,7 +113,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     public void shutdown() {
     }
 
-    public Map<String, Integer> getLoadBalancingServers() {
+    public List<InetSocketAddress> getLoadBalancingServers() {
         return loadBalancingServers;
     }
 
