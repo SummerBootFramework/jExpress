@@ -49,6 +49,16 @@ public class BootLoadBalancerProvider extends NameResolverProvider {
                 .collect(Collectors.toList());
     }
 
+    public BootLoadBalancerProvider(String scheme, List<? extends SocketAddress> addresses) {
+        this.scheme = scheme;
+        this.authority = addresses.stream()
+                .map(SocketAddress::toString)
+                .collect(Collectors.joining(", "));
+        this.servers = addresses.stream()
+                .map(EquivalentAddressGroup::new)
+                .collect(Collectors.toList());
+    }
+
     public BootLoadBalancerProvider(String scheme, Map<String, Integer> addressesMap) {
         this.scheme = scheme;
         InetSocketAddress[] addresses = addressesMap.entrySet()

@@ -24,7 +24,6 @@ import io.netty.handler.ssl.SslProvider;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -40,6 +39,7 @@ import io.netty.channel.ChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -85,7 +85,7 @@ public class NioConfig extends BootConfig {
             example = "192.168.1.10:8311, 127.0.0.1:8311, 0.0.0.0:8311")
 
     @Config(key = "nio.server.bindings", defaultValue = "0.0.0.0:8311")
-    private volatile Map<String, Integer> bindingAddresses = Map.of("0.0.0.0", 8311);
+    private volatile List<InetSocketAddress> bindingAddresses;
 
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")
@@ -561,7 +561,7 @@ public class NioConfig extends BootConfig {
         return webSocketAllowExtensions;
     }
 
-    public Map<String, Integer> getBindingAddresses() {
+    public List<InetSocketAddress> getBindingAddresses() {
         return bindingAddresses;
     }
 
