@@ -1,7 +1,7 @@
 /*
  * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, appVersion 2.0 (the
+ * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
  * "License"); you may not use this file except in compliance with the License and you have no
  * policy prohibiting employee contributions back to this file (unless the contributor to this
  * file is your current or retired employee). You may obtain a copy of the License at:
@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import io.grpc.BindableService;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerServiceDefinition;
+import java.net.InetSocketAddress;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
@@ -36,6 +37,7 @@ import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.nio.grpc.StatusReporter;
+import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.util.ApplicationUtil;
 
 /**
@@ -272,7 +274,13 @@ abstract public class SummerApplication extends SummerBigBang {
                 instrumentationMgr.start(BootConstant.VERSION);
             }
 
-            //3. health inspection
+            //3. runner.run            
+            SummerRunner.RunnerContext context = new SummerRunner.RunnerContext(cli, userSpecifiedConfigDir, guiceInjector, healthInspector, postOffice);
+            for (SummerRunner summerRunner : summerRunners) {
+                summerRunner.run(context);
+            }
+
+            //4. health inspection
             StringBuilder sb = new StringBuilder();
             sb.append(System.lineSeparator()).append(HealthMonitor.PROMPT);
             if (healthInspector != null) {
@@ -295,41 +303,42 @@ abstract public class SummerApplication extends SummerBigBang {
                 log.warn(sb);
             }
 
-            //4. runner.run            
-            SummerRunner.RunnerContext context = new SummerRunner.RunnerContext(cli, userSpecifiedConfigDir, guiceInjector, healthInspector, postOffice);
-            for (SummerRunner summerRunner : summerRunners) {
-                summerRunner.run(context);
-            }
-
             //5a. start server: gRPC
             log.trace("hasGRPCImpl.bs=" + gRPCBindableServiceImplClasses);
             log.trace("hasGRPCImpl.ssd=" + gRPCServerServiceDefinitionImplClasses);
             if (hasGRPCImpl) {
                 //2. init gRPC server
                 GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
-                gRPCServer = new GRPCServer(gRPCCfg.getBindingAddr(), gRPCCfg.getBindingPort(), gRPCCfg.getKmf(), gRPCCfg.getTmf());
-                gRPCServer.setContext(context);
+                List<InetSocketAddress> bindingAddresses = gRPCCfg.getBindingAddresses();
+                for (InetSocketAddress bindingAddress : bindingAddresses) {
+                    String host = bindingAddress.getAddress().getHostAddress();
+                    int port = bindingAddress.getPort();
 
-                GRPCServiceCounter gRPCServiceCounter = gRPCServer.configThreadPool(gRPCCfg.getPoolCoreSize(), gRPCCfg.getPoolMaxSizeMaxSize(), gRPCCfg.getPoolQueueSize(), gRPCCfg.getKeepAliveSeconds());
+                    gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf());
+                    gRPCServer.setContext(context);
+                    GRPCServiceCounter gRPCServiceCounter = gRPCServer.configThreadPool(gRPCCfg.getPoolCoreSize(), gRPCCfg.getPoolMaxSizeMaxSize(), gRPCCfg.getPoolQueueSize(), gRPCCfg.getKeepAliveSeconds());
+                    ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
 
-                ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
-                for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
-                    BindableService impl = guiceInjector.getInstance(c);
-                    serverBuilder.addService(impl);
-                    if (impl instanceof StatusReporter) {
-                        ((StatusReporter) impl).setCounter(gRPCServiceCounter);
+                    for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
+                        BindableService impl = guiceInjector.getInstance(c);
+                        serverBuilder.addService(impl);
+                        if (impl instanceof StatusReporter) {
+                            ((StatusReporter) impl).setCounter(gRPCServiceCounter);
+                        }
+                    }
+                    for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
+                        ServerServiceDefinition impl = guiceInjector.getInstance(c);
+                        serverBuilder.addService(impl);
+                    }
+                    if (gRPCCfg.isAutoStart()) {
+                        gRPCServer.start();
                     }
                 }
-                for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
-                    ServerServiceDefinition impl = guiceInjector.getInstance(c);
-                    serverBuilder.addService(impl);
-                }
-                gRPCServer.start();
             }
 
             //5b. start server: HTTP
             log.trace("hasControllers=" + hasControllers);
-            if (hasControllers) {
+            if (hasControllers && NioConfig.cfg.isAutoStart()) {
                 NioServer.bind();
             }
 

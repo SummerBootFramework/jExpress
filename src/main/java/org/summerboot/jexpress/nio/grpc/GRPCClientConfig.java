@@ -64,9 +64,8 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     //1. gRPC connection
     @Config(key = ID + ".target.url", defaultValue = "grpc:///",
-            desc = "grpc://127.0.0.1:8424\n"
-            + "grpc://127.0.0.1:8424\n"
-            + "grpcs:///\n"
+            desc = "grpc:///\n"
+            + "grpcs://127.0.0.1:8424\n"
             + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
 

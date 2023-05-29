@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Properties;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -57,11 +59,13 @@ public class GRPCServerConfig extends BootConfig {
     private final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
     //1. gRPC server config
-    @ConfigHeader(title = "1. " + ID + " provider")
-    @Config(key = ID + ".binding.addr", defaultValue = "127.0.0.1")
-    private volatile String bindingAddr;
-    @Config(key = ID + ".binding.port", defaultValue = "8424")
-    private volatile int bindingPort;
+    @ConfigHeader(title = "1. " + ID + " Network Listeners",
+            format = "ip1:port1, ip2:port2, ..., ipN:portN",
+            example = "192.168.1.10:8424, 127.0.0.1:8424, 0.0.0.0:8424")
+    @Config(key = ID + ".bindings", defaultValue = "0.0.0.0:8424")
+    private volatile List<InetSocketAddress> bindingAddresses;
+    @Config(key = ID + ".autostart", defaultValue = "true")
+    private volatile boolean autoStart;
 
     @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "CPU",
             desc = "valid value = CPU (default), IO, Mixed")
@@ -131,12 +135,12 @@ public class GRPCServerConfig extends BootConfig {
     public void shutdown() {
     }
 
-    public String getBindingAddr() {
-        return bindingAddr;
+    public List<InetSocketAddress> getBindingAddresses() {
+        return bindingAddresses;
     }
 
-    public int getBindingPort() {
-        return bindingPort;
+    public boolean isAutoStart() {
+        return autoStart;
     }
 
     public ThreadingMode getThreadingMode() {
