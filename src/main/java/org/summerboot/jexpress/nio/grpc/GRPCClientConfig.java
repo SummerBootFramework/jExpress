@@ -22,7 +22,6 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.URI;
 import java.util.List;
 import java.util.Properties;
