@@ -407,7 +407,8 @@ public class ReflectionUtil {
         } else if (targetClass.equals(LocalDateTime.class)) {
             return LocalDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME);
         } else if (targetClass.equals(InetSocketAddress.class) || targetClass.equals(SocketAddress.class)) {
-            String[] ap = value.trim().split(FormatterUtil.REGEX_BINDING_MAP);
+            //String[] ap = value.trim().split(FormatterUtil.REGEX_BINDING_MAP);
+            String[] ap = value.trim().split(":");
             return new InetSocketAddress(ap[0], Integer.parseInt(ap[1]));
         } else {
 //            //1. try JSON
