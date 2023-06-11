@@ -274,7 +274,8 @@ public class NioConfig extends BootConfig {
     public enum VerboseTargetUserType {
         id, uid, group, role, ignore
     }
-    @Config(key = "nio.verbose.filter.usertype.range",
+    private static final String KEY_FILTER_USERTYPE_RANGE = "nio.verbose.filter.usertype.range";
+    @Config(key = KEY_FILTER_USERTYPE_RANGE,
             desc = "user range (when type=CallerId): N1 - N2 or N1, N2, ... , Nn \n"
             + "user range (when type=CallerName): johndoe, janedoe")
     private volatile String filterUserVaue;
@@ -290,10 +291,11 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.verbose.filter.codetype", defaultValue = "all",
             desc = "valid value = HttpStatusCode, AppErrorCode, all, ignore")
     private volatile VerboseTargetCodeType filterCodeType = VerboseTargetCodeType.all;
-    @Config(key = "nio.verbose.filter.codetype.range",
+    private static final String KEY_FILTER_CODETYPE_RANGE = "nio.verbose.filter.codetype.range";
+    @Config(key = KEY_FILTER_CODETYPE_RANGE,
             desc = "5.2 error code filter\n"
             + "code range: N1 - N2 or N1, N2, ... , Nn")
-    private volatile String filterCodeVaue;    
+    private volatile String filterCodeVaue;
     private volatile Set<Long> filterCodeSet;
     private volatile long filterCodeRangeFrom;
     private volatile long filterCodeRangeTo;
@@ -440,9 +442,8 @@ public class NioConfig extends BootConfig {
         String key;
         switch (filterUserType) {
             case id:
-                key = "nio.verbose.filter.usertype.range";
                 filterCallerIdSet = new HashSet();
-                Long[] a = helper.getAsRangeLong(props, key, filterCallerIdSet);
+                Long[] a = helper.getAsRangeLong(props, KEY_FILTER_USERTYPE_RANGE, filterCallerIdSet);
                 if (a != null) {
                     filterCallerIdFrom = a[0];
                     filterCallerIdTo = a[1];
@@ -452,8 +453,7 @@ public class NioConfig extends BootConfig {
             case uid:
             case group:
             case role:
-                key = "nio.verbose.filter.usertype.range";
-                String[] na = helper.getAsCSV(props, key, null);
+                String[] na = helper.getAsCSV(props, KEY_FILTER_USERTYPE_RANGE, null);
                 filterCallerNameSet = new HashSet();
                 filterCallerNameSet.addAll(Arrays.asList(na));
                 break;
@@ -463,9 +463,8 @@ public class NioConfig extends BootConfig {
         switch (filterCodeType) {
             case HttpStatusCode:
             case AppErrorCode:
-                key = "nio.verbose.filter.codetype.range";
                 filterCodeSet = new HashSet();
-                Long[] a = helper.getAsRangeLong(props, key, filterCodeSet);
+                Long[] a = helper.getAsRangeLong(props, KEY_FILTER_CODETYPE_RANGE, filterCodeSet);
                 if (a != null) {
                     filterCodeRangeFrom = a[0];
                     filterCodeRangeTo = a[1];
