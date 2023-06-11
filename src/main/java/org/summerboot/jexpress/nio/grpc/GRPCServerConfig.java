@@ -78,13 +78,10 @@ public class GRPCServerConfig extends BootConfig {
     private volatile int poolMaxSizeMaxSize = availableProcessors + 1;
 
     @Config(key = ID + ".pool.queueSize", defaultValue = "" + Integer.MAX_VALUE)//2147483647
-    private volatile int poolQueueSize;
+    private volatile int poolQueueSize = Integer.MAX_VALUE;
 
     @Config(key = ID + ".pool.keepAliveSeconds", defaultValue = "60")
-    private volatile long keepAliveSeconds;
-
-    @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
-    private volatile int healthInspectionIntervalSeconds;
+    private volatile long keepAliveSeconds = 60;
 
     //2. TRC (The Remote Callee) keystore
     @ConfigHeader(title = "2. " + ID + " keystore")
@@ -98,8 +95,6 @@ public class GRPCServerConfig extends BootConfig {
     @Config(key = ID + ".ssl.TrustStore", StorePwdKey = ID + ".ssl.TrustStorePwd")
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
-
-    @Config(key = ID + ".ssl.overrideAuthority")
 
     @Override
     protected void reset() {
@@ -161,10 +156,6 @@ public class GRPCServerConfig extends BootConfig {
 
     public long getKeepAliveSeconds() {
         return keepAliveSeconds;
-    }
-
-    public int getHealthInspectionIntervalSeconds() {
-        return healthInspectionIntervalSeconds;
     }
 
     public KeyManagerFactory getKmf() {

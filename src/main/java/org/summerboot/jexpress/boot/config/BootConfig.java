@@ -142,7 +142,7 @@ public abstract class BootConfig implements JExpressConfig {
             return ex.getMessage();
         }
     }
-    
+
     protected void reset() {
     }
 
@@ -173,8 +173,7 @@ public abstract class BootConfig implements JExpressConfig {
             configName = cfgFile.getName();
         }
         Properties props = new Properties();
-        try (InputStream is = new FileInputStream(cfgFile);
-                InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);) {
+        try (InputStream is = new FileInputStream(cfgFile); InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);) {
             props.load(isr);
         }
         ConfigUtil helper = new ConfigUtil(this.cfgFile.getAbsolutePath());
@@ -217,25 +216,31 @@ public abstract class BootConfig implements JExpressConfig {
         if (cfgAnnotation == null) {
             return;
         }
-        final String annotationKeyValue = cfgAnnotation.key();
-        String valueInCfgFile = props.getProperty(annotationKeyValue);
+        final String annotationKey = cfgAnnotation.key();
+        String valueInCfgFile = props.getProperty(annotationKey);
         field.setAccessible(true);
         if (StringUtils.isBlank(valueInCfgFile)) {
-            String annotationDefaultValue = cfgAnnotation.defaultValue();
-            boolean hasDefaultValue = StringUtils.isNotBlank(annotationDefaultValue);
-            if (hasDefaultValue) {
-                valueInCfgFile = annotationDefaultValue;
-            } else {
-                if (cfgAnnotation.required()) {
-                    helper.addError("missing \"" + annotationKeyValue + "\"");
-                }
-                /*else {
-                    Object nullValue = ReflectionUtil.toStandardJavaType(null, field.getType(), false, false, null);
-                    field.set(this, nullValue);
-                }*/
+            if (cfgAnnotation.required()) {// 1. no cfg value, but required
+                helper.addError("missing \"" + annotationKey + "\"");
                 return;
             }
+            boolean isSpecifiedInCfgFile = props.containsKey(annotationKey);
+            if (isSpecifiedInCfgFile) {// 2. empty cfg value as null 
+                Object nullValue = ReflectionUtil.toStandardJavaType(null, field.getType(), false, false, null);
+                field.set(this, nullValue);
+                return;
+            } else {
+                String annotationDefaultValue = cfgAnnotation.defaultValue();
+                boolean hasDefaultValue = StringUtils.isNotBlank(annotationDefaultValue);
+                if (hasDefaultValue) {// 3. no cfg item, use annotationDefaultValue
+                    valueInCfgFile = annotationDefaultValue;
+                } else {// 4. no cfg item, no annotationDefaultValue, use class field default value
+                    return;
+                }
+            }
         }
+        
+        // 5. override default field value with cfg value
         Config.Validate validate = cfgAnnotation.validate();
         boolean isEncrypted = validate.equals(Config.Validate.Encrypted);
         if (isEncrypted) {
@@ -246,7 +251,7 @@ public abstract class BootConfig implements JExpressConfig {
                     throw new IllegalArgumentException("Failed to decrypt", ex);
                 }
             } else {
-                helper.addError("invalid \"" + annotationKeyValue + "\" - require encrypted format, missing warpper: ENC(encrypted value)");
+                helper.addError("invalid \"" + annotationKey + "\" - require encrypted format, missing warpper: ENC(encrypted value)");
                 return;
             }
         }
@@ -254,7 +259,7 @@ public abstract class BootConfig implements JExpressConfig {
 
         Class fieldClass = field.getType();
         if (fieldClass.equals(KeyManagerFactory.class)) {
-            String key_storeFile = annotationKeyValue;
+            String key_storeFile = annotationKey;
             String key_storePwd = cfgAnnotation.StorePwdKey();
             String key_keyAlias = cfgAnnotation.AliasKey();
             String key_keyPwd = cfgAnnotation.AliasPwdKey();
@@ -262,7 +267,7 @@ public abstract class BootConfig implements JExpressConfig {
                     key_storeFile, key_storePwd, key_keyAlias, key_keyPwd);
             field.set(this, kmf);
         } else if (fieldClass.equals(TrustManagerFactory.class)) {
-            String key_storeFile = annotationKeyValue;
+            String key_storeFile = annotationKey;
             String key_storePwd = cfgAnnotation.StorePwdKey();
             TrustManagerFactory tmf = helper.getAsTrustManagerFactory(props, configFolder,
                     key_storeFile, key_storePwd);
@@ -309,8 +314,7 @@ public abstract class BootConfig implements JExpressConfig {
             sb.append(line).append(System.lineSeparator());
         }
 
-        try (FileOutputStream output = new FileOutputStream(cfgFile);
-                FileChannel foc = output.getChannel();) {
+        try (FileOutputStream output = new FileOutputStream(cfgFile); FileChannel foc = output.getChannel();) {
             foc.write(ByteBuffer.wrap(sb.toString().getBytes(StandardCharsets.UTF_8)));
         }
     }
