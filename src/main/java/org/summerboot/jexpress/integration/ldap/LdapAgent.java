@@ -72,7 +72,6 @@ public class LdapAgent implements Closeable {
 
     public static String replaceOU(String dn, String newOU) {
         return dn.replaceFirst("(ou=)([^,]*)", "$1" + escape(newOU));
-
     }
 
     public static Properties buildCfg(String host, int port, boolean isSSL, String ldapSSLConnectionFactoryClassName, String sslProtocol, String bindingUserDN, String bindingPassword) {
