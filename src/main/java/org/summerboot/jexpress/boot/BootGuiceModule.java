@@ -96,10 +96,8 @@ public class BootGuiceModule extends AbstractModule {
 
         //3. NIO Controllers
         //if (startNIO) {
-        bind(ChannelHandler.class)
-                .annotatedWith(Names.named(BootHttpPingHandler.class.getName()))
-                .to(BootHttpPingHandler.class);
-        memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpPingHandler.class.getName()).append(", named=").append(BootHttpPingHandler.class.getName());
+        bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpPingHandler.class.getSimpleName())).to(BootHttpPingHandler.class);
+        memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpPingHandler.class.getSimpleName()).append(", named=").append(BootHttpPingHandler.class.getSimpleName());
 
         //4. @Servuces
         bind(HealthInspector.class).to(BootHealthInspectorImpl.class);
@@ -120,8 +118,8 @@ public class BootGuiceModule extends AbstractModule {
         bind(PostOffice.class).to(BootPostOfficeImpl.class);
         memo.append("\n\t- Ioc.bind: ").append(PostOffice.class.getName()).append(ARROW).append(BootPostOfficeImpl.class.getName());
 
-        bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpRequestHandler.BINDING_NAME)).to(BootHttpRequestHandler.class);
-        memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpRequestHandler.class.getName()).append(", named=").append(BootHttpRequestHandler.BINDING_NAME);
+        bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpRequestHandler.class.getSimpleName())).to(BootHttpRequestHandler.class);
+        memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpRequestHandler.class.getSimpleName()).append(", named=").append(BootHttpRequestHandler.class.getSimpleName());
 
         //5. Controllers
         scanAnnotation_BindInstance(binder(), Controller.class, callerRootPackageName);

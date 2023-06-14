@@ -337,6 +337,8 @@ public abstract class BootConfig implements JExpressConfig {
         }
     }
 
+    public static final String DES_DESC = "plain text to be encrypted";
+
     public static String generateTemplate(Class configClass) {
         Object objectInstance = null;
         if (JExpressConfig.class.isAssignableFrom(configClass)) {
@@ -474,6 +476,8 @@ public abstract class BootConfig implements JExpressConfig {
                     }
                     if (hasDefaultValue || hasPredefinedValue) {
                         sb.append(dv);
+                    } else {
+                        sb.append(DES_DESC);
                     }
                     if (isEncrypted) {
                         sb.append(")");
@@ -489,7 +493,7 @@ public abstract class BootConfig implements JExpressConfig {
                             }
                             sb.append(skey).append("=");
                             if (i == 0 || i == 2) {
-                                sb.append("DEC(plain text to be encrypted)");
+                                sb.append("DEC(" + DES_DESC + ")");
                             }
                             sb.append("\n");
                         }

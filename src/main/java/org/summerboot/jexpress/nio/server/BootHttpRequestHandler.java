@@ -47,8 +47,6 @@ import org.summerboot.jexpress.security.auth.Authenticator;
 @Singleton
 public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
-    public static final String BINDING_NAME = "BootHttpRequestHandler";
-
     @Inject
     protected Authenticator authenticator;
 

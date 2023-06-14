@@ -255,10 +255,10 @@ public class NioConfig extends BootConfig {
     private volatile String fielUploadHandlerAnnotatedName = null;
 
     @Config(key = "nio.HttpPingHandler")
-    private volatile String pingHandlerAnnotatedName = BootHttpPingHandler.class.getName();
+    private volatile String pingHandlerAnnotatedName = BootHttpPingHandler.class.getSimpleName();
 
-    @Config(key = "nio.HttpRequestHandler", defaultValue = BootHttpRequestHandler.BINDING_NAME)
-    private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.BINDING_NAME;
+    @Config(key = "nio.HttpRequestHandler")
+    private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.class.getSimpleName();
 
     @Config(key = "nio.WebSocket.Handler")
     private volatile String webSocketHandlerAnnotatedName = null;
