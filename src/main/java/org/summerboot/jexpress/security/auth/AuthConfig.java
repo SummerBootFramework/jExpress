@@ -26,8 +26,12 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.PublicKey;
@@ -38,11 +42,13 @@ import java.util.Set;
 import java.util.TreeSet;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import org.apache.commons.io.IOUtils;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.util.ApplicationUtil;
 
 /**
  *
@@ -126,23 +132,51 @@ public class AuthConfig extends BootConfig {
     private volatile Properties ldapConfig;
 
     //2. JWT
-    @ConfigHeader(title = "2. JWT")
-    @Config(key = "jwt.asymmetric.SigningKeyFile",
-            desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size. To generate the keypair manually:\n"
+    public static final String JWT_PRIVATE_KEY_FILE = "jwt_private.key";
+    public static final String JWT_PUBLIC_KEY_FILE = "jwt_public.key";
+    @ConfigHeader(title = "2. JWT",
+            example = "To generate the keypair manually:\n"
             + "1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
-            + "2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out public.pem \n"
+            + "2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out " + JWT_PUBLIC_KEY_FILE + " \n"
             + "3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM \n"
-            + "4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out private.pem")
+            + "4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out " + JWT_PRIVATE_KEY_FILE)
+    @Config(key = "jwt.asymmetric.SigningKeyFile",
+            desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size",
+            callbackmethodname4Dump = "generateTemplate_privateKeyFile")
     private volatile File privateKeyFile;
 
     @JsonIgnore
     @Config(key = "jwt.asymmetric.SigningKeyPwd", validate = Config.Validate.Encrypted, required = false,
-            desc = "The password of this private key")
+            desc = "The password of this private key",
+            callbackmethodname4Dump = "generateTemplate_privateKeyPwd")
     private volatile String privateKeyPwd;
 
     @Config(key = "jwt.asymmetric.ParsingKeyFile",
-            desc = "Path to the public key file corresponding to this private key")
+            desc = "Path to the public key file corresponding to this private key",
+            callbackmethodname4Dump = "generateTemplate_publicKeyFile")
     private volatile File publicKeyFile;
+
+    protected void generateTemplate_privateKeyFile(StringBuilder sb) {
+        sb.append("jwt.asymmetric.SigningKeyFile=" + JWT_PRIVATE_KEY_FILE + "\n");
+        generateTemplate = true;
+    }
+
+    protected void createIfNotExist(String fileName) {
+        if (cfgFile == null || !generateTemplate) {
+            return;
+        }
+        String location = cfgFile.getParentFile().getAbsolutePath();
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        ApplicationUtil.createIfNotExist(location, classLoader, fileName, fileName);
+    }
+
+    protected void generateTemplate_privateKeyPwd(StringBuilder sb) {
+        sb.append("jwt.asymmetric.SigningKeyPwd=DEC(changeit)\n");
+    }
+
+    protected void generateTemplate_publicKeyFile(StringBuilder sb) {
+        sb.append("jwt.asymmetric.ParsingKeyFile=" + JWT_PUBLIC_KEY_FILE + "\n");
+    }
 
     @JsonIgnore
     @Config(key = "jwt.symmetric.key", validate = Config.Validate.Encrypted, required = false,
@@ -163,7 +197,7 @@ public class AuthConfig extends BootConfig {
 
     //3. Role mapping
     @ConfigHeader(title = "3. Role mapping",
-            desc = "Map the role with user group (no matter the group is defined in LDAP or DB)",
+            desc = "Map the role (defined as @RolesAllowed({\"AppAdmin\"})) with user group (no matter the group is defined in LDAP or DB)",
             format = "roles.<role name>.groups=csv list of groups\n"
             + "roles.<role name>.users=csv list of users",
             example = "the following example maps one group(AppAdmin_Group) and two users(johndoe, janejoe) to a role(AppAdmin)\n"
@@ -179,8 +213,8 @@ public class AuthConfig extends BootConfig {
      */
     protected void generateTemplate_DumpRoleMapping(StringBuilder sb) {
         for (String role : declareRoles) {
-            sb.append("#roles.").append(role).append(".groups=\n");
-            sb.append("#roles.").append(role).append(".users=\n");
+            sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>\n");
+            sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>\n");
         }
     }
 
@@ -219,9 +253,11 @@ public class AuthConfig extends BootConfig {
         }
         //File rootFolder = cfgFile.getParentFile().getParentFile();
         if (privateKeyFile != null) {
+            createIfNotExist(JWT_PRIVATE_KEY_FILE);
             jwtSigningKey = EncryptorUtil.loadPrivateKey(privateKeyFile, privateKeyPwd.toCharArray());
         }
         if (publicKeyFile != null) {
+            createIfNotExist(JWT_PUBLIC_KEY_FILE);
             PublicKey publicKey = EncryptorUtil.loadPublicKey(EncryptorUtil.KeyFileType.PKCS12, publicKeyFile);
             jwtParser = Jwts.parserBuilder() // (1)
                     .setSigningKey(publicKey) // (2)

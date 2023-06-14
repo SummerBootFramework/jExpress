@@ -51,4 +51,6 @@ public @interface Config {
         None, Encrypted, EmailRecipients
     }
 
+    String callbackmethodname4Dump() default "";
+
 }

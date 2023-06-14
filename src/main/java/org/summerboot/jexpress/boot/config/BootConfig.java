@@ -83,6 +83,8 @@ public abstract class BootConfig implements JExpressConfig {
     @JsonIgnore
     protected Logger logger;
 
+    protected boolean generateTemplate = false;
+
     protected BootConfig() {
         registerSingleton();
     }
@@ -239,7 +241,7 @@ public abstract class BootConfig implements JExpressConfig {
                 }
             }
         }
-        
+
         // 5. override default field value with cfg value
         Config.Validate validate = cfgAnnotation.validate();
         boolean isEncrypted = validate.equals(Config.Validate.Encrypted);
@@ -333,6 +335,7 @@ public abstract class BootConfig implements JExpressConfig {
                 ex.printStackTrace();
             }
         }
+
         List<Field> configItems = ReflectionUtil.getDeclaredAndSuperClassesFields(configClass);
         boolean hasConfig = false;
         StringBuilder sb = new StringBuilder();
@@ -445,6 +448,19 @@ public abstract class BootConfig implements JExpressConfig {
                         sb.append("\n");
                     }
                     i++;
+                }
+                if (objectInstance != null) {
+                    String callbackFunc = cfg.callbackmethodname4Dump();
+                    if (StringUtils.isNotBlank(callbackFunc)) {
+                        Class[] cArg = {StringBuilder.class};//new Class[1];
+                        try {
+                            Method cbMethod = configClass.getDeclaredMethod(callbackFunc, cArg);
+                            cbMethod.setAccessible(true);
+                            cbMethod.invoke(objectInstance, sb);
+                        } catch (IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException | InvocationTargetException ex) {
+                            sb.append(ex).append("\n");
+                        }
+                    }
                 }
                 if (StringUtils.isNotBlank(cm)) {
                     sb.append("\n");

@@ -49,6 +49,7 @@ import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
+import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 
 /**
@@ -540,7 +541,7 @@ public class ServiceContext {
             Path errorFilePath = errorFile.getAbsoluteFile().toPath();
             try (InputStream ioStream = this.getClass()
                     .getClassLoader()
-                    .getResourceAsStream("HttpErrorTemplate" + (isDownloadMode ? ".txt" : ".html")); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
+                    .getResourceAsStream(ApplicationUtil.RESOURCE_PATH + "HttpErrorTemplate" + (isDownloadMode ? ".txt" : ".html")); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     sb.append(line).append(System.lineSeparator());
