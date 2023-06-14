@@ -40,8 +40,11 @@ import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 //@ImportResource(SummerApplication.CFG_GRPCCLIENT)
 abstract public class GRPCClientConfig extends BootConfig {
 
+    private static class a extends GRPCClientConfig {
+    }
+
     public static void main(String[] args) {
-        String t = generateTemplate(GRPCClientConfig.class);
+        String t = generateTemplate(a.class);
         System.out.println(t);
     }
 
@@ -54,7 +57,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     @ConfigHeader(title = "1. " + ID + " provider",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8424, 127.0.0.1:8425, 0.0.0.0:8426")
-    @Config(key = ID + ".LoadBalancing.servers")
+    @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = true)
     private volatile List<InetSocketAddress> loadBalancingServers;
 
     @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN", desc = "available options: ROUND_ROBIN, PICK_FIRST")
@@ -77,9 +80,19 @@ abstract public class GRPCClientConfig extends BootConfig {
     //2. TRC (The Remote Caller) keystore
     @ConfigHeader(title = "2. " + ID + " keystore")
     @Config(key = ID + ".ssl.KeyStore", StorePwdKey = ID + ".ssl.KeyStorePwd",
-            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd")
-    @JsonIgnore
+            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd",
+            desc = "Use SSL/TLS when key store is provided, use plain Socket if key stroe is not available",
+            callbackmethodname4Dump = "generateTemplate_keystore")
+    //@JsonIgnore
     protected volatile KeyManagerFactory kmf;
+
+    protected void generateTemplate_keystore(StringBuilder sb) {
+        sb.append(ID + ".ssl.KeyStore=server_keystore.p12\n");
+        sb.append(ID + ".ssl.KeyStorePwd=DEC(changeit)\n");
+        sb.append(ID + ".ssl.KeyAlias=demo3.com\n");
+        sb.append(ID + ".ssl.KeyPwd=DEC(demo3pwd)\n");
+        generateTemplate = true;
+    }
 
     //3. TRC (The Remote Caller) truststore
     @ConfigHeader(title = "3. " + ID + " truststore")
@@ -93,10 +106,11 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected volatile NettyChannelBuilder channelBuilder;
 
     @Override
-    protected void reset() {
+    protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
         loadBalancingServers = null;
         nameResolverProvider = null;
         channelBuilder = null;
+        createIfNotExist("server_keystore.p12");
     }
 
     @Override

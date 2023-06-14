@@ -83,7 +83,7 @@ public class NioConfig extends BootConfig {
     @ConfigHeader(title = "1. NIO Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8311, 127.0.0.1:8311, 0.0.0.0:8311")
-    @Config(key = "nio.server.bindings", defaultValue = "0.0.0.0:8311")
+    @Config(key = "nio.server.bindings", predefinedValue = "0.0.0.0:8211, 0.0.0.0:8311", required = true)
     private volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = "nio.server.autostart", defaultValue = "true")
     private volatile boolean autoStart = true;
@@ -95,8 +95,17 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.ssl.KeyStore", StorePwdKey = "nio.server.ssl.KeyStorePwd",
             AliasKey = "nio.server.ssl.KeyAlias", AliasPwdKey = "nio.server.ssl.KeyPwd",
             required = false,
-            desc = "Use SSL/TLS when key store is provided, use plain Socket if key stroe is not available")
+            desc = "Use SSL/TLS when key store is provided, use plain Socket if key stroe is not available",
+            callbackmethodname4Dump = "generateTemplate_keystore")
     private volatile KeyManagerFactory kmf = null;
+
+    protected void generateTemplate_keystore(StringBuilder sb) {
+        sb.append("nio.server.ssl.KeyStore=server_keystore.p12\n");
+        sb.append("nio.server.ssl.KeyStorePwd=DEC(changeit)\n");
+        sb.append("nio.server.ssl.KeyAlias=demo1.com\n");
+        sb.append("nio.server.ssl.KeyPwd=DEC(demo1pwd)\n");
+        generateTemplate = true;
+    }
 
     @JsonIgnore
     @Config(key = "nio.server.ssl.TrustStore", StorePwdKey = "nio.server.ssl.TrustStorePwd",
@@ -171,35 +180,37 @@ public class NioConfig extends BootConfig {
     private volatile int httpServerCodec_MaxChunkSize = 4096;
 
     @Config(key = "nio.server.EventLoopGroup.AcceptorSize", defaultValue = "0",
-            desc = "default AcceptorSize = number of bindings")
+            desc = "AcceptorSize 0 = number of bindings")
     private volatile int nioEventLoopGroupAcceptorSize = 0;
 
     private final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
-    @Config(key = "nio.server.EventLoopGroup.WorkerSize",
-            desc = "default WorkerSize = CPU core x2 +1")
+    @Config(key = "nio.server.EventLoopGroup.WorkerSize", predefinedValue = "0", required = true,
+            desc = "WorkerSize 0 = current server's available processors x 2 + 1")
     private volatile int nioEventLoopGroupWorkerSize = availableProcessors * 2 + 1;
     //private volatile int nioEventLoopGroupExecutorSize;
 
     public enum ThreadingMode {
         CPU, IO, Mixed
     }
-    @Config(key = "nio.server.BizExecutor.mode", defaultValue = "IO",
-            desc = "valid value = CPU, IO (default), Mixed")
-    private volatile ThreadingMode bizExecutorThreadingMode = ThreadingMode.IO;
-
-    @Config(key = "nio.server.BizExecutor.CoreSize",
-            desc = "use CPU core + 1 when application is CPU bound\n"
+    @Config(key = "nio.server.BizExecutor.mode", defaultValue = "Mixed",
+            desc = "valid value = CPU, IO (default), Mixed\nuse CPU core + 1 when application is CPU bound\n"
             + "use CPU core x 2 + 1 when application is I/O bound\n"
             + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
+    private volatile ThreadingMode bizExecutorThreadingMode = ThreadingMode.Mixed;
+
+    @Config(key = "nio.server.BizExecutor.CoreSize", predefinedValue = "0", required = true,
+            desc = "CoreSize 0 = current server's available processors x 2 + 1")
     private volatile int bizExecutorCoreSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentCore;
 
-    @Config(key = "nio.server.BizExecutor.MaxSize")
+    @Config(key = "nio.server.BizExecutor.MaxSize", predefinedValue = "0", required = true,
+            desc = "MaxSize 0 = current server's available processors x 2 + 1")
     private volatile int bizExecutorMaxSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
-    @Config(key = "nio.server.BizExecutor.QueueSize", defaultValue = "" + Integer.MAX_VALUE)
+    @Config(key = "nio.server.BizExecutor.QueueSize", predefinedValue = "" + Integer.MAX_VALUE, required = true,
+            desc = "The waiting list size when the pool is full")
     private volatile int bizExecutorQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
     private volatile int currentQueue;
 
@@ -344,7 +355,7 @@ public class NioConfig extends BootConfig {
     //8. Default NIO Response HTTP Headers
     @ConfigHeader(title = "8. Default Server Response HTTP Headers",
             desc = "put generic HTTP response headers here",
-            format = HEADER_SERVER_RESPONSE + "?=?",
+            format = HEADER_SERVER_RESPONSE + "<response_header_name>=<response_header_value>",
             example = HEADER_SERVER_RESPONSE + "Access-Control-Allow-Origin=https://www.summerboot.org\n"
             + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Headers=X-Requested-With, Content-Type, Origin, Authorization\n"
             + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Methods=PUT,GET,POST,DELETE,OPTIONS,PATCH\n"
@@ -357,9 +368,13 @@ public class NioConfig extends BootConfig {
             + HEADER_SERVER_RESPONSE + "X-Frame-Options=sameorigin\n"
             + HEADER_SERVER_RESPONSE + "Expect-CT=max-age=86400, enforce, report-uri=\"https://www.summerboot.org/report-uri\"\n"
             + HEADER_SERVER_RESPONSE + "X-Content-Type-Options=nosniff\n"
-            + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ")
-
+            + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ",
+            callbackmethodname4Dump = "generateTemplate_ResponseHeaders")
     private final HttpHeaders serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
+
+    protected void generateTemplate_ResponseHeaders(StringBuilder sb) {
+        sb.append("#").append(HEADER_SERVER_RESPONSE).append("<response_header_name>=<response_header_value>\n");
+    }
 
     public HttpHeaders getServerDefaultResponseHeaders() {
         return serverDefaultResponseHeaders;
@@ -367,6 +382,11 @@ public class NioConfig extends BootConfig {
 
     private String docrootDir;
     private String tempUoloadDir;
+
+    @Override
+    protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
+        createIfNotExist("server_keystore.p12");
+    }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {

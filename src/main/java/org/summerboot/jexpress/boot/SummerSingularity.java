@@ -248,24 +248,6 @@ abstract public class SummerSingularity implements BootConstant {
         String location = userSpecifiedConfigDir.getAbsolutePath();
         ClassLoader classLoader = this.getClass().getClassLoader();
         Path logFilePath = ApplicationUtil.createIfNotExist(location, classLoader, "log4j2.xml.temp", "log4j2.xml");
-
-//        Path logFilePath = Paths.get(userSpecifiedConfigDir.toString(), "log4j2.xml");
-//        if (!Files.exists(logFilePath)) {
-//            StringBuilder log4j2XML = new StringBuilder();
-//            try (InputStream ioStream = this.getClass()
-//                    .getClassLoader()
-//                    .getResourceAsStream("log4j2.xml.temp"); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
-//                String line;
-//                while ((line = br.readLine()) != null) {
-//                    log4j2XML.append(line).append(System.lineSeparator());
-//                }
-//                Files.writeString(logFilePath, log4j2XML);
-//            } catch (IOException ex) {
-//                System.out.println(ex + "\n\tCould generate log4j.xml at " + logFilePath);
-//                ex.printStackTrace();
-//                System.exit(1);
-//            }
-//        }
         String log4j2ConfigFile = logFilePath.toString();
         System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
         Locale userSpecifiedResourceBundle = null;

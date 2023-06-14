@@ -62,22 +62,25 @@ public class GRPCServerConfig extends BootConfig {
     @ConfigHeader(title = "1. " + ID + " Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8424, 127.0.0.1:8424, 0.0.0.0:8424")
-    @Config(key = ID + ".bindings", defaultValue = "0.0.0.0:8424")
+    @Config(key = ID + ".bindings", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = true)
     private volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = ID + ".autostart", defaultValue = "true")
     private volatile boolean autoStart;
 
-    @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "CPU",
+    @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "Mixed",
             desc = "valid value = CPU (default), IO, Mixed")
-    private volatile ThreadingMode threadingMode = ThreadingMode.CPU;
+    private volatile ThreadingMode threadingMode = ThreadingMode.Mixed;
 
-    @Config(key = ID + ".pool.coreSize")
-    private volatile int poolCoreSize = availableProcessors + 1;
+    @Config(key = ID + ".pool.coreSize", predefinedValue = "0", required = true,
+            desc = "coreSize 0 = current server's available processors x 2 + 1")
+    private volatile int poolCoreSize = availableProcessors * 2 + 1;
 
-    @Config(key = ID + ".pool.maxSize")
-    private volatile int poolMaxSizeMaxSize = availableProcessors + 1;
+    @Config(key = ID + ".pool.maxSize", predefinedValue = "0", required = true,
+            desc = "maxSize 0 = current server's available processors x 2 + 1")
+    private volatile int poolMaxSizeMaxSize = availableProcessors * 2 + 1;
 
-    @Config(key = ID + ".pool.queueSize", defaultValue = "" + Integer.MAX_VALUE)//2147483647
+    @Config(key = ID + ".pool.queueSize", predefinedValue = "" + Integer.MAX_VALUE, required = true,
+            desc = "The waiting list size when the pool is full")
     private volatile int poolQueueSize = Integer.MAX_VALUE;
 
     @Config(key = ID + ".pool.keepAliveSeconds", defaultValue = "60")
@@ -86,9 +89,19 @@ public class GRPCServerConfig extends BootConfig {
     //2. TRC (The Remote Callee) keystore
     @ConfigHeader(title = "2. " + ID + " keystore")
     @Config(key = ID + ".ssl.KeyStore", StorePwdKey = ID + ".ssl.KeyStorePwd",
-            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd")
-    @JsonIgnore
+            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd",
+            desc = "Use SSL/TLS when key store is provided, use plain Socket if key stroe is not available",
+            callbackmethodname4Dump = "generateTemplate_keystore")
+    //@JsonIgnore
     protected volatile KeyManagerFactory kmf;
+
+    protected void generateTemplate_keystore(StringBuilder sb) {
+        sb.append(ID + ".ssl.KeyStore=server_keystore.p12\n");
+        sb.append(ID + ".ssl.KeyStorePwd=DEC(changeit)\n");
+        sb.append(ID + ".ssl.KeyAlias=demo2.com\n");
+        sb.append(ID + ".ssl.KeyPwd=DEC(demo2pwd)\n");
+        generateTemplate = true;
+    }
 
     //3. TRC (The Remote Callee) truststore
     @ConfigHeader(title = "3. " + ID + " truststore")
@@ -97,12 +110,13 @@ public class GRPCServerConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
     @Override
-    protected void reset() {
+    protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
+        createIfNotExist("server_keystore.p12");
     }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        int cpuCoreSize = Runtime.getRuntime().availableProcessors();
+        int cpuCoreSize = availableProcessors;
         switch (threadingMode) {
             case CPU:// use CPU_Bound core + 1 when application is CPU_Bound bound
                 poolCoreSize = cpuCoreSize + 1;

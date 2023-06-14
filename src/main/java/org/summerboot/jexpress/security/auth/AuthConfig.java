@@ -26,12 +26,8 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.PublicKey;
@@ -42,13 +38,11 @@ import java.util.Set;
 import java.util.TreeSet;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
-import org.apache.commons.io.IOUtils;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
-import org.summerboot.jexpress.util.ApplicationUtil;
 
 /**
  *
@@ -159,15 +153,6 @@ public class AuthConfig extends BootConfig {
     protected void generateTemplate_privateKeyFile(StringBuilder sb) {
         sb.append("jwt.asymmetric.SigningKeyFile=" + JWT_PRIVATE_KEY_FILE + "\n");
         generateTemplate = true;
-    }
-
-    protected void createIfNotExist(String fileName) {
-        if (cfgFile == null || !generateTemplate) {
-            return;
-        }
-        String location = cfgFile.getParentFile().getAbsolutePath();
-        ClassLoader classLoader = this.getClass().getClassLoader();
-        ApplicationUtil.createIfNotExist(location, classLoader, fileName, fileName);
     }
 
     protected void generateTemplate_privateKeyPwd(StringBuilder sb) {

@@ -535,4 +535,19 @@ public class ReflectionUtil {
         } while (targetClass != null);
         return ret;
     }
+
+    public static Method getMethod(Class targetClass, String methodName, Class[] cArg) {
+        Method ret = null;
+        do {
+            try {
+                ret = targetClass.getDeclaredMethod(methodName, cArg);
+            } catch (NoSuchMethodException ex) {
+                targetClass = targetClass.getSuperclass();
+//                if (targetClass == null) {
+//                    throw ex;
+//                }
+            }
+        } while (ret == null && targetClass != null);
+        return ret;
+    }
 }

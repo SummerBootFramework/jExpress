@@ -39,6 +39,8 @@ public @interface Config {
     //String requiredWhen() default "";
     String defaultValue() default "";
 
+    String predefinedValue() default "";
+
     Validate validate() default Validate.None;
 
     String StorePwdKey() default "";
