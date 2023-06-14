@@ -476,7 +476,7 @@ public abstract class BootConfig implements JExpressConfig {
                     }
                     if (hasDefaultValue || hasPredefinedValue) {
                         sb.append(dv);
-                    } else {
+                    } else if (isEncrypted) {
                         sb.append(DES_DESC);
                     }
                     if (isEncrypted) {
