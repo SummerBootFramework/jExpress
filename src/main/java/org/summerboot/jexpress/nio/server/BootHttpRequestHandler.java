@@ -148,8 +148,8 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * @param httpRequestHeaders
      * @param httpRequestPath
      * @param context
-     * @return true if good to customizedAuthorizationCheck (caller is verified), otherwise
- false
+     * @return true if good to customizedAuthorizationCheck (caller is
+     * verified), otherwise false
      * @throws Exception
      */
     protected boolean authenticationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
