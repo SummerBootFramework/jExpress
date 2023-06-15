@@ -24,7 +24,7 @@ import org.summerboot.jexpress.util.ApplicationUtil;
 public interface BootConstant {
 
     //version
-    String VERSION = "SummerBoot.jExpress 2.3.6";
+    String VERSION = "SummerBoot.jExpress 2.3.7";
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
