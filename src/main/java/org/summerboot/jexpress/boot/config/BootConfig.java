@@ -337,7 +337,7 @@ public abstract class BootConfig implements JExpressConfig {
         }
     }
 
-    public static final String DES_DESC = "plain text to be encrypted";
+    public static final String DES_DESC = "plain text automatically encrypted when the application starts or runs";
 
     public static String generateTemplate(Class configClass) {
         Object objectInstance = null;
@@ -392,7 +392,7 @@ public abstract class BootConfig implements JExpressConfig {
                 sb.append("\n");
 
                 if (objectInstance != null) {
-                    String callbackFunc = header.callbackmethodname4Dump();
+                    String callbackFunc = header.callbackMethodName4Dump();
                     if (StringUtils.isNotBlank(callbackFunc)) {
                         Class[] cArg = {StringBuilder.class};//new Class[1];
                         try {
@@ -448,7 +448,7 @@ public abstract class BootConfig implements JExpressConfig {
 
                 boolean dumpDefault = true;
                 if (objectInstance != null) {
-                    String callbackFunc = cfg.callbackmethodname4Dump();
+                    String callbackFunc = cfg.callbackMethodName4Dump();
                     if (StringUtils.isNotBlank(callbackFunc)) {
                         Class[] cArg = {StringBuilder.class};//new Class[1];
                         try {

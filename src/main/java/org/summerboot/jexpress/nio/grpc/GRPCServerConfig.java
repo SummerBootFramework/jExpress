@@ -87,31 +87,45 @@ public class GRPCServerConfig extends BootConfig {
     private volatile long keepAliveSeconds = 60;
 
     //2. TRC (The Remote Callee) keystore
+    private static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    private static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    private static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    private static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
+
     @ConfigHeader(title = "2. " + ID + " keystore")
-    @Config(key = ID + ".ssl.KeyStore", StorePwdKey = ID + ".ssl.KeyStorePwd",
-            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd",
-            desc = "Use SSL/TLS when key store is provided, use plain Socket if key stroe is not available",
-            callbackmethodname4Dump = "generateTemplate_keystore")
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = "Use SSL/TLS when keystore is provided, otherwise use plain socket",
+            callbackMethodName4Dump = "generateTemplate_keystore")
     //@JsonIgnore
     protected volatile KeyManagerFactory kmf;
 
     protected void generateTemplate_keystore(StringBuilder sb) {
-        sb.append(ID + ".ssl.KeyStore=server_keystore.p12\n");
-        sb.append(ID + ".ssl.KeyStorePwd=DEC(changeit)\n");
-        sb.append(ID + ".ssl.KeyAlias=demo2.com\n");
-        sb.append(ID + ".ssl.KeyPwd=DEC(demo2pwd)\n");
+        sb.append(KEY_kmf_key + "=server_keystore.p12\n");
+        sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_kmf_AliasKey + "=demo2.com\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(demo2pwd)\n");
         generateTemplate = true;
     }
 
-    //3. TRC (The Remote Callee) truststore
+    //3. TRC (The Remote Callee) truststore    
+    private static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    private static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
-    @Config(key = ID + ".ssl.TrustStore", StorePwdKey = ID + ".ssl.TrustStorePwd")
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
+            desc = "Auth the remote client certificate when a truststore is provided, otherwise blindly trust all remote client certificate")
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
+//    protected void generateTemplate_truststore(StringBuilder sb) {
+//        sb.append(KEY_tmf_key + "=trustsotre_3.p12\n");
+//        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+//        generateTemplate = true;
+//    }
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
         createIfNotExist("server_keystore.p12");
+//        createIfNotExist("trustsotre_12.p12");
+//        createIfNotExist("trustsotre_3.p12");
     }
 
     @Override

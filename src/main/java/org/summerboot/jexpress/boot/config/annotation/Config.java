@@ -53,6 +53,11 @@ public @interface Config {
         None, Encrypted, EmailRecipients
     }
 
-    String callbackmethodname4Dump() default "";
+    /**
+     * protected void callbackMethodName(StringBuilder sb) {
+     *
+     * @return
+     */
+    String callbackMethodName4Dump() default "";
 
 }

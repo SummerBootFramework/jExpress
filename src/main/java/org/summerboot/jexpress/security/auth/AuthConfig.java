@@ -80,11 +80,11 @@ public class AuthConfig extends BootConfig {
             + "false when use others like Open LDAP, IBM Tivoli, Apache")
     private volatile boolean typeAD = false;
 
-    @Config(key = "ldap.host",
+    @Config(key = "ldap.host", defaultValue="localhost",
             desc = "LDAP will be disabled when host is not provided")
     private volatile String ldapHost;
 
-    @Config(key = "ldap.port",
+    @Config(key = "ldap.port", defaultValue="3269",
             desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global voer SSL 3269")
     private volatile int ldapPort;
 
@@ -126,41 +126,46 @@ public class AuthConfig extends BootConfig {
     private volatile Properties ldapConfig;
 
     //2. JWT
-    public static final String JWT_PRIVATE_KEY_FILE = "jwt_private.key";
-    public static final String JWT_PUBLIC_KEY_FILE = "jwt_public.key";
+    private static final String KEY_privateKeyFile = "jwt.asymmetric.SigningKeyFile";
+    private static final String KEY_privateKeyPwd = "jwt.asymmetric.SigningKeyPwd";
+    private static final String KEY_publicKeyFile = "jwt.asymmetric.ParsingKeyFile";
+
+    private static final String JWT_PRIVATE_KEY_FILE = "jwt_private.key";
+    private static final String JWT_PUBLIC_KEY_FILE = "jwt_public.key";
+
     @ConfigHeader(title = "2. JWT",
             example = "To generate the keypair manually:\n"
             + "1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
             + "2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out " + JWT_PUBLIC_KEY_FILE + " \n"
             + "3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM \n"
             + "4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out " + JWT_PRIVATE_KEY_FILE)
-    @Config(key = "jwt.asymmetric.SigningKeyFile",
+    @Config(key = KEY_privateKeyFile,
             desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size",
-            callbackmethodname4Dump = "generateTemplate_privateKeyFile")
+            callbackMethodName4Dump = "generateTemplate_privateKeyFile")
     private volatile File privateKeyFile;
 
-    @JsonIgnore
-    @Config(key = "jwt.asymmetric.SigningKeyPwd", validate = Config.Validate.Encrypted, required = false,
-            desc = "The password of this private key",
-            callbackmethodname4Dump = "generateTemplate_privateKeyPwd")
-    private volatile String privateKeyPwd;
-
-    @Config(key = "jwt.asymmetric.ParsingKeyFile",
-            desc = "Path to the public key file corresponding to this private key",
-            callbackmethodname4Dump = "generateTemplate_publicKeyFile")
-    private volatile File publicKeyFile;
-
     protected void generateTemplate_privateKeyFile(StringBuilder sb) {
-        sb.append("jwt.asymmetric.SigningKeyFile=" + JWT_PRIVATE_KEY_FILE + "\n");
+        sb.append(KEY_privateKeyFile + "=" + JWT_PRIVATE_KEY_FILE + "\n");
         generateTemplate = true;
     }
 
+    @JsonIgnore
+    @Config(key = KEY_privateKeyPwd, validate = Config.Validate.Encrypted, required = false,
+            desc = "The password of this private key",
+            callbackMethodName4Dump = "generateTemplate_privateKeyPwd")
+    private volatile String privateKeyPwd;
+
     protected void generateTemplate_privateKeyPwd(StringBuilder sb) {
-        sb.append("jwt.asymmetric.SigningKeyPwd=DEC(changeit)\n");
+        sb.append(KEY_privateKeyPwd + "=DEC(changeit)\n");
     }
 
+    @Config(key = KEY_publicKeyFile,
+            desc = "Path to the public key file corresponding to this private key",
+            callbackMethodName4Dump = "generateTemplate_publicKeyFile")
+    private volatile File publicKeyFile;
+
     protected void generateTemplate_publicKeyFile(StringBuilder sb) {
-        sb.append("jwt.asymmetric.ParsingKeyFile=" + JWT_PUBLIC_KEY_FILE + "\n");
+        sb.append(KEY_publicKeyFile + "=" + JWT_PUBLIC_KEY_FILE + "\n");
     }
 
     @JsonIgnore
@@ -188,11 +193,11 @@ public class AuthConfig extends BootConfig {
             example = "the following example maps one group(AppAdmin_Group) and two users(johndoe, janejoe) to a role(AppAdmin)\n"
             + "roles.AppAdmin.groups=AppAdmin_Group\n"
             + "roles.AppAdmin.users=johndoe, janejoe",
-            callbackmethodname4Dump = "generateTemplate_DumpRoleMapping")
+            callbackMethodName4Dump = "generateTemplate_DumpRoleMapping")
     private Map<String, RoleMapping> roles = new HashMap();
 
     /**
-     * called by @ConfigHeader.callbackmethodname4Dump value
+     * called by @ConfigHeader.callbackMethodName4Dump value
      *
      * @param sb
      */

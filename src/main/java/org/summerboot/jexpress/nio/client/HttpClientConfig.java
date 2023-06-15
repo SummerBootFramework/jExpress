@@ -55,7 +55,9 @@ import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 abstract public class HttpClientConfig extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(HttpClientConfig.class);
+        class a extends HttpClientConfig {
+        }
+        String t = generateTemplate(a.class);
         System.out.println(t);
     }
 
@@ -82,11 +84,24 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.ssl.protocol")
     private volatile String protocol = "TLSv1.3";
 
+    private static final String KEY_kmf_key = "httpclient.ssl.KeyStore";
+    private static final String KEY_kmf_StorePwdKey = "httpclient.ssl.KeyStorePwd";
+    private static final String KEY_kmf_AliasKey = "httpclient.ssl.KeyAlias";
+    private static final String KEY_kmf_AliasPwdKey = "httpclient.ssl.KeyPwd";
+
     @JsonIgnore
-    @Config(key = "httpclient.ssl.KeyStore", StorePwdKey = "httpclient.ssl.KeyStorePwd",
-            AliasKey = "httpclient.ssl.KeyAlias", AliasPwdKey = "httpclient.ssl.KeyPwd",
-            required = false)
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = "Use SSL/TLS when keystore is provided, otherwise use plain socket",
+            callbackMethodName4Dump = "generateTemplate_keystore")
     private volatile KeyManagerFactory kmf;
+
+    protected void generateTemplate_keystore(StringBuilder sb) {
+        sb.append(KEY_kmf_key + "=server_keystore.p12\n");
+        sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_kmf_AliasKey + "=demo1.com\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(demo1pwd)\n");
+        generateTemplate = true;
+    }
 
     @JsonIgnore
     @Config(key = "httpclient.ssl.TrustStore", StorePwdKey = "httpclient.ssl.TrustStorePwd")
@@ -163,6 +178,11 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public void setStatusListener(HTTPClientStatusListener l) {
         listener = l;
+    }
+
+    @Override
+    protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
+        createIfNotExist("server_keystore.p12");
     }
 
     @Override

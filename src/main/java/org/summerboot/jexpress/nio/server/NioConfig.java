@@ -91,19 +91,22 @@ public class NioConfig extends BootConfig {
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")
 
+    private static final String KEY_kmf_key = "nio.server.ssl.KeyStore";
+    private static final String KEY_kmf_StorePwdKey = "nio.server.ssl.KeyStorePwd";
+    private static final String KEY_kmf_AliasKey = "nio.server.ssl.KeyAlias";
+    private static final String KEY_kmf_AliasPwdKey = "nio.server.ssl.KeyPwd";
+
     @JsonIgnore
-    @Config(key = "nio.server.ssl.KeyStore", StorePwdKey = "nio.server.ssl.KeyStorePwd",
-            AliasKey = "nio.server.ssl.KeyAlias", AliasPwdKey = "nio.server.ssl.KeyPwd",
-            required = false,
-            desc = "Use SSL/TLS when key store is provided, use plain Socket if key stroe is not available",
-            callbackmethodname4Dump = "generateTemplate_keystore")
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = "Use SSL/TLS when keystore is provided, otherwise use plain socket",
+            callbackMethodName4Dump = "generateTemplate_keystore")
     private volatile KeyManagerFactory kmf = null;
 
     protected void generateTemplate_keystore(StringBuilder sb) {
-        sb.append("nio.server.ssl.KeyStore=server_keystore.p12\n");
-        sb.append("nio.server.ssl.KeyStorePwd=DEC(changeit)\n");
-        sb.append("nio.server.ssl.KeyAlias=demo1.com\n");
-        sb.append("nio.server.ssl.KeyPwd=DEC(demo1pwd)\n");
+        sb.append(KEY_kmf_key + "=server_keystore.p12\n");
+        sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_kmf_AliasKey + "=demo1.com\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(demo1pwd)\n");
         generateTemplate = true;
     }
 
@@ -369,7 +372,7 @@ public class NioConfig extends BootConfig {
             + HEADER_SERVER_RESPONSE + "Expect-CT=max-age=86400, enforce, report-uri=\"https://www.summerboot.org/report-uri\"\n"
             + HEADER_SERVER_RESPONSE + "X-Content-Type-Options=nosniff\n"
             + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ",
-            callbackmethodname4Dump = "generateTemplate_ResponseHeaders")
+            callbackMethodName4Dump = "generateTemplate_ResponseHeaders")
     private final HttpHeaders serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
 
     protected void generateTemplate_ResponseHeaders(StringBuilder sb) {
