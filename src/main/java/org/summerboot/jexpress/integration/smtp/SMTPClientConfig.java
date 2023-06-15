@@ -41,7 +41,7 @@ public class SMTPClientConfig extends BootConfig {
         String t = generateTemplate(SMTPClientConfig.class);
         System.out.println(t);
     }
-    
+
     public static final SMTPClientConfig cfg = new SMTPClientConfig();
 
     private SMTPClientConfig() {

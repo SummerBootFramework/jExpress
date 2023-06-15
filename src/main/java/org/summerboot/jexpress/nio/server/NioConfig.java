@@ -112,7 +112,6 @@ public class NioConfig extends BootConfig {
 
     @JsonIgnore
     @Config(key = "nio.server.ssl.TrustStore", StorePwdKey = "nio.server.ssl.TrustStorePwd",
-            required = false,
             desc = "trust all clients when truststore is not provided")
     private volatile TrustManagerFactory tmf = null;
 
@@ -188,8 +187,8 @@ public class NioConfig extends BootConfig {
 
     private final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
-    @Config(key = "nio.server.EventLoopGroup.WorkerSize", predefinedValue = "0", required = true,
-            desc = "WorkerSize 0 = current server's available processors x 2 + 1")
+    @Config(key = "nio.server.EventLoopGroup.WorkerSize", predefinedValue = "0",
+            desc = "WorkerSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int nioEventLoopGroupWorkerSize = availableProcessors * 2 + 1;
     //private volatile int nioEventLoopGroupExecutorSize;
 
@@ -202,17 +201,17 @@ public class NioConfig extends BootConfig {
             + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     private volatile ThreadingMode bizExecutorThreadingMode = ThreadingMode.Mixed;
 
-    @Config(key = "nio.server.BizExecutor.CoreSize", predefinedValue = "0", required = true,
-            desc = "CoreSize 0 = current server's available processors x 2 + 1")
+    @Config(key = "nio.server.BizExecutor.CoreSize", predefinedValue = "0",
+            desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int bizExecutorCoreSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentCore;
 
-    @Config(key = "nio.server.BizExecutor.MaxSize", predefinedValue = "0", required = true,
-            desc = "MaxSize 0 = current server's available processors x 2 + 1")
+    @Config(key = "nio.server.BizExecutor.MaxSize", predefinedValue = "0",
+            desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int bizExecutorMaxSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
-    @Config(key = "nio.server.BizExecutor.QueueSize", predefinedValue = "" + Integer.MAX_VALUE, required = true,
+    @Config(key = "nio.server.BizExecutor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
     private volatile int bizExecutorQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
     private volatile int currentQueue;

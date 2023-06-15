@@ -80,11 +80,11 @@ public class AuthConfig extends BootConfig {
             + "false when use others like Open LDAP, IBM Tivoli, Apache")
     private volatile boolean typeAD = false;
 
-    @Config(key = "ldap.host", defaultValue="localhost",
+    @Config(key = "ldap.host", defaultValue = "localhost",
             desc = "LDAP will be disabled when host is not provided")
     private volatile String ldapHost;
 
-    @Config(key = "ldap.port", defaultValue="3269",
+    @Config(key = "ldap.port", defaultValue = "3269",
             desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global voer SSL 3269")
     private volatile int ldapPort;
 
@@ -95,18 +95,18 @@ public class AuthConfig extends BootConfig {
     private volatile String bindingUserDN;
 
     @JsonIgnore
-    @Config(key = "ldap.bindingPassword", validate = Config.Validate.Encrypted, required = false)
+    @Config(key = "ldap.bindingPassword", validate = Config.Validate.Encrypted)
     private volatile String bindingPassword;
 
-    @Config(key = "ldap.PasswordAlgorithm", required = false)
+    @Config(key = "ldap.PasswordAlgorithm")
     private volatile String passwordAlgorithm = "SHA3-256";
 
-    @Config(key = "ldap.schema.TenantGroup.ou", required = false)
+    @Config(key = "ldap.schema.TenantGroup.ou")
     private volatile String ldapScheamTenantGroupOU;
 
     //1.2 LDAP Client keystore
     @ConfigHeader(title = "1.2 LDAP Client keystore")
-    @Config(key = "ldap.SSLConnectionFactoryClass", required = false)
+    @Config(key = "ldap.SSLConnectionFactoryClass")
     private volatile String ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
 
     @Config(key = "ldap.ssl.protocol")
@@ -150,7 +150,7 @@ public class AuthConfig extends BootConfig {
     }
 
     @JsonIgnore
-    @Config(key = KEY_privateKeyPwd, validate = Config.Validate.Encrypted, required = false,
+    @Config(key = KEY_privateKeyPwd, validate = Config.Validate.Encrypted,
             desc = "The password of this private key",
             callbackMethodName4Dump = "generateTemplate_privateKeyPwd")
     private volatile String privateKeyPwd;
@@ -169,7 +169,7 @@ public class AuthConfig extends BootConfig {
     }
 
     @JsonIgnore
-    @Config(key = "jwt.symmetric.key", validate = Config.Validate.Encrypted, required = false,
+    @Config(key = "jwt.symmetric.key", validate = Config.Validate.Encrypted,
             desc = "HMAC-SHA key for bothe signing and parsing, it will be ignored when asymmetric one is specified.\n"
             + "Use this command to generate this key: java -jar <app>.jar -jwt <HS256, HS384, HS512>")
     private volatile String symmetricKey;

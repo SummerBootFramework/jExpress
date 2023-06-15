@@ -147,16 +147,18 @@ abstract public class HttpClientConfig extends BootConfig {
 
     private final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
-    @Config(key = "httpclient.executor.CoreSize",
-            desc = "HTTP Client will be disabled when core size is/below 0")
+    @Config(key = "httpclient.executor.CoreSize", predefinedValue = "0",
+            desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int httpClientCoreSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentCore;
 
-    @Config(key = "httpclient.executor.MaxSize")
+    @Config(key = "httpclient.executor.MaxSize", predefinedValue = "0",
+            desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int httpClientMaxSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
-    @Config(key = "httpclient.executor.QueueSize")//2147483647
+    @Config(key = "httpclient.executor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
+            desc = "The waiting list size when the pool is full")
     private volatile int httpClientQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
     private volatile int currentQueue;
 
@@ -218,6 +220,12 @@ abstract public class HttpClientConfig extends BootConfig {
         }
 
         // 3.3 HTTP Client Executor
+        if (httpClientCoreSize <= 0) {
+            httpClientCoreSize = availableProcessors * 2 + 1;
+        }
+        if (httpClientMaxSize <= 0) {
+            httpClientMaxSize = availableProcessors * 2 + 1;
+        }
         if (httpClientMaxSize < httpClientCoreSize) {
             helper.addError("MaxSize should not less than CoreSize");
         }

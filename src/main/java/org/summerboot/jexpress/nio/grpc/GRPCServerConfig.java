@@ -71,15 +71,15 @@ public class GRPCServerConfig extends BootConfig {
             desc = "valid value = CPU (default), IO, Mixed")
     private volatile ThreadingMode threadingMode = ThreadingMode.Mixed;
 
-    @Config(key = ID + ".pool.coreSize", predefinedValue = "0", required = true,
-            desc = "coreSize 0 = current server's available processors x 2 + 1")
+    @Config(key = ID + ".pool.coreSize", predefinedValue = "0",
+            desc = "coreSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int poolCoreSize = availableProcessors * 2 + 1;
 
-    @Config(key = ID + ".pool.maxSize", predefinedValue = "0", required = true,
-            desc = "maxSize 0 = current server's available processors x 2 + 1")
+    @Config(key = ID + ".pool.maxSize", predefinedValue = "0",
+            desc = "maxSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int poolMaxSizeMaxSize = availableProcessors * 2 + 1;
 
-    @Config(key = ID + ".pool.queueSize", predefinedValue = "" + Integer.MAX_VALUE, required = true,
+    @Config(key = ID + ".pool.queueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
     private volatile int poolQueueSize = Integer.MAX_VALUE;
 

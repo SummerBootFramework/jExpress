@@ -69,7 +69,6 @@ abstract public class JPAHibernateConfig extends BootConfig {
     
     private JPAHibernateConfig(Object temp) {
     } */
-
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
     }

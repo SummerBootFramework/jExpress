@@ -466,7 +466,7 @@ public abstract class BootConfig implements JExpressConfig {
                     }
                 }
                 if (dumpDefault) {
-                    if (!isRequired || hasDefaultValue) {
+                    if (!hasPredefinedValue && !isRequired || hasDefaultValue) {
                         sb.append("#");
                     }
                     String key = cfg.key();
