@@ -98,14 +98,23 @@ abstract public class HttpClientConfig extends BootConfig {
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=server_keystore.p12\n");
         sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
-        sb.append(KEY_kmf_AliasKey + "=demo1.com\n");
-        sb.append(KEY_kmf_AliasPwdKey + "=DEC(demo1pwd)\n");
+        sb.append(KEY_kmf_AliasKey + "=server3.jexpress.org\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
         generateTemplate = true;
     }
 
+    private static final String KEY_tmf_key = "httpclient.ssl.TrustStore";
+    private static final String KEY_tmf_StorePwdKey = "httpclient.ssl.TrustStorePwd";
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
+            desc = "Auth the remote server certificate when a truststore is provided, otherwise blindly trust the remote server")
     @JsonIgnore
-    @Config(key = "httpclient.ssl.TrustStore", StorePwdKey = "httpclient.ssl.TrustStorePwd")
     private volatile TrustManagerFactory tmf;
+
+    protected void generateTemplate_truststore(StringBuilder sb) {
+        sb.append(KEY_tmf_key + "=truststore_4client.p12\n");
+        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+        generateTemplate = true;
+    }
 
     @Config(key = "httpclient.ssl.HostnameVerification")
     private volatile Boolean hostnameVerification = false;
@@ -170,11 +179,16 @@ abstract public class HttpClientConfig extends BootConfig {
     //3.3 HTTP Client Default Headers
     @ConfigHeader(title = "3. HTTP Client Default Headers",
             desc = "put generic HTTP Client request headers here",
-            format = HEADER_CLIENT_REQUEST + "?=?",
+            format = HEADER_CLIENT_REQUEST + "<request_header_name>=<request_header_value>",
             example = HEADER_CLIENT_REQUEST + "Accept=application/json\n"
             + HEADER_CLIENT_REQUEST + "Content-Type=application/json;charset=UTF-8\n"
-            + HEADER_CLIENT_REQUEST + "Accept-Language=en-ca")
+            + HEADER_CLIENT_REQUEST + "Accept-Language=en-ca",
+            callbackMethodName4Dump = "generateTemplate_RequestHeaders")
     private final Map<String, String> httpClientDefaultRequestHeaders = new HashMap<>();
+
+    protected void generateTemplate_RequestHeaders(StringBuilder sb) {
+        sb.append("#").append(HEADER_CLIENT_REQUEST).append("request_header_name=request_header_value\n");
+    }
 
     private HTTPClientStatusListener listener = null;
 

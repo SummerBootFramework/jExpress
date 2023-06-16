@@ -102,8 +102,8 @@ public class GRPCServerConfig extends BootConfig {
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=server_keystore.p12\n");
         sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
-        sb.append(KEY_kmf_AliasKey + "=demo2.com\n");
-        sb.append(KEY_kmf_AliasPwdKey + "=DEC(demo2pwd)\n");
+        sb.append(KEY_kmf_AliasKey + "=server2.jexpress.org\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
         generateTemplate = true;
     }
 
@@ -111,21 +111,21 @@ public class GRPCServerConfig extends BootConfig {
     private static final String KEY_tmf_key = ID + ".ssl.TrustStore";
     private static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
-    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
             desc = "Auth the remote client certificate when a truststore is provided, otherwise blindly trust all remote client certificate")
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
-//    protected void generateTemplate_truststore(StringBuilder sb) {
-//        sb.append(KEY_tmf_key + "=trustsotre_3.p12\n");
-//        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
-//        generateTemplate = true;
-//    }
+    protected void generateTemplate_truststore(StringBuilder sb) {
+        sb.append(KEY_tmf_key + "=truststore_4server.p12\n");
+        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+        generateTemplate = true;
+    }
+
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
         createIfNotExist("server_keystore.p12");
-//        createIfNotExist("trustsotre_12.p12");
-//        createIfNotExist("trustsotre_3.p12");
+        createIfNotExist("truststore_4server.p12");
     }
 
     @Override

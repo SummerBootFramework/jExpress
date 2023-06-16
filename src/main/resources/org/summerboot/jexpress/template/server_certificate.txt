@@ -1,0 +1,13 @@
+Run the following OpenSSL command to generate your private key and public certificate. Answer the questions and enter the Common Name when prompted.
+openssl req -newkey rsa:4096 -nodes -keyout key1.pem -x509 -days 365 -out server1.pem
+openssl req -newkey rsa:4096 -nodes -keyout key2.pem -x509 -days 365 -out server2.pem
+openssl req -newkey rsa:4096 -nodes -keyout key3.pem -x509 -days 365 -out server3.pem
+
+Combine your key and certificate in a PKCS#12 (P12) bundle:
+openssl pkcs12 -inkey key1.pem -in server1.pem -export -out server1.p12
+openssl pkcs12 -inkey key2.pem -in server2.pem -export -out server2.p12
+openssl pkcs12 -inkey key3.pem -in server3.pem -export -out server3.p12
+
+
+Review the created certificate: openssl x509 -text -noout -in server1.pem
+Validate your P2 file: openssl pkcs12 -in server1.p12 -noout -info

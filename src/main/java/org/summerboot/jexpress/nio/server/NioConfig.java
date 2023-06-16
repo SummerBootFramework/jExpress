@@ -105,15 +105,23 @@ public class NioConfig extends BootConfig {
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=server_keystore.p12\n");
         sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
-        sb.append(KEY_kmf_AliasKey + "=demo1.com\n");
-        sb.append(KEY_kmf_AliasPwdKey + "=DEC(demo1pwd)\n");
+        sb.append(KEY_kmf_AliasKey + "=server1.jexpress.org\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
         generateTemplate = true;
     }
 
+    private static final String KEY_tmf_key = "nio.server.ssl.TrustStore";
+    private static final String KEY_tmf_StorePwdKey = "nio.server.ssl.TrustStorePwd";
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
+            desc = "Auth the remote client certificate when a truststore is provided, otherwise blindly trust all remote client certificate")
     @JsonIgnore
-    @Config(key = "nio.server.ssl.TrustStore", StorePwdKey = "nio.server.ssl.TrustStorePwd",
-            desc = "trust all clients when truststore is not provided")
     private volatile TrustManagerFactory tmf = null;
+
+//    protected void generateTemplate_truststore(StringBuilder sb) {
+//        sb.append(KEY_tmf_key + "=truststore_4server.p12\n");
+//        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+//        generateTemplate = true;
+//    }
 
     @Config(key = "nio.server.ssl.VerifyCertificateHost", defaultValue = "false")
     private volatile boolean verifyCertificateHost = false;
@@ -375,7 +383,7 @@ public class NioConfig extends BootConfig {
     private final HttpHeaders serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
 
     protected void generateTemplate_ResponseHeaders(StringBuilder sb) {
-        sb.append("#").append(HEADER_SERVER_RESPONSE).append("<response_header_name>=<response_header_value>\n");
+        sb.append("#").append(HEADER_SERVER_RESPONSE).append("response_header_name=response_header_value\n");
     }
 
     public HttpHeaders getServerDefaultResponseHeaders() {
@@ -388,6 +396,7 @@ public class NioConfig extends BootConfig {
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
         createIfNotExist("server_keystore.p12");
+        //createIfNotExist("truststore_4server.p12");
     }
 
     @Override

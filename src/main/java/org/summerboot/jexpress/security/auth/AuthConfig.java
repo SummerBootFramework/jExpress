@@ -80,11 +80,11 @@ public class AuthConfig extends BootConfig {
             + "false when use others like Open LDAP, IBM Tivoli, Apache")
     private volatile boolean typeAD = false;
 
-    @Config(key = "ldap.host", defaultValue = "localhost",
+    @Config(key = "ldap.host",
             desc = "LDAP will be disabled when host is not provided")
     private volatile String ldapHost;
 
-    @Config(key = "ldap.port", defaultValue = "3269",
+    @Config(key = "ldap.port",
             desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global voer SSL 3269")
     private volatile int ldapPort;
 
@@ -114,13 +114,15 @@ public class AuthConfig extends BootConfig {
 
     @JsonIgnore
     @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
-            AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd")
+            AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd",
+            desc = "Use SSL/TLS when keystore is provided, otherwise use plain socket")
     private volatile KeyManagerFactory kmf;
 
     //1.3 LDAP Client truststore
     @ConfigHeader(title = "1.3 LDAP Client truststore")
+    @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd",
+            desc = "Auth the remote client certificate when a truststore is provided, otherwise blindly trust all remote client certificate")
     @JsonIgnore
-    @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd")
     private volatile TrustManagerFactory tmf;
 
     private volatile Properties ldapConfig;
