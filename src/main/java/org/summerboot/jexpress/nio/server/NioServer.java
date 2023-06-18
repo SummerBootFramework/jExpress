@@ -140,7 +140,7 @@ public class NioServer {
                     .ciphers(ciphers, SupportedCipherSuiteFilter.INSTANCE)
                     .build();
 //            }
-            log.info(StringUtils.join("[" + sp + "] " + Arrays.asList(nioCfg.getSslProtocols())) + " (" + nioCfg.getSslHandshakeTimeout() + "s): " + ciphers);
+            log.info(StringUtils.join("[" + sp + "] " + Arrays.asList(nioCfg.getSslProtocols())) + " (" + nioCfg.getSslHandshakeTimeoutSeconds() + "s): " + ciphers);
         }
 
         // Configure the server.
@@ -175,7 +175,7 @@ public class NioServer {
                 .childOption(ChannelOption.SO_KEEPALIVE, nioCfg.isSoKeepAlive())
                 .childOption(ChannelOption.TCP_NODELAY, nioCfg.isSoTcpNodelay())
                 .childOption(ChannelOption.SO_LINGER, nioCfg.getSoLinger())
-                .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, nioCfg.getSoConnectionTimeout() * 1000)
+                .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, nioCfg.getSoConnectionTimeoutSeconds() * 1000)
                 .childOption(ChannelOption.SO_RCVBUF, nioCfg.getSoRcvBuf())
                 .childOption(ChannelOption.SO_SNDBUF, nioCfg.getSoSndBuf())
                 //.childOption(ChannelOption.SINGLE_EVENTEXECUTOR_PER_GROUP, false)

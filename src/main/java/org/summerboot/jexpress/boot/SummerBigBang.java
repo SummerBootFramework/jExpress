@@ -72,18 +72,18 @@ abstract public class SummerBigBang extends SummerSingularity {
     /*
      * CLI commands
      */
-    protected static final String USAGE = "?";
-    protected static final String CLI_VERSION = "version";
-    protected static final String CLI_CONFIG_MONITOR_INTERVAL = "monitorInterval";
-    protected static final String CLI_I8N = "i18n";
-    protected static final String CLI_USE_IMPL = "use";//To specify which implementation will be used via @Component.checkImplTagUsed
-    protected static final String CLI_CONFIG_DEMO = "cfgdemo";
-    protected static final String CLI_LIST_UNIQUE = "list";
-    protected static final String CLI_ADMIN_PWD_FILE = "authfile";
-    protected static final String CLI_ADMIN_PWD = "auth";
-    protected static final String CLI_JWT = "jwt";
-    protected static final String CLI_ENCRYPT = "encrypt";
-    protected static final String CLI_DECRYPT = "decrypt";
+    public static final String USAGE = "?";
+    public static final String CLI_VERSION = "version";
+    public static final String CLI_CONFIG_MONITOR_INTERVAL = "monitorInterval";
+    public static final String CLI_I8N = "i18n";
+    public static final String CLI_USE_IMPL = "use";//To specify which implementation will be used via @Component.checkImplTagUsed
+    public static final String CLI_CONFIG_DEMO = "cfgdemo";
+    public static final String CLI_LIST_UNIQUE = "list";
+    public static final String CLI_ADMIN_PWD_FILE = "authfile";
+    public static final String CLI_ADMIN_PWD = "auth";
+    public static final String CLI_JWT = "jwt";
+    public static final String CLI_ENCRYPT = "encrypt";
+    public static final String CLI_DECRYPT = "decrypt";
 
     private final Module userOverrideModule;
     protected Injector guiceInjector;

@@ -98,7 +98,7 @@ public class NioConfig extends BootConfig {
 
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
-            desc = "Use SSL/TLS when keystore is provided, otherwise use plain socket",
+            desc = DESC_KMF,
             callbackMethodName4Dump = "generateTemplate_keystore")
     private volatile KeyManagerFactory kmf = null;
 
@@ -113,7 +113,7 @@ public class NioConfig extends BootConfig {
     private static final String KEY_tmf_key = "nio.server.ssl.TrustStore";
     private static final String KEY_tmf_StorePwdKey = "nio.server.ssl.TrustStorePwd";
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
-            desc = "Auth the remote client certificate when a truststore is provided, otherwise blindly trust all remote client certificate")
+            desc = DESC_TMF)
     @JsonIgnore
     private volatile TrustManagerFactory tmf = null;
 
@@ -122,7 +122,6 @@ public class NioConfig extends BootConfig {
 //        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
 //        generateTemplate = true;
 //    }
-
     @Config(key = "nio.server.ssl.VerifyCertificateHost", defaultValue = "false")
     private volatile boolean verifyCertificateHost = false;
 
@@ -155,10 +154,10 @@ public class NioConfig extends BootConfig {
     @ConfigHeader(title = "3.2 Socket Performance")
 
     @Config(key = "nio.server.ssl.HandshakeTimeout.second", defaultValue = "30")
-    private volatile int sslHandshakeTimeout = 30;
+    private volatile int sslHandshakeTimeoutSeconds = 30;
 
     @Config(key = "nio.server.socket.CONNECT_TIMEOUT.second", defaultValue = "30")
-    private volatile int soConnectionTimeout = 30;
+    private volatile int soConnectionTimeoutSeconds = 30;
 
     @Config(key = "nio.server.socket.SO_BACKLOG", defaultValue = "1024")
     private volatile int soBacklog = 1024;
@@ -235,13 +234,13 @@ public class NioConfig extends BootConfig {
 
     //4.3 Netty Channel Handler
     @ConfigHeader(title = "4.3 Netty Channel Handler")
-    @Config(key = "nio.server.ReaderIdleTime", defaultValue = "0",
+    @Config(key = "nio.server.ReaderIdleSeconds", defaultValue = "0",
             desc = "rec Idle enabled only when value > 0")
-    private volatile int readerIdleTime = 0;
+    private volatile int readerIdleSeconds = 0;
 
-    @Config(key = "nio.server.WriterIdleTime", defaultValue = "0",
+    @Config(key = "nio.server.WriterIdleSeconds", defaultValue = "0",
             desc = "Sent Idle enabled only when value > 0")
-    private volatile int writerIdleTime = 0;
+    private volatile int writerIdleSeconds = 0;
 
     @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
     private volatile int healthInspectionIntervalSeconds = 5;
@@ -637,12 +636,12 @@ public class NioConfig extends BootConfig {
         return soLinger;
     }
 
-    public int getSslHandshakeTimeout() {
-        return sslHandshakeTimeout;
+    public int getSslHandshakeTimeoutSeconds() {
+        return sslHandshakeTimeoutSeconds;
     }
 
-    public int getSoConnectionTimeout() {
-        return soConnectionTimeout;
+    public int getSoConnectionTimeoutSeconds() {
+        return soConnectionTimeoutSeconds;
     }
 
     public int getSoBacklog() {
@@ -705,12 +704,12 @@ public class NioConfig extends BootConfig {
         return bizTimeoutWarnThreshold;
     }
 
-    public int getReaderIdleTime() {
-        return readerIdleTime;
+    public int getReaderIdleSeconds() {
+        return readerIdleSeconds;
     }
 
-    public int getWriterIdleTime() {
-        return writerIdleTime;
+    public int getWriterIdleSeconds() {
+        return writerIdleSeconds;
     }
 
     public int getHealthInspectionIntervalSeconds() {

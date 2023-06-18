@@ -222,7 +222,7 @@ public class EmailBuilder {
         }
         MimeMessage message = new MimeMessage(emailSession);
         if (StringUtils.isBlank(email.getFrom())) {
-            email.setFrom(emailSession.getProperty("mail.smtp.userName"), emailSession.getProperty("mail.smtp.user"));
+            email.setFrom(emailSession.getProperty(SMTPClientConfig.KEY_USER_DISPLAYNAME), emailSession.getProperty("mail.smtp.user"));
         }
         message.setFrom(new InternetAddress(email.getFrom()));
         for (String to : email.getToList()) {

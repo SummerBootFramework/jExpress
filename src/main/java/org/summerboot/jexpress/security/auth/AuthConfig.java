@@ -106,22 +106,22 @@ public class AuthConfig extends BootConfig {
 
     //1.2 LDAP Client keystore
     @ConfigHeader(title = "1.2 LDAP Client keystore")
-    @Config(key = "ldap.SSLConnectionFactoryClass")
-    private volatile String ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+    @JsonIgnore
+    @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
+            AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd",
+            desc = DESC_KMF)
+    private volatile KeyManagerFactory kmf;
 
     @Config(key = "ldap.ssl.protocol")
     private volatile String ldapTLSProtocol = "TLSv1.3";
 
-    @JsonIgnore
-    @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
-            AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd",
-            desc = "Use SSL/TLS when keystore is provided, otherwise use plain socket")
-    private volatile KeyManagerFactory kmf;
+    @Config(key = "ldap.SSLConnectionFactoryClass")
+    private volatile String ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
 
     //1.3 LDAP Client truststore
     @ConfigHeader(title = "1.3 LDAP Client truststore")
     @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd",
-            desc = "Auth the remote client certificate when a truststore is provided, otherwise blindly trust all remote client certificate")
+            desc = DESC_TMF)
     @JsonIgnore
     private volatile TrustManagerFactory tmf;
 

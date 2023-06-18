@@ -93,9 +93,9 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
             }
             // Add SSL handler first to encrypt and decrypt everything.
             sslHandler = new SslHandler(engine);
-            long sslHandshakeTimeout = cfg.getSslHandshakeTimeout();
-            if (sslHandshakeTimeout > 0) {
-                sslHandler.setHandshakeTimeout(sslHandshakeTimeout, TimeUnit.SECONDS);
+            long sslHandshakeTimeoutSeconds = cfg.getSslHandshakeTimeoutSeconds();
+            if (sslHandshakeTimeoutSeconds > 0) {
+                sslHandler.setHandshakeTimeout(sslHandshakeTimeoutSeconds, TimeUnit.SECONDS);
             }
             // log
             if (log.isTraceEnabled()) {
@@ -124,11 +124,11 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
         configureSsl(socketChannel, channelPipeline);
 
         //Client Heartbeat not in my control: 
-        if (cfg.getReaderIdleTime() > 0) {
-            channelPipeline.addLast("tcp-pong", new HeartbeatRecIdleStateHandler(cfg.getReaderIdleTime()));
+        if (cfg.getReaderIdleSeconds() > 0) {
+            channelPipeline.addLast("tcp-pong", new HeartbeatRecIdleStateHandler(cfg.getReaderIdleSeconds()));
         }
-        if (cfg.getWriterIdleTime() > 0) {
-            channelPipeline.addLast("tcp-ping", new HeartbeatSentIdleStateHandler(cfg.getWriterIdleTime()));
+        if (cfg.getWriterIdleSeconds() > 0) {
+            channelPipeline.addLast("tcp-ping", new HeartbeatSentIdleStateHandler(cfg.getWriterIdleSeconds()));
         }
         if (isHttpService) {
             //1. HTTP based handlers

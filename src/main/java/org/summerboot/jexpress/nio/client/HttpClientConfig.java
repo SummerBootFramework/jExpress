@@ -91,7 +91,7 @@ abstract public class HttpClientConfig extends BootConfig {
 
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
-            desc = "Use SSL/TLS when keystore is provided, otherwise use plain socket",
+            desc = DESC_KMF,
             callbackMethodName4Dump = "generateTemplate_keystore")
     private volatile KeyManagerFactory kmf;
 
@@ -106,7 +106,7 @@ abstract public class HttpClientConfig extends BootConfig {
     private static final String KEY_tmf_key = "httpclient.ssl.TrustStore";
     private static final String KEY_tmf_StorePwdKey = "httpclient.ssl.TrustStorePwd";
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
-            desc = "Auth the remote server certificate when a truststore is provided, otherwise blindly trust the remote server")
+            desc = DESC_TMF)
     @JsonIgnore
     private volatile TrustManagerFactory tmf;
 

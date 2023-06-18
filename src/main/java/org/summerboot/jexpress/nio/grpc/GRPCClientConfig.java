@@ -84,7 +84,7 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     @ConfigHeader(title = "2. " + ID + " keystore")
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
-            desc = "Use SSL/TLS when keystore is provided, otherwise use plain socket",
+            desc = DESC_KMF,
             callbackMethodName4Dump = "generateTemplate_keystore")
     //@JsonIgnore
     protected volatile KeyManagerFactory kmf;
@@ -102,7 +102,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     private static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
-            desc = "Auth the remote server certificate when a truststore is provided, otherwise blindly trust the remote server")
+            desc = DESC_TMF)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 

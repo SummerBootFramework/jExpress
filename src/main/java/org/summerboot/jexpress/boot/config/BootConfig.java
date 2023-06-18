@@ -52,6 +52,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.SummerBigBang;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.util.ApplicationUtil;
 
@@ -63,6 +64,10 @@ import org.summerboot.jexpress.util.ApplicationUtil;
 public abstract class BootConfig implements JExpressConfig {
 
     private static final Map<Class, JExpressConfig> cache = new HashMap();
+
+    protected static final String DESC_KMF = "Path to key store file. Use SSL/TLS when keystore is provided, otherwise use plain socket";
+    protected static final String DESC_TMF = "Path to trust store file. Auth the remote client certificate when a truststore is provided, otherwise blindly trust all remote client certificate";
+    public static final String DESC_PLAINPWD = "plain text here will be automatically encrypted by app root password, specified by -" + SummerBigBang.CLI_ADMIN_PWD_FILE + " or -" + SummerBigBang.CLI_ADMIN_PWD + ", when the application starts or is running";
 
     public static <T extends JExpressConfig> T instance(Class<T> implclass) {
         JExpressConfig instance = cache.get(implclass);
@@ -85,6 +90,12 @@ public abstract class BootConfig implements JExpressConfig {
     protected Logger logger;
 
     protected boolean generateTemplate = false;
+
+    protected final Properties props = new Properties();
+
+    public Properties getProperties() {
+        return props;
+    }
 
     protected BootConfig() {
         registerSingleton();
@@ -183,7 +194,8 @@ public abstract class BootConfig implements JExpressConfig {
         if (configName == null) {
             configName = cfgFile.getName();
         }
-        Properties props = new Properties();
+        //props = new Properties();
+        props.clear();
         try (InputStream is = new FileInputStream(cfgFile); InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);) {
             props.load(isr);
         }
@@ -337,8 +349,6 @@ public abstract class BootConfig implements JExpressConfig {
         }
     }
 
-    public static final String DES_DESC = "plain text automatically encrypted when the application starts or runs";
-
     public static String generateTemplate(Class configClass) {
         Object objectInstance = null;
         if (JExpressConfig.class.isAssignableFrom(configClass)) {
@@ -477,7 +487,7 @@ public abstract class BootConfig implements JExpressConfig {
                     if (hasDefaultValue || hasPredefinedValue) {
                         sb.append(dv);
                     } else if (isEncrypted) {
-                        sb.append(DES_DESC);
+                        sb.append(DESC_PLAINPWD);
                     }
                     if (isEncrypted) {
                         sb.append(")");
@@ -493,7 +503,7 @@ public abstract class BootConfig implements JExpressConfig {
                             }
                             sb.append(skey).append("=");
                             if (i == 0 || i == 2) {
-                                sb.append("DEC(" + DES_DESC + ")");
+                                sb.append("DEC(" + DESC_PLAINPWD + ")");
                             }
                             sb.append("\n");
                         }

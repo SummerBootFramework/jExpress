@@ -115,7 +115,7 @@ abstract public class SummerSingularity implements BootConstant {
         System.getProperties().remove(LOG4J2_JDKADAPTER_KEY);
         System.getProperties().remove(SYS_PROP_APP_PACKAGE_NAME, "");// used by log4j2.xml
         System.getProperties().remove(SYS_PROP_LOGFILENAME, "");// used by log4j2.xml
-        System.getProperties().remove(SYS_PROP_APP_VERSION, "");// used by BootController.version()    
+        System.getProperties().remove(SYS_PROP_APP_VERSION, "");// used by BootController.version()   
         System.setProperty(BootConstant.LOG4J2_KEY, "");
         // reset Scan Results
         jvmStartCommand = null;
@@ -175,24 +175,24 @@ abstract public class SummerSingularity implements BootConstant {
     }
 
     protected void scanAnnotation_Version(Class callerClass) {
-        Version v = (Version) callerClass.getAnnotation(Version.class);
-        if (v != null) {
-            String logManager = v.LogManager();
+        Version version = (Version) callerClass.getAnnotation(Version.class);
+        if (version != null) {
+            String logManager = version.LogManager();
             if (StringUtils.isNotBlank(logManager)) {
                 System.setProperty(LOG4J2_JDKADAPTER_KEY, logManager);// https://logging.apache.org/log4j/log4j-2.3.2/log4j-jul/index.html
             }
-            SummerApplication.SystemErrorCodeAsInt = v.SystemErrorCodeAsInt();
-            logFileName = v.logFileName();
+            SummerApplication.SystemErrorCodeAsInt = version.SystemErrorCodeAsInt();
+            logFileName = version.logFileName();
             if (StringUtils.isBlank(logFileName)) {
-                logFileName = v.value()[0];
+                logFileName = version.value()[0];
             }
-            appVersion = v.value()[0];
-            System.setProperty(SYS_PROP_ERROR_PAGE_TITLE, appVersion);
-            int versionCount = v.value().length;
+            appVersion = version.value()[0];
+            System.setProperty(SYS_PROP_APP_VERSION_SHORT, appVersion);
+            int versionCount = version.value().length;
             if (versionCount > 1) {
                 appVersion = appVersion + " (";
                 for (int i = 1; i < versionCount; i++) {
-                    appVersion = appVersion + v.value()[i] + " ";
+                    appVersion = appVersion + version.value()[i] + " ";
                 }
                 appVersion = appVersion + ")";
             }
