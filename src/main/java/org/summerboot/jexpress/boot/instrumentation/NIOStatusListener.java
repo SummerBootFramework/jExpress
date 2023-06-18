@@ -21,7 +21,7 @@ package org.summerboot.jexpress.boot.instrumentation;
  */
 public interface NIOStatusListener {
 
-    void onNIOAccessReportUpdate(long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest);
+    void onNIOAccessReportUpdate(String id, long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest);
 
-    void onNIOBindNewPort(String VERSION, String sslMode, String protocol, String bindAddr, int listeningPort, String loadBalancingEndpoint);
+    void onNIOBindNewPort(String id, String sslMode, String protocol, String bindAddr, int listeningPort, String loadBalancingEndpoint);
 }

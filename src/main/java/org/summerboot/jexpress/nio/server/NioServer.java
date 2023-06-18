@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.nio.server;
 
+import com.google.inject.Inject;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -36,13 +37,9 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -66,36 +63,26 @@ import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 public class NioServer {
 
     protected static final Logger log = LogManager.getLogger(NioServer.class.getName());
-    protected static NioConfig nioCfg = NioConfig.cfg;
 
-    protected static EventLoopGroup bossGroup;// the pool to accept new connection requests
-    protected static EventLoopGroup workerGroup;// the pool to process IO logic
-    //private static EventExecutorGroup sharedNioExecutorGroup;// a thread pool to handle time-consuming business
-    protected static ScheduledExecutorService QPS_SERVICE;// = Executors.newSingleThreadScheduledExecutor();
+    protected EventLoopGroup bossGroup;// the pool to accept new connection requests
+    protected EventLoopGroup workerGroup;// the pool to process IO logic
+    //private  EventExecutorGroup sharedNioExecutorGroup;// a thread pool to handle time-consuming business
+    protected ScheduledExecutorService QPS_SERVICE;// = Executors.newSingleThreadScheduledExecutor();
 
-    protected static NIOStatusListener listener = null;
-
-    public static void setStatusListener(NIOStatusListener l) {
-        listener = l;
-    }
-
+//    protected  NIOStatusListener nioListener = null;
+//
+//    public  void setStatusListener(NIOStatusListener l) {
+//        nioListener = l;
+//    }
     /**
      *
-     * @throws GeneralSecurityException
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public static void bind() throws GeneralSecurityException, IOException, InterruptedException {
-        bind(nioCfg.getBindingAddresses());
-    }
-
-    /**
-     *
-     * @param bindingAddresses
+     * @param nioCfg
+     * @param nioListener
      * @throws InterruptedException
      * @throws SSLException
      */
-    public static void bind(List<InetSocketAddress> bindingAddresses) throws InterruptedException, SSLException {
+    public void bind(NioConfig nioCfg, NIOStatusListener nioListener) throws InterruptedException, SSLException {
+        List<InetSocketAddress> bindingAddresses = nioCfg.getBindingAddresses();
         if (bindingAddresses == null || bindingAddresses.isEmpty()) {
             log.info("Skip HTTP server due to no bindingAddresses in config file: " + nioCfg.getCfgFile());
             return;
@@ -189,7 +176,7 @@ public class NioServer {
 
         String appInfo = SummerApplication.VERSION + " " + SummerApplication.PID;
         //for (String bindAddr : bindingAddresses.keySet()) {
-        for(InetSocketAddress addr:bindingAddresses) {
+        for (InetSocketAddress addr : bindingAddresses) {
             // info
             String sslMode;
             String protocol;
@@ -210,21 +197,21 @@ public class NioServer {
             });
             log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingEndpoint == null ? "" : loadBalancingEndpoint));
 
-            if (listener != null) {
-                listener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, loadBalancingEndpoint);
+            if (nioListener != null) {
+                nioListener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, loadBalancingEndpoint);
             }
         }
 
         //final long[] lastBizHit = {0, 0};
         final AtomicReference<Long> lastBizHitRef = new AtomicReference<>();
         lastBizHitRef.set(-1L);
-        if (listener != null || log.isDebugEnabled()) {
+        if (nioListener != null || log.isDebugEnabled()) {
             int interval = 1;
             QPS_SERVICE = Executors.newSingleThreadScheduledExecutor();
             QPS_SERVICE.scheduleAtFixedRate(() -> {
                 long hps = NioCounter.COUNTER_HIT.getAndSet(0);
                 long tps = NioCounter.COUNTER_SENT.getAndSet(0);
-                if (listener == null && !log.isDebugEnabled()) {
+                if (nioListener == null && !log.isDebugEnabled()) {
                     return;
                 }
                 long bizHit = NioCounter.COUNTER_BIZ_HIT.get();
@@ -250,8 +237,8 @@ public class NioServer {
                     long pingHit = NioCounter.COUNTER_PING_HIT.get();
                     long totalHit = bizHit + pingHit;
                     log.debug(() -> "hps=" + hps + ", tps=" + tps + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
-                    if (listener != null) {
-                        listener.onNIOAccessReportUpdate(hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
+                    if (nioListener != null) {
+                        nioListener.onNIOAccessReportUpdate(appInfo, hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
                         //listener.onUpdate(data);//bad performance
                     }
                 }
@@ -259,7 +246,7 @@ public class NioServer {
         }
     }
 
-    public static void shutdown() {
+    public void shutdown() {
         String tn = Thread.currentThread().getName();
         if (bossGroup != null && !bossGroup.isShutdown()) {
             System.out.println(tn + ": shutdown bossGroup");
@@ -274,7 +261,7 @@ public class NioServer {
 //        if (childExecutor != null) {
 //            childExecutor.shutdownGracefully();
 //        }
-        if (QPS_SERVICE!= null && !QPS_SERVICE.isShutdown()) {
+        if (QPS_SERVICE != null && !QPS_SERVICE.isShutdown()) {
             System.out.println(tn + ": shutdown QPS_SERVICE");
             QPS_SERVICE.shutdownNow();
         }

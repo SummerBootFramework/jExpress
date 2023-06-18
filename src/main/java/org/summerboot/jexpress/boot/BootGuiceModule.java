@@ -95,7 +95,6 @@ public class BootGuiceModule extends AbstractModule {
         memo.append("\n\t- Ioc.bind: ").append(ConfigChangeListener.class.getName()).append(ARROW).append(ConfigChangeListenerImpl.class.getName());
 
         //3. NIO Controllers
-        //if (startNIO) {
         bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpPingHandler.class.getSimpleName())).to(BootHttpPingHandler.class);
         memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpPingHandler.class.getSimpleName()).append(", named=").append(BootHttpPingHandler.class.getSimpleName());
 

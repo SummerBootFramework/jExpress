@@ -72,7 +72,6 @@ public class NioConfig extends BootConfig {
     @Override
     public void shutdown() {
         String tn = Thread.currentThread().getName();
-        NioServer.shutdown();
         if (tpe != null && !tpe.isShutdown()) {
             System.out.println(tn + ": shutdown tpe");
             tpe.shutdown();

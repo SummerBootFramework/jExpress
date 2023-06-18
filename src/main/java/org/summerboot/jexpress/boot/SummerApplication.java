@@ -19,19 +19,21 @@ import com.google.inject.Module;
 import com.google.inject.Inject;
 import io.grpc.BindableService;
 import io.grpc.ServerBuilder;
+import io.grpc.ServerInterceptor;
 import io.grpc.ServerServiceDefinition;
 import java.net.InetSocketAddress;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
+import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.nio.grpc.GRPCServiceCounter;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
@@ -213,15 +215,17 @@ abstract public class SummerApplication extends SummerBigBang {
     @Inject
     protected HealthInspector healthInspector;
 
+    protected NioServer httpServer;
+
+    protected List<GRPCServer> gRPCServerList = new ArrayList();
+
     @Inject
     protected PostOffice postOffice;
 
-    private GRPCServer gRPCServer;
-
     private boolean memoLogged = false;
 
-    public GRPCServer getgRPCServer() {
-        return gRPCServer;
+    public List<GRPCServer> getgRPCServers() {
+        return gRPCServerList;
     }
 
     @Override
@@ -307,23 +311,21 @@ abstract public class SummerApplication extends SummerBigBang {
             log.trace("hasGRPCImpl.bs=" + gRPCBindableServiceImplClasses);
             log.trace("hasGRPCImpl.ssd=" + gRPCServerServiceDefinitionImplClasses);
             if (hasGRPCImpl) {
+                ServerInterceptor serverInterceptor = super.guiceInjector.getInstance(ServerInterceptor.class);
                 //2. init gRPC server
                 GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
                 List<InetSocketAddress> bindingAddresses = gRPCCfg.getBindingAddresses();
+                NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
                 for (InetSocketAddress bindingAddress : bindingAddresses) {
                     String host = bindingAddress.getAddress().getHostAddress();
                     int port = bindingAddress.getPort();
-
-                    gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf());
-                    gRPCServer.setContext(context);
-                    GRPCServiceCounter gRPCServiceCounter = gRPCServer.configThreadPool(gRPCCfg.getPoolCoreSize(), gRPCCfg.getPoolMaxSizeMaxSize(), gRPCCfg.getPoolQueueSize(), gRPCCfg.getKeepAliveSeconds());
+                    GRPCServer gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf(), serverInterceptor, gRPCCfg.getPoolCoreSize(), gRPCCfg.getPoolMaxSizeMaxSize(), gRPCCfg.getPoolQueueSize(), gRPCCfg.getKeepAliveSeconds(), nioListener);
                     ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
-
                     for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
                         BindableService impl = guiceInjector.getInstance(c);
                         serverBuilder.addService(impl);
                         if (impl instanceof StatusReporter) {
-                            ((StatusReporter) impl).setCounter(gRPCServiceCounter);
+                            ((StatusReporter) impl).setCounter(gRPCServer.getServiceCounter());
                         }
                     }
                     for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
@@ -333,13 +335,16 @@ abstract public class SummerApplication extends SummerBigBang {
                     if (gRPCCfg.isAutoStart()) {
                         gRPCServer.start();
                     }
+                    gRPCServerList.add(gRPCServer);
                 }
             }
 
             //5b. start server: HTTP
             log.trace("hasControllers=" + hasControllers);
             if (hasControllers && NioConfig.cfg.isAutoStart()) {
-                NioServer.bind();
+                httpServer = new NioServer();
+                NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
+                httpServer.bind(NioConfig.cfg, nioListener);
             }
 
             //6. announcement
@@ -368,10 +373,14 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     public void shutdown() {
-        if (gRPCServer != null) {
-            gRPCServer.shutdown();
+        if (gRPCServerList != null && !gRPCServerList.isEmpty()) {
+            for (GRPCServer gRPCServer : gRPCServerList) {
+                gRPCServer.shutdown();
+            }
         }
-        NioServer.shutdown();
+        if (httpServer != null) {
+            httpServer.shutdown();
+        }
         if (instrumentationMgr != null) {
             instrumentationMgr.shutdown();
         }

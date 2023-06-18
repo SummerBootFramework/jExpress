@@ -79,14 +79,14 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
     }
 
     @Override
-    public void onNIOAccessReportUpdate(long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest) {
+    public void onNIOAccessReportUpdate(String id, long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest) {
         Runnable asyncTask = () -> {
-            BootIOStatusData data = new BootIOStatusData(DTF.format(LocalDateTime.now()), "Server-IO", hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
+            BootIOStatusData data = new BootIOStatusData(DTF.format(LocalDateTime.now()), id, hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
             events.addFirst(data);
             while (events.size() > 100) {
                 events.removeLast();
             }
-            setLastIOStatus(data.toString(), "Server-IO");
+            setLastIOStatus(data.toString(), id);
         };
         POOL.execute(asyncTask);
     }
@@ -144,7 +144,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
 
     @Override
     public String getServiceStatus() {
-        return HealthMonitor.isServiceAvaliable()?"OK":"Service Unavaliable";
+        return HealthMonitor.isServiceAvaliable() ? "OK" : "Service Unavaliable";
     }
 
     @Override

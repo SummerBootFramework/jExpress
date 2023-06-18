@@ -64,54 +64,6 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
         this.loadBalancingEndpoint = loadBalancingEndpoint;
     }
 
-    private void configureSsl(SocketChannel socketChannel, ChannelPipeline pipeline) {
-        SslHandler sslHandler = null;
-        if (nettySslContext != null) {
-            sslHandler = nettySslContext.newHandler(socketChannel.alloc());
-            if (cfg.isVerifyCertificateHost()) {
-                SSLEngine sslEngine = sslHandler.engine();
-                SSLParameters sslParameters = sslEngine.getSSLParameters();
-                // only available since Java 7
-                sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
-                sslEngine.setSSLParameters(sslParameters);
-            }
-        } else if (jdkSslContext != null) {
-            // create SSL engine
-            SSLEngine engine = jdkSslContext.createSSLEngine();
-            engine.setUseClientMode(false);
-            engine.setNeedClientAuth(verifyClient);
-            engine.setWantClientAuth(verifyClient);
-            // specify protocols
-            String[] protocols = cfg.getSslProtocols();
-            if (protocols != null && protocols.length > 0) {
-                engine.setEnabledProtocols(protocols);
-            }
-            // specify cipher suites
-            String[] cipherSuites = cfg.getSslCipherSuites();
-            if (cipherSuites != null && cipherSuites.length > 0) {
-                engine.setEnabledCipherSuites(cipherSuites);
-            }
-            // Add SSL handler first to encrypt and decrypt everything.
-            sslHandler = new SslHandler(engine);
-            long sslHandshakeTimeoutSeconds = cfg.getSslHandshakeTimeoutSeconds();
-            if (sslHandshakeTimeoutSeconds > 0) {
-                sslHandler.setHandshakeTimeout(sslHandshakeTimeoutSeconds, TimeUnit.SECONDS);
-            }
-            // log
-            if (log.isTraceEnabled()) {
-                for (String s : engine.getEnabledProtocols()) {
-                    log.trace("\tProtocol = " + s);
-                }
-                for (String s : engine.getEnabledCipherSuites()) {
-                    log.trace("\tCipher = " + s);
-                }
-            }
-        }
-        if (sslHandler != null) {
-            pipeline.addLast("ssl", sslHandler);
-        }
-    }
-
 //    private static final int DEFAULT_MAX_INITIAL_LINE_LENGTH = 4096;
 //    private static final int DEFAULT_MAX_HEADER_SIZE = 8192;
 //    private static final int DEFAULT_MAX_CHUNK_SIZE = 8192;
@@ -173,6 +125,54 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
             if (ch != null) {
                 channelPipeline.addLast("biz-requestHandler", ch);
             }
+        }
+    }
+
+    private void configureSsl(SocketChannel socketChannel, ChannelPipeline pipeline) {
+        SslHandler sslHandler = null;
+        if (nettySslContext != null) {
+            sslHandler = nettySslContext.newHandler(socketChannel.alloc());
+            if (cfg.isVerifyCertificateHost()) {
+                SSLEngine sslEngine = sslHandler.engine();
+                SSLParameters sslParameters = sslEngine.getSSLParameters();
+                // only available since Java 7
+                sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                sslEngine.setSSLParameters(sslParameters);
+            }
+        } else if (jdkSslContext != null) {
+            // create SSL engine
+            SSLEngine engine = jdkSslContext.createSSLEngine();
+            engine.setUseClientMode(false);
+            engine.setNeedClientAuth(verifyClient);
+            engine.setWantClientAuth(verifyClient);
+            // specify protocols
+            String[] protocols = cfg.getSslProtocols();
+            if (protocols != null && protocols.length > 0) {
+                engine.setEnabledProtocols(protocols);
+            }
+            // specify cipher suites
+            String[] cipherSuites = cfg.getSslCipherSuites();
+            if (cipherSuites != null && cipherSuites.length > 0) {
+                engine.setEnabledCipherSuites(cipherSuites);
+            }
+            // Add SSL handler first to encrypt and decrypt everything.
+            sslHandler = new SslHandler(engine);
+            long sslHandshakeTimeoutSeconds = cfg.getSslHandshakeTimeoutSeconds();
+            if (sslHandshakeTimeoutSeconds > 0) {
+                sslHandler.setHandshakeTimeout(sslHandshakeTimeoutSeconds, TimeUnit.SECONDS);
+            }
+            // log
+            if (log.isTraceEnabled()) {
+                for (String s : engine.getEnabledProtocols()) {
+                    log.trace("\tProtocol = " + s);
+                }
+                for (String s : engine.getEnabledCipherSuites()) {
+                    log.trace("\tCipher = " + s);
+                }
+            }
+        }
+        if (sslHandler != null) {
+            pipeline.addLast("ssl", sslHandler);
         }
     }
 
