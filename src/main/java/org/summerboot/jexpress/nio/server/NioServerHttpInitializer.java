@@ -92,7 +92,8 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
      * @param jdkSSLContext
      * @param verifyClient
      * @param nioCfg
-     * @param loadBalancingEndpoint
+     * @param loadBalancingPingEndpoint
+     * @deprecated
      */
     @Deprecated
     public NioServerHttpInitializer(SSLContext jdkSSLContext, boolean verifyClient, NioConfig nioCfg, String loadBalancingPingEndpoint) {
