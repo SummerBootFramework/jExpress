@@ -48,7 +48,10 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
 
     protected final SslContext nettySslContext;
     protected final NioConfig nioCfg;
+    
+    @Deprecated
     protected final boolean isHttpService;
+    @Deprecated
     protected final String loadBalancingPingEndpoint;
 
     /**
@@ -73,16 +76,15 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
         log.debug(() -> tc + "[" + this.hashCode() + "]" + socketChannel);
 
         ChannelPipeline channelPipeline = socketChannel.pipeline();
-        initSSL_OpenSSL(socketChannel, channelPipeline);
+        if (nettySslContext != null) {
+            initSSL_OpenSSL(socketChannel, channelPipeline);
+        }
         initChannel(socketChannel, channelPipeline);
     }
 
     protected abstract void initChannel(SocketChannel socketChannel, ChannelPipeline pipeline);
 
     protected void initSSL_OpenSSL(SocketChannel socketChannel, ChannelPipeline pipeline) {
-        if (nettySslContext == null) {
-            return;
-        }
         SslHandler sslHandler = nettySslContext.newHandler(socketChannel.alloc());
         if (nioCfg.isVerifyCertificateHost()) {
             SSLEngine sslEngine = sslHandler.engine();
