@@ -15,17 +15,11 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
-import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.stream.ChunkedWriteHandler;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -48,9 +42,7 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
 
     protected final SslContext nettySslContext;
     protected final NioConfig nioCfg;
-    
-    @Deprecated
-    protected final boolean isHttpService;
+
     @Deprecated
     protected final String loadBalancingPingEndpoint;
 
@@ -63,7 +55,6 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
     public NioServerHttpInitializer(SslContext nettySslContext, NioConfig nioCfg, String loadBalancingPingEndpoint) {
         this.nettySslContext = nettySslContext;
         this.nioCfg = nioCfg;
-        this.isHttpService = nioCfg.isHttpService();
         this.loadBalancingPingEndpoint = loadBalancingPingEndpoint;
     }
 
@@ -109,7 +100,6 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
         this.verifyClient = verifyClient;
         this.nettySslContext = null;
         this.nioCfg = nioCfg;
-        this.isHttpService = nioCfg.isHttpService();
         this.loadBalancingPingEndpoint = loadBalancingPingEndpoint;
     }
 

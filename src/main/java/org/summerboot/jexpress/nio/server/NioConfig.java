@@ -247,9 +247,6 @@ public class NioConfig extends BootConfig {
     @JsonIgnore
     private Injector INJECTOR;
 
-    @Config(key = "nio.HttpService.enabled", defaultValue = "true")
-    private volatile boolean httpService = true;
-
     @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive", defaultValue = "false")
     private volatile boolean fromJsonCaseInsensitive = false;
     @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
@@ -713,10 +710,6 @@ public class NioConfig extends BootConfig {
 
     public int getHealthInspectionIntervalSeconds() {
         return healthInspectionIntervalSeconds;
-    }
-
-    public boolean isHttpService() {
-        return httpService;
     }
 
     public boolean isFromJsonCaseInsensitive() {
