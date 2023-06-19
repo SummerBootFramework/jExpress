@@ -37,31 +37,31 @@ import org.apache.logging.log4j.Logger;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
+abstract public class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
 
-    private static final Logger log = LogManager.getLogger(NioServerHttpInitializer.class.getName());
+    protected static final Logger log = LogManager.getLogger(NioServerHttpInitializer.class.getName());
 
-    private final SslContext nettySslContext;
-    private final SSLContext jdkSslContext;
-    private final boolean verifyClient;
-    private final NioConfig cfg;
-    private final boolean isHttpService;
-    private final String loadBalancingEndpoint;
+    @Deprecated
+    protected SSLContext jdkSslContext;
+    @Deprecated
+    protected boolean verifyClient;
+
+    protected final SslContext nettySslContext;
+    protected final NioConfig nioCfg;
+    protected final boolean isHttpService;
+    protected final String loadBalancingPingEndpoint;
 
     /**
      *
-     * @param sharedNioExecutorGroup
-     * @param sslCtx
-     * @param is2WaySSL
-     * @param cfg
+     * @param nettySslContext
+     * @param nioCfg
+     * @param loadBalancingPingEndpoint
      */
-    NioServerHttpInitializer(SSLContext jdkSSLContext, SslContext nettySslContext, boolean verifyClient, NioConfig cfg, String loadBalancingEndpoint) {
-        this.jdkSslContext = jdkSSLContext;
+    public NioServerHttpInitializer(SslContext nettySslContext, NioConfig nioCfg, String loadBalancingPingEndpoint) {
         this.nettySslContext = nettySslContext;
-        this.verifyClient = verifyClient;
-        this.cfg = cfg;
-        this.isHttpService = cfg.isHttpService();
-        this.loadBalancingEndpoint = loadBalancingEndpoint;
+        this.nioCfg = nioCfg;
+        this.isHttpService = nioCfg.isHttpService();
+        this.loadBalancingPingEndpoint = loadBalancingPingEndpoint;
     }
 
 //    private static final int DEFAULT_MAX_INITIAL_LINE_LENGTH = 4096;
@@ -73,107 +73,80 @@ class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
         log.debug(() -> tc + "[" + this.hashCode() + "]" + socketChannel);
 
         ChannelPipeline channelPipeline = socketChannel.pipeline();
-        configureSsl(socketChannel, channelPipeline);
-
-        //Client Heartbeat not in my control: 
-        if (cfg.getReaderIdleSeconds() > 0) {
-            channelPipeline.addLast("tcp-pong", new HeartbeatRecIdleStateHandler(cfg.getReaderIdleSeconds()));
-        }
-        if (cfg.getWriterIdleSeconds() > 0) {
-            channelPipeline.addLast("tcp-ping", new HeartbeatSentIdleStateHandler(cfg.getWriterIdleSeconds()));
-        }
-        if (isHttpService) {
-            //1. HTTP based handlers
-            channelPipeline.addLast("http-codec", new HttpServerCodec(cfg.getHttpServerCodec_MaxInitialLineLength(),
-                    cfg.getHttpServerCodec_MaxHeaderSize(),
-                    cfg.getHttpServerCodec_MaxChunkSize()));// to support both HTTP encode and decode in one handler for performance
-            //p.addLast(new HttpContentCompressor());
-            ChannelHandler ch = cfg.getHttpFileUploadHandler();
-            if (ch != null) {
-                channelPipeline.addLast("biz-fileUploadHandler", ch);// to support file upload, must beforeHttpObjectAggregator and  ChunkedWriteHandler
-            }
-            channelPipeline.addLast("http-aggregator", new HttpObjectAggregator(cfg.getHttpObjectAggregatorMaxContentLength()));// to merge multple messages into single request or response
-            channelPipeline.addLast("http-chunked", new ChunkedWriteHandler());// to support large file transfer
-
-            //2. 
-            String webSocketURI = cfg.getWebSocketHandlerAnnotatedName();
-            if (webSocketURI != null) {
-                String subprotocols = cfg.getWebSocketSubprotocols();
-                boolean allowExtensions = cfg.isWebSocketAllowExtensions();
-                int maxFrameSize = cfg.getWebSocketMaxFrameSize();
-                channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI, subprotocols, allowExtensions, maxFrameSize));
-                if (cfg.isWebSocketCompress()) {
-                    channelPipeline.addLast(new WebSocketServerCompressionHandler());
-                }
-                ch = cfg.getWebSockettHandler();
-                if (ch != null) {
-                    channelPipeline.addLast(ch);
-                }
-            }
-
-            //3. Tell the pipeline to run My Business Logic Handler's event handler methods in a different thread than an I/O thread, so that the I/O thread is not blocked by a time-consuming task.
-            // If the business logic is fully asynchronous or finished very quickly, no need to specify a group.
-            //p.addLast(cfg.getNioSharedChildExecutor(), "bizexe", cfg.getRequestHandler());
-            //p.addLast("sslhandshake", shh);
-            if (loadBalancingEndpoint != null) {
-                ch = cfg.getPingHandler();
-                if (ch != null) {
-                    channelPipeline.addLast("biz-pingHandler", ch);
-                }
-            }
-            ch = cfg.getRequestHandler();
-            if (ch != null) {
-                channelPipeline.addLast("biz-requestHandler", ch);
-            }
-        }
+        configureSSL_OpenSSL(socketChannel, channelPipeline);
+        initChannel(socketChannel, channelPipeline);
     }
 
-    private void configureSsl(SocketChannel socketChannel, ChannelPipeline pipeline) {
-        SslHandler sslHandler = null;
-        if (nettySslContext != null) {
-            sslHandler = nettySslContext.newHandler(socketChannel.alloc());
-            if (cfg.isVerifyCertificateHost()) {
-                SSLEngine sslEngine = sslHandler.engine();
-                SSLParameters sslParameters = sslEngine.getSSLParameters();
-                // only available since Java 7
-                sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
-                sslEngine.setSSLParameters(sslParameters);
+    protected abstract void initChannel(SocketChannel socketChannel, ChannelPipeline pipeline);
+
+    protected void configureSSL_OpenSSL(SocketChannel socketChannel, ChannelPipeline pipeline) {
+        if (nettySslContext == null) {
+            return;
+        }
+        SslHandler sslHandler = nettySslContext.newHandler(socketChannel.alloc());
+        if (nioCfg.isVerifyCertificateHost()) {
+            SSLEngine sslEngine = sslHandler.engine();
+            SSLParameters sslParameters = sslEngine.getSSLParameters();
+            // only available since Java 7
+            sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+            sslEngine.setSSLParameters(sslParameters);
+        }
+        pipeline.addLast("ssl", sslHandler);
+    }
+
+    /**
+     *
+     * @param jdkSSLContext
+     * @param verifyClient
+     * @param nioCfg
+     * @param loadBalancingEndpoint
+     */
+    @Deprecated
+    public NioServerHttpInitializer(SSLContext jdkSSLContext, boolean verifyClient, NioConfig nioCfg, String loadBalancingPingEndpoint) {
+        this.jdkSslContext = jdkSSLContext;
+        this.verifyClient = verifyClient;
+        this.nettySslContext = null;
+        this.nioCfg = nioCfg;
+        this.isHttpService = nioCfg.isHttpService();
+        this.loadBalancingPingEndpoint = loadBalancingPingEndpoint;
+    }
+
+    @Deprecated
+    protected void configureSSL_JDK(ChannelPipeline pipeline) {
+        if (jdkSslContext == null) {
+            return;
+        }
+        // create SSL engine
+        SSLEngine engine = jdkSslContext.createSSLEngine();
+        engine.setUseClientMode(false);
+        engine.setNeedClientAuth(verifyClient);
+        engine.setWantClientAuth(verifyClient);
+        // specify protocols
+        String[] protocols = nioCfg.getSslProtocols();
+        if (protocols != null && protocols.length > 0) {
+            engine.setEnabledProtocols(protocols);
+        }
+        // specify cipher suites
+        String[] cipherSuites = nioCfg.getSslCipherSuites();
+        if (cipherSuites != null && cipherSuites.length > 0) {
+            engine.setEnabledCipherSuites(cipherSuites);
+        }
+        // Add SSL handler first to encrypt and decrypt everything.
+        SslHandler sslHandler = new SslHandler(engine);
+        long sslHandshakeTimeoutSeconds = nioCfg.getSslHandshakeTimeoutSeconds();
+        if (sslHandshakeTimeoutSeconds > 0) {
+            sslHandler.setHandshakeTimeout(sslHandshakeTimeoutSeconds, TimeUnit.SECONDS);
+        }
+        // log
+        if (log.isTraceEnabled()) {
+            for (String s : engine.getEnabledProtocols()) {
+                log.trace("\tProtocol = " + s);
             }
-        } else if (jdkSslContext != null) {
-            // create SSL engine
-            SSLEngine engine = jdkSslContext.createSSLEngine();
-            engine.setUseClientMode(false);
-            engine.setNeedClientAuth(verifyClient);
-            engine.setWantClientAuth(verifyClient);
-            // specify protocols
-            String[] protocols = cfg.getSslProtocols();
-            if (protocols != null && protocols.length > 0) {
-                engine.setEnabledProtocols(protocols);
-            }
-            // specify cipher suites
-            String[] cipherSuites = cfg.getSslCipherSuites();
-            if (cipherSuites != null && cipherSuites.length > 0) {
-                engine.setEnabledCipherSuites(cipherSuites);
-            }
-            // Add SSL handler first to encrypt and decrypt everything.
-            sslHandler = new SslHandler(engine);
-            long sslHandshakeTimeoutSeconds = cfg.getSslHandshakeTimeoutSeconds();
-            if (sslHandshakeTimeoutSeconds > 0) {
-                sslHandler.setHandshakeTimeout(sslHandshakeTimeoutSeconds, TimeUnit.SECONDS);
-            }
-            // log
-            if (log.isTraceEnabled()) {
-                for (String s : engine.getEnabledProtocols()) {
-                    log.trace("\tProtocol = " + s);
-                }
-                for (String s : engine.getEnabledCipherSuites()) {
-                    log.trace("\tCipher = " + s);
-                }
+            for (String s : engine.getEnabledCipherSuites()) {
+                log.trace("\tCipher = " + s);
             }
         }
-        if (sslHandler != null) {
-            pipeline.addLast("ssl", sslHandler);
-        }
+        pipeline.addLast("ssl", sslHandler);
     }
 
 }

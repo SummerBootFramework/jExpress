@@ -168,11 +168,11 @@ public class NioServer {
                 //.childOption(ChannelOption.SINGLE_EVENTEXECUTOR_PER_GROUP, false)
                 .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);// need to call ReferenceCountUtil.release(msg) after use. 使用内存池之后，内存的申请和释放必须成对出现，即retain()和release()要成对出现，否则会导致内存泄露。 值得注意的是，如果使用内存池，完成ByteBuf的解码工作之后必须显式的调用ReferenceCountUtil.release(msg)对接收缓冲区ByteBuf进行内存释放，否则它会被认为仍然在使用中，这样会导致内存泄露。
 
-        String loadBalancingEndpoint = System.getProperty(SummerApplication.SYS_PROP_PING_URI);
+        String loadBalancingPingEndpoint = System.getProperty(SummerApplication.SYS_PROP_PING_URI);
         boot.group(bossGroup, workerGroup)
                 .channel(serverChannelClass)
                 //.handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new NioServerHttpInitializer(jdkSslContext, nettySslContext, clientAuth.equals(ClientAuth.REQUIRE), nioCfg, loadBalancingEndpoint));
+                .childHandler(new BootNioServerHttpInitializer(nettySslContext, nioCfg, loadBalancingPingEndpoint));
 
         String appInfo = SummerApplication.VERSION + " " + SummerApplication.PID;
         //for (String bindAddr : bindingAddresses.keySet()) {
@@ -195,10 +195,10 @@ public class NioServer {
                 //shutdown();
                 System.out.println("Server " + appInfo + " (" + sslMode + ") is stopped");
             });
-            log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingEndpoint == null ? "" : loadBalancingEndpoint));
+            log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint));
 
             if (nioListener != null) {
-                nioListener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, loadBalancingEndpoint);
+                nioListener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, loadBalancingPingEndpoint);
             }
         }
 
