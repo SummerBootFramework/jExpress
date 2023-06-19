@@ -73,13 +73,13 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
         log.debug(() -> tc + "[" + this.hashCode() + "]" + socketChannel);
 
         ChannelPipeline channelPipeline = socketChannel.pipeline();
-        configureSSL_OpenSSL(socketChannel, channelPipeline);
+        initSSL_OpenSSL(socketChannel, channelPipeline);
         initChannel(socketChannel, channelPipeline);
     }
 
     protected abstract void initChannel(SocketChannel socketChannel, ChannelPipeline pipeline);
 
-    protected void configureSSL_OpenSSL(SocketChannel socketChannel, ChannelPipeline pipeline) {
+    protected void initSSL_OpenSSL(SocketChannel socketChannel, ChannelPipeline pipeline) {
         if (nettySslContext == null) {
             return;
         }
@@ -112,7 +112,7 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
     }
 
     @Deprecated
-    protected void configureSSL_JDK(ChannelPipeline pipeline) {
+    protected void initSSL_JDK(ChannelPipeline pipeline) {
         if (jdkSslContext == null) {
             return;
         }
