@@ -104,7 +104,7 @@ public class NioConfig extends BootConfig {
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=server_keystore.p12\n");
         sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
-        sb.append(KEY_kmf_AliasKey + "=server1.jexpress.org\n");
+        sb.append(KEY_kmf_AliasKey + "=server1_2048.jexpress.org\n");
         sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
         generateTemplate = true;
     }

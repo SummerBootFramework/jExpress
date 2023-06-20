@@ -39,6 +39,7 @@ import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.nio.grpc.StatusReporter;
+import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.util.ApplicationUtil;
 
@@ -342,9 +343,10 @@ abstract public class SummerApplication extends SummerBigBang {
             //5b. start server: HTTP
             log.trace("hasControllers=" + hasControllers);
             if (hasControllers && NioConfig.cfg.isAutoStart()) {
-                httpServer = new NioServer();
+                NioChannelInitializer channelInitializer = super.guiceInjector.getInstance(NioChannelInitializer.class);
                 NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
-                httpServer.bind(NioConfig.cfg, nioListener);
+                httpServer = new NioServer(channelInitializer, nioListener);
+                httpServer.bind(NioConfig.cfg);
             }
 
             //6. announcement

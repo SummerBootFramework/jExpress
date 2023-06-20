@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import com.google.inject.Inject;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -69,19 +68,21 @@ public class NioServer {
     //private  EventExecutorGroup sharedNioExecutorGroup;// a thread pool to handle time-consuming business
     protected ScheduledExecutorService QPS_SERVICE;// = Executors.newSingleThreadScheduledExecutor();
 
-//    protected  NIOStatusListener nioListener = null;
-//
-//    public  void setStatusListener(NIOStatusListener l) {
-//        nioListener = l;
-//    }
+    protected final NioChannelInitializer channelInitializer;
+    protected final NIOStatusListener nioListener;
+
+    public NioServer(NioChannelInitializer channelInitializer, NIOStatusListener nioListener) {
+        this.channelInitializer = channelInitializer;
+        this.nioListener = nioListener;
+    }
+
     /**
      *
      * @param nioCfg
-     * @param nioListener
      * @throws InterruptedException
      * @throws SSLException
      */
-    public void bind(NioConfig nioCfg, NIOStatusListener nioListener) throws InterruptedException, SSLException {
+    public void bind(NioConfig nioCfg) throws InterruptedException, SSLException {
         List<InetSocketAddress> bindingAddresses = nioCfg.getBindingAddresses();
         if (bindingAddresses == null || bindingAddresses.isEmpty()) {
             log.info("Skip HTTP server due to no bindingAddresses in config file: " + nioCfg.getCfgFile());
@@ -169,10 +170,11 @@ public class NioServer {
                 .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);// need to call ReferenceCountUtil.release(msg) after use. 使用内存池之后，内存的申请和释放必须成对出现，即retain()和release()要成对出现，否则会导致内存泄露。 值得注意的是，如果使用内存池，完成ByteBuf的解码工作之后必须显式的调用ReferenceCountUtil.release(msg)对接收缓冲区ByteBuf进行内存释放，否则它会被认为仍然在使用中，这样会导致内存泄露。
 
         String loadBalancingPingEndpoint = System.getProperty(SummerApplication.SYS_PROP_PING_URI);
+        channelInitializer.setContext(nettySslContext, nioCfg, loadBalancingPingEndpoint);
         boot.group(bossGroup, workerGroup)
                 .channel(serverChannelClass)
                 //.handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new BootNioServerHttpInitializer(nettySslContext, nioCfg, loadBalancingPingEndpoint));
+                .childHandler(channelInitializer);
 
         String appInfo = SummerApplication.VERSION + " " + SummerApplication.PID;
         //for (String bindAddr : bindingAddresses.keySet()) {

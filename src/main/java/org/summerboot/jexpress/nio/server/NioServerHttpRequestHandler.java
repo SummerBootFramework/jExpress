@@ -15,13 +15,10 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceError;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.security.auth.Caller;
-import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -42,15 +39,18 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
-import io.netty.handler.codec.DecoderException;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ServiceError;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
+import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Sharable
+@ChannelHandler.Sharable
 public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> implements ErrorAuditor {
 
     protected Logger log = LogManager.getLogger(this.getClass());

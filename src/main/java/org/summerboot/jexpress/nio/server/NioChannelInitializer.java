@@ -20,8 +20,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import org.apache.logging.log4j.LogManager;
@@ -31,36 +29,23 @@ import org.apache.logging.log4j.Logger;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-abstract public class NioServerHttpInitializer extends ChannelInitializer<SocketChannel> {
+abstract public class NioChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-    protected static final Logger log = LogManager.getLogger(NioServerHttpInitializer.class.getName());
+    protected static final Logger log = LogManager.getLogger(NioChannelInitializer.class.getName());
 
-    @Deprecated
-    protected SSLContext jdkSslContext;
-    @Deprecated
-    protected boolean verifyClient;
+    protected SslContext nettySslContext;
+    protected NioConfig nioCfg;
+    protected String loadBalancingPingEndpoint;
 
-    protected final SslContext nettySslContext;
-    protected final NioConfig nioCfg;
+    public NioChannelInitializer() {
+    }
 
-    @Deprecated
-    protected final String loadBalancingPingEndpoint;
-
-    /**
-     *
-     * @param nettySslContext
-     * @param nioCfg
-     * @param loadBalancingPingEndpoint
-     */
-    public NioServerHttpInitializer(SslContext nettySslContext, NioConfig nioCfg, String loadBalancingPingEndpoint) {
+    public void setContext(SslContext nettySslContext, NioConfig nioCfg, String loadBalancingPingEndpoint) {
         this.nettySslContext = nettySslContext;
         this.nioCfg = nioCfg;
         this.loadBalancingPingEndpoint = loadBalancingPingEndpoint;
     }
 
-//    private static final int DEFAULT_MAX_INITIAL_LINE_LENGTH = 4096;
-//    private static final int DEFAULT_MAX_HEADER_SIZE = 8192;
-//    private static final int DEFAULT_MAX_CHUNK_SIZE = 8192;
     @Override
     public void initChannel(SocketChannel socketChannel) {
         long tc = NioCounter.COUNTER_TOTAL_CHANNEL.incrementAndGet();
@@ -70,10 +55,8 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
         if (nettySslContext != null) {
             initSSL_OpenSSL(socketChannel, channelPipeline);
         }
-        initChannel(socketChannel, channelPipeline);
+        initChannelPipeline(channelPipeline, nioCfg, loadBalancingPingEndpoint);
     }
-
-    protected abstract void initChannel(SocketChannel socketChannel, ChannelPipeline pipeline);
 
     protected void initSSL_OpenSSL(SocketChannel socketChannel, ChannelPipeline pipeline) {
         SslHandler sslHandler = nettySslContext.newHandler(socketChannel.alloc());
@@ -87,46 +70,31 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
         pipeline.addLast("ssl", sslHandler);
     }
 
-    /**
-     *
-     * @param jdkSSLContext
-     * @param verifyClient
-     * @param nioCfg
-     * @param loadBalancingPingEndpoint
-     * @deprecated
-     */
-    @Deprecated
-    public NioServerHttpInitializer(SSLContext jdkSSLContext, boolean verifyClient, NioConfig nioCfg, String loadBalancingPingEndpoint) {
-        this.jdkSslContext = jdkSSLContext;
-        this.verifyClient = verifyClient;
-        this.nettySslContext = null;
-        this.nioCfg = nioCfg;
-        this.loadBalancingPingEndpoint = loadBalancingPingEndpoint;
-    }
+    protected abstract void initChannelPipeline(ChannelPipeline pipeline, NioConfig nioCfg, String loadBalancingPingEndpoint);
 
-    @Deprecated
+    /*@Deprecated
     protected void initSSL_JDK(ChannelPipeline pipeline) {
-        if (jdkSslContext == null) {
+        if (ctx.jdkSslContext == null) {
             return;
         }
         // create SSL engine
-        SSLEngine engine = jdkSslContext.createSSLEngine();
+        SSLEngine engine = ctx.jdkSslContext.createSSLEngine();
         engine.setUseClientMode(false);
-        engine.setNeedClientAuth(verifyClient);
-        engine.setWantClientAuth(verifyClient);
+        engine.setNeedClientAuth(ctx.verifyClient);
+        engine.setWantClientAuth(ctx.verifyClient);
         // specify protocols
-        String[] protocols = nioCfg.getSslProtocols();
+        String[] protocols = ctx.getNioCfg().getSslProtocols();
         if (protocols != null && protocols.length > 0) {
             engine.setEnabledProtocols(protocols);
         }
         // specify cipher suites
-        String[] cipherSuites = nioCfg.getSslCipherSuites();
+        String[] cipherSuites = ctx.getNioCfg().getSslCipherSuites();
         if (cipherSuites != null && cipherSuites.length > 0) {
             engine.setEnabledCipherSuites(cipherSuites);
         }
         // Add SSL handler first to encrypt and decrypt everything.
         SslHandler sslHandler = new SslHandler(engine);
-        long sslHandshakeTimeoutSeconds = nioCfg.getSslHandshakeTimeoutSeconds();
+        long sslHandshakeTimeoutSeconds = ctx.getNioCfg().getSslHandshakeTimeoutSeconds();
         if (sslHandshakeTimeoutSeconds > 0) {
             sslHandler.setHandshakeTimeout(sslHandshakeTimeoutSeconds, TimeUnit.SECONDS);
         }
@@ -140,6 +108,5 @@ abstract public class NioServerHttpInitializer extends ChannelInitializer<Socket
             }
         }
         pipeline.addLast("ssl", sslHandler);
-    }
-
+    }*/
 }

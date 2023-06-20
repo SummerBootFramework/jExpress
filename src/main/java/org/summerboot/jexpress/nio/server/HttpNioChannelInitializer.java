@@ -17,26 +17,20 @@ package org.summerboot.jexpress.nio.server;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
-import io.netty.handler.ssl.SslContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class BootNioServerHttpInitializer extends NioServerHttpInitializer {
-
-    public BootNioServerHttpInitializer(SslContext nettySslContext, NioConfig nioCfg, String loadBalancingPingEndpoint) {
-        super(nettySslContext, nioCfg, loadBalancingPingEndpoint);
-    }
+public class HttpNioChannelInitializer extends NioChannelInitializer {
 
     @Override
-    protected void initChannel(SocketChannel socketChannel, ChannelPipeline channelPipeline) {
+    protected void initChannelPipeline(ChannelPipeline channelPipeline, NioConfig nioCfg, String loadBalancingPingEndpoint) {
         //Client Heartbeat not in my control: 
         if (nioCfg.getReaderIdleSeconds() > 0) {
             channelPipeline.addLast("tcp-pong", new HeartbeatRecIdleStateHandler(nioCfg.getReaderIdleSeconds()));

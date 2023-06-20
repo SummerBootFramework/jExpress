@@ -102,7 +102,7 @@ public class GRPCServerConfig extends BootConfig {
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=server_keystore.p12\n");
         sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
-        sb.append(KEY_kmf_AliasKey + "=server2.jexpress.org\n");
+        sb.append(KEY_kmf_AliasKey + "=server2_4096.jexpress.org\n");
         sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
         generateTemplate = true;
     }

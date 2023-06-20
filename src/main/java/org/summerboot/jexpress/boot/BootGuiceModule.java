@@ -44,6 +44,8 @@ import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
 import org.summerboot.jexpress.nio.server.BootHttpRequestHandler;
 import org.summerboot.jexpress.nio.server.BootNioExceptionHandler;
 import org.summerboot.jexpress.nio.server.BootNioLifecycleHandler;
+import org.summerboot.jexpress.nio.server.HttpNioChannelInitializer;
+import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioExceptionListener;
 import org.summerboot.jexpress.nio.server.NioLifecycleListener;
 import org.summerboot.jexpress.security.auth.Authenticator;
@@ -95,6 +97,8 @@ public class BootGuiceModule extends AbstractModule {
         memo.append("\n\t- Ioc.bind: ").append(ConfigChangeListener.class.getName()).append(ARROW).append(ConfigChangeListenerImpl.class.getName());
 
         //3. NIO Controllers
+        bind(NioChannelInitializer.class).to(HttpNioChannelInitializer.class);
+
         bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpPingHandler.class.getSimpleName())).to(BootHttpPingHandler.class);
         memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpPingHandler.class.getSimpleName()).append(", named=").append(BootHttpPingHandler.class.getSimpleName());
 
