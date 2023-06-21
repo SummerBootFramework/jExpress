@@ -88,10 +88,10 @@ public class NioServer {
             log.info("Skip HTTP server due to no bindingAddresses in config file: " + nioCfg.getCfgFile());
             return;
         }
-        if (nioCfg.getRequestHandler() == null) {
-            log.warn("Skip HTTP server due to no RequestHandler in config file: " + nioCfg.getCfgFile());
-            return;
-        }
+//        if (nioCfg.getRequestHandler() == null) {
+//            log.warn("Skip HTTP server due to no RequestHandler in config file: " + nioCfg.getCfgFile());
+//            return;
+//        }
 
         IoMultiplexer multiplexer = nioCfg.getMultiplexer();
         log.info("starting... Epoll=" + Epoll.isAvailable() + ", KQueue=" + KQueue.isAvailable() + ", multiplexer=" + multiplexer);
@@ -169,14 +169,14 @@ public class NioServer {
                 //.childOption(ChannelOption.SINGLE_EVENTEXECUTOR_PER_GROUP, false)
                 .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);// need to call ReferenceCountUtil.release(msg) after use. 使用内存池之后，内存的申请和释放必须成对出现，即retain()和release()要成对出现，否则会导致内存泄露。 值得注意的是，如果使用内存池，完成ByteBuf的解码工作之后必须显式的调用ReferenceCountUtil.release(msg)对接收缓冲区ByteBuf进行内存释放，否则它会被认为仍然在使用中，这样会导致内存泄露。
 
-        String loadBalancingPingEndpoint = System.getProperty(SummerApplication.SYS_PROP_PING_URI);
-        channelInitializer.setContext(nettySslContext, nioCfg, loadBalancingPingEndpoint);
+        channelInitializer.initSSL(nettySslContext, nioCfg);
         boot.group(bossGroup, workerGroup)
                 .channel(serverChannelClass)
                 //.handler(new LoggingHandler(LogLevel.INFO))
                 .childHandler(channelInitializer);
 
         String appInfo = SummerApplication.VERSION + " " + SummerApplication.PID;
+        String loadBalancingPingEndpoint = System.getProperty(SummerApplication.SYS_PROP_PING_URI);
         //for (String bindAddr : bindingAddresses.keySet()) {
         for (InetSocketAddress addr : bindingAddresses) {
             // info

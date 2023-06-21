@@ -521,7 +521,7 @@ abstract public class SummerBigBang extends SummerSingularity {
      */
     protected void genesis(Class primaryClass, Set<String> userSpecifiedImplTags) {
         BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedImplTags, memo);
-        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedImplTags, memo);
+        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedImplTags, channelHandlerNames, memo);
         Module bootModule = Modules.override(defaultModule).with(scanedModule);
         Module applicationModule = userOverrideModule == null
                 ? bootModule
@@ -545,7 +545,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         // Guice.createInjector(module) --> ScanedGuiceModule.configure() --> this will trigger SummerBigBang.onGuiceInjectorCreated_ControllersInjected
         guiceInjector = Guice.createInjector(Stage.PRODUCTION, applicationModule);
-        NioConfig.cfg.setGuiceInjector(guiceInjector);
+        //NioConfig.cfg.setGuiceInjector(guiceInjector);
         scanImplementation_SummerRunner(guiceInjector);
     }
 

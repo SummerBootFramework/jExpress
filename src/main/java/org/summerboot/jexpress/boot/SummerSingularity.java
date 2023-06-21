@@ -17,6 +17,7 @@ package org.summerboot.jexpress.boot;
 
 import io.grpc.BindableService;
 import io.grpc.ServerServiceDefinition;
+import io.netty.channel.ChannelHandler;
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
 import java.io.File;
@@ -51,6 +52,7 @@ import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.annotation.GrpcService;
+import org.summerboot.jexpress.boot.annotation.Service.ChannelHandlerType;
 import org.summerboot.jexpress.i18n.I18n;
 
 /**
@@ -96,6 +98,7 @@ abstract public class SummerSingularity implements BootConstant {
      * Format: bindingClass <--> {key=(ImplTag+named) <--> [@Service impl classes list]}
      */
     protected final Map<Class, Map<String, List<ServiceMetadata>>> scanedServiceBindingMap = new HashMap();
+    protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames = new HashMap();
 
     protected SummerSingularity(Class callerClass, String... args) {
         System.out.println("SummerApplication loading from " + BootConstant.HOST);
@@ -419,8 +422,9 @@ abstract public class SummerSingularity implements BootConstant {
             String named = serviceAnnotation.named().trim();
             String implTag = serviceAnnotation.implTag().trim();
             tags.add(implTag);
-            String uniqueKey = implTag + named;
+            String uniqueKey = "named=" + named + ", implTag=" + implTag;
             Class[] bindingClasses = serviceAnnotation.binding();
+            Service.ChannelHandlerType ChannelHandlerType = serviceAnnotation.type();
             if (bindingClasses != null && bindingClasses.length > 0) {//developer specified 
                 for (Class bindingClass : bindingClasses) {
                     if (!bindingClass.isAssignableFrom(serviceImplClass)) {
@@ -431,7 +435,7 @@ abstract public class SummerSingularity implements BootConstant {
                         sb.append("\n\t").append(serviceImplClass).append(" specifies @").append(Service.class.getSimpleName()).append("(binding=").append(bindingClass.getSimpleName()).append(".class), which is not in its Interfaces:").append(interfaces);
                         continue;
                     }
-                    scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, new ServiceMetadata(serviceImplClass, named, implTag));
+                    scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, new ServiceMetadata(serviceImplClass, named, implTag, ChannelHandlerType), sb);
                 }
             } else {//bindingClass not specified by developer, use its declaired interfaces by default
                 List<Class> declaredInterfaces = ReflectionUtil.getAllInterfaces(serviceImplClass, false);
@@ -448,7 +452,7 @@ abstract public class SummerSingularity implements BootConstant {
                     continue;
                 }
                 for (Class bindingClass : declaredInterfaces) {
-                    scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, new ServiceMetadata(serviceImplClass, named, implTag));
+                    scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, new ServiceMetadata(serviceImplClass, named, implTag, ChannelHandlerType), sb);
                 }
             }
         }
@@ -469,7 +473,7 @@ abstract public class SummerSingularity implements BootConstant {
         return serviceImplTags;
     }
 
-    protected void scanAnnotation_Service_Add2BindingMap(Class bindingClass, String uniqueKey, ServiceMetadata service) {
+    protected void scanAnnotation_Service_Add2BindingMap(Class bindingClass, String uniqueKey, ServiceMetadata service, StringBuilder sb) {
         memo.append("\n\t- scan.taggedservice.add to guiceModule.bind(").append(bindingClass.getName()).append(").to(").append(service).append("), uniqueKey=").append(uniqueKey);
         Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(bindingClass);
         if (taggeServicedMap == null) {
@@ -481,6 +485,12 @@ abstract public class SummerSingularity implements BootConstant {
             serviceImplList = new ArrayList();
             taggeServicedMap.put(uniqueKey, serviceImplList);
         }
+        if (bindingClass.equals(ChannelHandler.class)) {
+            ChannelHandlerType channelHandlerType = service.getChannelHandlerType();
+            if (channelHandlerType == null || channelHandlerType == ChannelHandlerType.nptspecified) {
+                sb.append("\n\t").append(service.getServiceImplClass()).append(" needs to specify type @").append(Service.class.getSimpleName()).append("(binding=ChannelHandler.class, type=?), when binding=ChannelHandler.class");
+            }
+        }
         serviceImplList.add(service);
     }
 
@@ -491,7 +501,7 @@ abstract public class SummerSingularity implements BootConstant {
                 List<ServiceMetadata> serviceImplList = taggeServicedMap.get(keyImplTag);
                 int size = serviceImplList.size();
                 if (size != 1) {
-                    sb.append("\nIOC ").append(keyBindingClass).append(" required a single bean, but ").append(size).append(" were found with the same useImplTag(").append(keyImplTag).append("): ").append(serviceImplList);
+                    sb.append("\nIOC ").append(keyBindingClass).append(" required a single bean, but ").append(size).append(" were found with the same named+implTag(").append(keyImplTag).append("): ").append(serviceImplList);
                 }
             }
         }
@@ -558,11 +568,13 @@ abstract public class SummerSingularity implements BootConstant {
         final Class serviceImplClass;
         final String named;
         final String implTag;
+        final ChannelHandlerType channelHandlerType;
 
-        public ServiceMetadata(Class serviceImplClass, String named, String implTag) {
+        public ServiceMetadata(Class serviceImplClass, String named, String implTag, ChannelHandlerType channelHandlerType) {
             this.serviceImplClass = serviceImplClass;
             this.named = named;
             this.implTag = implTag;
+            this.channelHandlerType = channelHandlerType;
         }
 
         @Override
@@ -582,5 +594,8 @@ abstract public class SummerSingularity implements BootConstant {
             return implTag;
         }
 
+        public ChannelHandlerType getChannelHandlerType() {
+            return channelHandlerType;
+        }
     }
 }

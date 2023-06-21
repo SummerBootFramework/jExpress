@@ -15,6 +15,10 @@
  */
 package org.summerboot.jexpress.nio.server;
 
+import com.google.inject.Inject;
+import com.google.inject.Key;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -29,57 +33,96 @@ import io.netty.handler.stream.ChunkedWriteHandler;
  */
 public class HttpNioChannelInitializer extends NioChannelInitializer {
 
+    private final static ChannelHandler DefaultFileUploadRejector = new BootHttpFileUploadRejector();
+
+    @Inject
+    @Named("BootHttpPingHandler")
+    private ChannelHandler defaultHttpPingHandler;
+
+    @Inject
+    @Named("BootHttpRequestHandler")
+    private ChannelHandler defaultHttpRequestHandler;
+
     @Override
-    protected void initChannelPipeline(ChannelPipeline channelPipeline, NioConfig nioCfg, String loadBalancingPingEndpoint) {
-        //Client Heartbeat not in my control: 
+    protected void initChannelPipeline(ChannelPipeline channelPipeline, NioConfig nioCfg) {
+        ChannelHandler ch;
+        // 1*. Heartbeat: Non-HTTP
         if (nioCfg.getReaderIdleSeconds() > 0) {
-            channelPipeline.addLast("tcp-pong", new HeartbeatRecIdleStateHandler(nioCfg.getReaderIdleSeconds()));
+            if (namedReadIdle != null) {
+                for (String named : namedReadIdle) {
+                    ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
+                    channelPipeline.addLast("tcp-ping_" + named, ch);
+                }
+            } else {
+                channelPipeline.addLast("tcp-ping", new HeartbeatRecIdleStateHandler(nioCfg.getReaderIdleSeconds()));
+            }
         }
         if (nioCfg.getWriterIdleSeconds() > 0) {
-            channelPipeline.addLast("tcp-ping", new HeartbeatSentIdleStateHandler(nioCfg.getWriterIdleSeconds()));
+            if (namedWriteIdle != null) {
+                for (String named : namedWriteIdle) {
+                    ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
+                    channelPipeline.addLast("tcp-pong_" + named, ch);
+                }
+            } else {
+                channelPipeline.addLast("tcp-pong", new HeartbeatSentIdleStateHandler(nioCfg.getWriterIdleSeconds()));
+            }
         }
 
-        //1. HTTP based handlers
-        channelPipeline.addLast("http-codec", new HttpServerCodec(nioCfg.getHttpServerCodec_MaxInitialLineLength(),
-                nioCfg.getHttpServerCodec_MaxHeaderSize(),
-                nioCfg.getHttpServerCodec_MaxChunkSize()));// to support both HTTP encode and decode in one handler for performance
-        //p.addLast(new HttpContentCompressor());
-        ChannelHandler ch = nioCfg.getHttpFileUploadHandler();
-        if (ch != null) {
-            channelPipeline.addLast("biz-fileUploadHandler", ch);// to support file upload, must beforeHttpObjectAggregator and  ChunkedWriteHandler
-        }
-        channelPipeline.addLast("http-aggregator", new HttpObjectAggregator(nioCfg.getHttpObjectAggregatorMaxContentLength()));// to merge multple messages into single request or response
+        // 2. HTTP base: codec, chunked
+        channelPipeline.addLast("http-codec", new HttpServerCodec(nioCfg.getHttpServerCodec_MaxInitialLineLength(), nioCfg.getHttpServerCodec_MaxHeaderSize(), nioCfg.getHttpServerCodec_MaxChunkSize()));// to support both HTTP encode and decode in one handler for performance
         channelPipeline.addLast("http-chunked", new ChunkedWriteHandler());// to support large file transfer
+        //channelPipeline.addLast(new HttpContentCompressor());
 
-        //2. 
-        String webSocketURI = nioCfg.getWebSocketHandlerAnnotatedName();
-        if (webSocketURI != null) {
+        // 3*. File upload: after codec, chunked and before aggregator
+        if (namedFileUpload != null) {
+            for (String named : namedFileUpload) {
+                ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
+                channelPipeline.addLast("FileUpload_" + named, ch);// to support file upload, must before HttpObjectAggregator
+            }
+        } else {
+            channelPipeline.addLast("FileUploadRejector", DefaultFileUploadRejector);
+        }
+
+        // 4. HTTP base: aggregator
+        channelPipeline.addLast("http-aggregator", new HttpObjectAggregator(nioCfg.getHttpObjectAggregatorMaxContentLength()));// to merge multple messages into single request or response
+
+        // 5*. websocket
+        if (namedWebsocket != null) {
             String subprotocols = nioCfg.getWebSocketSubprotocols();
             boolean allowExtensions = nioCfg.isWebSocketAllowExtensions();
             int maxFrameSize = nioCfg.getWebSocketMaxFrameSize();
-            channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI, subprotocols, allowExtensions, maxFrameSize));
-            if (nioCfg.isWebSocketCompress()) {
-                channelPipeline.addLast(new WebSocketServerCompressionHandler());
-            }
-            ch = nioCfg.getWebSockettHandler();
-            if (ch != null) {
-                channelPipeline.addLast(ch);
+            boolean isWebSocketCompress = nioCfg.isWebSocketCompress();
+            for (String named : namedWebsocket) {
+                ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
+                if (ch != null) {
+                    String webSocketURI = named;
+                    if (isWebSocketCompress) {
+                        channelPipeline.addLast(new WebSocketServerCompressionHandler());
+                    }
+                    channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI, subprotocols, allowExtensions, maxFrameSize));
+                    channelPipeline.addLast("Websocket_" + named, ch);
+                }
             }
         }
 
-        //3. Tell the pipeline to run My Business Logic Handler's event handler methods in a different thread than an I/O thread, so that the I/O thread is not blocked by a time-consuming task.
-        // If the business logic is fully asynchronous or finished very quickly, no need to specify a group.
-        //p.addLast(cfg.getNioSharedChildExecutor(), "bizexe", cfg.getRequestHandler());
-        //p.addLast("sslhandshake", shh);
-        if (loadBalancingPingEndpoint != null) {
-            ch = nioCfg.getPingHandler();
-            if (ch != null) {
-                channelPipeline.addLast("biz-pingHandler", ch);
+        // 6*. Ping
+        if (namedPing != null) {
+            for (String named : namedPing) {
+                ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
+                channelPipeline.addLast("Ping_" + named, ch);
             }
+        } else {
+            channelPipeline.addLast("Ping", defaultHttpPingHandler);
         }
-        ch = nioCfg.getRequestHandler();
-        if (ch != null) {
-            channelPipeline.addLast("biz-requestHandler", ch);
+
+        // 7*. Tell the pipeline to run My Business Logic Handler's event handler methods in a different thread than an I/O thread, so that the I/O thread is not blocked by a time-consuming task. If the business logic is fully asynchronous or finished very quickly, no need to specify a group.
+        if (namedBusiness != null) {
+            for (String named : namedBusiness) {
+                ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
+                channelPipeline.addLast("Biz_" + named, ch);
+            }
+        } else {
+            channelPipeline.addLast("Biz", defaultHttpRequestHandler);
         }
     }
 

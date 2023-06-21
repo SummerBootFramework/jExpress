@@ -345,7 +345,7 @@ abstract public class SummerApplication extends SummerBigBang {
             if (hasControllers && NioConfig.cfg.isAutoStart()) {
                 NioChannelInitializer channelInitializer = super.guiceInjector.getInstance(NioChannelInitializer.class);
                 NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
-                httpServer = new NioServer(channelInitializer, nioListener);
+                httpServer = new NioServer(channelInitializer.init(guiceInjector, channelHandlerNames), nioListener);
                 httpServer.bind(NioConfig.cfg);
             }
 

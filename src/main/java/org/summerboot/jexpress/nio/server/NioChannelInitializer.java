@@ -15,15 +15,19 @@
  */
 package org.summerboot.jexpress.nio.server;
 
+import com.google.inject.Injector;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
+import java.util.Map;
+import java.util.Set;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.annotation.Service;
 
 /**
  *
@@ -33,17 +37,62 @@ abstract public class NioChannelInitializer extends ChannelInitializer<SocketCha
 
     protected static final Logger log = LogManager.getLogger(NioChannelInitializer.class.getName());
 
+    protected Injector injector;
     protected SslContext nettySslContext;
     protected NioConfig nioCfg;
-    protected String loadBalancingPingEndpoint;
+    protected Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames;
+
+    // trade space for perofrmance
+    protected Set<String> namedReadIdle;
+    protected Set<String> namedWriteIdle;
+    protected Set<String> namedFileUpload;
+    protected Set<String> namedWebsocket;
+    protected Set<String> namedPing;
+    protected Set<String> namedBusiness;
 
     public NioChannelInitializer() {
     }
 
-    public void setContext(SslContext nettySslContext, NioConfig nioCfg, String loadBalancingPingEndpoint) {
+    public NioChannelInitializer init(Injector injector, Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames) {
+        this.injector = injector;
+        this.channelHandlerNames = channelHandlerNames;
+        // trade space for perofrmance
+        namedReadIdle = channelHandlerNames.get(Service.ChannelHandlerType.ReadIdle);
+        if (namedReadIdle != null && namedReadIdle.isEmpty()) {
+            namedReadIdle = null;
+        }
+
+        namedWriteIdle = channelHandlerNames.get(Service.ChannelHandlerType.WriteIdle);
+        if (namedWriteIdle != null && namedWriteIdle.isEmpty()) {
+            namedWriteIdle = null;
+        }
+
+        namedFileUpload = channelHandlerNames.get(Service.ChannelHandlerType.FileUpload);
+        if (namedFileUpload != null && namedFileUpload.isEmpty()) {
+            namedFileUpload = null;
+        }
+
+        namedWebsocket = channelHandlerNames.get(Service.ChannelHandlerType.Websocket);
+        if (namedWebsocket != null && namedWebsocket.isEmpty()) {
+            namedWebsocket = null;
+        }
+
+        namedPing = channelHandlerNames.get(Service.ChannelHandlerType.Ping);
+        if (namedPing != null && namedPing.isEmpty()) {
+            namedPing = null;
+        }
+
+        namedBusiness = channelHandlerNames.get(Service.ChannelHandlerType.Business);
+        if (namedBusiness != null && namedBusiness.isEmpty()) {
+            namedBusiness = null;
+        }
+
+        return this;
+    }
+
+    public void initSSL(SslContext nettySslContext, NioConfig nioCfg) {
         this.nettySslContext = nettySslContext;
         this.nioCfg = nioCfg;
-        this.loadBalancingPingEndpoint = loadBalancingPingEndpoint;
     }
 
     @Override
@@ -55,7 +104,7 @@ abstract public class NioChannelInitializer extends ChannelInitializer<SocketCha
         if (nettySslContext != null) {
             initSSL_OpenSSL(socketChannel, channelPipeline);
         }
-        initChannelPipeline(channelPipeline, nioCfg, loadBalancingPingEndpoint);
+        initChannelPipeline(channelPipeline, nioCfg);
     }
 
     protected void initSSL_OpenSSL(SocketChannel socketChannel, ChannelPipeline pipeline) {
@@ -70,7 +119,7 @@ abstract public class NioChannelInitializer extends ChannelInitializer<SocketCha
         pipeline.addLast("ssl", sslHandler);
     }
 
-    protected abstract void initChannelPipeline(ChannelPipeline pipeline, NioConfig nioCfg, String loadBalancingPingEndpoint);
+    protected abstract void initChannelPipeline(ChannelPipeline pipeline, NioConfig nioCfg);
 
     /*@Deprecated
     protected void initSSL_JDK(ChannelPipeline pipeline) {

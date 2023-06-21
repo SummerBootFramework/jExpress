@@ -15,11 +15,9 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.boot.config.ConfigUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.ssl.SslProvider;
 import java.io.File;
 import java.util.Arrays;
@@ -32,25 +30,18 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
-import org.summerboot.jexpress.boot.config.BootConfig;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.HttpHeaders;
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.boot.config.BootConfig;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
 
 /**
  *
@@ -244,9 +235,6 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
     private volatile int healthInspectionIntervalSeconds = 5;
 
-    @JsonIgnore
-    private Injector INJECTOR;
-
     @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive", defaultValue = "false")
     private volatile boolean fromJsonCaseInsensitive = false;
     @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
@@ -255,18 +243,6 @@ public class NioConfig extends BootConfig {
     private volatile boolean toJsonIgnoreNull = true;
     @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
     private volatile boolean toJsonPretty = false;
-
-    @Config(key = "nio.HttpFileUploadHandler")
-    private volatile String fielUploadHandlerAnnotatedName = null;
-
-    @Config(key = "nio.HttpPingHandler")
-    private volatile String pingHandlerAnnotatedName = BootHttpPingHandler.class.getSimpleName();
-
-    @Config(key = "nio.HttpRequestHandler")
-    private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.class.getSimpleName();
-
-    @Config(key = "nio.WebSocket.Handler")
-    private volatile String webSocketHandlerAnnotatedName = null;
 
     @Config(key = "nio.WebSocket.Compress", defaultValue = "true")
     private volatile boolean webSocketCompress = true;
@@ -504,70 +480,6 @@ public class NioConfig extends BootConfig {
         return tpe;
     }
 
-    private final static ChannelInboundHandler DefaultFileUploadRejector = new BootHttpFileUploadRejector();
-
-    public void setGuiceInjector(Injector _injector) {
-        INJECTOR = _injector;
-        if (StringUtils.isNotBlank(fielUploadHandlerAnnotatedName)) {
-//                Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r--------");
-//                FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions.asFileAttribute(permissions);
-//                Files.createDirectory(dir, fileAttributes);
-//                File dir = new File(tempUoloadDir);
-//                if (!dir.exists()) {
-//                    dir.mkdirs();
-//                }
-
-            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(fielUploadHandlerAnnotatedName)));
-            Path dir = Paths.get(tempUoloadDir).toAbsolutePath();
-            try {
-                Files.createDirectories(dir);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-        if (StringUtils.isNotBlank(pingHandlerAnnotatedName)) {
-            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(pingHandlerAnnotatedName)));
-        }
-        if (StringUtils.isNotBlank(requestHandlerAnnotatedName)) {
-            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
-        }
-        if (StringUtils.isNotBlank(webSocketHandlerAnnotatedName)) {
-            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(webSocketHandlerAnnotatedName)));
-        }
-    }
-
-    @JsonIgnore
-    public ChannelHandler getHttpFileUploadHandler() {
-        if (fielUploadHandlerAnnotatedName == null) {
-            return DefaultFileUploadRejector;
-        }
-        return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(fielUploadHandlerAnnotatedName)));
-    }
-
-    @JsonIgnore
-    public ChannelHandler getPingHandler() {
-        if (pingHandlerAnnotatedName == null) {
-            return null;
-        }
-        return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(pingHandlerAnnotatedName)));
-    }
-
-    @JsonIgnore
-    public ChannelHandler getRequestHandler() {
-        if (requestHandlerAnnotatedName == null) {
-            return null;
-        }
-        return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
-    }
-
-    @JsonIgnore
-    public ChannelHandler getWebSockettHandler() {
-        if (webSocketHandlerAnnotatedName == null) {
-            return null;
-        }
-        return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(webSocketHandlerAnnotatedName)));
-    }
-
     public boolean isWebSocketCompress() {
         return webSocketCompress;
     }
@@ -726,25 +638,6 @@ public class NioConfig extends BootConfig {
 
     public boolean isToJsonPretty() {
         return toJsonPretty;
-    }
-
-//    public boolean isUseDefaultHTTPHandler() {
-//        return useDefaultHTTPHandler;
-//    }
-    public String getFielUploadHandlerAnnotatedName() {
-        return fielUploadHandlerAnnotatedName;
-    }
-
-    public String getPingHandlerAnnotatedName() {
-        return pingHandlerAnnotatedName;
-    }
-
-    public String getRequestHandlerAnnotatedName() {
-        return requestHandlerAnnotatedName;
-    }
-
-    public String getWebSocketHandlerAnnotatedName() {
-        return webSocketHandlerAnnotatedName;
     }
 
     public VerboseTargetUserType getFilterUserType() {

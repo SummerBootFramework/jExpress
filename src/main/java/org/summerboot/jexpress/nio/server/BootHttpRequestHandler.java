@@ -21,6 +21,7 @@ import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -45,6 +46,7 @@ import org.summerboot.jexpress.security.auth.Authenticator;
  * @version 2.0
  */
 @Singleton
+@ChannelHandler.Sharable
 public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     @Inject

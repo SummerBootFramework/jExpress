@@ -31,6 +31,7 @@ import java.lang.annotation.Target;
 @Documented
 @BindingAnnotation
 public @interface Service {
+
     String NOT_TAGGED = "";
     String NOT_NAMED = "";
 
@@ -39,4 +40,10 @@ public @interface Service {
     String implTag() default NOT_TAGGED;
 
     String named() default NOT_NAMED;
+
+    ChannelHandlerType type() default ChannelHandlerType.nptspecified;
+
+    enum ChannelHandlerType {
+        ReadIdle, WriteIdle, FileUpload, Websocket, Ping, Business, nptspecified
+    }
 }
