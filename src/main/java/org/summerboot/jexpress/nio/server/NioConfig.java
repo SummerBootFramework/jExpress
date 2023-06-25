@@ -224,6 +224,7 @@ public class NioConfig extends BootConfig {
 
     //4.3 Netty Channel Handler
     @ConfigHeader(title = "4.3 Netty Channel Handler")
+
     @Config(key = "nio.server.ReaderIdleSeconds", defaultValue = "0",
             desc = "rec Idle enabled only when value > 0")
     private volatile int readerIdleSeconds = 0;
@@ -247,14 +248,20 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.WebSocket.Compress", defaultValue = "true")
     private volatile boolean webSocketCompress = true;
 
+    @Config(key = "nio.WebSocket.AllowExtensions", defaultValue = "true")
+    private volatile boolean webSocketAllowExtensions = true;
+
     @Config(key = "nio.WebSocket.maxFrameSize", defaultValue = "5242880")
     private volatile int webSocketMaxFrameSize = 5242880;
 
-    @Config(key = "nio.WebSocket.Subprotocols")
-    private volatile String webSocketSubprotocols = null;
-
-    @Config(key = "nio.WebSocket.AllowExtensions", defaultValue = "true")
-    private volatile boolean webSocketAllowExtensions = true;
+    @Config(key = "nio.WebSocket.AllowMaskMismatch", defaultValue = "false")
+    private volatile boolean webSocketAllowMaskMismatch = false;
+    @Config(key = "nio.WebSocket.CheckStartsWith", defaultValue = "false")
+    private volatile boolean webSocketCheckStartsWith = false;
+    @Config(key = "nio.WebSocket.DropPongFrames", defaultValue = "true")
+    private volatile boolean webSocketDropPongFrames = true;
+    @Config(key = "nio.WebSocket.HandshakeTimeoutMillis", defaultValue = "10000")
+    private volatile long webSocketHandshakeTimeoutMillis = 10000L;//io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig.DEFAULT_HANDSHAKE_TIMEOUT_MILLIS;
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
@@ -351,7 +358,7 @@ public class NioConfig extends BootConfig {
             + HEADER_SERVER_RESPONSE + "X-Content-Type-Options=nosniff\n"
             + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ",
             callbackMethodName4Dump = "generateTemplate_ResponseHeaders")
-    private final HttpHeaders serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
+    private HttpHeaders serverDefaultResponseHeaders;
 
     protected void generateTemplate_ResponseHeaders(StringBuilder sb) {
         sb.append("#").append(HEADER_SERVER_RESPONSE).append("response_header_name=response_header_value\n");
@@ -381,14 +388,20 @@ public class NioConfig extends BootConfig {
         tempUoloadDir = rootFolder.getAbsolutePath() + File.separator + tempUoload;
 
         //8. Default NIO Response HTTP Headers
-        serverDefaultResponseHeaders.clear();
+        serverDefaultResponseHeaders = new DefaultHttpHeaders(false);
         Set<String> _keys = props.keySet().stream().map(o -> o.toString()).collect(Collectors.toSet());
         List<String> keys = new ArrayList<>(_keys);
         keys.forEach((name) -> {
             if (name.startsWith(HEADER_SERVER_RESPONSE)) {
                 String[] names = name.split("\\.");
                 String headerName = names[2];
+                if (headerName != null) {
+                    headerName = headerName.trim();
+                }
                 String headerValue = props.getProperty(name);
+                if (headerValue != null) {
+                    headerValue = headerValue.trim();
+                }
                 serverDefaultResponseHeaders.set(headerName, headerValue);
             }
         });
@@ -484,16 +497,28 @@ public class NioConfig extends BootConfig {
         return webSocketCompress;
     }
 
+    public boolean isWebSocketAllowExtensions() {
+        return webSocketAllowExtensions;
+    }
+
     public int getWebSocketMaxFrameSize() {
         return webSocketMaxFrameSize;
     }
 
-    public String getWebSocketSubprotocols() {
-        return webSocketSubprotocols;
+    public boolean isWebSocketAllowMaskMismatch() {
+        return webSocketAllowMaskMismatch;
     }
 
-    public boolean isWebSocketAllowExtensions() {
-        return webSocketAllowExtensions;
+    public boolean isWebSocketCheckStartsWith() {
+        return webSocketCheckStartsWith;
+    }
+
+    public boolean isWebSocketDropPongFrames() {
+        return webSocketDropPongFrames;
+    }
+
+    public long getWebSocketHandshakeTimeoutMillis() {
+        return webSocketHandshakeTimeoutMillis;
     }
 
     public List<InetSocketAddress> getBindingAddresses() {

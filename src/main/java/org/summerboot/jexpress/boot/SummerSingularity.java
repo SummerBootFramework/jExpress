@@ -230,16 +230,19 @@ abstract public class SummerSingularity implements BootConstant {
         if (userSpecifiedConfigDir == null) {
             userSpecifiedConfigDir = CURRENT_DIR;
         }
-        if (userSpecifiedConfigDir != null && (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead())) {
-            System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
-            System.exit(1);
-        }
 
         if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
             //set log folder inside user specified config folder
             System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
             pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
         } else {
+            if (!userSpecifiedConfigDir.exists()) {
+                userSpecifiedConfigDir.mkdirs();
+            }
+            if (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead()) {
+                System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
+                System.exit(1);
+            }
             //set log folder outside user specified config folder
             System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
             pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();

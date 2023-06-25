@@ -25,7 +25,11 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -35,6 +39,8 @@ public class HttpNioChannelInitializer extends NioChannelInitializer {
 
     private final static ChannelHandler DefaultFileUploadRejector = new BootHttpFileUploadRejector();
 
+    private static final Logger LoggingHandlerLogger = LogManager.getLogger(LoggingHandler.class);
+
     @Inject
     @Named("BootHttpPingHandler")
     private ChannelHandler defaultHttpPingHandler;
@@ -43,9 +49,17 @@ public class HttpNioChannelInitializer extends NioChannelInitializer {
     @Named("BootHttpRequestHandler")
     private ChannelHandler defaultHttpRequestHandler;
 
+    private final ChannelHandler defaultLoggingHandler = new LoggingHandler(LogLevel.DEBUG);
+
     @Override
     protected void initChannelPipeline(ChannelPipeline channelPipeline, NioConfig nioCfg) {
         ChannelHandler ch;
+
+        // 0. logging
+        if (LoggingHandlerLogger.isDebugEnabled()) {
+            channelPipeline.addLast(defaultLoggingHandler);
+        }
+
         // 1*. Heartbeat: Non-HTTP
         if (nioCfg.getReaderIdleSeconds() > 0) {
             if (namedReadIdle != null) {
@@ -88,18 +102,23 @@ public class HttpNioChannelInitializer extends NioChannelInitializer {
 
         // 5*. websocket
         if (namedWebsocket != null) {
-            String subprotocols = nioCfg.getWebSocketSubprotocols();
+            boolean isWebSocketCompress = nioCfg.isWebSocketCompress();
+            if (isWebSocketCompress) {
+                channelPipeline.addLast(new WebSocketServerCompressionHandler());
+            }
+
             boolean allowExtensions = nioCfg.isWebSocketAllowExtensions();
             int maxFrameSize = nioCfg.getWebSocketMaxFrameSize();
-            boolean isWebSocketCompress = nioCfg.isWebSocketCompress();
+            boolean allowMaskMismatch = nioCfg.isWebSocketAllowMaskMismatch();
+            boolean checkStartsWith = nioCfg.isWebSocketCheckStartsWith();
+            boolean dropPongFrames = nioCfg.isWebSocketDropPongFrames();
+            long handshakeTimeoutMillis = nioCfg.getWebSocketHandshakeTimeoutMillis();
             for (String named : namedWebsocket) {
                 ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
                 if (ch != null) {
                     String webSocketURI = named;
-                    if (isWebSocketCompress) {
-                        channelPipeline.addLast(new WebSocketServerCompressionHandler());
-                    }
-                    channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI, subprotocols, allowExtensions, maxFrameSize));
+                    String subprotocols = null;
+                    channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI, subprotocols, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
                     channelPipeline.addLast("Websocket_" + named, ch);
                 }
             }

@@ -136,7 +136,7 @@ public class ScanedGuiceModule extends AbstractModule {
         }
         try {
             String c = BeanUtil.toJson(channelHandlerNames, true, true);
-            memo.append("\n\t- Ioc.scaned.ChannelHandlers: ").append(c);
+            memo.append("\n\t- Ioc.userdefined.ChannelHandlers: ").append(c);
         } catch (JsonProcessingException ex) {
         }
     }
