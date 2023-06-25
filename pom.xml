@@ -182,12 +182,12 @@
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <!-- Security -->
-        <bouncycastle.version>1.74</bouncycastle.version>
+        <bouncycastle.version>1.75</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.93.Final</netty.version>
+        <netty.version>4.1.94.Final</netty.version>
         <netty-tcnative.version>2.0.61.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.56.0</grpc.version>
@@ -207,7 +207,7 @@
         <!-- JSON/XML/Bean Validation -->
         <jackson.version>2.15.2</jackson.version>
         <!-- Bean Validation -->
-        <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
+        <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <el.Implementation.version>4.0.2</el.Implementation.version>
 
         <!-- IOC Injection -->

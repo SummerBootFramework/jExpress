@@ -113,12 +113,16 @@ public class HttpNioChannelInitializer extends NioChannelInitializer {
             boolean checkStartsWith = nioCfg.isWebSocketCheckStartsWith();
             boolean dropPongFrames = nioCfg.isWebSocketDropPongFrames();
             long handshakeTimeoutMillis = nioCfg.getWebSocketHandshakeTimeoutMillis();
+            boolean requrieWebSocketServerProtocolHandler = true;
             for (String named : namedWebsocket) {
                 ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
                 if (ch != null) {
-                    String webSocketURI = named;
-                    String subprotocols = null;
-                    channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI, subprotocols, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
+                    if (requrieWebSocketServerProtocolHandler) {
+                        String webSocketURI = named;
+                        String subprotocols = null;
+                        channelPipeline.addLast(new WebSocketServerProtocolHandler(webSocketURI, subprotocols, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
+                        requrieWebSocketServerProtocolHandler = false;
+                    }
                     channelPipeline.addLast("Websocket_" + named, ch);
                 }
             }
