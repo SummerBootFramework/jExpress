@@ -68,9 +68,9 @@ public abstract class BootConfig implements JExpressConfig {
     protected static final String DESC_KMF = "Path to key store file. Use SSL/TLS when keystore is provided, otherwise use plain socket";
     protected static final String DESC_TMF = "Path to trust store file. Auth the remote peer certificate when a truststore is provided, otherwise blindly trust all remote peer certificate";
     protected static final String DESC_PLAINPWD = "plain text here will be automatically encrypted by app root password, specified by -" + SummerBigBang.CLI_ADMIN_PWD_FILE + " or -" + SummerBigBang.CLI_ADMIN_PWD + ", when the application starts or is running";
-    protected static final String FILENAME_KEYSTORE = "app_keystore.p12";
-    protected static final String FILENAME_TRUSTSTORE_4SERVER = "app_truststore_4server.p12";
-    protected static final String FILENAME_TRUSTSTORE_4CLIENT = "app_truststore_4client.p12";
+    protected static final String FILENAME_KEYSTORE = "tls_keystore.p12";
+    protected static final String FILENAME_TRUSTSTORE_4SERVER = "tls_truststore_4server.p12";
+    protected static final String FILENAME_TRUSTSTORE_4CLIENT = "tls_truststore_4client.p12";
     
     
     public static <T extends JExpressConfig> T instance(Class<T> implclass) {
