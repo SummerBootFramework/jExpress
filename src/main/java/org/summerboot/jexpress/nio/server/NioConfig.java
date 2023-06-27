@@ -93,7 +93,7 @@ public class NioConfig extends BootConfig {
     private volatile KeyManagerFactory kmf = null;
 
     protected void generateTemplate_keystore(StringBuilder sb) {
-        sb.append(KEY_kmf_key + "=server_keystore.p12\n");
+        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
         sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
         sb.append(KEY_kmf_AliasKey + "=server1_2048.jexpress.org\n");
         sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
@@ -108,7 +108,7 @@ public class NioConfig extends BootConfig {
     private volatile TrustManagerFactory tmf = null;
 
 //    protected void generateTemplate_truststore(StringBuilder sb) {
-//        sb.append(KEY_tmf_key + "=truststore_4server.p12\n");
+//        sb.append(KEY_tmf_key + "="+FILENAME_TRUSTSTORE_4SERVER+"\n");
 //        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
 //        generateTemplate = true;
 //    }
@@ -373,8 +373,8 @@ public class NioConfig extends BootConfig {
 
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
-        createIfNotExist("server_keystore.p12");
-        //createIfNotExist("truststore_4server.p12");
+        createIfNotExist(FILENAME_KEYSTORE);
+        //createIfNotExist(FILENAME_TRUSTSTORE_4SERVER);
     }
 
     @Override
