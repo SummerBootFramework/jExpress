@@ -65,6 +65,8 @@ abstract public class SummerSingularity implements BootConstant {
     protected static Logger log;
     protected static final String CLI_CONFIG_DOMAIN = "domain";
     protected static final String CLI_CONFIG_DIR = "cfgdir";
+    protected static final String DEFAULT_CFG_DIR_NAME = "configuration";
+    protected static final File DEFAULT_CFG_DIR = new File(DEFAULT_CFG_DIR_NAME).getAbsoluteFile();
     protected static final File CURRENT_DIR = new File("").getAbsoluteFile();
     protected File userSpecifiedConfigDir;
     protected File pluginDir;
@@ -219,7 +221,7 @@ abstract public class SummerSingularity implements BootConstant {
                     break;
                 } else if (("-" + CLI_CONFIG_DOMAIN).equals(cli)) {
                     String envTag = args[++i];
-                    String cfgDir = /*unittestWorkingDir +*/ "standalone_" + envTag + File.separator + "configuration";
+                    String cfgDir = /*unittestWorkingDir +*/ "standalone_" + envTag + File.separator + DEFAULT_CFG_DIR_NAME;
                     userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
                     System.setProperty("domainName", envTag);
                     break;
@@ -228,25 +230,25 @@ abstract public class SummerSingularity implements BootConstant {
         }
 
         if (userSpecifiedConfigDir == null) {
-            userSpecifiedConfigDir = CURRENT_DIR;
+            userSpecifiedConfigDir = DEFAULT_CFG_DIR;
+        }
+        if (!userSpecifiedConfigDir.exists()) {
+            userSpecifiedConfigDir.mkdirs();
         }
 
-        if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
-            //set log folder inside user specified config folder
-            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
-            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
-        } else {
-            if (!userSpecifiedConfigDir.exists()) {
-                userSpecifiedConfigDir.mkdirs();
-            }
-            if (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead()) {
-                System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
-                System.exit(1);
-            }
-            //set log folder outside user specified config folder
-            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
-            pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
+//        if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
+//            //set log folder inside user specified config folder
+//            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
+//            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
+//        } else {
+        if (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead()) {
+            System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
+            System.exit(1);
         }
+        //set log folder outside user specified config folder
+        System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
+        pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
+//        }
 
         /*
          * [Config File] Log4J - init
