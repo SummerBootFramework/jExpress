@@ -124,11 +124,11 @@ public class Email {
         return from;
     }
 
-    public Email from(String userEmailTitle, String userEmailAddr) {
-        if (userEmailTitle == null) {
+    public Email from(String userDisplayName, String userEmailAddr) {
+        if (userDisplayName == null) {
             this.from = userEmailAddr;
         } else {
-            this.from = userEmailTitle + " <" + userEmailAddr + ">";
+            this.from = userDisplayName + " <" + userEmailAddr + ">";
         }
         return this;
     }
@@ -253,7 +253,7 @@ public class Email {
         }
         MimeMessage message = new MimeMessage(emailSession);
         if (StringUtils.isBlank(email.from())) {
-            email.from(emailSession.getProperty("mail.smtp.userName"), emailSession.getProperty("mail.smtp.user"));
+            email.from(emailSession.getProperty(SMTPClientConfig.KEY_USER_DISPLAYNAME), emailSession.getProperty(SMTPClientConfig.KEY_USER_ACCOUNT));
         }
         message.setFrom(new InternetAddress(email.from()));
         if (email.to() != null) {

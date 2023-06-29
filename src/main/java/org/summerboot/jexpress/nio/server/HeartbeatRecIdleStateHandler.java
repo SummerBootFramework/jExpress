@@ -32,18 +32,18 @@ public class HeartbeatRecIdleStateHandler extends IdleStateHandler {
     private static final Logger log = LogManager.getLogger(HeartbeatRecIdleStateHandler.class.getName());
     // Failure counter: did not receive the ping request sent by the client
 
-    private final int readerIdleTime;// home divice=45/180/wechat=300;
+    private final int readerIdleSeconds;// home divice=45/180/wechat=300;
 
-    public HeartbeatRecIdleStateHandler(int readerIdleTime) {
-        super(readerIdleTime, 0, 0, TimeUnit.SECONDS);
-        this.readerIdleTime = readerIdleTime;
+    public HeartbeatRecIdleStateHandler(int readerIdleSeconds) {
+        super(readerIdleSeconds, 0, 0, TimeUnit.SECONDS);
+        this.readerIdleSeconds = readerIdleSeconds;
     }
 
     @Override
     protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) {
         if (evt.state() == IdleState.READER_IDLE) {
             // close channel when idle MAX_UN_REC_PING_TIMES, client needs to reconnect
-            log.info(() -> "READER_IDLE(" + readerIdleTime + ") close channel" + ctx);
+            log.info(() -> "READER_IDLE(" + readerIdleSeconds + ") close channel" + ctx);
             ctx.close();
         }
     }

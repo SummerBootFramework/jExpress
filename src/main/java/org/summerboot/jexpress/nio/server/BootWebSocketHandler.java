@@ -22,11 +22,16 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.security.auth.Caller;
@@ -67,12 +72,29 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
 
     protected static final AttributeKey KEY_CALLER = AttributeKey.valueOf("caller");
 
+//    @Override
+//    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+//        if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
+//            WebSocketServerProtocolHandler.HandshakeComplete event = (WebSocketServerProtocolHandler.HandshakeComplete) evt;
+//            String uri = event.requestUri();
+//            System.out.println("uri=" + uri);
+//            String p = event.selectedSubprotocol();
+//            System.out.println("selectedSubprotocol=" + p);
+//
+//            HttpHeaders headers = event.requestHeaders();
+//            List<String> requestedSubprotocols = headers.getAll(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL);
+//            System.out.println("requestedSubprotocols=" + requestedSubprotocols);
+//        }
+//    }
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame msg) throws Exception {
         if (msg instanceof TextWebSocketFrame) {
             channelRead0(ctx, (TextWebSocketFrame) msg);
         } else if (msg instanceof BinaryWebSocketFrame) {
             channelRead0(ctx, (BinaryWebSocketFrame) msg);
+        } else if (msg instanceof ContinuationWebSocketFrame) {
+            channelRead0(ctx, (ContinuationWebSocketFrame) msg);
         }
     }
 
@@ -123,6 +145,10 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
             }
         };
         NioConfig.cfg.getBizExecutor().execute(asyncTask);
+    }
+
+    protected void channelRead0(ChannelHandlerContext ctx, ContinuationWebSocketFrame msg) throws Exception {
+
     }
 
     abstract protected Caller auth(String token);

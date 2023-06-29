@@ -15,13 +15,17 @@
  */
 package org.summerboot.jexpress.boot;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
+import io.netty.channel.ChannelHandler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.util.BeanUtil;
 
 /**
  *
@@ -37,9 +41,12 @@ public class ScanedGuiceModule extends AbstractModule {
     private final Set<String> userSpecifiedImplTags;
     private final StringBuilder memo;
 
-    public ScanedGuiceModule(Map<Class, Map<String, List<SummerSingularity.ServiceMetadata>>> scanedServiceBindingMap, Set<String> userSpecifiedImplTags, StringBuilder memo) {
+    private final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames;
+
+    public ScanedGuiceModule(Map<Class, Map<String, List<SummerSingularity.ServiceMetadata>>> scanedServiceBindingMap, Set<String> userSpecifiedImplTags, Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames, StringBuilder memo) {
         this.scanedServiceBindingMap = scanedServiceBindingMap;
         this.userSpecifiedImplTags = userSpecifiedImplTags;
+        this.channelHandlerNames = channelHandlerNames;
         this.memo = memo;
     }
 
@@ -47,9 +54,12 @@ public class ScanedGuiceModule extends AbstractModule {
         return userSpecifiedImplTags.contains(implTag);
     }
 
+    private final static String BIND_TO = " --> ";
+    private final static String INFO_FOUND = "\n\t- Ioc.scan.found: ";
+    private final static String INFO_BIND = "\n\t- Ioc.override.binding: ";
+
     @Override
     public void configure() {
-        String ARROW = " --> ";
         for (Class interfaceClass : scanedServiceBindingMap.keySet()) {
             Map<String, List<SummerSingularity.ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(interfaceClass);
             SummerSingularity.ServiceMetadata defaultImpl = null;
@@ -63,7 +73,7 @@ public class ScanedGuiceModule extends AbstractModule {
                 }
                 String implTag = serviceImpl.getImplTag();
                 boolean isCliUseImplTag = isCliUseImplTag(implTag);
-                memo.append("\n\t- Ioc.taggedservice.check: ").append(interfaceClass.getName()).append(", implTag=").append(uniqueKey).append(ARROW).append(serviceImpl).append(", isCliUseImplTag=").append(isCliUseImplTag);
+                memo.append(INFO_FOUND).append(interfaceClass.getName()).append(", implTag=").append(uniqueKey).append(BIND_TO).append(serviceImpl).append(", isCliUseImplTag=").append(isCliUseImplTag);
 
                 String named = serviceImpl.getNamed();
                 boolean notNamed = Service.NOT_NAMED.equals(named);
@@ -103,15 +113,31 @@ public class ScanedGuiceModule extends AbstractModule {
             if (bindingImpl != null) {
                 Class implClass_NotNamed = bindingImpl.getServiceImplClass();
                 bind(interfaceClass).to(implClass_NotNamed);
-                memo.append("\n\t- Ioc.taggedservice.override: ").append(interfaceClass).append(" bind to ").append(implClass_NotNamed);
+                memo.append(INFO_BIND).append(interfaceClass).append(BIND_TO).append(implClass_NotNamed);
             }
             //2. named
             for (String named : namedServiceImpls.keySet()) {
                 bindingImpl = namedServiceImpls.get(named);
                 Class implClass_Named = bindingImpl.getServiceImplClass();
                 bind(interfaceClass).annotatedWith(Names.named(named)).to(implClass_Named);
-                memo.append("\n\t- Ioc.taggedservice.override: ").append(interfaceClass).append(" bind to ").append(implClass_Named).append(", named=").append(named);
+
+                memo.append(INFO_BIND).append(interfaceClass).append(BIND_TO).append(implClass_Named).append(", named=").append(named);
+                if (interfaceClass.equals(ChannelHandler.class)) {
+                    Service.ChannelHandlerType channelHandlerType = bindingImpl.getChannelHandlerType();
+                    Set<String> nameList = channelHandlerNames.get(channelHandlerType);
+                    if (nameList == null) {
+                        nameList = new TreeSet();
+                        channelHandlerNames.put(channelHandlerType, nameList);
+                    }
+                    nameList.add(named);
+                    memo.append(", type=").append(channelHandlerType);
+                }
             }
+        }
+        try {
+            String c = BeanUtil.toJson(channelHandlerNames, true, true);
+            memo.append("\n\t- Ioc.userdefined.ChannelHandlers: ").append(c);
+        } catch (JsonProcessingException ex) {
         }
     }
 

@@ -31,9 +31,18 @@ import java.lang.annotation.Target;
 public @interface ConfigHeader {
 
     String title() default "";
+
     String desc() default "";
+
     String format() default "";
+
     String example() default "";
-    String callbackmethodname4Dump() default "";
+
+    /**
+     * protected void callbackMethodName(StringBuilder sb) {
+     *
+     * @return
+     */
+    String callbackMethodName4Dump() default "";
 
 }

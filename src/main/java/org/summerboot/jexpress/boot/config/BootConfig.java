@@ -52,7 +52,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.SummerBigBang;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.util.ApplicationUtil;
 
 /**
  *
@@ -63,6 +65,14 @@ public abstract class BootConfig implements JExpressConfig {
 
     private static final Map<Class, JExpressConfig> cache = new HashMap();
 
+    protected static final String DESC_KMF = "Path to key store file. Use SSL/TLS when keystore is provided, otherwise use plain socket";
+    protected static final String DESC_TMF = "Path to trust store file. Auth the remote peer certificate when a truststore is provided, otherwise blindly trust all remote peer certificate";
+    public static final String DESC_PLAINPWD = "plain text here will be automatically encrypted by app root password, specified by -" + SummerBigBang.CLI_ADMIN_PWD_FILE + " or -" + SummerBigBang.CLI_ADMIN_PWD + ", when the application starts or is running";
+    protected static final String FILENAME_KEYSTORE = "tls_keystore.p12";
+    protected static final String FILENAME_TRUSTSTORE_4SERVER = "tls_truststore_4server.p12";
+    protected static final String FILENAME_TRUSTSTORE_4CLIENT = "tls_truststore_4client.p12";
+    
+    
     public static <T extends JExpressConfig> T instance(Class<T> implclass) {
         JExpressConfig instance = cache.get(implclass);
         if (instance != null) {
@@ -82,6 +92,14 @@ public abstract class BootConfig implements JExpressConfig {
 
     @JsonIgnore
     protected Logger logger;
+
+    protected boolean generateTemplate = false;
+
+    protected final Properties props = new Properties();
+
+    public Properties getProperties() {
+        return props;
+    }
 
     protected BootConfig() {
         registerSingleton();
@@ -142,8 +160,17 @@ public abstract class BootConfig implements JExpressConfig {
             return ex.getMessage();
         }
     }
-    
-    protected void reset() {
+
+    protected void createIfNotExist(String fileName) {
+        if (cfgFile == null || !generateTemplate) {
+            return;
+        }
+        String location = cfgFile.getParentFile().getAbsolutePath();
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        ApplicationUtil.createIfNotExist(location, classLoader, fileName, fileName);
+    }
+
+    protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
     }
 
     /**
@@ -166,18 +193,24 @@ public abstract class BootConfig implements JExpressConfig {
      */
     @Override
     public void load(File cfgFile, boolean isReal) throws IOException {
-        reset();
         String configFolder = cfgFile.getParent();
         this.cfgFile = cfgFile.getAbsoluteFile();
         if (configName == null) {
             configName = cfgFile.getName();
         }
-        Properties props = new Properties();
-        try (InputStream is = new FileInputStream(cfgFile);
-                InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);) {
+        //props = new Properties();
+        props.clear();
+        try (InputStream is = new FileInputStream(cfgFile); InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);) {
             props.load(isr);
         }
         ConfigUtil helper = new ConfigUtil(this.cfgFile.getAbsolutePath());
+        try {
+            preLoad(cfgFile, isReal, helper, props);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            helper.addError("failed to preLoad configs:" + ex);
+        }
+
         Class c = this.getClass();
         List<Field> fields = ReflectionUtil.getDeclaredAndSuperClassesFields(c);
         boolean autoDecrypt = true;
@@ -217,25 +250,31 @@ public abstract class BootConfig implements JExpressConfig {
         if (cfgAnnotation == null) {
             return;
         }
-        final String annotationKeyValue = cfgAnnotation.key();
-        String valueInCfgFile = props.getProperty(annotationKeyValue);
+        final String annotationKey = cfgAnnotation.key();
+        String valueInCfgFile = props.getProperty(annotationKey);
         field.setAccessible(true);
         if (StringUtils.isBlank(valueInCfgFile)) {
-            String annotationDefaultValue = cfgAnnotation.defaultValue();
-            boolean hasDefaultValue = StringUtils.isNotBlank(annotationDefaultValue);
-            if (hasDefaultValue) {
-                valueInCfgFile = annotationDefaultValue;
-            } else {
-                if (cfgAnnotation.required()) {
-                    helper.addError("missing \"" + annotationKeyValue + "\"");
-                }
-                /*else {
-                    Object nullValue = ReflectionUtil.toStandardJavaType(null, field.getType(), false, false, null);
-                    field.set(this, nullValue);
-                }*/
+            if (cfgAnnotation.required()) {// 1. no cfg value, but required
+                helper.addError("missing \"" + annotationKey + "\"");
                 return;
             }
+            boolean isSpecifiedInCfgFile = props.containsKey(annotationKey);
+            if (isSpecifiedInCfgFile) {// 2. empty cfg value as null 
+                Object nullValue = ReflectionUtil.toStandardJavaType(null, field.getType(), false, false, null);
+                field.set(this, nullValue);
+                return;
+            } else {
+                String annotationDefaultValue = cfgAnnotation.defaultValue();
+                boolean hasDefaultValue = StringUtils.isNotBlank(annotationDefaultValue);
+                if (hasDefaultValue) {// 3. no cfg item, use annotationDefaultValue
+                    valueInCfgFile = annotationDefaultValue;
+                } else {// 4. no cfg item, no annotationDefaultValue, use class field default value
+                    return;
+                }
+            }
         }
+
+        // 5. override default field value with cfg value
         Config.Validate validate = cfgAnnotation.validate();
         boolean isEncrypted = validate.equals(Config.Validate.Encrypted);
         if (isEncrypted) {
@@ -246,7 +285,7 @@ public abstract class BootConfig implements JExpressConfig {
                     throw new IllegalArgumentException("Failed to decrypt", ex);
                 }
             } else {
-                helper.addError("invalid \"" + annotationKeyValue + "\" - require encrypted format, missing warpper: ENC(encrypted value)");
+                helper.addError("invalid \"" + annotationKey + "\" - require encrypted format, missing warpper: ENC(encrypted value)");
                 return;
             }
         }
@@ -254,7 +293,7 @@ public abstract class BootConfig implements JExpressConfig {
 
         Class fieldClass = field.getType();
         if (fieldClass.equals(KeyManagerFactory.class)) {
-            String key_storeFile = annotationKeyValue;
+            String key_storeFile = annotationKey;
             String key_storePwd = cfgAnnotation.StorePwdKey();
             String key_keyAlias = cfgAnnotation.AliasKey();
             String key_keyPwd = cfgAnnotation.AliasPwdKey();
@@ -262,7 +301,7 @@ public abstract class BootConfig implements JExpressConfig {
                     key_storeFile, key_storePwd, key_keyAlias, key_keyPwd);
             field.set(this, kmf);
         } else if (fieldClass.equals(TrustManagerFactory.class)) {
-            String key_storeFile = annotationKeyValue;
+            String key_storeFile = annotationKey;
             String key_storePwd = cfgAnnotation.StorePwdKey();
             TrustManagerFactory tmf = helper.getAsTrustManagerFactory(props, configFolder,
                     key_storeFile, key_storePwd);
@@ -309,8 +348,7 @@ public abstract class BootConfig implements JExpressConfig {
             sb.append(line).append(System.lineSeparator());
         }
 
-        try (FileOutputStream output = new FileOutputStream(cfgFile);
-                FileChannel foc = output.getChannel();) {
+        try (FileOutputStream output = new FileOutputStream(cfgFile); FileChannel foc = output.getChannel();) {
             foc.write(ByteBuffer.wrap(sb.toString().getBytes(StandardCharsets.UTF_8)));
         }
     }
@@ -329,6 +367,7 @@ public abstract class BootConfig implements JExpressConfig {
                 ex.printStackTrace();
             }
         }
+
         List<Field> configItems = ReflectionUtil.getDeclaredAndSuperClassesFields(configClass);
         boolean hasConfig = false;
         StringBuilder sb = new StringBuilder();
@@ -367,14 +406,18 @@ public abstract class BootConfig implements JExpressConfig {
                 sb.append("\n");
 
                 if (objectInstance != null) {
-                    String callbackFunc = header.callbackmethodname4Dump();
+                    String callbackFunc = header.callbackMethodName4Dump();
                     if (StringUtils.isNotBlank(callbackFunc)) {
                         Class[] cArg = {StringBuilder.class};//new Class[1];
                         try {
-                            Method cbMethod = configClass.getDeclaredMethod(callbackFunc, cArg);
-                            cbMethod.setAccessible(true);
-                            cbMethod.invoke(objectInstance, sb);
-                        } catch (IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException | InvocationTargetException ex) {
+                            Method cbMethod = ReflectionUtil.getMethod(configClass, callbackFunc, cArg);//configClass.getDeclaredMethod(callbackFunc, cArg);
+                            if (cbMethod != null) {
+                                cbMethod.setAccessible(true);
+                                cbMethod.invoke(objectInstance, sb);
+                            } else {
+                                sb.append("NoSuchMethodException: ").append(callbackFunc).append("\n");
+                            }
+                        } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/ SecurityException | InvocationTargetException ex) {
                             sb.append(ex).append("\n");
                         }
                     }
@@ -395,52 +438,81 @@ public abstract class BootConfig implements JExpressConfig {
                     }
                 }
                 boolean isRequired = cfg.required();
-                boolean hasDefaultValue = false;
-                String dv = cfg.defaultValue();
-                if (StringUtils.isBlank(dv) && objectInstance != null) {
-                    try {
-                        field.setAccessible(true);
-                        Object dfv = field.get(objectInstance);
-                        if (dfv != null) {
-                            dv = dfv.toString();//String.valueOf(dfv);
+                boolean hasDefaultValue = false, hasPredefinedValue = false;
+                String dv = cfg.predefinedValue();
+                if (!StringUtils.isBlank(dv)) {
+                    hasPredefinedValue = true;
+                } else {
+                    dv = cfg.defaultValue();
+                    if (StringUtils.isBlank(dv) && objectInstance != null) {
+                        try {
+                            field.setAccessible(true);
+                            Object dfv = field.get(objectInstance);
+                            if (dfv != null) {
+                                dv = dfv.toString();//String.valueOf(dfv);
+                            }
+                        } catch (Throwable ex) {
+                            ex.printStackTrace();
                         }
-                    } catch (Throwable ex) {
-                        ex.printStackTrace();
+                    }
+                    if (StringUtils.isNotBlank(dv)) {
+                        hasDefaultValue = true;
                     }
                 }
-                if (StringUtils.isNotBlank(dv)) {
-                    hasDefaultValue = true;
-                }
-                if (!isRequired || hasDefaultValue) {
-                    sb.append("#");
-                }
-                String key = cfg.key();
-                sb.append(key).append("=");
-                if (isEncrypted) {
-                    sb.append("DEC(");
-                }
-                if (hasDefaultValue) {
-                    sb.append(dv);
-                }
-                if (isEncrypted) {
-                    sb.append(")");
-                }
-                sb.append("\n");
 
-                int i = 0;
-                String[] keys = {cfg.StorePwdKey(), cfg.AliasKey(), cfg.AliasPwdKey()};
-                for (String skey : keys) {
-                    if (StringUtils.isNotBlank(skey)) {
-                        if (!isRequired) {
-                            sb.append("#");
+                boolean dumpDefault = true;
+                if (objectInstance != null) {
+                    String callbackFunc = cfg.callbackMethodName4Dump();
+                    if (StringUtils.isNotBlank(callbackFunc)) {
+                        Class[] cArg = {StringBuilder.class};//new Class[1];
+                        try {
+                            Method cbMethod = ReflectionUtil.getMethod(configClass, callbackFunc, cArg);//configClass.getDeclaredMethod(callbackFunc, cArg);
+                            if (cbMethod != null) {
+                                cbMethod.setAccessible(true);
+                                cbMethod.invoke(objectInstance, sb);
+                                dumpDefault = false;
+                            } else {
+                                sb.append("NoSuchMethodException: ").append(callbackFunc).append("\n");
+                            }
+                        } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/ SecurityException | InvocationTargetException ex) {
+                            sb.append(ex).append("\n");
                         }
-                        sb.append(skey).append("=");
-                        if (i == 0 || i == 2) {
-                            sb.append("DEC()");
-                        }
-                        sb.append("\n");
                     }
-                    i++;
+                }
+                if (dumpDefault) {
+                    if (!hasPredefinedValue && !isRequired || hasDefaultValue) {
+                        sb.append("#");
+                    }
+                    String key = cfg.key();
+                    sb.append(key).append("=");
+                    if (isEncrypted) {
+                        sb.append("DEC(");
+                    }
+                    if (hasDefaultValue || hasPredefinedValue) {
+                        sb.append(dv);
+                    } else if (isEncrypted) {
+                        sb.append(DESC_PLAINPWD);
+                    }
+                    if (isEncrypted) {
+                        sb.append(")");
+                    }
+                    sb.append("\n");
+
+                    int i = 0;
+                    String[] keys = {cfg.StorePwdKey(), cfg.AliasKey(), cfg.AliasPwdKey()};
+                    for (String skey : keys) {
+                        if (StringUtils.isNotBlank(skey)) {
+                            if (!isRequired) {
+                                sb.append("#");
+                            }
+                            sb.append(skey).append("=");
+                            if (i == 0 || i == 2) {
+                                sb.append("DEC(" + DESC_PLAINPWD + ")");
+                            }
+                            sb.append("\n");
+                        }
+                        i++;
+                    }
                 }
                 if (StringUtils.isNotBlank(cm)) {
                     sb.append("\n");

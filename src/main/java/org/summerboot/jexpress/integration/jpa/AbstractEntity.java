@@ -31,7 +31,7 @@ public abstract class AbstractEntity implements Serializable {
 
     @Version
     @Column(name = "version")
-    protected long version;
+    protected int version;
 
     @Column(name = "createdTs", nullable = false, updatable = false)
     protected OffsetDateTime createdTs = OffsetDateTime.now();

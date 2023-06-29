@@ -41,7 +41,9 @@ import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 abstract public class GRPCClientConfig extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(GRPCClientConfig.class);
+        class a extends GRPCClientConfig {
+        }
+        String t = generateTemplate(a.class);
         System.out.println(t);
     }
 
@@ -54,7 +56,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     @ConfigHeader(title = "1. " + ID + " provider",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8424, 127.0.0.1:8425, 0.0.0.0:8426")
-    @Config(key = ID + ".LoadBalancing.servers")
+    @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = false)
     private volatile List<InetSocketAddress> loadBalancingServers;
 
     @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN", desc = "available options: ROUND_ROBIN, PICK_FIRST")
@@ -65,7 +67,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     //1. gRPC connection
     @Config(key = ID + ".target.url", defaultValue = "grpc:///",
             desc = "grpc:///\n"
-            + "grpcs://127.0.0.1:8424\n"
+            + "grpc://127.0.0.1:8424\n"
             + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
 
@@ -74,29 +76,56 @@ abstract public class GRPCClientConfig extends BootConfig {
     @Config(key = ID + ".ssl.ciphers")
     protected List ciphers;
 
-    //2. TRC (The Remote Caller) keystore
+    //2. TRC (The Remote Caller) keystore    
+    private static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    private static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    private static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    private static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
+
     @ConfigHeader(title = "2. " + ID + " keystore")
-    @Config(key = ID + ".ssl.KeyStore", StorePwdKey = ID + ".ssl.KeyStorePwd",
-            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd")
-    @JsonIgnore
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = DESC_KMF,
+            callbackMethodName4Dump = "generateTemplate_keystore")
+    //@JsonIgnore
     protected volatile KeyManagerFactory kmf;
 
+    protected void generateTemplate_keystore(StringBuilder sb) {
+        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
+        sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_kmf_AliasKey + "=server3_4096.jexpress.org\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
+        generateTemplate = true;
+    }
+
     //3. TRC (The Remote Caller) truststore
+    private static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    private static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
-    @Config(key = ID + ".ssl.TrustStore", StorePwdKey = ID + ".ssl.TrustStorePwd")
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
+            desc = DESC_TMF)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
-    @Config(key = ID + ".ssl.overrideAuthority")
+
+    protected void generateTemplate_truststore(StringBuilder sb) {
+        sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
+        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+        generateTemplate = true;
+    }
+
+    @Config(key = ID + ".ssl.overrideAuthority", predefinedValue = "server2.jexpress.org",
+            desc = "NOT for PRODUCTION! Set server certificate DNS name here when server is not yet running on its certificate DNS name")
     protected volatile String overrideAuthority;
 
     @JsonIgnore
     protected volatile NettyChannelBuilder channelBuilder;
 
     @Override
-    protected void reset() {
+    protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
         loadBalancingServers = null;
         nameResolverProvider = null;
         channelBuilder = null;
+        createIfNotExist(FILENAME_KEYSTORE);
+        createIfNotExist(FILENAME_TRUSTSTORE_4CLIENT);
     }
 
     @Override

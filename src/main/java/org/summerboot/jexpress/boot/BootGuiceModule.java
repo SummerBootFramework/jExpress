@@ -44,6 +44,8 @@ import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
 import org.summerboot.jexpress.nio.server.BootHttpRequestHandler;
 import org.summerboot.jexpress.nio.server.BootNioExceptionHandler;
 import org.summerboot.jexpress.nio.server.BootNioLifecycleHandler;
+import org.summerboot.jexpress.nio.server.HttpNioChannelInitializer;
+import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioExceptionListener;
 import org.summerboot.jexpress.nio.server.NioLifecycleListener;
 import org.summerboot.jexpress.security.auth.Authenticator;
@@ -74,54 +76,55 @@ public class BootGuiceModule extends AbstractModule {
         return userSpecifiedImplTags.contains(implTag);
     }
 
+    private final static String BIND_TO = " --> ";
+    private final static String INFO = "\n\t- Ioc.default.binding: ";
+
     @Override
     public void configure() {
-        String ARROW = " --> ";
         //1. Instrumentation - JMX
         bind(NIOStatusListener.class).to(ServerStatus.class);
-        memo.append("\n\t- Ioc.bind: ").append(NIOStatusListener.class.getName()).append(ARROW).append(ServerStatus.class.getName());
+        memo.append(INFO).append(NIOStatusListener.class.getName()).append(BIND_TO).append(ServerStatus.class.getName());
 
         bind(HTTPClientStatusListener.class).to(ServerStatus.class);
-        memo.append("\n\t- Ioc.bind: ").append(HTTPClientStatusListener.class.getName()).append(ARROW).append(ServerStatus.class.getName());
+        memo.append(INFO).append(HTTPClientStatusListener.class.getName()).append(BIND_TO).append(ServerStatus.class.getName());
 
         bind(ServerStatusMBean.class).to(ServerStatus.class);
-        memo.append("\n\t- Ioc.bind: ").append(ServerStatusMBean.class.getName()).append(ARROW).append(ServerStatus.class.getName());
+        memo.append(INFO).append(ServerStatusMBean.class.getName()).append(BIND_TO).append(ServerStatus.class.getName());
 
         bind(InstrumentationMgr.class).to(InstrumentationMgrImpl.class);
-        memo.append("\n\t- Ioc.bind: ").append(InstrumentationMgr.class.getName()).append(ARROW).append(InstrumentationMgrImpl.class.getName());
+        memo.append(INFO).append(InstrumentationMgr.class.getName()).append(BIND_TO).append(InstrumentationMgrImpl.class.getName());
 
         //2. Non-Functinal services
         bind(ConfigChangeListener.class).to(ConfigChangeListenerImpl.class);
-        memo.append("\n\t- Ioc.bind: ").append(ConfigChangeListener.class.getName()).append(ARROW).append(ConfigChangeListenerImpl.class.getName());
+        memo.append(INFO).append(ConfigChangeListener.class.getName()).append(BIND_TO).append(ConfigChangeListenerImpl.class.getName());
 
         //3. NIO Controllers
-        //if (startNIO) {
-        bind(ChannelHandler.class)
-                .annotatedWith(Names.named(BootHttpPingHandler.class.getName()))
-                .to(BootHttpPingHandler.class);
-        memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpPingHandler.class.getName()).append(", named=").append(BootHttpPingHandler.class.getName());
+        bind(NioChannelInitializer.class).to(HttpNioChannelInitializer.class);
 
-        //4. @Servuces
+        bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpPingHandler.class.getSimpleName())).to(BootHttpPingHandler.class);
+        memo.append(INFO).append(ChannelHandler.class.getName()).append(BIND_TO).append(BootHttpPingHandler.class.getSimpleName()).append(", named=").append(BootHttpPingHandler.class.getSimpleName());
+
+        //4. @Services
         bind(HealthInspector.class).to(BootHealthInspectorImpl.class);
-        memo.append("\n\t- Ioc.bind: ").append(HealthInspector.class.getName()).append(ARROW).append(BootHealthInspectorImpl.class.getName());
+        memo.append(INFO).append(HealthInspector.class.getName()).append(BIND_TO).append(BootHealthInspectorImpl.class.getName());
 
         bind(AuthTokenCache.class).to(AuthTokenCacheLocalImpl.class);
-        memo.append("\n\t- Ioc.bind: ").append(AuthTokenCache.class.getName()).append(ARROW).append(AuthTokenCacheLocalImpl.class.getName());
+        memo.append(INFO).append(AuthTokenCache.class.getName()).append(BIND_TO).append(AuthTokenCacheLocalImpl.class.getName());
 
         bind(Authenticator.class).to(AuthenticatorMockImpl.class);
-        memo.append("\n\t- Ioc.bind: ").append(Authenticator.class.getName()).append(ARROW).append(AuthenticatorMockImpl.class.getName());
+        memo.append(INFO).append(Authenticator.class.getName()).append(BIND_TO).append(AuthenticatorMockImpl.class.getName());
 
         bind(NioExceptionListener.class).to(BootNioExceptionHandler.class);
-        memo.append("\n\t- Ioc.bind: ").append(NioExceptionListener.class.getName()).append(ARROW).append(BootNioExceptionHandler.class.getName());
+        memo.append(INFO).append(NioExceptionListener.class.getName()).append(BIND_TO).append(BootNioExceptionHandler.class.getName());
 
         bind(NioLifecycleListener.class).to(BootNioLifecycleHandler.class);
-        memo.append("\n\t- Ioc.bind: ").append(NioLifecycleListener.class.getName()).append(ARROW).append(BootNioLifecycleHandler.class.getName());
+        memo.append(INFO).append(NioLifecycleListener.class.getName()).append(BIND_TO).append(BootNioLifecycleHandler.class.getName());
 
         bind(PostOffice.class).to(BootPostOfficeImpl.class);
-        memo.append("\n\t- Ioc.bind: ").append(PostOffice.class.getName()).append(ARROW).append(BootPostOfficeImpl.class.getName());
+        memo.append(INFO).append(PostOffice.class.getName()).append(BIND_TO).append(BootPostOfficeImpl.class.getName());
 
-        bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpRequestHandler.BINDING_NAME)).to(BootHttpRequestHandler.class);
-        memo.append("\n\t- Ioc.bind: ").append(ChannelHandler.class.getName()).append(ARROW).append(BootHttpRequestHandler.class.getName()).append(", named=").append(BootHttpRequestHandler.BINDING_NAME);
+        bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpRequestHandler.class.getSimpleName())).to(BootHttpRequestHandler.class);
+        memo.append(INFO).append(ChannelHandler.class.getName()).append(BIND_TO).append(BootHttpRequestHandler.class.getSimpleName()).append(", named=").append(BootHttpRequestHandler.class.getSimpleName());
 
         //5. Controllers
         scanAnnotation_BindInstance(binder(), Controller.class, callerRootPackageName);
@@ -129,7 +132,7 @@ public class BootGuiceModule extends AbstractModule {
         //6. caller's Main class (App.Main)
         if (caller != null) {
             requestInjection(caller);//Although requestInjection is always considered a bad idea because it can easily set up a very fragile graph of implicit dependencies, we only use it here to bind the caller's Main class (App.Main)
-            memo.append("\n\t- Ioc.bind: ").append(caller);
+            memo.append(INFO).append(caller);
         }
     }
 

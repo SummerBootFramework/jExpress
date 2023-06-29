@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.nio.grpc;
 
-import com.google.inject.ConfigurationException;
 import io.grpc.Grpc;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -35,7 +34,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.SummerRunner;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
@@ -47,7 +45,82 @@ public class GRPCServer {
 
     protected static final Logger log = LogManager.getLogger(GRPCServer.class.getName());
 
-    public static ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
+//    @Inject
+//    private NIOStatusListener nioListener;
+//    @Inject
+//    protected ServerInterceptor serverInterceptor;
+    protected final String bindingAddr;
+    protected final int port;
+    protected final ServerCredentials serverCredentials;
+
+    protected final ServerBuilder serverBuilder;
+
+    protected Server server = null;
+
+    protected ScheduledExecutorService statusReporter = null;
+    protected ThreadPoolExecutor tpe = null;
+    protected boolean servicePaused = false;
+    protected final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
+
+    public ServerBuilder getServerBuilder() {
+        return serverBuilder;
+    }
+
+    public GRPCServiceCounter getServiceCounter() {
+        return serviceCounter;
+    }
+//    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
+//        this(bindingAddr, port, initTLS(kmf, tmf));
+//    }
+//
+//    public GRPCServer(String bindingAddr, int port, ServerCredentials serverCredentials) {
+//        this.bindingAddr = bindingAddr;
+//        this.port = port;
+//        this.serverCredentials = serverCredentials;
+//        if (serverCredentials == null) {
+//            serverBuilder = NettyServerBuilder.forAddress(new InetSocketAddress(bindingAddr, port));
+//        } else {
+//            serverBuilder = Grpc.newServerBuilderForPort(port, serverCredentials);
+//        }
+//        if (serverInterceptor != null) {
+//            serverBuilder.intercept(serverInterceptor);
+//        }
+//        //serverBuilder.executor(tpe)
+//        //AbstractImplBase implBase = 
+//        //serverBuilder.addService(implBase);
+//    }
+//    public ServerInterceptor getServerInterceptor() {
+//        return serverInterceptor;
+//    }
+//
+//    public void setContext(SummerRunner.RunnerContext context) {
+//        this.context = context;
+//        try {
+//            serverInterceptor = context.getGuiceInjector().getInstance(ServerInterceptor.class);
+//        } catch (ConfigurationException ex) {
+//
+//        }
+//        if (serverInterceptor != null) {
+//            serverBuilder.intercept(serverInterceptor);
+//        }
+//    }
+
+    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener) {
+        this.bindingAddr = bindingAddr;
+        this.port = port;
+        serverCredentials = initTLS(kmf, tmf);
+        if (serverCredentials == null) {
+            serverBuilder = NettyServerBuilder.forAddress(new InetSocketAddress(bindingAddr, port));
+        } else {
+            serverBuilder = Grpc.newServerBuilderForPort(port, serverCredentials);
+        }
+        if (serverInterceptor != null) {
+            serverBuilder.intercept(serverInterceptor);
+        }
+        initThreadPool(poolCoreSize, poolMaxSizeMaxSize, poolQueueSize, keepAliveSeconds, nioListener);
+    }
+
+    private ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
         if (kmf == null) {
             return null;
         }
@@ -59,75 +132,14 @@ public class GRPCServer {
         return tlsBuilder.build();
     }
 
-    protected Server server = null;
-    protected final String bindingAddr;
-    protected final int port;
-    protected final ServerCredentials serverCredentials;
-    protected final ServerBuilder serverBuilder;
-    protected ServerInterceptor serverInterceptor;
-
-    protected ScheduledExecutorService statusReporter = null;
-    protected ThreadPoolExecutor tpe = null;
-    protected static NIOStatusListener listener = null;
-    protected boolean servicePaused = false;
-    protected final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
-    protected SummerRunner.RunnerContext context;
-
-    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
-        this(bindingAddr, port, initTLS(kmf, tmf));
-    }
-
-    public GRPCServer(String bindingAddr, int port, ServerCredentials serverCredentials) {
-        this.bindingAddr = bindingAddr;
-        this.port = port;
-        this.serverCredentials = serverCredentials;
-        if (serverCredentials == null) {
-            serverBuilder = NettyServerBuilder.forAddress(new InetSocketAddress(bindingAddr, port));
-        } else {
-            serverBuilder = Grpc.newServerBuilderForPort(port, serverCredentials);
-        }
-        //serverBuilder.executor(tpe)
-        //AbstractImplBase implBase = 
-        //serverBuilder.addService(implBase);
-    }
-
-    public ServerInterceptor getServerInterceptor() {
-        return serverInterceptor;
-    }
-
-    public void setContext(SummerRunner.RunnerContext context) {
-        this.context = context;
-        try {
-            serverInterceptor = context.getGuiceInjector().getInstance(ServerInterceptor.class);
-        } catch (ConfigurationException ex) {
-
-        }
-        if (serverInterceptor != null) {
-            serverBuilder.intercept(serverInterceptor);
-        }
-    }
-
-    public ServerBuilder getServerBuilder() {
-        return serverBuilder;
-    }
-
-    public GRPCServiceCounter getServiceCounter() {
-        return serviceCounter;
-    }
-
-    public static void setListener(NIOStatusListener listener) {
-        GRPCServer.listener = listener;
-    }
-
-    public GRPCServiceCounter configThreadPool() {
-        final int coreSize = Runtime.getRuntime().availableProcessors();
-        int poolCoreSize = coreSize * 2 + 1;// how many tasks running at the same time
-        int poolMaxSizeMaxSize = poolCoreSize;// how many tasks running at the same time
-        long keepAliveSeconds = 60L;
-        int poolQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
-        return this.configThreadPool(poolCoreSize, poolMaxSizeMaxSize, poolQueueSize, keepAliveSeconds);
-    }
-
+//    protected GRPCServiceCounter initThreadPool() {
+//        final int coreSize = Runtime.getRuntime().availableProcessors();
+//        int poolCoreSize = coreSize * 2 + 1;// how many tasks running at the same time
+//        int poolMaxSizeMaxSize = poolCoreSize;// how many tasks running at the same time
+//        long keepAliveSeconds = 60L;
+//        int poolQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
+//        return this.initThreadPool(poolCoreSize, poolMaxSizeMaxSize, poolQueueSize, keepAliveSeconds);
+//    }
     /**
      *
      * @param poolCoreSize - the number of threads to keep in the pool, even if
@@ -138,9 +150,24 @@ public class GRPCServer {
      * @param keepAliveSeconds - when the number of threads is greater than the
      * core, this is the maximum time that excess idle threads will wait for new
      * tasks before terminating.
+     * @param nioListener
      * @return
      */
-    public GRPCServiceCounter configThreadPool(int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds) {
+    private GRPCServiceCounter initThreadPool(int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener) {
+        if (poolCoreSize < 1) {
+            final int coreSize = Runtime.getRuntime().availableProcessors();
+            poolCoreSize = coreSize * 2 + 1;// how many tasks running at the same time
+        }
+
+        if (poolMaxSizeMaxSize < poolCoreSize) {
+            poolMaxSizeMaxSize = poolCoreSize;// how many tasks running at the same time
+        }
+        if (poolQueueSize < 1) {
+            poolQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
+        }
+        if (keepAliveSeconds < 1) {
+            keepAliveSeconds = 60L;
+        }
         ThreadPoolExecutor old = tpe;
         tpe = new ThreadPoolExecutor(poolCoreSize, poolMaxSizeMaxSize, keepAliveSeconds, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(poolQueueSize),
@@ -158,7 +185,7 @@ public class GRPCServer {
         ScheduledExecutorService old2 = statusReporter;
         statusReporter = Executors.newSingleThreadScheduledExecutor();
         statusReporter.scheduleAtFixedRate(() -> {
-            if (listener == null && !log.isDebugEnabled()) {
+            if (nioListener == null && !log.isDebugEnabled()) {
                 return;
             }
             long bizHit = serviceCounter.getBiz();
@@ -185,8 +212,8 @@ public class GRPCServer {
                 long task = tpe.getTaskCount();
                 long completed = tpe.getCompletedTaskCount();
                 log.debug(() -> "hps=" + hps + ", tps=" + tps + ", totalHit=" + totalHit + " (ping " + pingHit + " + biz " + bizHit + "), queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest + ", task=" + task + ", completed=" + completed + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel);
-                if (listener != null) {
-                    listener.onNIOAccessReportUpdate(hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
+                if (nioListener != null) {
+                    nioListener.onNIOAccessReportUpdate("gRPC", hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
                     //listener.onUpdate(data);//bad performance
                 }
             }
@@ -198,16 +225,16 @@ public class GRPCServer {
     }
 
     public void start() throws IOException {
-        start(false);
+        this.start(false);
     }
 
     /**
      * openssl s_client -connect server:port -alpn h2
      *
-     * @param isBlock
+     * @param isBlockingMode
      * @throws IOException
      */
-    public void start(boolean isBlock) throws IOException {
+    public void start(boolean isBlockingMode) throws IOException {
         if (server != null) {
             shutdown();
         }
@@ -219,7 +246,7 @@ public class GRPCServer {
                 new Thread(() -> {
                     shutdown();
                 }, "GRPCServer.shutdown and stop listening on " + schema + "://" + bindingAddr + ":" + port));
-        if (isBlock) {
+        if (isBlockingMode) {
             try {
                 server.awaitTermination();
             } catch (InterruptedException ex) {

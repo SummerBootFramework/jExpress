@@ -55,7 +55,9 @@ import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 abstract public class HttpClientConfig extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(HttpClientConfig.class);
+        class a extends HttpClientConfig {
+        }
+        String t = generateTemplate(a.class);
         System.out.println(t);
     }
 
@@ -82,15 +84,37 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.ssl.protocol")
     private volatile String protocol = "TLSv1.3";
 
-    @JsonIgnore
-    @Config(key = "httpclient.ssl.KeyStore", StorePwdKey = "httpclient.ssl.KeyStorePwd",
-            AliasKey = "httpclient.ssl.KeyAlias", AliasPwdKey = "httpclient.ssl.KeyPwd",
-            required = false)
-    private volatile KeyManagerFactory kmf;
+    private static final String KEY_kmf_key = "httpclient.ssl.KeyStore";
+    private static final String KEY_kmf_StorePwdKey = "httpclient.ssl.KeyStorePwd";
+    private static final String KEY_kmf_AliasKey = "httpclient.ssl.KeyAlias";
+    private static final String KEY_kmf_AliasPwdKey = "httpclient.ssl.KeyPwd";
 
     @JsonIgnore
-    @Config(key = "httpclient.ssl.TrustStore", StorePwdKey = "httpclient.ssl.TrustStorePwd")
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = DESC_KMF,
+            callbackMethodName4Dump = "generateTemplate_keystore")
+    private volatile KeyManagerFactory kmf;
+
+    protected void generateTemplate_keystore(StringBuilder sb) {
+        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
+        sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_kmf_AliasKey + "=server3_2048.jexpress.org\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
+        generateTemplate = true;
+    }
+
+    private static final String KEY_tmf_key = "httpclient.ssl.TrustStore";
+    private static final String KEY_tmf_StorePwdKey = "httpclient.ssl.TrustStorePwd";
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
+            desc = DESC_TMF)
+    @JsonIgnore
     private volatile TrustManagerFactory tmf;
+
+    protected void generateTemplate_truststore(StringBuilder sb) {
+        sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
+        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+        generateTemplate = true;
+    }
 
     @Config(key = "httpclient.ssl.HostnameVerification")
     private volatile Boolean hostnameVerification = false;
@@ -132,16 +156,18 @@ abstract public class HttpClientConfig extends BootConfig {
 
     private final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
-    @Config(key = "httpclient.executor.CoreSize",
-            desc = "HTTP Client will be disabled when core size is/below 0")
+    @Config(key = "httpclient.executor.CoreSize", predefinedValue = "0",
+            desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int httpClientCoreSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentCore;
 
-    @Config(key = "httpclient.executor.MaxSize")
+    @Config(key = "httpclient.executor.MaxSize", predefinedValue = "0",
+            desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int httpClientMaxSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
-    @Config(key = "httpclient.executor.QueueSize")//2147483647
+    @Config(key = "httpclient.executor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
+            desc = "The waiting list size when the pool is full")
     private volatile int httpClientQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
     private volatile int currentQueue;
 
@@ -153,16 +179,27 @@ abstract public class HttpClientConfig extends BootConfig {
     //3.3 HTTP Client Default Headers
     @ConfigHeader(title = "3. HTTP Client Default Headers",
             desc = "put generic HTTP Client request headers here",
-            format = HEADER_CLIENT_REQUEST + "?=?",
+            format = HEADER_CLIENT_REQUEST + "<request_header_name>=<request_header_value>",
             example = HEADER_CLIENT_REQUEST + "Accept=application/json\n"
             + HEADER_CLIENT_REQUEST + "Content-Type=application/json;charset=UTF-8\n"
-            + HEADER_CLIENT_REQUEST + "Accept-Language=en-ca")
+            + HEADER_CLIENT_REQUEST + "Accept-Language=en-ca",
+            callbackMethodName4Dump = "generateTemplate_RequestHeaders")
     private final Map<String, String> httpClientDefaultRequestHeaders = new HashMap<>();
+
+    protected void generateTemplate_RequestHeaders(StringBuilder sb) {
+        sb.append("#").append(HEADER_CLIENT_REQUEST).append("request_header_name=request_header_value\n");
+    }
 
     private HTTPClientStatusListener listener = null;
 
     public void setStatusListener(HTTPClientStatusListener l) {
         listener = l;
+    }
+
+    @Override
+    protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
+        createIfNotExist(FILENAME_KEYSTORE);
+        createIfNotExist(FILENAME_TRUSTSTORE_4CLIENT);
     }
 
     @Override
@@ -198,6 +235,12 @@ abstract public class HttpClientConfig extends BootConfig {
         }
 
         // 3.3 HTTP Client Executor
+        if (httpClientCoreSize <= 0) {
+            httpClientCoreSize = availableProcessors * 2 + 1;
+        }
+        if (httpClientMaxSize <= 0) {
+            httpClientMaxSize = availableProcessors * 2 + 1;
+        }
         if (httpClientMaxSize < httpClientCoreSize) {
             helper.addError("MaxSize should not less than CoreSize");
         }

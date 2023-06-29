@@ -16,184 +16,117 @@
 package org.summerboot.jexpress.integration.jpa;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.summerboot.jexpress.boot.config.ConfigUtil;
-import jakarta.persistence.Entity;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 import jakarta.persistence.EntityManager;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.logging.log4j.LogManager;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
-import org.summerboot.jexpress.boot.SummerApplication;
-import org.summerboot.jexpress.boot.config.BootConfig;
-import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-abstract public class JPAHibernateConfig extends BootConfig {
+abstract public class JPAHibernateConfig extends JPAConfig {
+
+    public static void main(String[] args) {
+        class a extends JPAHibernateConfig {
+        }
+        String t = generateTemplate(a.class);
+        System.out.println(t);
+    }
+
+    @ConfigHeader(title = "1. Hibernate properties for Database Connection",
+            callbackMethodName4Dump = "generateTemplate_JPAConnection")
+    private final String dummyfield4annotion1 = null;
+
+    protected void generateTemplate_JPAConnection(StringBuilder sb) {
+        sb.append(Environment.URL + "=\n");
+        sb.append(Environment.USER + "=\n");
+        sb.append(Environment.PASS + "=DEC(" + DESC_PLAINPWD + ")\n");
+        sb.append(Environment.DIALECT + "=\n");
+        sb.append(Environment.DRIVER + "=\n");
+        sb.append(Environment.SHOW_SQL + "=false\n");
+        sb.append(Environment.HBM2DDL_AUTO + "=validate\n");
+        sb.append("#hibernate.proc.param_null_passing=true\n");
+        sb.append("#" + Environment.LOADED_CLASSES + "=\n");
+    }
+
+    @ConfigHeader(title = "2. Connection Pool",
+            callbackMethodName4Dump = "generateTemplate_ConnectionPool")
+    private final String dummyfield4annotion2 = null;
+
+    protected void generateTemplate_ConnectionPool(StringBuilder sb) {
+        sb.append("# Maximum waiting time for a connection from the pool\n");
+        sb.append("hibernate.hikari.connectionTimeout=20000\n");
+        sb.append("# Minimum number of ideal connections in the pool\n");
+        sb.append("hibernate.hikari.minimumIdle=10\n");
+        sb.append("# Maximum number of actual connection in the pool\n");
+        sb.append("hibernate.hikari.maximumPoolSize=20\n");
+        sb.append("# Maximum time that a connection is allowed to sit ideal in the pool\n");
+        sb.append("hibernate.hikari.idleTimeout=300000\n");
+        sb.append("hibernate.hikari.registerMbeans=true\n");
+    }
 
     //private static volatile Logger log = null;
     @JsonIgnore
     private volatile SessionFactory sessionFactory;
 
-    //private File cfgFile;
-    private final Properties props = new Properties();
-    private final Map<String, Object> settings = new HashMap<>();
-    private final List<Class<?>> entityClasses = new ArrayList();
-
     protected JPAHibernateConfig() {
     }
 
-    /*
-     * used by temp()
-     *
-     * @param temp
-    
-    private JPAHibernateConfig(Object temp) {
-    } */
-
     @Override
-    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
-    }
+    protected void buildEntityManagerFactory() {
+        try {
+            //build EMF
+            //EntityManagerFactory emf = new EntityManagerFactoryBuilderImpl(new PersistenceUnitInfoDescriptor(null), settings).build();
+            //build SessionFactory
+            SessionFactory old = sessionFactory;
+            StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
+            registryBuilder.applySettings(settings);
+            StandardServiceRegistry registry = registryBuilder.build();
+            MetadataSources sources = new MetadataSources(registry);
+            entityClasses.forEach(sources::addAnnotatedClass);
+            Metadata metadata = sources.getMetadataBuilder().build();
+            sessionFactory = metadata.getSessionFactoryBuilder().build();
 
-    @Override
-    public void load(File cfgFile, boolean isReal) throws IOException {
-        load(cfgFile);
-    }
-
-    /**
-     *
-     * @param cfgFile
-     * @param packages in which contains the @Entity classes
-     * @throws IOException
-     */
-    public void load(File cfgFile, String... packages) throws IOException {
-        if (logger == null) {
-            logger = LogManager.getLogger(getClass());
-        }
-        this.cfgFile = cfgFile.getAbsoluteFile();
-
-        try (InputStream is = new FileInputStream(cfgFile);) {
-            props.load(is);
-        }
-        if (!cfgFile.canRead() || props.isEmpty()) {
-            throw new IOException("Failed to load DB config file " + cfgFile);
-        }
-
-        settings.clear();
-        ConfigUtil helper = new ConfigUtil(this.cfgFile.getAbsolutePath());
-
-        Set<Object> keys = props.keySet();
-        keys.forEach((key) -> {
-            String name = key.toString();
-            //if (name.startsWith("hibernate.")) {
-            settings.put(name, props.getProperty(name));
-            //}
-        });
-
-        //Environment.PASS = "hibernate.connection.password"
-        settings.put(Environment.PASS, helper.getAsPassword(props, Environment.PASS));
-        String error = helper.getError();
-        if (error != null) {
-            throw new IllegalArgumentException(error);
-        }
-        //scan @Entity
-        //settings.put(Environment.LOADED_CLASSES, entityClasses);
-        String callerRootPackageName = System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME);//SummerApplication.getCallerRootPackageName();
-        String csvPackageNames = props.getProperty(Environment.LOADED_CLASSES, "");
-        scanAnnotation_Entity(callerRootPackageName + "," + csvPackageNames, packages);
-
-        //build EMF
-        //EntityManagerFactory emf = new EntityManagerFactoryBuilderImpl(new PersistenceUnitInfoDescriptor(null), settings).build();
-        //build SessionFactory
-        SessionFactory old = sessionFactory;
-        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
-        registryBuilder.applySettings(settings);
-        StandardServiceRegistry registry = registryBuilder.build();
-        MetadataSources sources = new MetadataSources(registry);
-        entityClasses.forEach(sources::addAnnotatedClass);
-        Metadata metadata = sources.getMetadataBuilder().build();
-        sessionFactory = metadata.getSessionFactoryBuilder().build();
-
-        if (old != null) {
-            logger.warn("close current db connection due to config changed");
-            try {
-                old.close();
-            } catch (Throwable ex) {
-                logger.warn("failed to close current db connection", ex);
+            if (old != null) {
+                logger.warn("close current db connection due to config changed");
+                try {
+                    old.close();
+                } catch (Throwable ex) {
+                    logger.warn("failed to close current db connection", ex);
+                }
             }
-        }
-        if (settings.get(Environment.PASS) != null) {
-            settings.put(Environment.PASS, "****");// protect password from being logged
-        }
-    }
-
-    private void scanAnnotation_Entity(String csvPackageNames, String... packages) {
-        logger.debug("_rootPackageNames={}", csvPackageNames);
-        String[] rootPackageNames = FormatterUtil.parseCsv(csvPackageNames);
-        List<String> rootPackageNameList = new ArrayList();
-        rootPackageNameList.addAll(Arrays.asList(rootPackageNames));
-        rootPackageNameList.addAll(Arrays.asList(packages));
-        rootPackageNameList = rootPackageNameList.stream()
-                .distinct()
-                .collect(Collectors.toList());
-        rootPackageNameList.removeAll(Collections.singleton(""));
-        rootPackageNameList.removeAll(Collections.singleton(null));
-        logger.debug("rootPackageNameList:{}", rootPackageNameList);
-        for (String rootPackageName : rootPackageNameList) {
-            Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(Entity.class, rootPackageName, false);
-            entityClasses.addAll(tempEntityClasses);
+        } finally {
+            if (settings.get(Environment.PASS) != null) {
+                settings.put(Environment.PASS, "****");// protect password from being logged
+            }
         }
     }
 
     @Override
     public void shutdown() {
-        System.out.println(Thread.currentThread().getName() + ": shutdown DB.SessionFactory");
         if (sessionFactory != null) {
+            System.out.println(Thread.currentThread().getName() + ": shutdown DB.SessionFactory");
             try {
                 sessionFactory.close();
+                sessionFactory = null;
             } catch (Throwable ex) {
                 ex.printStackTrace(System.err);
             }
         }
     }
 
-    public Map<String, Object> getSettings() {
-        return settings;
-    }
-
     public SessionFactory getSessionFactory() {
         return sessionFactory;
     }
 
+    @Override
     public EntityManager em() {
         return sessionFactory.createEntityManager();
-    }
-
-    public String getProperty(String key) {
-        return props.getProperty(key);
-    }
-
-    public List<Class<?>> getEntityClasses() {
-        return entityClasses;
     }
 
 }

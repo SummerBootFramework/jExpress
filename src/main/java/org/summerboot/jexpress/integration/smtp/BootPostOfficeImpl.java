@@ -123,7 +123,7 @@ public class BootPostOfficeImpl implements PostOffice {
                 if (rootCause != null) {
                     key = key + rootCause.getClass().getName();
                 }
-                if (debounced(key, smtpCfg.getEmailAlertDebouncingInterval())) {
+                if (debounced(key, smtpCfg.getEmailAlertDebouncingIntervalMinutes())) {
                     return;
                 }
             }

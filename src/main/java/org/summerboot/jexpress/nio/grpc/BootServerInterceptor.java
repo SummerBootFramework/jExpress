@@ -60,4 +60,12 @@ public abstract class BootServerInterceptor implements ServerInterceptor {
     }
 
     abstract protected Caller buildCaller(String jwt);
+
+    /*
+    @Override
+    protected Caller buildCaller(String jwt) {
+        User user = new User(888L, "mockuser");
+        return user;
+    }
+     */
 }

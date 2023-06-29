@@ -21,6 +21,7 @@ import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -45,9 +46,8 @@ import org.summerboot.jexpress.security.auth.Authenticator;
  * @version 2.0
  */
 @Singleton
+@ChannelHandler.Sharable
 public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
-
-    public static final String BINDING_NAME = "BootHttpRequestHandler";
 
     @Inject
     protected Authenticator authenticator;
@@ -150,8 +150,8 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * @param httpRequestHeaders
      * @param httpRequestPath
      * @param context
-     * @return true if good to customizedAuthorizationCheck (caller is verified), otherwise
- false
+     * @return true if good to customizedAuthorizationCheck (caller is
+     * verified), otherwise false
      * @throws Exception
      */
     protected boolean authenticationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {

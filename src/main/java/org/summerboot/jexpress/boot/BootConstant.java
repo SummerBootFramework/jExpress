@@ -24,7 +24,7 @@ import org.summerboot.jexpress.util.ApplicationUtil;
 public interface BootConstant {
 
     //version
-    String VERSION = "SummerBoot.jExpress 2.3.6";
+    String VERSION = "SummerBoot.jExpress 2.3.7";
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
@@ -45,7 +45,7 @@ public interface BootConstant {
      * It means only one thread can invoke the ‘java.util.Hashtable.get()’ method at any given time. 
      */
     String SYS_PROP_APP_VERSION = "version";//used by BootController.version()
-    String SYS_PROP_ERROR_PAGE_TITLE = "ErrorPageTitle";//used by ServiceContext.buildErrorFile()
+    String SYS_PROP_APP_VERSION_SHORT = "version.short";//used by ServiceContext.buildErrorFile()
     String SYS_PROP_APP_PACKAGE_NAME = "appPackage";//used by both log4j2.xml ${sys:appPackage} and JPAHibernateConfig to scan @Entity
     String SYS_PROP_HOST_NAME = "hostName";//used by log4j2.xml ${hostName}
     String SYS_PROP_LOGFILENAME = "appappName";//used by log4j2.xml ${sys:appappName} as log file name

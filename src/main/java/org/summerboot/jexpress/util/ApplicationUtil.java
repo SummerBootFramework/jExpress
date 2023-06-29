@@ -17,11 +17,15 @@ package org.summerboot.jexpress.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import org.apache.commons.io.IOUtils;
 
 /**
  *
@@ -179,5 +184,23 @@ public class ApplicationUtil {
             throw new NoClassDefFoundError(sb.toString());
         }
         return classes;
+    }
+
+    public static final String RESOURCE_PATH = "org/summerboot/jexpress/template/";
+
+    public static Path createIfNotExist(String location, ClassLoader classLoader, String srcFileName, String destFileName) {
+        Path targetFile = Paths.get(location, destFileName).toAbsolutePath();
+        if (Files.exists(targetFile)) {
+            return targetFile;
+        }
+        try (InputStream ioStream = classLoader.getResourceAsStream(RESOURCE_PATH + srcFileName);) {
+            final byte[] bytes = IOUtils.toByteArray(ioStream);
+            Files.write(targetFile, bytes);
+        } catch (Throwable ex) {
+            System.out.println(ex + "\n\tCould generate from " + srcFileName + " to " + targetFile);
+            ex.printStackTrace();
+            System.exit(1);
+        }
+        return targetFile;
     }
 }

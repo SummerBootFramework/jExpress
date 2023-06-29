@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.boot.instrumentation.jmx;
 
-import org.summerboot.jexpress.nio.server.NioServer;
 import com.google.inject.Inject;
 import java.lang.management.ManagementFactory;
 import javax.management.InstanceAlreadyExistsException;
@@ -26,7 +25,6 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import com.google.inject.Singleton;
-import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 
 /**
  *
@@ -41,15 +39,8 @@ public class InstrumentationMgrImpl implements InstrumentationMgr {
     @Inject
     private ServerStatusMBean mbean;
 
-    @Inject
-    private NIOStatusListener nioListener;
-
-    //protected static HttpClientConfig httpCfg = HttpClientConfig.instance(HttpClientConfig.class);
     @Override
     public void start(String beanName) throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
-        NioServer.setStatusListener(nioListener);
-        //httpCfg.setStatusListener(httpclientListener);
-
         mBeanServer = ManagementFactory.getPlatformMBeanServer();
         mbeanName = new ObjectName(beanName + ":name=Status");
         //ServerStatusMBean mbean = Main.injector.getInstance(ServerStatusMBean.class);

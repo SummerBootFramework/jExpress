@@ -15,11 +15,9 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.boot.config.ConfigUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.ssl.SslProvider;
 import java.io.File;
 import java.util.Arrays;
@@ -32,25 +30,18 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
-import org.summerboot.jexpress.boot.config.BootConfig;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.HttpHeaders;
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.boot.config.BootConfig;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
 
 /**
  *
@@ -72,7 +63,6 @@ public class NioConfig extends BootConfig {
     @Override
     public void shutdown() {
         String tn = Thread.currentThread().getName();
-        NioServer.shutdown();
         if (tpe != null && !tpe.isShutdown()) {
             System.out.println(tn + ": shutdown tpe");
             tpe.shutdown();
@@ -83,31 +73,49 @@ public class NioConfig extends BootConfig {
     @ConfigHeader(title = "1. NIO Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8311, 127.0.0.1:8311, 0.0.0.0:8311")
-    @Config(key = "nio.server.bindings", defaultValue = "0.0.0.0:8311")
+    @Config(key = "nio.server.bindings", predefinedValue = "0.0.0.0:8211, 0.0.0.0:8311", required = true)
     private volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = "nio.server.autostart", defaultValue = "true")
-    private volatile boolean autoStart;
+    private volatile boolean autoStart = true;
 
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")
 
+    private static final String KEY_kmf_key = "nio.server.ssl.KeyStore";
+    private static final String KEY_kmf_StorePwdKey = "nio.server.ssl.KeyStorePwd";
+    private static final String KEY_kmf_AliasKey = "nio.server.ssl.KeyAlias";
+    private static final String KEY_kmf_AliasPwdKey = "nio.server.ssl.KeyPwd";
+
     @JsonIgnore
-    @Config(key = "nio.server.ssl.KeyStore", StorePwdKey = "nio.server.ssl.KeyStorePwd",
-            AliasKey = "nio.server.ssl.KeyAlias", AliasPwdKey = "nio.server.ssl.KeyPwd",
-            required = false,
-            desc = "Use SSL/TLS when key store is provided, use plain Socket if key stroe is not available")
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = DESC_KMF,
+            callbackMethodName4Dump = "generateTemplate_keystore")
     private volatile KeyManagerFactory kmf = null;
 
+    protected void generateTemplate_keystore(StringBuilder sb) {
+        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
+        sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_kmf_AliasKey + "=server1_2048.jexpress.org\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
+        generateTemplate = true;
+    }
+
+    private static final String KEY_tmf_key = "nio.server.ssl.TrustStore";
+    private static final String KEY_tmf_StorePwdKey = "nio.server.ssl.TrustStorePwd";
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
+            desc = DESC_TMF)
     @JsonIgnore
-    @Config(key = "nio.server.ssl.TrustStore", StorePwdKey = "nio.server.ssl.TrustStorePwd",
-            required = false,
-            desc = "trust all clients when truststore is not provided")
     private volatile TrustManagerFactory tmf = null;
 
-    @Config(key = "nio.server.ssl.VerifyCertificateHost")
+//    protected void generateTemplate_truststore(StringBuilder sb) {
+//        sb.append(KEY_tmf_key + "="+FILENAME_TRUSTSTORE_4SERVER+"\n");
+//        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+//        generateTemplate = true;
+//    }
+    @Config(key = "nio.server.ssl.VerifyCertificateHost", defaultValue = "false")
     private volatile boolean verifyCertificateHost = false;
 
-    @Config(key = "nio.server.ssl.Provider")
+    @Config(key = "nio.server.ssl.Provider", defaultValue = "OPENSSL")
     private volatile SslProvider sslProvider = SslProvider.OPENSSL;
 
     @Config(key = "nio.server.ssl.Protocols", defaultValue = "TLSv1.2, TLSv1.3")
@@ -115,91 +123,93 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.server.ssl.CipherSuites",
             desc = "use system default ciphersuites when not specified")
-    private String[] sslCipherSuites = null;
+    private String[] sslCipherSuites;
 
     //3.1 Socket controller
     @ConfigHeader(title = "3.1 Socket controller")
 
-    @Config(key = "nio.server.socket.SO_REUSEADDR")
+    @Config(key = "nio.server.socket.SO_REUSEADDR", defaultValue = "true")
     private volatile boolean soReuseAddr = true;
 
-    @Config(key = "nio.server.socket.SO_KEEPALIVE")
+    @Config(key = "nio.server.socket.SO_KEEPALIVE", defaultValue = "true")
     private volatile boolean soKeepAlive = true;
 
-    @Config(key = "nio.server.socket.TCP_NODELAY")
+    @Config(key = "nio.server.socket.TCP_NODELAY", defaultValue = "true")
     private volatile boolean soTcpNodelay = true;
 
-    @Config(key = "nio.server.socket.SO_LINGER")
+    @Config(key = "nio.server.socket.SO_LINGER", defaultValue = "-1")
     private volatile int soLinger = -1;
 
     //3.2 Socket Performance
     @ConfigHeader(title = "3.2 Socket Performance")
 
-    @Config(key = "nio.server.ssl.HandshakeTimeout.second")
-    private volatile int sslHandshakeTimeout = 30;
+    @Config(key = "nio.server.ssl.HandshakeTimeout.second", defaultValue = "30")
+    private volatile int sslHandshakeTimeoutSeconds = 30;
 
-    @Config(key = "nio.server.socket.CONNECT_TIMEOUT.second")
-    private volatile int soConnectionTimeout = 30;
+    @Config(key = "nio.server.socket.CONNECT_TIMEOUT.second", defaultValue = "30")
+    private volatile int soConnectionTimeoutSeconds = 30;
 
-    @Config(key = "nio.server.socket.SO_BACKLOG")
+    @Config(key = "nio.server.socket.SO_BACKLOG", defaultValue = "1024")
     private volatile int soBacklog = 1024;
 
-    @Config(key = "nio.server.socket.SO_RCVBUF",
+    @Config(key = "nio.server.socket.SO_RCVBUF", defaultValue = "1048576",
             desc = " - cat /proc/sys/net/ipv4/tcp_rmem (max 1024k)")
     private volatile int soRcvBuf = 1048576;
 
-    @Config(key = "nio.server.socket.SO_SNDBUF",
+    @Config(key = "nio.server.socket.SO_SNDBUF", defaultValue = "1048576",
             desc = " - cat /proc/sys/net/ipv4/tcp_smem (max 1024k)")
     private volatile int soSndBuf = 1048576;
-    @Config(key = "nio.server.HttpObjectAggregator.maxContentLength",
+    @Config(key = "nio.server.HttpObjectAggregator.maxContentLength", defaultValue = "65536",
             desc = "default - 64kb")
     private volatile int httpObjectAggregatorMaxContentLength = 65536;
 
     //4.1 Netty controller
     @ConfigHeader(title = "4.1 Netty controller")
 
-    @Config(key = "nio.server.multiplexer")
+    @Config(key = "nio.server.multiplexer", defaultValue = "AVAILABLE")
     private volatile IoMultiplexer multiplexer = IoMultiplexer.AVAILABLE;
 
-    @Config(key = "nio.server.httpServerCodec.MaxInitialLineLength")
+    @Config(key = "nio.server.httpServerCodec.MaxInitialLineLength", defaultValue = "4096")
     private volatile int httpServerCodec_MaxInitialLineLength = 4096;
 
-    @Config(key = "nio.server.httpServerCodec.MaxHeaderSize")
+    @Config(key = "nio.server.httpServerCodec.MaxHeaderSize", defaultValue = "4096")
     private volatile int httpServerCodec_MaxHeaderSize = 4096;
 
-    @Config(key = "nio.server.httpServerCodec.MaxChunkSize")
+    @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "4096")
     private volatile int httpServerCodec_MaxChunkSize = 4096;
 
-    @Config(key = "nio.server.EventLoopGroup.AcceptorSize",
-            desc = "default AcceptorSize = number of bindings")
+    @Config(key = "nio.server.EventLoopGroup.AcceptorSize", defaultValue = "0",
+            desc = "AcceptorSize 0 = number of bindings")
     private volatile int nioEventLoopGroupAcceptorSize = 0;
 
     private final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
-    @Config(key = "nio.server.EventLoopGroup.WorkerSize",
-            desc = "default WorkerSize = CPU core x2 +1")
+    @Config(key = "nio.server.EventLoopGroup.WorkerSize", predefinedValue = "0",
+            desc = "WorkerSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int nioEventLoopGroupWorkerSize = availableProcessors * 2 + 1;
     //private volatile int nioEventLoopGroupExecutorSize;
 
     public enum ThreadingMode {
         CPU, IO, Mixed
     }
-    @Config(key = "nio.server.BizExecutor.mode",
-            desc = "valid value = CPU, IO (default), Mixed")
-    private volatile ThreadingMode bizExecutorThreadingMode = ThreadingMode.IO;
-
-    @Config(key = "nio.server.BizExecutor.CoreSize",
-            desc = "use CPU core + 1 when application is CPU bound\n"
+    @Config(key = "nio.server.BizExecutor.mode", defaultValue = "Mixed",
+            desc = "valid value = CPU, IO (default), Mixed\nuse CPU core + 1 when application is CPU bound\n"
             + "use CPU core x 2 + 1 when application is I/O bound\n"
             + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
+    private volatile ThreadingMode bizExecutorThreadingMode = ThreadingMode.Mixed;
+
+    @Config(key = "nio.server.BizExecutor.CoreSize", predefinedValue = "0",
+            desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int bizExecutorCoreSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentCore;
 
-    @Config(key = "nio.server.BizExecutor.MaxSize")
+    @Config(key = "nio.server.BizExecutor.MaxSize", predefinedValue = "0",
+            desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int bizExecutorMaxSize = availableProcessors * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
-    @Config(key = "nio.server.BizExecutor.QueueSize")
+    @Config(key = "nio.server.BizExecutor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
+            desc = "The waiting list size when the pool is full")
     private volatile int bizExecutorQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
     private volatile int currentQueue;
 
@@ -209,66 +219,53 @@ public class NioConfig extends BootConfig {
             new LinkedBlockingQueue<>(bizExecutorQueueSize),
             Executors.defaultThreadFactory(), new AbortPolicyWithReport("NIOBizThreadPoolExecutor"));
 
-    @Config(key = "nio.server.BizExecutor.bizTimeoutWarnThreshold")
+    @Config(key = "nio.server.BizExecutor.bizTimeoutWarnThreshold", defaultValue = "5000")
     private volatile int bizTimeoutWarnThreshold = 5000;
 
     //4.3 Netty Channel Handler
     @ConfigHeader(title = "4.3 Netty Channel Handler")
-    @Config(key = "nio.server.ReaderIdleTime",
+
+    @Config(key = "nio.server.ReaderIdleSeconds", defaultValue = "0",
             desc = "rec Idle enabled only when value > 0")
-    private volatile int readerIdleTime = 0;
+    private volatile int readerIdleSeconds = 0;
 
-    @Config(key = "nio.server.WriterIdleTime",
+    @Config(key = "nio.server.WriterIdleSeconds", defaultValue = "0",
             desc = "Sent Idle enabled only when value > 0")
-    private volatile int writerIdleTime = 0;
+    private volatile int writerIdleSeconds = 0;
 
-    @Config(key = "nio.server.health.InspectionIntervalSeconds")
+    @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
     private volatile int healthInspectionIntervalSeconds = 5;
 
-    @JsonIgnore
-    private Injector INJECTOR;
-
-    @Config(key = "nio.HttpService.enabled")
-    private volatile boolean httpService = true;
-
-    @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive")
+    @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive", defaultValue = "false")
     private volatile boolean fromJsonCaseInsensitive = false;
-    @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties")
+    @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
     private volatile boolean fromJsonFailOnUnknownProperties = true;
-    @Config(key = "nio.JAX-RS.toJson.IgnoreNull")
+    @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
     private volatile boolean toJsonIgnoreNull = true;
-    @Config(key = "nio.JAX-RS.toJson.Pretty")
+    @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
     private volatile boolean toJsonPretty = false;
 
-//    @Config(key = "nio.useDefaultHTTPHandler")
-//    private volatile boolean useDefaultHTTPHandler = true;
-    @Config(key = "nio.HttpFileUploadHandler")
-    private volatile String fielUploadHandlerAnnotatedName = null;
-
-    @Config(key = "nio.HttpPingHandler")
-    private volatile String pingHandlerAnnotatedName = BootHttpPingHandler.class.getName();
-
-    @Config(key = "nio.HttpRequestHandler")
-    private volatile String requestHandlerAnnotatedName = BootHttpRequestHandler.BINDING_NAME;
-
-    @Config(key = "nio.WebSocket.Handler")
-    private volatile String webSocketHandlerAnnotatedName = null;
-
-    @Config(key = "nio.WebSocket.Compress")
+    @Config(key = "nio.WebSocket.Compress", defaultValue = "true")
     private volatile boolean webSocketCompress = true;
 
-    @Config(key = "nio.WebSocket.maxFrameSize")
+    @Config(key = "nio.WebSocket.AllowExtensions", defaultValue = "true")
+    private volatile boolean webSocketAllowExtensions = true;
+
+    @Config(key = "nio.WebSocket.maxFrameSize", defaultValue = "5242880")
     private volatile int webSocketMaxFrameSize = 5242880;
 
-    @Config(key = "nio.WebSocket.Subprotocols")
-    private volatile String webSocketSubprotocols = null;
-
-    @Config(key = "nio.WebSocket.AllowExtensions")
-    private volatile boolean webSocketAllowExtensions = true;
+    @Config(key = "nio.WebSocket.AllowMaskMismatch", defaultValue = "false")
+    private volatile boolean webSocketAllowMaskMismatch = false;
+    @Config(key = "nio.WebSocket.CheckStartsWith", defaultValue = "false")
+    private volatile boolean webSocketCheckStartsWith = false;
+    @Config(key = "nio.WebSocket.DropPongFrames", defaultValue = "true")
+    private volatile boolean webSocketDropPongFrames = true;
+    @Config(key = "nio.WebSocket.HandshakeTimeoutMillis", defaultValue = "10000")
+    private volatile long webSocketHandshakeTimeoutMillis = 10000L;//io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig.DEFAULT_HANDSHAKE_TIMEOUT_MILLIS;
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
-    @Config(key = "nio.verbose.filter.usertype",
+    @Config(key = "nio.verbose.filter.usertype", defaultValue = "ignore",
             desc = "5.1 caller filter\n"
             + "valid value = id, uid, group, role, ignore")
     private volatile VerboseTargetUserType filterUserType = VerboseTargetUserType.ignore;
@@ -276,7 +273,8 @@ public class NioConfig extends BootConfig {
     public enum VerboseTargetUserType {
         id, uid, group, role, ignore
     }
-    @Config(key = "nio.verbose.filter.usertype.range",
+    private static final String KEY_FILTER_USERTYPE_RANGE = "nio.verbose.filter.usertype.range";
+    @Config(key = KEY_FILTER_USERTYPE_RANGE,
             desc = "user range (when type=CallerId): N1 - N2 or N1, N2, ... , Nn \n"
             + "user range (when type=CallerName): johndoe, janedoe")
     private volatile String filterUserVaue;
@@ -286,33 +284,33 @@ public class NioConfig extends BootConfig {
     private volatile long filterCallerIdTo;
 
     //5.2 error code filter
-    @Config(key = "nio.verbose.filter.codetype",
-            desc = "valid value = HttpStatusCode, AppErrorCode, all, ignore")
-    private volatile VerboseTargetCodeType filterCodeType = VerboseTargetCodeType.all;
-    @Config(key = "nio.verbose.filter.codetype.range",
-            desc = "5.2 error code filter\n"
-            + "code range: N1 - N2 or N1, N2, ... , Nn")
-    private volatile String filterCodeVaue;
-
     public enum VerboseTargetCodeType {
         HttpStatusCode, AppErrorCode, all, ignore
     }
+    @Config(key = "nio.verbose.filter.codetype", defaultValue = "all",
+            desc = "valid value = HttpStatusCode, AppErrorCode, all, ignore")
+    private volatile VerboseTargetCodeType filterCodeType = VerboseTargetCodeType.all;
+    private static final String KEY_FILTER_CODETYPE_RANGE = "nio.verbose.filter.codetype.range";
+    @Config(key = KEY_FILTER_CODETYPE_RANGE,
+            desc = "5.2 error code filter\n"
+            + "code range: N1 - N2 or N1, N2, ... , Nn")
+    private volatile String filterCodeVaue;
     private volatile Set<Long> filterCodeSet;
     private volatile long filterCodeRangeFrom;
     private volatile long filterCodeRangeTo;
     //5.3 verbose aspect
-    @Config(key = "nio.verbose.aspect.ReqHeader")
+    @Config(key = "nio.verbose.aspect.ReqHeader", defaultValue = "true")
     private volatile boolean verboseReqHeader = true;
-    @Config(key = "nio.verbose.aspect.ReqContent")
+    @Config(key = "nio.verbose.aspect.ReqContent", defaultValue = "true")
     private volatile boolean verboseReqContent = true;
-    @Config(key = "nio.verbose.aspect.RespHeader")
+    @Config(key = "nio.verbose.aspect.RespHeader", defaultValue = "true")
     private volatile boolean verboseRespHeader = true;
-    @Config(key = "nio.verbose.aspect.RespContent")
+    @Config(key = "nio.verbose.aspect.RespContent", defaultValue = "true")
     private volatile boolean verboseRespContent = true;
 
     //6. POI filter
     @ConfigHeader(title = "6. POI logging filter")
-    @Config(key = "nio.verbose.ServiceTimePOI.type",
+    @Config(key = "nio.verbose.ServiceTimePOI.type", defaultValue = "all",
             desc = "valid value = filter, all, ignore")
     private volatile VerboseTargetPOIType filterPOIType = VerboseTargetPOIType.all;
 
@@ -327,16 +325,16 @@ public class NioConfig extends BootConfig {
 
     //7. Web Server Mode
     @ConfigHeader(title = "7. Web Server Mode")
-    @Config(key = "server.http.web.docroot")
+    @Config(key = "server.http.web.docroot", defaultValue = "docroot")
     private volatile String docroot = "docroot";
 
-    @Config(key = "server.http.web.docroot.errorPageFolderName")
+    @Config(key = "server.http.web.docroot.errorPageFolderName", defaultValue = "errorpages")
     private volatile String errorPageFolderName = "errorpages";
 
-    @Config(key = "server.http.web.welcomePage")
+    @Config(key = "server.http.web.welcomePage", defaultValue = "index.html")
     private volatile String welcomePage = "index.html";
 
-    @Config(key = "server.http.web-server.tempupload")
+    @Config(key = "server.http.web-server.tempupload", defaultValue = "tempupload")
     private volatile String tempUoload = "tempupload";
 
     private volatile boolean downloadMode;
@@ -345,7 +343,7 @@ public class NioConfig extends BootConfig {
     //8. Default NIO Response HTTP Headers
     @ConfigHeader(title = "8. Default Server Response HTTP Headers",
             desc = "put generic HTTP response headers here",
-            format = HEADER_SERVER_RESPONSE + "?=?",
+            format = HEADER_SERVER_RESPONSE + "<response_header_name>=<response_header_value>",
             example = HEADER_SERVER_RESPONSE + "Access-Control-Allow-Origin=https://www.summerboot.org\n"
             + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Headers=X-Requested-With, Content-Type, Origin, Authorization\n"
             + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Methods=PUT,GET,POST,DELETE,OPTIONS,PATCH\n"
@@ -358,9 +356,13 @@ public class NioConfig extends BootConfig {
             + HEADER_SERVER_RESPONSE + "X-Frame-Options=sameorigin\n"
             + HEADER_SERVER_RESPONSE + "Expect-CT=max-age=86400, enforce, report-uri=\"https://www.summerboot.org/report-uri\"\n"
             + HEADER_SERVER_RESPONSE + "X-Content-Type-Options=nosniff\n"
-            + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ")
+            + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ",
+            callbackMethodName4Dump = "generateTemplate_ResponseHeaders")
+    private HttpHeaders serverDefaultResponseHeaders;
 
-    private final HttpHeaders serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
+    protected void generateTemplate_ResponseHeaders(StringBuilder sb) {
+        sb.append("#").append(HEADER_SERVER_RESPONSE).append("response_header_name=response_header_value\n");
+    }
 
     public HttpHeaders getServerDefaultResponseHeaders() {
         return serverDefaultResponseHeaders;
@@ -368,6 +370,12 @@ public class NioConfig extends BootConfig {
 
     private String docrootDir;
     private String tempUoloadDir;
+
+    @Override
+    protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
+        createIfNotExist(FILENAME_KEYSTORE);
+        //createIfNotExist(FILENAME_TRUSTSTORE_4SERVER);
+    }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
@@ -380,14 +388,20 @@ public class NioConfig extends BootConfig {
         tempUoloadDir = rootFolder.getAbsolutePath() + File.separator + tempUoload;
 
         //8. Default NIO Response HTTP Headers
-        serverDefaultResponseHeaders.clear();
+        serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
         Set<String> _keys = props.keySet().stream().map(o -> o.toString()).collect(Collectors.toSet());
         List<String> keys = new ArrayList<>(_keys);
         keys.forEach((name) -> {
             if (name.startsWith(HEADER_SERVER_RESPONSE)) {
                 String[] names = name.split("\\.");
                 String headerName = names[2];
+                if (headerName != null) {
+                    headerName = headerName.trim();
+                }
                 String headerValue = props.getProperty(name);
+                if (headerValue != null) {
+                    headerValue = headerValue.trim();
+                }
                 serverDefaultResponseHeaders.set(headerName, headerValue);
             }
         });
@@ -443,9 +457,8 @@ public class NioConfig extends BootConfig {
         String key;
         switch (filterUserType) {
             case id:
-                key = "nio.verbose.filter.usertype.range";
                 filterCallerIdSet = new HashSet();
-                Long[] a = helper.getAsRangeLong(props, key, filterCallerIdSet);
+                Long[] a = helper.getAsRangeLong(props, KEY_FILTER_USERTYPE_RANGE, filterCallerIdSet);
                 if (a != null) {
                     filterCallerIdFrom = a[0];
                     filterCallerIdTo = a[1];
@@ -455,8 +468,7 @@ public class NioConfig extends BootConfig {
             case uid:
             case group:
             case role:
-                key = "nio.verbose.filter.usertype.range";
-                String[] na = helper.getAsCSV(props, key, null);
+                String[] na = helper.getAsCSV(props, KEY_FILTER_USERTYPE_RANGE, null);
                 filterCallerNameSet = new HashSet();
                 filterCallerNameSet.addAll(Arrays.asList(na));
                 break;
@@ -466,9 +478,8 @@ public class NioConfig extends BootConfig {
         switch (filterCodeType) {
             case HttpStatusCode:
             case AppErrorCode:
-                key = "nio.verbose.filter.codetype.range";
                 filterCodeSet = new HashSet();
-                Long[] a = helper.getAsRangeLong(props, key, filterCodeSet);
+                Long[] a = helper.getAsRangeLong(props, KEY_FILTER_CODETYPE_RANGE, filterCodeSet);
                 if (a != null) {
                     filterCodeRangeFrom = a[0];
                     filterCodeRangeTo = a[1];
@@ -482,84 +493,32 @@ public class NioConfig extends BootConfig {
         return tpe;
     }
 
-    private final static ChannelInboundHandler DefaultFileUploadRejector = new BootHttpFileUploadRejector();
-
-    public void setGuiceInjector(Injector _injector) {
-        INJECTOR = _injector;
-        if (StringUtils.isNotBlank(fielUploadHandlerAnnotatedName)) {
-//                Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r--------");
-//                FileAttribute<Set<PosixFilePermission>> fileAttributes = PosixFilePermissions.asFileAttribute(permissions);
-//                Files.createDirectory(dir, fileAttributes);
-//                File dir = new File(tempUoloadDir);
-//                if (!dir.exists()) {
-//                    dir.mkdirs();
-//                }
-
-            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(fielUploadHandlerAnnotatedName)));
-            Path dir = Paths.get(tempUoloadDir).toAbsolutePath();
-            try {
-                Files.createDirectories(dir);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-        if (StringUtils.isNotBlank(pingHandlerAnnotatedName)) {
-            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(pingHandlerAnnotatedName)));
-        }
-        if (StringUtils.isNotBlank(requestHandlerAnnotatedName)) {
-            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
-        }
-        if (StringUtils.isNotBlank(webSocketHandlerAnnotatedName)) {
-            INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(webSocketHandlerAnnotatedName)));
-        }
-    }
-
-    @JsonIgnore
-    public ChannelHandler getHttpFileUploadHandler() {
-        if (fielUploadHandlerAnnotatedName == null) {
-            return DefaultFileUploadRejector;
-        }
-        return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(fielUploadHandlerAnnotatedName)));
-    }
-
-    @JsonIgnore
-    public ChannelHandler getPingHandler() {
-        if (pingHandlerAnnotatedName == null) {
-            return null;
-        }
-        return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(pingHandlerAnnotatedName)));
-    }
-
-    @JsonIgnore
-    public ChannelHandler getRequestHandler() {
-        if (requestHandlerAnnotatedName == null) {
-            return null;
-        }
-        return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(requestHandlerAnnotatedName)));
-    }
-
-    @JsonIgnore
-    public ChannelHandler getWebSockettHandler() {
-        if (webSocketHandlerAnnotatedName == null) {
-            return null;
-        }
-        return INJECTOR.getInstance(Key.get(ChannelHandler.class, Names.named(webSocketHandlerAnnotatedName)));
-    }
-
     public boolean isWebSocketCompress() {
         return webSocketCompress;
+    }
+
+    public boolean isWebSocketAllowExtensions() {
+        return webSocketAllowExtensions;
     }
 
     public int getWebSocketMaxFrameSize() {
         return webSocketMaxFrameSize;
     }
 
-    public String getWebSocketSubprotocols() {
-        return webSocketSubprotocols;
+    public boolean isWebSocketAllowMaskMismatch() {
+        return webSocketAllowMaskMismatch;
     }
 
-    public boolean isWebSocketAllowExtensions() {
-        return webSocketAllowExtensions;
+    public boolean isWebSocketCheckStartsWith() {
+        return webSocketCheckStartsWith;
+    }
+
+    public boolean isWebSocketDropPongFrames() {
+        return webSocketDropPongFrames;
+    }
+
+    public long getWebSocketHandshakeTimeoutMillis() {
+        return webSocketHandshakeTimeoutMillis;
     }
 
     public List<InetSocketAddress> getBindingAddresses() {
@@ -610,12 +569,12 @@ public class NioConfig extends BootConfig {
         return soLinger;
     }
 
-    public int getSslHandshakeTimeout() {
-        return sslHandshakeTimeout;
+    public int getSslHandshakeTimeoutSeconds() {
+        return sslHandshakeTimeoutSeconds;
     }
 
-    public int getSoConnectionTimeout() {
-        return soConnectionTimeout;
+    public int getSoConnectionTimeoutSeconds() {
+        return soConnectionTimeoutSeconds;
     }
 
     public int getSoBacklog() {
@@ -678,20 +637,16 @@ public class NioConfig extends BootConfig {
         return bizTimeoutWarnThreshold;
     }
 
-    public int getReaderIdleTime() {
-        return readerIdleTime;
+    public int getReaderIdleSeconds() {
+        return readerIdleSeconds;
     }
 
-    public int getWriterIdleTime() {
-        return writerIdleTime;
+    public int getWriterIdleSeconds() {
+        return writerIdleSeconds;
     }
 
     public int getHealthInspectionIntervalSeconds() {
         return healthInspectionIntervalSeconds;
-    }
-
-    public boolean isHttpService() {
-        return httpService;
     }
 
     public boolean isFromJsonCaseInsensitive() {
@@ -708,25 +663,6 @@ public class NioConfig extends BootConfig {
 
     public boolean isToJsonPretty() {
         return toJsonPretty;
-    }
-
-//    public boolean isUseDefaultHTTPHandler() {
-//        return useDefaultHTTPHandler;
-//    }
-    public String getFielUploadHandlerAnnotatedName() {
-        return fielUploadHandlerAnnotatedName;
-    }
-
-    public String getPingHandlerAnnotatedName() {
-        return pingHandlerAnnotatedName;
-    }
-
-    public String getRequestHandlerAnnotatedName() {
-        return requestHandlerAnnotatedName;
-    }
-
-    public String getWebSocketHandlerAnnotatedName() {
-        return webSocketHandlerAnnotatedName;
     }
 
     public VerboseTargetUserType getFilterUserType() {

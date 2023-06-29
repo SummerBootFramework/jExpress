@@ -20,12 +20,14 @@ import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.mail.Authenticator;
 import java.io.File;
 import java.util.Properties;
 import java.util.Set;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import java.util.HashSet;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
@@ -41,7 +43,7 @@ public class SMTPClientConfig extends BootConfig {
         String t = generateTemplate(SMTPClientConfig.class);
         System.out.println(t);
     }
-    
+
     public static final SMTPClientConfig cfg = new SMTPClientConfig();
 
     private SMTPClientConfig() {
@@ -57,76 +59,65 @@ public class SMTPClientConfig extends BootConfig {
     //1. SMTP Settings
     @ConfigHeader(title = "1. SMTP Settings")
     @JsonIgnore
-    @Config(key = "mail.smtp.host")
-    protected volatile String smtpHost = "smtp.gmail.com";
+    @Config(key = "mail.smtp.host", required = false, desc = "The SMTP server to connect to. i.e. Gmail server: smtp.gmail.com")
+    protected volatile String smtpHost;
 
     @JsonIgnore
-    @Config(key = "mail.smtp.port",
-            desc = "Port 25: The original standard SMTP port\n"
-            + "Port 587: The standard secure SMTP port")
-    protected volatile int smtpPort = 587;
+    @Config(key = "mail.smtp.port", defaultValue = "25",
+            desc = "25: The original standard SMTP port\n"
+            + "587: The standard secure SMTP port")
+    protected volatile int smtpPort = 25;
 
     @JsonIgnore
-    @Config(key = "mail.smtp.auth")
-    protected volatile boolean smtpAuth = true;
+    @Config(key = "mail.smtp.auth", desc = "Whether to attempt to authenticate the user using the AUTH command")
+    protected volatile Boolean smtpAuth;
 
     @JsonIgnore
-    @Config(key = "mail.smtp.starttls.enable")
-    protected volatile boolean smtpStarttls = true;
+    @Config(key = "mail.smtp.starttls.enable", desc = "To inform the email server that the email client wants to upgrade from an insecure connection to a secure one using TLS or SSL")
+    protected volatile Boolean smtpStarttls;
 
+    public static final String KEY_USER_ACCOUNT = "mail.smtp.user";
     @JsonIgnore
-    @Config(key = "mail.smtp.userName", desc = "Display name")
-    protected volatile String smtpUserDisplayName = "John Doe";
+    @Config(key = KEY_USER_ACCOUNT, required = false, desc = "Sender email account, also as default username for SMTP when display name is not provided")
+    protected volatile String smtpUser;
 
+    public static final String KEY_USER_DISPLAYNAME = "mail.smtp.user.displayname";
     @JsonIgnore
-    @Config(key = "mail.smtp.user", desc = "Email account")
-    protected volatile String smtpUser = "johndoe@???.com";
+    @Config(key = KEY_USER_DISPLAYNAME, desc = "Sender display name")
+    protected volatile String smtpUserDisplayName;
 
+    public static final String KEY_USER_PWD = "mail.smtp.user.passwrod";
     @JsonIgnore
-    @Config(key = "mail.smtp.pwd", validate = Config.Validate.Encrypted)
+    @Config(key = KEY_USER_PWD, validate = Config.Validate.Encrypted)
     protected volatile String smtpPassword;
 
     //2. Alert Recipients
     @ConfigHeader(title = "2. Alert Recipients",
             format = "CSV format",
             example = "johndoe@test.com, janedoe@test.com")
-    @Config(key = "email.to.AppSupport", validate = Config.Validate.EmailRecipients,
+    public static final String KEY_MAILTO_APPSUPPORT = "email.to.AppSupport";
+    @Config(key = KEY_MAILTO_APPSUPPORT, validate = Config.Validate.EmailRecipients,
             desc = "The default alert email recipients")
     protected volatile Set<String> emailToAppSupport;
 
-    @Config(key = "email.to.Development", validate = Config.Validate.EmailRecipients,
+    public static final String KEY_MAILTO_DEV = "email.to.Development";
+    @Config(key = KEY_MAILTO_DEV, validate = Config.Validate.EmailRecipients,
             desc = "use AppSupport if not provided")
     protected volatile Set<String> emailToDevelopment;
 
+    public static final String KEY_MAILTO_REPORT = "email.to.ReportViewer";
     @Config(key = "email.to.ReportViewer", validate = Config.Validate.EmailRecipients,
             desc = "use AppSupport if not provided")
     protected volatile Set<String> emailToReportViewer;
 
-    @Config(key = "debouncing.emailalert_minute",
+    public static final String KEY_DEBOUCING_INTERVAL = "debouncing.emailalert_minute";
+    @Config(key = KEY_DEBOUCING_INTERVAL,
             desc = "Alert message with the same title will not be sent out within this minutes")
-    protected volatile int emailAlertDebouncingInterval = 30;
+    protected volatile int emailAlertDebouncingIntervalMinutes = 30;
 
     //3. mail session for Json display only
     private Properties mailSessionProp;
 
-//    @Override
-//    public String toString() {
-//        Properties p = (Properties) mailSession.getProperties().clone();
-//        p.put("mail.smtp.pwd", "***");
-//        p.put("cfgFile", cfgFile);
-//        p.put("session", mailSession.toString());
-//        try {
-//            //return "{" + "getConfigFile=" + getConfigFile + ", bindingAddresses=" + bindingAddresses + ", keyManagerFactory=" + keyManagerFactory + ", trustManagerFactory=" + trustManagerFactory + ", sslProtocols=" + Arrays.toString(sslProtocols) + ", sslCipherSuites=" + Arrays.toString(sslCipherSuites) + ", readerIdleTime=" + readerIdleTime + ", writerIdleTime=" + writerIdleTime + ", soBacklog=" + soBacklog + ", soConnectionTimeout=" + soConnectionTimeout + ", sslHandshakeTimeout=" + sslHandshakeTimeout + ", soRcvBuf=" + soRcvBuf + ", soSndBuf=" + soSndBuf + ", maxContentLength=" + maxContentLength + ", tpsWarnThreshold=" + tpsWarnThreshold + ", nioEventLoopGroupAcceptorSize=" + nioEventLoopGroupAcceptorSize + ", nioEventLoopGroupWorkerSize=" + nioEventLoopGroupWorkerSize + ", bizExecutorCoreSize=" + bizExecutorCoreSize + ", bizExecutorMaxSize=" + bizExecutorMaxSize + ", bizExecutorQueueSize=" + bizExecutorQueueSize + ", sslProvider=" + sslProvider + ", httpRequestHandlerImpl=" + httpRequestHandlerImpl + ", tpe=" + tpe + '}';
-//            return JsonUtil.toJson(p, true, false);
-//        } catch (JsonProcessingException ex) {
-//            return ex.toString();
-//        }
-//    }
-//
-//    @Override
-//    public String info() {
-//        return toString();
-//    }
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
         //1. SMTP recipients
@@ -152,8 +143,25 @@ public class SMTPClientConfig extends BootConfig {
             throw new IllegalArgumentException(error);
         }
 
-        mailSession = Session.getInstance(props,
-                new jakarta.mail.Authenticator() {
+        props.remove(KEY_USER_PWD);
+        props.remove(KEY_MAILTO_APPSUPPORT);
+        props.remove(KEY_MAILTO_DEV);
+        props.remove(KEY_MAILTO_REPORT);
+        props.remove(KEY_DEBOUCING_INTERVAL);
+        Object displayName = props.get(KEY_USER_DISPLAYNAME);
+        if (displayName == null) {
+            //displayName = System.getProperty(BootConstant.SYS_PROP_APP_VERSION_SHORT);// use major Version
+
+            displayName = props.get("mail.smtp.userName");// for backward compatibility only, will be depreacated in next release
+            if (displayName == null) {
+                displayName = System.getProperty(BootConstant.SYS_PROP_APP_VERSION_SHORT);// use major Version
+            }
+
+            if (displayName != null) {
+                props.put(KEY_USER_DISPLAYNAME, displayName);
+            }
+        }
+        mailSession = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(smtpUser, smtpPassword);
@@ -178,7 +186,7 @@ public class SMTPClientConfig extends BootConfig {
         return emailToReportViewer;
     }
 
-    public int getEmailAlertDebouncingInterval() {
-        return emailAlertDebouncingInterval;
+    public int getEmailAlertDebouncingIntervalMinutes() {
+        return emailAlertDebouncingIntervalMinutes;
     }
 }

@@ -17,19 +17,15 @@ package org.summerboot.jexpress.boot;
 
 import io.grpc.BindableService;
 import io.grpc.ServerServiceDefinition;
+import io.netty.channel.ChannelHandler;
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,6 +52,7 @@ import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.annotation.GrpcService;
+import org.summerboot.jexpress.boot.annotation.Service.ChannelHandlerType;
 import org.summerboot.jexpress.i18n.I18n;
 
 /**
@@ -68,6 +65,8 @@ abstract public class SummerSingularity implements BootConstant {
     protected static Logger log;
     protected static final String CLI_CONFIG_DOMAIN = "domain";
     protected static final String CLI_CONFIG_DIR = "cfgdir";
+    protected static final String DEFAULT_CFG_DIR_NAME = "configuration";
+    protected static final File DEFAULT_CFG_DIR = new File(DEFAULT_CFG_DIR_NAME).getAbsoluteFile();
     protected static final File CURRENT_DIR = new File("").getAbsoluteFile();
     protected File userSpecifiedConfigDir;
     protected File pluginDir;
@@ -101,6 +100,7 @@ abstract public class SummerSingularity implements BootConstant {
      * Format: bindingClass <--> {key=(ImplTag+named) <--> [@Service impl classes list]}
      */
     protected final Map<Class, Map<String, List<ServiceMetadata>>> scanedServiceBindingMap = new HashMap();
+    protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames = new HashMap();
 
     protected SummerSingularity(Class callerClass, String... args) {
         System.out.println("SummerApplication loading from " + BootConstant.HOST);
@@ -120,7 +120,7 @@ abstract public class SummerSingularity implements BootConstant {
         System.getProperties().remove(LOG4J2_JDKADAPTER_KEY);
         System.getProperties().remove(SYS_PROP_APP_PACKAGE_NAME, "");// used by log4j2.xml
         System.getProperties().remove(SYS_PROP_LOGFILENAME, "");// used by log4j2.xml
-        System.getProperties().remove(SYS_PROP_APP_VERSION, "");// used by BootController.version()    
+        System.getProperties().remove(SYS_PROP_APP_VERSION, "");// used by BootController.version()   
         System.setProperty(BootConstant.LOG4J2_KEY, "");
         // reset Scan Results
         jvmStartCommand = null;
@@ -180,24 +180,24 @@ abstract public class SummerSingularity implements BootConstant {
     }
 
     protected void scanAnnotation_Version(Class callerClass) {
-        Version v = (Version) callerClass.getAnnotation(Version.class);
-        if (v != null) {
-            String logManager = v.LogManager();
+        Version version = (Version) callerClass.getAnnotation(Version.class);
+        if (version != null) {
+            String logManager = version.LogManager();
             if (StringUtils.isNotBlank(logManager)) {
                 System.setProperty(LOG4J2_JDKADAPTER_KEY, logManager);// https://logging.apache.org/log4j/log4j-2.3.2/log4j-jul/index.html
             }
-            SummerApplication.SystemErrorCodeAsInt = v.SystemErrorCodeAsInt();
-            logFileName = v.logFileName();
+            SummerApplication.SystemErrorCodeAsInt = version.SystemErrorCodeAsInt();
+            logFileName = version.logFileName();
             if (StringUtils.isBlank(logFileName)) {
-                logFileName = v.value()[0];
+                logFileName = version.value()[0];
             }
-            appVersion = v.value()[0];
-            System.setProperty(SYS_PROP_ERROR_PAGE_TITLE, appVersion);
-            int versionCount = v.value().length;
+            appVersion = version.value()[0];
+            System.setProperty(SYS_PROP_APP_VERSION_SHORT, appVersion);
+            int versionCount = version.value().length;
             if (versionCount > 1) {
                 appVersion = appVersion + " (";
                 for (int i = 1; i < versionCount; i++) {
-                    appVersion = appVersion + v.value()[i] + " ";
+                    appVersion = appVersion + version.value()[i] + " ";
                 }
                 appVersion = appVersion + ")";
             }
@@ -221,7 +221,7 @@ abstract public class SummerSingularity implements BootConstant {
                     break;
                 } else if (("-" + CLI_CONFIG_DOMAIN).equals(cli)) {
                     String envTag = args[++i];
-                    String cfgDir = /*unittestWorkingDir +*/ "standalone_" + envTag + File.separator + "configuration";
+                    String cfgDir = /*unittestWorkingDir +*/ "standalone_" + envTag + File.separator + DEFAULT_CFG_DIR_NAME;
                     userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
                     System.setProperty("domainName", envTag);
                     break;
@@ -230,43 +230,32 @@ abstract public class SummerSingularity implements BootConstant {
         }
 
         if (userSpecifiedConfigDir == null) {
-            userSpecifiedConfigDir = CURRENT_DIR;
+            userSpecifiedConfigDir = DEFAULT_CFG_DIR;
         }
-        if (userSpecifiedConfigDir != null && (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead())) {
+        if (!userSpecifiedConfigDir.exists()) {
+            userSpecifiedConfigDir.mkdirs();
+        }
+
+//        if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
+//            //set log folder inside user specified config folder
+//            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
+//            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
+//        } else {
+        if (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead()) {
             System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
             System.exit(1);
         }
-
-        if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
-            //set log folder inside user specified config folder
-            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
-            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
-        } else {
-            //set log folder outside user specified config folder
-            System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
-            pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
-        }
+        //set log folder outside user specified config folder
+        System.setProperty(SYS_PROP_LOGGINGPATH, userSpecifiedConfigDir.getParent());//used by log4j2.xml
+        pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
+//        }
 
         /*
          * [Config File] Log4J - init
          */
-        Path logFilePath = Paths.get(userSpecifiedConfigDir.toString(), "log4j2.xml");
-        if (!Files.exists(logFilePath)) {
-            StringBuilder log4j2XML = new StringBuilder();
-            try (InputStream ioStream = this.getClass()
-                    .getClassLoader()
-                    .getResourceAsStream("log4j2.xml.temp"); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    log4j2XML.append(line).append(System.lineSeparator());
-                }
-                Files.writeString(logFilePath, log4j2XML);
-            } catch (IOException ex) {
-                System.out.println(ex + "\n\tCould generate log4j.xml at " + logFilePath);
-                ex.printStackTrace();
-                System.exit(1);
-            }
-        }
+        String location = userSpecifiedConfigDir.getAbsolutePath();
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        Path logFilePath = ApplicationUtil.createIfNotExist(location, classLoader, "log4j2.xml.temp", "log4j2.xml");
         String log4j2ConfigFile = logFilePath.toString();
         System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
         Locale userSpecifiedResourceBundle = null;
@@ -438,8 +427,9 @@ abstract public class SummerSingularity implements BootConstant {
             String named = serviceAnnotation.named().trim();
             String implTag = serviceAnnotation.implTag().trim();
             tags.add(implTag);
-            String uniqueKey = implTag + named;
+            String uniqueKey = "named=" + named + ", implTag=" + implTag;
             Class[] bindingClasses = serviceAnnotation.binding();
+            Service.ChannelHandlerType ChannelHandlerType = serviceAnnotation.type();
             if (bindingClasses != null && bindingClasses.length > 0) {//developer specified 
                 for (Class bindingClass : bindingClasses) {
                     if (!bindingClass.isAssignableFrom(serviceImplClass)) {
@@ -450,7 +440,7 @@ abstract public class SummerSingularity implements BootConstant {
                         sb.append("\n\t").append(serviceImplClass).append(" specifies @").append(Service.class.getSimpleName()).append("(binding=").append(bindingClass.getSimpleName()).append(".class), which is not in its Interfaces:").append(interfaces);
                         continue;
                     }
-                    scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, new ServiceMetadata(serviceImplClass, named, implTag));
+                    scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, new ServiceMetadata(serviceImplClass, named, implTag, ChannelHandlerType), sb);
                 }
             } else {//bindingClass not specified by developer, use its declaired interfaces by default
                 List<Class> declaredInterfaces = ReflectionUtil.getAllInterfaces(serviceImplClass, false);
@@ -467,7 +457,7 @@ abstract public class SummerSingularity implements BootConstant {
                     continue;
                 }
                 for (Class bindingClass : declaredInterfaces) {
-                    scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, new ServiceMetadata(serviceImplClass, named, implTag));
+                    scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, new ServiceMetadata(serviceImplClass, named, implTag, ChannelHandlerType), sb);
                 }
             }
         }
@@ -488,7 +478,7 @@ abstract public class SummerSingularity implements BootConstant {
         return serviceImplTags;
     }
 
-    protected void scanAnnotation_Service_Add2BindingMap(Class bindingClass, String uniqueKey, ServiceMetadata service) {
+    protected void scanAnnotation_Service_Add2BindingMap(Class bindingClass, String uniqueKey, ServiceMetadata service, StringBuilder sb) {
         memo.append("\n\t- scan.taggedservice.add to guiceModule.bind(").append(bindingClass.getName()).append(").to(").append(service).append("), uniqueKey=").append(uniqueKey);
         Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(bindingClass);
         if (taggeServicedMap == null) {
@@ -500,6 +490,12 @@ abstract public class SummerSingularity implements BootConstant {
             serviceImplList = new ArrayList();
             taggeServicedMap.put(uniqueKey, serviceImplList);
         }
+        if (bindingClass.equals(ChannelHandler.class)) {
+            ChannelHandlerType channelHandlerType = service.getChannelHandlerType();
+            if (channelHandlerType == null || channelHandlerType == ChannelHandlerType.nptspecified) {
+                sb.append("\n\t").append(service.getServiceImplClass()).append(" needs to specify type @").append(Service.class.getSimpleName()).append("(binding=ChannelHandler.class, type=?), when binding=ChannelHandler.class");
+            }
+        }
         serviceImplList.add(service);
     }
 
@@ -510,7 +506,7 @@ abstract public class SummerSingularity implements BootConstant {
                 List<ServiceMetadata> serviceImplList = taggeServicedMap.get(keyImplTag);
                 int size = serviceImplList.size();
                 if (size != 1) {
-                    sb.append("\nIOC ").append(keyBindingClass).append(" required a single bean, but ").append(size).append(" were found with the same useImplTag(").append(keyImplTag).append("): ").append(serviceImplList);
+                    sb.append("\nIOC ").append(keyBindingClass).append(" required a single bean, but ").append(size).append(" were found with the same named+implTag(").append(keyImplTag).append("): ").append(serviceImplList);
                 }
             }
         }
@@ -577,11 +573,13 @@ abstract public class SummerSingularity implements BootConstant {
         final Class serviceImplClass;
         final String named;
         final String implTag;
+        final ChannelHandlerType channelHandlerType;
 
-        public ServiceMetadata(Class serviceImplClass, String named, String implTag) {
+        public ServiceMetadata(Class serviceImplClass, String named, String implTag, ChannelHandlerType channelHandlerType) {
             this.serviceImplClass = serviceImplClass;
             this.named = named;
             this.implTag = implTag;
+            this.channelHandlerType = channelHandlerType;
         }
 
         @Override
@@ -601,5 +599,8 @@ abstract public class SummerSingularity implements BootConstant {
             return implTag;
         }
 
+        public ChannelHandlerType getChannelHandlerType() {
+            return channelHandlerType;
+        }
     }
 }

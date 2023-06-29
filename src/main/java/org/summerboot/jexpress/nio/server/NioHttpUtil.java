@@ -58,6 +58,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.util.TimeUtil;
@@ -284,7 +285,19 @@ public class NioHttpUtil {
         sendWebResource(httpRequestPath, response);
     }
 
-    public static void sendWebResource(final String httpRequestPath, final ServiceContext response) {
+    public static void sendWebResource(final String httpRequestPath, final ServiceContext context) {
+        HttpHeaders headers = context.requestHeaders();
+        if (headers != null) {
+            String accept = headers.get(HttpHeaderNames.ACCEPT);
+            if (accept != null) {
+                accept = accept.toLowerCase();
+                if (!accept.contains("html") && !accept.contains("web") && !accept.contains("image") && (accept.contains("json") || accept.contains("xml"))) {
+                    var error = new Err(BootErrorCode.NIO_WSRS_REQUEST_BAD_DATA, null, "Client expect " + accept + ", but request a web resource", null);
+                    context.error(error).status(HttpResponseStatus.NOT_FOUND);
+                    return;
+                }
+            }
+        }
         File webResourceFile = WebResourceCache.get(httpRequestPath);
         if (webResourceFile == null) {
             String filePath = NioConfig.cfg.getDocrootDir() + httpRequestPath;
@@ -292,7 +305,7 @@ public class NioHttpUtil {
             webResourceFile = new File(filePath).getAbsoluteFile();
             WebResourceCache.put(httpRequestPath, webResourceFile);
         }
-        response.file(webResourceFile, false).level(Level.TRACE);
+        context.file(webResourceFile, false).level(Level.TRACE);
     }
 
     public static String getFileContentType(File file) {

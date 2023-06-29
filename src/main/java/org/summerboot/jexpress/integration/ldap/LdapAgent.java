@@ -46,6 +46,7 @@ import javax.naming.ldap.LdapContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.security.auth.AuthConfig;
 import org.summerboot.jexpress.security.auth.AuthenticatorListener;
 import org.summerboot.jexpress.security.auth.User;
 
@@ -72,7 +73,10 @@ public class LdapAgent implements Closeable {
 
     public static String replaceOU(String dn, String newOU) {
         return dn.replaceFirst("(ou=)([^,]*)", "$1" + escape(newOU));
+    }
 
+    public static LdapAgent build() throws NamingException {
+        return new LdapAgent(AuthConfig.cfg.getLdapConfig(), AuthConfig.cfg.getLdapBaseDN(), AuthConfig.cfg.isTypeAD(), AuthConfig.cfg.getLdapScheamTenantGroupOU());
     }
 
     public static Properties buildCfg(String host, int port, boolean isSSL, String ldapSSLConnectionFactoryClassName, String sslProtocol, String bindingUserDN, String bindingPassword) {

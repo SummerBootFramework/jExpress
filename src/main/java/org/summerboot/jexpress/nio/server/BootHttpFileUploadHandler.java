@@ -55,6 +55,8 @@ import io.netty.handler.codec.DecoderException;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
+//NOT @ChannelHandler.Sharable due to BootHttpFileUploadHandler is stateful
+//NOT @Singleton
 public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHandler<HttpObject> {
 
     protected Logger log = LogManager.getLogger(this.getClass());

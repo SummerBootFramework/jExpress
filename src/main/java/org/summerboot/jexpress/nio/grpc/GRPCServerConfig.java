@@ -62,52 +62,75 @@ public class GRPCServerConfig extends BootConfig {
     @ConfigHeader(title = "1. " + ID + " Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8424, 127.0.0.1:8424, 0.0.0.0:8424")
-    @Config(key = ID + ".bindings", defaultValue = "0.0.0.0:8424")
+    @Config(key = ID + ".bindings", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = true)
     private volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = ID + ".autostart", defaultValue = "true")
     private volatile boolean autoStart;
 
-    @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "CPU",
+    @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "Mixed",
             desc = "valid value = CPU (default), IO, Mixed")
-    private volatile ThreadingMode threadingMode = ThreadingMode.CPU;
+    private volatile ThreadingMode threadingMode = ThreadingMode.Mixed;
 
-    @Config(key = ID + ".pool.coreSize")
-    private volatile int poolCoreSize = availableProcessors + 1;
+    @Config(key = ID + ".pool.coreSize", predefinedValue = "0",
+            desc = "coreSize 0 = current computer/VM's available processors x 2 + 1")
+    private volatile int poolCoreSize = availableProcessors * 2 + 1;
 
-    @Config(key = ID + ".pool.maxSize")
-    private volatile int poolMaxSizeMaxSize = availableProcessors + 1;
+    @Config(key = ID + ".pool.maxSize", predefinedValue = "0",
+            desc = "maxSize 0 = current computer/VM's available processors x 2 + 1")
+    private volatile int poolMaxSizeMaxSize = availableProcessors * 2 + 1;
 
-    @Config(key = ID + ".pool.queueSize", defaultValue = "" + Integer.MAX_VALUE)//2147483647
-    private volatile int poolQueueSize;
+    @Config(key = ID + ".pool.queueSize", defaultValue = "" + Integer.MAX_VALUE,
+            desc = "The waiting list size when the pool is full")
+    private volatile int poolQueueSize = Integer.MAX_VALUE;
 
     @Config(key = ID + ".pool.keepAliveSeconds", defaultValue = "60")
-    private volatile long keepAliveSeconds;
-
-    @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
-    private volatile int healthInspectionIntervalSeconds;
+    private volatile long keepAliveSeconds = 60;
 
     //2. TRC (The Remote Callee) keystore
+    private static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    private static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    private static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    private static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
+
     @ConfigHeader(title = "2. " + ID + " keystore")
-    @Config(key = ID + ".ssl.KeyStore", StorePwdKey = ID + ".ssl.KeyStorePwd",
-            AliasKey = ID + ".ssl.KeyAlias", AliasPwdKey = ID + ".ssl.KeyPwd")
-    @JsonIgnore
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = DESC_KMF,
+            callbackMethodName4Dump = "generateTemplate_keystore")
+    //@JsonIgnore
     protected volatile KeyManagerFactory kmf;
 
-    //3. TRC (The Remote Callee) truststore
+    protected void generateTemplate_keystore(StringBuilder sb) {
+        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
+        sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_kmf_AliasKey + "=server2_4096.jexpress.org\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
+        generateTemplate = true;
+    }
+
+    //3. TRC (The Remote Callee) truststore    
+    private static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    private static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
-    @Config(key = ID + ".ssl.TrustStore", StorePwdKey = ID + ".ssl.TrustStorePwd")
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
+            desc = DESC_TMF)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
-    @Config(key = ID + ".ssl.overrideAuthority")
+    protected void generateTemplate_truststore(StringBuilder sb) {
+        sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4SERVER + "\n");
+        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+        generateTemplate = true;
+    }
 
     @Override
-    protected void reset() {
+    protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
+        createIfNotExist(FILENAME_KEYSTORE);
+        createIfNotExist(FILENAME_TRUSTSTORE_4SERVER);
     }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        int cpuCoreSize = Runtime.getRuntime().availableProcessors();
+        int cpuCoreSize = availableProcessors;
         switch (threadingMode) {
             case CPU:// use CPU_Bound core + 1 when application is CPU_Bound bound
                 poolCoreSize = cpuCoreSize + 1;
@@ -161,10 +184,6 @@ public class GRPCServerConfig extends BootConfig {
 
     public long getKeepAliveSeconds() {
         return keepAliveSeconds;
-    }
-
-    public int getHealthInspectionIntervalSeconds() {
-        return healthInspectionIntervalSeconds;
     }
 
     public KeyManagerFactory getKmf() {

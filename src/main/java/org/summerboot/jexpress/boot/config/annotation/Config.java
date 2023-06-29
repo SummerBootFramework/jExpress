@@ -39,6 +39,8 @@ public @interface Config {
     //String requiredWhen() default "";
     String defaultValue() default "";
 
+    String predefinedValue() default "";
+
     Validate validate() default Validate.None;
 
     String StorePwdKey() default "";
@@ -50,5 +52,12 @@ public @interface Config {
     public enum Validate {
         None, Encrypted, EmailRecipients
     }
+
+    /**
+     * protected void callbackMethodName(StringBuilder sb) {
+     *
+     * @return
+     */
+    String callbackMethodName4Dump() default "";
 
 }
