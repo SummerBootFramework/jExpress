@@ -388,7 +388,7 @@ public class NioConfig extends BootConfig {
         tempUoloadDir = rootFolder.getAbsolutePath() + File.separator + tempUoload;
 
         //8. Default NIO Response HTTP Headers
-        serverDefaultResponseHeaders = new DefaultHttpHeaders(false);
+        serverDefaultResponseHeaders = new DefaultHttpHeaders(true);
         Set<String> _keys = props.keySet().stream().map(o -> o.toString()).collect(Collectors.toSet());
         List<String> keys = new ArrayList<>(_keys);
         keys.forEach((name) -> {
