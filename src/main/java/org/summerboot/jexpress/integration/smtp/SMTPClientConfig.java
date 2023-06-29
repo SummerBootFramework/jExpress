@@ -150,9 +150,15 @@ public class SMTPClientConfig extends BootConfig {
         props.remove(KEY_DEBOUCING_INTERVAL);
         Object displayName = props.get(KEY_USER_DISPLAYNAME);
         if (displayName == null) {
-            String majorVersion = System.getProperty(BootConstant.SYS_PROP_APP_VERSION_SHORT);
-            if (majorVersion != null) {
-                props.put(KEY_USER_DISPLAYNAME, majorVersion);
+            //displayName = System.getProperty(BootConstant.SYS_PROP_APP_VERSION_SHORT);// use major Version
+
+            displayName = props.get("mail.smtp.userName");// for backward compatibility only, will be depreacated in next release
+            if (displayName == null) {
+                displayName = System.getProperty(BootConstant.SYS_PROP_APP_VERSION_SHORT);// use major Version
+            }
+
+            if (displayName != null) {
+                props.put(KEY_USER_DISPLAYNAME, displayName);
             }
         }
         mailSession = Session.getInstance(props, new Authenticator() {
