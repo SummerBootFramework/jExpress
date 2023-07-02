@@ -122,6 +122,9 @@ public class LdapAgent implements Closeable {
     }
 
     public LdapAgent(Properties cfg, String baseDN, boolean isAD, String tenantGroupName) throws NamingException {
+        if (cfg == null || baseDN == null) {
+            throw new UnsupportedOperationException("LDAP is not configured yet: " + AuthConfig.cfg.getCfgFile().getAbsolutePath() + ". or create your own service implements org.summerboot.jexpress.security.auth.Authenticator and annotated with @Service(binding = Authenticator.class)");
+        }
         this.cfg = cfg;
         this.baseDN = escape(baseDN);
         this.isAD = isAD;

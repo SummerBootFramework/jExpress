@@ -60,12 +60,12 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
     @Inject(optional = true)
     protected AuthenticatorListener authenticatorListener;
 
-    @Inject(optional = true)
+    @Inject
     protected AuthTokenCache authTokenCache;
 
     /**
      *
-     * @param uid
+     * @param usename
      * @param pwd
      * @param validForMinutes
      * @param context
@@ -73,13 +73,13 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
      * @throws NamingException
      */
     @Override
-    public String signJWT(String uid, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException {
+    public String signJWT(String usename, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException {
         //1. protect request body from being logged
         //context.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
 
         //2. signJWT caller against LDAP or DB
         context.poi(BootPOI.LDAP_BEGIN);
-        Caller caller = authenticate(uid, pwd, (T) metaData, authenticatorListener, context);
+        Caller caller = authenticate(usename, pwd, (T) metaData, authenticatorListener, context);
         context.poi(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);

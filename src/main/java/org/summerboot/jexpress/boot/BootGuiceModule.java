@@ -50,7 +50,7 @@ import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioExceptionListener;
 import org.summerboot.jexpress.nio.server.NioLifecycleListener;
 import org.summerboot.jexpress.security.auth.Authenticator;
-import org.summerboot.jexpress.security.auth.AuthenticatorMockImpl;
+import org.summerboot.jexpress.security.auth.AuthenticatorLDAPImpl;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
 /**
@@ -112,11 +112,11 @@ public class BootGuiceModule extends AbstractModule {
         bind(AuthTokenCache.class).to(AuthTokenCacheLocalImpl.class);
         memo.append(INFO).append(AuthTokenCache.class.getName()).append(BIND_TO).append(AuthTokenCacheLocalImpl.class.getName());
 
-        bind(Authenticator.class).to(AuthenticatorMockImpl.class);
-        memo.append(INFO).append(Authenticator.class.getName()).append(BIND_TO).append(AuthenticatorMockImpl.class.getName());
+        bind(Authenticator.class).to(AuthenticatorLDAPImpl.class);
+        memo.append(INFO).append(Authenticator.class.getName()).append(BIND_TO).append(AuthenticatorLDAPImpl.class.getName());
 
-        bind(ServerInterceptor.class).to(AuthenticatorMockImpl.class);
-        memo.append(INFO).append(ServerInterceptor.class.getName()).append(BIND_TO).append(AuthenticatorMockImpl.class.getName());
+        bind(ServerInterceptor.class).to(AuthenticatorLDAPImpl.class);
+        memo.append(INFO).append(ServerInterceptor.class.getName()).append(BIND_TO).append(AuthenticatorLDAPImpl.class.getName());
 
         bind(NioExceptionListener.class).to(BootNioExceptionHandler.class);
         memo.append(INFO).append(NioExceptionListener.class.getName()).append(BIND_TO).append(BootNioExceptionHandler.class.getName());
