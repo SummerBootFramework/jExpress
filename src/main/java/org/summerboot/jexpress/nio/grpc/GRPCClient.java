@@ -113,6 +113,9 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                 sslBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
             } else {
                 sslBuilder.trustManager(trustManagerFactory);
+                if (overrideAuthority != null) {
+                    channelBuilder.overrideAuthority(overrideAuthority);
+                }
             }
             GrpcSslContexts.configure(sslBuilder, SslProvider.OPENSSL);
             if (tlsVersionProtocols != null) {
@@ -123,9 +126,6 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
             }
             SslContext sslContext = sslBuilder.build();
             channelBuilder.sslContext(sslContext).useTransportSecurity();
-            if (overrideAuthority != null) {
-                channelBuilder.overrideAuthority(overrideAuthority);
-            }
         }
         return channelBuilder;
     }
