@@ -23,8 +23,10 @@ import org.summerboot.jexpress.util.ApplicationUtil;
  */
 public interface BootConstant {
 
+    int CPU_CORE = Runtime.getRuntime().availableProcessors();
+
     //version
-    String VERSION = "SummerBoot.jExpress 2.3.7";
+    String VERSION = "SummerBoot.jExpress 2.3.8";
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";

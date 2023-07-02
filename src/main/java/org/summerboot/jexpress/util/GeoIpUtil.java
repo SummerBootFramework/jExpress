@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.URL;
 import java.util.Enumeration;
@@ -103,5 +104,20 @@ public class GeoIpUtil {
         ret[1] = sb1.toString();
         ret[2] = systemInfo;
         return ret;
+    }
+
+    public static void showAddress(String host, int port) {
+        InetSocketAddress address = new InetSocketAddress(host, port);
+        System.out.println("\n" + host);
+        showAddress(address);
+    }
+
+    public static void showAddress(InetSocketAddress address) {
+        System.out.println("\t getHostName: " + address.getHostName());
+        System.out.println("\t getHostString: " + address.getHostString());
+        System.out.println("\t getCanonicalHostName: " + address.getAddress().getCanonicalHostName());
+        System.out.println("\t getHostAddress: " + address.getAddress().getHostAddress());
+        System.out.println("\t getHostName: " + address.getAddress().getHostName());
+        System.out.println("\n");
     }
 }

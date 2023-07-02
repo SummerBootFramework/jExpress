@@ -19,6 +19,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
+import io.grpc.ServerInterceptor;
 import io.netty.channel.ChannelHandler;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
@@ -113,6 +114,9 @@ public class BootGuiceModule extends AbstractModule {
 
         bind(Authenticator.class).to(AuthenticatorMockImpl.class);
         memo.append(INFO).append(Authenticator.class.getName()).append(BIND_TO).append(AuthenticatorMockImpl.class.getName());
+
+        bind(ServerInterceptor.class).to(AuthenticatorMockImpl.class);
+        memo.append(INFO).append(ServerInterceptor.class.getName()).append(BIND_TO).append(AuthenticatorMockImpl.class.getName());
 
         bind(NioExceptionListener.class).to(BootNioExceptionHandler.class);
         memo.append(INFO).append(NioExceptionListener.class.getName()).append(BIND_TO).append(BootNioExceptionHandler.class.getName());

@@ -217,7 +217,7 @@ abstract public class BootController extends PingController {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
-    //@CaptureTransaction("user.login")
+    //@CaptureTransaction("user.signJWT")
     @Log(requestBody = false, responseHeader = false)
     @Operation(
             tags = {TAG_USER_AUTH},
@@ -248,7 +248,7 @@ abstract public class BootController extends PingController {
             context.error(new Err(BootErrorCode.ACCESS_ERROR, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
         }
-        String jwt = auth.login(uid, pwd, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
+        String jwt = auth.signJWT(uid, pwd, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
         if (jwt == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
         } else {
@@ -260,7 +260,7 @@ abstract public class BootController extends PingController {
     @DELETE
     @Path(Config.CURRENT_VERSION + Config.API_USER_LOGOUT)
     //@PermitAll
-    //@CaptureTransaction("user.logout")
+    //@CaptureTransaction("user.logoutToken")
     @Operation(
             tags = {TAG_USER_AUTH},
             summary = "User logout",
@@ -284,7 +284,7 @@ abstract public class BootController extends PingController {
             return;
         }
         //AuthTokenCache authTokenCache = getAuthTokenCache();
-        auth.logout(request.getHttpHeaders(), authTokenCache, context);
+        auth.logoutToken(request.getHttpHeaders(), authTokenCache, context);
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 

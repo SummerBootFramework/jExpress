@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.security.auth;
 
+import com.google.inject.Inject;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
@@ -23,6 +24,13 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import com.google.inject.Singleton;
+import io.grpc.Context;
+import io.grpc.Contexts;
+import io.grpc.Metadata;
+import io.grpc.ServerCall;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
+import io.grpc.Status;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtBuilder;
@@ -38,6 +46,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.naming.NamingException;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.nio.grpc.BearerAuthCredential;
+import org.summerboot.jexpress.nio.server.RequestProcessor;
 
 /**
  *
@@ -45,19 +55,13 @@ import org.apache.commons.lang3.StringUtils;
  * @param <T> authenticate(T metaData)
  */
 @Singleton
-public abstract class BootAuthenticator<T> implements Authenticator {
+public abstract class BootAuthenticator<T> implements Authenticator, ServerInterceptor {
 
-    protected AuthenticatorListener listener;
-    protected AuthConfig authCfg = AuthConfig.cfg;
+    @Inject(optional = true)
+    protected AuthenticatorListener authenticatorListener;
 
-    /**
-     *
-     * @param listener
-     */
-    @Override
-    public void setListener(AuthenticatorListener listener) {
-        this.listener = listener;
-    }
+    @Inject(optional = true)
+    protected AuthTokenCache authTokenCache;
 
     /**
      *
@@ -69,13 +73,13 @@ public abstract class BootAuthenticator<T> implements Authenticator {
      * @throws NamingException
      */
     @Override
-    public String login(String uid, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException {
+    public String signJWT(String uid, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException {
         //1. protect request body from being logged
         //context.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
 
-        //2. login caller against LDAP or DB
+        //2. signJWT caller against LDAP or DB
         context.poi(BootPOI.LDAP_BEGIN);
-        Caller caller = authenticate(uid, pwd, (T) metaData, listener, context);
+        Caller caller = authenticate(uid, pwd, (T) metaData, authenticatorListener, context);
         context.poi(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
@@ -86,11 +90,10 @@ public abstract class BootAuthenticator<T> implements Authenticator {
         JwtBuilder builder = toJwt(caller);
 
         //4. create JWT
-        //String token = JwtUtil.createJWT(authCfg.getJwtSignatureAlgorithm(),
-        Key signingKey = authCfg.getJwtSigningKey();
+        Key signingKey = AuthConfig.cfg.getJwtSigningKey();
         String token = JwtUtil.createJWT(signingKey, builder, Duration.ofMinutes(validForMinutes));
-        if (listener != null) {
-            listener.onLoginSuccess(caller.getUid(), token);
+        if (authenticatorListener != null) {
+            authenticatorListener.onLoginSuccess(caller.getUid(), token);
         }
         context.caller(caller);
         return token;
@@ -115,10 +118,9 @@ public abstract class BootAuthenticator<T> implements Authenticator {
      * @param caller
      * @return formatted auth token builder
      */
-    @Override
-    public JwtBuilder toJwt(Caller caller) {
+    protected JwtBuilder toJwt(Caller caller) {
         String jti = caller.getTenantId() + "." + caller.getId() + "_" + caller.getUid() + "_" + System.currentTimeMillis();
-        String issuer = authCfg.getJwtIssuer();
+        String issuer = AuthConfig.cfg.getJwtIssuer();
         String userName = caller.getUid();
         Set<String> groups = caller.getGroups();
         String groupsCsv = groups == null || groups.size() < 1
@@ -153,6 +155,10 @@ public abstract class BootAuthenticator<T> implements Authenticator {
         return builder;
     }
 
+    protected Claims parseJWT(String jwt) {
+        return JwtUtil.parseJWT(AuthConfig.cfg.getJwtParser(), jwt).getBody();
+    }
+
     /**
      * Convert Caller back from auth token, override this method to implement
      * customized token format
@@ -160,8 +166,7 @@ public abstract class BootAuthenticator<T> implements Authenticator {
      * @param claims
      * @return Caller
      */
-    @Override
-    public Caller fromJwt(Claims claims) {
+    protected Caller fromJwt(Claims claims) {
         //String jti = claims.getId();
         //String issuer = claims.getIssuer();
         String userName = claims.getSubject();
@@ -202,25 +207,38 @@ public abstract class BootAuthenticator<T> implements Authenticator {
     }
 
     /**
+     * Retrieve token based on RFC 6750 - The OAuth 2.0 Authorization Framework
+     * override this method to get customized token
      *
      * @param httpRequestHeaders
      * @return
      */
-    @Override
-    public String getBearerToken(HttpHeaders httpRequestHeaders) {
-        String authToken = httpRequestHeaders.get(HttpHeaderNames.AUTHORIZATION);
-        if (StringUtils.isBlank(authToken) || !authToken.startsWith("Bearer ")) {
+    protected String getBearerToken(HttpHeaders httpRequestHeaders) {
+        String authHeaderValue = httpRequestHeaders.get(HttpHeaderNames.AUTHORIZATION);
+        return getBearerToken(authHeaderValue);
+    }
+
+    /**
+     * Retrieve token based on RFC 6750 - The OAuth 2.0 Authorization Framework
+     * override this method to get customized token
+     *
+     * @param authHeaderValue "Bearer jwt"
+     * @return
+     */
+    protected String getBearerToken(String authHeaderValue) {
+        // return authHeaderValue.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
+        if (StringUtils.isBlank(authHeaderValue) || !authHeaderValue.startsWith("Bearer ")) {
             return null;
         }
-        String[] a = authToken.split(" ");
+        String[] a = authHeaderValue.split(" ");
         if (a.length < 2) {
             return null;
         }
-        authToken = a[1];
-        if (StringUtils.isBlank(authToken)) {
+        authHeaderValue = a[1];
+        if (StringUtils.isBlank(authHeaderValue)) {
             return null;
         }
-        return authToken;
+        return authHeaderValue;
     }
 
     /**
@@ -232,7 +250,7 @@ public abstract class BootAuthenticator<T> implements Authenticator {
      * @return
      */
     @Override
-    public Caller verifyBearerToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
+    public Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
         String authToken = getBearerToken(httpRequestHeaders);
         return verifyToken(authToken, cache, errorCode, context);
     }
@@ -254,10 +272,13 @@ public abstract class BootAuthenticator<T> implements Authenticator {
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
-                Claims claims = JwtUtil.parseJWT(authCfg.getJwtParser(), authToken).getBody();
+                Claims claims = parseJWT(authToken);
                 String jti = claims.getId();
                 context.callerId(jti);
-                if (cache != null && cache.isBlacklist(jti)) {// because jti is used as blacklist key in logout
+                if (cache == null) {
+                    cache = authTokenCache;
+                }
+                if (cache != null && cache.isBlacklist(jti)) {// because jti is used as blacklist key in logoutToken
                     Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "AuthToken has been logout", null);
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
@@ -275,6 +296,11 @@ public abstract class BootAuthenticator<T> implements Authenticator {
         return caller;
     }
 
+    @Override
+    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+        return true;
+    }
+
     protected Integer overrideVerifyTokenErrorCode() {
         return null;
     }
@@ -286,9 +312,9 @@ public abstract class BootAuthenticator<T> implements Authenticator {
      * @param context
      */
     @Override
-    public void logout(HttpHeaders httpRequestHeaders, AuthTokenCache cache, ServiceContext context) {
+    public void logoutToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, ServiceContext context) {
         String authToken = getBearerToken(httpRequestHeaders);
-        logout(authToken, cache, context);
+        logoutToken(authToken, cache, context);
     }
 
     /**
@@ -298,18 +324,21 @@ public abstract class BootAuthenticator<T> implements Authenticator {
      * @param context
      */
     @Override
-    public void logout(String authToken, AuthTokenCache cache, ServiceContext context) {
+    public void logoutToken(String authToken, AuthTokenCache cache, ServiceContext context) {
         try {
-            Claims claims = JwtUtil.parseJWT(authCfg.getJwtParser(), authToken).getBody();
+            Claims claims = parseJWT(authToken);
             String jti = claims.getId();
             String uid = claims.getSubject();
             Date exp = claims.getExpiration();
             long expireInMilliseconds = exp.getTime() - System.currentTimeMillis();
+            if (cache == null) {
+                cache = authTokenCache;
+            }
             if (cache != null) {
                 cache.blacklist(jti, authToken, expireInMilliseconds);
             }
-            if (listener != null) {
-                listener.onLogout(claims, authToken, expireInMilliseconds);
+            if (authenticatorListener != null) {
+                authenticatorListener.onLogout(claims, authToken, expireInMilliseconds);
             }
         } catch (ExpiredJwtException ex) {
             //ignore
@@ -320,4 +349,52 @@ public abstract class BootAuthenticator<T> implements Authenticator {
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
+    private static final String ERROR = "Bearer Authorization Failed: ";
+
+    /**
+     * gRPC JWT verification
+     *
+     * @param <ReqT>
+     * @param <RespT>
+     * @param serverCall
+     * @param metadata
+     * @param serverCallHandler
+     * @return
+     */
+    @Override
+    public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
+        Status status;
+        String headerValueAuthorization = metadata.get(BearerAuthCredential.AUTHORIZATION_METADATA_KEY);
+        if (headerValueAuthorization == null) {
+            //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");
+            return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
+        } else if (!headerValueAuthorization.startsWith(BearerAuthCredential.BEARER_TYPE)) {
+            status = Status.INVALID_ARGUMENT.withDescription(ERROR + "Unknown authorization type, non bearer token provided");
+        } else {
+            try {
+                Context ctx = Context.current();
+                String jwt = headerValueAuthorization.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
+                ServiceContext context = ServiceContext.build(0);
+                Caller caller = verifyToken(jwt, authTokenCache, null, context);
+                if (caller == null) {
+                    String desc = context.error().getErrors().get(0).getErrorDesc();
+                    status = Status.INVALID_ARGUMENT.withDescription(ERROR + desc);
+                    //throw new StatusRuntimeException(status);
+                } else {
+                    ctx = ctx.withValue(GrpcCaller, caller);
+                    String jti = context.callerId();
+                    if (jti != null) {
+                        ctx = ctx.withValue(GrpcCallerId, jti);
+                    }
+                    return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
+                }
+            } catch (Throwable ex) {
+                status = Status.INVALID_ARGUMENT.withDescription(ERROR + ex.getMessage()).withCause(ex);
+            }
+        }
+
+        serverCall.close(status, metadata);
+        return new ServerCall.Listener<ReqT>() {
+        };
+    }
 }

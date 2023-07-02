@@ -158,7 +158,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         if (authenticator == null) {
             return true;//ignore token when authenticator is not implemented
         }
-        authenticator.verifyBearerToken(httpRequestHeaders, tokenCache, null, context);
+        authenticator.verifyToken(httpRequestHeaders, tokenCache, null, context);
         return context.caller() != null;
     }
 

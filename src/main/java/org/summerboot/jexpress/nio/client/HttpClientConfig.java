@@ -44,6 +44,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
@@ -154,16 +155,14 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.timeout.ms")
     private volatile long httpClientTimeoutMs = 5000;
 
-    private final int availableProcessors = Runtime.getRuntime().availableProcessors();
-
     @Config(key = "httpclient.executor.CoreSize", predefinedValue = "0",
             desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int httpClientCoreSize = availableProcessors * 2 + 1;// how many tasks running at the same time
+    private volatile int httpClientCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
     private volatile int currentCore;
 
     @Config(key = "httpclient.executor.MaxSize", predefinedValue = "0",
             desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int httpClientMaxSize = availableProcessors * 2 + 1;// how many tasks running at the same time
+    private volatile int httpClientMaxSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
     @Config(key = "httpclient.executor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
@@ -236,10 +235,10 @@ abstract public class HttpClientConfig extends BootConfig {
 
         // 3.3 HTTP Client Executor
         if (httpClientCoreSize <= 0) {
-            httpClientCoreSize = availableProcessors * 2 + 1;
+            httpClientCoreSize = BootConstant.CPU_CORE * 2 + 1;
         }
         if (httpClientMaxSize <= 0) {
-            httpClientMaxSize = availableProcessors * 2 + 1;
+            httpClientMaxSize = BootConstant.CPU_CORE * 2 + 1;
         }
         if (httpClientMaxSize < httpClientCoreSize) {
             helper.addError("MaxSize should not less than CoreSize");

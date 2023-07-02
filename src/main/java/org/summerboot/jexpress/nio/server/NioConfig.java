@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
@@ -182,11 +183,9 @@ public class NioConfig extends BootConfig {
             desc = "AcceptorSize 0 = number of bindings")
     private volatile int nioEventLoopGroupAcceptorSize = 0;
 
-    private final int availableProcessors = Runtime.getRuntime().availableProcessors();
-
     @Config(key = "nio.server.EventLoopGroup.WorkerSize", predefinedValue = "0",
             desc = "WorkerSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int nioEventLoopGroupWorkerSize = availableProcessors * 2 + 1;
+    private volatile int nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
     //private volatile int nioEventLoopGroupExecutorSize;
 
     public enum ThreadingMode {
@@ -200,12 +199,12 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.server.BizExecutor.CoreSize", predefinedValue = "0",
             desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int bizExecutorCoreSize = availableProcessors * 2 + 1;// how many tasks running at the same time
+    private volatile int bizExecutorCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
     private volatile int currentCore;
 
     @Config(key = "nio.server.BizExecutor.MaxSize", predefinedValue = "0",
             desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int bizExecutorMaxSize = availableProcessors * 2 + 1;// how many tasks running at the same time
+    private volatile int bizExecutorMaxSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
     @Config(key = "nio.server.BizExecutor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
@@ -411,23 +410,23 @@ public class NioConfig extends BootConfig {
             nioEventLoopGroupAcceptorSize = bindingAddresses.size();
         }
         if (nioEventLoopGroupWorkerSize < 1) {
-            nioEventLoopGroupWorkerSize = availableProcessors * 2 + 1;
+            nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
         }
         switch (bizExecutorThreadingMode) {
             case CPU:// use CPU core + 1 when application is CPU bound
-                bizExecutorCoreSize = availableProcessors + 1;
-                bizExecutorMaxSize = availableProcessors + 1;
+                bizExecutorCoreSize = BootConstant.CPU_CORE + 1;
+                bizExecutorMaxSize = BootConstant.CPU_CORE + 1;
                 break;
             case IO:// use CPU core x 2 + 1 when application is I/O bound
-                bizExecutorCoreSize = availableProcessors * 2 + 1;
-                bizExecutorMaxSize = availableProcessors * 2 + 1;
+                bizExecutorCoreSize = BootConstant.CPU_CORE * 2 + 1;
+                bizExecutorMaxSize = BootConstant.CPU_CORE * 2 + 1;
                 break;
             case Mixed:// manual config is required when it is mixed
                 if (bizExecutorCoreSize < 1) {
-                    bizExecutorCoreSize = availableProcessors * 2 + 1;
+                    bizExecutorCoreSize = BootConstant.CPU_CORE * 2 + 1;
                 }
                 if (bizExecutorMaxSize < 1) {
-                    bizExecutorMaxSize = availableProcessors * 2 + 1;
+                    bizExecutorMaxSize = BootConstant.CPU_CORE * 2 + 1;
                 }
                 if (bizExecutorMaxSize < bizExecutorCoreSize) {
                     helper.addError("BizExecutor.MaxSize should not less than BizExecutor.CoreSize");
