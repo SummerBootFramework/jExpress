@@ -35,6 +35,11 @@ public class Err<T> {
     private String errorTag;
     private String errorDesc;
     private String cause;
+
+    @JsonIgnore
+    private String _cause;
+
+    @JsonIgnore
     private Throwable ex;
     @JsonIgnore
     private T attachedData;
@@ -56,9 +61,13 @@ public class Err<T> {
         if (rootCause == null) {
             rootCause = ex;
         }
-        this.cause = rootCause == null
+        this._cause = rootCause == null
                 ? null
                 : rootCause.toString();
+    }
+
+    void enableLogging(boolean isEnable) {
+        this.cause = isEnable ? this._cause : null;
     }
 
     @Override
@@ -123,7 +132,6 @@ public class Err<T> {
         this.cause = cause;
     }
 
-    @JsonIgnore
     public Throwable getEx() {
         return ex;
     }

@@ -31,7 +31,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
-public interface NioExceptionListener {
+public interface HttpExceptionHandler {
 
     void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
             final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);

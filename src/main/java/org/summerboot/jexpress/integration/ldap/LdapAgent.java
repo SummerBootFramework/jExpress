@@ -47,7 +47,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.security.auth.AuthConfig;
+import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.AuthenticatorListener;
+import org.summerboot.jexpress.security.auth.BootAuthenticator;
 import org.summerboot.jexpress.security.auth.User;
 
 /**
@@ -121,9 +123,13 @@ public class LdapAgent implements Closeable {
         return m_ctx;
     }
 
+    protected static final String ERROR_NO_CFG = "LDAP is not configured yet: " + AuthConfig.cfg.getCfgFile().getAbsolutePath()
+            + ". \nOr create your own class, either extends " + BootAuthenticator.class.getSimpleName() + " or implements " + Authenticator.class.getSimpleName()
+            + " then annotated with @Service(binding = " + Authenticator.class.getSimpleName() + ".class)";
+
     public LdapAgent(Properties cfg, String baseDN, boolean isAD, String tenantGroupName) throws NamingException {
         if (cfg == null || baseDN == null) {
-            throw new UnsupportedOperationException("LDAP is not configured yet: " + AuthConfig.cfg.getCfgFile().getAbsolutePath() + ". or create your own service implements org.summerboot.jexpress.security.auth.Authenticator and annotated with @Service(binding = Authenticator.class)");
+            throw new UnsupportedOperationException(ERROR_NO_CFG);
         }
         this.cfg = cfg;
         this.baseDN = escape(baseDN);

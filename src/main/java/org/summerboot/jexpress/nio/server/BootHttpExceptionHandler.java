@@ -45,7 +45,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
  * @version 1.0
  */
 @Singleton
-public class BootNioExceptionHandler implements NioExceptionListener {
+public class BootHttpExceptionHandler implements HttpExceptionHandler {
 
     @Inject
     protected HealthInspector healthInspector;
@@ -71,9 +71,9 @@ public class BootNioExceptionHandler implements NioExceptionListener {
             }
             if (cause instanceof java.net.UnknownHostException) {
                 HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
-                nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+                nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
             } else {
-                Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
+                Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, cause.getClass().getSimpleName(), ex);
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
             }
         }
@@ -87,9 +87,9 @@ public class BootNioExceptionHandler implements NioExceptionListener {
         }
         if (cause instanceof java.net.ConnectException) {
             HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
-            nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+            nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
         } else {
-            Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, cause.getClass().getSimpleName() + ": " + cause.getMessage(), ex);
+            Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, cause.getClass().getSimpleName(), ex);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -115,7 +115,7 @@ public class BootNioExceptionHandler implements NioExceptionListener {
     @Override
     public void onIOException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
-        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO issue: " + ex.getClass().getSimpleName() + ": " + ex.getMessage(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO issue: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
 
     }
 
@@ -127,7 +127,7 @@ public class BootNioExceptionHandler implements NioExceptionListener {
 
     @Override
     public void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure", ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
     protected void nak(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {

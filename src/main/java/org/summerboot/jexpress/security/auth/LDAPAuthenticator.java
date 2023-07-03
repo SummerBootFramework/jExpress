@@ -23,7 +23,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class AuthenticatorLDAPImpl extends BootAuthenticator<Long> {
+public class LDAPAuthenticator extends BootAuthenticator<Long> {
 
     @Override
     protected Caller authenticate(String usename, String password, Long metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException {
@@ -31,13 +31,4 @@ public class AuthenticatorLDAPImpl extends BootAuthenticator<Long> {
             return ldap.authenticateUser(usename, password, listener);
         }
     }
-
-//    @Override
-//    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
-//        return true;
-//    }
-//    @Override
-//    protected Integer overrideVerifyTokenErrorCode() {
-//        return null;
-//    }
 }

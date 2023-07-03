@@ -43,15 +43,15 @@ import org.summerboot.jexpress.integration.smtp.BootPostOfficeImpl;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
 import org.summerboot.jexpress.nio.server.BootHttpRequestHandler;
-import org.summerboot.jexpress.nio.server.BootNioExceptionHandler;
-import org.summerboot.jexpress.nio.server.BootNioLifecycleHandler;
+import org.summerboot.jexpress.nio.server.BootHttpExceptionHandler;
+import org.summerboot.jexpress.nio.server.BootHttpLifecycleHandler;
 import org.summerboot.jexpress.nio.server.HttpNioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
-import org.summerboot.jexpress.nio.server.NioExceptionListener;
-import org.summerboot.jexpress.nio.server.NioLifecycleListener;
 import org.summerboot.jexpress.security.auth.Authenticator;
-import org.summerboot.jexpress.security.auth.AuthenticatorLDAPImpl;
+import org.summerboot.jexpress.security.auth.LDAPAuthenticator;
 import org.summerboot.jexpress.util.ReflectionUtil;
+import org.summerboot.jexpress.nio.server.HttpExceptionHandler;
+import org.summerboot.jexpress.nio.server.HttpLifecycleHandler;
 
 /**
  *
@@ -112,17 +112,17 @@ public class BootGuiceModule extends AbstractModule {
         bind(AuthTokenCache.class).to(AuthTokenCacheLocalImpl.class);
         memo.append(INFO).append(AuthTokenCache.class.getName()).append(BIND_TO).append(AuthTokenCacheLocalImpl.class.getName());
 
-        bind(Authenticator.class).to(AuthenticatorLDAPImpl.class);
-        memo.append(INFO).append(Authenticator.class.getName()).append(BIND_TO).append(AuthenticatorLDAPImpl.class.getName());
+        bind(Authenticator.class).to(LDAPAuthenticator.class);
+        memo.append(INFO).append(Authenticator.class.getName()).append(BIND_TO).append(LDAPAuthenticator.class.getName());
 
-        bind(ServerInterceptor.class).to(AuthenticatorLDAPImpl.class);
-        memo.append(INFO).append(ServerInterceptor.class.getName()).append(BIND_TO).append(AuthenticatorLDAPImpl.class.getName());
+        bind(ServerInterceptor.class).to(LDAPAuthenticator.class);
+        memo.append(INFO).append(ServerInterceptor.class.getName()).append(BIND_TO).append(LDAPAuthenticator.class.getName());
 
-        bind(NioExceptionListener.class).to(BootNioExceptionHandler.class);
-        memo.append(INFO).append(NioExceptionListener.class.getName()).append(BIND_TO).append(BootNioExceptionHandler.class.getName());
+        bind(HttpExceptionHandler.class).to(BootHttpExceptionHandler.class);
+        memo.append(INFO).append(HttpExceptionHandler.class.getName()).append(BIND_TO).append(BootHttpExceptionHandler.class.getName());
 
-        bind(NioLifecycleListener.class).to(BootNioLifecycleHandler.class);
-        memo.append(INFO).append(NioLifecycleListener.class.getName()).append(BIND_TO).append(BootNioLifecycleHandler.class.getName());
+        bind(HttpLifecycleHandler.class).to(BootHttpLifecycleHandler.class);
+        memo.append(INFO).append(HttpLifecycleHandler.class.getName()).append(BIND_TO).append(BootHttpLifecycleHandler.class.getName());
 
         bind(PostOffice.class).to(BootPostOfficeImpl.class);
         memo.append(INFO).append(PostOffice.class.getName()).append(BIND_TO).append(BootPostOfficeImpl.class.getName());

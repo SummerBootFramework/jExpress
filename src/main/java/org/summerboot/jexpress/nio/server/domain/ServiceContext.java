@@ -831,7 +831,7 @@ public class ServiceContext {
             return this;
         }
         sb.append("\n\n\tError: ");
-        sb.append(BeanUtil.toJson(this.serviceError, true, true));
+        sb.append(BeanUtil.toJson(this.serviceError.enableLogging(true), true, true));
         return this;
     }
 
