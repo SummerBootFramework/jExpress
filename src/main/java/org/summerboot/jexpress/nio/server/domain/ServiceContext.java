@@ -827,11 +827,23 @@ public class ServiceContext {
     }
 
     public ServiceContext reportError(StringBuilder sb) throws JsonProcessingException {
-        if (this.serviceError == null || file == null) {// log error only for file request
+        if (this.serviceError == null /*|| file == null*/) {// log error only for file request
             return this;
         }
-        sb.append("\n\n\tError: ");
-        sb.append(BeanUtil.toJson(this.serviceError.enableLogging(true), true, true));
+        if (file != null) {
+            sb.append("\n\n\tError: ");
+            sb.append(BeanUtil.toJson(this.serviceError.showRootCause(true), true, true));
+        } else {
+            List<Err> errors = serviceError.getErrors();
+            if (errors != null && errors.size() > 1) {
+                sb.append("\n\n\tExceptions: ");
+                for (var error : errors) {
+                    if (error.getEx() != null) {
+                        sb.append("\n\t ").append(error.getEx());
+                    }
+                }
+            }
+        }
         return this;
     }
 

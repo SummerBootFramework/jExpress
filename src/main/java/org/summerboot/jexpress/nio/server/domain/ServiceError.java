@@ -55,10 +55,10 @@ public class ServiceError {
         this.errors.add(new Err(errorCode, errorTag, errorDesc, ex));
     }
 
-    ServiceError enableLogging(boolean isEnable) {
+    ServiceError showRootCause(boolean isEnable) {
         if (errors != null) {
             for (var err : errors) {
-                err.enableLogging(isEnable);
+                err.showRootCause(isEnable);
             }
         }
         return this;
