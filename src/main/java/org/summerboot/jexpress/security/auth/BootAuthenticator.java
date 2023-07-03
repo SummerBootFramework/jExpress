@@ -366,13 +366,12 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
         Status status;
         String headerValueAuthorization = metadata.get(BearerAuthCredential.AUTHORIZATION_METADATA_KEY);
         if (headerValueAuthorization == null) {
-            //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");
+            //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");            
             return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
         } else if (!headerValueAuthorization.startsWith(BearerAuthCredential.BEARER_TYPE)) {
             status = Status.INVALID_ARGUMENT.withDescription(ERROR + "Unknown authorization type, non bearer token provided");
         } else {
             try {
-                Context ctx = Context.current();
                 String jwt = headerValueAuthorization.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
                 ServiceContext context = ServiceContext.build(0);
                 Caller caller = verifyToken(jwt, authTokenCache, null, context);
@@ -381,7 +380,7 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
                     status = Status.INVALID_ARGUMENT.withDescription(ERROR + desc);
                     //throw new StatusRuntimeException(status);
                 } else {
-                    ctx = ctx.withValue(GrpcCaller, caller);
+                    Context ctx = Context.current().withValue(GrpcCaller, caller);
                     String jti = context.callerId();
                     if (jti != null) {
                         ctx = ctx.withValue(GrpcCallerId, jti);

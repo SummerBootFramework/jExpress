@@ -123,7 +123,7 @@ public class LdapAgent implements Closeable {
         return m_ctx;
     }
 
-    protected static final String ERROR_NO_CFG = "LDAP is not configured yet: " + AuthConfig.cfg.getCfgFile().getAbsolutePath()
+    protected static final String ERROR_NO_CFG = "LDAP is not configured at " + AuthConfig.cfg.getCfgFile().getAbsolutePath()
             + ". \nOr create your own class, either extends " + BootAuthenticator.class.getSimpleName() + " or implements " + Authenticator.class.getSimpleName()
             + " then annotated with @Service(binding = " + Authenticator.class.getSimpleName() + ".class)";
 

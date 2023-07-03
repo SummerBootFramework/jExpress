@@ -31,14 +31,12 @@ public interface Authenticator {
     /**
      * gRPC JWT verification result
      */
-    String GRPC_KEY_UID = "uid";
-    Context.Key<String> GrpcCallerId = Context.key(GRPC_KEY_UID);
+    Context.Key<String> GrpcCallerId = Context.key("uid");
 
     /**
      * gRPC JWT verification result
      */
-    String GRPC_KEY_CALLER = "caller";
-    Context.Key<Caller> GrpcCaller = Context.key(GRPC_KEY_CALLER);
+    Context.Key<Caller> GrpcCaller = Context.key("caller");
 
     /**
      * Success HTTP Status: 201 Created
