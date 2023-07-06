@@ -20,7 +20,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import java.io.IOException;
-import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.BootConstant;
 
 /**
  *
@@ -30,7 +30,7 @@ public class ErrorCodeDeserializer extends JsonDeserializer<String> {
 
     @Override
     public String deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
-        if (SummerApplication.SystemErrorCodeAsInt) {
+        if (BootConstant.CFG_ERROR_CODE_AS_INT) {
             int intValue = jp.getValueAsInt();
             return String.valueOf(intValue);
         } else {

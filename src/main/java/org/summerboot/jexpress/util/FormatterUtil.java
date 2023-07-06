@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
@@ -334,5 +333,18 @@ public class FormatterUtil {
 
     public static String[] splitByLength(String plain, int chunckSize) {
         return plain.split("(?<=\\G.{" + chunckSize + "})");
+    }
+
+    public static <T> T[] arrayCopy(T[] array1, T[] array2) {
+        T[] result = Arrays.copyOf(array1, array1.length + array2.length);
+        System.arraycopy(array2, 0, result, array1.length, array2.length);
+        return result;
+    }
+
+    public static <T> T[] arrayAdd(T[] array1, T newElement) {
+        int size = array1.length;
+        T[] result = Arrays.copyOf(array1, size + 1);
+        result[size] = newElement;
+        return result;
     }
 }

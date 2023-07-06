@@ -17,7 +17,6 @@ package org.summerboot.jexpress.nio.server.ws.rs;
 
 //import co.elastic.apm.api.CaptureTransaction;
 import com.google.inject.Inject;
-import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
@@ -58,8 +57,9 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.SystemConfig;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.security.auth.Caller;
@@ -76,7 +76,7 @@ import org.summerboot.jexpress.security.auth.Caller;
 @OpenAPIDefinition(//OAS v3
         info = @Info(
                 title = "Default Admin API",
-                version = SummerApplication.VERSION,
+                version = BootConstant.VERSION,
                 description = "To change to yours, just add @OpenAPIDefinition.info",
                 contact = @Contact(
                         name = "summerboot.org",
@@ -142,7 +142,7 @@ abstract public class BootController extends PingController {
 
     protected String getVersion() {
         if (version == null) {
-            version = System.getProperty(SummerApplication.SYS_PROP_APP_VERSION);//Although System.getProperty is a synchronized API, this is  a singleton
+            version = SystemConfig.cfg.getVersion();
         }
         return version;
     }
@@ -175,7 +175,7 @@ abstract public class BootController extends PingController {
     public void inspect(@Parameter(hidden = true) final ServiceContext context) {
         //HealthInspector healthInspector = getHealthInspector();        
         if (healthInspector == null) {
-            context.error(new Err(BootErrorCode.ACCESS_ERROR, null, "HealthInspector not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, "HealthInspector not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return;
         }
         List<Err> error = healthInspector.ping(true);
@@ -245,7 +245,7 @@ abstract public class BootController extends PingController {
             @FormParam("j_password") String pwd,
             @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
         if (auth == null) {
-            context.error(new Err(BootErrorCode.ACCESS_ERROR, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
         }
         String jwt = auth.signJWT(uid, pwd, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
@@ -280,7 +280,7 @@ abstract public class BootController extends PingController {
     public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final ServiceContext context) {
         //Authenticator auth = getAuthenticator();
         if (auth == null) {
-            context.error(new Err(BootErrorCode.ACCESS_ERROR, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return;
         }
         //AuthTokenCache authTokenCache = getAuthTokenCache();

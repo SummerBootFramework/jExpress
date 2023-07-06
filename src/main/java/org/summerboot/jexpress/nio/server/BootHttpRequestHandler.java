@@ -108,7 +108,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             if (!httpLifecycleHandler.beofreProcess(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return processorSettings;
             }
-            processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context, BootErrorCode.NIO_WSRS_REQUEST_BAD_DATA);
+            processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context, BootErrorCode.NIO_REQUEST_BAD_DATA);
             //} catch (ExpiredJwtException | SignatureException | MalformedJwtException ex) {
             //    nak(context, HttpResponseStatus.UNAUTHORIZED, BootErrorCode.AUTH_INVALID_TOKEN, "Invalid JWT");
         } catch (NamingException ex) {
@@ -117,7 +117,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             httpExceptionHandler.onPersistenceException(ex, httptMethod, httpRequestPath, context);
         } catch (HttpConnectTimeoutException ex) {// a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
             httpExceptionHandler.onHttpConnectTimeoutException(ex, httptMethod, httpRequestPath, context);
-        } catch (HttpTimeoutException ex) {// a context is not received within a specified time period.            
+        } catch (HttpTimeoutException ex) {// a context is not received within a specified time period.
             httpExceptionHandler.onHttpTimeoutException(ex, httptMethod, httpRequestPath, context);
         } catch (RejectedExecutionException ex) {
             httpExceptionHandler.onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
@@ -151,7 +151,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * @param httpRequestPath
      * @param context
      * @return true if good to customizedAuthorizationCheck (caller is
- verified), otherwise false
+     * verified), otherwise false
      * @throws Exception
      */
     protected boolean authenticationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {

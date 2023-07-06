@@ -96,13 +96,13 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
 
     @Override
     public void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPCLIENT_TIMEOUT, ex.getMessage());
+        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTP_CONNECTION_TIMEOUT, ex.getMessage());
         context.level(Level.WARN);
     }
 
     @Override
     public void onHttpTimeoutException(HttpTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTPREQUEST_TIMEOUT, ex.getMessage());
+        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTP_REQUEST_TIMEOUT, ex.getMessage());
         context.level(Level.WARN);
     }
 
@@ -115,7 +115,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
     @Override
     public void onIOException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
-        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_ERROR, "IO issue: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_BASE, "IO issue: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
 
     }
 
@@ -127,7 +127,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
 
     @Override
     public void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_FAILURE, "Unexpected Failure: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_PROCESSOR_FAILURE, "Unexpected Failure: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
     protected void nak(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {

@@ -15,6 +15,10 @@
  */
 package org.summerboot.jexpress.boot;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.util.ApplicationUtil;
 
 /**
@@ -23,38 +27,84 @@ import org.summerboot.jexpress.util.ApplicationUtil;
  */
 public interface BootConstant {
 
-    int CPU_CORE = Runtime.getRuntime().availableProcessors();
-
     //version
     String VERSION = "SummerBoot.jExpress 2.3.8";
+    String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
+
+    /*
+     * Runtime info
+     */
+    int CPU_CORE = Runtime.getRuntime().availableProcessors();
+    String PID = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+    String HOST = jExpressInit();
+    String BR = System.lineSeparator();
+
+    private static String jExpressInit() {
+        String FILE_CFG_SYSTEM = "boot.conf";
+        File currentDir = new File("etc").getAbsoluteFile();
+        if (!currentDir.exists()) {
+            currentDir.mkdirs();
+        }
+        File systemConfigFile = Paths.get(currentDir.getAbsolutePath(), FILE_CFG_SYSTEM).toFile();
+        try {
+            if (!systemConfigFile.exists()) {
+                ConfigUtil.createConfigFile(SystemConfig.class, currentDir, FILE_CFG_SYSTEM, false);
+            }
+            SystemConfig.cfg.load(systemConfigFile, false);
+        } catch (IOException ex) {
+            System.err.println("Failed to init " + systemConfigFile + ", caused by " + ex);
+            System.exit(1);
+        }
+        return ApplicationUtil.getServerName(true);
+    }
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
     String LOG4J2_JDKADAPTER_KEY = "java.util.logging.manager";
     String LOG4J2_JDKADAPTER_VALUE = "org.apache.logging.log4j.jul.LogManager";
 
-    String CFG_AUTH = "cfg_auth.properties";
-    String CFG_SMTP = "cfg_smtp.properties";
-    String CFG_NIO = "cfg_nio.properties";
-    String CFG_GRPC = "cfg_grpc.properties";
+    /**
+     * 3. jExpress Default Settings
+     */
+    boolean CFG_ERROR_CODE_AS_INT = SystemConfig.cfg.isErrorCodeAsInt();
+    String DIR_STANDALONE = SystemConfig.cfg.getDomainFolderPrefix();
+    String DIR_CONFIGURATION = SystemConfig.cfg.getConfigFolderName();
+    String DIR_PLUGIN = SystemConfig.cfg.getPluginFolderName();
+    String DIR_LOG = SystemConfig.cfg.getLogFolderName();
 
-    String DIR_PLUGIN = "plugin";
+    String FILE_CFG_AUTH = SystemConfig.cfg.getAuthConfigFileName();
+    String FILE_CFG_SMTP = SystemConfig.cfg.getSmtpConfigFileName();
+    String FILE_CFG_NIO = SystemConfig.cfg.getNioConfigFileName();
+    String FILE_CFG_GRPC = SystemConfig.cfg.getgRPCConfigFileName();
 
     /*
+     * 4. jExpress Default CLI Name
+     */
+    String CLI_USAGE = SystemConfig.cfg.getCliName_usage();
+    String CLI_VERSION = SystemConfig.cfg.getCliName_version();
+    String CLI_CONFIG_DOMAIN = SystemConfig.cfg.getCliName_domain();
+    String CLI_CONFIG_DIR = SystemConfig.cfg.getCliName_cfgdir();
+    String CLI_CONFIG_MONITOR_INTERVAL = SystemConfig.cfg.getCliName_monitorInterval();
+    String CLI_I8N = SystemConfig.cfg.getCliName_i18n();
+    String CLI_USE_IMPL = SystemConfig.cfg.getCliName_use();//To specify which implementation will be used via @Component.checkImplTagUsed
+    String CLI_CONFIG_DEMO = SystemConfig.cfg.getCliName_cfgdemo();
+    String CLI_LIST_UNIQUE = SystemConfig.cfg.getCliName_list();
+    String CLI_ADMIN_PWD_FILE = SystemConfig.cfg.getCliName_authfile();
+    String CLI_ADMIN_PWD = SystemConfig.cfg.getCliName_auth();
+    String CLI_JWT = SystemConfig.cfg.getCliName_jwt();
+    String CLI_ENCRYPT = SystemConfig.cfg.getCliName_encrypt();
+    String CLI_DECRYPT = SystemConfig.cfg.getCliName_decrypt();
+
+    /*
+     * 5. Log4j2.xml variables
+     *
      * Pass by System.setProperty() instead of making them public static, any better idea?
      * ‘java.lang.System.getProperty()’ API underlyingly uses ‘java.util.Hashtable.get()’ API. 
      * Please be advised that ‘java.util.Hashtable.get()’ is a synchronized API. 
      * It means only one thread can invoke the ‘java.util.Hashtable.get()’ method at any given time. 
      */
-    String SYS_PROP_APP_VERSION = "version";//used by BootController.version()
-    String SYS_PROP_APP_VERSION_SHORT = "version.short";//used by ServiceContext.buildErrorFile()
-    String SYS_PROP_APP_PACKAGE_NAME = "appPackage";//used by both log4j2.xml ${sys:appPackage} and JPAHibernateConfig to scan @Entity
-    String SYS_PROP_HOST_NAME = "hostName";//used by log4j2.xml ${hostName}
-    String SYS_PROP_LOGFILENAME = "appappName";//used by log4j2.xml ${sys:appappName} as log file name
-    String SYS_PROP_LOGGINGPATH = "logDir";//used by log4j2.xml ${sys:loggingPath}
-    String SYS_PROP_PING_URI = "pingURI";//used by NioServer.bind() and BootHttpPingHandler. TODO: use injector
-
-    //runtime info
-    String PID = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
-    String HOST = ApplicationUtil.getServerName(SYS_PROP_HOST_NAME, true);
+    String SYS_PROP_LOGFILEPATH = SystemConfig.cfg.getLog4j2LogFilePath();//"logPath"; // used by log4j2.xml ${sys:loggingPath}
+    String SYS_PROP_LOGFILENAME = SystemConfig.cfg.getLog4j2LogFileName();//"appName"; // used by log4j2.xml ${sys:appappName} as log file name
+    String SYS_PROP_SERVER_NAME = SystemConfig.cfg.getLog4j2ServerName();//"serverName"; // used by log4j2.xml ${hostName}
+    String SYS_PROP_APP_PACKAGE_NAME = SystemConfig.cfg.getLog4j2AppPackageName();//"appPackageName"; // used by both log4j2.xml ${sys:appPackage} and JPAHibernateConfig to scan @Entity
 }

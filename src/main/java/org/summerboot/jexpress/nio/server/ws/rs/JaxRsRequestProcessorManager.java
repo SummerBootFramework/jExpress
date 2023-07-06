@@ -39,7 +39,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.function.Function;
-import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.annotation.Ping;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
@@ -88,7 +87,8 @@ public class JaxRsRequestProcessorManager {
 
     public static final String KEY_PING = Ping.class.getName();
 
-    private static void checkDuplicated(StringBuilder errors, StringBuilder memo) {
+    private static String checkDuplicated(StringBuilder errors, StringBuilder memo) {
+        String pingURL = null;
         List<ProcessorMeta> pingProcessors = registeredProcessors.remove(KEY_PING);
         if (pingProcessors != null) {//only allow either one default @Ping without overridden, or one overridden @Ping
             ProcessorMeta targetPingProcessor = null;
@@ -96,11 +96,12 @@ public class JaxRsRequestProcessorManager {
             if (pintImplCount == 1) {//it is ok if either one default @Ping or one overridden @Ping
                 targetPingProcessor = pingProcessors.get(0);
             } else if (pintImplCount > 1) {
-                List<ProcessorMeta> defaultPing = new ArrayList();
+                //List<ProcessorMeta> defaultPing = new ArrayList();
                 List<ProcessorMeta> overridenPing = new ArrayList();
                 for (ProcessorMeta pingProcessor : pingProcessors) {
                     if (pingProcessor.m.getDeclaringClass().equals(PingController.class)) {
-                        defaultPing.add(pingProcessor);
+                        //defaultPing.add(pingProcessor);
+                        targetPingProcessor = pingProcessor;
                     } else {
                         overridenPing.add(pingProcessor);
                     }
@@ -108,15 +109,15 @@ public class JaxRsRequestProcessorManager {
                 if (overridenPing.size() == 1) {// it is only ok with one overridden @Ping if more than one @Ping
                     targetPingProcessor = overridenPing.get(0);
                 } else {
-                    errors.append("\n\n! Duplicated URI ").append(KEY_PING);
-                    for (ProcessorMeta p : pingProcessors) {
+                    errors.append("\n\n! Only one URI in @Controller classes is allowed to be annotated with both @GET and @").append(Ping.class.getSimpleName()).append(", found duplicated:");
+                    for (ProcessorMeta p : overridenPing) {
                         errors.append("\n\t").append("@ ").append(p.info);
                     }
                 }
             }
 
             if (targetPingProcessor != null) {
-                System.setProperty(SummerApplication.SYS_PROP_PING_URI, targetPingProcessor.url);
+                pingURL = targetPingProcessor.url;
                 memo.append("\n\t- ").append("* GET").append(" ").append(targetPingProcessor.url).append(" (").append(targetPingProcessor.info).append(" )");
             }
         }
@@ -131,11 +132,12 @@ public class JaxRsRequestProcessorManager {
                 errors.append("\n\t").append("@ ").append(p.info);
             }
         }
+        return pingURL;
     }
 
-    public static void registerControllers(@Controller Map<String, Object> controllers, StringBuilder memo) {
+    public static String registerControllers(@Controller Map<String, Object> controllers, StringBuilder memo) {
         if (controllers == null || controllers.isEmpty()) {
-            return;
+            return null;
         }
         registeredProcessors.clear();
         final Set<String> declareRoles = new HashSet();
@@ -241,7 +243,7 @@ public class JaxRsRequestProcessorManager {
                 }
             }
         }
-        checkDuplicated(errors, memo);
+        String pingURL = checkDuplicated(errors, memo);
         //Java 17 if (!errors.isEmpty()) {
         String error = errors.toString();
         if (!error.isBlank()) {
@@ -254,6 +256,7 @@ public class JaxRsRequestProcessorManager {
         memo.append("\n\t- * DeclareRoles=").append(declareRoles);
         processorMapString = stringMap;
         processorMapRegex = regexMap;
+        return pingURL;
     }
 
     private static Map<HttpMethod, Map<String, RequestProcessor>> processorMapString;

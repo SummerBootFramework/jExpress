@@ -55,8 +55,8 @@ public class ScanedGuiceModule extends AbstractModule {
     }
 
     private final static String BIND_TO = " --> ";
-    private final static String INFO_FOUND = "\n\t- Ioc.scan.found: ";
-    private final static String INFO_BIND = "\n\t- Ioc.override.binding: ";
+    private final static String INFO_FOUND = BootConstant.BR + "\t- Ioc.scan.found: ";
+    private final static String INFO_BIND = BootConstant.BR + "\t- Ioc.override.binding: ";
 
     @Override
     public void configure() {
@@ -102,7 +102,7 @@ public class ScanedGuiceModule extends AbstractModule {
                     if (namedBindingImpl != null) {
                         Class implClass = namedBindingImpl.getServiceImplClass();
                         bind(interfaceClass).annotatedWith(Names.named(named)).to(implClass);
-                        memo.append("\n\t- Ioc.taggedservice.override: ").append(interfaceClass).append(" bind to ").append(implClass).append(", named=").append(named);
+                        memo.append(BootConstant.BR + "\t- Ioc.taggedservice.override: ").append(interfaceClass).append(" bind to ").append(implClass).append(", named=").append(named);
                     }
                     //continue;*/
                 }
@@ -136,7 +136,7 @@ public class ScanedGuiceModule extends AbstractModule {
         }
         try {
             String c = BeanUtil.toJson(channelHandlerNames, true, true);
-            memo.append("\n\t- Ioc.userdefined.ChannelHandlers: ").append(c);
+            memo.append(BootConstant.BR).append("\t- Ioc.userdefined.ChannelHandlers: ").append(c);
         } catch (JsonProcessingException ex) {
         }
     }

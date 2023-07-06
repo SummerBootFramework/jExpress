@@ -25,20 +25,18 @@ import java.util.Properties;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import static org.summerboot.jexpress.boot.config.BootConfig.generateTemplate;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-@ImportResource(SummerApplication.CFG_GRPC)
+//@ImportResource(BootConstant.FILE_CFG_GRPC)
 public class GRPCServerConfig extends BootConfig {
 
     public static void main(String[] args) {

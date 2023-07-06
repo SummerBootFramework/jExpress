@@ -78,7 +78,7 @@ public class BootGuiceModule extends AbstractModule {
     }
 
     private final static String BIND_TO = " --> ";
-    private final static String INFO = "\n\t- Ioc.default.binding: ";
+    private final static String INFO = BootConstant.BR + "\t- Ioc.default.binding: ";
 
     @Override
     public void configure() {
@@ -157,23 +157,23 @@ public class BootGuiceModule extends AbstractModule {
         // binder.addBinding("BIZ").to(BusinessServiceController.class);
 
         final Set<Class<?>> classesAll = new HashSet();//to remove duplicated
-        for (String rootPackageName : rootPackageNames) {
-            Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(annotation, rootPackageName, false);
-            //classesAll.addAll(classes);
-            for (Class c : classes) {
-                Controller a = (Controller) c.getAnnotation(annotation);
-                String implTag = a.implTag();
-                if (StringUtils.isNotBlank(implTag) && !isCliUseImplTag(implTag)) {
-                    continue;
-                }
-
-                int mod = c.getModifiers();
-                if (Modifier.isAbstract(mod) || Modifier.isInterface(mod)) {
-                    continue;
-                }
-                classesAll.add(c);
+        //for (String rootPackageName : rootPackageNames) {
+        Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(annotation, false, rootPackageNames);
+        //classesAll.addAll(classes);
+        for (Class c : classes) {
+            Controller a = (Controller) c.getAnnotation(annotation);
+            String implTag = a.implTag();
+            if (StringUtils.isNotBlank(implTag) && !isCliUseImplTag(implTag)) {
+                continue;
             }
+
+            int mod = c.getModifiers();
+            if (Modifier.isAbstract(mod) || Modifier.isInterface(mod)) {
+                continue;
+            }
+            classesAll.add(c);
         }
+        //}
         classesAll.forEach(c -> {
             mapbinder.addBinding(c.getName()).to(c);
         });

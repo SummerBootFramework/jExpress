@@ -29,7 +29,7 @@ import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.SystemConfig;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 /**
@@ -46,7 +46,7 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
 
     public BootHttpPingHandler(/*String pingURL*/) {
         super(FullHttpRequest.class, false);
-        String endpointCfg = System.getProperty(SummerApplication.SYS_PROP_PING_URI);//Although System.getProperty is a synchronized API, this is a @Singleton, TODO: use injector
+        String endpointCfg = SystemConfig.cfg.getPingURL();
         if (StringUtils.isNotBlank(endpointCfg)) {
             pingURL = endpointCfg;
         } else {

@@ -120,7 +120,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
                 fileSizeQuota = precheck(ctx, request);
                 if (fileSizeQuota < 1) {
                     ReferenceCountUtil.release(httpObject);
-                    //NioHttpUtil.sendError(ctx, HttpResponseStatus.FORBIDDEN, BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT, "file upload not supported", null);
+                    //NioHttpUtil.sendError(ctx, HttpResponseStatus.FORBIDDEN, BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, "file upload not supported", null);
                     TimeUnit.MILLISECONDS.sleep(1000);// give it time to flush the error message to client
                     ctx.channel().close();// the only way to stop uploading is to close socket 
                     return;
@@ -142,7 +142,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
                     boolean isOverSized = onPartialChunk(ctx, fileSizeQuota);
                     if (isOverSized) {
                         reset();
-                        ServiceError e = new ServiceError(BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT, null, String.valueOf(fileSizeQuota), null);
+                        ServiceError e = new ServiceError(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, String.valueOf(fileSizeQuota), null);
                         NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, e.toJson(), null, null, true, null);
                     } else if (chunk instanceof LastHttpContent) {
                         onLastChunk(ctx);
@@ -257,7 +257,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
      */
     private long precheck(ChannelHandlerContext ctx, HttpRequest req) {
         if (!isValidRequestPath(req.uri()) || !HttpMethod.POST.equals(req.method())) {
-            ServiceError e = new ServiceError(BootErrorCode.NIO_HTTP_REQUEST_DECODER_FAILURE, null, "invalid request:" + req.method() + " " + req.uri(), null);
+            ServiceError e = new ServiceError(BootErrorCode.NIO_FILE_UPLOAD_BAD_REQUEST, null, "invalid request:" + req.method() + " " + req.uri(), null);
             NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.BAD_REQUEST, e.toJson(), null, null, true, null);
             return 0;
         }
@@ -283,13 +283,13 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
         try {
             contentLength = Long.parseLong(cl);
         } catch (RuntimeException ex) {
-            ServiceError e = new ServiceError(BootErrorCode.NIO_HTTP_REQUEST_DECODER_FAILURE, null, "Invalid header: " + HttpHeaderNames.CONTENT_LENGTH + "=" + cl, ex);
+            ServiceError e = new ServiceError(BootErrorCode.NIO_FILE_UPLOAD_BAD_LENGTH, null, "Invalid header: " + HttpHeaderNames.CONTENT_LENGTH + "=" + cl, ex);
             NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.BAD_REQUEST, e.toJson(), null, null, true, null);
             return 0;
         }
         long maxAllowedSize = getCallerFileUploadSizeLimit_Bytes(caller);
         if (contentLength > maxAllowedSize) {
-            ServiceError e = new ServiceError(BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT, null, String.valueOf(maxAllowedSize), null);
+            ServiceError e = new ServiceError(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, String.valueOf(maxAllowedSize), null);
             NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE, e.toJson(), null, null, true, null);
             return 0;
         }

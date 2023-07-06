@@ -81,10 +81,10 @@ public class LdapAgent implements Closeable {
         return new LdapAgent(AuthConfig.cfg.getLdapConfig(), AuthConfig.cfg.getLdapBaseDN(), AuthConfig.cfg.isTypeAD(), AuthConfig.cfg.getLdapScheamTenantGroupOU());
     }
 
-    public static Properties buildCfg(String host, int port, boolean isSSL, String ldapSSLConnectionFactoryClassName, String sslProtocol, String bindingUserDN, String bindingPassword) {
+    public static Properties buildCfg(String host, int port, boolean isSSLEnabled, String ldapSSLConnectionFactoryClassName, String sslProtocol, String bindingUserDN, String bindingPassword) {
         Properties tempCfg = new Properties();
         tempCfg.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        String providerUrl = isSSL
+        String providerUrl = isSSLEnabled
                 ? "ldaps://" + host + ":" + port
                 : "ldap://" + host + ":" + port;
         tempCfg.put(Context.PROVIDER_URL, providerUrl);
@@ -99,7 +99,7 @@ public class LdapAgent implements Closeable {
             tempCfg.put(Context.SECURITY_AUTHENTICATION, "simple");//"EXTERNAL" - Principal and credentials will be obtained from the connection
             tempCfg.put(Context.SECURITY_CREDENTIALS, bindingPassword);
         }
-        if (isSSL) {// Specify SSL
+        if (isSSLEnabled) {// Specify SSL
             tempCfg.put(Context.SECURITY_PROTOCOL, sslProtocol);//"TLSv1.3"
             if (ldapSSLConnectionFactoryClassName != null) {
                 tempCfg.put("java.naming.ldap.factory.socket", ldapSSLConnectionFactoryClassName);

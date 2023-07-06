@@ -35,6 +35,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -56,6 +57,8 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
  */
 @Singleton
 public abstract class BootAuthenticator<T> implements Authenticator, ServerInterceptor {
+
+    protected static final String ERROR_NO_CFG = "JWT is not configured at " + AuthConfig.cfg.getCfgFile().getAbsolutePath();
 
     @Inject(optional = true)
     protected AuthenticatorListener authenticatorListener;
@@ -91,6 +94,9 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
 
         //4. create JWT
         Key signingKey = AuthConfig.cfg.getJwtSigningKey();
+        if (signingKey == null) {
+            throw new UnsupportedOperationException(ERROR_NO_CFG);
+        }
         String token = JwtUtil.createJWT(signingKey, builder, Duration.ofMinutes(validForMinutes));
         if (authenticatorListener != null) {
             authenticatorListener.onLoginSuccess(caller.getUid(), token);
@@ -156,7 +162,11 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
     }
 
     protected Claims parseJWT(String jwt) {
-        return JwtUtil.parseJWT(AuthConfig.cfg.getJwtParser(), jwt).getBody();
+        JwtParser jwtParser = AuthConfig.cfg.getJwtParser();
+        if (jwtParser == null) {
+            throw new UnsupportedOperationException(ERROR_NO_CFG);
+        }
+        return JwtUtil.parseJWT(jwtParser, jwt).getBody();
     }
 
     /**

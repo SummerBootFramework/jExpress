@@ -372,14 +372,14 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int badRequestErrorCode) throws Throwable {
+    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int errorcodeRequestValidationFailed) throws Throwable {
         //2. invoke
         Object ret;
         if (parameterSize > 0) {
             ServiceRequest request = buildServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody);
             Object[] paramValues = new Object[parameterSize];
             for (int i = 0; i < parameterSize; i++) {
-                paramValues[i] = parameterList.get(i).value(badRequestErrorCode, request, context);
+                paramValues[i] = parameterList.get(i).value(errorcodeRequestValidationFailed, request, context);
             }
             if (context.error() != null) {
                 return;

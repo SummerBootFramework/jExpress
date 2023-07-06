@@ -16,12 +16,17 @@
 package org.summerboot.jexpress.boot;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.Map;
+import org.summerboot.jexpress.boot.annotation.Unique;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
+@Unique(name = "SystemErrorCode", type = int.class)
 public interface BootErrorCode {
+
+    Map<Integer, Integer> Mapping = SystemConfig.cfg.getBootErrorCodeMapping();
 
     interface CustomHttpStatus {
 
@@ -29,48 +34,58 @@ public interface BootErrorCode {
         HttpResponseStatus ABP_POSSIBLE_REJECTION = HttpResponseStatus.valueOf(520, "ABP Possible rejection");
     }
 
-    int OK = 0;
+    private static int getErrorCode(int code) {
+        if (Mapping == null) {
+            return code;
+        }
+        Integer ret = Mapping.get(code);
+        return ret == null ? code : ret;
+    }
+
+    int OK = getErrorCode(0);
 
     // NIO
-    int NIO_UNEXPECTED_EXECUTOR_FAILURE = 1;
-    int NIO_UNEXPECTED_SERVICE_FAILURE = 2;
-    int NIO_TOO_MANY_REQUESTS = 3;
-    int NIO_BAD_REQUEST = 4;
-    int NIO_OUT_OF_MEMORY = 5;
-    int NIO_HTTP_REQUEST_DECODER_FAILURE = 6;
-    int NIO_EXCEED_FILE_SIZE_LIMIT = 7;
-    int NIO_CONTROLLER_UNINITIALIZED = 8;
-    int NIO_UNEXPECTED_FAILURE = 9;
-    int NIO_WSRS_REQUEST_BAD_DATA = 10;
+    int NIO_BASE = getErrorCode(1);
+    int NIO_TOO_MANY_REQUESTS = getErrorCode(NIO_BASE + 1);
+    int NIO_UNEXPECTED_EXECUTOR_FAILURE = getErrorCode(NIO_BASE + 2);
+    int NIO_UNEXPECTED_SERVICE_FAILURE = getErrorCode(NIO_BASE + 3);
+    int NIO_UNEXPECTED_PROCESSOR_FAILURE = getErrorCode(NIO_BASE + 4);
+    int NIO_FILE_UPLOAD_BAD_REQUEST = getErrorCode(NIO_BASE + 5);
+    int NIO_FILE_UPLOAD_BAD_LENGTH = getErrorCode(NIO_BASE + 6);
+    int NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT = getErrorCode(NIO_BASE + 7);
+    int NIO_REQUEST_BAD_HEADER = getErrorCode(NIO_BASE + 8);
+    int NIO_REQUEST_BAD_DATA = getErrorCode(NIO_BASE + 9);
+    int NIO_REQUEST_BAD_ENCODING = getErrorCode(NIO_BASE + 10);
+    int NIO_REQUEST_BAD_DOWNLOAD = getErrorCode(NIO_BASE + 11);
 
     //IO
-    int IO_ERROR = 20;
-    int APP_INTERRUPTED = IO_ERROR + 1;
-    int HTTPREQUEST_TIMEOUT = IO_ERROR + 2;
-    int HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT = IO_ERROR + 3;
-    int HTTPCLIENT_TIMEOUT = IO_ERROR + 4;
-    int HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT = IO_ERROR + 5;
-    int HTTPCLIENT_RPC_FAILED = IO_ERROR + 6;
-    int NETWORK_ERROR = IO_ERROR + 7;
-    int FILE_NOT_ACCESSABLE = IO_ERROR + 11;
-    int FILE_NOT_FOUND = IO_ERROR + 12;
+    int IO_BASE = getErrorCode(20);
+    int APP_INTERRUPTED = getErrorCode(IO_BASE + 1);
+    int HTTP_REQUEST_TIMEOUT = getErrorCode(IO_BASE + 2);// a context is not received within a specified time period.
+    int HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT = getErrorCode(IO_BASE + 3);
+    int HTTP_CONNECTION_TIMEOUT = getErrorCode(IO_BASE + 4);// a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
+    int HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT = getErrorCode(IO_BASE + 5);
+    int HTTPCLIENT_RPC_FAILED = getErrorCode(IO_BASE + 6);
+    int NETWORK_ERROR = getErrorCode(IO_BASE + 7);
+    int FILE_NOT_ACCESSABLE = getErrorCode(IO_BASE + 8);
+    int FILE_NOT_FOUND = getErrorCode(IO_BASE + 9);
 
     // Auth
-    int AUTH_BASE = 40;
-    int AUTH_REQUIRE_TOKEN = AUTH_BASE + 1;
-    int AUTH_INVALID_TOKEN = AUTH_BASE + 2;
-    int AUTH_EXPIRED_TOKEN = AUTH_BASE + 3;
-    int AUTH_INVALID_URL = AUTH_BASE + 4;
-    int AUTH_LOGIN_FAILED = AUTH_BASE + 5;
-    int AUTH_NO_PERMISSION = AUTH_BASE + 6;
-    int AUTH_INVALID_USER = AUTH_BASE + 7;
+    int AUTH_BASE = getErrorCode(40);
+    int AUTH_REQUIRE_TOKEN = getErrorCode(AUTH_BASE + 1);
+    int AUTH_INVALID_TOKEN = getErrorCode(AUTH_BASE + 2);
+    int AUTH_EXPIRED_TOKEN = getErrorCode(AUTH_BASE + 3);
+    int AUTH_INVALID_URL = getErrorCode(AUTH_BASE + 4);
+    int AUTH_LOGIN_FAILED = getErrorCode(AUTH_BASE + 5);
+    int AUTH_NO_PERMISSION = getErrorCode(AUTH_BASE + 6);
+    int AUTH_INVALID_USER = getErrorCode(AUTH_BASE + 7);
 
     //Integration
-    int ACCESS_ERROR = 50;
-    int ACCESS_ERROR_CACHE = ACCESS_ERROR + 1;
-    int ACCESS_ERROR_LDAP = ACCESS_ERROR + 2;
-    int ACCESS_ERROR_SMTP = ACCESS_ERROR + 3;
-    int ACCESS_ERROR_DATABASE = ACCESS_ERROR + 4;
-    int ACCESS_ERROR_RPC = ACCESS_ERROR + 5;
+    int ACCESS_BASE = getErrorCode(50);
+    int ACCESS_ERROR_CACHE = getErrorCode(ACCESS_BASE + 1);
+    int ACCESS_ERROR_LDAP = getErrorCode(ACCESS_BASE + 2);
+    int ACCESS_ERROR_SMTP = getErrorCode(ACCESS_BASE + 3);
+    int ACCESS_ERROR_DATABASE = getErrorCode(ACCESS_BASE + 4);
+    int ACCESS_ERROR_RPC = getErrorCode(ACCESS_BASE + 5);
 
 }

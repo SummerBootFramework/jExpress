@@ -292,7 +292,7 @@ public class NioHttpUtil {
             if (accept != null) {
                 accept = accept.toLowerCase();
                 if (!accept.contains("html") && !accept.contains("web") && !accept.contains("image") && (accept.contains("json") || accept.contains("xml"))) {
-                    var error = new Err(BootErrorCode.NIO_WSRS_REQUEST_BAD_DATA, null, "Client expect " + accept + ", but request a web resource", null);
+                    var error = new Err(BootErrorCode.NIO_REQUEST_BAD_HEADER, null, "Client expect " + accept + ", but request a web resource", null);
                     context.error(error).status(HttpResponseStatus.NOT_FOUND);
                     return;
                 }

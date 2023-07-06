@@ -50,8 +50,6 @@ import org.summerboot.jexpress.util.ApplicationUtil;
  */
 abstract public class SummerApplication extends SummerBigBang {
 
-    public static boolean SystemErrorCodeAsInt = false;
-
     /**
      * Might not work on Non HotSpot VM implementations.
      *
@@ -236,15 +234,15 @@ abstract public class SummerApplication extends SummerBigBang {
 
     protected void traceConfig() {
         if (!memoLogged) {
-            memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_VERSION).append(" = ").append(System.getProperty(SummerApplication.SYS_PROP_APP_VERSION));
-            memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME));
-            memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(SummerApplication.SYS_PROP_LOGFILENAME));
-            memo.append("\n\t- sys.prop.").append(SummerApplication.SYS_PROP_LOGGINGPATH).append(" = ").append(System.getProperty(SummerApplication.SYS_PROP_LOGGINGPATH));
+            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILEPATH).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILEPATH));
+            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILENAME));
+            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_SERVER_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_SERVER_NAME));
+            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME));
 
-            memo.append("\n\t- start: PostOffice=").append(postOffice.getClass().getName());
-            memo.append("\n\t- start: HealthInspector=").append(healthInspector.getClass().getName());
-            //memo.append("\n\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
-            memo.append("\n\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
+            memo.append(BootConstant.BR).append("\t- start: PostOffice=").append(postOffice.getClass().getName());
+            memo.append(BootConstant.BR).append("\t- start: HealthInspector=").append(healthInspector.getClass().getName());
+            //memo.append(BootConstant.BR).append("\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
+            memo.append(BootConstant.BR).append("\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
             memoLogged = true;
         }
         log.trace(() -> memo.toString());
@@ -358,14 +356,14 @@ abstract public class SummerApplication extends SummerBigBang {
             }
         } catch (java.net.BindException ex) {
             ex.printStackTrace();
-            log.fatal("\nIn order to check which application is listening on a port, you can use the following command from the command line:\n"
+            log.fatal(BootConstant.BR + "In order to check which application is listening on a port, you can use the following command from the command line:\n"
                     + "\n"
-                    + "For Microsoft Windows:\n"
-                    + "    netstat -ano | find \"80\" | find \"LISTEN\"\n"
-                    + "    tasklist /fi \"PID eq <pid>\"\n"
-                    + "     \n"
-                    + "For Linux:\n"
-                    + "    netstat -anpe | grep \"80\" | grep \"LISTEN\" \n", ex);
+                    + "For Microsoft Windows:" + BootConstant.BR
+                    + "    netstat -ano | find \"80\" | find \"LISTEN\"" + BootConstant.BR
+                    + "    tasklist /fi \"PID eq <pid>\"" + BootConstant.BR
+                    + "     " + BootConstant.BR
+                    + "For Linux:" + BootConstant.BR
+                    + "    netstat -anpe | grep \"80\" | grep \"LISTEN\" " + BootConstant.BR, ex);
             System.exit(1);
         } catch (Throwable ex) {
             ex.printStackTrace();

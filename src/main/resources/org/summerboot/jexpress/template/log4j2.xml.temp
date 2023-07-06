@@ -13,8 +13,8 @@
         -->
         <RollingRandomAccessFile
             name="StatusLogFile"
-            fileName="${sys:logDir}/log/${sys:appappName}_status_${hostName}.log"
-            filePattern="${sys:logDir}/log/$${date:yyyy-MM-dd}/${sys:appappName}_status_${hostName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
+            fileName="${sys:logPath}/${sys:appName}_status_${sys:serverName}.log"
+            filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_status_${sys:serverName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
             immediateFlush="false"
             ignoreExceptions="false">
             <PatternLayout pattern="%d %p %c{}.%M() [%t] %m %ex%n"/>
@@ -25,8 +25,8 @@
         </RollingRandomAccessFile>  
         <RollingRandomAccessFile
             name="RequestLogFile"
-            fileName="${sys:logDir}/log/${sys:appappName}_requests_${hostName}.log"
-            filePattern="${sys:logDir}/log/$${date:yyyy-MM-dd}/${sys:appappName}_requests_${hostName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
+            fileName="${sys:logPath}/${sys:appName}_requests_${sys:serverName}.log"
+            filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_requests_${sys:serverName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
             immediateFlush="false"
             ignoreExceptions="false">
             <PatternLayout pattern="%d %p %c{}.%M() [%t] %m %ex%n"/>
@@ -80,7 +80,7 @@
             <AppenderRef ref="Console"/>
         </Logger>
 
-        <Logger level="debug" name="${sys:appPackage}" includeLocation="true" additivity="false">
+        <Logger level="debug" name="${sys:appPackageName}" includeLocation="true" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
             <!-- -->
             <AppenderRef ref="Console"/>

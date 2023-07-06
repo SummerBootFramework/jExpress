@@ -36,11 +36,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 
@@ -48,7 +46,7 @@ import org.summerboot.jexpress.boot.config.ConfigUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@ImportResource(SummerApplication.CFG_NIO)
+//@ImportResource(BootConstant.FILE_CFG_NIO)
 public class NioConfig extends BootConfig {
 
     public static void main(String[] args) {
@@ -223,7 +221,6 @@ public class NioConfig extends BootConfig {
 
     //4.3 Netty Channel Handler
     @ConfigHeader(title = "4.3 Netty Channel Handler")
-
     @Config(key = "nio.server.ReaderIdleSeconds", defaultValue = "0",
             desc = "rec Idle enabled only when value > 0")
     private volatile int readerIdleSeconds = 0;
