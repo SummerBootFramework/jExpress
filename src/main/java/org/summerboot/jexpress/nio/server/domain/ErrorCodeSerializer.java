@@ -19,7 +19,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
-import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.BootConstant;
 
 /**
  *
@@ -29,7 +29,7 @@ public class ErrorCodeSerializer extends JsonSerializer<String> {
 
     @Override
     public void serialize(String value, JsonGenerator jg, SerializerProvider sp) throws IOException {
-        if (SummerApplication.SystemErrorCodeAsInt) {
+        if (BootConstant.CFG_ERROR_CODE_AS_INT) {
             int intValue = Integer.parseInt(value);
             jg.writeNumber(intValue);
         } else {

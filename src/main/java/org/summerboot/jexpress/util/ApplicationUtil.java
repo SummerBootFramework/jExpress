@@ -132,17 +132,17 @@ public class ApplicationUtil {
         return duplicates;
     }
 
-    public static String getServerName(String key, boolean exitWhenFail) {
+    public static String getServerName(boolean exitWhenFail) {
         try {
-            System.setProperty(key, InetAddress.getLocalHost().getHostName());
+            return InetAddress.getLocalHost().getHostName();
+            //System.setProperty(key, InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException ex) {
-            System.setProperty(key, null);
             ex.printStackTrace(System.err);
             if (exitWhenFail) {
                 System.exit(-1);
             }
         }
-        return System.getProperty(key);
+        return null;
     }
 
     public static Set<String> getClassNamesFromJarFile(File jarFile) throws IOException {

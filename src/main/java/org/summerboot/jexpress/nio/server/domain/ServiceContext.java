@@ -47,7 +47,8 @@ import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.SystemConfig;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -443,7 +444,7 @@ public class ServiceContext {
         try {
             realPath = file.getAbsoluteFile().toPath().normalize().toString();
         } catch (Throwable ex) {
-            Err e = new Err(BootErrorCode.NIO_BAD_REQUEST, null, "Invalid file path: " + filePath, ex);
+            Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, "Invalid file path: " + filePath, ex);
             this.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return false;
         }
@@ -476,7 +477,7 @@ public class ServiceContext {
         try {
             realPath = file.getAbsoluteFile().toPath().normalize().toString();
         } catch (Throwable ex) {
-            Err e = new Err(BootErrorCode.NIO_BAD_REQUEST, null, "Invalid file path: " + filePath, ex);
+            Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, "Invalid file path: " + filePath, ex);
             this.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return false;
         }
@@ -535,7 +536,7 @@ public class ServiceContext {
         }
         if (!errorFile.exists()) {
             errorFile.getParentFile().mkdirs();
-            String title = System.getProperty(SummerApplication.SYS_PROP_APP_VERSION_SHORT);
+            String title = SystemConfig.cfg.getVersionShort();
             String errorDesc = status.reasonPhrase();
             StringBuilder sb = new StringBuilder();
             Path errorFilePath = errorFile.getAbsoluteFile().toPath();
@@ -827,11 +828,23 @@ public class ServiceContext {
     }
 
     public ServiceContext reportError(StringBuilder sb) throws JsonProcessingException {
-        if (this.serviceError == null || file == null) {// log error only for file request
+        if (this.serviceError == null /*|| file == null*/) {// log error only for file request
             return this;
         }
-        sb.append("\n\n\tError: ");
-        sb.append(BeanUtil.toJson(this.serviceError, true, true));
+        if (file != null) {
+            sb.append("\n\n\tError: ");
+            sb.append(BeanUtil.toJson(this.serviceError.showRootCause(true), true, true));
+        } else {
+            List<Err> errors = serviceError.getErrors();
+            if (errors != null && errors.size() > 1) {
+                sb.append("\n\n\tExceptions: ");
+                for (var error : errors) {
+                    if (error.getEx() != null) {
+                        sb.append("\n\t ").append(error.getEx());
+                    }
+                }
+            }
+        }
         return this;
     }
 

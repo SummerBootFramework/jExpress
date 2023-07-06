@@ -17,7 +17,7 @@ package org.summerboot.jexpress.integration.cache;
 
 import org.summerboot.jexpress.integration.cache.domain.FlashSale;
 import java.util.UUID;
-import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.BootConstant;
 
 /**
  *
@@ -52,7 +52,7 @@ public interface BootCache {
     boolean unlock(String lockName, String unlockPassword);
 
     default String generateUnlockPassword() {
-        return UUID.randomUUID().toString() + "_" + SummerApplication.PID + "_" + Thread.currentThread().getName();
+        return UUID.randomUUID().toString() + "_" + BootConstant.PID + "_" + Thread.currentThread().getName();
     }
 
     /**

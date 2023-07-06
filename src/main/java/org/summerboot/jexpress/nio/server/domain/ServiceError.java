@@ -29,9 +29,10 @@ import java.util.List;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ServiceError {
+
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The index of requests received by current server since start")
     private long ref;
-    
+
     @JsonIgnore
     private Object attachedData;
 
@@ -52,6 +53,15 @@ public class ServiceError {
             errors = new ArrayList();
         }
         this.errors.add(new Err(errorCode, errorTag, errorDesc, ex));
+    }
+
+    ServiceError showRootCause(boolean isEnable) {
+        if (errors != null) {
+            for (var err : errors) {
+                err.showRootCause(isEnable);
+            }
+        }
+        return this;
     }
 
     @Override

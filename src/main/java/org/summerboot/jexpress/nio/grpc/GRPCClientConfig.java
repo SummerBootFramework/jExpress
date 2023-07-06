@@ -112,8 +112,8 @@ abstract public class GRPCClientConfig extends BootConfig {
         generateTemplate = true;
     }
 
-    @Config(key = ID + ".ssl.overrideAuthority", predefinedValue = "server2.jexpress.org",
-            desc = "NOT for PRODUCTION! Set server certificate DNS name here when server is not yet running on its certificate DNS name")
+    @Config(key = ID + ".ssl.overrideAuthority", predefinedValue = "server2.4096.jexpress.org",
+            desc = "NOT for PRODUCTION! Set server certificate DNS name here when server is not yet running on its certificate Subject Alternative Names (SAN)")
     protected volatile String overrideAuthority;
 
     @JsonIgnore

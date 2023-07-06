@@ -101,7 +101,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     public void channelRead0(final ChannelHandlerContext ctx, final FullHttpRequest req) {
         final long start = System.currentTimeMillis();
         if (!req.decoderResult().isSuccess()) {
-            NioHttpUtil.sendError(ctx, HttpResponseStatus.BAD_REQUEST, BootErrorCode.NIO_BAD_REQUEST, "failed to decode request", null);
+            NioHttpUtil.sendError(ctx, HttpResponseStatus.BAD_REQUEST, BootErrorCode.NIO_REQUEST_BAD_ENCODING, "failed to decode request", null);
             return;
         }
         NioCounter.COUNTER_HIT.incrementAndGet();
@@ -111,8 +111,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 //        }
         long dataSize = req.content().capacity();
 //        if (dataSize > _5MB) {
-//            ServiceError e = new ServiceError(BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT, null, "Upload file cannot over 5MB", null);
-//            ServiceContext context = ServiceContext.build(hitIndex).txt(e.toJson()).status(HttpResponseStatus.INSUFFICIENT_STORAGE).errorCode(BootErrorCode.NIO_EXCEED_FILE_SIZE_LIMIT).level(Level.DEBUG);
+//            ServiceError e = new ServiceError(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "Upload file cannot over 5MB", null);
+//            ServiceContext context = ServiceContext.build(hitIndex).txt(e.toJson()).status(HttpResponseStatus.INSUFFICIENT_STORAGE).errorCode(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT).level(Level.DEBUG);
 //            NioHttpUtil.sendText(ctx, true, null, context.status(), context.txt(), context.contentType(), true);
 //            return;
 //        }

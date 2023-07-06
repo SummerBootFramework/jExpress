@@ -38,6 +38,4 @@ public @interface Version {
     String logFileName() default "";// which is value[0]
 
     String LogManager() default BootConstant.LOG4J2_JDKADAPTER_VALUE;
-
-    boolean SystemErrorCodeAsInt() default false;
 }

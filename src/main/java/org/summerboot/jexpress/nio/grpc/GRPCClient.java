@@ -75,7 +75,7 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
      */
     public static NettyChannelBuilder getNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
             @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
-        NettyChannelBuilder channelBuilder;
+        final NettyChannelBuilder channelBuilder;
         String target = uri.toString();//"grpcs://"+uri.getAuthority()+"/service";// "grpcs:///"
         switch (uri.getScheme()) {
             case "unix": //https://github.com/grpc/grpc-java/issues/1539
@@ -107,7 +107,7 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
         if (keyManagerFactory == null) {
             channelBuilder.usePlaintext();
         } else {
-            SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
+            final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
             sslBuilder.keyManager(keyManagerFactory);
             if (trustManagerFactory == null) {//ignore Server Certificate
                 sslBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
@@ -117,7 +117,7 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                     channelBuilder.overrideAuthority(overrideAuthority);
                 }
             }
-            sslBuilder = GrpcSslContexts.configure(sslBuilder, SslProvider.OPENSSL);
+            GrpcSslContexts.configure(sslBuilder, SslProvider.OPENSSL);
             if (tlsVersionProtocols != null) {
                 sslBuilder.protocols(tlsVersionProtocols);
             }

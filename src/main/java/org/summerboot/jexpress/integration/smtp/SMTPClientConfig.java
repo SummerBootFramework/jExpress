@@ -27,16 +27,14 @@ import java.util.Set;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import java.util.HashSet;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.SummerApplication;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.boot.SystemConfig;
 
 /**
  * Volatile Bean　Pattern
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@ImportResource(SummerApplication.CFG_SMTP)
+//@ImportResource(BootConstant.FILE_CFG_SMTP)
 public class SMTPClientConfig extends BootConfig {
 
     public static void main(String[] args) {
@@ -150,11 +148,9 @@ public class SMTPClientConfig extends BootConfig {
         props.remove(KEY_DEBOUCING_INTERVAL);
         Object displayName = props.get(KEY_USER_DISPLAYNAME);
         if (displayName == null) {
-            //displayName = System.getProperty(BootConstant.SYS_PROP_APP_VERSION_SHORT);// use major Version
-
             displayName = props.get("mail.smtp.userName");// for backward compatibility only, will be depreacated in next release
             if (displayName == null) {
-                displayName = System.getProperty(BootConstant.SYS_PROP_APP_VERSION_SHORT);// use major Version
+                displayName = SystemConfig.cfg.getVersionShort();// use major Version
             }
 
             if (displayName != null) {

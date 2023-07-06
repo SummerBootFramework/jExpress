@@ -34,6 +34,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
@@ -105,6 +106,11 @@ public class GRPCServer {
 //        }
 //    }
 
+    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
+        //ServerInterceptor serverInterceptor, int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener;
+        this(bindingAddr, port, kmf, tmf, null, BootConstant.CPU_CORE * 2 + 1, BootConstant.CPU_CORE * 2 + 1, Integer.MAX_VALUE, 60, null);
+    }
+
     public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener) {
         this.bindingAddr = bindingAddr;
         this.port = port;
@@ -132,14 +138,6 @@ public class GRPCServer {
         return tlsBuilder.build();
     }
 
-//    protected GRPCServiceCounter initThreadPool() {
-//        final int coreSize = Runtime.getRuntime().availableProcessors();
-//        int poolCoreSize = coreSize * 2 + 1;// how many tasks running at the same time
-//        int poolMaxSizeMaxSize = poolCoreSize;// how many tasks running at the same time
-//        long keepAliveSeconds = 60L;
-//        int poolQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
-//        return this.initThreadPool(poolCoreSize, poolMaxSizeMaxSize, poolQueueSize, keepAliveSeconds);
-//    }
     /**
      *
      * @param poolCoreSize - the number of threads to keep in the pool, even if
@@ -155,8 +153,7 @@ public class GRPCServer {
      */
     private GRPCServiceCounter initThreadPool(int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener) {
         if (poolCoreSize < 1) {
-            final int coreSize = Runtime.getRuntime().availableProcessors();
-            poolCoreSize = coreSize * 2 + 1;// how many tasks running at the same time
+            poolCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
         }
 
         if (poolMaxSizeMaxSize < poolCoreSize) {

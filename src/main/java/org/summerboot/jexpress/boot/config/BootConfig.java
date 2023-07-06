@@ -52,7 +52,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.SummerBigBang;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.util.ApplicationUtil;
 
@@ -67,12 +66,11 @@ public abstract class BootConfig implements JExpressConfig {
 
     protected static final String DESC_KMF = "Path to key store file. Use SSL/TLS when keystore is provided, otherwise use plain socket";
     protected static final String DESC_TMF = "Path to trust store file. Auth the remote peer certificate when a truststore is provided, otherwise blindly trust all remote peer certificate";
-    public static final String DESC_PLAINPWD = "plain text here will be automatically encrypted by app root password, specified by -" + SummerBigBang.CLI_ADMIN_PWD_FILE + " or -" + SummerBigBang.CLI_ADMIN_PWD + ", when the application starts or is running";
+    public static final String DESC_PLAINPWD = "plain text inside DEC() will be automatically encrypted by app root password when the application starts or is running";
     protected static final String FILENAME_KEYSTORE = "tls_keystore.p12";
     protected static final String FILENAME_TRUSTSTORE_4SERVER = "tls_truststore_4server.p12";
     protected static final String FILENAME_TRUSTSTORE_4CLIENT = "tls_truststore_4client.p12";
-    
-    
+
     public static <T extends JExpressConfig> T instance(Class<T> implclass) {
         JExpressConfig instance = cache.get(implclass);
         if (instance != null) {
@@ -238,7 +236,7 @@ public abstract class BootConfig implements JExpressConfig {
         if (error != null) {
             throw new IllegalArgumentException(error);
         }
-        if (logger == null) {
+        if (isReal && logger == null) {
             logger = LogManager.getLogger(getClass());
         }
     }
@@ -507,7 +505,7 @@ public abstract class BootConfig implements JExpressConfig {
                             }
                             sb.append(skey).append("=");
                             if (i == 0 || i == 2) {
-                                sb.append("DEC(" + DESC_PLAINPWD + ")");
+                                sb.append("DEC(").append(DESC_PLAINPWD).append(")");
                             }
                             sb.append("\n");
                         }

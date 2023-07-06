@@ -27,7 +27,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
-public interface NioLifecycleListener {
+public interface HttpLifecycleHandler {
 
     /**
      * step0 - do any validation checks before processing

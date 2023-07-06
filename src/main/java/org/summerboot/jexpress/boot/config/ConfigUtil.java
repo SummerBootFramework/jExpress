@@ -137,7 +137,7 @@ public class ConfigUtil {
             if (cfgConfigDir == null || !cfgConfigDir.isDirectory() || !cfgConfigDir.canWrite()) {
                 return 0;
             }
-            createConfigFile(cfg.getClass(), cfgConfigDir, null, false);
+            createConfigFile(cfg.getClass(), cfgConfigDir, configFile.getName(), false);
         }
         //ConfigurationMonitor.listener.stop();
         int updated = updatePasswords(configFile, null, mode.isEncryptMode());

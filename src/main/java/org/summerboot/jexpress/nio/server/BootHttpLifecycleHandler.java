@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.nio.server;
 
+import com.google.inject.Singleton;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -29,7 +30,8 @@ import org.summerboot.jexpress.util.FormatterUtil;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
-public class BootNioLifecycleHandler implements NioLifecycleListener {
+@Singleton
+public class BootHttpLifecycleHandler implements HttpLifecycleHandler {
 
     @Override
     public boolean beofreProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
@@ -38,10 +40,6 @@ public class BootNioLifecycleHandler implements NioLifecycleListener {
 
     @Override
     public void afterProcess(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
-        protectAuthToken(processor, httpRequestHeaders);
-    }
-
-    protected void protectAuthToken(RequestProcessor processor, HttpHeaders httpRequestHeaders) {
         if (httpRequestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
             httpRequestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
         }
@@ -49,7 +47,8 @@ public class BootNioLifecycleHandler implements NioLifecycleListener {
 
     @Override
     public String beforeSendingError(String errorContent) {
-        return FormatterUtil.protectContent(errorContent, "UnknownHostException", ":", null, " ***");
+        //return FormatterUtil.protectContent(errorContent, "UnknownHostException", ":", null, " ***");
+        return errorContent;
     }
 
     @Override

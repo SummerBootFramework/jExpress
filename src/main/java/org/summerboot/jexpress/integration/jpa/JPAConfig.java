@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -31,7 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.hibernate.cfg.Environment;
-import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.SystemConfig;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
@@ -104,19 +105,21 @@ public abstract class JPAConfig extends BootConfig {
         }
         //scan @Entity
         //settings.put(Environment.LOADED_CLASSES, entityClasses);
-        String callerRootPackageName = System.getProperty(SummerApplication.SYS_PROP_APP_PACKAGE_NAME);//SummerApplication.getCallerRootPackageName();
+        Set<String> packageSet = new HashSet();
+        packageSet.addAll(Set.of(packages));
+        packageSet.addAll(SystemConfig.cfg.getRootPackageNames());
         String csvPackageNames = props.getProperty(Environment.LOADED_CLASSES, "");
-        scanAnnotation_Entity(callerRootPackageName + "," + csvPackageNames, packages);
+        scanAnnotation_Entity(csvPackageNames, packageSet);
 
         buildEntityManagerFactory();
     }
 
-    protected void scanAnnotation_Entity(String csvPackageNames, String... packages) {
+    protected void scanAnnotation_Entity(String csvPackageNames, Set<String> packageSet) {
         logger.debug("_rootPackageNames={}", csvPackageNames);
         String[] rootPackageNames = FormatterUtil.parseCsv(csvPackageNames);
         List<String> rootPackageNameList = new ArrayList();
         rootPackageNameList.addAll(Arrays.asList(rootPackageNames));
-        rootPackageNameList.addAll(Arrays.asList(packages));
+        rootPackageNameList.addAll(List.copyOf(packageSet));
         rootPackageNameList = rootPackageNameList.stream()
                 .distinct()
                 .collect(Collectors.toList());
@@ -124,10 +127,8 @@ public abstract class JPAConfig extends BootConfig {
         rootPackageNameList.removeAll(Collections.singleton(null));
         logger.debug("rootPackageNameList:{}", rootPackageNameList);
         entityClasses.clear();
-        for (String rootPackageName : rootPackageNameList) {
-            Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(jakarta.persistence.Entity.class, rootPackageName, false);
-            entityClasses.addAll(tempEntityClasses);
-        }
+        Set<Class<?>> tempEntityClasses = ReflectionUtil.getAllImplementationsByAnnotation(jakarta.persistence.Entity.class, false, rootPackageNameList);
+        entityClasses.addAll(tempEntityClasses);
     }
 
     @Override

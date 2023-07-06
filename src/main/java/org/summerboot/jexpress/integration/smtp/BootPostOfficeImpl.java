@@ -25,13 +25,13 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import com.google.inject.Singleton;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.summerboot.jexpress.boot.BootConstant;
 
 /**
  *
@@ -54,7 +54,7 @@ public class BootPostOfficeImpl implements PostOffice {
         return postoffice;
     }
 
-    private String appVersion = SummerApplication.VERSION;
+    private String appVersion = BootConstant.VERSION;
 
     @Override
     public void setAppVersion(String appVersion) {
@@ -70,7 +70,7 @@ public class BootPostOfficeImpl implements PostOffice {
      * @return
      */
     protected String updateAlertTitle(String title) {
-        return "Alert@" + SummerApplication.HOST + " " + appVersion + " - " + title;
+        return "Alert@" + BootConstant.HOST + " " + appVersion + " - " + title;
     }
 
     /**

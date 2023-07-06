@@ -39,16 +39,14 @@ import java.util.TreeSet;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@ImportResource(SummerApplication.CFG_AUTH)
+//@ImportResource(BootConstant.FILE_CFG_AUTH)
 public class AuthConfig extends BootConfig {
 
     public static void main(String[] args) {
@@ -98,7 +96,7 @@ public class AuthConfig extends BootConfig {
     @Config(key = "ldap.bindingPassword", validate = Config.Validate.Encrypted)
     private volatile String bindingPassword;
 
-    @Config(key = "ldap.PasswordAlgorithm")
+    @Config(key = "ldap.PasswordAlgorithm", defaultValue = "SHA3-256")
     private volatile String passwordAlgorithm = "SHA3-256";
 
     @Config(key = "ldap.schema.TenantGroup.ou")
@@ -178,6 +176,7 @@ public class AuthConfig extends BootConfig {
 
     @JsonIgnore
     private volatile Key jwtSigningKey;
+
     @JsonIgnore
     private volatile JwtParser jwtParser;
 
@@ -215,8 +214,8 @@ public class AuthConfig extends BootConfig {
         // 1. LDAP Client keystore
         if (ldapHost != null) {
             // 1.1 LDAP Client keystore
-            boolean isSSL = kmf != null;
-            if (isSSL) {
+            boolean isSSLEnabled = kmf != null;
+            if (isSSLEnabled) {
                 //LdapSSLConnectionFactory1.init(kmf == null ? null : kmf.getKeyManagers(), tmf == null ? null : tmf.getTrustManagers(), ldapTLSProtocol);
                 //ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
                 String key = "ldap.SSLConnectionFactoryClass";
@@ -233,7 +232,7 @@ public class AuthConfig extends BootConfig {
                 }
             }
             //1.2 LDAP info
-            ldapConfig = LdapAgent.buildCfg(ldapHost, ldapPort, isSSL, ldapSSLConnectionFactoryClassName, ldapTLSProtocol, bindingUserDN, bindingPassword);
+            ldapConfig = LdapAgent.buildCfg(ldapHost, ldapPort, isSSLEnabled, ldapSSLConnectionFactoryClassName, ldapTLSProtocol, bindingUserDN, bindingPassword);
         }
         // 2. JWT        
         if (symmetricKey != null) {

@@ -15,35 +15,20 @@
  */
 package org.summerboot.jexpress.security.auth;
 
-import io.netty.handler.codec.http.HttpHeaders;
 import javax.naming.NamingException;
-import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.integration.ldap.LdapAgent;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class AuthenticatorMockImpl extends BootAuthenticator<Long> {
+public class LDAPAuthenticator extends BootAuthenticator<Long> {
 
     @Override
-    protected Caller authenticate(String uid, String password, Long metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException {
-        if (!uid.equals(password)) {
-            return null;
+    protected Caller authenticate(String usename, String password, Long metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException {
+        try (LdapAgent ldap = LdapAgent.build()) {
+            return ldap.authenticateUser(usename, password, listener);
         }
-        long userId = uid.hashCode();
-        User user = new User(userId, uid);
-        return user;
     }
-
-    @Override
-    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
-        return true;
-    }
-
-    @Override
-    protected Integer overrideVerifyTokenErrorCode() {
-        return null;
-    }
-
 }

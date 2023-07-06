@@ -24,20 +24,19 @@ import java.util.List;
 import java.util.Properties;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
-import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import static org.summerboot.jexpress.boot.config.BootConfig.generateTemplate;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-@ImportResource(SummerApplication.CFG_GRPC)
+//@ImportResource(BootConstant.FILE_CFG_GRPC)
 public class GRPCServerConfig extends BootConfig {
 
     public static void main(String[] args) {
@@ -56,8 +55,6 @@ public class GRPCServerConfig extends BootConfig {
         CPU, IO, Mixed
     }
 
-    private final int availableProcessors = Runtime.getRuntime().availableProcessors();
-
     //1. gRPC server config
     @ConfigHeader(title = "1. " + ID + " Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
@@ -73,11 +70,11 @@ public class GRPCServerConfig extends BootConfig {
 
     @Config(key = ID + ".pool.coreSize", predefinedValue = "0",
             desc = "coreSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int poolCoreSize = availableProcessors * 2 + 1;
+    private volatile int poolCoreSize = BootConstant.CPU_CORE * 2 + 1;
 
     @Config(key = ID + ".pool.maxSize", predefinedValue = "0",
             desc = "maxSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int poolMaxSizeMaxSize = availableProcessors * 2 + 1;
+    private volatile int poolMaxSizeMaxSize = BootConstant.CPU_CORE * 2 + 1;
 
     @Config(key = ID + ".pool.queueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
@@ -117,8 +114,8 @@ public class GRPCServerConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
     protected void generateTemplate_truststore(StringBuilder sb) {
-        sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4SERVER + "\n");
-        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append("#" + KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4SERVER + "\n");
+        sb.append("#" + KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
         generateTemplate = true;
     }
 
@@ -130,7 +127,7 @@ public class GRPCServerConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        int cpuCoreSize = availableProcessors;
+        int cpuCoreSize = BootConstant.CPU_CORE;
         switch (threadingMode) {
             case CPU:// use CPU_Bound core + 1 when application is CPU_Bound bound
                 poolCoreSize = cpuCoreSize + 1;

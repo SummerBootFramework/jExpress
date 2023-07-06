@@ -47,7 +47,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.security.auth.AuthConfig;
+import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.AuthenticatorListener;
+import org.summerboot.jexpress.security.auth.BootAuthenticator;
 import org.summerboot.jexpress.security.auth.User;
 
 /**
@@ -79,10 +81,10 @@ public class LdapAgent implements Closeable {
         return new LdapAgent(AuthConfig.cfg.getLdapConfig(), AuthConfig.cfg.getLdapBaseDN(), AuthConfig.cfg.isTypeAD(), AuthConfig.cfg.getLdapScheamTenantGroupOU());
     }
 
-    public static Properties buildCfg(String host, int port, boolean isSSL, String ldapSSLConnectionFactoryClassName, String sslProtocol, String bindingUserDN, String bindingPassword) {
+    public static Properties buildCfg(String host, int port, boolean isSSLEnabled, String ldapSSLConnectionFactoryClassName, String sslProtocol, String bindingUserDN, String bindingPassword) {
         Properties tempCfg = new Properties();
         tempCfg.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        String providerUrl = isSSL
+        String providerUrl = isSSLEnabled
                 ? "ldaps://" + host + ":" + port
                 : "ldap://" + host + ":" + port;
         tempCfg.put(Context.PROVIDER_URL, providerUrl);
@@ -97,7 +99,7 @@ public class LdapAgent implements Closeable {
             tempCfg.put(Context.SECURITY_AUTHENTICATION, "simple");//"EXTERNAL" - Principal and credentials will be obtained from the connection
             tempCfg.put(Context.SECURITY_CREDENTIALS, bindingPassword);
         }
-        if (isSSL) {// Specify SSL
+        if (isSSLEnabled) {// Specify SSL
             tempCfg.put(Context.SECURITY_PROTOCOL, sslProtocol);//"TLSv1.3"
             if (ldapSSLConnectionFactoryClassName != null) {
                 tempCfg.put("java.naming.ldap.factory.socket", ldapSSLConnectionFactoryClassName);
@@ -121,7 +123,14 @@ public class LdapAgent implements Closeable {
         return m_ctx;
     }
 
+    protected static final String ERROR_NO_CFG = "LDAP is not configured at " + AuthConfig.cfg.getCfgFile().getAbsolutePath()
+            + ". \nOr create your own class, either extends " + BootAuthenticator.class.getSimpleName() + " or implements " + Authenticator.class.getSimpleName()
+            + " then annotated with @Service(binding = " + Authenticator.class.getSimpleName() + ".class)";
+
     public LdapAgent(Properties cfg, String baseDN, boolean isAD, String tenantGroupName) throws NamingException {
+        if (cfg == null || baseDN == null) {
+            throw new UnsupportedOperationException(ERROR_NO_CFG);
+        }
         this.cfg = cfg;
         this.baseDN = escape(baseDN);
         this.isAD = isAD;

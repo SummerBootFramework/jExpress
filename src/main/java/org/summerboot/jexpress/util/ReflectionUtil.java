@@ -45,6 +45,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -77,16 +78,21 @@ public class ReflectionUtil {
      *
      * @param <T>
      * @param interfaceClass
-     * @param rootPackageName
+     * @param rootPackageNames
      * @return
      */
-    public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, String rootPackageName) {
-        Set<Class<? extends T>> classes;
-        if (StringUtils.isBlank(rootPackageName)) {
-            classes = new HashSet();
-        } else {
+    public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, String... rootPackageNames) {
+        Set<Class<? extends T>> classes = new HashSet();
+        for (String rootPackageName : rootPackageNames) {
+            if (StringUtils.isBlank(rootPackageName)) {
+                continue;
+            }
             Reflections reflections = new Reflections(rootPackageName);
-            classes = reflections.getSubTypesOf(interfaceClass);
+            Set<Class<? extends T>> cs = reflections.getSubTypesOf(interfaceClass);
+            if (cs.isEmpty()) {
+                continue;
+            }
+            classes.addAll(cs);
         }
         for (Class c : PluginClasses) {
             if (interfaceClass.isAssignableFrom(c)) {
@@ -96,20 +102,30 @@ public class ReflectionUtil {
         return classes;
     }
 
+    public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, Collection<String> rootPackageNames) {
+        String[] sa = rootPackageNames.toArray(String[]::new);
+        return getAllImplementationsByInterface(interfaceClass, sa);
+    }
+
     /**
      *
      * @param annotation
-     * @param rootPackageName
+     * @param rootPackageNames
      * @param honorInherited
      * @return
      */
-    public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, String rootPackageName, boolean honorInherited) {
-        Set<Class<?>> classes;
-        if (StringUtils.isBlank(rootPackageName)) {
-            classes = new HashSet();
-        } else {
+    public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, boolean honorInherited, String... rootPackageNames) {
+        Set<Class<?>> classes = new HashSet();
+        for (String rootPackageName : rootPackageNames) {
+            if (StringUtils.isBlank(rootPackageName)) {
+                continue;
+            }
             Reflections reflections = new Reflections(rootPackageName);
-            classes = reflections.getTypesAnnotatedWith(annotation, honorInherited);
+            Set<Class<?>> cs = reflections.getTypesAnnotatedWith(annotation, honorInherited);
+            if (cs.isEmpty()) {
+                continue;
+            }
+            classes.addAll(cs);
         }
         classes.addAll(PluginClasses);
         Set<Class<?>> ret = new HashSet();// honorInherited not working as expected, that will cause classes could contain subclasses with no such annotation
@@ -119,6 +135,11 @@ public class ReflectionUtil {
             }
         }
         return ret;
+    }
+
+    public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, boolean honorInherited, Collection<String> rootPackageNames) {
+        String[] sa = rootPackageNames.toArray(String[]::new);
+        return getAllImplementationsByAnnotation(annotation, honorInherited, sa);
     }
 
     /**

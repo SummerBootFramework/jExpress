@@ -15,8 +15,7 @@
  */
 package org.summerboot.jexpress.security.auth;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtBuilder;
+import io.grpc.Context;
 import io.netty.handler.codec.http.HttpHeaders;
 import javax.naming.NamingException;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
@@ -29,12 +28,15 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
  */
 public interface Authenticator {
 
-    //<T extends BootCache> void setCache(T cache);
     /**
-     *
-     * @param listener
+     * gRPC JWT verification result
      */
-    void setListener(AuthenticatorListener listener);
+    Context.Key<String> GrpcCallerId = Context.key("uid");
+
+    /**
+     * gRPC JWT verification result
+     */
+    Context.Key<Caller> GrpcCaller = Context.key("caller");
 
     /**
      * Success HTTP Status: 201 Created
@@ -47,32 +49,7 @@ public interface Authenticator {
      * @return JWT
      * @throws javax.naming.NamingException
      */
-    String login(String username, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException;
-
-    /**
-     * Extra authorization checks before processing
-     *
-     * @param processor
-     * @param httpRequestHeaders
-     * @param httpRequestPath
-     * @param context
-     * @return true if good to process request, otherwise false
-     * @throws Exception
-     */
-    boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
-
-    JwtBuilder toJwt(Caller caller);
-
-    Caller fromJwt(Claims claims);
-
-    /**
-     * Retrieve token based on RFC 6750 - The OAuth 2.0 Authorization Framework
-     * override this method to get customized token
-     *
-     * @param httpRequestHeaders
-     * @return
-     */
-    String getBearerToken(HttpHeaders httpRequestHeaders);
+    String signJWT(String username, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException;
 
     /**
      * Success HTTP Status: 200 OK
@@ -84,7 +61,7 @@ public interface Authenticator {
      * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyBearerToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
+    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
 
     /**
      *
@@ -98,13 +75,25 @@ public interface Authenticator {
     <T extends Caller> T verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
 
     /**
+     * Extra authorization checks before processing
+     *
+     * @param processor
+     * @param httpRequestHeaders
+     * @param httpRequestPath
+     * @param context
+     * @return true if good to process request, otherwise false
+     * @throws Exception
+     */
+    boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
+
+    /**
      * Success HTTP Status: 204 No Content
      *
      * @param httpRequestHeaders contains Authorization = Bearer + JWT
      * @param cache
      * @param context
      */
-    void logout(HttpHeaders httpRequestHeaders, AuthTokenCache cache, final ServiceContext context);
+    void logoutToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, final ServiceContext context);
 
     /**
      * Success HTTP Status: 204 No Content
@@ -113,5 +102,5 @@ public interface Authenticator {
      * @param cache
      * @param context
      */
-    void logout(String authToken, AuthTokenCache cache, final ServiceContext context);
+    void logoutToken(String authToken, AuthTokenCache cache, final ServiceContext context);
 }

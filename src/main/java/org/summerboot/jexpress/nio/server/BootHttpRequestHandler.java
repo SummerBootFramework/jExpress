@@ -53,13 +53,13 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
     protected Authenticator authenticator;
 
     @Inject
-    protected NioExceptionListener nioExceptionListener;
+    protected HttpExceptionHandler httpExceptionHandler;
 
     @Inject
-    protected AuthTokenCache tokenCache;
+    protected AuthTokenCache authTokenCache;
 
     @Inject
-    protected NioLifecycleListener nioLifecycleListener;
+    protected HttpLifecycleHandler httpLifecycleHandler;
 
     protected static SMTPClientConfig cmtpCfg = SMTPClientConfig.cfg;
 
@@ -74,7 +74,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             if (processor == null) {
                 processor = getRequestProcessor(httptMethod, "");
                 if (processor == null) {
-                    nioExceptionListener.onActionNotFound(ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
+                    httpExceptionHandler.onActionNotFound(ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
                     return processorSettings;
                 }
             }
@@ -87,7 +87,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
                 context.logResponseBody(logSettings.isLogResponseBody());
             }
 
-            // step2. caller authentication, will do authorizationCheck in next step(ControllerAction.process(...))
+            // step2. caller authentication
             if (processor.isRoleBased()) {
                 context.poi(BootPOI.AUTH_BEGIN);
                 if (!authenticationCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
@@ -100,43 +100,43 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
                 }
             }
 
-            // step3. serve the request, most frequently called first
+            // step3. serve the request, most frequently called first, will do customizedAuthorizationCheck in next step(ControllerAction.process(...))
             context.poi(BootPOI.PROCESS_BEGIN);
             if (authenticator != null && !authenticator.customizedAuthorizationCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return processorSettings;
             }
-            if (!nioLifecycleListener.beofreProcess(processor, httpRequestHeaders, httpRequestPath, context)) {
+            if (!httpLifecycleHandler.beofreProcess(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return processorSettings;
             }
-            processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context, BootErrorCode.NIO_WSRS_REQUEST_BAD_DATA);
+            processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context, BootErrorCode.NIO_REQUEST_BAD_DATA);
             //} catch (ExpiredJwtException | SignatureException | MalformedJwtException ex) {
             //    nak(context, HttpResponseStatus.UNAUTHORIZED, BootErrorCode.AUTH_INVALID_TOKEN, "Invalid JWT");
         } catch (NamingException ex) {
-            nioExceptionListener.onNamingException(ex, httptMethod, httpRequestPath, context);
+            httpExceptionHandler.onNamingException(ex, httptMethod, httpRequestPath, context);
         } catch (PersistenceException ex) {
-            nioExceptionListener.onPersistenceException(ex, httptMethod, httpRequestPath, context);
+            httpExceptionHandler.onPersistenceException(ex, httptMethod, httpRequestPath, context);
         } catch (HttpConnectTimeoutException ex) {// a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
-            nioExceptionListener.onHttpConnectTimeoutException(ex, httptMethod, httpRequestPath, context);
-        } catch (HttpTimeoutException ex) {// a context is not received within a specified time period.            
-            nioExceptionListener.onHttpTimeoutException(ex, httptMethod, httpRequestPath, context);
+            httpExceptionHandler.onHttpConnectTimeoutException(ex, httptMethod, httpRequestPath, context);
+        } catch (HttpTimeoutException ex) {// a context is not received within a specified time period.
+            httpExceptionHandler.onHttpTimeoutException(ex, httptMethod, httpRequestPath, context);
         } catch (RejectedExecutionException ex) {
-            nioExceptionListener.onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
+            httpExceptionHandler.onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
         } catch (IOException | UnresolvedAddressException ex) {//SocketException, 
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause == null) {
                 cause = ex;
             }
             if (cause instanceof RejectedExecutionException) {
-                nioExceptionListener.onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
+                httpExceptionHandler.onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
             } else {
-                nioExceptionListener.onIOException(ex, httptMethod, httpRequestPath, context);
+                httpExceptionHandler.onIOException(ex, httptMethod, httpRequestPath, context);
             }
         } catch (InterruptedException ex) {
-            nioExceptionListener.onInterruptedException(ex, httptMethod, httpRequestPath, context);
+            httpExceptionHandler.onInterruptedException(ex, httptMethod, httpRequestPath, context);
         } catch (Throwable ex) {
-            nioExceptionListener.onUnexpectedException(ex, processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
+            httpExceptionHandler.onUnexpectedException(ex, processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
         } finally {
-            nioLifecycleListener.afterProcess(processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
+            httpLifecycleHandler.afterProcess(processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
             context.poi(BootPOI.PROCESS_END);
         }
         return processorSettings;
@@ -158,24 +158,24 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         if (authenticator == null) {
             return true;//ignore token when authenticator is not implemented
         }
-        authenticator.verifyBearerToken(httpRequestHeaders, tokenCache, null, context);
+        authenticator.verifyToken(httpRequestHeaders, authTokenCache, null, context);
         return context.caller() != null;
     }
 
     @Override
     protected String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
             final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
-        return nioLifecycleListener.beforeLogging(originallLogContent, httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
+        return httpLifecycleHandler.beforeLogging(originallLogContent, httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
     }
 
     @Override
     protected void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
             final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception {
-        nioLifecycleListener.afterLogging(logContent, httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
+        httpLifecycleHandler.afterLogging(logContent, httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
     }
 
     @Override
     public String beforeSendingError(String errorContent) {
-        return nioLifecycleListener.beforeSendingError(errorContent);
+        return httpLifecycleHandler.beforeSendingError(errorContent);
     }
 }

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.util.ExceptionUtil;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
@@ -35,7 +36,13 @@ public class Err<T> {
     private String errorTag;
     private String errorDesc;
     private String cause;
+
+    @JsonIgnore
+    private String _cause;
+
+    @JsonIgnore
     private Throwable ex;
+
     @JsonIgnore
     private T attachedData;
 
@@ -52,13 +59,21 @@ public class Err<T> {
         this.errorTag = errorTag;
         this.errorDesc = errorDesc;
         this.ex = ex;//keep orignal ex for stacktrace in log/email
+
+//        this._cause = ex == null
+//                ? null
+//                : ExceptionUtils.getStackTrace(ex);
         Throwable rootCause = ExceptionUtils.getRootCause(ex);
         if (rootCause == null) {
             rootCause = ex;
         }
-        this.cause = rootCause == null
+        this._cause = rootCause == null
                 ? null
                 : rootCause.toString();
+    }
+
+    void showRootCause(boolean isEnable) {
+        this.cause = isEnable ? this._cause : null;
     }
 
     @Override
@@ -123,7 +138,6 @@ public class Err<T> {
         this.cause = cause;
     }
 
-    @JsonIgnore
     public Throwable getEx() {
         return ex;
     }
