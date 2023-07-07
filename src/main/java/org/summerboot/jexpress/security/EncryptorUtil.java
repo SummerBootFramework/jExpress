@@ -470,13 +470,13 @@ public class EncryptorUtil {
 //                keyPEM = keyPEM.substring(begin);
 //                keyPEM = keyPEM
 //                        .replace("-----BEGIN PUBLIC KEY-----", "")
-//                        .replaceAll(System.lineSeparator(), "")
+//                        .replaceAll(BootConstant.BR, "")
 //                        .replace("-----END PUBLIC KEY-----", "")
 //                        //                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
 //                        //                .replace("-----END RSA PRIVATE KEY-----", "")
 //                        //                .replace("-----BEGIN EC PRIVATE KEY-----", "")
 //                        //                .replace("-----END EC PRIVATE KEY-----", "")
-//                        //.replaceAll(System.lineSeparator(), "");
+//                        //.replaceAll(BootConstant.BR, "");
 //                        .replaceAll("\\s+", "");
                 byte[] encoded = loadPermKey(publicKeyFile);
                 // Turn the encoded key into a real RSA public key.
@@ -594,7 +594,7 @@ public class EncryptorUtil {
                 .replace("-----END RSA PRIVATE KEY-----", "")
                 .replace("-----BEGIN EC PRIVATE KEY-----", "")
                 .replace("-----END EC PRIVATE KEY-----", "")
-                //.replaceAll(System.lineSeparator(), "");
+                //.replaceAll(BootConstant.BR, "");
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
                 .replaceAll("\\s+", "");

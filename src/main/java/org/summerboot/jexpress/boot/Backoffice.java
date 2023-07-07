@@ -21,6 +21,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import static org.summerboot.jexpress.boot.config.BootConfig.generateTemplate;
@@ -33,26 +37,36 @@ import org.summerboot.jexpress.util.ReflectionUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class SystemConfig extends BootConfig {
+public class Backoffice extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(SystemConfig.class);
+        String t = generateTemplate(Backoffice.class);
         System.out.println(t);
     }
 
-    public static final SystemConfig cfg = new SystemConfig();
+    public static final Backoffice cfg = new Backoffice();
 
-    protected SystemConfig() {
+    protected Backoffice() {
     }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
+        tpe = new ThreadPoolExecutor(backofficeExecutorCore, backofficeExecutorMax, backofficeExecutorkeepAliveTimeSec, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(backofficeExecutorQueue), Executors.defaultThreadFactory(), new ThreadPoolExecutor.DiscardPolicy());
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            tpe.shutdown();
+        }, "ShutdownHook.Backoffice")
+        );
     }
 
     @Override
     public void shutdown() {
     }
 
+    public static void execute(Runnable task) {
+        cfg.tpe.execute(task);
+    }
+    protected ThreadPoolExecutor tpe;
     private String pingURL;
     private String version;
     private String versionShort;
@@ -95,12 +109,11 @@ public class SystemConfig extends BootConfig {
                     .stream()
                     .sorted(Map.Entry.comparingByValue())
                     .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
-
-            String BR = System.lineSeparator();
             StringBuilder sb = new StringBuilder().append("## Default Error Codes:").append(BR);
             sorted.forEach((key, value) -> sb.append("## ").append(key).append(": ").append(value).append(BR));
             ret = sb.toString();
         } catch (Throwable ex) {
+            ex.printStackTrace();
         }
         return ret;
     }
@@ -130,6 +143,36 @@ public class SystemConfig extends BootConfig {
     @ConfigHeader(title = "3. Default Settings")
     @Config(key = "type.errorCodeAsInt", defaultValue = "false")
     private boolean errorCodeAsInt = false;
+
+    @Config(key = "timeout.alert.milliseconds", defaultValue = "3000")
+    private long processTimeoutMilliseconds = 3000;
+
+    private static final String ALERT_MSG_TIMEOUT = "Note: This is a known issue in Linux systems where the/dev/random runs out of \"entropy\" and it causes the system to blockthreads. \n\tTo verify: cat /dev/random or install haveged.\n";
+    @Config(key = "timeout.alert.message", defaultValue = ALERT_MSG_TIMEOUT)
+    private String processTimeoutAlertMessage = ALERT_MSG_TIMEOUT;
+
+    private static final String ALERT_MSG_PORT_IN_USE = "In order to check which application is listening on a port, you can use the following command from the command line:\n"
+            + "\n"
+            + "For Microsoft Windows:\n"
+            + "    netstat -ano | find \"80\" | find \"LISTEN\"\n"
+            + "    tasklist /fi \"PID eq <pid>\"\n"
+            + "     \n"
+            + "For Linux:\n"
+            + "    netstat -anpe | grep \"80\" | grep \"LISTEN\" \n";
+    @Config(key = "portinuse.alert.message", defaultValue = ALERT_MSG_PORT_IN_USE)
+    private String portInUseAlertMessage = ALERT_MSG_PORT_IN_USE;
+
+    @Config(key = "backoffice.executor.core", defaultValue = "100")
+    private int backofficeExecutorCore = 100;
+
+    @Config(key = "backoffice.executor.max", defaultValue = "100")
+    private int backofficeExecutorMax = 100;
+
+    @Config(key = "backoffice.executor.queue", defaultValue = "" + Integer.MAX_VALUE)
+    private int backofficeExecutorQueue = Integer.MAX_VALUE;
+
+    @Config(key = "backoffice.executor.keepAliveTimeSec", defaultValue = "60")
+    private int backofficeExecutorkeepAliveTimeSec = 60;
 
     @ConfigHeader(title = "4.1 Default Path/File Naming")
     @Config(key = "naming.folder.domainPrefix", defaultValue = "standalone")
@@ -218,6 +261,18 @@ public class SystemConfig extends BootConfig {
 
     public boolean isErrorCodeAsInt() {
         return errorCodeAsInt;
+    }
+
+    public long getProcessTimeoutMilliseconds() {
+        return processTimeoutMilliseconds;
+    }
+
+    public String getProcessTimeoutAlertMessage() {
+        return processTimeoutAlertMessage;
+    }
+
+    public String getPortInUseAlertMessage() {
+        return portInUseAlertMessage;
     }
 
     public String getDomainFolderPrefix() {

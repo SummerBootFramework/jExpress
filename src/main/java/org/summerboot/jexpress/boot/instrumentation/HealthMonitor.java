@@ -16,14 +16,13 @@
 package org.summerboot.jexpress.boot.instrumentation;
 
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.Backoffice;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -36,18 +35,7 @@ public class HealthMonitor {
 
     private static final Logger log = LogManager.getLogger(HealthMonitor.class.getName());
 
-    private static final ThreadPoolExecutor POOL_HealthInspector;
-
     protected static NioConfig nioCfg = NioConfig.cfg;
-
-    static {
-        POOL_HealthInspector = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(1), Executors.defaultThreadFactory(), new ThreadPoolExecutor.DiscardPolicy());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            POOL_HealthInspector.shutdown();
-        }, "ShutdownHook.HealthInspector")
-        );
-    }
 
     public static final String PROMPT = "\tSelf Inspection Result: ";
 
@@ -66,8 +54,13 @@ public class HealthMonitor {
             boolean inspectionFailed;
             do {
                 StringBuilder sb = new StringBuilder();
-                sb.append(System.lineSeparator()).append(PROMPT);
-                List<Err> errors = healthInspector.ping();
+                sb.append(BootConstant.BR).append(PROMPT);
+                List<Err> errors = null;
+                try (var a = new TimeoutAlert(healthInspector.getClass().getName() + ".ping()")) {
+                    errors = healthInspector.ping();
+                } catch (Throwable ex) {
+                }
+
                 inspectionFailed = errors != null && !errors.isEmpty();
                 if (inspectionFailed) {
                     String inspectionReport;
@@ -77,7 +70,7 @@ public class HealthMonitor {
                         inspectionReport = "total " + ex;
                     }
                     sb.append(inspectionReport);
-                    sb.append(System.lineSeparator()).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
+                    sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
                     log.warn(sb);
                     try {
                         TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
@@ -91,9 +84,9 @@ public class HealthMonitor {
             } while (inspectionFailed);
             HealthInspector.healthInspectorCounter.set(0);
         };
-        if (POOL_HealthInspector.getActiveCount() < 1) {
+        if (i <= 1) {
             try {
-                POOL_HealthInspector.execute(asyncTask);
+                Backoffice.execute(asyncTask);
             } catch (RejectedExecutionException ex2) {
                 log.debug(() -> "Duplicated HealthInspection Rejected: " + ex2);
             }
