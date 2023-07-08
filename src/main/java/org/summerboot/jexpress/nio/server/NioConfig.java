@@ -205,6 +205,10 @@ public class NioConfig extends BootConfig {
     private volatile int bizExecutorMaxSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
     private volatile int currentMax;
 
+    @Config(key = "nio.server.BizExecutor.KeepAliveSec", predefinedValue = "60")
+    private volatile int bizExecutorKeepAliveSec = 60;
+    private volatile int currentKeepAliveSec;
+
     @Config(key = "nio.server.BizExecutor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
     private volatile int bizExecutorQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
@@ -430,15 +434,16 @@ public class NioConfig extends BootConfig {
                 }
                 break;
         }
-        if (currentCore != bizExecutorCoreSize || currentMax != bizExecutorMaxSize || currentQueue != bizExecutorQueueSize) {
+        if (currentCore != bizExecutorCoreSize || currentMax != bizExecutorMaxSize || currentKeepAliveSec != bizExecutorKeepAliveSec || currentQueue != bizExecutorQueueSize) {
             //update current
             currentCore = bizExecutorCoreSize;
             currentMax = bizExecutorMaxSize;
+            currentKeepAliveSec = bizExecutorKeepAliveSec;
             currentQueue = bizExecutorQueueSize;
             //backup old
             ThreadPoolExecutor old = tpe;
             //create new
-            tpe = new ThreadPoolExecutor(currentCore, currentMax, 60L, TimeUnit.SECONDS,
+            tpe = new ThreadPoolExecutor(currentCore, currentMax, currentKeepAliveSec, TimeUnit.SECONDS,
                     new LinkedBlockingQueue<>(currentQueue),
                     Executors.defaultThreadFactory(), new AbortPolicyWithReport("NIOBizThreadPoolExecutor"));//.DiscardOldestPolicy()
             // then shotdown old tpe
@@ -450,7 +455,6 @@ public class NioConfig extends BootConfig {
         BeanUtil.init(fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull);
 
         //5.1 caller filter
-        String key;
         switch (filterUserType) {
             case id:
                 filterCallerIdSet = new HashSet();

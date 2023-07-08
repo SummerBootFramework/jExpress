@@ -64,6 +64,8 @@ public abstract class BootConfig implements JExpressConfig {
 
     private static final Map<Class, JExpressConfig> cache = new HashMap();
 
+    protected static String BR = System.lineSeparator();
+
     protected static final String DESC_KMF = "Path to key store file. Use SSL/TLS when keystore is provided, otherwise use plain socket";
     protected static final String DESC_TMF = "Path to trust store file. Auth the remote peer certificate when a truststore is provided, otherwise blindly trust all remote peer certificate";
     public static final String DESC_PLAINPWD = "plain text inside DEC() will be automatically encrypted by app root password when the application starts or is running";
@@ -343,7 +345,7 @@ public abstract class BootConfig implements JExpressConfig {
                     }
                 }
             }
-            sb.append(line).append(System.lineSeparator());
+            sb.append(line).append(BR);
         }
 
         try (FileOutputStream output = new FileOutputStream(cfgFile); FileChannel foc = output.getChannel();) {
@@ -456,6 +458,10 @@ public abstract class BootConfig implements JExpressConfig {
                     if (StringUtils.isNotBlank(dv)) {
                         hasDefaultValue = true;
                     }
+                }
+                if (StringUtils.isNotBlank(dv)) {
+                    dv = dv.replace("\n", "\\n");// use \n\ as the ending of the line in properties file
+                    dv = dv.replace(BR, "\\n");
                 }
 
                 boolean dumpDefault = true;

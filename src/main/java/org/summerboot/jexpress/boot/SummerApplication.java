@@ -25,11 +25,13 @@ import java.net.InetSocketAddress;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
+import org.summerboot.jexpress.boot.instrumentation.TimeoutAlert;
 import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
@@ -285,21 +287,23 @@ abstract public class SummerApplication extends SummerBigBang {
 
             //4. health inspection
             StringBuilder sb = new StringBuilder();
-            sb.append(System.lineSeparator()).append(HealthMonitor.PROMPT);
+            sb.append(BootConstant.BR).append(HealthMonitor.PROMPT);
             if (healthInspector != null) {
-                List<Error> errors = healthInspector.ping(log);
-                if (errors == null || errors.isEmpty()) {
-                    sb.append("passed");
-                    log.info(sb);
-                } else {
-                    String inspectionReport;
-                    try {
-                        inspectionReport = BeanUtil.toJson(errors, true, true);
-                    } catch (Throwable ex) {
-                        inspectionReport = "total " + errors.size();
+                try (var a = new TimeoutAlert(healthInspector.getClass().getName() + ".ping()")) {
+                    List<Error> errors = healthInspector.ping(log);
+                    if (errors == null || errors.isEmpty()) {
+                        sb.append("passed");
+                        log.info(sb);
+                    } else {
+                        String inspectionReport;
+                        try {
+                            inspectionReport = BeanUtil.toJson(errors, true, true);
+                        } catch (Throwable ex) {
+                            inspectionReport = "total " + errors.size();
+                        }
+                        sb.append(inspectionReport);
+                        HealthMonitor.setHealthStatus(false, sb.toString(), healthInspector);
                     }
-                    sb.append(inspectionReport);
-                    HealthMonitor.setHealthStatus(false, sb.toString(), healthInspector);
                 }
             } else {
                 sb.append("skipped");
@@ -354,20 +358,16 @@ abstract public class SummerApplication extends SummerBigBang {
             if (postOffice != null) {
                 postOffice.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Started at " + OffsetDateTime.now(), fullConfigInfo, null, false);
             }
-        } catch (java.net.BindException ex) {
-            ex.printStackTrace();
-            log.fatal(BootConstant.BR + "In order to check which application is listening on a port, you can use the following command from the command line:\n"
-                    + "\n"
-                    + "For Microsoft Windows:" + BootConstant.BR
-                    + "    netstat -ano | find \"80\" | find \"LISTEN\"" + BootConstant.BR
-                    + "    tasklist /fi \"PID eq <pid>\"" + BootConstant.BR
-                    + "     " + BootConstant.BR
-                    + "For Linux:" + BootConstant.BR
-                    + "    netstat -anpe | grep \"80\" | grep \"LISTEN\" " + BootConstant.BR, ex);
+        } catch (java.net.BindException ex) {// from NioServer
+            log.fatal(ex + BootConstant.BR + Backoffice.cfg.getPortInUseAlertMessage());
             System.exit(1);
         } catch (Throwable ex) {
-            ex.printStackTrace();
-            log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
+            Throwable cause = ExceptionUtils.getRootCause(ex);
+            if (cause instanceof java.net.BindException) {// from gRPC server
+                log.fatal(ex + BootConstant.BR + Backoffice.cfg.getPortInUseAlertMessage());
+            } else {
+                log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
+            }
             System.exit(1);
         }
     }

@@ -48,7 +48,7 @@ import org.summerboot.jexpress.nio.server.NioConfig;
 import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.SystemConfig;
+import org.summerboot.jexpress.boot.Backoffice;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -536,7 +536,7 @@ public class ServiceContext {
         }
         if (!errorFile.exists()) {
             errorFile.getParentFile().mkdirs();
-            String title = SystemConfig.cfg.getVersionShort();
+            String title = Backoffice.cfg.getVersionShort();
             String errorDesc = status.reasonPhrase();
             StringBuilder sb = new StringBuilder();
             Path errorFilePath = errorFile.getAbsoluteFile().toPath();
@@ -545,7 +545,7 @@ public class ServiceContext {
                     .getResourceAsStream(ApplicationUtil.RESOURCE_PATH + "HttpErrorTemplate" + (isDownloadMode ? ".txt" : ".html")); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
                 String line;
                 while ((line = br.readLine()) != null) {
-                    sb.append(line).append(System.lineSeparator());
+                    sb.append(line).append(BootConstant.BR);
                 }
                 String errorFileContent = sb.toString().replace("${title}", title).replace("${code}", "" + errorCode).replace("${desc}", errorDesc);
                 //errorFileContent = errorFileContent..replace("${title}", title);

@@ -191,14 +191,14 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         arg = Option.builder(BootConstant.CLI_ADMIN_PWD_FILE)
                 .desc("Specify an application configuration password in a file which contains a line: APP_ROOT_PASSWORD=<base64 encoded password>"
-                        + System.lineSeparator() + "Note: Unlike the -" + BootConstant.CLI_ADMIN_PWD + " opton, this option protects the app config password from being exposed via ps command.")
+                        + BootConstant.BR + "Note: Unlike the -" + BootConstant.CLI_ADMIN_PWD + " opton, this option protects the app config password from being exposed via ps command.")
                 .hasArg().argName("file")
                 .build();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_ADMIN_PWD)
                 .desc("Specify an application config password instead of the default one."
-                        + System.lineSeparator() + "Note: This option exposes the app config password via ps command")
+                        + BootConstant.BR + "Note: This option exposes the app config password via ps command")
                 .hasArg().argName("password")
                 .build();
         cliOptions.addOption(arg);
@@ -211,15 +211,15 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         arg = Option.builder(BootConstant.CLI_ENCRYPT)
                 .desc("Encrypt config file content with all \"DEC(plain text)\":"
-                        + System.lineSeparator() + System.lineSeparator() + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> -" + BootConstant.CLI_ADMIN_PWD_FILE + " <path>"
-                        + System.lineSeparator() + System.lineSeparator() + "\t or"
-                        + System.lineSeparator() + System.lineSeparator() + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
+                        + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> -" + BootConstant.CLI_ADMIN_PWD_FILE + " <path>"
+                        + BootConstant.BR + BootConstant.BR + "\t or"
+                        + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
                 .build();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_DECRYPT)
                 .desc("Decrypt config file content with all \"ENC(encrypted text)\" using password:"
-                        + System.lineSeparator() + System.lineSeparator() + System.lineSeparator() + "\t -" + BootConstant.CLI_DECRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
+                        + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_DECRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
                 .build();
         cliOptions.addOption(arg);
 
@@ -371,15 +371,15 @@ abstract public class SummerBigBang extends SummerSingularity {
          */
         if (cli.hasOption(BootConstant.CLI_ENCRYPT)) {
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_encrypt);
-            System.out.println(System.lineSeparator() + "\t " + updated + " config items have been encrypted in " + userSpecifiedConfigDir.getAbsolutePath());
+            System.out.println(BootConstant.BR + "\t " + updated + " config items have been encrypted in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
         } else if (cli.hasOption(BootConstant.CLI_DECRYPT)) {
             if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
-                System.err.println(System.lineSeparator() + "\t error: -" + BootConstant.CLI_ADMIN_PWD_FILE + " is not allowed for decryption, please private password with -" + BootConstant.CLI_ADMIN_PWD + " option when decrypt data");
+                System.err.println(BootConstant.BR + "\t error: -" + BootConstant.CLI_ADMIN_PWD_FILE + " is not allowed for decryption, please private password with -" + BootConstant.CLI_ADMIN_PWD + " option when decrypt data");
                 System.exit(1);
             }
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
-            System.out.println(System.lineSeparator() + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
+            System.out.println(BootConstant.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
             System.exit(0);
         }
 
@@ -547,7 +547,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void onGuiceInjectorCreated_ControllersInjected(@Controller Map<String, Object> controllers) {
         //1. scan and register controllers
         String pingURL = JaxRsRequestProcessorManager.registerControllers(controllers, memo);
-        SystemConfig.cfg.setPingURL(pingURL);
+        Backoffice.cfg.setPingURL(pingURL);
     }
 
     protected void scanImplementation_SummerRunner(Injector injector) {
