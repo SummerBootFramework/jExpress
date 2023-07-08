@@ -36,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
@@ -195,7 +196,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         verboseClientServerCommunication(nioCfg, requestHeaders, httpPostRequestBody, context, sb);
                         context.reportMemo(sb);
                         context.reportError(sb);
-                        sb.append(System.lineSeparator());
+                        sb.append(BootConstant.BR);
                         report = sb.toString();
                         if (processorSettings != null) {
                             ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();

@@ -27,7 +27,7 @@ import java.util.Set;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import java.util.HashSet;
-import org.summerboot.jexpress.boot.SystemConfig;
+import org.summerboot.jexpress.boot.Backoffice;
 
 /**
  * Volatile Bean　Pattern
@@ -150,7 +150,7 @@ public class SMTPClientConfig extends BootConfig {
         if (displayName == null) {
             displayName = props.get("mail.smtp.userName");// for backward compatibility only, will be depreacated in next release
             if (displayName == null) {
-                displayName = SystemConfig.cfg.getVersionShort();// use major Version
+                displayName = Backoffice.cfg.getVersionShort();// use major Version
             }
 
             if (displayName != null) {

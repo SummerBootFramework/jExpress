@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.hibernate.cfg.Environment;
-import org.summerboot.jexpress.boot.SystemConfig;
+import org.summerboot.jexpress.boot.Backoffice;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
@@ -107,7 +107,10 @@ public abstract class JPAConfig extends BootConfig {
         //settings.put(Environment.LOADED_CLASSES, entityClasses);
         Set<String> packageSet = new HashSet();
         packageSet.addAll(Set.of(packages));
-        packageSet.addAll(SystemConfig.cfg.getRootPackageNames());
+        Set<String> configuredPackageSet = Backoffice.cfg.getRootPackageNames();
+        if (configuredPackageSet != null && !configuredPackageSet.isEmpty()) {
+            packageSet.addAll(configuredPackageSet);
+        }
         String csvPackageNames = props.getProperty(Environment.LOADED_CLASSES, "");
         scanAnnotation_Entity(csvPackageNames, packageSet);
 

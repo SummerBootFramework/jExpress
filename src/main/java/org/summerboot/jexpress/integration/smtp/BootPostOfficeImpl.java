@@ -18,10 +18,6 @@ package org.summerboot.jexpress.integration.smtp;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +27,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.summerboot.jexpress.boot.Backoffice;
 import org.summerboot.jexpress.boot.BootConstant;
 
 /**
@@ -40,19 +37,7 @@ import org.summerboot.jexpress.boot.BootConstant;
 @Singleton
 public class BootPostOfficeImpl implements PostOffice {
 
-    private static final ExecutorService POSTOFFICE = buildPostffice();
     protected static SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
-
-    protected static ExecutorService buildPostffice() {
-        ExecutorService postoffice = new ThreadPoolExecutor(2, 2,
-                0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            postoffice.shutdown();
-        }, "ShutdownHook.PostOffice")
-        );
-        return postoffice;
-    }
 
     private String appVersion = BootConstant.VERSION;
 
@@ -135,7 +120,7 @@ public class BootPostOfficeImpl implements PostOffice {
             }
         };
         if (async) {
-            POSTOFFICE.execute(postman);
+            Backoffice.execute(postman);
         } else {
             postman.run();
         }
@@ -164,7 +149,7 @@ public class BootPostOfficeImpl implements PostOffice {
                             log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
                         }
                     };
-                    POSTOFFICE.execute(postman);
+                    Backoffice.execute(postman);
                 } else {
                     email.send(smtpCfg.getMailSession());
                 }

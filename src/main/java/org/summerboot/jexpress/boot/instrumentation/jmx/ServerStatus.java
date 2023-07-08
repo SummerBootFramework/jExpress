@@ -30,9 +30,7 @@ import javax.management.MBeanNotificationInfo;
 import javax.management.Notification;
 import javax.management.NotificationBroadcasterSupport;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import org.summerboot.jexpress.boot.Backoffice;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
@@ -43,18 +41,8 @@ import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 @Singleton
 public class ServerStatus extends NotificationBroadcasterSupport implements NIOStatusListener, HTTPClientStatusListener, ServerStatusMBean {
 
-    private static final ThreadPoolExecutor POOL;
-
     private static final DateTimeFormatter DTF = DateTimeFormatter.ISO_LOCAL_DATE_TIME;//DateTimeFormatter.ofPattern("yyyy-MM-dd E HH:mm:ss");//
 
-    static {
-        POOL = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            POOL.shutdown();
-        }, "ShutdownHook.ServerStatus")
-        );
-    }
     private final LinkedList<BootIOStatusData> events;
 
     public ServerStatus() {
@@ -88,7 +76,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
             }
             setLastIOStatus(data.toString(), id);
         };
-        POOL.execute(asyncTask);
+        Backoffice.execute(asyncTask);
     }
 
     @Override
@@ -101,7 +89,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
             }
             setLastIOStatus(data.toString(), "HTTPClient-IO");
         };
-        POOL.execute(asyncTask);
+        Backoffice.execute(asyncTask);
     }
 
     private final AtomicLong sequenceNumber = new AtomicLong(1);

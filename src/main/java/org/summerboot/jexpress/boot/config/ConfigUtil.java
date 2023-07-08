@@ -42,7 +42,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.boot.instrumentation.TimeoutAlert;
 
 /**
  *
@@ -98,7 +100,9 @@ public class ConfigUtil {
         Map<File, Runnable> cfgUpdateTasks = new HashMap();
         for (String fileName : configs.keySet()) {
             File configFile = Paths.get(configFolder.toString(), fileName).toFile();
-            updated += loadConfig(mode, log, defaultRB, configFile, configs.get(fileName), cfgUpdateTasks, cfgConfigDir);
+            try (var a = new TimeoutAlert("loading config file " + configFile)) {
+                updated += loadConfig(mode, log, defaultRB, configFile, configs.get(fileName), cfgUpdateTasks, cfgConfigDir);
+            }
         }
         // 2. monitor the change of config files
         if (!mode.isCliMode() && CfgMonitorInterval > 0) {
@@ -193,7 +197,7 @@ public class ConfigUtil {
             sb = new StringBuilder();
             sb.append("config file = ").append(cfgFile);
         }
-        sb.append(System.lineSeparator() + "\t").append(e);
+        sb.append(BootConstant.BR).append("\t").append(e);
     }
 
     public String getError() {
@@ -471,7 +475,7 @@ public class ConfigUtil {
                     updated++;
                 }
             }
-            sb.append(line).append(System.lineSeparator());
+            sb.append(line).append(BootConstant.BR);
         }
         if (updated > 0) {
             if (destFile == null) {
