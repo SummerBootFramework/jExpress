@@ -48,6 +48,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.logging.log4j.LogManager;
@@ -232,6 +237,10 @@ public abstract class BootConfig implements JExpressConfig {
         } catch (Throwable ex) {
             ex.printStackTrace();
             helper.addError("failed to init customized configs:" + ex);
+        } finally {
+            if (!isReal) {
+                shutdown();
+            }
         }
 
         String error = helper.getError();
@@ -559,5 +568,74 @@ public abstract class BootConfig implements JExpressConfig {
 
     private static int getLength(String s) {
         return StringUtils.isBlank(s) ? 0 : s.trim().length();
+    }
+
+    protected static final int CPU_CORE = Runtime.getRuntime().availableProcessors();
+
+    public enum ThreadingMode {
+        CPU, IO, Mixed
+    }
+
+    public static ThreadPoolExecutor buildThreadPoolExecutor(ThreadPoolExecutor tpe, String tpeName, ThreadingMode threadingMode,
+            int core, int max, int queue, long keepAliveSec, RejectedExecutionHandler rejectedExecutionHandler,
+            boolean prestartAllCoreThreads, boolean allowCoreThreadTimeOut, boolean isSingleton) {
+        switch (threadingMode) {
+            case CPU:// use CPU core + 1 when application is CPU bound
+                core = CPU_CORE + 1;
+                max = CPU_CORE + 1;
+                break;
+            case IO:// use CPU core x 2 + 1 when application is I/O bound
+                core = CPU_CORE * 2 + 1;
+                max = CPU_CORE * 2 + 1;
+                break;
+            case Mixed:// manual config is required when it is mixed
+                if (core < 1) {
+                    core = CPU_CORE * 2 + 1;
+                }
+                if (max < 1) {
+                    max = CPU_CORE * 2 + 1;
+                }
+                if (max < core) {
+                    //helper.addError("BizExecutor.MaxSize should not less than BizExecutor.CoreSize");
+                    max = core;
+                }
+                break;
+        }
+
+        boolean isQueueChanged = false;
+        if (tpe != null && !isSingleton) {
+            int currentQueue = tpe.getQueue().size() + tpe.getQueue().remainingCapacity();
+            isQueueChanged = currentQueue != queue;
+        }
+
+        if (tpe == null || isQueueChanged) {
+            //backup old
+            ThreadPoolExecutor old = tpe;
+            //create new
+            BlockingQueue<Runnable> bq = queue > 0 ? new LinkedBlockingQueue<>(queue) : new EmptyBlockingQueue();
+            tpe = new ThreadPoolExecutor(core, max, keepAliveSec, TimeUnit.SECONDS, bq,
+                    new NamedDefaultThreadFactory(tpeName), rejectedExecutionHandler);//.DiscardOldestPolicy()
+            // then shotdown old tpe
+            if (old != null) {
+                old.shutdown();
+            }
+        }
+
+        // Update tpe: From JDK 9 the implementation of ThreadPoolExecutor's setCorePoolSize was changed and contains an additional constraints comparing the maxPoolSize and corePoolSize values.
+        // If maxPoolSize is not changed but corePoolSize is given as a higher number of default maxPoolSize it throws IllegalArgumentException.
+        if (max >= tpe.getCorePoolSize()) {
+            tpe.setMaximumPoolSize(max);
+            tpe.setCorePoolSize(core);
+        } else {
+            tpe.setCorePoolSize(core);
+            tpe.setMaximumPoolSize(max);
+        }
+
+        tpe.setKeepAliveTime(keepAliveSec, TimeUnit.SECONDS);
+        if (prestartAllCoreThreads) {
+            tpe.prestartAllCoreThreads();
+        }
+        tpe.allowCoreThreadTimeOut(allowCoreThreadTimeOut);
+        return tpe;
     }
 }

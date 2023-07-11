@@ -24,10 +24,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.net.InetSocketAddress;
@@ -177,6 +174,7 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "4096")
     private volatile int httpServerCodec_MaxChunkSize = 4096;
 
+    @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Exector Pool")
     @Config(key = "nio.server.EventLoopGroup.AcceptorSize", defaultValue = "0",
             desc = "AcceptorSize 0 = number of bindings")
     private volatile int nioEventLoopGroupAcceptorSize = 0;
@@ -186,42 +184,38 @@ public class NioConfig extends BootConfig {
     private volatile int nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
     //private volatile int nioEventLoopGroupExecutorSize;
 
-    public enum ThreadingMode {
-        CPU, IO, Mixed
-    }
     @Config(key = "nio.server.BizExecutor.mode", defaultValue = "Mixed",
             desc = "valid value = CPU, IO (default), Mixed\nuse CPU core + 1 when application is CPU bound\n"
             + "use CPU core x 2 + 1 when application is I/O bound\n"
             + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
-    private volatile ThreadingMode bizExecutorThreadingMode = ThreadingMode.Mixed;
+    private volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
 
     @Config(key = "nio.server.BizExecutor.CoreSize", predefinedValue = "0",
             desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int bizExecutorCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
-    private volatile int currentCore;
+    private volatile int tpeCore = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
 
     @Config(key = "nio.server.BizExecutor.MaxSize", predefinedValue = "0",
             desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int bizExecutorMaxSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
-    private volatile int currentMax;
+    private volatile int tpeMax = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
 
-    @Config(key = "nio.server.BizExecutor.KeepAliveSec", predefinedValue = "60")
-    private volatile int bizExecutorKeepAliveSec = 60;
-    private volatile int currentKeepAliveSec;
+    @Config(key = "nio.server.BizExecutor.KeepAliveSec", defaultValue = "60")
+    private volatile int tpeKeepAliveSeconds = 60;
 
     @Config(key = "nio.server.BizExecutor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
-    private volatile int bizExecutorQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
-    private volatile int currentQueue;
+    private volatile int tpeQueue = Integer.MAX_VALUE;// waiting list size when the pool is full
+
+    @Config(key = "nio.server.BizExecutor.prestartAllCoreThreads", defaultValue = "true")
+    private boolean prestartAllCoreThreads = true;
+
+    @Config(key = "nio.server.BizExecutor.allowCoreThreadTimeOut", defaultValue = "false")
+    private boolean allowCoreThreadTimeOut = false;
 
     //4.2 Netty Performance - NIO and Biz Exector Pool
-    @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Exector Pool")
-    private ThreadPoolExecutor tpe = new ThreadPoolExecutor(bizExecutorCoreSize, bizExecutorMaxSize, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(bizExecutorQueueSize),
-            Executors.defaultThreadFactory(), new AbortPolicyWithReport("NIOBizThreadPoolExecutor"));
+    private ThreadPoolExecutor tpe = null;
 
-    @Config(key = "nio.server.BizExecutor.bizTimeoutWarnThreshold", defaultValue = "5000")
-    private volatile int bizTimeoutWarnThreshold = 5000;
+    @Config(key = "nio.server.BizExecutor.bizTimeoutWarnThresholdMs", defaultValue = "5000")
+    private volatile long bizTimeoutWarnThresholdMs = 5000L;
 
     //4.3 Netty Channel Handler
     @ConfigHeader(title = "4.3 Netty Channel Handler")
@@ -260,8 +254,8 @@ public class NioConfig extends BootConfig {
     private volatile boolean webSocketCheckStartsWith = false;
     @Config(key = "nio.WebSocket.DropPongFrames", defaultValue = "true")
     private volatile boolean webSocketDropPongFrames = true;
-    @Config(key = "nio.WebSocket.HandshakeTimeoutMillis", defaultValue = "10000")
-    private volatile long webSocketHandshakeTimeoutMillis = 10000L;//io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig.DEFAULT_HANDSHAKE_TIMEOUT_MILLIS;
+    @Config(key = "nio.WebSocket.HandshakeTimeoutMs", defaultValue = "10000")
+    private volatile long webSocketHandshakeTimeoutMs = 10000L;//io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig.DEFAULT_HANDSHAKE_TIMEOUT_MILLIS;
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
@@ -411,47 +405,12 @@ public class NioConfig extends BootConfig {
             nioEventLoopGroupAcceptorSize = bindingAddresses.size();
         }
         if (nioEventLoopGroupWorkerSize < 1) {
-            nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
-        }
-        switch (bizExecutorThreadingMode) {
-            case CPU:// use CPU core + 1 when application is CPU bound
-                bizExecutorCoreSize = BootConstant.CPU_CORE + 1;
-                bizExecutorMaxSize = BootConstant.CPU_CORE + 1;
-                break;
-            case IO:// use CPU core x 2 + 1 when application is I/O bound
-                bizExecutorCoreSize = BootConstant.CPU_CORE * 2 + 1;
-                bizExecutorMaxSize = BootConstant.CPU_CORE * 2 + 1;
-                break;
-            case Mixed:// manual config is required when it is mixed
-                if (bizExecutorCoreSize < 1) {
-                    bizExecutorCoreSize = BootConstant.CPU_CORE * 2 + 1;
-                }
-                if (bizExecutorMaxSize < 1) {
-                    bizExecutorMaxSize = BootConstant.CPU_CORE * 2 + 1;
-                }
-                if (bizExecutorMaxSize < bizExecutorCoreSize) {
-                    helper.addError("BizExecutor.MaxSize should not less than BizExecutor.CoreSize");
-                }
-                break;
-        }
-        if (currentCore != bizExecutorCoreSize || currentMax != bizExecutorMaxSize || currentKeepAliveSec != bizExecutorKeepAliveSec || currentQueue != bizExecutorQueueSize) {
-            //update current
-            currentCore = bizExecutorCoreSize;
-            currentMax = bizExecutorMaxSize;
-            currentKeepAliveSec = bizExecutorKeepAliveSec;
-            currentQueue = bizExecutorQueueSize;
-            //backup old
-            ThreadPoolExecutor old = tpe;
-            //create new
-            tpe = new ThreadPoolExecutor(currentCore, currentMax, currentKeepAliveSec, TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>(currentQueue),
-                    Executors.defaultThreadFactory(), new AbortPolicyWithReport("NIOBizThreadPoolExecutor"));//.DiscardOldestPolicy()
-            // then shotdown old tpe
-            if (old != null) {
-                old.shutdown();
-            }
+            nioEventLoopGroupWorkerSize = CPU_CORE * 2 + 1;
         }
 
+        tpe = buildThreadPoolExecutor(tpe, "NIO.Biz", tpeThreadingMode,
+                tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, new AbortPolicyWithReport("NIOBizThreadPoolExecutor"),
+                prestartAllCoreThreads, allowCoreThreadTimeOut, false);
         BeanUtil.init(fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull);
 
         //5.1 caller filter
@@ -517,8 +476,8 @@ public class NioConfig extends BootConfig {
         return webSocketDropPongFrames;
     }
 
-    public long getWebSocketHandshakeTimeoutMillis() {
-        return webSocketHandshakeTimeoutMillis;
+    public long getWebSocketHandshakeTimeoutMs() {
+        return webSocketHandshakeTimeoutMs;
     }
 
     public List<InetSocketAddress> getBindingAddresses() {
@@ -617,24 +576,24 @@ public class NioConfig extends BootConfig {
         return nioEventLoopGroupWorkerSize;
     }
 
-    public ThreadingMode getBizExecutorThreadingMode() {
-        return bizExecutorThreadingMode;
+    public ThreadingMode getTpeThreadingMode() {
+        return tpeThreadingMode;
     }
 
-    public int getBizExecutorCoreSize() {
-        return bizExecutorCoreSize;
+    public int getTpeCore() {
+        return tpeCore;
     }
 
-    public int getBizExecutorMaxSize() {
-        return bizExecutorMaxSize;
+    public int getTpeMax() {
+        return tpeMax;
     }
 
-    public int getBizExecutorQueueSize() {
-        return bizExecutorQueueSize;
+    public int getTpeQueue() {
+        return tpeQueue;
     }
 
-    public int getBizTimeoutWarnThreshold() {
-        return bizTimeoutWarnThreshold;
+    public long getBizTimeoutWarnThresholdMs() {
+        return bizTimeoutWarnThresholdMs;
     }
 
     public int getReaderIdleSeconds() {

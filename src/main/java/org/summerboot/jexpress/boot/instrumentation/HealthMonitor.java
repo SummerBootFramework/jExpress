@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.Backoffice;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
@@ -49,44 +49,49 @@ public class HealthMonitor {
             log.debug(() -> "Duplicated HealthInspection Rejected: total=" + i);
             return;
         }
+        final long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
+        final String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
         Runnable asyncTask = () -> {
             HealthInspector.healthInspectorCounter.incrementAndGet();
             boolean inspectionFailed;
-            do {
-                StringBuilder sb = new StringBuilder();
-                sb.append(BootConstant.BR).append(PROMPT);
-                List<Err> errors = null;
-                try (var a = new TimeoutAlert(healthInspector.getClass().getName() + ".ping()")) {
-                    errors = healthInspector.ping();
-                } catch (Throwable ex) {
-                }
-
-                inspectionFailed = errors != null && !errors.isEmpty();
-                if (inspectionFailed) {
-                    String inspectionReport;
-                    try {
-                        inspectionReport = BeanUtil.toJson(errors, true, true);
+            try {
+                do {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(BootConstant.BR).append(PROMPT);
+                    List<Err> errors = null;
+                    try (var a = Timeout.watch(healthInspector.getClass().getName() + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
+                        errors = healthInspector.ping();
                     } catch (Throwable ex) {
-                        inspectionReport = "total " + ex;
                     }
-                    sb.append(inspectionReport);
-                    sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
-                    log.warn(sb);
-                    try {
-                        TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
-                    } catch (InterruptedException ex) {
-                        Thread.currentThread().interrupt();
+
+                    inspectionFailed = errors != null && !errors.isEmpty();
+                    if (inspectionFailed) {
+                        String inspectionReport;
+                        try {
+                            inspectionReport = BeanUtil.toJson(errors, true, true);
+                        } catch (Throwable ex) {
+                            inspectionReport = "total " + ex;
+                        }
+                        sb.append(inspectionReport);
+                        sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
+                        log.warn(sb);
+                        try {
+                            TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
+                        } catch (InterruptedException ex) {
+                            Thread.currentThread().interrupt();
+                        }
+                    } else {
+                        sb.append("passed");
+                        setHealthStatus(true, sb.toString(), null);
                     }
-                } else {
-                    sb.append("passed");
-                    setHealthStatus(true, sb.toString(), null);
-                }
-            } while (inspectionFailed);
-            HealthInspector.healthInspectorCounter.set(0);
+                } while (inspectionFailed);
+            } finally {
+                HealthInspector.healthInspectorCounter.set(0);
+            }
         };
         if (i <= 1) {
             try {
-                Backoffice.execute(asyncTask);
+                BackOffice.execute(asyncTask);
             } catch (RejectedExecutionException ex2) {
                 log.debug(() -> "Duplicated HealthInspection Rejected: " + ex2);
             }

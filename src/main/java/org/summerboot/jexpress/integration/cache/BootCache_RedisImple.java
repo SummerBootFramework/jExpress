@@ -33,6 +33,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -85,7 +86,7 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected static final Logger log = LogManager.getLogger(BootCache_RedisImple.class.getName());
 
-    protected static final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), Executors.defaultThreadFactory(), new AbortPolicyWithReport("Cahce.BackofficeExecutor"));
+    protected static final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), new NamedDefaultThreadFactory("Redis"), new AbortPolicyWithReport("Cahce.BackofficeExecutor"));
 
     protected static final RuntimeException REDIS_MASTER_NULL_EX = new RuntimeException("Redis master is null");
 

@@ -21,10 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import static org.summerboot.jexpress.boot.config.BootConfig.generateTemplate;
@@ -37,25 +34,34 @@ import org.summerboot.jexpress.util.ReflectionUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class Backoffice extends BootConfig {
+public class BackOffice extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(Backoffice.class);
+        String t = generateTemplate(BackOffice.class);
         System.out.println(t);
     }
 
-    public static final Backoffice cfg = new Backoffice();
+    public static final BackOffice agent = new BackOffice();
 
-    protected Backoffice() {
+    protected BackOffice() {
     }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
-        tpe = new ThreadPoolExecutor(backofficeExecutorCore, backofficeExecutorMax, backofficeExecutorkeepAliveTimeSec, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(backofficeExecutorQueue), Executors.defaultThreadFactory(), new ThreadPoolExecutor.DiscardPolicy());
+        if (tpeCore < 1) {
+            tpeCore = CPU_CORE + 1;
+        }
+        if (tpeMax < 1) {
+            tpeMax = CPU_CORE + 1;
+        }
+
+        tpe = buildThreadPoolExecutor(tpe, "BackOffice", ThreadingMode.Mixed,
+                tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, new ThreadPoolExecutor.DiscardPolicy(),
+                prestartAllCoreThreads, allowCoreThreadTimeOut, false);
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             tpe.shutdown();
-        }, "ShutdownHook.Backoffice")
+        }, "ShutdownHook.BackOffice")
         );
     }
 
@@ -64,7 +70,10 @@ public class Backoffice extends BootConfig {
     }
 
     public static void execute(Runnable task) {
-        cfg.tpe.execute(task);
+        if (agent.tpe == null || agent.tpe.isShutdown()) {
+            throw new IllegalStateException("BackOffice.tpe is down:" + agent.tpe);
+        }
+        agent.tpe.execute(task);
     }
     protected ThreadPoolExecutor tpe;
     private String pingURL;
@@ -162,17 +171,25 @@ public class Backoffice extends BootConfig {
     @Config(key = "portinuse.alert.message", defaultValue = ALERT_MSG_PORT_IN_USE)
     private String portInUseAlertMessage = ALERT_MSG_PORT_IN_USE;
 
-    @Config(key = "backoffice.executor.core", defaultValue = "100")
-    private int backofficeExecutorCore = 100;
+    @Config(key = "backoffice.executor.core", defaultValue = "3",
+            desc = "MaxSize 0 = current computer/VM's available processors + 1")
+    private int tpeCore = 3;
 
-    @Config(key = "backoffice.executor.max", defaultValue = "100")
-    private int backofficeExecutorMax = 100;
+    @Config(key = "backoffice.executor.max", defaultValue = "" + Integer.MAX_VALUE,
+            desc = "MaxSize 0 = current computer/VM's available processors + 1")
+    private int tpeMax = Integer.MAX_VALUE;
 
-    @Config(key = "backoffice.executor.queue", defaultValue = "" + Integer.MAX_VALUE)
-    private int backofficeExecutorQueue = Integer.MAX_VALUE;
+    @Config(key = "backoffice.executor.queue", defaultValue = "0")
+    private int tpeQueue = 0;
 
     @Config(key = "backoffice.executor.keepAliveTimeSec", defaultValue = "60")
-    private int backofficeExecutorkeepAliveTimeSec = 60;
+    private int tpeKeepAliveSeconds = 60;
+
+    @Config(key = "backoffice.executor.prestartAllCoreThreads", defaultValue = "false")
+    private boolean prestartAllCoreThreads = false;
+
+    @Config(key = "backoffice.executor.allowCoreThreadTimeOut", defaultValue = "false")
+    private boolean allowCoreThreadTimeOut = false;
 
     @ConfigHeader(title = "4.1 Default Path/File Naming")
     @Config(key = "naming.folder.domainPrefix", defaultValue = "standalone")

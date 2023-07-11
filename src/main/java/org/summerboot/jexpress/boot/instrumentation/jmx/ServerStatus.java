@@ -30,7 +30,9 @@ import javax.management.MBeanNotificationInfo;
 import javax.management.Notification;
 import javax.management.NotificationBroadcasterSupport;
 import java.time.format.DateTimeFormatter;
-import org.summerboot.jexpress.boot.Backoffice;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
@@ -41,7 +43,9 @@ import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 @Singleton
 public class ServerStatus extends NotificationBroadcasterSupport implements NIOStatusListener, HTTPClientStatusListener, ServerStatusMBean {
 
-    private static final DateTimeFormatter DTF = DateTimeFormatter.ISO_LOCAL_DATE_TIME;//DateTimeFormatter.ofPattern("yyyy-MM-dd E HH:mm:ss");//
+    private static final DateTimeFormatter DTF = DateTimeFormatter.ISO_LOCAL_DATE_TIME;//DateTimeFormatter.ofPattern("yyyy-MM-dd E HH:mm:ss");
+
+    private static final ExecutorService QPS_SERVICE = Executors.newSingleThreadExecutor(new NamedDefaultThreadFactory("ServerStatus"));
 
     private final LinkedList<BootIOStatusData> events;
 
@@ -76,7 +80,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
             }
             setLastIOStatus(data.toString(), id);
         };
-        Backoffice.execute(asyncTask);
+        QPS_SERVICE.execute(asyncTask);
     }
 
     @Override
@@ -89,7 +93,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
             }
             setLastIOStatus(data.toString(), "HTTPClient-IO");
         };
-        Backoffice.execute(asyncTask);
+        QPS_SERVICE.execute(asyncTask);
     }
 
     private final AtomicLong sequenceNumber = new AtomicLong(1);
