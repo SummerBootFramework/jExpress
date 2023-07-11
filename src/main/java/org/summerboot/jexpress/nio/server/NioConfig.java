@@ -205,8 +205,8 @@ public class NioConfig extends BootConfig {
             desc = "The waiting list size when the pool is full")
     private volatile int tpeQueue = Integer.MAX_VALUE;// waiting list size when the pool is full
 
-    @Config(key = "nio.server.BizExecutor.prestartAllCoreThreads", defaultValue = "true")
-    private boolean prestartAllCoreThreads = true;
+    @Config(key = "nio.server.BizExecutor.prestartAllCoreThreads", defaultValue = "false")
+    private boolean prestartAllCoreThreads = false;
 
     @Config(key = "nio.server.BizExecutor.allowCoreThreadTimeOut", defaultValue = "false")
     private boolean allowCoreThreadTimeOut = false;

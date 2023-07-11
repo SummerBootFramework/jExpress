@@ -81,8 +81,8 @@ public class GRPCServerConfig extends BootConfig {
     @Config(key = ID + ".pool.keepAliveSeconds", defaultValue = "60")
     private volatile long tpeKeepAliveSeconds = 60;
 
-    @Config(key = ID + ".pool.prestartAllCoreThreads", defaultValue = "true")
-    private boolean prestartAllCoreThreads = true;
+    @Config(key = ID + ".pool.prestartAllCoreThreads", defaultValue = "false")
+    private boolean prestartAllCoreThreads = false;
 
     @Config(key = ID + ".pool.allowCoreThreadTimeOut", defaultValue = "false")
     private boolean allowCoreThreadTimeOut = false;
