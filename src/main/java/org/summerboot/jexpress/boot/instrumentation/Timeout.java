@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.BackOffice1;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 
 /**
@@ -74,13 +74,13 @@ public class Timeout implements AutoCloseable {
                         : BootConstant.BR + "\t" + message;
                 log.warn(BootConstant.BR + BootConstant.BR + "\t*** Warning: " + processName + " has timed out for " + timeoutMilliseconds + " ms ***" + BootConstant.BR + desc + BootConstant.BR + BootConstant.BR);
                 if (task != null) {
-                    BackOffice1.execute(task);
+                    BackOffice.execute(task);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         };
-        BackOffice1.execute(runnableTask);
+        BackOffice.execute(runnableTask);
     }
 
     @Override
