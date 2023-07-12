@@ -16,59 +16,76 @@
 package org.summerboot.jexpress.boot.instrumentation;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.Backoffice;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class TimeoutAlert implements AutoCloseable {
+public class Timeout implements AutoCloseable {
 
-    protected static Logger log = LogManager.getLogger(TimeoutAlert.class);
+    protected static Logger log = LogManager.getLogger(Timeout.class);
 
     private final String processName;
     private final long timeoutMilliseconds;
     private String message;
-    private boolean isFinishedOnTime = false;
+    private Runnable task;
 
-    public TimeoutAlert(String processName) {
-        this(processName, Backoffice.cfg.getProcessTimeoutMilliseconds(), null);
+    private final ReentrantLock lock = new ReentrantLock();
+
+    public static Timeout watch(String processName, long timeoutMilliseconds) {
+        return new Timeout(processName, timeoutMilliseconds, null, null);
     }
 
-    public TimeoutAlert(String processName, long timeoutMilliseconds) {
-        this(processName, timeoutMilliseconds, null);
-    }
-
-    public TimeoutAlert(String processName, long timeoutMilliseconds, String message) {
+    private Timeout(String processName, long timeoutMilliseconds, String message, Runnable task) {
         this.processName = processName;
         this.timeoutMilliseconds = timeoutMilliseconds;
         this.message = message;
+        this.task = task;
         startTheTimer();
     }
 
+    public Timeout withDesc(String desc) {
+        this.message = desc;
+        return this;
+    }
+
+    public Timeout withTask(Runnable task) {
+        this.task = task;
+        return this;
+    }
+
     private void startTheTimer() {
+        lock.lock();
         Runnable runnableTask = () -> {
             try {
-                TimeUnit.MILLISECONDS.sleep(timeoutMilliseconds);
-                if (!isFinishedOnTime) {
-                    if (message == null) {
-                        message = Backoffice.cfg.getProcessTimeoutAlertMessage();
-                    }
-                    log.warn(BootConstant.BR + "\t*** Warning: " + processName + " timeout in " + timeoutMilliseconds + "ms ***" + BootConstant.BR + "\t" + message);
+                log.info("Timeout watching: {} - {}", processName, System.currentTimeMillis());
+                if (lock.tryLock(timeoutMilliseconds, TimeUnit.MILLISECONDS)) {
+                    lock.unlock();
+                    log.info("Timeout ontime: {} - {}", processName, System.currentTimeMillis());
+                    return;
+                }
+                String desc = message == null
+                        ? ""
+                        : BootConstant.BR + "\t" + message;
+                log.warn(BootConstant.BR + BootConstant.BR + "\t*** Warning: " + processName + " has timed out for " + timeoutMilliseconds + " ms ***" + BootConstant.BR + desc + BootConstant.BR + BootConstant.BR);
+                if (task != null) {
+                    BackOffice.execute(task);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         };
-        Backoffice.execute(runnableTask);
+        BackOffice.execute(runnableTask);
     }
 
     @Override
     public void close() throws Exception {
-        isFinishedOnTime = true;
+        lock.unlock();
     }
 
 }

@@ -31,7 +31,7 @@ import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
-import org.summerboot.jexpress.boot.instrumentation.TimeoutAlert;
+import org.summerboot.jexpress.boot.instrumentation.Timeout;
 import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
@@ -285,11 +285,13 @@ abstract public class SummerApplication extends SummerBigBang {
                 summerRunner.run(context);
             }
 
+            long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
+            String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             //4. health inspection
             StringBuilder sb = new StringBuilder();
             sb.append(BootConstant.BR).append(HealthMonitor.PROMPT);
             if (healthInspector != null) {
-                try (var a = new TimeoutAlert(healthInspector.getClass().getName() + ".ping()")) {
+                try (var a = Timeout.watch(healthInspector.getClass().getName() + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
                     List<Error> errors = healthInspector.ping(log);
                     if (errors == null || errors.isEmpty()) {
                         sb.append("passed");
@@ -322,33 +324,37 @@ abstract public class SummerApplication extends SummerBigBang {
                 for (InetSocketAddress bindingAddress : bindingAddresses) {
                     String host = bindingAddress.getAddress().getHostAddress();
                     int port = bindingAddress.getPort();
-                    GRPCServer gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf(), serverInterceptor, gRPCCfg.getPoolCoreSize(), gRPCCfg.getPoolMaxSizeMaxSize(), gRPCCfg.getPoolQueueSize(), gRPCCfg.getKeepAliveSeconds(), nioListener);
-                    ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
-                    for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
-                        BindableService impl = guiceInjector.getInstance(c);
-                        serverBuilder.addService(impl);
-                        if (impl instanceof StatusReporter) {
-                            ((StatusReporter) impl).setCounter(gRPCServer.getServiceCounter());
+                    try (var a = Timeout.watch("starting gRPCServer at " + host + ":" + port, timeoutMs).withDesc(timeoutDesc)) {
+                        GRPCServer gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf(), serverInterceptor, gRPCCfg.getTpe(), nioListener);
+                        ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
+                        for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
+                            BindableService impl = guiceInjector.getInstance(c);
+                            serverBuilder.addService(impl);
+                            if (impl instanceof StatusReporter) {
+                                ((StatusReporter) impl).setCounter(gRPCServer.getServiceCounter());
+                            }
                         }
+                        for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
+                            ServerServiceDefinition impl = guiceInjector.getInstance(c);
+                            serverBuilder.addService(impl);
+                        }
+                        if (gRPCCfg.isAutoStart()) {
+                            gRPCServer.start();
+                        }
+                        gRPCServerList.add(gRPCServer);
                     }
-                    for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
-                        ServerServiceDefinition impl = guiceInjector.getInstance(c);
-                        serverBuilder.addService(impl);
-                    }
-                    if (gRPCCfg.isAutoStart()) {
-                        gRPCServer.start();
-                    }
-                    gRPCServerList.add(gRPCServer);
                 }
             }
 
             //5b. start server: HTTP
             log.trace("hasControllers=" + hasControllers);
             if (hasControllers && NioConfig.cfg.isAutoStart()) {
-                NioChannelInitializer channelInitializer = super.guiceInjector.getInstance(NioChannelInitializer.class);
-                NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
-                httpServer = new NioServer(channelInitializer.init(guiceInjector, channelHandlerNames), nioListener);
-                httpServer.bind(NioConfig.cfg);
+                try (var a = Timeout.watch("starting Web Server", timeoutMs).withDesc(timeoutDesc)) {
+                    NioChannelInitializer channelInitializer = super.guiceInjector.getInstance(NioChannelInitializer.class);
+                    NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
+                    httpServer = new NioServer(channelInitializer.init(guiceInjector, channelHandlerNames), nioListener);
+                    httpServer.bind(NioConfig.cfg);
+                }
             }
 
             //6. announcement
@@ -359,12 +365,12 @@ abstract public class SummerApplication extends SummerBigBang {
                 postOffice.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Started at " + OffsetDateTime.now(), fullConfigInfo, null, false);
             }
         } catch (java.net.BindException ex) {// from NioServer
-            log.fatal(ex + BootConstant.BR + Backoffice.cfg.getPortInUseAlertMessage());
+            log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
             System.exit(1);
         } catch (Throwable ex) {
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause instanceof java.net.BindException) {// from gRPC server
-                log.fatal(ex + BootConstant.BR + Backoffice.cfg.getPortInUseAlertMessage());
+                log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
             } else {
                 log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             }

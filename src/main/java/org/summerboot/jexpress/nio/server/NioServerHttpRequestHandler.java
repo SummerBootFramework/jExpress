@@ -159,7 +159,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 long responseTime = System.currentTimeMillis() - start;
                 String report = null;
                 try {
-                    boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThreshold();
+                    boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThresholdMs();
                     HttpResponseStatus status = context.status();
                     Level level = context.level();
                     if ((overtime || status.code() >= 400) && level.isLessSpecificThan(Level.WARN)) {

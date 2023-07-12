@@ -73,14 +73,6 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected List<SummerInitializer> summerInitializers = new ArrayList();
     protected List<SummerRunner> summerRunners = new ArrayList();
 
-
-    /*
-     * CLI results
-     */
-    protected Locale userSpecifiedResourceBundle;
-    private int userSpecifiedCfgMonitorIntervalSec = 30;
-    protected final Set<String> userSpecifiedImplTags = new HashSet<>();
-
     protected SummerBigBang(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass, args);
         this.userOverrideModule = userOverrideModule;
@@ -96,9 +88,6 @@ abstract public class SummerBigBang extends SummerSingularity {
         guiceInjector = null;
         summerInitializers.clear();
         summerRunners.clear();
-        userSpecifiedResourceBundle = null;
-        userSpecifiedCfgMonitorIntervalSec = 30;
-        userSpecifiedImplTags.clear();
     }
 
     private <T extends SummerApplication> T aParallelUniverse(String... args) {
@@ -124,10 +113,6 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         return (T) this;
     }
-
-    protected CommandLine cli;
-    protected final Options cliOptions = new Options();
-    protected final HelpFormatter cliHelpFormatter = new HelpFormatter();
 
     protected void bigBang_LetThereBeCLI(String[] args) {
         memo.append(BootConstant.BR).append("\t- CLI.init: args=").append(Arrays.asList(args));
@@ -458,7 +443,7 @@ abstract public class SummerBigBang extends SummerSingularity {
                     scanedJExpressConfigs.remove(GRPCServerConfig.class.getSimpleName());
                 }
 //                if (!hasAuthImpl) {
-//                    memo.append("\n\t- cfg.loading.skip: no @DeclareRoles or @RolesAllowed found in any @Controller, skip=").append(AuthConfig.class.getSimpleName());
+//                    memo.append("\n\t- agent.loading.skip: no @DeclareRoles or @RolesAllowed found in any @Controller, skip=").append(AuthConfig.class.getSimpleName());
 //                    scanedJExpressConfigs.remove(AuthConfig.class.getSimpleName());
 //                }
                 break;
@@ -529,7 +514,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         // Guice.createInjector(module) --> ScanedGuiceModule.configure() --> this will trigger SummerBigBang.onGuiceInjectorCreated_ControllersInjected
         guiceInjector = Guice.createInjector(Stage.PRODUCTION, applicationModule);
-        //NioConfig.cfg.setGuiceInjector(guiceInjector);
+        //NioConfig.agent.setGuiceInjector(guiceInjector);
         scanImplementation_SummerRunner(guiceInjector);
     }
 
@@ -547,7 +532,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void onGuiceInjectorCreated_ControllersInjected(@Controller Map<String, Object> controllers) {
         //1. scan and register controllers
         String pingURL = JaxRsRequestProcessorManager.registerControllers(controllers, memo);
-        Backoffice.cfg.setPingURL(pingURL);
+        BackOffice.agent.setPingURL(pingURL);
     }
 
     protected void scanImplementation_SummerRunner(Injector injector) {

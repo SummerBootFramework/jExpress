@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +44,7 @@ import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
@@ -122,11 +122,9 @@ abstract public class HttpClientConfig extends BootConfig {
 
     @Config(key = "httpclient.proxy.host")
     private volatile String proxyHost;
-    private volatile String currentProxyHost;
 
     @Config(key = "httpclient.proxy.port")
     private volatile int proxyPort = 8080;
-    private volatile int currentProxyPort;
 
     @Config(key = "httpclient.proxy.userName")
     private volatile String proxyUserName;
@@ -148,8 +146,9 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.fromJson.failOnUnknownProperties")
     private volatile boolean fromJsonFailOnUnknownProperties = true;
 
-    //3.2 HTTP Client Performance
+    //3.2 HTTP Client Performance    
     @ConfigHeader(title = "2. HTTP Client Performance")
+    @JsonIgnore
     private volatile HttpClient httpClient;
 
     @Config(key = "httpclient.timeout.ms")
@@ -158,17 +157,23 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.executor.CoreSize", predefinedValue = "0",
             desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int httpClientCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
-    private volatile int currentCore;
 
     @Config(key = "httpclient.executor.MaxSize", predefinedValue = "0",
             desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
     private volatile int httpClientMaxSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
-    private volatile int currentMax;
 
     @Config(key = "httpclient.executor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
     private volatile int httpClientQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
-    private volatile int currentQueue;
+
+    @Config(key = "httpclient.executor.KeepAliveSec", defaultValue = "60")
+    private volatile int tpeKeepAliveSeconds = 60;
+
+    @Config(key = "httpclient.executor.prestartAllCoreThreads", defaultValue = "false")
+    private boolean prestartAllCoreThreads = false;
+
+    @Config(key = "httpclient.executor.allowCoreThreadTimeOut", defaultValue = "false")
+    private boolean allowCoreThreadTimeOut = false;
 
     private ThreadPoolExecutor tpe;
     @JsonIgnore
@@ -256,43 +261,40 @@ abstract public class HttpClientConfig extends BootConfig {
         if (!isReal) {
             return;
         }
-        boolean isHttpClientSettingsChanged = currentCore != httpClientCoreSize || currentMax != httpClientMaxSize || currentQueue != httpClientQueueSize
-                || !StringUtils.equals(currentProxyHost, proxyHost) || currentProxyPort != proxyPort;
-        if (httpClient == null || isHttpClientSettingsChanged) {
-            // 1. save
-            currentCore = httpClientCoreSize;
-            currentMax = httpClientMaxSize;
-            currentQueue = httpClientQueueSize;
-            currentProxyHost = proxyHost;
-            currentProxyPort = proxyPort;
-            ThreadPoolExecutor old = tpe;
-            ScheduledExecutorService sesold = ses;
-            // 2. build new 
-            if (httpClientCoreSize > 0) {
-                tpe = new ThreadPoolExecutor(currentCore, currentMax, 60L, TimeUnit.SECONDS,
-                        new LinkedBlockingQueue<>(currentQueue), Executors.defaultThreadFactory(), new AbortPolicyWithReport("HttpClientExecutor"));
 
-                HttpClient.Builder builder = HttpClient.newBuilder()
-                        .executor(tpe);
-                if (sslContext != null) {
-                    builder.sslContext(sslContext);
-                }
-                builder.version(HttpClient.Version.HTTP_2)
-                        .followRedirects(redirectOption);
-                if (StringUtils.isNotBlank(proxyHost)) {
-                    builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
-                }
-                if (StringUtils.isNotBlank(proxyUserName)) {
-                    if (proxyUserPwd == null) {
-                        proxyUserPwd = "";
-                    }
-                    //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
-                    System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
-                    //2a. set proxy authenticator at the request header level: 
-                    String plain = proxyUserName + ":" + proxyUserPwd;
-                    String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
-                    proxyAuthorizationBasicValue = "Basic " + encoded;
-                    //HttpRequest.newBuilder().setHeader("Proxy-Authorization", ProxyAuthorizationValue);
+        ThreadPoolExecutor old = tpe;
+        int currentTpeHashCode = old == null ? -1 : old.hashCode();
+        tpe = buildThreadPoolExecutor(old, "HttpClient", ThreadingMode.Mixed,
+                httpClientCoreSize, httpClientMaxSize, httpClientQueueSize, tpeKeepAliveSeconds, new AbortPolicyWithReport("HttpClientExecutor"),
+                prestartAllCoreThreads, allowCoreThreadTimeOut, false);
+        boolean isHttpClientSettingsChanged = tpe.hashCode() != currentTpeHashCode;
+        // 1. save
+        ScheduledExecutorService sesold = ses;
+        // 2. build new 
+//                tpe = new ThreadPoolExecutor(currentCore, currentMax, 60L, TimeUnit.SECONDS,
+//                        new LinkedBlockingQueue<>(currentQueue), new NamedDefaultThreadFactory("HttpClient"), new AbortPolicyWithReport("HttpClientExecutor"));
+
+        HttpClient.Builder builder = HttpClient.newBuilder()
+                .executor(tpe);
+        if (sslContext != null) {
+            builder.sslContext(sslContext);
+        }
+        builder.version(HttpClient.Version.HTTP_2)
+                .followRedirects(redirectOption);
+        if (StringUtils.isNotBlank(proxyHost)) {
+            builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
+        }
+        if (StringUtils.isNotBlank(proxyUserName)) {
+            if (proxyUserPwd == null) {
+                proxyUserPwd = "";
+            }
+            //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
+            System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
+            //2a. set proxy authenticator at the request header level: 
+            String plain = proxyUserName + ":" + proxyUserPwd;
+            String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
+            proxyAuthorizationBasicValue = "Basic " + encoded;
+            //HttpRequest.newBuilder().setHeader("Proxy-Authorization", ProxyAuthorizationValue);
 
 //                    if (useAuthenticator) {
 //                        //2b. set proxy authenticator at the HttpClient level: not flexible to deal with different remote server settings
@@ -304,39 +306,38 @@ abstract public class HttpClientConfig extends BootConfig {
 //                        };
 //                        builder.authenticator(authenticator);
 //                    }
-                }
-                httpClient = builder.build();
-                // 3. register new
-                ses = Executors.newSingleThreadScheduledExecutor();
-                ses.scheduleAtFixedRate(() -> {
-                    int queue = tpe.getQueue().size();
-                    int active = tpe.getActiveCount();
-                    if (active > 0 || queue > 0) {
-                        long task = tpe.getTaskCount();
-                        long completed = tpe.getCompletedTaskCount();
-                        long pool = tpe.getPoolSize();
-                        int core = tpe.getCorePoolSize();
-                        long max = tpe.getMaximumPoolSize();
-                        long largest = tpe.getLargestPoolSize();
-                        if (listener != null) {
-                            listener.onHTTPClientAccessReportUpdate(task, completed, queue, active, pool, core, max, largest);
-                        }
-                        logger.info(() -> "HTTPClient task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
-                    }
-                }, 0, 1, TimeUnit.SECONDS);
-            }
-            // 4. shutdown old
-            if (old != null) {
-                old.shutdown();
-            }
-            if (sesold != null) {
-                sesold.shutdown();
-            }
         }
+        httpClient = builder.build();
+        // 3. register new
+        ses = Executors.newSingleThreadScheduledExecutor(new NamedDefaultThreadFactory("HttpClient.QPS_SERVICE"));
+        ses.scheduleAtFixedRate(() -> {
+            int queue = tpe.getQueue().size();
+            int active = tpe.getActiveCount();
+            if (active > 0 || queue > 0) {
+                long task = tpe.getTaskCount();
+                long completed = tpe.getCompletedTaskCount();
+                long pool = tpe.getPoolSize();
+                int core = tpe.getCorePoolSize();
+                long max = tpe.getMaximumPoolSize();
+                long largest = tpe.getLargestPoolSize();
+                if (listener != null) {
+                    listener.onHTTPClientAccessReportUpdate(task, completed, queue, active, pool, core, max, largest);
+                }
+                logger.info(() -> "HTTPClient task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
+            }
+        }, 0, 1, TimeUnit.SECONDS);
+
+        // 4. shutdown old
+        if (old != null && isHttpClientSettingsChanged) {
+            old.shutdown();
+        }
+        if (sesold != null) {
+            sesold.shutdown();
+        }
+        System.gc();
     }
 
     // 3. HttpClient
-    @JsonIgnore
     public HttpClient getHttpClient() {
         return httpClient;
     }
