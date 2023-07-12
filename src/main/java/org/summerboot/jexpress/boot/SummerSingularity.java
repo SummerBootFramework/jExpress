@@ -166,13 +166,13 @@ abstract public class SummerSingularity {
     private <T extends SummerApplication> T bigBang(String[] args) {
         memo.append(BootConstant.BR).append("\t- deployee callerClass=").append(primaryClass.getName());
         Set<String> packageSet = new HashSet();
-        Set<String> configuredPackageSet = BackOffice.agent.getRootPackageNames();
+        Set<String> configuredPackageSet = BackOffice1.agent.getRootPackageNames();
         if (configuredPackageSet != null && !configuredPackageSet.isEmpty()) {
             packageSet.addAll(configuredPackageSet);
         }
         String rootPackageName = ReflectionUtil.getRootPackageName(primaryClass, BootConstant.PACKAGE_LEVEL);
         packageSet.add(rootPackageName);
-        BackOffice.agent.setRootPackageNames(packageSet);
+        BackOffice1.agent.setRootPackageNames(packageSet);
         callerRootPackageNames = packageSet.toArray(String[]::new);
 
         memo.append(BootConstant.BR).append("\t- callerRootPackageName=").append(packageSet);
@@ -183,7 +183,7 @@ abstract public class SummerSingularity {
         scanAnnotation_Version(primaryClass);
         System.setProperty(BootConstant.SYS_PROP_LOGFILENAME, logFileName);// used by log4j2.xml as log file name
         System.setProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME, rootPackageName);// used by log4j2.xml
-        BackOffice.agent.setVersion(appVersion);
+        BackOffice1.agent.setVersion(appVersion);
         scanArgsToInitializeLogging(args);
         /*
          * load external modules
@@ -222,7 +222,7 @@ abstract public class SummerSingularity {
                 logFileName = version.value()[0];
             }
             appVersion = version.value()[0];
-            BackOffice.agent.setVersionShort(appVersion);
+            BackOffice1.agent.setVersionShort(appVersion);
             int versionCount = version.value().length;
             if (versionCount > 1) {
                 appVersion = appVersion + " (";

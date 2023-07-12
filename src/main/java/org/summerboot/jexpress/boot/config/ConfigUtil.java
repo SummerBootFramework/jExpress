@@ -42,7 +42,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BackOffice1;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 import org.summerboot.jexpress.boot.instrumentation.Timeout;
@@ -99,8 +99,8 @@ public class ConfigUtil {
         // 1. load configs
         int updated = 0;
         Map<File, Runnable> cfgUpdateTasks = new HashMap();
-        long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
-        String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
+        long timeoutMs = BackOffice1.agent.getProcessTimeoutMilliseconds();
+        String timeoutDesc = BackOffice1.agent.getProcessTimeoutAlertMessage();
         for (String fileName : configs.keySet()) {
             File configFile = Paths.get(configFolder.toString(), fileName).toFile();
             try (var a = Timeout.watch("loading config file " + configFile, timeoutMs).withDesc(timeoutDesc)) {
