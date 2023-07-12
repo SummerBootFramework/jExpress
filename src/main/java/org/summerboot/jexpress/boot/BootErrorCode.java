@@ -26,7 +26,7 @@ import org.summerboot.jexpress.boot.annotation.Unique;
 @Unique(name = "SystemErrorCode", type = int.class)
 public interface BootErrorCode {
 
-    Map<Integer, Integer> Mapping = BackOffice.agent.getBootErrorCodeMapping();
+    Map<Integer, Integer> Mapping = BackOffice1.agent.getBootErrorCodeMapping();
 
     interface CustomHttpStatus {
 

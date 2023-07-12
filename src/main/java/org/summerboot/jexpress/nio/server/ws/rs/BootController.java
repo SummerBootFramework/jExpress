@@ -59,7 +59,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BackOffice1;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.security.auth.Caller;
@@ -142,7 +142,7 @@ abstract public class BootController extends PingController {
 
     protected String getVersion() {
         if (version == null) {
-            version = BackOffice.agent.getVersion();
+            version = BackOffice1.agent.getVersion();
         }
         return version;
     }

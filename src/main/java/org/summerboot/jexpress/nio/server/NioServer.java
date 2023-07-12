@@ -54,7 +54,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLException;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BackOffice1;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
@@ -181,7 +181,7 @@ public class NioServer {
                 .childHandler(channelInitializer);
 
         String appInfo = BootConstant.VERSION + " " + BootConstant.PID;
-        String loadBalancingPingEndpoint = BackOffice.agent.getPingURL();
+        String loadBalancingPingEndpoint = BackOffice1.agent.getPingURL();
         //for (String bindAddr : bindingAddresses.keySet()) {
         for (InetSocketAddress addr : bindingAddresses) {
             // info
