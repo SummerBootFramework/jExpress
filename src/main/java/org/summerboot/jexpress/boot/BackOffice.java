@@ -34,16 +34,16 @@ import org.summerboot.jexpress.util.ReflectionUtil;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class BackOffice1 extends BootConfig {
+public class BackOffice extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(BackOffice1.class);
+        String t = generateTemplate(BackOffice.class);
         System.out.println(t);
     }
 
-    public static final BackOffice1 agent = new BackOffice1();
+    public static final BackOffice agent = new BackOffice();
 
-    protected BackOffice1() {
+    protected BackOffice() {
     }
 
     @Override

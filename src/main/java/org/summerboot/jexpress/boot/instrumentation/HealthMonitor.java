@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.BackOffice1;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
@@ -49,8 +49,8 @@ public class HealthMonitor {
             log.debug(() -> "Duplicated HealthInspection Rejected: total=" + i);
             return;
         }
-        final long timeoutMs = BackOffice1.agent.getProcessTimeoutMilliseconds();
-        final String timeoutDesc = BackOffice1.agent.getProcessTimeoutAlertMessage();
+        final long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
+        final String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
         Runnable asyncTask = () -> {
             HealthInspector.healthInspectorCounter.incrementAndGet();
             boolean inspectionFailed;
@@ -91,7 +91,7 @@ public class HealthMonitor {
         };
         if (i <= 1) {
             try {
-                BackOffice1.execute(asyncTask);
+                BackOffice.execute(asyncTask);
             } catch (RejectedExecutionException ex2) {
                 log.debug(() -> "Duplicated HealthInspection Rejected: " + ex2);
             }

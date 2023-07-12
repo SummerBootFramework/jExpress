@@ -48,9 +48,9 @@ public interface BootConstant {
         File systemConfigFile = Paths.get(currentDir.getAbsolutePath(), FILE_CFG_SYSTEM).toFile();
         try {
             if (!systemConfigFile.exists()) {
-                ConfigUtil.createConfigFile(BackOffice1.class, currentDir, FILE_CFG_SYSTEM, false);
+                ConfigUtil.createConfigFile(BackOffice.class, currentDir, FILE_CFG_SYSTEM, false);
             }
-            BackOffice1.agent.load(systemConfigFile, false);// isReal:false = do not init logging
+            BackOffice.agent.load(systemConfigFile, false);// isReal:false = do not init logging
         } catch (IOException ex) {
             System.err.println("Failed to init " + systemConfigFile + ", caused by " + ex);
             System.exit(1);
@@ -66,36 +66,36 @@ public interface BootConstant {
     /**
      * 3. jExpress Default Settings
      */
-    boolean CFG_ERROR_CODE_AS_INT = BackOffice1.agent.isErrorCodeAsInt();
-    int CFG_CHANGE_MONITOR_INTERVAL_SEC = BackOffice1.agent.getCfgChangeMonitorIntervalSec();
-    int PACKAGE_LEVEL = BackOffice1.agent.getReflectionPackageLevel();
-    String DIR_STANDALONE = BackOffice1.agent.getDomainFolderPrefix();
-    String DIR_CONFIGURATION = BackOffice1.agent.getConfigFolderName();
-    String DIR_PLUGIN = BackOffice1.agent.getPluginFolderName();
-    String DIR_LOG = BackOffice1.agent.getLogFolderName();
+    boolean CFG_ERROR_CODE_AS_INT = BackOffice.agent.isErrorCodeAsInt();
+    int CFG_CHANGE_MONITOR_INTERVAL_SEC = BackOffice.agent.getCfgChangeMonitorIntervalSec();
+    int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
+    String DIR_STANDALONE = BackOffice.agent.getDomainFolderPrefix();
+    String DIR_CONFIGURATION = BackOffice.agent.getConfigFolderName();
+    String DIR_PLUGIN = BackOffice.agent.getPluginFolderName();
+    String DIR_LOG = BackOffice.agent.getLogFolderName();
 
-    String FILE_CFG_AUTH = BackOffice1.agent.getAuthConfigFileName();
-    String FILE_CFG_SMTP = BackOffice1.agent.getSmtpConfigFileName();
-    String FILE_CFG_NIO = BackOffice1.agent.getNioConfigFileName();
-    String FILE_CFG_GRPC = BackOffice1.agent.getgRPCConfigFileName();
+    String FILE_CFG_AUTH = BackOffice.agent.getAuthConfigFileName();
+    String FILE_CFG_SMTP = BackOffice.agent.getSmtpConfigFileName();
+    String FILE_CFG_NIO = BackOffice.agent.getNioConfigFileName();
+    String FILE_CFG_GRPC = BackOffice.agent.getgRPCConfigFileName();
 
     /*
      * 4. jExpress Default CLI Name
      */
-    String CLI_USAGE = BackOffice1.agent.getCliName_usage();
-    String CLI_VERSION = BackOffice1.agent.getCliName_version();
-    String CLI_CONFIG_DOMAIN = BackOffice1.agent.getCliName_domain();
-    String CLI_CONFIG_DIR = BackOffice1.agent.getCliName_cfgdir();
-    String CLI_CONFIG_MONITOR_INTERVAL = BackOffice1.agent.getCliName_monitorInterval();
-    String CLI_I8N = BackOffice1.agent.getCliName_i18n();
-    String CLI_USE_IMPL = BackOffice1.agent.getCliName_use();//To specify which implementation will be used via @Component.checkImplTagUsed
-    String CLI_CONFIG_DEMO = BackOffice1.agent.getCliName_cfgdemo();
-    String CLI_LIST_UNIQUE = BackOffice1.agent.getCliName_list();
-    String CLI_ADMIN_PWD_FILE = BackOffice1.agent.getCliName_authfile();
-    String CLI_ADMIN_PWD = BackOffice1.agent.getCliName_auth();
-    String CLI_JWT = BackOffice1.agent.getCliName_jwt();
-    String CLI_ENCRYPT = BackOffice1.agent.getCliName_encrypt();
-    String CLI_DECRYPT = BackOffice1.agent.getCliName_decrypt();
+    String CLI_USAGE = BackOffice.agent.getCliName_usage();
+    String CLI_VERSION = BackOffice.agent.getCliName_version();
+    String CLI_CONFIG_DOMAIN = BackOffice.agent.getCliName_domain();
+    String CLI_CONFIG_DIR = BackOffice.agent.getCliName_cfgdir();
+    String CLI_CONFIG_MONITOR_INTERVAL = BackOffice.agent.getCliName_monitorInterval();
+    String CLI_I8N = BackOffice.agent.getCliName_i18n();
+    String CLI_USE_IMPL = BackOffice.agent.getCliName_use();//To specify which implementation will be used via @Component.checkImplTagUsed
+    String CLI_CONFIG_DEMO = BackOffice.agent.getCliName_cfgdemo();
+    String CLI_LIST_UNIQUE = BackOffice.agent.getCliName_list();
+    String CLI_ADMIN_PWD_FILE = BackOffice.agent.getCliName_authfile();
+    String CLI_ADMIN_PWD = BackOffice.agent.getCliName_auth();
+    String CLI_JWT = BackOffice.agent.getCliName_jwt();
+    String CLI_ENCRYPT = BackOffice.agent.getCliName_encrypt();
+    String CLI_DECRYPT = BackOffice.agent.getCliName_decrypt();
 
     /*
      * 5. Log4j2.xml variables
@@ -105,8 +105,8 @@ public interface BootConstant {
      * Please be advised that ‘java.util.Hashtable.get()’ is a synchronized API. 
      * It means only one thread can invoke the ‘java.util.Hashtable.get()’ method at any given time. 
      */
-    String SYS_PROP_LOGFILEPATH = BackOffice1.agent.getLog4j2LogFilePath();//"logPath"; // used by log4j2.xml ${sys:loggingPath}
-    String SYS_PROP_LOGFILENAME = BackOffice1.agent.getLog4j2LogFileName();//"appName"; // used by log4j2.xml ${sys:appappName} as log file name
-    String SYS_PROP_SERVER_NAME = BackOffice1.agent.getLog4j2ServerName();//"serverName"; // used by log4j2.xml ${hostName}
-    String SYS_PROP_APP_PACKAGE_NAME = BackOffice1.agent.getLog4j2AppPackageName();//"appPackageName"; // used by both log4j2.xml ${sys:appPackage} and JPAHibernateConfig to scan @Entity
+    String SYS_PROP_LOGFILEPATH = BackOffice.agent.getLog4j2LogFilePath();//"logPath"; // used by log4j2.xml ${sys:loggingPath}
+    String SYS_PROP_LOGFILENAME = BackOffice.agent.getLog4j2LogFileName();//"appName"; // used by log4j2.xml ${sys:appappName} as log file name
+    String SYS_PROP_SERVER_NAME = BackOffice.agent.getLog4j2ServerName();//"serverName"; // used by log4j2.xml ${hostName}
+    String SYS_PROP_APP_PACKAGE_NAME = BackOffice.agent.getLog4j2AppPackageName();//"appPackageName"; // used by both log4j2.xml ${sys:appPackage} and JPAHibernateConfig to scan @Entity
 }

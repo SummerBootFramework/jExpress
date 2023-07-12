@@ -285,8 +285,8 @@ abstract public class SummerApplication extends SummerBigBang {
                 summerRunner.run(context);
             }
 
-            long timeoutMs = BackOffice1.agent.getProcessTimeoutMilliseconds();
-            String timeoutDesc = BackOffice1.agent.getProcessTimeoutAlertMessage();
+            long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
+            String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             //4. health inspection
             StringBuilder sb = new StringBuilder();
             sb.append(BootConstant.BR).append(HealthMonitor.PROMPT);
@@ -365,12 +365,12 @@ abstract public class SummerApplication extends SummerBigBang {
                 postOffice.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Started at " + OffsetDateTime.now(), fullConfigInfo, null, false);
             }
         } catch (java.net.BindException ex) {// from NioServer
-            log.fatal(ex + BootConstant.BR + BackOffice1.agent.getPortInUseAlertMessage());
+            log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
             System.exit(1);
         } catch (Throwable ex) {
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause instanceof java.net.BindException) {// from gRPC server
-                log.fatal(ex + BootConstant.BR + BackOffice1.agent.getPortInUseAlertMessage());
+                log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
             } else {
                 log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             }
