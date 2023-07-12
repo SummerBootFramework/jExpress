@@ -47,8 +47,8 @@ import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.BackOffice1;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -531,7 +531,7 @@ public class ServiceContext {
         }
         if (!errorFile.exists()) {
             errorFile.getParentFile().mkdirs();
-            String title = BackOffice1.agent.getVersionShort();
+            String title = BackOffice.agent.getVersionShort();
             String errorDesc = status.reasonPhrase();
             StringBuilder sb = new StringBuilder();
             Path errorFilePath = errorFile.getAbsoluteFile().toPath();

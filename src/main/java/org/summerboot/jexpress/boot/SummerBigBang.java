@@ -532,7 +532,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void onGuiceInjectorCreated_ControllersInjected(@Controller Map<String, Object> controllers) {
         //1. scan and register controllers
         String pingURL = JaxRsRequestProcessorManager.registerControllers(controllers, memo);
-        BackOffice1.agent.setPingURL(pingURL);
+        BackOffice.agent.setPingURL(pingURL);
     }
 
     protected void scanImplementation_SummerRunner(Injector injector) {
