@@ -519,11 +519,6 @@ public class ServiceContext {
 //        }
 //        return this;
 //    }
-    public ServiceContext file(File file, boolean isDownloadMode) {
-        this.downloadMode = isDownloadMode;
-        return this.file(file);
-    }
-
     private File buildErrorFile(HttpResponseStatus status, boolean isDownloadMode) {
         int errorCode = status.code();
         String errorFileName = errorCode + (isDownloadMode ? ".txt" : ".html");
@@ -558,7 +553,15 @@ public class ServiceContext {
         return errorFile;
     }
 
-    public ServiceContext file(File file) {
+    public ServiceContext file(String fileName, boolean isDownloadMode) {
+        String targetFileName = NioConfig.cfg.getDocrootDir() + File.separator + fileName;
+        targetFileName = targetFileName.replace('/', File.separatorChar);
+        File targetFile = new File(targetFileName).getAbsoluteFile();
+        return this.file(targetFile, isDownloadMode);
+    }
+
+    public ServiceContext file(File file, boolean isDownloadMode) {
+        this.downloadMode = isDownloadMode;
         if (!precheckFile(file, downloadMode)) {
             file = buildErrorFile(status, downloadMode);
         }

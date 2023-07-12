@@ -508,7 +508,7 @@ public class ReflectionUtil {
 
     public static String loadFields(Class targetClass, Class fieldClass) throws IllegalArgumentException, IllegalAccessException, JsonProcessingException {
         Map<String, Integer> results = new HashMap();
-        ReflectionUtil.loadFields(targetClass, fieldClass, results, false);
+        loadFields(targetClass, fieldClass, results, false);
         Map<Object, String> sorted = results
                 .entrySet()
                 .stream()
@@ -517,15 +517,30 @@ public class ReflectionUtil {
         return BeanUtil.toJson(sorted, true, false);
     }
 
-    private static final String MY_PACKAGE_ROOT = "org.";
-
-    public static String getRootPackageName(Class callerClass) {
+    //private static final String MY_PACKAGE_ROOT = "org.";
+    public static String getRootPackageName(Class callerClass, int level) {
         String packageName = callerClass.getPackageName();
-        if (packageName.startsWith(MY_PACKAGE_ROOT)) {
-            int offset = MY_PACKAGE_ROOT.length();
-            return packageName.substring(0, packageName.indexOf(".", offset));
+        if (level < 1) {
+            return packageName;
         }
-        return packageName.substring(0, packageName.indexOf("."));
+        String[] packageNames = FormatterUtil.parseDsv(packageName, "\\.");
+        if (level >= packageNames.length) {
+            return packageName;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < level; i++) {
+            if (i > 0) {
+                sb.append(".");
+            }
+            sb.append(packageNames[i]);
+        }
+        return sb.toString();
+
+//        if (packageName.startsWith(MY_PACKAGE_ROOT)) {
+//            int offset = MY_PACKAGE_ROOT.length();
+//            return packageName.substring(0, packageName.indexOf(".", offset));
+//        }
+//        return packageName.substring(0, packageName.indexOf("."));
     }
 
     public static List<Field> getDeclaredAndSuperClassesFields(Class targetClass) {

@@ -153,6 +153,12 @@ public class BackOffice extends BootConfig {
     @Config(key = "type.errorCodeAsInt", defaultValue = "false")
     private boolean errorCodeAsInt = false;
 
+    @Config(key = "default.interval.ConfigChangeMonitor", defaultValue = "30")
+    private int CfgChangeMonitorIntervalSec = 30;
+
+    @Config(key = "reflection.package.level", defaultValue = "2")
+    private int reflectionPackageLevel = 2;
+
     @Config(key = "timeout.alert.milliseconds", defaultValue = "3000")
     private long processTimeoutMilliseconds = 3000;
 
@@ -278,6 +284,14 @@ public class BackOffice extends BootConfig {
 
     public boolean isErrorCodeAsInt() {
         return errorCodeAsInt;
+    }
+
+    public int getCfgChangeMonitorIntervalSec() {
+        return CfgChangeMonitorIntervalSec;
+    }
+
+    public int getReflectionPackageLevel() {
+        return reflectionPackageLevel;
     }
 
     public long getProcessTimeoutMilliseconds() {

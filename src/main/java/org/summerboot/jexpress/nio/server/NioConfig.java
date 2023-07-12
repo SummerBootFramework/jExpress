@@ -376,7 +376,7 @@ public class NioConfig extends BootConfig {
         // 7. Web Server Mode       
         rootFolder = cfgFile.getParentFile().getParentFile();
         docrootDir = null;
-        docrootDir = rootFolder.getName() + File.separator + docroot;
+        docrootDir = rootFolder.getAbsolutePath() + File.separator + docroot;
         downloadMode = StringUtils.isBlank(welcomePage);
         tempUoloadDir = null;
         tempUoloadDir = rootFolder.getAbsolutePath() + File.separator + tempUoload;

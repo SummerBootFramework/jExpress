@@ -67,6 +67,8 @@ public interface BootConstant {
      * 3. jExpress Default Settings
      */
     boolean CFG_ERROR_CODE_AS_INT = BackOffice.agent.isErrorCodeAsInt();
+    int CFG_CHANGE_MONITOR_INTERVAL_SEC = BackOffice.agent.getCfgChangeMonitorIntervalSec();
+    int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
     String DIR_STANDALONE = BackOffice.agent.getDomainFolderPrefix();
     String DIR_CONFIGURATION = BackOffice.agent.getConfigFolderName();
     String DIR_PLUGIN = BackOffice.agent.getPluginFolderName();

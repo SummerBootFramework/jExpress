@@ -73,14 +73,6 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected List<SummerInitializer> summerInitializers = new ArrayList();
     protected List<SummerRunner> summerRunners = new ArrayList();
 
-
-    /*
-     * CLI results
-     */
-    protected Locale userSpecifiedResourceBundle;
-    private int userSpecifiedCfgMonitorIntervalSec = 30;
-    protected final Set<String> userSpecifiedImplTags = new HashSet<>();
-
     protected SummerBigBang(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass, args);
         this.userOverrideModule = userOverrideModule;
@@ -96,9 +88,6 @@ abstract public class SummerBigBang extends SummerSingularity {
         guiceInjector = null;
         summerInitializers.clear();
         summerRunners.clear();
-        userSpecifiedResourceBundle = null;
-        userSpecifiedCfgMonitorIntervalSec = 30;
-        userSpecifiedImplTags.clear();
     }
 
     private <T extends SummerApplication> T aParallelUniverse(String... args) {
@@ -124,10 +113,6 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         return (T) this;
     }
-
-    protected CommandLine cli;
-    protected final Options cliOptions = new Options();
-    protected final HelpFormatter cliHelpFormatter = new HelpFormatter();
 
     protected void bigBang_LetThereBeCLI(String[] args) {
         memo.append(BootConstant.BR).append("\t- CLI.init: args=").append(Arrays.asList(args));
