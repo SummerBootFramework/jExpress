@@ -38,6 +38,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,6 +77,20 @@ abstract public class SummerSingularity {
 
     protected final StringBuilder memo = new StringBuilder();
     protected final Class primaryClass;
+
+    /*
+     * CLI utils
+     */
+    protected CommandLine cli;
+    protected final Options cliOptions = new Options();
+    protected final HelpFormatter cliHelpFormatter = new HelpFormatter();
+
+    /*
+     * CLI results
+     */
+    protected Locale userSpecifiedResourceBundle;
+    protected int userSpecifiedCfgMonitorIntervalSec;
+    protected final Set<String> userSpecifiedImplTags = new HashSet<>();
 
     /*
      * Scan Results
@@ -122,6 +139,12 @@ abstract public class SummerSingularity {
         System.getProperties().remove(BootConstant.SYS_PROP_APP_PACKAGE_NAME, "");// used by log4j2.xml
         System.getProperties().remove(BootConstant.SYS_PROP_LOGFILENAME, "");// used by log4j2.xml
         System.setProperty(BootConstant.LOG4J2_KEY, "");
+
+        // CLI        
+        userSpecifiedResourceBundle = null;
+        userSpecifiedCfgMonitorIntervalSec = BootConstant.CFG_CHANGE_MONITOR_INTERVAL_SEC;
+        userSpecifiedImplTags.clear();
+
         // reset Scan Results
         jvmStartCommand = null;
         jmxRequired = false;
@@ -143,13 +166,13 @@ abstract public class SummerSingularity {
     private <T extends SummerApplication> T bigBang(String[] args) {
         memo.append(BootConstant.BR).append("\t- deployee callerClass=").append(primaryClass.getName());
         Set<String> packageSet = new HashSet();
-        Set<String> configuredPackageSet = Backoffice.cfg.getRootPackageNames();
+        Set<String> configuredPackageSet = BackOffice.agent.getRootPackageNames();
         if (configuredPackageSet != null && !configuredPackageSet.isEmpty()) {
             packageSet.addAll(configuredPackageSet);
         }
-        String rootPackageName = ReflectionUtil.getRootPackageName(primaryClass);
+        String rootPackageName = ReflectionUtil.getRootPackageName(primaryClass, BootConstant.PACKAGE_LEVEL);
         packageSet.add(rootPackageName);
-        Backoffice.cfg.setRootPackageNames(packageSet);
+        BackOffice.agent.setRootPackageNames(packageSet);
         callerRootPackageNames = packageSet.toArray(String[]::new);
 
         memo.append(BootConstant.BR).append("\t- callerRootPackageName=").append(packageSet);
@@ -160,9 +183,8 @@ abstract public class SummerSingularity {
         scanAnnotation_Version(primaryClass);
         System.setProperty(BootConstant.SYS_PROP_LOGFILENAME, logFileName);// used by log4j2.xml as log file name
         System.setProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME, rootPackageName);// used by log4j2.xml
-        Backoffice.cfg.setVersion(appVersion);
-        scanArgsToInitializePluginFromConfigDir(args);
-        log.debug("Configuration path = {}", userSpecifiedConfigDir);
+        BackOffice.agent.setVersion(appVersion);
+        scanArgsToInitializeLogging(args);
         /*
          * load external modules
          */
@@ -200,7 +222,7 @@ abstract public class SummerSingularity {
                 logFileName = version.value()[0];
             }
             appVersion = version.value()[0];
-            Backoffice.cfg.setVersionShort(appVersion);
+            BackOffice.agent.setVersionShort(appVersion);
             int versionCount = version.value().length;
             if (versionCount > 1) {
                 appVersion = appVersion + " (";
@@ -215,7 +237,7 @@ abstract public class SummerSingularity {
         memo.append(BootConstant.BR).append("\t- callerVersion=").append(appVersion);
     }
 
-    protected void scanArgsToInitializePluginFromConfigDir(String[] args) {
+    protected void scanArgsToInitializeLogging(String[] args) {
         /*
          * [Config File] Location - determine the configuration path: userSpecifiedConfigDir
          */
@@ -267,7 +289,7 @@ abstract public class SummerSingularity {
         String log4j2ConfigFile = logFilePath.toString();
         System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
         log = LogManager.getLogger(SummerApplication.class);// init log
-        log.info("logging initialized");
+        log.info("Logging initialized from {}", userSpecifiedConfigDir);
         Locale userSpecifiedResourceBundle = null;
         memo.append(BootConstant.BR).append("\t- ").append(I18n.info.launchingLog.format(userSpecifiedResourceBundle, System.getProperty(BootConstant.LOG4J2_KEY)));
     }

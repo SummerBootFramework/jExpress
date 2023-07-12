@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.nio.server;
 
+import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -41,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
@@ -52,7 +54,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLException;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.Backoffice;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
@@ -137,19 +139,21 @@ public class NioServer {
         int bossSize = nioCfg.getNioEventLoopGroupAcceptorSize();
         int workerSize = nioCfg.getNioEventLoopGroupWorkerSize();
         Class<? extends ServerChannel> serverChannelClass;
+        ThreadFactory threadFactoryBoss = new NamedDefaultThreadFactory("NIO.Boss");
+        ThreadFactory threadFactoryWorker = new NamedDefaultThreadFactory("NIO.Worker");
         if (Epoll.isAvailable() && (IoMultiplexer.AVAILABLE.equals(multiplexer) || IoMultiplexer.EPOLL.equals(multiplexer))) {
-            bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize);
-            workerGroup = workerSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(workerSize);
+            bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize, threadFactoryBoss);
+            workerGroup = workerSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(workerSize, threadFactoryWorker);
             serverChannelClass = EpollServerSocketChannel.class;
             multiplexer = IoMultiplexer.EPOLL;
         } else if (KQueue.isAvailable() && (IoMultiplexer.AVAILABLE.equals(multiplexer) || IoMultiplexer.KQUEUE.equals(multiplexer))) {
-            bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize);
-            workerGroup = workerSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(workerSize);
+            bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize, threadFactoryBoss);
+            workerGroup = workerSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(workerSize, threadFactoryWorker);
             serverChannelClass = KQueueServerSocketChannel.class;
             multiplexer = IoMultiplexer.KQUEUE;
         } else {
-            bossGroup = bossSize < 1 ? new NioEventLoopGroup() : new NioEventLoopGroup(bossSize);
-            workerGroup = workerSize < 1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerSize);
+            bossGroup = bossSize < 1 ? new NioEventLoopGroup() : new NioEventLoopGroup(bossSize, threadFactoryBoss);
+            workerGroup = workerSize < 1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerSize, threadFactoryWorker);
             serverChannelClass = NioServerSocketChannel.class;
             multiplexer = IoMultiplexer.JDK;
         }
@@ -177,7 +181,7 @@ public class NioServer {
                 .childHandler(channelInitializer);
 
         String appInfo = BootConstant.VERSION + " " + BootConstant.PID;
-        String loadBalancingPingEndpoint = Backoffice.cfg.getPingURL();
+        String loadBalancingPingEndpoint = BackOffice.agent.getPingURL();
         //for (String bindAddr : bindingAddresses.keySet()) {
         for (InetSocketAddress addr : bindingAddresses) {
             // info
@@ -210,7 +214,7 @@ public class NioServer {
         lastBizHitRef.set(-1L);
         if (nioListener != null || log.isDebugEnabled()) {
             int interval = 1;
-            QPS_SERVICE = Executors.newSingleThreadScheduledExecutor();
+            QPS_SERVICE = Executors.newSingleThreadScheduledExecutor(new NamedDefaultThreadFactory("NIO.QPS_SERVICE"));
             QPS_SERVICE.scheduleAtFixedRate(() -> {
                 long hps = NioCounter.COUNTER_HIT.getAndSet(0);
                 long tps = NioCounter.COUNTER_SENT.getAndSet(0);

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ThreadPoolExecutor;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.summerboot.jexpress.boot.BootConstant;
@@ -30,6 +31,7 @@ import static org.summerboot.jexpress.boot.config.BootConfig.generateTemplate;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
 /**
  *
@@ -51,10 +53,6 @@ public class GRPCServerConfig extends BootConfig {
     protected GRPCServerConfig() {
     }
 
-    public enum ThreadingMode {
-        CPU, IO, Mixed
-    }
-
     //1. gRPC server config
     @ConfigHeader(title = "1. " + ID + " Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
@@ -66,22 +64,30 @@ public class GRPCServerConfig extends BootConfig {
 
     @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "Mixed",
             desc = "valid value = CPU (default), IO, Mixed")
-    private volatile ThreadingMode threadingMode = ThreadingMode.Mixed;
+    private volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
 
     @Config(key = ID + ".pool.coreSize", predefinedValue = "0",
             desc = "coreSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int poolCoreSize = BootConstant.CPU_CORE * 2 + 1;
+    private volatile int tpeCore = BootConstant.CPU_CORE * 2 + 1;
 
     @Config(key = ID + ".pool.maxSize", predefinedValue = "0",
             desc = "maxSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int poolMaxSizeMaxSize = BootConstant.CPU_CORE * 2 + 1;
+    private volatile int tpeMax = BootConstant.CPU_CORE * 2 + 1;
 
     @Config(key = ID + ".pool.queueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
-    private volatile int poolQueueSize = Integer.MAX_VALUE;
+    private volatile int tpeQueue = Integer.MAX_VALUE;
 
     @Config(key = ID + ".pool.keepAliveSeconds", defaultValue = "60")
-    private volatile long keepAliveSeconds = 60;
+    private volatile long tpeKeepAliveSeconds = 60;
+
+    @Config(key = ID + ".pool.prestartAllCoreThreads", defaultValue = "false")
+    private boolean prestartAllCoreThreads = false;
+
+    @Config(key = ID + ".pool.allowCoreThreadTimeOut", defaultValue = "false")
+    private boolean allowCoreThreadTimeOut = false;
+
+    private ThreadPoolExecutor tpe = null;
 
     //2. TRC (The Remote Callee) keystore
     private static final String KEY_kmf_key = ID + ".ssl.KeyStore";
@@ -127,32 +133,16 @@ public class GRPCServerConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        int cpuCoreSize = BootConstant.CPU_CORE;
-        switch (threadingMode) {
-            case CPU:// use CPU_Bound core + 1 when application is CPU_Bound bound
-                poolCoreSize = cpuCoreSize + 1;
-                poolMaxSizeMaxSize = poolCoreSize;
-                break;
-            case IO:// use CPU_Bound core x 2 + 1 when application is I/O bound
-                poolCoreSize = cpuCoreSize * 2 + 1;
-                poolMaxSizeMaxSize = poolCoreSize;
-                break;
-            case Mixed:// manual config is required when it is mixed
-                if (poolCoreSize < 1) {
-                    poolCoreSize = cpuCoreSize * 2 + 1;
-                }
-                if (poolMaxSizeMaxSize < 1) {
-                    poolMaxSizeMaxSize = cpuCoreSize * 2 + 1;
-                }
-                if (poolMaxSizeMaxSize < poolCoreSize) {
-                    poolMaxSizeMaxSize = poolCoreSize;
-                }
-                break;
-        }
+        tpe = buildThreadPoolExecutor(tpe, "gRPC.Biz", tpeThreadingMode,
+                tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, new AbortPolicyWithReport("gRPCThreadPoolExecutor"),
+                prestartAllCoreThreads, allowCoreThreadTimeOut, true);
     }
 
     @Override
     public void shutdown() {
+        if (tpe != null && !tpe.isShutdown()) {
+            tpe.shutdown();
+        }
     }
 
     public List<InetSocketAddress> getBindingAddresses() {
@@ -163,24 +153,28 @@ public class GRPCServerConfig extends BootConfig {
         return autoStart;
     }
 
-    public ThreadingMode getThreadingMode() {
-        return threadingMode;
+    public ThreadingMode getTpeThreadingMode() {
+        return tpeThreadingMode;
     }
 
-    public int getPoolCoreSize() {
-        return poolCoreSize;
+    public int getTpeCore() {
+        return tpeCore;
     }
 
-    public int getPoolMaxSizeMaxSize() {
-        return poolMaxSizeMaxSize;
+    public int getTpeMax() {
+        return tpeMax;
     }
 
-    public int getPoolQueueSize() {
-        return poolQueueSize;
+    public int getTpeQueue() {
+        return tpeQueue;
     }
 
-    public long getKeepAliveSeconds() {
-        return keepAliveSeconds;
+    public long getTpeKeepAliveSeconds() {
+        return tpeKeepAliveSeconds;
+    }
+
+    public ThreadPoolExecutor getTpe() {
+        return tpe;
     }
 
     public KeyManagerFactory getKmf() {

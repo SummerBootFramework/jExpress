@@ -48,7 +48,7 @@ import org.summerboot.jexpress.nio.server.NioConfig;
 import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.Backoffice;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -519,11 +519,6 @@ public class ServiceContext {
 //        }
 //        return this;
 //    }
-    public ServiceContext file(File file, boolean isDownloadMode) {
-        this.downloadMode = isDownloadMode;
-        return this.file(file);
-    }
-
     private File buildErrorFile(HttpResponseStatus status, boolean isDownloadMode) {
         int errorCode = status.code();
         String errorFileName = errorCode + (isDownloadMode ? ".txt" : ".html");
@@ -536,7 +531,7 @@ public class ServiceContext {
         }
         if (!errorFile.exists()) {
             errorFile.getParentFile().mkdirs();
-            String title = Backoffice.cfg.getVersionShort();
+            String title = BackOffice.agent.getVersionShort();
             String errorDesc = status.reasonPhrase();
             StringBuilder sb = new StringBuilder();
             Path errorFilePath = errorFile.getAbsoluteFile().toPath();
@@ -558,7 +553,15 @@ public class ServiceContext {
         return errorFile;
     }
 
-    public ServiceContext file(File file) {
+    public ServiceContext file(String fileName, boolean isDownloadMode) {
+        String targetFileName = NioConfig.cfg.getDocrootDir() + File.separator + fileName;
+        targetFileName = targetFileName.replace('/', File.separatorChar);
+        File targetFile = new File(targetFileName).getAbsoluteFile();
+        return this.file(targetFile, isDownloadMode);
+    }
+
+    public ServiceContext file(File file, boolean isDownloadMode) {
+        this.downloadMode = isDownloadMode;
         if (!precheckFile(file, downloadMode)) {
             file = buildErrorFile(status, downloadMode);
         }

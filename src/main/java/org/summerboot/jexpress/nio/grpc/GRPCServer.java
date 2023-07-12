@@ -25,7 +25,6 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -34,9 +33,8 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
-import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
 /**
  *
@@ -59,7 +57,7 @@ public class GRPCServer {
     protected Server server = null;
 
     protected ScheduledExecutorService statusReporter = null;
-    protected ThreadPoolExecutor tpe = null;
+    //protected ThreadPoolExecutor tpe = null;
     protected boolean servicePaused = false;
     protected final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
 
@@ -108,10 +106,10 @@ public class GRPCServer {
 
     public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
         //ServerInterceptor serverInterceptor, int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener;
-        this(bindingAddr, port, kmf, tmf, null, BootConstant.CPU_CORE * 2 + 1, BootConstant.CPU_CORE * 2 + 1, Integer.MAX_VALUE, 60, null);
+        this(bindingAddr, port, kmf, tmf, null, GRPCServerConfig.cfg.getTpe(), null);
     }
 
-    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener) {
+    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, ThreadPoolExecutor tpe, NIOStatusListener nioListener) {
         this.bindingAddr = bindingAddr;
         this.port = port;
         serverCredentials = initTLS(kmf, tmf);
@@ -123,7 +121,7 @@ public class GRPCServer {
         if (serverInterceptor != null) {
             serverBuilder.intercept(serverInterceptor);
         }
-        initThreadPool(poolCoreSize, poolMaxSizeMaxSize, poolQueueSize, keepAliveSeconds, nioListener);
+        initThreadPool(tpe, nioListener);
     }
 
     private ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
@@ -151,28 +149,8 @@ public class GRPCServer {
      * @param nioListener
      * @return
      */
-    private GRPCServiceCounter initThreadPool(int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener) {
-        if (poolCoreSize < 1) {
-            poolCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
-        }
-
-        if (poolMaxSizeMaxSize < poolCoreSize) {
-            poolMaxSizeMaxSize = poolCoreSize;// how many tasks running at the same time
-        }
-        if (poolQueueSize < 1) {
-            poolQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
-        }
-        if (keepAliveSeconds < 1) {
-            keepAliveSeconds = 60L;
-        }
-        ThreadPoolExecutor old = tpe;
-        tpe = new ThreadPoolExecutor(poolCoreSize, poolMaxSizeMaxSize, keepAliveSeconds, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(poolQueueSize),
-                Executors.defaultThreadFactory(), new AbortPolicyWithReport("gRPC Server Executor"));//.DiscardOldestPolicy()
+    private GRPCServiceCounter initThreadPool(ThreadPoolExecutor tpe, NIOStatusListener nioListener) {
         serverBuilder.executor(tpe);
-        if (old != null) {
-            old.shutdown();
-        }
 
         int interval = 1;
         final AtomicReference<Long> lastBizHitRef = new AtomicReference<>();
@@ -180,7 +158,7 @@ public class GRPCServer {
         long totalChannel = -1;//NioServerContext.COUNTER_TOTAL_CHANNEL.get();
         long activeChannel = -1;//NioServerContext.COUNTER_ACTIVE_CHANNEL.get();
         ScheduledExecutorService old2 = statusReporter;
-        statusReporter = Executors.newSingleThreadScheduledExecutor();
+        statusReporter = Executors.newSingleThreadScheduledExecutor(new NamedDefaultThreadFactory("gRPC.QPS_SERVICE"));
         statusReporter.scheduleAtFixedRate(() -> {
             if (nioListener == null && !log.isDebugEnabled()) {
                 return;

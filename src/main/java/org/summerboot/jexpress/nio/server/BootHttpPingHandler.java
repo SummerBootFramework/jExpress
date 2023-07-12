@@ -29,7 +29,7 @@ import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.Backoffice;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 /**
@@ -46,7 +46,7 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
 
     public BootHttpPingHandler(/*String pingURL*/) {
         super(FullHttpRequest.class, false);
-        String endpointCfg = Backoffice.cfg.getPingURL();
+        String endpointCfg = BackOffice.agent.getPingURL();
         if (StringUtils.isNotBlank(endpointCfg)) {
             pingURL = endpointCfg;
         } else {

@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.summerboot.jexpress.boot.Backoffice;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 
 /**
@@ -120,7 +120,7 @@ public class BootPostOfficeImpl implements PostOffice {
             }
         };
         if (async) {
-            Backoffice.execute(postman);
+            BackOffice.execute(postman);
         } else {
             postman.run();
         }
@@ -149,7 +149,7 @@ public class BootPostOfficeImpl implements PostOffice {
                             log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
                         }
                     };
-                    Backoffice.execute(postman);
+                    BackOffice.execute(postman);
                 } else {
                     email.send(smtpCfg.getMailSession());
                 }
