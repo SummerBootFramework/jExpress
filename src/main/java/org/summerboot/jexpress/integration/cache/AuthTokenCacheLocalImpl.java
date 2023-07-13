@@ -23,7 +23,7 @@ import com.google.inject.Singleton;
  * @version 2.0
  */
 @Singleton
-public class AuthTokenCacheLocalImpl extends SimpleLocalCacheImpl implements AuthTokenCache {
+public class AuthTokenCacheLocalImpl extends SimpleLocalCacheImpl<String, String> implements AuthTokenCache {
 
     @Override
     public void blacklist(String key, String value, long ttlMilliseconds) {

@@ -43,6 +43,7 @@ public class User implements Serializable, Caller, Comparable<User> {
     protected int type = 1;
     protected Map prop = null;
     protected boolean enabled = true;
+    protected Long tokenTtlSec;
 
     public User(Long tenantId, String tenantName, Long id, String uid) {
         this.tenantId = tenantId;
@@ -234,6 +235,15 @@ public class User implements Serializable, Caller, Comparable<User> {
             return null;
         }
         return prop.keySet();
+    }
+
+    @Override
+    public Long getTokenTtlSec() {
+        return tokenTtlSec;
+    }
+
+    public void setTokenTtlSec(Long tokenTtlSec) {
+        this.tokenTtlSec = tokenTtlSec;
     }
 
 }

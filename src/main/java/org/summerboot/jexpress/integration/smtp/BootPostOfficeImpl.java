@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.SummerApplication;
 
 /**
  *
@@ -55,7 +56,7 @@ public class BootPostOfficeImpl implements PostOffice {
      * @return
      */
     protected String updateAlertTitle(String title) {
-        return "Alert@" + BootConstant.HOST + " " + appVersion + " - " + title;
+        return "Alert@" + SummerApplication.HOST + " " + appVersion + " - " + title;
     }
 
     /**

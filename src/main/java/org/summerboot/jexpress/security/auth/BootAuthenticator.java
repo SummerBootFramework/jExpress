@@ -53,10 +53,10 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
- * @param <T> authenticate(T metaData)
+ * @param <E> authenticate(T metaData)
  */
 @Singleton
-public abstract class BootAuthenticator<T> implements Authenticator, ServerInterceptor {
+public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerInterceptor {
 
     protected static final String ERROR_NO_CFG = "JWT is not configured at " + AuthConfig.cfg.getCfgFile().getAbsolutePath();
 
@@ -76,17 +76,26 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
      * @throws NamingException
      */
     @Override
-    public String signJWT(String usename, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException {
+    public String signJWT(String usename, String pwd, E metaData, int validForMinutes, final ServiceContext context) throws NamingException {
         //1. protect request body from being logged
         //context.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
 
         //2. signJWT caller against LDAP or DB
         context.poi(BootPOI.LDAP_BEGIN);
-        Caller caller = authenticate(usename, pwd, (T) metaData, authenticatorListener, context);
+        Caller caller = authenticate(usename, pwd, (E) metaData, authenticatorListener, context);
         context.poi(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
             return null;
+        }
+
+        // get token TTL from caller, otherwise use default
+        Long tokenTtlSec = caller.getTokenTtlSec();
+        Duration tokenTTL;
+        if (tokenTtlSec != null) {
+            tokenTTL = Duration.ofSeconds(tokenTtlSec);
+        } else {
+            tokenTTL = Duration.ofMinutes(validForMinutes);
         }
 
         //3. format JWT
@@ -97,7 +106,7 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
         if (signingKey == null) {
             throw new UnsupportedOperationException(ERROR_NO_CFG);
         }
-        String token = JwtUtil.createJWT(signingKey, builder, Duration.ofMinutes(validForMinutes));
+        String token = JwtUtil.createJWT(signingKey, builder, tokenTTL);
         if (authenticatorListener != null) {
             authenticatorListener.onLoginSuccess(caller.getUid(), token);
         }
@@ -115,7 +124,7 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
      * @return
      * @throws NamingException
      */
-    abstract protected Caller authenticate(String usename, String password, T metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
+    abstract protected Caller authenticate(String usename, String password, E metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -124,7 +133,8 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
      * @param caller
      * @return formatted auth token builder
      */
-    protected JwtBuilder toJwt(Caller caller) {
+    @Override
+    public JwtBuilder toJwt(Caller caller) {
         String jti = caller.getTenantId() + "." + caller.getId() + "_" + caller.getUid() + "_" + System.currentTimeMillis();
         String issuer = AuthConfig.cfg.getJwtIssuer();
         String userName = caller.getUid();

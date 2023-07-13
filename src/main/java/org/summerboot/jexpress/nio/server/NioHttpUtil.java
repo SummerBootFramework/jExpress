@@ -57,7 +57,10 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.integration.cache.SimpleLocalCache;
+import org.summerboot.jexpress.integration.cache.SimpleLocalCacheImpl;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
@@ -278,7 +281,7 @@ public class NioHttpUtil {
         return fileLength;
     }
 
-    public static final Map<String, File> WebResourceCache = new HashMap();
+    public static final SimpleLocalCache<String, File> WebResourceCache = new SimpleLocalCacheImpl();
 
     public static void sendWebResource(final ServiceRequest request, final ServiceContext response) {
         String httpRequestPath = request.getHttpRequestPath();
@@ -303,7 +306,7 @@ public class NioHttpUtil {
             String filePath = NioConfig.cfg.getDocrootDir() + httpRequestPath;
             filePath = filePath.replace('/', File.separatorChar);
             webResourceFile = new File(filePath).getAbsoluteFile();
-            WebResourceCache.put(httpRequestPath, webResourceFile);
+            WebResourceCache.put(httpRequestPath, webResourceFile, BootConstant.WEB_RESOURCE_TTL_MS);
         }
         context.file(webResourceFile, false).level(Level.TRACE);
     }

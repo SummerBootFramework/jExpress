@@ -18,12 +18,14 @@ package org.summerboot.jexpress.integration.cache;
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ * @param <K>
+ * @param <V>
  */
-public interface SimpleLocalCache {
+public interface SimpleLocalCache<K, V> {
 
-    void put(Object key, Object value, Long ttlMilliseconds);
+    void put(K key, V value, Long ttlMilliseconds);
 
-    <T extends Object> T get(Object key);
+    V get(K key);
 
-    <T extends Object> T delete(Object key);
+    V delete(K key);
 }

@@ -130,7 +130,7 @@ public class BackOffice extends BootConfig {
     // 1 Override error code
     @ConfigHeader(title = "1. Override default error codes with application defined ones", desc = "To verify: java -jar <app>.jar -list SystemErrorCode [-dmain <domain>]",
             format = "CSV of <default error code>:<new error code>",
-            example = "10:1010, 20:1020",
+            example = "1:1001, 20:1020, 40:1040, 50:1050",
             callbackMethodName4Dump = "generateTemplate_keystore")
     @Config(key = "errorcode.override")
     private volatile Map<Integer, Integer> bootErrorCodeMapping;
@@ -155,6 +155,9 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "default.interval.ConfigChangeMonitor", defaultValue = "30")
     private int CfgChangeMonitorIntervalSec = 30;
+
+    @Config(key = "default.web.resource.ttl.sec", defaultValue = "3600")
+    private long webResourceCacheTtlSec = 3600;
 
     @Config(key = "reflection.package.level", defaultValue = "2")
     private int reflectionPackageLevel = 2;
@@ -288,6 +291,10 @@ public class BackOffice extends BootConfig {
 
     public int getCfgChangeMonitorIntervalSec() {
         return CfgChangeMonitorIntervalSec;
+    }
+
+    public long getWebResourceCacheTtlSec() {
+        return webResourceCacheTtlSec;
     }
 
     public int getReflectionPackageLevel() {

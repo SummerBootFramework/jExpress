@@ -123,12 +123,11 @@ public class LdapAgent implements Closeable {
         return m_ctx;
     }
 
-    protected static final String ERROR_NO_CFG = "LDAP is not configured at " + AuthConfig.cfg.getCfgFile().getAbsolutePath()
-            + ". \nOr create your own class, either extends " + BootAuthenticator.class.getSimpleName() + " or implements " + Authenticator.class.getSimpleName()
-            + " then annotated with @Service(binding = " + Authenticator.class.getSimpleName() + ".class)";
-
     public LdapAgent(Properties cfg, String baseDN, boolean isAD, String tenantGroupName) throws NamingException {
         if (cfg == null || baseDN == null) {
+            String ERROR_NO_CFG = "LDAP is not configured at " + (AuthConfig.cfg.getCfgFile() == null ? "any file" : AuthConfig.cfg.getCfgFile().getAbsolutePath())
+                    + ". \nOr create your own class, either extends " + BootAuthenticator.class.getSimpleName() + " or implements " + Authenticator.class.getSimpleName()
+                    + " then annotated with @Service(binding = " + Authenticator.class.getSimpleName() + ".class)";
             throw new UnsupportedOperationException(ERROR_NO_CFG);
         }
         this.cfg = cfg;

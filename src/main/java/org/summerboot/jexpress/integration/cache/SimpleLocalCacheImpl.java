@@ -22,15 +22,17 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ * @param <K>
+ * @param <V>
  */
 @Singleton
-public class SimpleLocalCacheImpl implements SimpleLocalCache {
+public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
 
-    protected final Map<Object, CacheEntity> debouncingData = new ConcurrentHashMap<>();
+    protected final Map<Object, CacheEntity<V>> debouncingData = new ConcurrentHashMap<>();
 
     protected void clean(long now) {
         debouncingData.keySet().forEach(key -> {
-            CacheEntity ce = debouncingData.get(key);
+            CacheEntity<V> ce = debouncingData.get(key);
             if (ce == null || ce.getTtlMillis() < now) {
                 debouncingData.remove(key);
             }
@@ -44,24 +46,23 @@ public class SimpleLocalCacheImpl implements SimpleLocalCache {
      * @param ttlMilliseconds
      */
     @Override
-    public void put(Object key, Object value, Long ttlMilliseconds) {
+    public void put(K key, V value, Long ttlMilliseconds) {
         debouncingData.put(key, new CacheEntity(value, ttlMilliseconds));
     }
 
     /**
      *
-     * @param <T>
      * @param key
      * @return
      */
     @Override
-    public <T> T get(Object key) {
+    public V get(K key) {
         if (key == null) {
             return null;
         }
         long now = System.currentTimeMillis();
         clean(now);
-        CacheEntity e = debouncingData.get(key);
+        CacheEntity<V> e = debouncingData.get(key);
         if (e == null) {
             return null;
         }
@@ -69,38 +70,38 @@ public class SimpleLocalCacheImpl implements SimpleLocalCache {
         if (e.getTtlMillis() < now) {
             return null;
         }
-        return (T) e.getValue();
+        return e.getValue();
     }
 
     /**
      *
-     * @param <T>
      * @param key
      * @return
      */
     @Override
-    public <T> T delete(Object key) {
-        T ret = get(key);
+    public V delete(K key) {
+        V ret = get(key);
         debouncingData.remove(key);
         return ret;
     }
 
     /**
      *
+     * @param <V>
      */
-    public static class CacheEntity {
+    public static class CacheEntity<V> {
 
-        private final Object value;
+        private final V value;
         private final long ttlMillis;
 
-        public CacheEntity(Object value, Long ttlMilliseconds) {
+        public CacheEntity(V value, Long ttlMilliseconds) {
             this.value = value;
             this.ttlMillis = ttlMilliseconds == null || ttlMilliseconds < 0
                     ? Long.MAX_VALUE
                     : System.currentTimeMillis() + ttlMilliseconds;
         }
 
-        public Object getValue() {
+        public V getValue() {
             return value;
         }
 

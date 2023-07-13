@@ -1,0 +1,200 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< org.summerboot:jexpress >-----------------------
+[INFO] Building Summer Boot jExpress 2.3.8-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ jexpress ---
+[INFO] org.summerboot:jexpress:jar:2.3.8-SNAPSHOT
+[INFO] +- org.apache.commons:commons-lang3:jar:3.12.0:compile
+[INFO] +- commons-cli:commons-cli:jar:1.5.0:compile
+[INFO] +- commons-io:commons-io:jar:2.13.0:compile
+[INFO] +- org.apache.logging.log4j:log4j-api:jar:2.20.0:compile
+[INFO] +- org.apache.logging.log4j:log4j-core:jar:2.20.0:compile
+[INFO] +- com.lmax:disruptor:jar:3.4.4:compile
+[INFO] +- org.apache.logging.log4j:log4j-jul:jar:2.20.0:runtime
+[INFO] +- com.sun.mail:jakarta.mail:jar:2.0.1:compile
+[INFO] +- com.sun.activation:jakarta.activation:jar:2.0.1:compile
+[INFO] +- org.bouncycastle:bcprov-jdk18on:jar:1.75:compile
+[INFO] +- org.bouncycastle:bcpkix-jdk18on:jar:1.75:compile
+[INFO] |  \- org.bouncycastle:bcutil-jdk18on:jar:1.75:compile
+[INFO] +- io.jsonwebtoken:jjwt-api:jar:0.11.5:compile
+[INFO] +- io.jsonwebtoken:jjwt-impl:jar:0.11.5:compile
+[INFO] +- io.jsonwebtoken:jjwt-jackson:jar:0.11.5:compile
+[INFO] +- javax.xml.bind:jaxb-api:jar:2.3.1:compile
+[INFO] |  \- javax.activation:javax.activation-api:jar:1.2.0:compile
+[INFO] +- io.netty:netty-all:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-buffer:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-dns:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-haproxy:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-http:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-http2:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-memcache:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-mqtt:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-redis:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-smtp:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-socks:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-stomp:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-codec-xml:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-common:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-handler:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-transport-native-unix-common:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-handler-proxy:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-handler-ssl-ocsp:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-resolver:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-resolver-dns:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-transport:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-transport-rxtx:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-transport-sctp:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-transport-udt:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-transport-classes-epoll:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-transport-classes-kqueue:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-resolver-dns-classes-macos:jar:4.1.93.Final:compile
+[INFO] |  +- io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.93.Final:runtime
+[INFO] |  +- io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.1.93.Final:runtime
+[INFO] |  +- io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.93.Final:runtime
+[INFO] |  +- io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.1.93.Final:runtime
+[INFO] |  +- io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.93.Final:runtime
+[INFO] |  \- io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.93.Final:runtime
+[INFO] +- io.netty:netty-transport-native-epoll:jar:4.1.93.Final:compile
+[INFO] +- io.netty:netty-transport-native-kqueue:jar:4.1.93.Final:compile
+[INFO] +- io.netty:netty-tcnative-boringssl-static:jar:2.0.61.Final:compile
+[INFO] |  +- io.netty:netty-tcnative-boringssl-static:jar:linux-x86_64:2.0.61.Final:compile
+[INFO] |  +- io.netty:netty-tcnative-boringssl-static:jar:linux-aarch_64:2.0.61.Final:compile
+[INFO] |  +- io.netty:netty-tcnative-boringssl-static:jar:osx-x86_64:2.0.61.Final:compile
+[INFO] |  +- io.netty:netty-tcnative-boringssl-static:jar:osx-aarch_64:2.0.61.Final:compile
+[INFO] |  \- io.netty:netty-tcnative-boringssl-static:jar:windows-x86_64:2.0.61.Final:compile
+[INFO] +- io.netty:netty-tcnative-classes:jar:2.0.61.Final:compile
+[INFO] +- com.google.protobuf:protobuf-java:jar:3.23.4:compile
+[INFO] +- io.grpc:grpc-protobuf:jar:1.56.1:compile
+[INFO] |  +- io.grpc:grpc-api:jar:1.56.1:compile
+[INFO] |  |  \- io.grpc:grpc-context:jar:1.56.1:compile
+[INFO] |  +- com.google.code.findbugs:jsr305:jar:3.0.2:compile
+[INFO] |  +- com.google.api.grpc:proto-google-common-protos:jar:2.17.0:compile
+[INFO] |  +- io.grpc:grpc-protobuf-lite:jar:1.56.1:compile
+[INFO] |  \- com.google.guava:guava:jar:31.1-android:compile
+[INFO] |     +- com.google.guava:failureaccess:jar:1.0.1:compile
+[INFO] |     +- com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
+[INFO] |     +- org.checkerframework:checker-qual:jar:3.12.0:compile
+[INFO] |     \- com.google.j2objc:j2objc-annotations:jar:1.3:compile
+[INFO] +- io.grpc:grpc-netty-shaded:jar:1.56.1:compile
+[INFO] |  +- com.google.errorprone:error_prone_annotations:jar:2.18.0:compile
+[INFO] |  +- io.perfmark:perfmark-api:jar:0.26.0:runtime
+[INFO] |  \- io.grpc:grpc-core:jar:1.56.1:compile
+[INFO] |     +- com.google.android:annotations:jar:4.1.1.4:runtime
+[INFO] |     \- org.codehaus.mojo:animal-sniffer-annotations:jar:1.23:runtime
+[INFO] +- io.grpc:grpc-stub:jar:1.56.1:compile
+[INFO] +- io.swagger.core.v3:swagger-annotations:jar:2.2.15:compile
+[INFO] +- org.apache.tika:tika-core:jar:2.8.0:compile
+[INFO] |  \- org.slf4j:slf4j-api:jar:2.0.7:compile
+[INFO] +- jakarta.ws.rs:jakarta.ws.rs-api:jar:3.1.0:compile
+[INFO] +- jakarta.annotation:jakarta.annotation-api:jar:2.1.1:compile
+[INFO] +- org.reflections:reflections:jar:0.10.2:compile
+[INFO] |  \- org.javassist:javassist:jar:3.28.0-GA:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-databind:jar:2.15.2:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-core:jar:2.15.2:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-annotations:jar:2.15.2:compile
+[INFO] +- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.15.2:compile
+[INFO] +- com.fasterxml.jackson.dataformat:jackson-dataformat-xml:jar:2.15.2:compile
+[INFO] |  +- org.codehaus.woodstox:stax2-api:jar:4.2.1:compile
+[INFO] |  \- com.fasterxml.woodstox:woodstox-core:jar:6.5.1:compile
+[INFO] +- org.hibernate.validator:hibernate-validator:jar:8.0.1.Final:compile
+[INFO] |  +- jakarta.validation:jakarta.validation-api:jar:3.0.2:compile
+[INFO] |  +- org.jboss.logging:jboss-logging:jar:3.4.3.Final:compile
+[INFO] |  \- com.fasterxml:classmate:jar:1.5.1:compile
+[INFO] +- org.glassfish:jakarta.el:jar:4.0.2:compile
+[INFO] |  \- jakarta.el:jakarta.el-api:jar:4.0.0:compile
+[INFO] +- com.google.inject:guice:jar:5.1.0:compile
+[INFO] |  +- javax.inject:javax.inject:jar:1:compile
+[INFO] |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] +- org.hibernate.orm:hibernate-core:jar:6.2.6.Final:compile
+[INFO] |  +- jakarta.persistence:jakarta.persistence-api:jar:3.1.0:compile
+[INFO] |  +- jakarta.transaction:jakarta.transaction-api:jar:2.0.1:compile
+[INFO] |  +- org.hibernate.common:hibernate-commons-annotations:jar:6.0.6.Final:runtime
+[INFO] |  +- io.smallrye:jandex:jar:3.0.5:runtime
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.12.18:runtime
+[INFO] |  +- jakarta.xml.bind:jakarta.xml.bind-api:jar:4.0.0:runtime
+[INFO] |  |  \- jakarta.activation:jakarta.activation-api:jar:2.1.0:runtime
+[INFO] |  +- org.glassfish.jaxb:jaxb-runtime:jar:4.0.2:runtime
+[INFO] |  |  \- org.glassfish.jaxb:jaxb-core:jar:4.0.2:runtime
+[INFO] |  |     +- org.eclipse.angus:angus-activation:jar:2.0.0:runtime
+[INFO] |  |     +- org.glassfish.jaxb:txw2:jar:4.0.2:runtime
+[INFO] |  |     \- com.sun.istack:istack-commons-runtime:jar:4.1.1:runtime
+[INFO] |  +- jakarta.inject:jakarta.inject-api:jar:2.0.1:runtime
+[INFO] |  \- org.antlr:antlr4-runtime:jar:4.10.1:runtime
+[INFO] +- org.hibernate.orm:hibernate-hikaricp:jar:6.2.6.Final:compile
+[INFO] +- com.zaxxer:HikariCP:jar:5.0.1:compile
+[INFO] +- redis.clients:jedis:jar:4.4.3:provided
+[INFO] |  +- org.apache.commons:commons-pool2:jar:2.11.1:provided
+[INFO] |  +- org.json:json:jar:20230227:provided
+[INFO] |  \- com.google.code.gson:gson:jar:2.10.1:runtime
+[INFO] +- org.freemarker:freemarker:jar:2.3.32:compile
+[INFO] +- com.google.zxing:core:jar:3.5.1:provided
+[INFO] +- com.google.zxing:javase:jar:3.5.1:provided
+[INFO] |  +- com.beust:jcommander:jar:1.82:provided
+[INFO] |  \- com.github.jai-imageio:jai-imageio-core:jar:1.4.0:provided
+[INFO] +- com.itextpdf:itext7-core:pom:7.2.5:provided
+[INFO] |  +- com.itextpdf:barcodes:jar:7.2.5:provided
+[INFO] |  +- com.itextpdf:font-asian:jar:7.2.5:provided
+[INFO] |  +- com.itextpdf:forms:jar:7.2.5:provided
+[INFO] |  +- com.itextpdf:hyph:jar:7.2.5:provided
+[INFO] |  +- com.itextpdf:io:jar:7.2.5:provided
+[INFO] |  |  \- com.itextpdf:commons:jar:7.2.5:provided
+[INFO] |  +- com.itextpdf:kernel:jar:7.2.5:provided
+[INFO] |  |  +- org.bouncycastle:bcpkix-jdk15on:jar:1.70:provided
+[INFO] |  |  |  \- org.bouncycastle:bcutil-jdk15on:jar:1.70:provided
+[INFO] |  |  \- org.bouncycastle:bcprov-jdk15on:jar:1.70:provided
+[INFO] |  +- com.itextpdf:layout:jar:7.2.5:provided
+[INFO] |  +- com.itextpdf:pdfa:jar:7.2.5:provided
+[INFO] |  +- com.itextpdf:sign:jar:7.2.5:provided
+[INFO] |  +- com.itextpdf:styled-xml-parser:jar:7.2.5:provided
+[INFO] |  \- com.itextpdf:svg:jar:7.2.5:provided
+[INFO] +- com.itextpdf:html2pdf:jar:4.0.5:provided
+[INFO] +- com.openhtmltopdf:openhtmltopdf-core:jar:1.0.10:compile
+[INFO] +- com.openhtmltopdf:openhtmltopdf-pdfbox:jar:1.0.10:compile
+[INFO] |  +- org.apache.pdfbox:pdfbox:jar:2.0.24:compile
+[INFO] |  |  +- org.apache.pdfbox:fontbox:jar:2.0.24:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.2:compile
+[INFO] |  +- org.apache.pdfbox:xmpbox:jar:2.0.24:compile
+[INFO] |  \- de.rototor.pdfbox:graphics2d:jar:0.32:compile
+[INFO] +- com.openhtmltopdf:openhtmltopdf-java2d:jar:1.0.10:compile
+[INFO] +- com.openhtmltopdf:openhtmltopdf-rtl-support:jar:1.0.10:compile
+[INFO] |  \- com.ibm.icu:icu4j:jar:59.1:compile
+[INFO] +- com.openhtmltopdf:openhtmltopdf-slf4j:jar:1.0.10:compile
+[INFO] +- com.openhtmltopdf:openhtmltopdf-svg-support:jar:1.0.10:compile
+[INFO] |  +- org.apache.xmlgraphics:batik-transcoder:jar:1.14:compile
+[INFO] |  |  +- org.apache.xmlgraphics:batik-anim:jar:1.14:compile
+[INFO] |  |  |  +- org.apache.xmlgraphics:batik-css:jar:1.14:compile
+[INFO] |  |  |  \- org.apache.xmlgraphics:batik-parser:jar:1.14:compile
+[INFO] |  |  +- org.apache.xmlgraphics:batik-awt-util:jar:1.14:compile
+[INFO] |  |  +- org.apache.xmlgraphics:batik-bridge:jar:1.14:compile
+[INFO] |  |  |  \- org.apache.xmlgraphics:batik-script:jar:1.14:compile
+[INFO] |  |  +- org.apache.xmlgraphics:batik-dom:jar:1.14:compile
+[INFO] |  |  |  +- xalan:xalan:jar:2.7.2:compile
+[INFO] |  |  |  |  \- xalan:serializer:jar:2.7.2:compile
+[INFO] |  |  |  \- xml-apis:xml-apis:jar:1.4.01:compile
+[INFO] |  |  +- org.apache.xmlgraphics:batik-gvt:jar:1.14:compile
+[INFO] |  |  +- org.apache.xmlgraphics:batik-shared-resources:jar:1.14:compile
+[INFO] |  |  +- org.apache.xmlgraphics:batik-svggen:jar:1.14:compile
+[INFO] |  |  +- org.apache.xmlgraphics:batik-util:jar:1.14:compile
+[INFO] |  |  |  +- org.apache.xmlgraphics:batik-constants:jar:1.14:compile
+[INFO] |  |  |  \- org.apache.xmlgraphics:batik-i18n:jar:1.14:compile
+[INFO] |  |  +- org.apache.xmlgraphics:batik-xml:jar:1.14:compile
+[INFO] |  |  \- xml-apis:xml-apis-ext:jar:1.3.04:compile
+[INFO] |  +- org.apache.xmlgraphics:batik-codec:jar:1.14:compile
+[INFO] |  +- org.apache.xmlgraphics:batik-ext:jar:1.14:compile
+[INFO] |  \- org.apache.xmlgraphics:xmlgraphics-commons:jar:2.6:compile
+[INFO] +- com.openhtmltopdf:openhtmltopdf-mathml-support:jar:1.0.10:compile
+[INFO] |  \- de.rototor.jeuclid:jeuclid-core:jar:3.1.12:compile
+[INFO] |     \- org.apache.xmlgraphics:batik-svg-dom:jar:1.9:compile
+[INFO] +- org.testng:testng:jar:7.8.0:test
+[INFO] |  \- org.webjars:jquery:jar:3.6.1:test
+[INFO] \- com.mysql:mysql-connector-j:jar:8.0.33:test
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.868 s
+[INFO] Finished at: 2023-07-13T13:33:23-04:00
+[INFO] ------------------------------------------------------------------------
+Active code page: 65001
