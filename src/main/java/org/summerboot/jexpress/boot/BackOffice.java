@@ -130,7 +130,7 @@ public class BackOffice extends BootConfig {
     // 1 Override error code
     @ConfigHeader(title = "1. Override default error codes with application defined ones", desc = "To verify: java -jar <app>.jar -list SystemErrorCode [-dmain <domain>]",
             format = "CSV of <default error code>:<new error code>",
-            example = "10:1010, 20:1020",
+            example = "1:1001, 20:1020, 40:1040, 50:1050",
             callbackMethodName4Dump = "generateTemplate_keystore")
     @Config(key = "errorcode.override")
     private volatile Map<Integer, Integer> bootErrorCodeMapping;

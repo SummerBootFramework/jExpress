@@ -26,8 +26,9 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ * @param <T>
  */
-public interface Authenticator {
+public interface Authenticator<T> {
 
     /**
      * gRPC JWT verification result
@@ -50,7 +51,7 @@ public interface Authenticator {
      * @return JWT
      * @throws javax.naming.NamingException
      */
-    String signJWT(String username, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException;
+    String signJWT(String username, String pwd, T metaData, int validForMinutes, final ServiceContext context) throws NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -64,25 +65,23 @@ public interface Authenticator {
     /**
      * Success HTTP Status: 200 OK
      *
-     * @param <T>
      * @param httpRequestHeaders contains Authorization = Bearer + JWT
      * @param cache
      * @param errorCode
      * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
+    Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
 
     /**
      *
-     * @param <T>
      * @param authToken
      * @param cache
      * @param errorCode
      * @param context
      * @return Caller
      */
-    <T extends Caller> T verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
+    Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
 
     /**
      * Extra authorization checks before processing

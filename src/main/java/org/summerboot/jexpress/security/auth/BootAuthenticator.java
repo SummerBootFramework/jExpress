@@ -53,10 +53,10 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
- * @param <T> authenticate(T metaData)
+ * @param <E> authenticate(T metaData)
  */
 @Singleton
-public abstract class BootAuthenticator<T> implements Authenticator, ServerInterceptor {
+public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerInterceptor {
 
     protected static final String ERROR_NO_CFG = "JWT is not configured at " + AuthConfig.cfg.getCfgFile().getAbsolutePath();
 
@@ -76,13 +76,13 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
      * @throws NamingException
      */
     @Override
-    public String signJWT(String usename, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException {
+    public String signJWT(String usename, String pwd, E metaData, int validForMinutes, final ServiceContext context) throws NamingException {
         //1. protect request body from being logged
         //context.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
 
         //2. signJWT caller against LDAP or DB
         context.poi(BootPOI.LDAP_BEGIN);
-        Caller caller = authenticate(usename, pwd, (T) metaData, authenticatorListener, context);
+        Caller caller = authenticate(usename, pwd, (E) metaData, authenticatorListener, context);
         context.poi(BootPOI.LDAP_END);
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
@@ -124,7 +124,7 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
      * @return
      * @throws NamingException
      */
-    abstract protected Caller authenticate(String usename, String password, T metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
+    abstract protected Caller authenticate(String usename, String password, E metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement

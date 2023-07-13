@@ -23,7 +23,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import java.util.List;
 import java.util.Map;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.util.FormatterUtil;
 
 /**
  *

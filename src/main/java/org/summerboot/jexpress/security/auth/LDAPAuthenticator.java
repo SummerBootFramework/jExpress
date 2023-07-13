@@ -22,11 +22,12 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ * @param <M>
  */
-public class LDAPAuthenticator extends BootAuthenticator<Long> {
+public class LDAPAuthenticator<M> extends BootAuthenticator<M> {
 
     @Override
-    protected Caller authenticate(String usename, String password, Long metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException {
+    protected Caller authenticate(String usename, String password, M metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException {
         try (LdapAgent ldap = LdapAgent.build()) {
             return ldap.authenticateUser(usename, password, listener);
         }
