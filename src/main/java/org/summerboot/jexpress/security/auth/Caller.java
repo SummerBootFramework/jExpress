@@ -54,4 +54,6 @@ public interface Caller {
     void remove(String key);
 
     Set<String> propKeySet();
+
+    Long getTokenTtlSec();
 }

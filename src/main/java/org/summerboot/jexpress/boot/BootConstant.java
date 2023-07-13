@@ -69,6 +69,7 @@ public interface BootConstant {
     boolean CFG_ERROR_CODE_AS_INT = BackOffice.agent.isErrorCodeAsInt();
     int CFG_CHANGE_MONITOR_INTERVAL_SEC = BackOffice.agent.getCfgChangeMonitorIntervalSec();
     int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
+    long WEB_RESOURCE_TTL_MS = BackOffice.agent.getWebResourceCacheTtlSec() * 1000;
     String DIR_STANDALONE = BackOffice.agent.getDomainFolderPrefix();
     String DIR_CONFIGURATION = BackOffice.agent.getConfigFolderName();
     String DIR_PLUGIN = BackOffice.agent.getPluginFolderName();

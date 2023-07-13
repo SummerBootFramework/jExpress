@@ -89,6 +89,15 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
             return null;
         }
 
+        // get token TTL from caller, otherwise use default
+        Long tokenTtlSec = caller.getTokenTtlSec();
+        Duration tokenTTL;
+        if (tokenTtlSec != null) {
+            tokenTTL = Duration.ofSeconds(tokenTtlSec);
+        } else {
+            tokenTTL = Duration.ofMinutes(validForMinutes);
+        }
+
         //3. format JWT
         JwtBuilder builder = toJwt(caller);
 
@@ -97,7 +106,7 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
         if (signingKey == null) {
             throw new UnsupportedOperationException(ERROR_NO_CFG);
         }
-        String token = JwtUtil.createJWT(signingKey, builder, Duration.ofMinutes(validForMinutes));
+        String token = JwtUtil.createJWT(signingKey, builder, tokenTTL);
         if (authenticatorListener != null) {
             authenticatorListener.onLoginSuccess(caller.getUid(), token);
         }

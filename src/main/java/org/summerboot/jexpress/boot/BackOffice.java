@@ -156,6 +156,9 @@ public class BackOffice extends BootConfig {
     @Config(key = "default.interval.ConfigChangeMonitor", defaultValue = "30")
     private int CfgChangeMonitorIntervalSec = 30;
 
+    @Config(key = "default.web.resource.ttl.sec", defaultValue = "3600")
+    private long webResourceCacheTtlSec = 3600;
+
     @Config(key = "reflection.package.level", defaultValue = "2")
     private int reflectionPackageLevel = 2;
 
@@ -288,6 +291,10 @@ public class BackOffice extends BootConfig {
 
     public int getCfgChangeMonitorIntervalSec() {
         return CfgChangeMonitorIntervalSec;
+    }
+
+    public long getWebResourceCacheTtlSec() {
+        return webResourceCacheTtlSec;
     }
 
     public int getReflectionPackageLevel() {
