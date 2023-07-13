@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.security.auth;
 
 import io.grpc.Context;
+import io.jsonwebtoken.JwtBuilder;
 import io.netty.handler.codec.http.HttpHeaders;
 import javax.naming.NamingException;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
@@ -50,6 +51,15 @@ public interface Authenticator {
      * @throws javax.naming.NamingException
      */
     String signJWT(String username, String pwd, Object metaData, int validForMinutes, final ServiceContext context) throws NamingException;
+
+    /**
+     * Convert Caller to auth token, override this method to implement
+     * customized token format
+     *
+     * @param caller
+     * @return formatted auth token builder
+     */
+    JwtBuilder toJwt(Caller caller);
 
     /**
      * Success HTTP Status: 200 OK
