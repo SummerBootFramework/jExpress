@@ -133,7 +133,7 @@ public abstract class BootAuthenticator<T> implements Authenticator, ServerInter
      * @param caller
      * @return formatted auth token builder
      */
-    protected JwtBuilder toJwt(Caller caller) {
+    public JwtBuilder toJwt(Caller caller) {
         String jti = caller.getTenantId() + "." + caller.getId() + "_" + caller.getUid() + "_" + System.currentTimeMillis();
         String issuer = AuthConfig.cfg.getJwtIssuer();
         String userName = caller.getUid();
