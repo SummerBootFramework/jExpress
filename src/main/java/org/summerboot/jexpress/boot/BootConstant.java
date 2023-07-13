@@ -15,12 +15,6 @@
  */
 package org.summerboot.jexpress.boot;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.util.ApplicationUtil;
-
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -36,27 +30,7 @@ public interface BootConstant {
      */
     int CPU_CORE = Runtime.getRuntime().availableProcessors();
     String PID = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
-    String HOST = jExpressInit();
     String BR = System.lineSeparator();
-
-    private static String jExpressInit() {
-        String FILE_CFG_SYSTEM = "boot.conf";
-        File currentDir = new File("etc").getAbsoluteFile();
-        if (!currentDir.exists()) {
-            currentDir.mkdirs();
-        }
-        File systemConfigFile = Paths.get(currentDir.getAbsolutePath(), FILE_CFG_SYSTEM).toFile();
-        try {
-            if (!systemConfigFile.exists()) {
-                ConfigUtil.createConfigFile(BackOffice.class, currentDir, FILE_CFG_SYSTEM, false);
-            }
-            BackOffice.agent.load(systemConfigFile, false);// isReal:false = do not init logging
-        } catch (IOException ex) {
-            System.err.println("Failed to init " + systemConfigFile + ", caused by " + ex);
-            System.exit(1);
-        }
-        return ApplicationUtil.getServerName(true);
-    }
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";

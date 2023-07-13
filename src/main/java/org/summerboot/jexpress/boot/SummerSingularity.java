@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,6 +57,7 @@ import org.summerboot.jexpress.util.ReflectionUtil;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.annotation.GrpcService;
 import org.summerboot.jexpress.boot.annotation.Service.ChannelHandlerType;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
@@ -68,6 +70,27 @@ import org.summerboot.jexpress.util.FormatterUtil;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 abstract public class SummerSingularity {
+
+    public static final String HOST = jExpressInit();
+
+    private static String jExpressInit() {
+        String FILE_CFG_SYSTEM = "boot.conf";
+        File currentDir = new File("etc").getAbsoluteFile();
+        if (!currentDir.exists()) {
+            currentDir.mkdirs();
+        }
+        File systemConfigFile = Paths.get(currentDir.getAbsolutePath(), FILE_CFG_SYSTEM).toFile();
+        try {
+            if (!systemConfigFile.exists()) {
+                ConfigUtil.createConfigFile(BackOffice.class, currentDir, FILE_CFG_SYSTEM, false);
+            }
+            BackOffice.agent.load(systemConfigFile, false);// isReal:false = do not init logging
+        } catch (IOException ex) {
+            System.err.println("Failed to init " + systemConfigFile + ", caused by " + ex);
+            System.exit(1);
+        }
+        return ApplicationUtil.getServerName(true);
+    }
 
     protected static Logger log;
     protected static final File DEFAULT_CFG_DIR = new File(BootConstant.DIR_CONFIGURATION).getAbsoluteFile();
@@ -121,8 +144,8 @@ abstract public class SummerSingularity {
     protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames = new HashMap();
 
     protected SummerSingularity(Class callerClass, String... args) {
-        System.out.println("SummerApplication loading from " + BootConstant.HOST);
-        System.setProperty(BootConstant.SYS_PROP_SERVER_NAME, BootConstant.HOST);// used by log4j2.xml
+        System.out.println("SummerApplication loading from " + HOST);
+        System.setProperty(BootConstant.SYS_PROP_SERVER_NAME, HOST);// used by log4j2.xml
         primaryClass = callerClass == null
                 ? this.getClass()
                 : callerClass;
