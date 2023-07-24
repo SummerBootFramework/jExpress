@@ -22,7 +22,7 @@ package org.summerboot.jexpress.boot;
 public interface BootConstant {
 
     //version
-    String VERSION = "SummerBoot.jExpress 2.3.8";
+    String VERSION = "SummerBoot.jExpress 2.3.9";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
     /*

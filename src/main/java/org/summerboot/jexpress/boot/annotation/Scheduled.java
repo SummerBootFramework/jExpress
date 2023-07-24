@@ -13,34 +13,28 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.config;
+package org.summerboot.jexpress.boot.annotation;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import com.google.inject.BindingAnnotation;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
- * @param <E>
  */
-public class EmptyBlockingQueue<E> extends LinkedBlockingQueue<E> implements BlockingQueue<E>, java.io.Serializable {
+@Target({ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@BindingAnnotation
+public @interface Scheduled {
 
-    public EmptyBlockingQueue() {
-        super(1);
-    }
+    String[] cron() default {};
 
-    @Override
-    public boolean add(E e) {
-        return false;
-    }
+    int dailyHour() default -1;
 
-    @Override
-    public int size() {
-        return 0;
-    }
-
-    @Override
-    public int remainingCapacity() {
-        return 0;
-    }
+    int dailyMinute() default 0;
 }

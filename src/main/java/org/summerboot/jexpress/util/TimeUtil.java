@@ -16,6 +16,8 @@
 package org.summerboot.jexpress.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -25,9 +27,22 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.zone.ZoneOffsetTransition;
+import java.time.zone.ZoneRules;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Random;
 import org.apache.commons.lang3.StringUtils;
+import org.quartz.CronScheduleBuilder;
+import org.quartz.CronTrigger;
+import org.quartz.Job;
+import org.quartz.JobBuilder;
+import org.quartz.JobDetail;
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.TriggerBuilder;
+import org.summerboot.jexpress.boot.annotation.Scheduled;
 
 /**
  *
@@ -278,5 +293,269 @@ public class TimeUtil {
             this.zonedDateTime = zonedDateTime;
         }
 
+    }
+
+    public static int addQuartzJob(Scheduler scheduler, Class<? extends Job> jobClass) throws SchedulerException {
+        Scheduled scheduledAnnotation = (Scheduled) jobClass.getAnnotation(Scheduled.class);
+        if (scheduledAnnotation == null) {
+            return 0;
+        }
+        int dailyHour = scheduledAnnotation.dailyHour();
+        int dailyMinute = scheduledAnnotation.dailyMinute();
+        String[] cronExpressions = scheduledAnnotation.cron();
+
+        ZoneId zoneId = ZoneId.systemDefault();
+        String cronExpression4JobSkippedWhenDSTStarts = cronExpression4JobSkippedWhenDSTStarts(zoneId, dailyHour, dailyMinute);
+        if (cronExpression4JobSkippedWhenDSTStarts != null) {
+            int n = cronExpressions.length;
+            String[] newArray = Arrays.copyOf(cronExpressions, n + 1);
+            newArray[n] = cronExpression4JobSkippedWhenDSTStarts;
+            cronExpressions = newArray;
+        }
+        return addQuartzJob(scheduler, jobClass, dailyHour, dailyMinute, cronExpressions);
+    }
+
+    /**
+     *
+     * @param scheduler
+     * @param jobClass
+     * @param dailyHour
+     * @param dailyMinute
+     * @param cronExpressions
+     * @return
+     * @throws SchedulerException
+     */
+    public static int addQuartzJob(Scheduler scheduler, Class<? extends Job> jobClass, int dailyHour, int dailyMinute, String... cronExpressions) throws SchedulerException {
+        boolean hasCronJob = cronExpressions != null && cronExpressions.length > 0;
+        if (!hasCronJob && dailyHour < 0) {
+            return 0;
+        }
+        boolean hasOnly1CronJob = cronExpressions != null && cronExpressions.length == 1 && dailyHour < 0;
+        boolean hasOnly1DailyJob = !hasCronJob && dailyHour >= 0;
+        boolean isDurable = !(hasOnly1CronJob || hasOnly1DailyJob); // a 2nd trigger, and make job durably=true
+        JobDetail jobDetail = JobBuilder.newJob(jobClass)
+                .withIdentity(jobClass.getName() + dailyHour + ":" + dailyMinute, jobClass.getName())
+                .storeDurably(isDurable)
+                .build();
+        return addQuartzJob(scheduler, jobDetail, dailyHour, dailyMinute, cronExpressions);
+    }
+
+    /**
+     *
+     * @param scheduler
+     * @param jobDetail
+     * @param dailyHour
+     * @param dailyMinute
+     * @param cronExpressions
+     * @return
+     * @throws SchedulerException
+     */
+    public static int addQuartzJob(Scheduler scheduler, JobDetail jobDetail, int dailyHour, int dailyMinute, String... cronExpressions) throws SchedulerException {
+        boolean hasCronJob = cronExpressions != null && cronExpressions.length > 0;
+        boolean hasOnly1CronJob = cronExpressions != null && cronExpressions.length == 1 && dailyHour < 0;
+        boolean hasOnly1DailyJob = !hasCronJob && dailyHour >= 0;
+        if ((cronExpressions == null || cronExpressions.length < 1) && dailyHour < 0) {
+            return 0;
+        }
+        int triggers = 0;
+        JobKey jobKey = jobDetail.getKey();
+        if (hasOnly1CronJob && !hasOnly1DailyJob) {// only one cron
+            // 2. build a trigger
+            CronTrigger trigger = TriggerBuilder.newTrigger()
+                    .forJob(jobKey)
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpressions[0]))
+                    .build();
+
+            // 3. schedule the job with the trigger
+            scheduler.scheduleJob(jobDetail, trigger);
+            triggers++;
+        } else if (!hasCronJob && hasOnly1DailyJob) {// only one daily
+            CronTrigger trigger = TriggerBuilder.newTrigger()
+                    .forJob(jobKey)
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpressions[0]))
+                    .build();
+
+            // 3. schedule the job with the trigger
+            scheduler.scheduleJob(jobDetail, trigger);
+            triggers++;
+        } else if (hasCronJob || hasOnly1DailyJob) {
+            scheduler.addJob(jobDetail, true);
+            if (dailyHour >= 0) {
+                CronTrigger trigger_daily_ExceptTheDayDSTStarts = TriggerBuilder.newTrigger()
+                        .forJob(jobKey)
+                        .withSchedule(CronScheduleBuilder.dailyAtHourAndMinute(dailyHour, dailyMinute))
+                        .build();
+                scheduler.scheduleJob(trigger_daily_ExceptTheDayDSTStarts);
+                triggers++;
+            }
+            // 2b. build each trigger
+            if (cronExpressions != null) {
+                for (String cronExpression : cronExpressions) {
+                    if (StringUtils.isBlank(cronExpression)) {
+                        continue;
+                    }
+                    CronTrigger cronTrigger = TriggerBuilder.newTrigger()
+                            .forJob(jobKey)
+                            .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                            .build();
+                    // 3b. schedule the job with both triggers
+                    scheduler.scheduleJob(cronTrigger);
+                    triggers++;
+                }
+            }
+        }
+        return triggers;
+    }
+
+    /**
+     * Use user specified ZoneId Not working for Israel: Friday before last
+     * Sunday
+     *
+     * @param zoneId
+     * @param hour
+     * @param minute
+     * @return
+     */
+    public static String cronExpression4JobSkippedWhenDSTStarts(ZoneId zoneId, int hour, int minute) {
+        // 1. get DST starting info
+        ZoneOffsetTransition[] dstInfo = getDSTChangeInfo(zoneId, ZonedDateTime.now());
+        ZoneOffsetTransition dstStartTransition = dstInfo[0];
+        if (dstStartTransition == null) {
+            return null;
+        }
+        boolean isFuture = dstStartTransition.getInstant().isAfter(Instant.now());
+        if (!isFuture) {
+            // check if DST ends in future
+            ZoneOffsetTransition dstEndTransition = dstInfo[1];
+            if (dstEndTransition == null) {
+                return null;// DST will last forever (i.e. Ontario Bill 214)
+            }
+            // there still will be DST change in future, then get future DST starting info
+            ZonedDateTime zdt = ZonedDateTime.ofInstant(dstEndTransition.getInstant().plusSeconds(86400), zoneId);
+            dstInfo = getDSTChangeInfo(zoneId, zdt);
+            dstStartTransition = dstInfo[0];
+            if (dstStartTransition == null) {
+                return null;// DST will never happen (i.e. Ontario Bill 214)
+            }
+        }
+
+        // 2. check if hour:minute falls into the skipped DST starting interval (i.e. 2am~3am 2nd Sunday of March in Ontario)
+        int dstStartHour = dstStartTransition.getDateTimeBefore().getHour();
+        long durationMinutes = dstStartTransition.getDuration().toMinutes();// Australia/Lord_Howe Australia/LHI: 30minutes, default: 60minutes, Antarctica/Troll: 120minutes
+        long dstStartMinuteOfDay = dstStartHour * 60;
+        long dstEndMinuteOfDay = dstStartHour * 60 + durationMinutes;
+        long jobMinuteOfDay = hour * 60 + minute;
+        boolean willDailyJobNOTBeSkippedWhenDSTStarts = jobMinuteOfDay < dstStartMinuteOfDay || jobMinuteOfDay >= dstEndMinuteOfDay;
+        if (willDailyJobNOTBeSkippedWhenDSTStarts) {
+            return null;// job will not be skipped when DST starts, scheduled hour:minute will fall into the skipped DST starting interval (i.e. 2am~3am 2nd Sunday of March in Ontario)
+        }
+
+        // 3. build cron expression for a yearly cron job on DST starting day
+        long durationHours = toDurationHours(durationMinutes);
+        LocalDateTime dstDate = dstStartTransition.getDateTimeAfter();
+        int month = dstDate.getMonthValue();// 3 = March
+        int dayOfWeek = dstDate.getDayOfWeek().getValue();// 1-7: MON-SUN
+        int dayOfMonth = dstDate.getDayOfMonth();// 10 = March 10
+        String dayOfWeekOption = buildQuartzDSTDayOfWeekOption(dayOfMonth);
+
+        int quartzDayOfWeek = (dayOfWeek + 1) % 7;// 1-7: SUN-SAT
+        String cronExpression4JobSkippedWhenDSTStarts = "0 " + minute + " " + (hour + durationHours) + " ? " + month + " " + quartzDayOfWeek + dayOfWeekOption;
+        //String cronEuropean = "0 " + minute + " " + (hour + 1) + " ? 3 SUNL"; // In most of European Daylight Saving Time begins at 1:00 a.m. local time on the last Sunday in March
+        //String cronAmerica = "0 " + minute + " " + (hour + 1) + " ? 3 SUN#2"; // In most of Canada Daylight Saving Time begins at 2:00 a.m. local time on the second Sunday in March
+//        System.out.println(zoneId + ": " + cronExpression4JobSkippedWhenDSTStarts);
+//        print(dstStartTransition);
+        return cronExpression4JobSkippedWhenDSTStarts;
+    }
+
+    /**
+     * Use system default ZoneId Not working for Israel: Friday before last
+     * Sunday
+     *
+     * @param hour
+     * @param minute
+     * @return
+     */
+    public static String cronExpression4JobSkippedWhenDSTStarts(int hour, int minute) {
+        return cronExpression4JobSkippedWhenDSTStarts(ZoneId.systemDefault(), hour, minute);
+    }
+
+    /**
+     *
+     * @param zoneId
+     * @param zdt
+     * @return Two elements: array[0] is DST starting info or null if DST is not
+     * applied, array[1] is DST ending info or null if DST is not applied
+     */
+    public static ZoneOffsetTransition[] getDSTChangeInfo(ZoneId zoneId, ZonedDateTime zdt) {
+        ZoneRules zoneRules = zoneId.getRules();
+        //ZonedDateTime zdt = ZonedDateTime.now();//ZonedDateTime.of(2017, 1, 1, 10, 0, 0, 0, zoneId);//ZonedDateTime.now();
+        Instant instant = zdt.toInstant();
+
+        ZoneOffsetTransition prevTransition = zoneRules.previousTransition(instant);
+        ZoneOffsetTransition nextTransition = zoneRules.nextTransition(instant);
+
+        ZoneOffsetTransition dstStartTransition = null, dstEndTransition = null;
+        if (prevTransition != null) {
+            if (zoneRules.isDaylightSavings(prevTransition.getInstant())) {
+                dstStartTransition = prevTransition;
+            } else {
+                dstEndTransition = prevTransition;
+            }
+        }
+        if (nextTransition != null) {
+            if (zoneRules.isDaylightSavings(nextTransition.getInstant())) {
+                dstStartTransition = nextTransition;
+            } else {
+                dstEndTransition = nextTransition;
+            }
+        }
+        //print(transition);
+        ZoneOffsetTransition[] ret = {dstStartTransition, dstEndTransition};
+        return ret;
+    }
+
+    public static void print(ZoneOffsetTransition transition) {
+        if (transition == null) {
+            return;
+        }
+        int dstStartHour = transition.getDateTimeBefore().getHour();
+        long durationMinutes = transition.getDuration().toMinutes();
+        boolean isFuture = transition.getInstant().isAfter(Instant.now());
+
+        System.out.println("\ttransition.isFuture=" + isFuture);
+        System.out.println("\ttransition.getInstant=" + transition.getInstant());
+        System.out.println("\ttransition.getDateTimeBefore=" + transition.getDateTimeBefore());
+        System.out.println("\ttransition.getDateTimeAfter=" + transition.getDateTimeAfter());
+        System.out.println("\ttransition.dstStartHour=" + dstStartHour + "am");
+        System.out.println("\ttransition.getDuration=" + durationMinutes + "minutes");
+        System.out.println("\ttransition.getOffsetBefore=" + transition.getOffsetBefore());
+        System.out.println("\ttransition.getOffsetAfter=" + transition.getOffsetAfter());
+        System.out.println("\ttransition.isGap=" + transition.isGap());
+        System.out.println("\ttransition.isOverlap=" + transition.isOverlap());
+    }
+
+    private static final BigDecimal MINUTES60 = BigDecimal.valueOf(60);
+
+    public static int toDurationHours(long durationMinutes) {
+        return BigDecimal.valueOf(durationMinutes).divide(MINUTES60, RoundingMode.CEILING).intValue();
+    }
+
+    private static final BigDecimal DAYS7 = BigDecimal.valueOf(7);
+
+    /**
+     * Not working for Israel: Friday before last Sunday
+     *
+     * @param dayOfMonth
+     * @return
+     */
+    public static String buildQuartzDSTDayOfWeekOption(int dayOfMonth) {
+        String dayOfWeekOption;
+        int quartzDayOfMonthIndex = BigDecimal.valueOf(dayOfMonth).divide(DAYS7, RoundingMode.CEILING).intValue();
+        if (quartzDayOfMonthIndex <= 2) {// First Saturday, First Sunday, Second Sunday
+            dayOfWeekOption = "#" + quartzDayOfMonthIndex;
+        } else {// Last Sunday, Last Thursday, Last Friday, Last Saturday, Israel: Friday before last Sunday
+            dayOfWeekOption = "L";
+        }
+        return dayOfWeekOption;
     }
 }

@@ -274,20 +274,24 @@ abstract public class SummerApplication extends SummerBigBang {
             );
         }
         try {
-            //2. initialize JMX instrumentation
+            // 2. initialize JMX instrumentation
             if (instrumentationMgr != null/* && isJMXRequired()*/) {
                 instrumentationMgr.start(BootConstant.VERSION);
             }
 
-            //3. runner.run            
+            // 3a. runner.run            
             SummerRunner.RunnerContext context = new SummerRunner.RunnerContext(cli, userSpecifiedConfigDir, guiceInjector, healthInspector, postOffice);
             for (SummerRunner summerRunner : summerRunners) {
                 summerRunner.run(context);
             }
+            // 3b. start scheduler
+            if (!scheduler.getJobGroupNames().isEmpty()) {
+                scheduler.start();
+            }
 
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
-            //4. health inspection
+            // 4. health inspection
             StringBuilder sb = new StringBuilder();
             sb.append(BootConstant.BR).append(HealthMonitor.PROMPT);
             if (healthInspector != null) {
@@ -312,7 +316,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 log.warn(sb);
             }
 
-            //5a. start server: gRPC
+            // 5a. start server: gRPC
             log.trace("hasGRPCImpl.bs=" + gRPCBindableServiceImplClasses);
             log.trace("hasGRPCImpl.ssd=" + gRPCServerServiceDefinitionImplClasses);
             if (hasGRPCImpl) {
@@ -346,7 +350,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 }
             }
 
-            //5b. start server: HTTP
+            // 5b. start server: HTTP
             log.trace("hasControllers=" + hasControllers);
             if (hasControllers && NioConfig.cfg.isAutoStart()) {
                 try (var a = Timeout.watch("starting Web Server", timeoutMs).withDesc(timeoutDesc)) {
@@ -357,7 +361,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 }
             }
 
-            //6. announcement
+            // 6. announcement
             log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID));
 
             String fullConfigInfo = sb.toString();

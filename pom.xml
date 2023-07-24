@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.3.8</version>
+    <version>2.3.9-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
@@ -187,7 +187,7 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.93.Final</netty.version>
+        <netty.version>4.1.95.Final</netty.version>
         <netty-tcnative.version>2.0.61.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.56.1</grpc.version>
@@ -219,6 +219,8 @@
 
         <!-- Cache -->
         <jedis.version>4.4.3</jedis.version>
+        
+        <quartz.version>2.3.2</quartz.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.32</freemarker.version>
@@ -234,7 +236,7 @@
         
         <!-- Testing  -->
         <testng.version>7.8.0</testng.version>        
-        <jdbc.version>8.0.33</jdbc.version>
+        <jdbc.version>8.1.0</jdbc.version>
     </properties>
 
     <dependencies>
@@ -548,7 +550,6 @@
         </dependency>
 
 
-
         <!-- Cache -->
         <!-- https://mvnrepository.com/artifact/redis.clients/jedis MIT-->
         <dependency>
@@ -556,6 +557,26 @@
             <artifactId>jedis</artifactId>
             <version>${jedis.version}</version>
             <scope>provided</scope>
+        </dependency>
+        
+              
+        <!-- Scheduler -->
+        <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+            <version>${quartz.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.zaxxer</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz-jobs</artifactId>
+            <version>${quartz.version}</version>
         </dependency>
 
 
@@ -680,6 +701,6 @@
             <artifactId>mysql-connector-j</artifactId>
             <version>${jdbc.version}</version>
             <scope>test</scope>
-        </dependency>
+        </dependency>  
     </dependencies>  
 </project>
