@@ -107,7 +107,6 @@ abstract public class SummerSingularity {
     protected final StringBuilder memo = new StringBuilder();
     protected final Class primaryClass;
 
-    protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
 
     /*
      * CLI utils
@@ -131,6 +130,8 @@ abstract public class SummerSingularity {
     protected String[] callerRootPackageNames;//also used by JPAHibernateConfig access to scan @Entity
     protected String appVersion = BootConstant.VERSION;
     protected String logFileName = BootConstant.VERSION;
+    protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
+    protected int schedulerTriggers = 0;
 
     /*
      * Annotation scan results as CLI inputs
@@ -182,6 +183,7 @@ abstract public class SummerSingularity {
         callerRootPackageNames = null;
         appVersion = BootConstant.VERSION;
         logFileName = BootConstant.VERSION;
+        schedulerTriggers = 0;
 
         //reset Annotation scan results as CLI inputs
         availableUniqueTagOptions.clear();
@@ -238,7 +240,7 @@ abstract public class SummerSingularity {
         scanAnnotation_Controller(callerRootPackageNames);
         scanAnnotation_Service(callerRootPackageNames);
         scanAnnotation_DeclareRoles(callerRootPackageNames);
-        scanAnnotation_Scheduled(callerRootPackageNames);
+        schedulerTriggers = scanAnnotation_Scheduled(callerRootPackageNames);
         return (T) this;
     }
 
@@ -624,15 +626,25 @@ abstract public class SummerSingularity {
         hasAuthImpl = !authCfg.getDeclareRoles().isEmpty();
     }
 
-    protected void scanAnnotation_Scheduled(String... rootPackageNames) {
+    protected int scanAnnotation_Scheduled(String... rootPackageNames) {
+        int triggers = 0;
         Set<Class<? extends Job>> classes = ReflectionUtil.getAllImplementationsByInterface(Job.class, rootPackageNames);
+
+        if (!classes.isEmpty() && scheduler == null) {
+            try {
+                scheduler = new StdSchedulerFactory().getScheduler();
+            } catch (SchedulerException ex) {
+                throw new RuntimeException("Filed to build a Scheduler", ex);
+            }
+        }
         for (Class c : classes) {
             try {
-                TimeUtil.addQuartzJob(scheduler, c);
+                triggers += TimeUtil.addQuartzJob(scheduler, c);
             } catch (SchedulerException ex) {
                 throw new RuntimeException("Filed to addQuartzJob for " + c, ex);
             }
         }
+        return triggers;
     }
 
     protected static class ConfigMetadata {

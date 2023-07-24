@@ -26,6 +26,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.quartz.impl.StdSchedulerFactory;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
@@ -44,6 +45,7 @@ import org.summerboot.jexpress.nio.grpc.StatusReporter;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.util.ApplicationUtil;
+import org.summerboot.jexpress.util.TimeUtil;
 
 /**
  * In Code We Trust
@@ -285,8 +287,12 @@ abstract public class SummerApplication extends SummerBigBang {
                 summerRunner.run(context);
             }
             // 3b. start scheduler
-            if (!scheduler.getJobGroupNames().isEmpty()) {
+            if (schedulerTriggers > 0) {
                 scheduler.start();
+                StringBuilder sb = new StringBuilder();
+                sb.append("Scheduled jobs next fire time by ").append(schedulerTriggers).append(" triggers: ");
+                TimeUtil.getNextFireTimes(scheduler, sb);
+                log.info(() -> sb.toString());
             }
 
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();

@@ -34,7 +34,63 @@ public @interface Scheduled {
 
     String[] cron() default {};
 
-    int dailyHour() default -1;
+    /**
+     * 1-31: for monthlyOnDayAndHourAndMinute(int dayOfMonth, int hour, int
+     * minute)
+     *
+     * @return
+     */
+    int dayOfMonth() default -1;
 
-    int dailyMinute() default 0;
+    /**
+     * 1-7 for SUN-SAT: for atHourAndMinuteOnGivenDaysOfWeek(int hour, int
+     * minute, Integer[] daysOfWeek)
+     *
+     * @return
+     */
+    int[] daysOfWeek() default {};
+
+    /**
+     * 0-23: for dailyAtHourAndMinute(int hour, int minute)
+     *
+     * @return
+     */
+    int hour() default -1;
+
+    /**
+     * 0-59
+     * @return 
+     */
+    int minute() default 0;
+
+//    /**
+//     * The fixedDelay makes sure that there is a delay of n millisecond between
+//     * the finish time of an execution of a task and the start time of the next
+//     * execution of the task.
+//     *
+//     * This property is specifically useful when you need to make sure that only
+//     * one instance of the task runs all the time. For dependent jobs, it is
+//     * quite helpful.
+//     *
+//     *
+//     * @return
+//     */
+//    long fixedDelay() default 0;
+//
+//    long initialDelay() default 0;
+//
+//    /**
+//     * The fixedRate runs the scheduled task at every n millisecond. It doesn't
+//     * check for any previous executions of the task.
+//     *
+//     * This is useful when all executions of the task are independent. If we
+//     * don't expect to exceed the size of the memory and the thread pool,
+//     * fixedRate should be quite handy.
+//     *
+//     * Although, if the incoming tasks do not finish quickly, it's possible they
+//     * end up with “Out of Memory exception”.
+//     *
+//     * @return
+//     */
+//    long fixedRate() default 0;
 }
