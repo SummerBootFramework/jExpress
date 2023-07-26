@@ -45,10 +45,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.quartz.Job;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Unique;
 import org.summerboot.jexpress.boot.annotation.Version;
@@ -60,7 +56,6 @@ import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.annotation.GrpcService;
-import org.summerboot.jexpress.boot.annotation.Scheduled;
 import org.summerboot.jexpress.boot.annotation.Service.ChannelHandlerType;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.i18n.I18n;
@@ -68,7 +63,6 @@ import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.TimeUtil;
 
 /**
  * In Code We Trust
@@ -130,8 +124,6 @@ abstract public class SummerSingularity {
     protected String[] callerRootPackageNames;//also used by JPAHibernateConfig access to scan @Entity
     protected String appVersion = BootConstant.VERSION;
     protected String logFileName = BootConstant.VERSION;
-    protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
-    protected int schedulerTriggers = 0;
 
     /*
      * Annotation scan results as CLI inputs
@@ -183,7 +175,6 @@ abstract public class SummerSingularity {
         callerRootPackageNames = null;
         appVersion = BootConstant.VERSION;
         logFileName = BootConstant.VERSION;
-        schedulerTriggers = 0;
 
         //reset Annotation scan results as CLI inputs
         availableUniqueTagOptions.clear();
@@ -240,7 +231,6 @@ abstract public class SummerSingularity {
         scanAnnotation_Controller(callerRootPackageNames);
         scanAnnotation_Service(callerRootPackageNames);
         scanAnnotation_DeclareRoles(callerRootPackageNames);
-        schedulerTriggers = scanAnnotation_Scheduled(callerRootPackageNames);
         return (T) this;
     }
 
@@ -624,27 +614,6 @@ abstract public class SummerSingularity {
 
         //2. check is there any declared roles so that the auth config should be used
         hasAuthImpl = !authCfg.getDeclareRoles().isEmpty();
-    }
-
-    protected int scanAnnotation_Scheduled(String... rootPackageNames) {
-        int triggers = 0;
-        Set<Class<? extends Job>> classes = ReflectionUtil.getAllImplementationsByInterface(Job.class, rootPackageNames);
-
-        if (!classes.isEmpty() && scheduler == null) {
-            try {
-                scheduler = new StdSchedulerFactory().getScheduler();
-            } catch (SchedulerException ex) {
-                throw new RuntimeException("Filed to build a Scheduler", ex);
-            }
-        }
-        for (Class c : classes) {
-            try {
-                triggers += TimeUtil.addQuartzJob(scheduler, c);
-            } catch (SchedulerException ex) {
-                throw new RuntimeException("Filed to addQuartzJob for " + c, ex);
-            }
-        }
-        return triggers;
     }
 
     protected static class ConfigMetadata {

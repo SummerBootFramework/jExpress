@@ -59,38 +59,51 @@ public @interface Scheduled {
 
     /**
      * 0-59
-     * @return 
+     *
+     * @return
      */
-    int minute() default 0;
+    int minute() default -1;
 
-//    /**
-//     * The fixedDelay makes sure that there is a delay of n millisecond between
-//     * the finish time of an execution of a task and the start time of the next
-//     * execution of the task.
-//     *
-//     * This property is specifically useful when you need to make sure that only
-//     * one instance of the task runs all the time. For dependent jobs, it is
-//     * quite helpful.
-//     *
-//     *
-//     * @return
-//     */
-//    long fixedDelay() default 0;
-//
-//    long initialDelay() default 0;
-//
-//    /**
-//     * The fixedRate runs the scheduled task at every n millisecond. It doesn't
-//     * check for any previous executions of the task.
-//     *
-//     * This is useful when all executions of the task are independent. If we
-//     * don't expect to exceed the size of the memory and the thread pool,
-//     * fixedRate should be quite handy.
-//     *
-//     * Although, if the incoming tasks do not finish quickly, it's possible they
-//     * end up with “Out of Memory exception”.
-//     *
-//     * @return
-//     */
-//    long fixedRate() default 0;
+    /**
+     * 0-59
+     *
+     * @return
+     */
+    int second() default -1;
+
+    /**
+     * The fixedRate runs the scheduled task at every n millisecond. It doesn't
+     * check for any previous executions of the task.
+     *
+     * This is useful when all executions of the task are independent. If we
+     * don't expect to exceed the size of the memory and the thread pool,
+     * fixedRate should be quite handy.
+     *
+     * Although, if the incoming tasks do not finish quickly, it's possible they
+     * end up with “Out of Memory exception”.
+     *
+     * @return
+     */
+    long fixedRate() default 0;
+
+    /**
+     * The fixedDelay makes sure that there is a delay of n millisecond between
+     * the finish time of an execution of a task and the start time of the next
+     * execution of the task.
+     *
+     * This property is specifically useful when you need to make sure that only
+     * one instance of the task runs all the time. For dependent jobs, it is
+     * quite helpful.
+     *
+     *
+     * @return
+     */
+    long fixedDelay() default 0;
+
+    /**
+     * start job after n millisecond
+     *
+     * @return
+     */
+    long initialDelay() default 0;
 }

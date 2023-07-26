@@ -26,6 +26,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+import org.quartz.Scheduler;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigChangeListenerImpl;
@@ -39,6 +40,7 @@ import org.summerboot.jexpress.boot.instrumentation.jmx.ServerStatus;
 import org.summerboot.jexpress.boot.instrumentation.jmx.ServerStatusMBean;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.integration.cache.AuthTokenCacheLocalImpl;
+import org.summerboot.jexpress.integration.quartz.SchedulerProvider;
 import org.summerboot.jexpress.integration.smtp.BootPostOfficeImpl;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
@@ -74,7 +76,7 @@ public class BootGuiceModule extends AbstractModule {
     }
 
     protected boolean isCliUseImplTag(String implTag) {
-        return userSpecifiedImplTags.contains(implTag);
+        return userSpecifiedImplTags != null && userSpecifiedImplTags.contains(implTag);
     }
 
     private final static String BIND_TO = " --> ";
@@ -82,7 +84,7 @@ public class BootGuiceModule extends AbstractModule {
 
     @Override
     public void configure() {
-        //1. Instrumentation - JMX
+        // 1. Instrumentation - JMX
         bind(NIOStatusListener.class).to(ServerStatus.class);
         memo.append(INFO).append(NIOStatusListener.class.getName()).append(BIND_TO).append(ServerStatus.class.getName());
 
@@ -95,17 +97,17 @@ public class BootGuiceModule extends AbstractModule {
         bind(InstrumentationMgr.class).to(InstrumentationMgrImpl.class);
         memo.append(INFO).append(InstrumentationMgr.class.getName()).append(BIND_TO).append(InstrumentationMgrImpl.class.getName());
 
-        //2. Non-Functinal services
+        // 2. Non-Functinal services
         bind(ConfigChangeListener.class).to(ConfigChangeListenerImpl.class);
         memo.append(INFO).append(ConfigChangeListener.class.getName()).append(BIND_TO).append(ConfigChangeListenerImpl.class.getName());
 
-        //3. NIO Controllers
+        // 3. NIO Controllers
         bind(NioChannelInitializer.class).to(HttpNioChannelInitializer.class);
 
         bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpPingHandler.class.getSimpleName())).to(BootHttpPingHandler.class);
         memo.append(INFO).append(ChannelHandler.class.getName()).append(BIND_TO).append(BootHttpPingHandler.class.getSimpleName()).append(", named=").append(BootHttpPingHandler.class.getSimpleName());
 
-        //4. @Services
+        // 4. @Services
         bind(HealthInspector.class).to(BootHealthInspectorImpl.class);
         memo.append(INFO).append(HealthInspector.class.getName()).append(BIND_TO).append(BootHealthInspectorImpl.class.getName());
 
@@ -130,14 +132,16 @@ public class BootGuiceModule extends AbstractModule {
         bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpRequestHandler.class.getSimpleName())).to(BootHttpRequestHandler.class);
         memo.append(INFO).append(ChannelHandler.class.getName()).append(BIND_TO).append(BootHttpRequestHandler.class.getSimpleName()).append(", named=").append(BootHttpRequestHandler.class.getSimpleName());
 
-        //5. Controllers
+        // 5. Controllers
         scanAnnotation_BindInstance(binder(), Controller.class, callerRootPackageName);
 
-        //6. caller's Main class (App.Main)
+        // 6. caller's Main class (App.Main)
         if (caller != null) {
             requestInjection(caller);//Although requestInjection is always considered a bad idea because it can easily set up a very fragile graph of implicit dependencies, we only use it here to bind the caller's Main class (App.Main)
             memo.append(INFO).append(caller);
         }
+        // 7. supports org.quartz with Guice IoC
+        bind(Scheduler.class).toProvider(SchedulerProvider.class).asEagerSingleton();
     }
 
     /**
