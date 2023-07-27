@@ -16,7 +16,6 @@
 package org.summerboot.jexpress.integration.quartz;
 
 import java.util.Date;
-import java.util.List;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
@@ -47,6 +46,10 @@ public class FixedDelayJobListener extends JobListenerSupport {
 
     @Override
     public void jobWasExecuted(final JobExecutionContext context, final JobExecutionException exception) {
+        Date nextFireTime = context.getNextFireTime();
+        if (nextFireTime != null) {
+            return;
+        }
         JobDetail jobDetail = context.getJobDetail();
         JobDataMap jobData = jobDetail.getJobDataMap();
         if (!jobData.containsKey(FIXED_DELAY_VALUE)) {
@@ -55,18 +58,22 @@ public class FixedDelayJobListener extends JobListenerSupport {
 
         TriggerKey currentTriggerKey = context.getTrigger().getKey();
         try {
-
             Scheduler scheduler = context.getScheduler();
             if (scheduler.isShutdown()) {
                 return;
             }
-            JobKey jobKey = jobDetail.getKey();
-            if (hasUnfiredTrigger(scheduler, jobKey)) {
-                return;
+
+            Trigger currentTrigger = context.getTrigger();
+            if (currentTrigger instanceof SimpleTrigger) {
+                SimpleTrigger st = (SimpleTrigger) currentTrigger;
+                if (st.getRepeatInterval() != 0 || st.getRepeatCount() != 0 || st.getTimesTriggered() != 1 || st.getNextFireTime() != null) {
+                    return;
+                }
             }
             long fixedDelay = (long) jobData.getWrappedMap().get(FIXED_DELAY_VALUE);
             String desc = (String) jobData.getWrappedMap().get(FIXED_DELAY_DESC);
             Date nextTime = new Date(System.currentTimeMillis() + fixedDelay);
+            JobKey jobKey = jobDetail.getKey();
             Trigger nextTrigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
                     .withDescription(desc)
@@ -79,15 +86,5 @@ public class FixedDelayJobListener extends JobListenerSupport {
         } catch (SchedulerException ex) {
             getLog().error("failed to reschedule the job with triger: {}", currentTriggerKey, ex);
         }
-    }
-
-    private boolean hasUnfiredTrigger(final Scheduler scheduler, final JobKey jobKey) throws SchedulerException {
-        List<? extends Trigger> triggersOfJob = scheduler.getTriggersOfJob(jobKey);
-        for (Trigger trigger : triggersOfJob) {
-            if (trigger instanceof SimpleTrigger && ((SimpleTrigger) trigger).getTimesTriggered() == 0) {
-                return true;
-            }
-        }
-        return false;
     }
 }

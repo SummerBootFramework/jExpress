@@ -24,6 +24,18 @@ import java.lang.annotation.Target;
 
 /**
  *
+ * <pre>Usage: {@code
+ * @Scheduled(cron="0 15 10 ? * 6L 2012-2015")// org.quartz cron expression: Fire at 10:15am on every last Friday of every month during the years 2012, 2013, 2014 and 2015
+ * @Scheduled(dayOfMonth = 1, hour=2, minute=3)// monthly: every 2:03am 1st day of the month
+ * @Scheduled(daysOfWeek=1, hour=14, minute=15)// weekly: 2:15pm every Sunday
+ * @Scheduled(daysOfWeek={1, 6, 7}, hour=14, minute=15)// weekly: 2:15pm every Sunday, Friday and Saturday
+ * @Scheduled(hour = 14, minute = 15, second = 16)// daily: 2:15:16pm everyday
+ * @Scheduled(minute = 15, second = 16)// hourly: every hour at the 15th minute and the 16th second
+ * @Scheduled(second = 16)// minutely: every minute at the 16th second
+ * @Scheduled(fixedRate = 10_000, initialDelay=5_000)// start job after 5 seconds, run job every 10 secsonds no matter how long the job takes
+ * @Scheduled(fixedDelay = 10_000, initialDelay=5_000)// start job after 5 seconds, when the job finished wait 10 seconds then start it again
+ * }</pre>
+ *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Target({ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
