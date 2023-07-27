@@ -25,7 +25,10 @@ import java.net.InetSocketAddress;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
@@ -203,45 +206,45 @@ abstract public class SummerApplication extends SummerBigBang {
         app.traceConfig();
         return (T) app;
     }
-
+    
     private SummerApplication(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass, userOverrideModule, args);
     }
-
+    
     @Inject
     protected ConfigChangeListener configChangeListener;
-
+    
     @Inject
     protected InstrumentationMgr instrumentationMgr;
-
+    
     @Inject
     protected HealthInspector healthInspector;
-
+    
     protected NioServer httpServer;
-
+    
     protected List<GRPCServer> gRPCServerList = new ArrayList();
-
+    
     @Inject
     protected PostOffice postOffice;
-
+    
     private boolean memoLogged = false;
-
+    
     public List<GRPCServer> getgRPCServers() {
         return gRPCServerList;
     }
-
+    
     @Override
     protected Class getAddtionalI18n() {
         return null;
     }
-
+    
     protected void traceConfig() {
         if (!memoLogged) {
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILEPATH).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILEPATH));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILENAME));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_SERVER_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_SERVER_NAME));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME));
-
+            
             memo.append(BootConstant.BR).append("\t- start: PostOffice=").append(postOffice.getClass().getName());
             memo.append(BootConstant.BR).append("\t- start: HealthInspector=").append(healthInspector.getClass().getName());
             //memo.append(BootConstant.BR).append("\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
@@ -293,7 +296,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 TimeUtil.getNextFireTimes(scheduler, sb);
                 log.info(() -> sb.toString());
             }
-
+            
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             // 4. health inspection
@@ -368,7 +371,7 @@ abstract public class SummerApplication extends SummerBigBang {
 
             // 6. announcement
             log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID));
-
+            
             String fullConfigInfo = sb.toString();
             if (postOffice != null) {
                 postOffice.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Started at " + OffsetDateTime.now(), fullConfigInfo, null, false);
@@ -386,7 +389,7 @@ abstract public class SummerApplication extends SummerBigBang {
             System.exit(1);
         }
     }
-
+    
     public void shutdown() {
         if (gRPCServerList != null && !gRPCServerList.isEmpty()) {
             for (GRPCServer gRPCServer : gRPCServerList) {
@@ -398,6 +401,13 @@ abstract public class SummerApplication extends SummerBigBang {
         }
         if (instrumentationMgr != null) {
             instrumentationMgr.shutdown();
+        }
+        if (scheduler != null) {
+            try {
+                scheduler.shutdown();
+            } catch (SchedulerException ex) {
+                log.warn("Failed to shoutdown scheduler", ex);
+            }
         }
     }
 }

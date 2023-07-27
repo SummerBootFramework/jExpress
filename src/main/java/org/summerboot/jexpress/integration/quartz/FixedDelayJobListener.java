@@ -65,7 +65,7 @@ public class FixedDelayJobListener extends JobListenerSupport {
 
             Trigger currentTrigger = context.getTrigger();
             if (currentTrigger instanceof SimpleTrigger) {
-                SimpleTrigger st = (SimpleTrigger) currentTrigger;
+                SimpleTrigger st = (SimpleTrigger) currentTrigger;// TODO: JDK17
                 if (st.getRepeatInterval() != 0 || st.getRepeatCount() != 0 || st.getTimesTriggered() != 1 || st.getNextFireTime() != null) {
                     return;
                 }
