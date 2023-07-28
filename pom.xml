@@ -174,6 +174,7 @@
         <!-- Commons -->
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-cli.version>1.5.0</commons-cli.version>
+        <commons-io.version>2.13.0</commons-io.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.20.0</log4j-api.version>
@@ -253,6 +254,26 @@
             <version>${commons-cli.version}</version>
             <!--            <optional>true</optional>-->
         </dependency>
+        <!-- https://mvnrepository.com/artifact/commons-io/commons-io Apache 2.0-->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
+        <!--        <dependency>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+            <version>${owasp.encoder.version}</version>
+        </dependency>-->
+       
+        <!-- Reflection -->
+        <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>${reflections.version}</version>
+        </dependency>
 
 
         <!-- Logging -->
@@ -330,7 +351,8 @@
             <version>${jwt.version}</version>
         </dependency>
         <!-- backward compatibility for jjwt only https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
-<!--        <dependency>
+        <!--
+        <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>2.3.1</version>
@@ -437,13 +459,6 @@
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
             <version>${jakarta.annotation.version}</version>
-        </dependency>
-       
-        <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>${reflections.version}</version>
         </dependency>
 
 
@@ -647,6 +662,12 @@
             <groupId>com.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-slf4j</artifactId>
             <version>${openhtml.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>  	
         <dependency>
             <!-- Optional, leave out if you do not need SVG support. -->
