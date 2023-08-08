@@ -25,8 +25,6 @@ import java.net.InetSocketAddress;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;

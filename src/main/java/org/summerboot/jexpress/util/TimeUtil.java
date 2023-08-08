@@ -319,7 +319,7 @@ public class TimeUtil {
             return 0;
         }
 
-        int dayOfMonth = scheduledAnnotation.dayOfMonth();
+        int[] daysOfMonth = scheduledAnnotation.daysOfMonth();
         int[] daysOfWeek = scheduledAnnotation.daysOfWeek();
         int hour = scheduledAnnotation.hour();
         int minute = scheduledAnnotation.minute();
@@ -329,14 +329,14 @@ public class TimeUtil {
         long fixedRate = scheduledAnnotation.fixedRate();
         long fixedDelay = scheduledAnnotation.fixedDelay();
         long initialDelay = scheduledAnnotation.initialDelay();
-        return addQuartzJob(scheduler, jobClass, dayOfMonth, daysOfWeek, hour, minute, second, fixedRate, fixedDelay, initialDelay, cronExpressions);
+        return addQuartzJob(scheduler, jobClass, daysOfMonth, daysOfWeek, hour, minute, second, fixedRate, fixedDelay, initialDelay, cronExpressions);
     }
 
     /**
      *
      * @param scheduler
      * @param jobClass
-     * @param dayOfMonth 1-31
+     * @param daysOfMonth 1-31
      * @param daysOfWeek 1-7 for SUN-SAT
      * @param hour 0-23
      * @param minute 0-59
@@ -351,13 +351,13 @@ public class TimeUtil {
      * @return number of triggers created
      * @throws SchedulerException
      */
-    public static int addQuartzJob(Scheduler scheduler, Class<? extends Job> jobClass, Integer dayOfMonth, int[] daysOfWeek, Integer hour, Integer minute, Integer second, Long fixedRate, Long fixedDelay, Long initialDelay, String... cronExpressions) throws SchedulerException {
+    public static int addQuartzJob(Scheduler scheduler, Class<? extends Job> jobClass, int[] daysOfMonth, int[] daysOfWeek, Integer hour, Integer minute, Integer second, Long fixedRate, Long fixedDelay, Long initialDelay, String... cronExpressions) throws SchedulerException {
         boolean isFixedDelayJob = fixedDelay != null && fixedDelay > 0;
         JobDetail jobDetail = JobBuilder.newJob(jobClass)
                 .withIdentity(jobClass.getName(), jobClass.getName())
                 .storeDurably(!isFixedDelayJob)
                 .build();
-        return addQuartzJob(scheduler, jobDetail, dayOfMonth, daysOfWeek, hour, minute, second, fixedRate, fixedDelay, initialDelay, cronExpressions);
+        return addQuartzJob(scheduler, jobDetail, daysOfMonth, daysOfWeek, hour, minute, second, fixedRate, fixedDelay, initialDelay, cronExpressions);
     }
 
     public static final Map<Integer, String> QUARTZ_WEEKDAY_MAP = Map.of(1, "SUN", 2, "MON", 3, "TUE", 4, "WED", 5, "THU", 6, "FRI", 7, "SAT");
@@ -373,7 +373,7 @@ public class TimeUtil {
      *
      * @param scheduler
      * @param jobDetail
-     * @param dayOfMonth 1-31
+     * @param daysOfMonth 1-31
      * @param daysOfWeek 1-7 for SUN-SAT
      * @param hour 0-23
      * @param minute 0-59
@@ -388,17 +388,21 @@ public class TimeUtil {
      * @return number of triggers created
      * @throws org.quartz.SchedulerException
      */
-    public static int addQuartzJob(final Scheduler scheduler, final JobDetail jobDetail, final Integer dayOfMonth, final int[] daysOfWeek, final Integer hour, final Integer minute, final Integer second,
+    public static int addQuartzJob(final Scheduler scheduler, final JobDetail jobDetail, final int[] daysOfMonth, final int[] daysOfWeek, final Integer hour, final Integer minute, final Integer second,
             final Long fixedRate, final Long fixedDelay, final Long initialDelay, final String... cronExpressions) throws SchedulerException {
-        boolean isMonthlyJob = dayOfMonth != null && dayOfMonth > 0;
+        boolean isCronJobs = cronExpressions != null && cronExpressions.length > 0;
+
+        boolean isMonthlyJob = daysOfMonth != null && daysOfMonth.length > 0;
         boolean isWeeklyJob = daysOfWeek != null && daysOfWeek.length == 1;
         boolean isWeeklyJobs = daysOfWeek != null && daysOfWeek.length > 1;
-        boolean isDailyJob = !isMonthlyJob && !isWeeklyJob && !isWeeklyJobs && hour != null && hour >= 0;
-        boolean isHourlyJob = !isDailyJob && minute != null && minute >= 0;
-        boolean isMinutelyJob = !isHourlyJob && second != null && second >= 0;
-        boolean isCronJobs = cronExpressions != null && cronExpressions.length > 0;
-        boolean isFixedRateJob = fixedRate != null & fixedRate > 0;
+        boolean isNotByDay = !isMonthlyJob && !isWeeklyJob && !isWeeklyJobs;
+
+        boolean isDailyJob = isNotByDay && hour != null && hour >= 0;
+        boolean isHourlyJob = isNotByDay && !isDailyJob && minute != null && minute >= 0;
+        boolean isMinutelyJob = isNotByDay && !isDailyJob && !isHourlyJob && second != null && second >= 0;
+        boolean isFixedRateJob = fixedRate != null && fixedRate > 0;
         boolean isFixedDelayJob = fixedDelay != null && fixedDelay > 0;
+
         if ((isMonthlyJob || isWeeklyJob || isWeeklyJobs || isDailyJob || isHourlyJob || isMinutelyJob || isCronJobs || isFixedRateJob) && isFixedDelayJob) {
             throw new SchedulerException("Unable to create Fixed Delay Job with other jobs");
         }
@@ -412,13 +416,15 @@ public class TimeUtil {
         }
         //boolean isHourJob = !isMonthlyJob && !isWeeklyJob && !isWeeklyJobs && !isDailyJob && minute >= 0;
         if (isMonthlyJob) {
-            CronTrigger trigger = TriggerBuilder.newTrigger()
-                    .forJob(jobKey)
-                    .withDescription(jobName + ".Monthly@" + dayOfMonth + "T" + trim(hour) + ":" + trim(minute))
-                    .withSchedule(CronScheduleBuilder.monthlyOnDayAndHourAndMinute(dayOfMonth, trim(hour), trim(minute)))
-                    .build();
-            scheduler.scheduleJob(trigger);
-            triggers++;
+            for (var dayOfMonth : daysOfMonth) {
+                CronTrigger trigger = TriggerBuilder.newTrigger()
+                        .forJob(jobKey)
+                        .withDescription(jobName + ".Monthly@" + dayOfMonth + "T" + trim(hour) + ":" + trim(minute))
+                        .withSchedule(CronScheduleBuilder.monthlyOnDayAndHourAndMinute(dayOfMonth, trim(hour), trim(minute)))
+                        .build();
+                scheduler.scheduleJob(trigger);
+                triggers++;
+            }
         }
         if (isWeeklyJob) {
             int dayOfWeek = daysOfWeek[0];

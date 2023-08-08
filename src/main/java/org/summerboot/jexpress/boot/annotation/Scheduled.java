@@ -52,7 +52,7 @@ public @interface Scheduled {
      *
      * @return
      */
-    int dayOfMonth() default -1;
+    int[] daysOfMonth() default {};
 
     /**
      * 1-7 for SUN-SAT: for atHourAndMinuteOnGivenDaysOfWeek(int hour, int

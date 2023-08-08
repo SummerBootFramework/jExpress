@@ -176,5 +176,23 @@ public final class SecurityUtil {
         }
         return true;
     }
+    
+    
+    public static final Pattern PATTERN_UNPRINTABLE = Pattern.compile("\\p{C}");
+    public static final Pattern PATTERN_UNPRINTABLE_CRLFTAB = Pattern.compile("\\p{C}&&[^\\r\\n\\t]");
 
+    /**
+     * Removes all unprintable characters from a string and replaces with
+     * substitute (i.e. a space).
+     *
+     * @param input
+     * @param substitute
+     * @return the stripped value
+     */
+    public static String stripControls(String input, String substitute) {
+        if (StringUtils.isEmpty(input)) {
+            return input;
+        }
+        return PATTERN_UNPRINTABLE.matcher(input).replaceAll(substitute);//str.replaceAll("\\p{C}", " ");
+    }
 }
