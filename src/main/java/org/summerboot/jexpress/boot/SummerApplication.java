@@ -35,6 +35,7 @@ import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.boot.instrumentation.Timeout;
 import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
+import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
@@ -45,7 +46,6 @@ import org.summerboot.jexpress.nio.grpc.StatusReporter;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.TimeUtil;
 
 /**
  * In Code We Trust
@@ -204,45 +204,45 @@ abstract public class SummerApplication extends SummerBigBang {
         app.traceConfig();
         return (T) app;
     }
-    
+
     private SummerApplication(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass, userOverrideModule, args);
     }
-    
+
     @Inject
     protected ConfigChangeListener configChangeListener;
-    
+
     @Inject
     protected InstrumentationMgr instrumentationMgr;
-    
+
     @Inject
     protected HealthInspector healthInspector;
-    
+
     protected NioServer httpServer;
-    
+
     protected List<GRPCServer> gRPCServerList = new ArrayList();
-    
+
     @Inject
     protected PostOffice postOffice;
-    
+
     private boolean memoLogged = false;
-    
+
     public List<GRPCServer> getgRPCServers() {
         return gRPCServerList;
     }
-    
+
     @Override
     protected Class getAddtionalI18n() {
         return null;
     }
-    
+
     protected void traceConfig() {
         if (!memoLogged) {
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILEPATH).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILEPATH));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILENAME));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_SERVER_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_SERVER_NAME));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME));
-            
+
             memo.append(BootConstant.BR).append("\t- start: PostOffice=").append(postOffice.getClass().getName());
             memo.append(BootConstant.BR).append("\t- start: HealthInspector=").append(healthInspector.getClass().getName());
             //memo.append(BootConstant.BR).append("\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
@@ -291,10 +291,10 @@ abstract public class SummerApplication extends SummerBigBang {
                 scheduler.start();
                 StringBuilder sb = new StringBuilder();
                 sb.append("Scheduled jobs next fire time by ").append(schedulerTriggers).append(" triggers: ");
-                TimeUtil.getNextFireTimes(scheduler, sb);
+                QuartzUtil.getNextFireTimes(scheduler, sb);
                 log.info(() -> sb.toString());
             }
-            
+
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             // 4. health inspection
@@ -369,7 +369,7 @@ abstract public class SummerApplication extends SummerBigBang {
 
             // 6. announcement
             log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID));
-            
+
             String fullConfigInfo = sb.toString();
             if (postOffice != null) {
                 postOffice.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Started at " + OffsetDateTime.now(), fullConfigInfo, null, false);
@@ -387,7 +387,7 @@ abstract public class SummerApplication extends SummerBigBang {
             System.exit(1);
         }
     }
-    
+
     public void shutdown() {
         if (gRPCServerList != null && !gRPCServerList.isEmpty()) {
             for (GRPCServer gRPCServer : gRPCServerList) {

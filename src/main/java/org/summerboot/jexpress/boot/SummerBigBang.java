@@ -54,13 +54,13 @@ import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.i18n.I18n;
+import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
-import org.summerboot.jexpress.util.TimeUtil;
 
 /**
  * In Code We Trust
@@ -587,7 +587,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         }
         for (Class c : classes) {
             try {
-                triggers += TimeUtil.addQuartzJob(scheduler, c);
+                triggers += QuartzUtil.addQuartzJob(scheduler, c);
             } catch (SchedulerException ex) {
                 throw new RuntimeException("Filed to addQuartzJob for " + c, ex);
             }

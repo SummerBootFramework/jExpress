@@ -37,7 +37,7 @@ public class FixedDelayJobListener extends JobListenerSupport {
 
     public static final String FIXED_DELAY_VALUE = "FIXED_DELAY_VALUE";
     public static final String FIXED_DELAY_DESC = "FIXED_DELAY_DESC";
-    private static final String JOB_LISTENER_NAME = "FixedDelayJobListener";
+    private static final String JOB_LISTENER_NAME = FixedDelayJobListener.class.getSimpleName();
 
     @Override
     public String getName() {
