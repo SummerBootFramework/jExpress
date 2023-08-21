@@ -25,6 +25,8 @@ public interface BootConstant {
     String VERSION = "SummerBoot.jExpress 2.3.9";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
+    String DEFAULT_ADMIN_MM = "changeit";
+
     /*
      * Runtime info
      */
@@ -80,8 +82,10 @@ public interface BootConstant {
      * Please be advised that ‘java.util.Hashtable.get()’ is a synchronized API. 
      * It means only one thread can invoke the ‘java.util.Hashtable.get()’ method at any given time. 
      */
+    String SYS_PROP_LOGID = BackOffice.agent.getLog4J2LogId();// "logid" // used by log4j2.xml ${sys:logid}
     String SYS_PROP_LOGFILEPATH = BackOffice.agent.getLog4j2LogFilePath();//"logPath"; // used by log4j2.xml ${sys:loggingPath}
     String SYS_PROP_LOGFILENAME = BackOffice.agent.getLog4j2LogFileName();//"appName"; // used by log4j2.xml ${sys:appappName} as log file name
     String SYS_PROP_SERVER_NAME = BackOffice.agent.getLog4j2ServerName();//"serverName"; // used by log4j2.xml ${hostName}
     String SYS_PROP_APP_PACKAGE_NAME = BackOffice.agent.getLog4j2AppPackageName();//"appPackageName"; // used by both log4j2.xml ${sys:appPackage} and JPAHibernateConfig to scan @Entity
+
 }

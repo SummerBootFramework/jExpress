@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN" monitorInterval="30">
     <Properties>
-        <Property name="logPattern" value="%d{ISO8601} %p %c{}.%M() [%t] %m %ex%n"/>
-        <!-- %replace{pattern}{regex}{substitution} -->
-        <Property name="logPattern2" value="%d{ISO8601} %p %c{}.%M() [%t] %replace{%enc{%m}{CRLF}}{\\r|\\n|%0D|%0A|%0d|%0a}{|} %uEx%n"/>
+        <Property name="logPattern" value="[${sys:logId}] %d{ISO8601} %p %c{}.%M() [%t] %m %ex%n"/>
+        <!-- usage: %replace{pattern}{regex}{substitution} -->
+        <Property name="logPattern2" value="[${sys:logId}] %d{ISO8601} %p %c{}.%M() [%t] %replace{%enc{%m}{CRLF}}{\\r|\\n|%0D|%0A|%0d|%0a}{|} %uEx%n"/>
         
     </Properties>
     <Appenders>

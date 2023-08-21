@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Properties;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
@@ -91,9 +92,9 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
-        sb.append(KEY_kmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_kmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
         sb.append(KEY_kmf_AliasKey + "=server3_4096.jexpress.org\n");
-        sb.append(KEY_kmf_AliasPwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_kmf_AliasPwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
         generateTemplate = true;
     }
 
@@ -108,7 +109,7 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     protected void generateTemplate_truststore(StringBuilder sb) {
         sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
-        sb.append(KEY_tmf_StorePwdKey + "=DEC(changeit)\n");
+        sb.append(KEY_tmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
         generateTemplate = true;
     }
 

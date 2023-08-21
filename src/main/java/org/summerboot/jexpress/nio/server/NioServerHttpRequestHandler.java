@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
 import org.apache.commons.lang3.StringUtils;
+//import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -222,6 +223,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                             }
                         }
                         report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
+                        //report = StringEscapeUtils.escapeJava(report);
                         log.log(level, report, context.cause());
                     }
                 } catch (Throwable ex) {
@@ -385,8 +387,10 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
         // 3c. verbose aspect
         // 3.1 request responseHeader
+        //sb.append("\n\t1.client_req.headers=").append((context.logRequestHeader() && cfg.isVerboseReqHeader()) ? (httpHeaders == null ? "" : StringEscapeUtils.escapeJava(httpHeaders.toString())) : "***");
         sb.append("\n\t1.client_req.headers=").append((context.logRequestHeader() && cfg.isVerboseReqHeader()) ? httpHeaders : "***");
         // 3.2 request body
+        //sb.append("\n\t2.client_req.body=").append((context.logRequestBody() && cfg.isVerboseReqContent()) ? StringEscapeUtils.escapeJava(httpPostRequestBody) : "***");
         sb.append("\n\t2.client_req.body=").append((context.logRequestBody() && cfg.isVerboseReqContent()) ? httpPostRequestBody : "***");
         // 3.3 context responseHeader
         sb.append("\n\t3.server_resp.headers=").append((context.logResponseHeader() && cfg.isVerboseRespHeader()) ? context.responseHeaders() : "***");
