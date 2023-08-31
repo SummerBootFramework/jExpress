@@ -26,6 +26,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
@@ -34,6 +35,7 @@ import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.boot.instrumentation.Timeout;
 import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
+import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
@@ -236,6 +238,7 @@ abstract public class SummerApplication extends SummerBigBang {
 
     protected void traceConfig() {
         if (!memoLogged) {
+            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGID).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGID));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILEPATH).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILEPATH));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILENAME));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_SERVER_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_SERVER_NAME));
@@ -274,20 +277,28 @@ abstract public class SummerApplication extends SummerBigBang {
             );
         }
         try {
-            //2. initialize JMX instrumentation
+            // 2. initialize JMX instrumentation
             if (instrumentationMgr != null/* && isJMXRequired()*/) {
                 instrumentationMgr.start(BootConstant.VERSION);
             }
 
-            //3. runner.run            
+            // 3a. runner.run            
             SummerRunner.RunnerContext context = new SummerRunner.RunnerContext(cli, userSpecifiedConfigDir, guiceInjector, healthInspector, postOffice);
             for (SummerRunner summerRunner : summerRunners) {
                 summerRunner.run(context);
             }
+            // 3b. start scheduler
+            if (schedulerTriggers > 0) {
+                scheduler.start();
+                StringBuilder sb = new StringBuilder();
+                sb.append("Scheduled jobs next fire time by ").append(schedulerTriggers).append(" triggers: ");
+                QuartzUtil.getNextFireTimes(scheduler, sb);
+                log.info(() -> sb.toString());
+            }
 
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
-            //4. health inspection
+            // 4. health inspection
             StringBuilder sb = new StringBuilder();
             sb.append(BootConstant.BR).append(HealthMonitor.PROMPT);
             if (healthInspector != null) {
@@ -312,7 +323,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 log.warn(sb);
             }
 
-            //5a. start server: gRPC
+            // 5a. start server: gRPC
             log.trace("hasGRPCImpl.bs=" + gRPCBindableServiceImplClasses);
             log.trace("hasGRPCImpl.ssd=" + gRPCServerServiceDefinitionImplClasses);
             if (hasGRPCImpl) {
@@ -346,7 +357,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 }
             }
 
-            //5b. start server: HTTP
+            // 5b. start server: HTTP
             log.trace("hasControllers=" + hasControllers);
             if (hasControllers && NioConfig.cfg.isAutoStart()) {
                 try (var a = Timeout.watch("starting Web Server", timeoutMs).withDesc(timeoutDesc)) {
@@ -357,7 +368,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 }
             }
 
-            //6. announcement
+            // 6. announcement
             log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID));
 
             String fullConfigInfo = sb.toString();
@@ -389,6 +400,13 @@ abstract public class SummerApplication extends SummerBigBang {
         }
         if (instrumentationMgr != null) {
             instrumentationMgr.shutdown();
+        }
+        if (scheduler != null) {
+            try {
+                scheduler.shutdown();
+            } catch (SchedulerException ex) {
+                log.warn("Failed to shoutdown scheduler", ex);
+            }
         }
     }
 }

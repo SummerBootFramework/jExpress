@@ -13,34 +13,32 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.config;
+package org.summerboot.jexpress.integration.quartz;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Date;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.quartz.listeners.JobListenerSupport;
 
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
- * @param <E>
  */
-public class EmptyBlockingQueue<E> extends LinkedBlockingQueue<E> implements BlockingQueue<E>, java.io.Serializable {
+public class DSTDailyJobListener extends JobListenerSupport {
 
-    public EmptyBlockingQueue() {
-        super(1);
-    }
+    private static final String JOB_LISTENER_NAME = DSTDailyJobListener.class.getSimpleName();
 
     @Override
-    public boolean add(E e) {
-        return false;
+    public String getName() {
+        return JOB_LISTENER_NAME;
+    }
+    
+    @Override
+    public void jobWasExecuted(final JobExecutionContext context, final JobExecutionException exception) {
+        Date nextFireTime = context.getNextFireTime();
+        if (nextFireTime != null) {
+            return;
+        }
     }
 
-    @Override
-    public int size() {
-        return 0;
-    }
-
-    @Override
-    public int remainingCapacity() {
-        return 0;
-    }
 }

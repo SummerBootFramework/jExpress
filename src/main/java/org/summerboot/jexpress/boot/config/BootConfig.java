@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.boot.config;
 
+import org.summerboot.jexpress.util.concurrent.EmptyBlockingQueue;
 import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.BeanUtil;

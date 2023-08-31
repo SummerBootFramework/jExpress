@@ -226,6 +226,9 @@ public class BackOffice extends BootConfig {
     private String gRPCConfigFileName = "cfg_grpc.properties";
 
     @ConfigHeader(title = "4.2 Default Log4j2.xml Variables Naming")
+    @Config(key = "naming.log4j2.xml.var.logId", defaultValue = "logId")
+    private String log4j2LogId = "logId";
+
     @Config(key = "naming.log4j2.xml.var.logPath", defaultValue = "logPath")
     private String log4j2LogFilePath = "logPath";
 
@@ -343,6 +346,10 @@ public class BackOffice extends BootConfig {
 
     public String getgRPCConfigFileName() {
         return gRPCConfigFileName;
+    }
+
+    public String getLog4J2LogId() {
+        return log4j2LogId;
     }
 
     public String getLog4j2LogFilePath() {

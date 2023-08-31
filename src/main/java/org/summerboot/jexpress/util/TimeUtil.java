@@ -16,6 +16,8 @@
 package org.summerboot.jexpress.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -25,6 +27,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.zone.ZoneOffsetTransition;
+import java.time.zone.ZoneRules;
 import java.util.Calendar;
 import java.util.Random;
 import org.apache.commons.lang3.StringUtils;
@@ -278,5 +282,219 @@ public class TimeUtil {
             this.zonedDateTime = zonedDateTime;
         }
 
+    }
+
+    /**
+     * Use system default ZoneId Not working for Israel: Friday before last
+     * Sunday
+     *
+     * @param hour
+     * @param minute
+     * @return
+     */
+    public static String cronExpression4JobSkippedWhenDSTStarts(int hour, int minute) {
+        return getAnnualCompensationForDSTGapCronExpression(ZoneId.systemDefault(), hour, minute);
+    }
+
+    public static class ZoneOffsetTransitionInfo {
+
+        private final ZoneId zoneId;
+        private final ZoneOffsetTransition dstStartTransition;
+        private final int dstStartHour;
+        private final long durationMinutes;
+
+        private final long dstStartMinuteOfDay;
+        private final long dstEndMinuteOfDay;
+
+        public ZoneOffsetTransitionInfo(ZoneId zoneId, ZoneOffsetTransition dstStartTransition) {
+            this.zoneId = zoneId;
+            this.dstStartTransition = dstStartTransition;
+            this.dstStartHour = dstStartTransition.getDateTimeBefore().getHour();
+            this.durationMinutes = dstStartTransition.getDuration().toMinutes();// Australia/Lord_Howe Australia/LHI: 30minutes, default: 60minutes, Antarctica/Troll: 120minutes
+            this.dstStartMinuteOfDay = this.dstStartHour * 60;
+            this.dstEndMinuteOfDay = this.dstStartMinuteOfDay + this.durationMinutes;
+        }
+
+        public ZoneId getZoneId() {
+            return zoneId;
+        }
+
+        public ZoneOffsetTransition getDstStartTransition() {
+            return dstStartTransition;
+        }
+
+        public int getDstStartHour() {
+            return dstStartHour;
+        }
+
+        public long getDurationMinutes() {
+            return durationMinutes;
+        }
+
+        public long getDstStartMinuteOfDay() {
+            return dstStartMinuteOfDay;
+        }
+
+        public long getDstEndMinuteOfDay() {
+            return dstEndMinuteOfDay;
+        }
+
+        public boolean willDailyJobBeSkippedWhenDSTStarts(int hour, int minute) {
+            long jobMinuteOfDay = hour * 60 + minute;
+            return jobMinuteOfDay >= dstStartMinuteOfDay && jobMinuteOfDay < dstEndMinuteOfDay;
+        }
+
+        public String buildCronExpression4JobSkippedWhenDSTStarts(int hour, int minute) {
+            if (!willDailyJobBeSkippedWhenDSTStarts(hour, minute)) {
+                return null;
+            }
+            // 3. build cron expression for a yearly cron job on DST starting day
+            long durationHours = toDurationHours(durationMinutes);
+            LocalDateTime dstDate = dstStartTransition.getDateTimeAfter();
+            int month = dstDate.getMonthValue();// 3 = March
+            int dayOfWeek = dstDate.getDayOfWeek().getValue();// 1-7: MON-SUN
+            int dayOfMonth = dstDate.getDayOfMonth();// 10 = March 10
+            String dayOfWeekOption = buildCronDSTDayOfWeekOption(zoneId, dayOfWeek, dayOfMonth);
+            String cronExpression4JobSkippedWhenDSTStarts = "0 " + minute + " " + (hour + durationHours) + " ? " + month + " " + dayOfWeekOption;
+            return cronExpression4JobSkippedWhenDSTStarts;
+        }
+    }
+
+    public static ZoneOffsetTransitionInfo getZoneOffsetTransitionInfo(ZoneId zoneId) {
+        // 1. get DST starting info
+        ZoneOffsetTransition[] dstInfo = getDSTChangeInfo(zoneId, ZonedDateTime.now());
+        ZoneOffsetTransition dstStartTransition = dstInfo[0];
+        if (dstStartTransition == null) {
+            return null;
+        }
+        boolean isFuture = dstStartTransition.getInstant().isAfter(Instant.now());
+        if (!isFuture) {
+            // check if DST ends in future
+            ZoneOffsetTransition dstEndTransition = dstInfo[1];
+            if (dstEndTransition == null) {
+                return null;// DST will last forever (i.e. Ontario Bill 214)
+            }
+            // there still will be DST change in future, then get future DST starting info
+            ZonedDateTime zdt = ZonedDateTime.ofInstant(dstEndTransition.getInstant().plusSeconds(86400), zoneId);
+            dstInfo = getDSTChangeInfo(zoneId, zdt);
+            dstStartTransition = dstInfo[0];
+            if (dstStartTransition == null) {
+                return null;// DST will never happen (i.e. Ontario Bill 214)
+            }
+        }
+        return new ZoneOffsetTransitionInfo(zoneId, dstStartTransition);
+    }
+
+    /**
+     * Use user specified ZoneId.
+     * <p>
+     * Warning: Not working for Israel: due to Friday before last Sunday in
+     * March is not supported by cron syntax yet,
+     * <p>
+     * work-around: schedule your job every Friday in March and have some in-job
+     * logic to check whether it is actually the second-to-last before going on.
+     *
+     * @param zoneId
+     * @param hour
+     * @param minute
+     * @return
+     */
+    public static String getAnnualCompensationForDSTGapCronExpression(ZoneId zoneId, int hour, int minute) {
+        if (hour < 0 || hour > 24 || minute < 0 || minute > 60) {
+            return null;
+        }
+        if (zoneId.getId().equals("Israel")) {// TODO: pending cron syntax supports Friday before last Sunday in March at 2:00 
+            return null;
+        }
+        ZoneOffsetTransitionInfo dstStartTransitionInfo = getZoneOffsetTransitionInfo(zoneId);
+        return dstStartTransitionInfo.buildCronExpression4JobSkippedWhenDSTStarts(hour, minute);
+    }
+
+    /**
+     *
+     * @param zoneId
+     * @param zdt
+     * @return Two elements: array[0] is DST starting info or null if DST is not
+     * applied, array[1] is DST ending info or null if DST is not applied
+     */
+    public static ZoneOffsetTransition[] getDSTChangeInfo(ZoneId zoneId, ZonedDateTime zdt) {
+        ZoneRules zoneRules = zoneId.getRules();
+        //ZonedDateTime zdt = ZonedDateTime.now();//ZonedDateTime.of(2017, 1, 1, 10, 0, 0, 0, zoneId);//ZonedDateTime.now();
+        Instant instant = zdt.toInstant();
+
+        ZoneOffsetTransition prevTransition = zoneRules.previousTransition(instant);
+        ZoneOffsetTransition nextTransition = zoneRules.nextTransition(instant);
+
+        ZoneOffsetTransition dstStartTransition = null, dstEndTransition = null;
+        if (prevTransition != null) {
+            if (zoneRules.isDaylightSavings(prevTransition.getInstant())) {
+                dstStartTransition = prevTransition;
+            } else {
+                dstEndTransition = prevTransition;
+            }
+        }
+        if (nextTransition != null) {
+            if (zoneRules.isDaylightSavings(nextTransition.getInstant())) {
+                dstStartTransition = nextTransition;
+            } else {
+                dstEndTransition = nextTransition;
+            }
+        }
+        //print(transition);
+        ZoneOffsetTransition[] ret = {dstStartTransition, dstEndTransition};
+        return ret;
+    }
+
+    public static void print(ZoneOffsetTransition transition) {
+        if (transition == null) {
+            return;
+        }
+        int dstStartHour = transition.getDateTimeBefore().getHour();
+        long durationMinutes = transition.getDuration().toMinutes();
+        boolean isFuture = transition.getInstant().isAfter(Instant.now());
+
+        System.out.println("\ttransition.isFuture=" + isFuture);
+        System.out.println("\ttransition.getInstant=" + transition.getInstant());
+        System.out.println("\ttransition.getDateTimeBefore=" + transition.getDateTimeBefore());
+        System.out.println("\ttransition.getDateTimeAfter=" + transition.getDateTimeAfter());
+        System.out.println("\ttransition.dstStartHour=" + dstStartHour + "am");
+        System.out.println("\ttransition.getDuration=" + durationMinutes + "minutes");
+        System.out.println("\ttransition.getOffsetBefore=" + transition.getOffsetBefore());
+        System.out.println("\ttransition.getOffsetAfter=" + transition.getOffsetAfter());
+        System.out.println("\ttransition.isGap=" + transition.isGap());
+        System.out.println("\ttransition.isOverlap=" + transition.isOverlap());
+    }
+
+    private static final BigDecimal MINUTES60 = BigDecimal.valueOf(60);
+
+    public static int toDurationHours(long durationMinutes) {
+        return BigDecimal.valueOf(durationMinutes).divide(MINUTES60, RoundingMode.CEILING).intValue();
+    }
+
+    private static final BigDecimal DAYS7 = BigDecimal.valueOf(7);
+
+    /**
+     * Not working for Israel: Friday before last Sunday
+     *
+     * @param zoneId
+     * @param dayOfWeek
+     * @param dayOfMonth
+     * @return
+     */
+    public static String buildCronDSTDayOfWeekOption(ZoneId zoneId, int dayOfWeek, int dayOfMonth) {
+        String dayOfWeekOption;
+//        if (zoneId.getId().equals("Israel")) {
+//            dayOfWeekOption = "1L-2";// TODO: pending cron syntax supports Friday before last Sunday in March at 2:00 
+//        } else {
+        int quartzDayOfWeek = (dayOfWeek + 1) % 7;// 1-7: SUN-SAT
+        int quartzDayOfMonthIndex = BigDecimal.valueOf(dayOfMonth).divide(DAYS7, RoundingMode.CEILING).intValue();
+        if (quartzDayOfMonthIndex <= 2) {// First Saturday, First Sunday, Second Sunday
+            dayOfWeekOption = quartzDayOfWeek + "#" + quartzDayOfMonthIndex;
+        } else {// Last Sunday, Last Thursday, Last Friday, Last Saturday, Israel: Friday before last Sunday
+            dayOfWeekOption = quartzDayOfWeek + "L";
+        }
+//        }
+
+        return dayOfWeekOption;
     }
 }

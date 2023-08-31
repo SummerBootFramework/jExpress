@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.3.8</version>
+    <version>2.3.9</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
@@ -172,9 +172,10 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <!-- Commons -->
-        <commons-lang3.version>3.12.0</commons-lang3.version>
+        <commons-lang3.version>3.13.0</commons-lang3.version>
         <commons-cli.version>1.5.0</commons-cli.version>
         <commons-io.version>2.13.0</commons-io.version>
+        <commons-text.version>1.10.0</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.20.0</log4j-api.version>
@@ -182,23 +183,24 @@
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <!-- Security -->
-        <bouncycastle.version>1.75</bouncycastle.version>
+        <bouncycastle.version>1.76</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.93.Final</netty.version>
+        <netty.version>4.1.97.Final</netty.version>
         <netty-tcnative.version>2.0.61.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.56.1</grpc.version>
-        <protobuf.version>3.23.4</protobuf.version>
+        <grpc.version>1.57.2</grpc.version>
+        <guava.version>32.1.2-jre</guava.version>
+        <protobuf.version>3.24.2</protobuf.version>
         <!-- Web JAX-RS -->        
         <swagger.core.version>2.2.15</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
         
         
         <!-- MIME-Type -->
-        <tika.version>2.8.0</tika.version>
+        <tika.version>2.9.0</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>3.1.0</rs-api.version>
         <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
@@ -214,16 +216,18 @@
         <guice.version>5.1.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.2.6.Final</hibernate.version>
+        <hibernate.version>6.2.7.Final</hibernate.version>
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
         <jedis.version>4.4.3</jedis.version>
+        
+        <quartz.version>2.3.2</quartz.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.32</freemarker.version>
         <!-- Barcode -->
-        <zxing.version>3.5.1</zxing.version>
+        <zxing.version>3.5.2</zxing.version>
         <!-- PDF - PDFBox 
         <pdfbox.version>2.0.25</pdfbox.version>-->
         <!-- PDF - com.openhtmltopdf -->	       
@@ -234,7 +238,7 @@
         
         <!-- Testing  -->
         <testng.version>7.8.0</testng.version>        
-        <jdbc.version>8.0.33</jdbc.version>
+        <jdbc.version>8.1.0</jdbc.version>
     </properties>
 
     <dependencies>
@@ -258,12 +262,27 @@
             <artifactId>commons-io</artifactId>
             <version>${commons-io.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>${commons-text.version}</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
         <!--        <dependency>
             <groupId>org.owasp.encoder</groupId>
             <artifactId>encoder</artifactId>
             <version>${owasp.encoder.version}</version>
         </dependency>-->
+       
+        <!-- Reflection -->
+        <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>${reflections.version}</version>
+        </dependency>
 
 
         <!-- Logging -->
@@ -312,15 +331,15 @@
         <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on BouncyCastle-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-            <version>${bouncycastle.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
             <version>${bouncycastle.version}</version>
         </dependency>
+        <!--         https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on BouncyCastle
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>-->
 
         <!-- JWT -->
         <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt Apache 2.0-->
@@ -340,13 +359,13 @@
             <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
             <version>${jwt.version}</version>
         </dependency>
-
         <!-- backward compatibility for jjwt only https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
+        <!--
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>2.3.1</version>
-        </dependency>
+        </dependency>-->
 
 
 
@@ -396,7 +415,14 @@
             <artifactId>grpc-protobuf</artifactId>
             <version>${grpc.version}</version>
             <!--            <scope>provided</scope>-->
-        </dependency>   
+        </dependency>
+        <!-- security patch https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded -->
         <dependency>
             <groupId>io.grpc</groupId>
@@ -418,7 +444,6 @@
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
             <version>${swagger.core.version}</version>
-            <scope>compile</scope>
         </dependency>
         
         <!-- https://mvnrepository.com/artifact/co.elastic.apm/apm-agent-api 
@@ -450,13 +475,6 @@
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
             <version>${jakarta.annotation.version}</version>
-        </dependency>
-       
-        <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>${reflections.version}</version>
         </dependency>
 
 
@@ -532,6 +550,12 @@
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${hibernate.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.eclipse.angus</groupId>
+                    <artifactId>angus-activation</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-hikaricp  LGPL 2.1-->
         <dependency>
@@ -548,7 +572,6 @@
         </dependency>
 
 
-
         <!-- Cache -->
         <!-- https://mvnrepository.com/artifact/redis.clients/jedis MIT-->
         <dependency>
@@ -556,6 +579,26 @@
             <artifactId>jedis</artifactId>
             <version>${jedis.version}</version>
             <scope>provided</scope>
+        </dependency>
+        
+              
+        <!-- Scheduler -->
+        <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+            <version>${quartz.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.zaxxer</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz-jobs</artifactId>
+            <version>${quartz.version}</version>
         </dependency>
 
 
@@ -641,6 +684,12 @@
             <groupId>com.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-slf4j</artifactId>
             <version>${openhtml.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>  	
         <dependency>
             <!-- Optional, leave out if you do not need SVG support. -->
@@ -680,6 +729,6 @@
             <artifactId>mysql-connector-j</artifactId>
             <version>${jdbc.version}</version>
             <scope>test</scope>
-        </dependency>
+        </dependency>  
     </dependencies>  
 </project>

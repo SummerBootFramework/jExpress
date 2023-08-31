@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <Property name="logPattern" value="[${sys:logId}] %d{ISO8601} %p %c{}.%M() [%t] %m %ex%n"/>
+        <!-- usage: %replace{pattern}{regex}{substitution} -->
+        <Property name="logPattern2" value="[${sys:logId}] %d{ISO8601} %p %c{}.%M() [%t] %replace{%enc{%m}{CRLF}}{\\r|\\n|%0D|%0A|%0d|%0a}{|} %uEx%n"/>
+        
+    </Properties>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{ISO8601}{Canada/Eastern} %p %c{}.%M() [%t] %m %ex%n"/>
+            <!-- <PatternLayout pattern="%d{ISO8601}{Canada/Eastern} %p %c{}.%M() [%t] %enc{%m}{CRLF} %ex%n"/>-->
+            <PatternLayout pattern="${sys:logPattern}"/>
         </Console>
 	
         <!-- 
@@ -17,7 +24,7 @@
             filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_status_${sys:serverName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
             immediateFlush="false"
             ignoreExceptions="false">
-            <PatternLayout pattern="%d %p %c{}.%M() [%t] %m %ex%n"/>
+            <PatternLayout pattern="${sys:logPattern}"/>
             <Policies>
                 <SizeBasedTriggeringPolicy size="2MB" />
             </Policies>
@@ -29,7 +36,7 @@
             filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_requests_${sys:serverName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
             immediateFlush="false"
             ignoreExceptions="false">
-            <PatternLayout pattern="%d %p %c{}.%M() [%t] %m %ex%n"/>
+            <PatternLayout pattern="${sys:logPattern}"/>
             <Policies>
                 <SizeBasedTriggeringPolicy size="10MB" />
             </Policies>

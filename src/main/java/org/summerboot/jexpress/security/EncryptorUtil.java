@@ -57,7 +57,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import jakarta.annotation.Nullable;
-import java.io.FileNotFoundException;
 import java.security.spec.EncodedKeySpec;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -79,6 +78,7 @@ import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
+import org.summerboot.jexpress.boot.BootConstant;
 
 /**
  *
@@ -139,7 +139,7 @@ public class EncryptorUtil {
         }
         return ret;
     }
-    static Key SCERET_KEY = new SecretKeySpec(buildSecretKey("changeit"), "AES");
+    static Key SCERET_KEY = new SecretKeySpec(buildSecretKey(BootConstant.DEFAULT_ADMIN_MM), "AES");
 
     public static void init(String applicationPwd) {
         SCERET_KEY = new SecretKeySpec(buildSecretKey(applicationPwd), "AES");
@@ -329,7 +329,7 @@ public class EncryptorUtil {
     }
 
     /**
-     * 
+     *
      * <code>1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096</code>
      * <code>2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out public.pem</code>
      * <code>3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM</code>

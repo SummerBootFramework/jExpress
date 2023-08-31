@@ -45,12 +45,16 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
+import org.quartz.Job;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Order;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.i18n.I18n;
+import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
@@ -85,6 +89,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         guiceInjector = null;
         summerInitializers.clear();
         summerRunners.clear();
+        schedulerTriggers = 0;
     }
 
     private <T extends SummerApplication> T aParallelUniverse(String... args) {
@@ -513,6 +518,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         guiceInjector = Guice.createInjector(Stage.PRODUCTION, applicationModule);
         //NioConfig.agent.setGuiceInjector(guiceInjector);
         scanImplementation_SummerRunner(guiceInjector);
+        schedulerTriggers = scanAnnotation_Scheduled(guiceInjector, callerRootPackageNames);
     }
 
     /**
@@ -562,4 +568,30 @@ abstract public class SummerBigBang extends SummerSingularity {
         }
     }
 
+    protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
+    protected int schedulerTriggers = 0;
+
+    protected int scanAnnotation_Scheduled(Injector injector, String... rootPackageNames) {
+        int triggers = 0;
+        Set<Class<? extends Job>> classes = ReflectionUtil.getAllImplementationsByInterface(Job.class, rootPackageNames);
+
+        if (!classes.isEmpty() && scheduler == null) {
+//            try {
+//                scheduler = new StdSchedulerFactory().getScheduler();
+//                scheduler.setJobFactory(new GuiceJobFactory(injector));
+//                scheduler.getListenerManager().addJobListener(new FixedDelayJobListener());
+//            } catch (SchedulerException ex) {
+//                throw new RuntimeException("Filed to build a Scheduler", ex);
+//            }
+            scheduler = injector.getInstance(Scheduler.class);
+        }
+        for (Class c : classes) {
+            try {
+                triggers += QuartzUtil.addQuartzJob(scheduler, c);
+            } catch (SchedulerException ex) {
+                throw new RuntimeException("Filed to addQuartzJob for " + c, ex);
+            }
+        }
+        return triggers;
+    }
 }

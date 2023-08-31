@@ -39,6 +39,7 @@ import java.util.TreeSet;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 
@@ -156,7 +157,7 @@ public class AuthConfig extends BootConfig {
     private volatile String privateKeyPwd;
 
     protected void generateTemplate_privateKeyPwd(StringBuilder sb) {
-        sb.append(KEY_privateKeyPwd + "=DEC(changeit)\n");
+        sb.append(KEY_privateKeyPwd + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
     }
 
     @Config(key = KEY_publicKeyFile,
