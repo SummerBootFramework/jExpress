@@ -188,7 +188,7 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.95.Final</netty.version>
+        <netty.version>4.1.97.Final</netty.version>
         <netty-tcnative.version>2.0.61.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.58.0</grpc.version>
