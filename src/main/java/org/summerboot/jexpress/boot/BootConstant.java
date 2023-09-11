@@ -22,7 +22,7 @@ package org.summerboot.jexpress.boot;
 public interface BootConstant {
 
     //version
-    String VERSION = "SummerBoot.jExpress 2.3.10-u1";
+    String VERSION = "SummerBoot.jExpress 2.3.11";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
     String DEFAULT_ADMIN_MM = "changeit";
