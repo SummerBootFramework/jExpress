@@ -267,6 +267,7 @@ abstract public class SummerApplication extends SummerBigBang {
         //1. init email
         final SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
         if (postOffice != null) {
+            HealthMonitor.setPostOffice(postOffice);
             postOffice.setAppVersion(super.appVersion);
             //gracefully shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {

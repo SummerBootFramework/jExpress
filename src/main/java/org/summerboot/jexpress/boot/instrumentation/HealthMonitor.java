@@ -23,6 +23,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.integration.smtp.PostOffice;
+import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -38,6 +40,12 @@ public class HealthMonitor {
     protected static NioConfig nioCfg = NioConfig.cfg;
 
     public static final String PROMPT = "\tSelf Inspection Result: ";
+
+    private static PostOffice postOffice;
+
+    public static void setPostOffice(PostOffice po) {
+        postOffice = po;
+    }
 
     private static void startHealthInspectionSingleton(int inspectionIntervalSeconds, HealthInspector healthInspector) {
         if (healthInspector == null || inspectionIntervalSeconds < 1) {
@@ -75,6 +83,9 @@ public class HealthMonitor {
                         sb.append(inspectionReport);
                         sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
                         log.warn(sb);
+                        if (postOffice != null) {
+                            postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Health Inspection Failed", sb.toString(), null, true);
+                        }
                         try {
                             TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
                         } catch (InterruptedException ex) {
@@ -134,7 +145,11 @@ public class HealthMonitor {
 //        }
         serviceAvaliable = healthOk && !paused;
         if (serviceStatusChanged) {
-            log.log(healthOk ? Level.WARN : Level.FATAL, "\n\t server status changed: paused=" + paused + ", OK=" + healthOk + ", serviceAvaliable=" + serviceAvaliable + "\n\t reason: " + reason);
+            String content = "\n\t server status changed: paused=" + paused + ", OK=" + healthOk + ", serviceAvaliable=" + serviceAvaliable + "\n\t reason: " + reason;
+            log.log(healthOk ? Level.WARN : Level.FATAL, content);
+            if (postOffice != null) {
+                postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Service Status Changed", content, null, false);
+            }
         }
     }
 
