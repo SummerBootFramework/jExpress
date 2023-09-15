@@ -175,7 +175,7 @@
         <commons-lang3.version>3.13.0</commons-lang3.version>
         <commons-cli.version>1.5.0</commons-cli.version>
         <commons-io.version>2.13.0</commons-io.version>
-<!--        <commons-text.version>1.10.0</commons-text.version>-->
+        <!--        <commons-text.version>1.10.0</commons-text.version>-->
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.20.0</log4j-api.version>
@@ -220,7 +220,7 @@
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>4.4.3</jedis.version>
+        <jedis.version>5.0.0</jedis.version>
         
         <quartz.version>2.3.2</quartz.version>
 
@@ -232,9 +232,10 @@
         <pdfbox.version>2.0.25</pdfbox.version>-->
         <!-- PDF - com.openhtmltopdf -->	       
         <openhtml.version>1.0.10</openhtml.version>
+        <batik-transcoder.version>1.17</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext7-core.version>7.2.5</itext7-core.version>
-        <itext7-html2pdf.version>4.0.5</itext7-html2pdf.version>
+        <itext7-core.version>8.0.1</itext7-core.version>
+        <itext7-html2pdf.version>5.0.1</itext7-html2pdf.version>
         
         <!-- Testing  -->
         <testng.version>7.8.0</testng.version>        
@@ -263,7 +264,7 @@
             <version>${commons-io.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
             <version>${commons-text.version}</version>
@@ -697,6 +698,13 @@
             <artifactId>openhtmltopdf-svg-support</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
+        <!-- security patch https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-transcoder -->
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-transcoder</artifactId>
+            <version>${batik-transcoder.version}</version>
+        </dependency>
+
         <dependency>
             <!-- Optional, leave out if you do not need MathML support. -->
             <!-- Introduced in RC-13. -->
