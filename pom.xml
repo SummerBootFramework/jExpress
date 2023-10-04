@@ -174,12 +174,12 @@
         <!-- Commons -->
         <commons-lang3.version>3.13.0</commons-lang3.version>
         <commons-cli.version>1.5.0</commons-cli.version>
-        <commons-io.version>2.13.0</commons-io.version>
+        <commons-io.version>2.14.0</commons-io.version>
         <!--        <commons-text.version>1.10.0</commons-text.version>-->
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.20.0</log4j-api.version>
-        <log4j-disruptor.version>3.4.4</log4j-disruptor.version>
+        <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <!-- Security -->
@@ -188,7 +188,7 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.98.Final</netty.version>
+        <netty.version>4.1.99.Final</netty.version>
         <netty-tcnative.version>2.0.61.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.58.0</grpc.version>
