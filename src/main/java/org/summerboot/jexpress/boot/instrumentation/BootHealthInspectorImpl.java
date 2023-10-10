@@ -22,6 +22,7 @@ import java.util.List;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 
 /**
  *
@@ -37,7 +38,7 @@ public class BootHealthInspectorImpl implements HealthInspector {
      */
     @Override
     public List<Err> ping(Object... args) {
-        ServiceError error = new ServiceError(-1);
+        ServiceError error = new ServiceError(BootConstant.APP_ID + "- ping");
         healthCheck(error, null);
         List<Err> errors = error.getErrors();
         return errors;

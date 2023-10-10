@@ -175,7 +175,7 @@ abstract public class BootController extends PingController {
     public void inspect(@Parameter(hidden = true) final ServiceContext context) {
         //HealthInspector healthInspector = getHealthInspector();        
         if (healthInspector == null) {
-            context.error(new Err(BootErrorCode.ACCESS_BASE, null, "HealthInspector not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "HealthInspector not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return;
         }
         List<Err> error = healthInspector.ping(true);
@@ -245,7 +245,7 @@ abstract public class BootController extends PingController {
             @FormParam("j_password") String pwd,
             @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
         if (auth == null) {
-            context.error(new Err(BootErrorCode.ACCESS_BASE, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
         }
         String jwt = auth.signJWT(uid, pwd, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
@@ -280,7 +280,7 @@ abstract public class BootController extends PingController {
     public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final ServiceContext context) {
         //Authenticator auth = getAuthenticator();
         if (auth == null) {
-            context.error(new Err(BootErrorCode.ACCESS_BASE, null, "Authenticator not provided", null)).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return;
         }
         //AuthTokenCache authTokenCache = getAuthTokenCache();

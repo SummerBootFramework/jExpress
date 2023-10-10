@@ -142,7 +142,7 @@ public class ServiceRequest {
             }
         }
         if (value == null && context != null) {
-            Err e = new Err(errorCode, null, key + " is required", null);
+            Err e = new Err(errorCode, null, key + " is required", null, null);
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);
         }
         return value;

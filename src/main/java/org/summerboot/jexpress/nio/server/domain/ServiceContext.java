@@ -51,7 +51,6 @@ import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
 import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.BeanUtil;
 
 /**
  *
@@ -444,7 +443,7 @@ public class ServiceContext {
         try {
             realPath = file.getAbsoluteFile().toPath().normalize().toString();
         } catch (Throwable ex) {
-            Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, "Invalid file path: " + filePath, ex);
+            Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, null, ex, "Invalid file path: " + filePath);
             this.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return false;
         }
@@ -452,7 +451,7 @@ public class ServiceContext {
 
         if (!folder.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "File not exists: " + filePath, null);
+            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, null, null, "File not exists: " + filePath);
             this.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
@@ -461,7 +460,7 @@ public class ServiceContext {
                 || !folder.isDirectory() || folder.isFile()
                 || folder.isHidden() || !folder.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "Malicious file reqeust: " + filePath, null);
+            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Malicious file reqeust: " + filePath);
             // 2. build JSON response with same app error code, and keep the default INFO log level.
             this.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
@@ -477,14 +476,14 @@ public class ServiceContext {
         try {
             realPath = file.getAbsoluteFile().toPath().normalize().toString();
         } catch (Throwable ex) {
-            Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, "Invalid file path: " + filePath, ex);
+            Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, null, ex, "Invalid file path: " + filePath);
             this.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return false;
         }
 
         if (!file.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "File not exists: " + filePath, null);
+            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, null, null, "File not exists: " + filePath);
             this.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
@@ -493,7 +492,7 @@ public class ServiceContext {
                 || file.isDirectory() || !file.isFile()
                 || file.isHidden() || !file.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "Malicious file reqeust: " + filePath, null);
+            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Malicious file reqeust: " + filePath);
             // 2. build JSON response with same app error code, and keep the default INFO log level.
             this.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
@@ -546,7 +545,8 @@ public class ServiceContext {
                 //errorFileContent = errorFileContent..replace("${title}", title);
                 Files.writeString(errorFilePath, errorFileContent);
             } catch (IOException ex) {
-                Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "Failed to generate error page:" + errorFile.getName(), ex);
+                String message = title + ": errCode=" + errorCode + ", desc=" + errorDesc;
+                Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, message, ex, "Failed to generate error page:" + errorFile.getName() + ", error message = " + message);
                 this.error(e);
             }
         }
@@ -661,18 +661,18 @@ public class ServiceContext {
      */
     public ServiceContext error(Err error) {
         if (serviceError == null) {
-            serviceError = new ServiceError(hit);
+            serviceError = new ServiceError(BootConstant.APP_ID + "-" + hit);
         }
         if (error == null) {
             return this;
         }
         serviceError.addError(error);
-        Throwable t = error.getEx();
+        Throwable t = error.getCause();
         if (t != null) {
             cause = t;
         }
         // set log level
-        if (error.getEx() != null) {
+        if (error.getCause() != null) {
             level = Level.ERROR;
         }
         return this;
@@ -693,11 +693,11 @@ public class ServiceContext {
             return this;
         }
         if (serviceError == null) {
-            serviceError = new ServiceError(hit);
+            serviceError = new ServiceError(BootConstant.APP_ID + "-" + hit);
         }
         serviceError.addErrors(es);
         for (Err e : es) {
-            Throwable t = e.getEx();
+            Throwable t = e.getCause();
             if (t != null) {
                 cause = t;
             }
@@ -831,23 +831,31 @@ public class ServiceContext {
     }
 
     public ServiceContext reportError(StringBuilder sb) throws JsonProcessingException {
-        if (this.serviceError == null /*|| file == null*/) {// log error only for file request
+        if (serviceError == null /*|| file == null*/) {// log error only for file request
             return this;
         }
-        if (file != null) {
-            sb.append("\n\n\tError: ");
-            sb.append(BeanUtil.toJson(this.serviceError.showRootCause(true), true, true));
-        } else {
-            List<Err> errors = serviceError.getErrors();
-            if (errors != null && errors.size() > 1) {
-                sb.append("\n\n\tExceptions: ");
-                for (var error : errors) {
-                    if (error.getEx() != null) {
-                        sb.append("\n\t ").append(error.getEx());
-                    }
-                }
+//        if (file != null) {
+//            sb.append("\n\n\tError: ");
+//            sb.append(BeanUtil.toJson(serviceError.showRootCause(true), true, true));
+//        } else {
+//            List<Err> errors = serviceError.getErrors();
+//            if (errors != null && errors.size() > 1) {
+//                sb.append("\n\n\tExceptions: ");
+//                for (var error : errors) {
+//                    if (error.getCause() != null) {
+//                        sb.append("\n\t ").append(error.getCause());
+//                    }
+//                }
+//            }
+//        }
+        List<Err> errors = serviceError.getErrors();
+        if (errors != null && !errors.isEmpty()) {
+            sb.append("\n\n\tErrors: ");
+            for (var error : errors) {
+                sb.append("\n\t ").append(error.toStringEx(false));
             }
         }
+
         return this;
     }
 

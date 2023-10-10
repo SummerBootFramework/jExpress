@@ -196,7 +196,7 @@ public class BootPostOfficeImpl implements PostOffice {
         Err e = null;
         boolean success = sendEmailSync(r, "[Ping] " + appVersion, "just to test if you can receive this email.", false);
         if (!success) {
-            e = new Err(BootErrorCode.ACCESS_ERROR_SMTP, null, "Mail Access Error - failed to send test email to app support", null);
+            e = new Err(BootErrorCode.ACCESS_ERROR_SMTP, null, "Mail Access Error - failed to send test email to app support", null, null);
         }
         List<Err> errors = null;
         if (e != null) {

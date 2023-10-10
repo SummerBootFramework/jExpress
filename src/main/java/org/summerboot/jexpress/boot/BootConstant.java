@@ -15,11 +15,15 @@
  */
 package org.summerboot.jexpress.boot;
 
+import java.util.Random;
+
 /**
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface BootConstant {
+
+    String APP_ID = String.format("%06d", new Random().nextInt(999999));
 
     //version
     String VERSION = "SummerBoot.jExpress 2.3.11";

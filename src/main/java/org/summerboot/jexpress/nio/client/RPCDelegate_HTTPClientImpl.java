@@ -185,7 +185,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @return
      */
     protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> onInterrupted(HttpRequest req, ServiceContext serviceContext, Throwable ex) {
-        Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "RPC Interrupted", ex);
+        Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, null, ex, "RPC Interrupted");
         serviceContext.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
         return new RPCResult(null, false);
     }
