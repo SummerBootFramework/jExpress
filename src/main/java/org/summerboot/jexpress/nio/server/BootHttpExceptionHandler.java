@@ -96,20 +96,23 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
 
     @Override
     public void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTP_CONNECTION_TIMEOUT, ex.getMessage());
-        context.level(Level.WARN);
+        context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
+                .level(Level.WARN)
+                .error(new Err(BootErrorCode.HTTP_CONNECTION_TIMEOUT, null, "Http Connect Timeout", ex, ex.getMessage()));
     }
 
     @Override
     public void onHttpTimeoutException(HttpTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTP_REQUEST_TIMEOUT, ex.getMessage());
-        context.level(Level.WARN);
+        context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
+                .level(Level.WARN)
+                .error(new Err(BootErrorCode.HTTP_REQUEST_TIMEOUT, null, "Http Timeout", ex, ex.getMessage()));
     }
 
     @Override
     public void onRejectedExecutionException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        nak(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, ex.getMessage());
-        context.level(Level.WARN);
+        context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
+                .level(Level.WARN)
+                .error(new Err(BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, null, "Too many request, try again later", ex, ex.getMessage()));
     }
 
     @Override
@@ -130,32 +133,6 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
         nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_PROCESSOR_FAILURE, "Unexpected Failure: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
-    protected void nak(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {
-        // 1. convert to JSON
-        Err e = new Err(appErrorCode, null, null, null, errorMessage);
-        // 2. build JSON context with same app error code, and keep the default INFO log level.
-        context.status(httpResponseStatus).error(e);
-    }
-
-    /**
-     * Build negative acknowledgement context with exception at ERROR level when
-     * ex is not null
-     *
-     * @param context
-     * @param httpResponseStatus
-     * @param appErrorCode
-     * @param errorMessage
-     * @param ex
-     */
-    protected void nakError(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex) {
-        // 1. convert to JSON
-        //Err e = new ServiceError(appErrorCode, null, errorMessage, ex);
-        Err e = new Err(appErrorCode, null, null, ex, errorMessage);
-        // 2. build JSON context with same app error code and exception, and Level.ERROR is used as the default log level when exception is not null, 
-        // the log level will be set to INFO once the exception is null.
-        context.status(httpResponseStatus).error(e);
-    }
-
     /**
      * Build negative acknowledgement context with exception at FATAL level, no
      * matter ex is null or not
@@ -170,10 +147,9 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
      */
     protected void nakFatal(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex, Collection<String> emailTo, String content) {
         // 1. build JSON context with same app error code and exception
-        nakError(context, httpResponseStatus, appErrorCode, errorMessage, ex);
-        // 2. set log level to FATAL
-        context.level(Level.FATAL);
-        // 3. send sendAlertAsync
+        Err e = new Err(appErrorCode, null, null, ex, errorMessage);
+        context.status(httpResponseStatus).level(Level.FATAL).error(e);
+        // 2. send sendAlertAsync
         if (po != null) {
             // build email content
             String briefContent = "caller=" + context.callerId() + ", request#" + context.hit() + ": " + content;

@@ -73,18 +73,22 @@ public class Err<T> {
 //    void showRootCause(boolean isEnable) {
 //        this.cause = isEnable ? this._cause : null;
 //    }
-    @Override
-    public String toString() {
+    public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
         try {
             return BeanUtil.toJson(this, true, true);
         } catch (JsonProcessingException ex) {
-            return toStringEx(true);
+            return toStringEx(false);
         }
     }
 
-    protected String toStringEx(boolean sendRequestParsingErrorToClient) {
-        if (sendRequestParsingErrorToClient) {
+    @Override
+    public String toString() {
+        return toStringEx(true);
+    }
+
+    protected String toStringEx(boolean isForInternalDebug) {
+        if (!isForInternalDebug) {
             return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + "\"}";
         }
         Throwable rootCause = ExceptionUtils.getRootCause(cause);
