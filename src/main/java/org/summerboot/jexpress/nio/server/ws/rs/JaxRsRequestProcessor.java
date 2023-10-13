@@ -353,7 +353,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             Caller caller = context.caller();
             if (caller == null) {
                 context.status(HttpResponseStatus.UNAUTHORIZED)
-                        .error(new Err(BootErrorCode.AUTH_INVALID_USER, null, "Authentication Required", null, "Unkown caller"));
+                        .error(new Err(BootErrorCode.AUTH_INVALID_USER, null, null, null, "Authentication Required - Unkown caller"));
                 return false;
             }
 
@@ -366,7 +366,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 
             if (!isAuthorized) {
                 context.status(HttpResponseStatus.FORBIDDEN)
-                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Authorization Failed", null, "Caller is not in role: " + rolesAllowed));
+                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, null, null, "Authorization Failed - Caller is not in role: " + rolesAllowed));
                 return false;
             }
         }
@@ -374,14 +374,14 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int errorcodeRequestValidationFailed) throws Throwable {
+    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) throws Throwable {
         //2. invoke
         Object ret;
         if (parameterSize > 0) {
             ServiceRequest request = buildServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody);
             Object[] paramValues = new Object[parameterSize];
             for (int i = 0; i < parameterSize; i++) {
-                paramValues[i] = parameterList.get(i).value(errorcodeRequestValidationFailed, request, context);
+                paramValues[i] = parameterList.get(i).value(request, context);
             }
             if (context.error() != null) {
                 return;

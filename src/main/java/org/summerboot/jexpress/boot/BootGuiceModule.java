@@ -40,7 +40,7 @@ import org.summerboot.jexpress.boot.instrumentation.jmx.ServerStatus;
 import org.summerboot.jexpress.boot.instrumentation.jmx.ServerStatusMBean;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.integration.cache.AuthTokenCacheLocalImpl;
-import org.summerboot.jexpress.integration.quartz.SchedulerProvider;
+import org.summerboot.jexpress.integration.quartz.GuiceSchedulerProvider;
 import org.summerboot.jexpress.integration.smtp.BootPostOfficeImpl;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
@@ -141,7 +141,7 @@ public class BootGuiceModule extends AbstractModule {
             memo.append(INFO).append(caller);
         }
         // 7. supports org.quartz with Guice IoC
-        bind(Scheduler.class).toProvider(SchedulerProvider.class).asEagerSingleton();
+        bind(Scheduler.class).toProvider(GuiceSchedulerProvider.class).asEagerSingleton();
     }
 
     /**

@@ -243,7 +243,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         } catch (RejectedExecutionException ex) {
             long queuingTime = System.currentTimeMillis() - start;
             ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
-            Err e = new Err(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Try again later", ex, null);
+            Err e = new Err(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, null, ex, "Too many request, try again later");
             context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
 

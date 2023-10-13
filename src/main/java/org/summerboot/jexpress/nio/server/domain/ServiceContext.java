@@ -546,7 +546,7 @@ public class ServiceContext {
                 Files.writeString(errorFilePath, errorFileContent);
             } catch (IOException ex) {
                 String message = title + ": errCode=" + errorCode + ", desc=" + errorDesc;
-                Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, message, ex, "Failed to generate error page:" + errorFile.getName() + ", error message = " + message);
+                Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, null, ex, "Failed to generate error page:" + errorFile.getName() + ", " + message);
                 this.error(e);
             }
         }

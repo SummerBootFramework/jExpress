@@ -89,7 +89,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
             HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
             nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
         } else {
-            Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause.getClass().getSimpleName());
+            Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -98,21 +98,21 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
     public void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
                 .level(Level.WARN)
-                .error(new Err(BootErrorCode.HTTP_CONNECTION_TIMEOUT, null, "Http Connect Timeout", ex, ex.getMessage()));
+                .error(new Err(BootErrorCode.HTTP_CONNECTION_TIMEOUT, null, null, ex, "Http Connect Timeout: " + ex.getMessage()));
     }
 
     @Override
     public void onHttpTimeoutException(HttpTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
                 .level(Level.WARN)
-                .error(new Err(BootErrorCode.HTTP_REQUEST_TIMEOUT, null, "Http Timeout", ex, ex.getMessage()));
+                .error(new Err(BootErrorCode.HTTP_REQUEST_TIMEOUT, null, null, ex, "Http Request Timeout: " + ex.getMessage()));
     }
 
     @Override
     public void onRejectedExecutionException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
                 .level(Level.WARN)
-                .error(new Err(BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, null, "Too many request, try again later", ex, ex.getMessage()));
+                .error(new Err(BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, null, null, ex, "Too many request, try again later: " + ex.getMessage()));
     }
 
     @Override

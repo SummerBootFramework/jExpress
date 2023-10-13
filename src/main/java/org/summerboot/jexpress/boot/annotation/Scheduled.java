@@ -32,8 +32,8 @@ import java.lang.annotation.Target;
  * @Scheduled(hour = 14, minute = 15, second = 16)// daily: 2:15:16pm everyday
  * @Scheduled(minute = 15, second = 16)// hourly: every hour at the 15th minute and the 16th second
  * @Scheduled(second = 16)// minutely: every minute at the 16th second
- * @Scheduled(fixedRate = 10_000, initialDelay=5_000)// start job after 5 seconds, run job every 10 secsonds no matter how long the job takes
- * @Scheduled(fixedDelay = 10_000, initialDelay=5_000)// start job after 5 seconds, when the job finished wait 10 seconds then start it again
+ * @Scheduled(fixedRateMs = 10_000, initialDelayMs=5_000)// start job after 5 seconds, run job every 10 secsonds no matter how long the job takes
+ * @Scheduled(fixedDelayMs = 10_000, initialDelayMs=5_000)// start job after 5 seconds, when the job finished wait 10 seconds then start it again
  * }</pre>
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -96,7 +96,7 @@ public @interface Scheduled {
      *
      * @return
      */
-    long fixedRate() default 0;
+    long fixedRateMs() default 0;
 
     /**
      * The fixedDelay makes sure that there is a delay of n millisecond between
@@ -110,12 +110,12 @@ public @interface Scheduled {
      *
      * @return
      */
-    long fixedDelay() default 0;
+    long fixedDelayMs() default 0;
 
     /**
      * start job after n millisecond
      *
      * @return
      */
-    long initialDelay() default 0;
+    long initialDelayMs() default 0;
 }
