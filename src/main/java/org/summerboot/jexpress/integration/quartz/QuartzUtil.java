@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.Job;
@@ -38,6 +39,8 @@ import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.annotation.Scheduled;
+import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.ReflectionMetadata;
 import org.summerboot.jexpress.util.TimeUtil;
 
 /**
@@ -45,6 +48,8 @@ import org.summerboot.jexpress.util.TimeUtil;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class QuartzUtil {
+
+    private static final org.apache.logging.log4j.Logger log = LogManager.getLogger(QuartzUtil.class);
 
     public static final TimeUtil.ZoneOffsetTransitionInfo DEFAULT_DST_Transition_INFO = TimeUtil.getZoneOffsetTransitionInfo(ZoneId.systemDefault());
 
@@ -61,16 +66,102 @@ public class QuartzUtil {
             return 0;
         }
 
-        int[] daysOfMonth = scheduledAnnotation.daysOfMonth();
-        int[] daysOfWeek = scheduledAnnotation.daysOfWeek();
-        int hour = scheduledAnnotation.hour();
-        int minute = scheduledAnnotation.minute();
-        int second = scheduledAnnotation.second();
-        String[] cronExpressions = scheduledAnnotation.cron();
+        String[] cronExpressions;
+        ReflectionMetadata<String[]> stringArrayFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.cronField());
+        try {
+            String[] cronExpressionsConfig = stringArrayFieldValue.value();
+            String[] cronExpressionsHardcoded = scheduledAnnotation.cron();
+            cronExpressions = BeanUtil.arrayMergeAndRemoveDuplicated(cronExpressionsConfig, cronExpressionsHardcoded);
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(stringArrayFieldValue.buildClassCastExceptionDesc("String[]"), ex);
+        }
 
-        long fixedRateMs = scheduledAnnotation.fixedRateMs();
-        long fixedDelayMs = scheduledAnnotation.fixedDelayMs();
-        long initialDelayMs = scheduledAnnotation.initialDelayMs();
+        int[] daysOfMonth;
+        ReflectionMetadata<int[]> intArrayFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.daysOfMonthField());
+        try {
+            int[] daysOfMonthConfig = intArrayFieldValue.value();
+            int[] daysOfMonthHardcoded = scheduledAnnotation.daysOfMonth();
+            daysOfMonth = BeanUtil.arrayMergeAndRemoveDuplicated(daysOfMonthConfig, daysOfMonthHardcoded);
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intArrayFieldValue.buildClassCastExceptionDesc("int[]"), ex);
+        }
+
+        int[] daysOfWeek;
+        intArrayFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.daysOfWeekField());
+        try {
+            int[] daysOfWeekhConfig = intArrayFieldValue.value();
+            int[] daysOfWeekHardcoded = scheduledAnnotation.daysOfWeek();
+            daysOfWeek = BeanUtil.arrayMergeAndRemoveDuplicated(daysOfWeekhConfig, daysOfWeekHardcoded);
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intArrayFieldValue.buildClassCastExceptionDesc("int[]"), ex);
+        }
+
+        int hour = scheduledAnnotation.hour();// hardcoded
+        ReflectionMetadata<Integer> intFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.hourField());
+        try {
+            Integer hourConfig = intFieldValue.value();
+            if (hourConfig != null) {
+                hour = hourConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("int"), ex);
+        }
+
+        int minute = scheduledAnnotation.minute();// hardcoded
+        intFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.minuteField());
+        try {
+            Integer minuteConfig = intFieldValue.value();
+            if (minuteConfig != null) {
+                minute = minuteConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("int"), ex);
+        }
+
+        int second = scheduledAnnotation.second();// hardcoded
+        intFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.secondField());
+        try {
+            Integer secondConfig = intFieldValue.value();
+            if (secondConfig != null) {
+                second = secondConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("int"), ex);
+        }
+
+        long fixedRateMs = scheduledAnnotation.fixedRateMs();// hardcoded
+        ReflectionMetadata<Long> longFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.fixedRateMsField());
+        try {
+            Long fixedRateMsConfig = longFieldValue.value();
+            if (fixedRateMsConfig != null) {
+                fixedRateMs = fixedRateMsConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("long"), ex);
+        }
+
+        long fixedDelayMs = scheduledAnnotation.fixedDelayMs();// hardcoded
+        longFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.fixedDelayMsField());
+        try {
+            Long fixedDelayMsConfig = longFieldValue.value();
+            if (fixedDelayMsConfig != null) {
+                fixedDelayMs = fixedDelayMsConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("long"), ex);
+        }
+
+        long initialDelayMs = scheduledAnnotation.initialDelayMs();// hardcoded
+        longFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.initialDelayMsField());
+        try {
+            Long initialDelayMsConfig = longFieldValue.value();
+            if (initialDelayMsConfig != null) {
+                initialDelayMs = initialDelayMsConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("long"), ex);
+        }
+
         return addQuartzJob(scheduler, jobClass, daysOfMonth, daysOfWeek, hour, minute, second, fixedRateMs, fixedDelayMs, initialDelayMs, cronExpressions);
     }
 
@@ -122,8 +213,8 @@ public class QuartzUtil {
      * @param second 0-59
      * @param fixedRateMs The fixedRateMs runs the scheduled task at every n
      * millisecond
-     * @param fixedDelayMs The fixedDelayMs makes sure that there is a delay of n
-     * millisecond between the finish time of an execution of a task and the
+     * @param fixedDelayMs The fixedDelayMs makes sure that there is a delay of
+     * n millisecond between the finish time of an execution of a task and the
      * start time of the next execution of the task
      * @param initialDelayMs start job after n millisecond
      * @param cronExpressions

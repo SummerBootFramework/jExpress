@@ -47,12 +47,28 @@ public @interface Scheduled {
     String[] cron() default {};
 
     /**
+     * The name of a static field defined in the same class, which contains a
+     * configurable value
+     *
+     * @return
+     */
+    String cronField() default "";
+
+    /**
      * 1-31: for monthlyOnDayAndHourAndMinute(int dayOfMonth, int hour, int
      * minute)
      *
      * @return
      */
     int[] daysOfMonth() default {};
+
+    /**
+     * The name of a static field defined in the same class, which contains a
+     * configurable value
+     *
+     * @return
+     */
+    String daysOfMonthField() default "";
 
     /**
      * 1-7 for SUN-SAT: for atHourAndMinuteOnGivenDaysOfWeek(int hour, int
@@ -63,11 +79,27 @@ public @interface Scheduled {
     int[] daysOfWeek() default {};
 
     /**
+     * The name of a static field defined in the same class, which contains a
+     * configurable value
+     *
+     * @return
+     */
+    String daysOfWeekField() default "";
+
+    /**
      * 0-23: for dailyAtHourAndMinute(int hour, int minute)
      *
      * @return
      */
     int hour() default -1;
+
+    /**
+     * The name of a static field defined in the same class, which contains a
+     * configurable value
+     *
+     * @return
+     */
+    String hourField() default "";
 
     /**
      * 0-59
@@ -77,11 +109,27 @@ public @interface Scheduled {
     int minute() default -1;
 
     /**
+     * The name of a static field defined in the same class, which contains a
+     * configurable value
+     *
+     * @return
+     */
+    String minuteField() default "";
+
+    /**
      * 0-59
      *
      * @return
      */
     int second() default -1;
+
+    /**
+     * The name of a static field defined in the same class, which contains a
+     * configurable value
+     *
+     * @return
+     */
+    String secondField() default "";
 
     /**
      * The fixedRate runs the scheduled task at every n millisecond. It doesn't
@@ -99,6 +147,14 @@ public @interface Scheduled {
     long fixedRateMs() default 0;
 
     /**
+     * The name of a static field defined in the same class, which contains a
+     * configurable value
+     *
+     * @return
+     */
+    String fixedRateMsField() default "";
+
+    /**
      * The fixedDelay makes sure that there is a delay of n millisecond between
      * the finish time of an execution of a task and the start time of the next
      * execution of the task.
@@ -113,9 +169,25 @@ public @interface Scheduled {
     long fixedDelayMs() default 0;
 
     /**
+     * The name of a static field defined in the same class, which contains a
+     * configurable value
+     *
+     * @return
+     */
+    String fixedDelayMsField() default "";
+
+    /**
      * start job after n millisecond
      *
      * @return
      */
     long initialDelayMs() default 0;
+
+    /**
+     * The name of a static field defined in the same class, which contains a
+     * configurable value
+     *
+     * @return
+     */
+    String initialDelayMsField() default "";
 }

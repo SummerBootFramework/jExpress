@@ -173,12 +173,12 @@
         <maven.compiler.target>11</maven.compiler.target>
         <!-- Commons -->
         <commons-lang3.version>3.13.0</commons-lang3.version>
-        <commons-cli.version>1.5.0</commons-cli.version>
-        <commons-io.version>2.14.0</commons-io.version>
-        <!--        <commons-text.version>1.10.0</commons-text.version>-->
+        <commons-cli.version>1.6.0</commons-cli.version>
+        <commons-io.version>2.15.0</commons-io.version>
+        <!--        <commons-text.version>1.11.0</commons-text.version>-->
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
-        <log4j-api.version>2.20.0</log4j-api.version>
+        <log4j-api.version>2.21.1</log4j-api.version>
         <log4j-disruptor.version>3.4.4</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
@@ -191,16 +191,16 @@
         <netty.version>4.1.100.Final</netty.version>
         <netty-tcnative.version>2.0.62.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.58.0</grpc.version>
+        <grpc.version>1.59.0</grpc.version>
         <guava.version>32.1.3-jre</guava.version>
         <protobuf.version>3.24.4</protobuf.version>
         <!-- Web JAX-RS -->        
-        <swagger.core.version>2.2.16</swagger.core.version>
+        <swagger.core.version>2.2.18</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
         
         
         <!-- MIME-Type -->
-        <tika.version>2.9.0</tika.version>
+        <tika.version>2.9.1</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>3.1.0</rs-api.version>
         <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
@@ -220,7 +220,7 @@
         <hikari-cp.version>5.0.1</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>5.0.0</jedis.version>
+        <jedis.version>5.0.2</jedis.version>
         
         <quartz.version>2.3.2</quartz.version>
 
@@ -234,12 +234,12 @@
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.17</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext7-core.version>8.0.1</itext7-core.version>
-        <itext7-html2pdf.version>5.0.1</itext7-html2pdf.version>
+        <itext7-core.version>8.0.2</itext7-core.version>
+        <itext7-html2pdf.version>5.0.2</itext7-html2pdf.version>
         
         <!-- Testing  -->
         <testng.version>7.8.0</testng.version>        
-        <jdbc.version>8.1.0</jdbc.version>
+        <jdbc.version>8.2.0</jdbc.version>
     </properties>
 
     <dependencies>

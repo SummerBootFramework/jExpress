@@ -28,6 +28,7 @@ import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.ReferenceCountUtil;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +48,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.util.TimeUtil;
 
 /**
  *
@@ -56,6 +58,8 @@ import org.summerboot.jexpress.util.FormatterUtil;
 public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> implements ErrorAuditor {
 
     protected Logger log = LogManager.getLogger(this.getClass());
+
+    protected ZoneId zoneId = ZoneId.systemDefault();
 
     protected static NioConfig nioCfg = NioConfig.cfg;
     protected String protectedContectReplaceWith = "***";
@@ -185,6 +189,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         //line2,3
                         sb.append("\n\t").append(requestMetaInfo).append("\n\tresponse_").append(hitIndex).append("=").append(status)
                                 .append(", error=").append(errorCount)
+                                .append(", FullHttpRequest.t0=").append(TimeUtil.toOffsetDateTime(start, zoneId))
                                 .append(", queuing=").append(queuingTime).append("ms, process=").append(processTime);
                         if (overtime) {
                             sb.append("ms, response.ot=");
