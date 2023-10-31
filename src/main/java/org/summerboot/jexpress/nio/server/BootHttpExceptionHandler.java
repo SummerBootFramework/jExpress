@@ -55,15 +55,15 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
 
     @Override
     public void onActionNotFound(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
-        Err e = new Err(BootErrorCode.AUTH_INVALID_URL, null, "path not found: " + httptMethod + " " + httpRequestPath, null);
+        Err e = new Err(BootErrorCode.AUTH_INVALID_URL, null, null, null, "Action not found: " + httptMethod + " " + httpRequestPath);
         context.error(e).status(HttpResponseStatus.NOT_FOUND);
     }
 
     @Override
     public void onNamingException(NamingException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         if (ex instanceof AuthenticationException) {
-            Err e = new Err(BootErrorCode.AUTH_INVALID_USER, null, "Authentication failed", null);
-            context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            Err e = new Err(BootErrorCode.AUTH_INVALID_USER, null, null, null, "Authentication failed");
+            context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause == null) {
@@ -73,7 +73,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
                 HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
                 nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
             } else {
-                Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, cause.getClass().getSimpleName(), ex);
+                Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, null, ex, cause.getClass().getSimpleName());
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
             }
         }
@@ -89,27 +89,30 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
             HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
             nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
         } else {
-            Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, cause.getClass().getSimpleName(), ex);
+            Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTP_CONNECTION_TIMEOUT, ex.getMessage());
-        context.level(Level.WARN);
+        context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
+                .level(Level.WARN)
+                .error(new Err(BootErrorCode.HTTP_CONNECTION_TIMEOUT, null, null, ex, "Http Connect Timeout: " + ex.getMessage()));
     }
 
     @Override
     public void onHttpTimeoutException(HttpTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        nak(context, HttpResponseStatus.GATEWAY_TIMEOUT, BootErrorCode.HTTP_REQUEST_TIMEOUT, ex.getMessage());
-        context.level(Level.WARN);
+        context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
+                .level(Level.WARN)
+                .error(new Err(BootErrorCode.HTTP_REQUEST_TIMEOUT, null, null, ex, "Http Request Timeout: " + ex.getMessage()));
     }
 
     @Override
     public void onRejectedExecutionException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        nak(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, ex.getMessage());
-        context.level(Level.WARN);
+        context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
+                .level(Level.WARN)
+                .error(new Err(BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, null, null, ex, "Too many request, try again later: " + ex.getMessage()));
     }
 
     @Override
@@ -130,32 +133,6 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
         nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_PROCESSOR_FAILURE, "Unexpected Failure: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
-    protected void nak(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage) {
-        // 1. convert to JSON
-        Err e = new Err(appErrorCode, null, errorMessage, null);
-        // 2. build JSON context with same app error code, and keep the default INFO log level.
-        context.status(httpResponseStatus).error(e);
-    }
-
-    /**
-     * Build negative acknowledgement context with exception at ERROR level when
-     * ex is not null
-     *
-     * @param context
-     * @param httpResponseStatus
-     * @param appErrorCode
-     * @param errorMessage
-     * @param ex
-     */
-    protected void nakError(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex) {
-        // 1. convert to JSON
-        //Err e = new ServiceError(appErrorCode, null, errorMessage, ex);
-        Err e = new Err(appErrorCode, null, errorMessage, ex);
-        // 2. build JSON context with same app error code and exception, and Level.ERROR is used as the default log level when exception is not null, 
-        // the log level will be set to INFO once the exception is null.
-        context.status(httpResponseStatus).error(e);
-    }
-
     /**
      * Build negative acknowledgement context with exception at FATAL level, no
      * matter ex is null or not
@@ -170,10 +147,9 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
      */
     protected void nakFatal(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex, Collection<String> emailTo, String content) {
         // 1. build JSON context with same app error code and exception
-        nakError(context, httpResponseStatus, appErrorCode, errorMessage, ex);
-        // 2. set log level to FATAL
-        context.level(Level.FATAL);
-        // 3. send sendAlertAsync
+        Err e = new Err(appErrorCode, null, null, ex, errorMessage);
+        context.status(httpResponseStatus).level(Level.FATAL).error(e);
+        // 2. send sendAlertAsync
         if (po != null) {
             // build email content
             String briefContent = "caller=" + context.callerId() + ", request#" + context.hit() + ": " + content;

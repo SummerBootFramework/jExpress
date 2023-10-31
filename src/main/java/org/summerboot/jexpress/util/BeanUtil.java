@@ -29,7 +29,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
+import java.lang.reflect.Array;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
@@ -213,4 +215,129 @@ public class BeanUtil {
 //        String schemaString = JacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(schema);
 //        System.out.println(schemaString);
 //    }
+    /**
+     * Good for all type of arrays, including primitive array
+     *
+     * @param <T>
+     * @param array1
+     * @param array2
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T arrayMergeAndRemoveDuplicated(T array1, T array2) {
+        if (array1 == null) {
+            return (T) arrayRemoveDuplicated(array2);
+        }
+        if (array2 == null) {
+            return (T) arrayRemoveDuplicated(array1);
+        }
+        if (!array1.getClass().isArray() || !array2.getClass().isArray()) {
+            throw new IllegalArgumentException("Both parameters must be array");
+        }
+
+        Class<?> arrayType1 = array1.getClass().getComponentType();
+        Class<?> arrayType2 = array2.getClass().getComponentType();
+        if (!arrayType1.equals(arrayType2)) {
+            throw new IllegalArgumentException("Two arrays have different types: " + arrayType1 + " and " + arrayType2);
+        }// now the afterward typecasting below will be safe 
+
+        int len1 = Array.getLength(array1);
+        if (len1 == 0) {
+            return (T) arrayRemoveDuplicated(array2);
+        }
+        int len2 = Array.getLength(array2);
+        if (len2 == 0) {
+            return (T) arrayRemoveDuplicated(array1);
+        }
+        // create the merged array to be returned
+        T result = (T) Array.newInstance(arrayType1, len1 + len2);
+        // copy to merged array
+        System.arraycopy(array1, 0, result, 0, len1);
+        System.arraycopy(array2, 0, result, len1, len2);
+
+        //return (T) arrayRemoveDuplicated((Object[]) result);
+        return (T) arrayRemoveDuplicated(result);
+    }
+
+    /**
+     * Good for all type of arrays, including primitive array
+     *
+     * @param <T>
+     * @param array
+     * @return
+     */
+    public static <T> T arrayRemoveDuplicated(T array) {
+        if (array == null) {
+            return null;
+        }
+        if (!array.getClass().isArray()) {
+            throw new IllegalArgumentException("Parameter must be array");
+        }
+        int len = Array.getLength(array);
+        if (len < 2) {
+            return array;
+        }
+        Class<?> arrayType = array.getClass().getComponentType();
+        T noDuplicates = (T) Array.newInstance(arrayType, len);
+        int uniqueCount = 0;
+
+        for (int i = 0; i < len; i++) {
+            Object element = Array.get(array, i);
+            if (!isArrayElementPresent(noDuplicates, element)) {
+                Array.set(noDuplicates, uniqueCount, element);
+                uniqueCount++;
+            }
+        }
+        T truncatedArray = (T) Array.newInstance(arrayType, uniqueCount);
+        System.arraycopy(noDuplicates, 0, truncatedArray, 0, uniqueCount);
+        return truncatedArray;
+    }
+
+    /**
+     * Good for all type of arrays, including primitive array
+     *
+     * @param <T>
+     * @param array
+     * @param element
+     * @return
+     */
+    public static <T> boolean isArrayElementPresent(T array, T element) {
+        int len = Array.getLength(array);
+        for (int i = 0; i < len; i++) {
+            Object e1 = Array.get(array, i);
+            if (Objects.equals(e1, element)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static <T> T[] arrayRemoveDuplicated(T[] array) {
+        if (array == null || array.length < 2) {
+            return array;
+        }
+        Class<?> arrayType = array.getClass().getComponentType();
+        T[] noDuplicates = (T[]) Array.newInstance(arrayType, array.length);
+        int uniqueCount = 0;
+
+        for (T element : array) {
+            if (!isArrayElementPresent(noDuplicates, element)) {
+                noDuplicates[uniqueCount] = element;
+                uniqueCount++;
+            }
+        }
+        T[] truncatedArray = (T[]) Array.newInstance(arrayType, uniqueCount);
+        System.arraycopy(noDuplicates, 0, truncatedArray, 0, uniqueCount);
+        return truncatedArray;
+    }
+
+    public static <T> boolean isArrayElementPresent(T[] array, T element) {
+        for (T el : array) {
+            //if (el == element) {
+            if (Objects.equals(el, element)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

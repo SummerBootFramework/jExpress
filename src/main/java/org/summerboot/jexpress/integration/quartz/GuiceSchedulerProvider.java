@@ -24,11 +24,11 @@ import org.quartz.impl.StdSchedulerFactory;
 
 /**
  * need to add the following into GuiceModule:
- * bind(Scheduler.class).toProvider(SchedulerProvider.class).asEagerSingleton();
+ * bind(Scheduler.class).toProvider(GuiceSchedulerProvider.class).asEagerSingleton();
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class SchedulerProvider implements Provider<Scheduler> {
+public class GuiceSchedulerProvider implements Provider<Scheduler> {
 
     @Inject
     private Injector injector;
@@ -40,7 +40,7 @@ public class SchedulerProvider implements Provider<Scheduler> {
             Scheduler scheduler = factory.getScheduler();
 
             scheduler.setJobFactory(new GuiceJobFactory(injector));
-            scheduler.getListenerManager().addJobListener(new FixedDelayJobListener());
+            scheduler.getListenerManager().addJobListener(new BootJobListener());
             return scheduler;
         } catch (SchedulerException ex) {
             throw new RuntimeException("Failed to provide a Scheduler", ex);

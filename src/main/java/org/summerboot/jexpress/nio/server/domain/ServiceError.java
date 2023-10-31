@@ -31,7 +31,7 @@ import java.util.List;
 public class ServiceError {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The index of requests received by current server since start")
-    private long ref;
+    private final String ref;
 
     @JsonIgnore
     private Object attachedData;
@@ -39,7 +39,7 @@ public class ServiceError {
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "The optional error list")
     private List<Err> errors;
 
-    public ServiceError(long ref) {
+    public ServiceError(String ref) {
         this.ref = ref;
     }
 
@@ -49,21 +49,21 @@ public class ServiceError {
     }
 
     public ServiceError(String errorCode, String errorTag, String errorDesc, Throwable ex) {
+        this.ref = null;
         if (errors == null) {
             errors = new ArrayList();
         }
-        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex));
+        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex, null));
     }
 
-    ServiceError showRootCause(boolean isEnable) {
-        if (errors != null) {
-            for (var err : errors) {
-                err.showRootCause(isEnable);
-            }
-        }
-        return this;
-    }
-
+//    ServiceError showRootCause(boolean isEnable) {
+//        if (errors != null) {
+//            for (var err : errors) {
+//                err.showRootCause(isEnable);
+//            }
+//        }
+//        return this;
+//    }
     @Override
     public String toString() {
         return "ServiceError{" + "ref=" + ref + ", attachedData=" + attachedData + ", errors=" + errors + '}';
@@ -86,14 +86,13 @@ public class ServiceError {
         }
     }
 
-    public long getRef() {
+    public String getRef() {
         return ref;
     }
 
-    public void setRef(long ref) {
-        this.ref = ref;
-    }
-
+//    public void setRef(long ref) {
+//        this.ref = BootConstant.APP_ID + "-" + ref;
+//    }
     public Object getAttachedData() {
         return attachedData;
     }
@@ -139,10 +138,14 @@ public class ServiceError {
     }
 
     public void addError(int errorCode, String errorTag, String errorDesc, Throwable ex) {
+        addError(errorCode, errorTag, errorDesc, ex, null);
+    }
+
+    public void addError(int errorCode, String errorTag, String errorDesc, Throwable ex, String internalInfo) {
         if (errors == null) {
             errors = new ArrayList();
         }
-        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex));
+        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex, internalInfo));
     }
 
 }

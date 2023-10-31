@@ -541,8 +541,8 @@ public abstract class BootConfig implements JExpressConfig {
         List<String> ret = new ArrayList<>();
         lineBreak(memo.title(), null, ret);
         lineBreak(memo.desc(), null, ret);
-        lineBreak(memo.format(), "Format: ", ret);
-        lineBreak(memo.example(), "Example: ", ret);
+        lineBreak(memo.format(), "Format> ", ret);
+        lineBreak(memo.example(), "Example> ", ret);
 
         return ret;
     }

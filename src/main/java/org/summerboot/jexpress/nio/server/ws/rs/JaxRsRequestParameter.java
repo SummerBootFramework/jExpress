@@ -44,6 +44,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 //import jakarta.xml.bind.JAXBException;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootErrorCode;
 
 /**
  *
@@ -204,7 +205,7 @@ class JaxRsRequestParameter {
         System.out.println(a.contains("Bc"));
     }
 
-    public Object value(int errorcodeRequestValidationFailed, ServiceRequest request, ServiceContext context) /*throws JAXBException*/ {
+    public Object value(ServiceRequest request, ServiceContext context) /*throws JAXBException*/ {
         ParamType currentType = type;
         if (currentType.equals(ParamType.Body_OnDemond_BylClientRquestType)) {
             String ct = request.getHttpHeaders().get(HttpHeaderNames.CONTENT_TYPE);
@@ -224,19 +225,19 @@ class JaxRsRequestParameter {
                 return context;
             case PathParam:
                 String v = request.getPathParam(key);
-                return parse(v, defaultValue, context, errorcodeRequestValidationFailed);
+                return parse(v, defaultValue, context);
             case MatrixParam:
                 v = request.getMatrixParam(key);
-                return parse(v, defaultValue, context, errorcodeRequestValidationFailed);
+                return parse(v, defaultValue, context);
             case QueryParam:
                 v = request.getQueryParam(key);
-                return parse(v, defaultValue, context, errorcodeRequestValidationFailed);
+                return parse(v, defaultValue, context);
             case FormParam:
                 v = request.getFormParam(key);
-                return parse(v, defaultValue, context, errorcodeRequestValidationFailed);
+                return parse(v, defaultValue, context);
             case HeaderParam:
                 v = request.getHttpHeaders().get(key);
-                return parse(v, defaultValue, context, errorcodeRequestValidationFailed);
+                return parse(v, defaultValue, context);
             case CookieParam:
                 String value = request.getHttpHeaders().get(HttpHeaderNames.COOKIE);
                 if (value == null) {
@@ -268,14 +269,14 @@ class JaxRsRequestParameter {
                     }
                 } catch (Throwable ex) {
                     // 1. convert to JSON
-                    Err e = new Err(errorcodeRequestValidationFailed, null, "Bad request: " + ex.toString(), null);
+                    Err e = new Err(BootErrorCode.BAD_RQUEST_UNKNOWN_JSON_REQUEST_BODY, null, null, ex, "Unknown request(JSON) body: " + ex.toString());
                     // 2. build JSON response with same app error code, and keep the default INFO log level.
                     context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     return null;
                 }
                 if (postDataObj == null) {
                     if (isRequired) {
-                        Err e = new Err(errorcodeRequestValidationFailed, null, "missing " + type, null);
+                        Err e = new Err(BootErrorCode.BAD_RQUEST_MISSING_JSON_REQUEST_BODY, null, null, null, "Missing request(JSON) body: " + type);
                         context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     } else {
                         return null;
@@ -288,7 +289,7 @@ class JaxRsRequestParameter {
                             String validationError = BeanUtil.getBeanValidationResult(o);
                             if (validationError != null) {
                                 hasError = true;
-                                Err e = new Err(errorcodeRequestValidationFailed, null, validationError, null);
+                                Err e = new Err(BootErrorCode.BAD_RQUEST_INVALID_JSON_REQUEST_BODY, null, null, null, "Invalid request(JSON) body: " + validationError);
                                 // 2. build JSON response with same app error code, and keep the default INFO log level.
                                 context.error(e);
                             }
@@ -300,7 +301,7 @@ class JaxRsRequestParameter {
                     } else {
                         String validationError = BeanUtil.getBeanValidationResult(postDataObj);
                         if (validationError != null) {
-                            Err e = new Err(errorcodeRequestValidationFailed, null, validationError, null);
+                            Err e = new Err(BootErrorCode.BAD_RQUEST_INVALID_JSON_REQUEST_BODY, null, null, null, "Invalid request(JSON) body: " + validationError);
                             // 2. build JSON response with same app error code, and keep the default INFO log level.
                             context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                             return null;
@@ -311,7 +312,7 @@ class JaxRsRequestParameter {
             case Body_STRING:
                 v = request.getHttpPostRequestBody();
                 if (isRequired && StringUtils.isBlank(v)) {
-                    Err e = new Err(errorcodeRequestValidationFailed, null, "missing " + type, null);
+                    Err e = new Err(BootErrorCode.BAD_RQUEST_MISSING_REQUEST_BODY, null, null, null, "Missing request body: " + type);
                     context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                 }
                 return v;
@@ -321,14 +322,14 @@ class JaxRsRequestParameter {
                     postDataObj = BeanUtil.fromXML(targetClass, v);
                 } catch (Throwable ex) {
                     // 1. convert to JSON
-                    Err e = new Err(errorcodeRequestValidationFailed, null, "Bad request: " + ex.toString(), null);
+                    Err e = new Err(BootErrorCode.BAD_RQUEST_UNKNOWN_XML_REQUEST_BODY, null, null, ex, "Unknown request(XML) body: " + ex.toString());
                     // 2. build JSON response with same app error code, and keep the default INFO log level.
                     context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     return null;
                 }
                 if (postDataObj == null) {
                     if (isRequired) {
-                        Err e = new Err(errorcodeRequestValidationFailed, null, "missing " + type, null);
+                        Err e = new Err(BootErrorCode.BAD_RQUEST_MISSING_XML_REQUEST_BODY, null, null, null, "Missing request(XML) body: " + type);
                         context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     } else {
                         return null;
@@ -336,7 +337,7 @@ class JaxRsRequestParameter {
                 } else if (autoBeanValidation) {
                     String validationError = BeanUtil.getBeanValidationResult(postDataObj);
                     if (validationError != null) {
-                        Err e = new Err(errorcodeRequestValidationFailed, null, validationError, null);
+                        Err e = new Err(BootErrorCode.BAD_RQUEST_INVALID_XML_REQUEST_BODY, null, null, null, "Invalid request(XML) body: " + validationError);
                         // 2. build JSON response with same app error code, and keep the default INFO log level.
                         context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                         return null;
@@ -345,11 +346,11 @@ class JaxRsRequestParameter {
                 return postDataObj;
             case Body_OnDemond_BylClientRquestType:
                 v = request.getHttpPostRequestBody();
-                postDataObj = parse(v, defaultValue, context, errorcodeRequestValidationFailed);
+                postDataObj = parse(v, defaultValue, context);
                 if (autoBeanValidation) {
                     String validationError = BeanUtil.getBeanValidationResult(postDataObj);
                     if (validationError != null) {
-                        Err e = new Err(errorcodeRequestValidationFailed, null, validationError, null);
+                        Err e = new Err(BootErrorCode.BAD_RQUEST_INVALID_REQUEST_BODY, null, null, null, "Invalid request body: " + validationError);
                         // 2. build JSON response with same app error code, and keep the default INFO log level.
                         context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                         return null;
@@ -360,13 +361,13 @@ class JaxRsRequestParameter {
         return null;
     }
 
-    private Object parse(String value, String defaultValue, ServiceContext context, int errorcodeRequestValidationFailed) {
+    private Object parse(String value, String defaultValue, ServiceContext context) {
         if (StringUtils.isBlank(value)) {
             if (defaultValue != null) {
                 value = defaultValue;
             } else {
                 if (isRequired) {
-                    Err e = new Err(errorcodeRequestValidationFailed, null, "missing " + type + "{" + key + "}=" + value, null);
+                    Err e = new Err(BootErrorCode.BAD_RQUEST_MISSING_REQUIRED_FILED, null, null, null, "Missing Required Filed: " + type + "{" + key + "}=" + value);
                     context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                 }
                 return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
@@ -375,7 +376,7 @@ class JaxRsRequestParameter {
         try {
             return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, false, false, enumConvert);
         } catch (Throwable ex) {
-            Err e = new Err(errorcodeRequestValidationFailed, null, "invalid " + type + "{" + key + "}=" + value, ex);
+            Err e = new Err(BootErrorCode.BAD_RQUEST_DATA, null, null, ex, "Failed to parse data type: invalid " + type + "{" + key + "}=" + value);
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
         }

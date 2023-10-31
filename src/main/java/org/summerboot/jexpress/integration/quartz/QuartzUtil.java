@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.Job;
@@ -38,6 +39,8 @@ import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.annotation.Scheduled;
+import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.ReflectionMetadata;
 import org.summerboot.jexpress.util.TimeUtil;
 
 /**
@@ -45,6 +48,8 @@ import org.summerboot.jexpress.util.TimeUtil;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class QuartzUtil {
+
+    private static final org.apache.logging.log4j.Logger log = LogManager.getLogger(QuartzUtil.class);
 
     public static final TimeUtil.ZoneOffsetTransitionInfo DEFAULT_DST_Transition_INFO = TimeUtil.getZoneOffsetTransitionInfo(ZoneId.systemDefault());
 
@@ -61,17 +66,103 @@ public class QuartzUtil {
             return 0;
         }
 
-        int[] daysOfMonth = scheduledAnnotation.daysOfMonth();
-        int[] daysOfWeek = scheduledAnnotation.daysOfWeek();
-        int hour = scheduledAnnotation.hour();
-        int minute = scheduledAnnotation.minute();
-        int second = scheduledAnnotation.second();
-        String[] cronExpressions = scheduledAnnotation.cron();
+        String[] cronExpressions;
+        ReflectionMetadata<String[]> stringArrayFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.cronField());
+        try {
+            String[] cronExpressionsConfig = stringArrayFieldValue.value();
+            String[] cronExpressionsHardcoded = scheduledAnnotation.cron();
+            cronExpressions = BeanUtil.arrayMergeAndRemoveDuplicated(cronExpressionsHardcoded, cronExpressionsConfig);
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(stringArrayFieldValue.buildClassCastExceptionDesc("String[]"), ex);
+        }
 
-        long fixedRate = scheduledAnnotation.fixedRate();
-        long fixedDelay = scheduledAnnotation.fixedDelay();
-        long initialDelay = scheduledAnnotation.initialDelay();
-        return addQuartzJob(scheduler, jobClass, daysOfMonth, daysOfWeek, hour, minute, second, fixedRate, fixedDelay, initialDelay, cronExpressions);
+        int[] daysOfMonth;
+        ReflectionMetadata<int[]> intArrayFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.daysOfMonthField());
+        try {
+            int[] daysOfMonthConfig = intArrayFieldValue.value();
+            int[] daysOfMonthHardcoded = scheduledAnnotation.daysOfMonth();
+            daysOfMonth = BeanUtil.arrayMergeAndRemoveDuplicated(daysOfMonthHardcoded, daysOfMonthConfig);
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intArrayFieldValue.buildClassCastExceptionDesc("int[]"), ex);
+        }
+
+        int[] daysOfWeek;
+        intArrayFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.daysOfWeekField());
+        try {
+            int[] daysOfWeekhConfig = intArrayFieldValue.value();
+            int[] daysOfWeekHardcoded = scheduledAnnotation.daysOfWeek();
+            daysOfWeek = BeanUtil.arrayMergeAndRemoveDuplicated(daysOfWeekHardcoded, daysOfWeekhConfig);
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intArrayFieldValue.buildClassCastExceptionDesc("int[]"), ex);
+        }
+
+        int hour = scheduledAnnotation.hour();// hardcoded
+        ReflectionMetadata<Integer> intFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.hourField());
+        try {
+            Integer hourConfig = intFieldValue.value();
+            if (hourConfig != null) {
+                hour = hourConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("int"), ex);
+        }
+
+        int minute = scheduledAnnotation.minute();// hardcoded
+        intFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.minuteField());
+        try {
+            Integer minuteConfig = intFieldValue.value();
+            if (minuteConfig != null) {
+                minute = minuteConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("int"), ex);
+        }
+
+        int second = scheduledAnnotation.second();// hardcoded
+        intFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.secondField());
+        try {
+            Integer secondConfig = intFieldValue.value();
+            if (secondConfig != null) {
+                second = secondConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("int"), ex);
+        }
+
+        long fixedRateMs = scheduledAnnotation.fixedRateMs();// hardcoded
+        ReflectionMetadata<Long> longFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.fixedRateMsField());
+        try {
+            Long fixedRateMsConfig = longFieldValue.value();
+            if (fixedRateMsConfig != null) {
+                fixedRateMs = fixedRateMsConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("long"), ex);
+        }
+
+        long fixedDelayMs = scheduledAnnotation.fixedDelayMs();// hardcoded
+        longFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.fixedDelayMsField());
+        try {
+            Long fixedDelayMsConfig = longFieldValue.value();
+            if (fixedDelayMsConfig != null) {
+                fixedDelayMs = fixedDelayMsConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("long"), ex);
+        }
+
+        long initialDelayMs = scheduledAnnotation.initialDelayMs();// hardcoded
+        longFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.initialDelayMsField());
+        try {
+            Long initialDelayMsConfig = longFieldValue.value();
+            if (initialDelayMsConfig != null) {
+                initialDelayMs = initialDelayMsConfig;
+            }
+        } catch (ClassCastException ex) {
+            throw new TypeNotPresentException(intFieldValue.buildClassCastExceptionDesc("long"), ex);
+        }
+
+        return addQuartzJob(scheduler, jobClass, daysOfMonth, daysOfWeek, hour, minute, second, fixedRateMs, fixedDelayMs, initialDelayMs, cronExpressions);
     }
 
     /**
@@ -83,23 +174,23 @@ public class QuartzUtil {
      * @param hour 0-23
      * @param minute 0-59
      * @param second 0-59
-     * @param fixedRate The fixedRate runs the scheduled task at every n
+     * @param fixedRateMs The fixedRateMs runs the scheduled task at every n
      * millisecond
-     * @param fixedDelay The fixedDelay makes sure that there is a delay of n
-     * millisecond between the finish time of an execution of a task and the
+     * @param fixedDelayMs The fixedDelayMs makes sure that there is a delay of
+     * n millisecond between the finish time of an execution of a task and the
      * start time of the next execution of the task
-     * @param initialDelay start job after n millisecond
+     * @param initialDelayMs start job after n millisecond
      * @param cronExpressions
      * @return number of triggers created
      * @throws SchedulerException
      */
-    public static int addQuartzJob(Scheduler scheduler, Class<? extends Job> jobClass, int[] daysOfMonth, int[] daysOfWeek, Integer hour, Integer minute, Integer second, Long fixedRate, Long fixedDelay, Long initialDelay, String... cronExpressions) throws SchedulerException {
-        boolean isFixedDelayJob = fixedDelay != null && fixedDelay > 0;
+    public static int addQuartzJob(Scheduler scheduler, Class<? extends Job> jobClass, int[] daysOfMonth, int[] daysOfWeek, Integer hour, Integer minute, Integer second, Long fixedRateMs, Long fixedDelayMs, Long initialDelayMs, String... cronExpressions) throws SchedulerException {
+        boolean isFixedDelayJob = fixedDelayMs != null && fixedDelayMs > 0;
         JobDetail jobDetail = JobBuilder.newJob(jobClass)
                 .withIdentity(jobClass.getName(), jobClass.getName())
                 .storeDurably(!isFixedDelayJob)
                 .build();
-        return addQuartzJob(scheduler, jobDetail, daysOfMonth, daysOfWeek, hour, minute, second, fixedRate, fixedDelay, initialDelay, cronExpressions);
+        return addQuartzJob(scheduler, jobDetail, daysOfMonth, daysOfWeek, hour, minute, second, fixedRateMs, fixedDelayMs, initialDelayMs, cronExpressions);
     }
 
     public static final Map<Integer, String> QUARTZ_WEEKDAY_MAP = Map.of(1, "SUN", 2, "MON", 3, "TUE", 4, "WED", 5, "THU", 6, "FRI", 7, "SAT");
@@ -120,18 +211,18 @@ public class QuartzUtil {
      * @param hour 0-23
      * @param minute 0-59
      * @param second 0-59
-     * @param fixedRate The fixedRate runs the scheduled task at every n
+     * @param fixedRateMs The fixedRateMs runs the scheduled task at every n
      * millisecond
-     * @param fixedDelay The fixedDelay makes sure that there is a delay of n
-     * millisecond between the finish time of an execution of a task and the
+     * @param fixedDelayMs The fixedDelayMs makes sure that there is a delay of
+     * n millisecond between the finish time of an execution of a task and the
      * start time of the next execution of the task
-     * @param initialDelay start job after n millisecond
+     * @param initialDelayMs start job after n millisecond
      * @param cronExpressions
      * @return number of triggers created
      * @throws org.quartz.SchedulerException
      */
     public static int addQuartzJob(final Scheduler scheduler, final JobDetail jobDetail, final int[] daysOfMonth, final int[] daysOfWeek, final Integer hour, final Integer minute, final Integer second,
-            final Long fixedRate, final Long fixedDelay, final Long initialDelay, final String... cronExpressions) throws SchedulerException {
+            final Long fixedRateMs, final Long fixedDelayMs, final Long initialDelayMs, final String... cronExpressions) throws SchedulerException {
         boolean isCronJobs = cronExpressions != null && cronExpressions.length > 0;
 
         boolean isMonthlyJob = daysOfMonth != null && daysOfMonth.length > 0;
@@ -142,8 +233,8 @@ public class QuartzUtil {
         boolean isDailyJob = isNotByDay && hour != null && hour >= 0;
         boolean isHourlyJob = isNotByDay && !isDailyJob && minute != null && minute >= 0;
         boolean isMinutelyJob = isNotByDay && !isDailyJob && !isHourlyJob && second != null && second >= 0;
-        boolean isFixedRateJob = fixedRate != null && fixedRate > 0;
-        boolean isFixedDelayJob = fixedDelay != null && fixedDelay > 0;
+        boolean isFixedRateJob = fixedRateMs != null && fixedRateMs > 0;
+        boolean isFixedDelayJob = fixedDelayMs != null && fixedDelayMs > 0;
 
         if ((isMonthlyJob || isWeeklyJob || isWeeklyJobs || isDailyJob || isHourlyJob || isMinutelyJob || isCronJobs || isFixedRateJob) && isFixedDelayJob) {
             throw new SchedulerException("Unable to create Fixed Delay Job with other jobs");
@@ -161,7 +252,7 @@ public class QuartzUtil {
             for (var dayOfMonth : daysOfMonth) {
                 CronTrigger trigger = TriggerBuilder.newTrigger()
                         .forJob(jobKey)
-                        .withDescription(jobName + ".Monthly@" + dayOfMonth + "T" + trim(hour) + ":" + trim(minute))
+                        .withDescription(jobName + ".Monthly@" + dayOfMonth + "md" + trim(hour) + "h:" + trim(minute) + "m")
                         .withSchedule(CronScheduleBuilder.monthlyOnDayAndHourAndMinute(dayOfMonth, trim(hour), trim(minute)))
                         .build();
                 scheduler.scheduleJob(trigger);
@@ -172,7 +263,7 @@ public class QuartzUtil {
             int dayOfWeek = daysOfWeek[0];
             CronTrigger trigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
-                    .withDescription(jobName + ".Weekly@" + QUARTZ_WEEKDAY_MAP.get(dayOfWeek) + "T" + trim(hour) + ":" + trim(minute))
+                    .withDescription(jobName + ".Weekly@" + QUARTZ_WEEKDAY_MAP.get(dayOfWeek) + "md" + trim(hour) + "h:" + trim(minute) + "m")
                     .withSchedule(CronScheduleBuilder.weeklyOnDayAndHourAndMinute(dayOfWeek, trim(hour), trim(minute)))
                     .build();
             scheduler.scheduleJob(trigger);
@@ -185,14 +276,14 @@ public class QuartzUtil {
             }
             CronTrigger trigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
-                    .withDescription(jobName + ".Weekly@" + desc + "T" + trim(hour) + ":" + trim(minute))
+                    .withDescription(jobName + ".Weekly@" + desc + "wd" + trim(hour) + "h:" + trim(minute) + "m")
                     .withSchedule(CronScheduleBuilder.atHourAndMinuteOnGivenDaysOfWeek(trim(hour), trim(minute), dow))
                     .build();
             scheduler.scheduleJob(trigger);
             triggers++;
         }
         if (isDailyJob) {
-            String desc = jobName + ".Daily@" + hour + ":" + trim(minute);
+            String desc = jobName + ".Daily@" + hour + "h:" + trim(minute) + "m";
             CronTrigger trigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
                     .withDescription(desc)
@@ -234,18 +325,18 @@ public class QuartzUtil {
             triggers++;
         }
         if (isFixedRateJob) {
-            long delay = initialDelay;
-            if (initialDelay == null || initialDelay < 0) {
+            long delay = initialDelayMs;
+            if (initialDelayMs == null || initialDelayMs < 0) {
                 delay = 0L;
             }
             Date startTime = new Date(System.currentTimeMillis() + delay);
 
-            String desc = jobName + "@fixedRate:" + fixedRate + "ms, start@" + startTime;
+            String desc = jobName + "@fixedRate:" + fixedRateMs + "ms, start@" + startTime;
             Trigger trigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
                     .withDescription(desc)
                     .withSchedule(SimpleScheduleBuilder.simpleSchedule()
-                            .withIntervalInMilliseconds(fixedRate)
+                            .withIntervalInMilliseconds(fixedRateMs)
                             .repeatForever())
                     .startAt(startTime)
                     .build();
@@ -253,17 +344,17 @@ public class QuartzUtil {
             triggers++;
         }
         if (isFixedDelayJob) {
-            long delay = initialDelay;
-            if (initialDelay == null || initialDelay < 0) {
+            long delay = initialDelayMs;
+            if (initialDelayMs == null || initialDelayMs < 0) {
                 delay = 0L;
             }
             Date startTime = new Date(System.currentTimeMillis() + delay);
 
-            String desc = jobName + "@fixedDelay:" + fixedDelay + "ms, start@" + startTime;
+            String desc = jobName + "@fixedDelay:" + fixedDelayMs + "ms, start@" + startTime;
 
             JobDataMap data = jobDetail.getJobDataMap();
-            data.put(FixedDelayJobListener.FIXED_DELAY_VALUE, fixedDelay);
-            data.put(FixedDelayJobListener.FIXED_DELAY_DESC, desc);
+            data.put(BootJobListener.FIXED_DELAY_VALUE, fixedDelayMs);
+            data.put(BootJobListener.FIXED_DELAY_DESC, desc);
             Trigger trigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
                     .withDescription(desc)

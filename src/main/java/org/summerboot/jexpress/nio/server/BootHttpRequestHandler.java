@@ -108,7 +108,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             if (!httpLifecycleHandler.beofreProcess(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return processorSettings;
             }
-            processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context, BootErrorCode.NIO_REQUEST_BAD_DATA);
+            processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context);
             //} catch (ExpiredJwtException | SignatureException | MalformedJwtException ex) {
             //    nak(context, HttpResponseStatus.UNAUTHORIZED, BootErrorCode.AUTH_INVALID_TOKEN, "Invalid JWT");
         } catch (NamingException ex) {

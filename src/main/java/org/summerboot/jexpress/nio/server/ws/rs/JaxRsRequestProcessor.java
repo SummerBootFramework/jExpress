@@ -69,6 +69,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     protected final List<String> produces;
     protected final String produce_ExplicitType;
     protected final String produce_DefaultType;
+    protected final Log classLevelLogAnnotation;
 
     //param info    
     private final List<JaxRsRequestParameter> parameterList;
@@ -250,7 +251,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         this.regexPattern = (usingPathParam || usingMatrixParam) ? Pattern.compile(this.declaredPath) : null;
 
         //logging info
-        Log classLevelLogAnnotation = (Log) controllerClass.getAnnotation(Log.class);
+        classLevelLogAnnotation = (Log) controllerClass.getAnnotation(Log.class);
 //        Class ctrlClass = controllerClass;
 //        while (classLevelLogAnnotation == null && ctrlClass.getSuperclass() != null) {
 //            ctrlClass = ctrlClass.getSuperclass();
@@ -302,7 +303,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             }
             list.addAll(Arrays.asList(protectedJsonStringFields));
         }
-        
+
         String[] protectedJsonArrayFields = log.hideJsonArrayFields();
         if (protectedJsonArrayFields != null && protectedJsonArrayFields.length > 0) {
             List<String> list = logSettings.getProtectedJsonArrayFields();
@@ -312,6 +313,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             }
             list.addAll(Arrays.asList(protectedJsonArrayFields));
         }
+        logSettings.setSendRequestParsingErrorToClient(log.sendRequestParsingErrorToClient());
     }
 
     @Override
@@ -351,7 +353,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             Caller caller = context.caller();
             if (caller == null) {
                 context.status(HttpResponseStatus.UNAUTHORIZED)
-                        .error(new Err(BootErrorCode.AUTH_INVALID_USER, null, "Authentication Required - Unkown caller", null));
+                        .error(new Err(BootErrorCode.AUTH_INVALID_USER, null, null, null, "Authentication Required - Unkown caller"));
                 return false;
             }
 
@@ -364,7 +366,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 
             if (!isAuthorized) {
                 context.status(HttpResponseStatus.FORBIDDEN)
-                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Authorization Failed - Caller is not in role: " + rolesAllowed, null));
+                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, null, null, "Authorization Failed - Caller is not in role: " + rolesAllowed));
                 return false;
             }
         }
@@ -372,14 +374,14 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int errorcodeRequestValidationFailed) throws Throwable {
+    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) throws Throwable {
         //2. invoke
         Object ret;
         if (parameterSize > 0) {
             ServiceRequest request = buildServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody);
             Object[] paramValues = new Object[parameterSize];
             for (int i = 0; i < parameterSize; i++) {
-                paramValues[i] = parameterList.get(i).value(errorcodeRequestValidationFailed, request, context);
+                paramValues[i] = parameterList.get(i).value(request, context);
             }
             if (context.error() != null) {
                 return;

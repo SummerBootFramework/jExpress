@@ -70,6 +70,11 @@
             <AppenderRef ref="RequestLogFile"/>
             <!-- -->
             <AppenderRef ref="Console"/>
+        </Logger>       
+        <Logger level="info" name="org.summerboot.jexpress.integration.quartz.BootJobListener" includeLocation="false" additivity="false">
+            <AppenderRef ref="RequestLogFile"/>
+            <!-- -->
+            <AppenderRef ref="Console"/>
         </Logger>
         <Logger level="warn" name="org.summerboot.jexpress.integration.ldap" includeLocation="true" additivity="false">
             <AppenderRef ref="RequestLogFile"/>

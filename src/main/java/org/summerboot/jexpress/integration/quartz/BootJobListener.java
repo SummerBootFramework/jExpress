@@ -16,6 +16,8 @@
 package org.summerboot.jexpress.integration.quartz;
 
 import java.util.Date;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
@@ -33,11 +35,13 @@ import org.quartz.listeners.JobListenerSupport;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class FixedDelayJobListener extends JobListenerSupport {
+public class BootJobListener extends JobListenerSupport {
 
-    public static final String FIXED_DELAY_VALUE = "FIXED_DELAY_VALUE";
-    public static final String FIXED_DELAY_DESC = "FIXED_DELAY_DESC";
-    private static final String JOB_LISTENER_NAME = FixedDelayJobListener.class.getSimpleName();
+    protected static final Logger log = LogManager.getLogger(BootJobListener.class);
+
+    public static final String FIXED_DELAY_VALUE = "jExpress_FIXED_DELAY_VALUE";
+    public static final String FIXED_DELAY_DESC = "jExpress_FIXED_DELAY_DESC";
+    protected static final String JOB_LISTENER_NAME = BootJobListener.class.getSimpleName();
 
     @Override
     public String getName() {
@@ -46,13 +50,32 @@ public class FixedDelayJobListener extends JobListenerSupport {
 
     @Override
     public void jobWasExecuted(final JobExecutionContext context, final JobExecutionException exception) {
+        scheduleFixedDelayJob(context, exception);
+        scheduleDSTDailyJob(context, exception);
+        logNextFireTime(context, exception);
+    }
+
+    protected Date logNextFireTime(final JobExecutionContext context, final JobExecutionException exception) {
         Date nextFireTime = context.getNextFireTime();
-        if (nextFireTime != null) {
-            return;
+        if (nextFireTime != null && log.isInfoEnabled()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Scheduled jobs next fire time by triggers: ");
+            try {
+                Scheduler scheduler = context.getScheduler();
+                QuartzUtil.getNextFireTimes(scheduler, sb);
+            } catch (Throwable ex) {
+                sb.append(ex);
+            }
+            log.info(() -> sb.toString());
         }
+        return nextFireTime;
+    }
+
+    protected void scheduleFixedDelayJob(final JobExecutionContext context, final JobExecutionException exception) {
         JobDetail jobDetail = context.getJobDetail();
         JobDataMap jobData = jobDetail.getJobDataMap();
         if (!jobData.containsKey(FIXED_DELAY_VALUE)) {
+            log.info("Scheduled jobs next fire time by triggers: none");
             return;
         }
 
@@ -70,9 +93,9 @@ public class FixedDelayJobListener extends JobListenerSupport {
                     return;
                 }
             }
-            long fixedDelay = (long) jobData.getWrappedMap().get(FIXED_DELAY_VALUE);
+            long fixedDelayMs = (long) jobData.getWrappedMap().get(FIXED_DELAY_VALUE);
             String desc = (String) jobData.getWrappedMap().get(FIXED_DELAY_DESC);
-            Date nextTime = new Date(System.currentTimeMillis() + fixedDelay);
+            Date nextTime = new Date(System.currentTimeMillis() + fixedDelayMs);
             JobKey jobKey = jobDetail.getKey();
             Trigger nextTrigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
@@ -81,10 +104,14 @@ public class FixedDelayJobListener extends JobListenerSupport {
                     .startAt(nextTime)
                     .build();
             scheduler.rescheduleJob(currentTriggerKey, nextTrigger);
-            getLog().info(desc + " scheduled@" + nextTime);
+            log.info(desc + " scheduled@" + nextTime);
 
         } catch (SchedulerException ex) {
-            getLog().error("failed to reschedule the job with triger: {}", currentTriggerKey, ex);
+            log.error("failed to reschedule the job with triger: {}", currentTriggerKey, ex);
         }
+    }
+
+    protected void scheduleDSTDailyJob(final JobExecutionContext context, final JobExecutionException exception) {
+        //TODO:
     }
 }

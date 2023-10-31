@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.util.ExceptionUtil;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
@@ -35,70 +34,69 @@ public class Err<T> {
     private String errorCode;
     private String errorTag;
     private String errorDesc;
-    private String cause;
 
     @JsonIgnore
-    private String _cause;
+    private Throwable cause;
 
     @JsonIgnore
-    private Throwable ex;
-
-    @JsonIgnore
-    private T attachedData;
-
-    public Err() {
-    }
+    private T internalInfo;
 
     public Err(int errorCode, String errorTag, String errorDesc, Throwable ex) {
         //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
-        this("" + errorCode, errorTag, errorDesc, ex);
+        this("" + errorCode, errorTag, errorDesc, ex, null);
     }
 
-    public Err(String errorCode, String errorTag, String errorDesc, Throwable ex) {
+    public Err(int errorCode, String errorTag, String errorDesc, Throwable ex, T internalInfo) {
+        //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
+        this("" + errorCode, errorTag, errorDesc, ex, internalInfo);
+    }
+
+    public Err(String errorCode, String errorTag, String errorDesc, Throwable ex, T internalInfo) {
         this.errorCode = errorCode;
         this.errorTag = errorTag;
         this.errorDesc = errorDesc;
-        this.ex = ex;//keep orignal ex for stacktrace in log/email
+        this.cause = ex;//keep orignal cause for stacktrace in log/email
+        this.internalInfo = internalInfo;
 
-//        this._cause = ex == null
+//        this._cause = cause == null
 //                ? null
-//                : ExceptionUtils.getStackTrace(ex);
-        Throwable rootCause = ExceptionUtils.getRootCause(ex);
-        if (rootCause == null) {
-            rootCause = ex;
-        }
-        this._cause = rootCause == null
-                ? null
-                : rootCause.toString();
+//                : ExceptionUtils.getStackTrace(cause);
+//        Throwable rootCause = ExceptionUtils.getRootCause(cause);
+//        if (rootCause == null) {
+//            rootCause = cause;
+//        }
+//        this._cause = rootCause == null
+//                ? null
+//                : rootCause.toString();
     }
 
-    void showRootCause(boolean isEnable) {
-        this.cause = isEnable ? this._cause : null;
-    }
-
-    @Override
-    public String toString() {
-        return toJson();
-    }
-
-    protected String toStringEx() {
-        if (cause == null) {
-            return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + "\"}";
-        }
-        return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + "\", \"cause\": \"" + cause + "\"}";
-    }
-
+//    void showRootCause(boolean isEnable) {
+//        this.cause = isEnable ? this._cause : null;
+//    }
     public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
         try {
             return BeanUtil.toJson(this, true, true);
         } catch (JsonProcessingException ex) {
-            return toStringEx();
+            return toStringEx(false);
         }
     }
 
-    public String getErrorCode() {
-        return errorCode;
+    @Override
+    public String toString() {
+        return toStringEx(true);
+    }
+
+    protected String toStringEx(boolean isForInternalDebug) {
+        if (!isForInternalDebug) {
+            return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + "\"}";
+        }
+        Throwable rootCause = ExceptionUtils.getRootCause(cause);
+        if (rootCause == null) {
+            rootCause = cause;
+        }
+        String trace = ExceptionUtils.getStackTrace(cause);
+        return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + ", \"internalInfo\": \"" + internalInfo + "\", \"cause\": \"" + rootCause + "\"}\n\t" + trace + "\n\n";
     }
 
     @JsonIgnore
@@ -106,48 +104,48 @@ public class Err<T> {
         return Integer.parseInt(errorCode);
     }
 
-    public String getErrorTag() {
-        return errorTag;
-    }
-
-    public String getErrorDesc() {
-        return errorDesc;
-    }
-
-    public String getCause() {
-        return cause;
-    }
-
     public void setErrorCode(int errorCode) {
         this.errorCode = "" + errorCode;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
     }
 
     public void setErrorCode(String errorCode) {
         this.errorCode = errorCode;
     }
 
+    public String getErrorTag() {
+        return errorTag;
+    }
+
     public void setErrorTag(String errorTag) {
         this.errorTag = errorTag;
+    }
+
+    public String getErrorDesc() {
+        return errorDesc;
     }
 
     public void setErrorDesc(String errorDesc) {
         this.errorDesc = errorDesc;
     }
 
-    public void setCause(String cause) {
+    public Throwable getCause() {
+        return cause;
+    }
+
+    public void setCause(Throwable cause) {
         this.cause = cause;
     }
 
-    public Throwable getEx() {
-        return ex;
+    public T getInternalInfo() {
+        return internalInfo;
     }
 
-    public T getAttachedData() {
-        return attachedData;
-    }
-
-    public void setAttachedData(T attachedData) {
-        this.attachedData = attachedData;
+    public void setInternalInfo(T internalInfo) {
+        this.internalInfo = internalInfo;
     }
 
 }

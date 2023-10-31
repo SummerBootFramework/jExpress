@@ -71,6 +71,8 @@ public class ProcessorSettings {
 
         private List<String> protectedJsonArrayFields;
 
+        private boolean sendRequestParsingErrorToClient;
+
         public void removeDuplicates() {
             if (protectedJsonStringFields != null) {
                 protectedJsonStringFields = protectedJsonStringFields.stream().distinct().collect(Collectors.toList());
@@ -137,6 +139,14 @@ public class ProcessorSettings {
 
         public void setProtectedJsonArrayFields(List<String> protectedJsonArrayFields) {
             this.protectedJsonArrayFields = protectedJsonArrayFields;
+        }
+
+        public boolean isSendRequestParsingErrorToClient() {
+            return sendRequestParsingErrorToClient;
+        }
+
+        public void setSendRequestParsingErrorToClient(boolean sendRequestParsingErrorToClient) {
+            this.sendRequestParsingErrorToClient = sendRequestParsingErrorToClient;
         }
 
     }
