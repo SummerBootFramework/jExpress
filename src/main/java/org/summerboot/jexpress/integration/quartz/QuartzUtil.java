@@ -71,7 +71,7 @@ public class QuartzUtil {
         try {
             String[] cronExpressionsConfig = stringArrayFieldValue.value();
             String[] cronExpressionsHardcoded = scheduledAnnotation.cron();
-            cronExpressions = BeanUtil.arrayMergeAndRemoveDuplicated(cronExpressionsConfig, cronExpressionsHardcoded);
+            cronExpressions = BeanUtil.arrayMergeAndRemoveDuplicated(cronExpressionsHardcoded, cronExpressionsConfig);
         } catch (ClassCastException ex) {
             throw new TypeNotPresentException(stringArrayFieldValue.buildClassCastExceptionDesc("String[]"), ex);
         }
@@ -81,7 +81,7 @@ public class QuartzUtil {
         try {
             int[] daysOfMonthConfig = intArrayFieldValue.value();
             int[] daysOfMonthHardcoded = scheduledAnnotation.daysOfMonth();
-            daysOfMonth = BeanUtil.arrayMergeAndRemoveDuplicated(daysOfMonthConfig, daysOfMonthHardcoded);
+            daysOfMonth = BeanUtil.arrayMergeAndRemoveDuplicated(daysOfMonthHardcoded, daysOfMonthConfig);
         } catch (ClassCastException ex) {
             throw new TypeNotPresentException(intArrayFieldValue.buildClassCastExceptionDesc("int[]"), ex);
         }
@@ -91,7 +91,7 @@ public class QuartzUtil {
         try {
             int[] daysOfWeekhConfig = intArrayFieldValue.value();
             int[] daysOfWeekHardcoded = scheduledAnnotation.daysOfWeek();
-            daysOfWeek = BeanUtil.arrayMergeAndRemoveDuplicated(daysOfWeekhConfig, daysOfWeekHardcoded);
+            daysOfWeek = BeanUtil.arrayMergeAndRemoveDuplicated(daysOfWeekHardcoded, daysOfWeekhConfig);
         } catch (ClassCastException ex) {
             throw new TypeNotPresentException(intArrayFieldValue.buildClassCastExceptionDesc("int[]"), ex);
         }
@@ -252,7 +252,7 @@ public class QuartzUtil {
             for (var dayOfMonth : daysOfMonth) {
                 CronTrigger trigger = TriggerBuilder.newTrigger()
                         .forJob(jobKey)
-                        .withDescription(jobName + ".Monthly@" + dayOfMonth + "T" + trim(hour) + ":" + trim(minute))
+                        .withDescription(jobName + ".Monthly@" + dayOfMonth + "md" + trim(hour) + "h:" + trim(minute) + "m")
                         .withSchedule(CronScheduleBuilder.monthlyOnDayAndHourAndMinute(dayOfMonth, trim(hour), trim(minute)))
                         .build();
                 scheduler.scheduleJob(trigger);
@@ -263,7 +263,7 @@ public class QuartzUtil {
             int dayOfWeek = daysOfWeek[0];
             CronTrigger trigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
-                    .withDescription(jobName + ".Weekly@" + QUARTZ_WEEKDAY_MAP.get(dayOfWeek) + "T" + trim(hour) + ":" + trim(minute))
+                    .withDescription(jobName + ".Weekly@" + QUARTZ_WEEKDAY_MAP.get(dayOfWeek) + "md" + trim(hour) + "h:" + trim(minute) + "m")
                     .withSchedule(CronScheduleBuilder.weeklyOnDayAndHourAndMinute(dayOfWeek, trim(hour), trim(minute)))
                     .build();
             scheduler.scheduleJob(trigger);
@@ -276,14 +276,14 @@ public class QuartzUtil {
             }
             CronTrigger trigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
-                    .withDescription(jobName + ".Weekly@" + desc + "T" + trim(hour) + ":" + trim(minute))
+                    .withDescription(jobName + ".Weekly@" + desc + "wd" + trim(hour) + "h:" + trim(minute) + "m")
                     .withSchedule(CronScheduleBuilder.atHourAndMinuteOnGivenDaysOfWeek(trim(hour), trim(minute), dow))
                     .build();
             scheduler.scheduleJob(trigger);
             triggers++;
         }
         if (isDailyJob) {
-            String desc = jobName + ".Daily@" + hour + ":" + trim(minute);
+            String desc = jobName + ".Daily@" + hour + "h:" + trim(minute) + "m";
             CronTrigger trigger = TriggerBuilder.newTrigger()
                     .forJob(jobKey)
                     .withDescription(desc)
