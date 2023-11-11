@@ -203,19 +203,20 @@ public class ReflectionUtil {
      * @param value
      * @param autoDecrypt
      * @param isEmailRecipients
+     * @param collectionDelimiter
      * @throws java.lang.IllegalAccessException
      */
-    public static void loadField(Object instance, Field field, String value, final boolean autoDecrypt, final boolean isEmailRecipients) throws IllegalAccessException {
+    public static void loadField(Object instance, Field field, String value, final boolean autoDecrypt, final boolean isEmailRecipients, String collectionDelimiter) throws IllegalAccessException {
         Class targetClass = field.getType();
         Type genericType = field.getGenericType();
         field.setAccessible(true);
-        field.set(instance, toJavaType(targetClass, genericType, value, autoDecrypt, isEmailRecipients, null));
+        field.set(instance, toJavaType(targetClass, genericType, value, autoDecrypt, isEmailRecipients, null, collectionDelimiter));
     }
 
     private static final Type[] DEFAULT_ARG_TYPES = {String.class, String.class};
 
     public static Object toJavaType(Class targetClass, Type genericType, String value, final boolean autoDecrypt,
-            final boolean isEmailRecipients, EnumConvert.To enumConvert) throws IllegalAccessException {
+            final boolean isEmailRecipients, EnumConvert.To enumConvert, String collectionDelimiter) throws IllegalAccessException {
         if (StringUtils.isBlank(value)) {
             Object nullValue = ReflectionUtil.toStandardJavaType(null, targetClass, autoDecrypt, false, enumConvert);
             return nullValue;
@@ -246,7 +247,7 @@ public class ReflectionUtil {
         }
 
         if (targetClass.isArray()) {
-            String[] valuesStr = FormatterUtil.parseCsv(value);
+            String[] valuesStr = FormatterUtil.parseDsv(value, collectionDelimiter);
             if (valuesStr == null || valuesStr.length < 1) {
                 return null;
             }
@@ -257,7 +258,7 @@ public class ReflectionUtil {
             }
             return array;
         } else if (targetClass.equals(Set.class)) {
-            String[] valuesStr = FormatterUtil.parseCsv(value);
+            String[] valuesStr = FormatterUtil.parseDsv(value, collectionDelimiter);
             if (valuesStr == null || valuesStr.length < 1) {
                 return null;
             }
@@ -268,7 +269,7 @@ public class ReflectionUtil {
             }
             return Set.of((Object[]) array);
         } else if (targetClass.equals(SortedSet.class)) {
-            String[] valuesStr = FormatterUtil.parseCsv(value);
+            String[] valuesStr = FormatterUtil.parseDsv(value, collectionDelimiter);
             if (valuesStr == null || valuesStr.length < 1) {
                 return null;
             }
@@ -279,7 +280,7 @@ public class ReflectionUtil {
             }
             return ImmutableSortedSet.copyOf(List.of((Object[]) array));
         } else if (targetClass.equals(List.class)) {
-            String[] valuesStr = FormatterUtil.parseCsv(value);
+            String[] valuesStr = FormatterUtil.parseDsv(value, collectionDelimiter);
             if (valuesStr == null || valuesStr.length < 1) {
                 return null;
             }

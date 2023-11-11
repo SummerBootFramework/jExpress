@@ -59,5 +59,7 @@ public @interface Config {
      * @return
      */
     String callbackMethodName4Dump() default "";
+    
+    String collectionDelimiter() default ",";
 
 }

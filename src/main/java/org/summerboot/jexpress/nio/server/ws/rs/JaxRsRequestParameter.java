@@ -68,6 +68,7 @@ class JaxRsRequestParameter {
     private boolean autoBeanValidation = false;
     private boolean cookieParamObj = false;
     private final EnumConvert.To enumConvert;
+    private final String collectionDelimiter = null;// TODO
 
     public JaxRsRequestParameter(String info, HttpMethod httpMethod, List<String> consumes, Parameter param) {
         String error = "\n\tparameter is not allowed in " + info + "(" + param + ")\n\t - ";
@@ -374,7 +375,7 @@ class JaxRsRequestParameter {
             }
         }
         try {
-            return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, false, false, enumConvert);
+            return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, false, false, enumConvert, collectionDelimiter);
         } catch (Throwable ex) {
             Err e = new Err(BootErrorCode.BAD_RQUEST_DATA, null, null, ex, "Failed to parse data type: invalid " + type + "{" + key + "}=" + value);
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);

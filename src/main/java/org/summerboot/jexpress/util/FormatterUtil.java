@@ -61,6 +61,9 @@ public class FormatterUtil {
     public static final Pattern REGEX_EMAIL_PATTERN = Pattern.compile(REGEX_EMAIL);
 
     public static String[] parseDsv(String csv, String delimiter) {
+        if (StringUtils.isBlank(delimiter)) {
+            return parseCsv(csv);
+        }
         return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split("\\s*" + delimiter + "\\s*");
     }
 
