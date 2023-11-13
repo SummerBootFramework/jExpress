@@ -45,53 +45,53 @@ import org.apache.logging.log4j.Logger;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class FormatterUtil {
-
+    
     protected static Logger log = null;// = LogManager.getLogger(FormatterUtil.class);
 
     public static final long INT_MASK = 0xFFFFFFFFL;//(long) Integer.MAX_VALUE - (long) Integer.MIN_VALUE;
     public static final int SHORT_MASK = 0xFFFF;
     public static final short BYTE_MASK = 0xFF;
     public static final short NIBBLE_MASK = 0x0F;
-
+    
     public static final String[] EMPTY_STR_ARRAY = {};
     public static final String REGEX_CSV = "\\s*,\\s*";
     public static final String REGEX_URL = "\\s*/\\s*";
     public static final String REGEX_BINDING_MAP = "\\s*:\\s*";
     public static final String REGEX_EMAIL = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     public static final Pattern REGEX_EMAIL_PATTERN = Pattern.compile(REGEX_EMAIL);
-
+    
     public static String[] parseDsv(String csv, String delimiter) {
-        if (StringUtils.isBlank(delimiter)) {
+        if (StringUtils.isBlank(delimiter) || ",".equals(delimiter)) {
             return parseCsv(csv);
         }
         return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split("\\s*" + delimiter + "\\s*");
     }
-
+    
     public static String[] parseCsv(String csv) {
         return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split(REGEX_CSV);
     }
-
+    
     public static String[] parseURL(String url) {
         return StringUtils.isBlank(url) ? EMPTY_STR_ARRAY : url.trim().split(REGEX_URL);
     }
-
+    
     public static String[] parseURL(String url, boolean trim) {
         return StringUtils.isBlank(url)
                 ? EMPTY_STR_ARRAY
                 : trim ? url.trim().split(REGEX_URL) : url.split(REGEX_URL);
     }
-
+    
     public static <T extends Object> String toCSV(Collection<T> a) {
         return a.stream().map(String::valueOf).collect(Collectors.joining(", "));
     }
-
+    
     public static String[] getEnumNames(Class<? extends Enum<?>> e) {
         //return Arrays.stream(MyEnum.values()).map(MyEnum::name).toArray(String[]::new);
         return Arrays.stream(e.getEnumConstants()).map(Enum::name).toArray(String[]::new);
     }
-
+    
     public static Pattern INSIDE_PARENTHESES_VALUE = Pattern.compile("\\(([^)]+)\\)");
-
+    
     public static String getInsideParenthesesValue(String value) {
         String ret = value;
 //        Matcher m = INSIDE_PARENTHESES_VALUE.matcher(value);
@@ -105,13 +105,13 @@ public class FormatterUtil {
         }
         return ret;
     }
-
+    
     public static final String REGEX_FIRST_AND_LAST_B = "\\(.*\\)";
-
+    
     public static final Pattern REGEX_DEC_PATTERN = Pattern.compile(DECRYPTED_WARPER_PREFIX + REGEX_FIRST_AND_LAST_B);
-
+    
     public static final Pattern REGEX_ENC_PATTERN = Pattern.compile(ENCRYPTED_WARPER_PREFIX + REGEX_FIRST_AND_LAST_B);
-
+    
     public static String updateProtectedLine(String line, boolean encrypt) throws GeneralSecurityException {
         Matcher matcher = encrypt
                 ? REGEX_DEC_PATTERN.matcher(line)
@@ -129,7 +129,7 @@ public class FormatterUtil {
         }
         return null;
     }
-
+    
     @Deprecated
     public static String updateProtectedLine_(String line, boolean encrypt) throws GeneralSecurityException {
         String ret = null;
@@ -148,7 +148,7 @@ public class FormatterUtil {
         }
         return ret;
     }
-
+    
     public static String b2n(String s) {
         return StringUtils.isBlank(s) ? null : s.trim();
     }
@@ -166,7 +166,7 @@ public class FormatterUtil {
         }
         return ret;
     }
-
+    
     public static Map<String, String> parseMap(String mapCVS) {
         //int[] ports = Arrays.stream(portsStr).mapToInt(Integer::parseInt).toArray();
         Map<String, String> ret = new HashMap<>();
@@ -177,24 +177,24 @@ public class FormatterUtil {
         }
         return ret;
     }
-
+    
     public static String convertTo(String value, String targetCharsetName) throws UnsupportedEncodingException {
         //String rawString = "Fantasticèéçà Entwickeln Sie mit Vergnügen";
         return new String(value.getBytes(targetCharsetName), targetCharsetName);
     }
-
+    
     public static String base64MimeEncode(byte[] contentBytes) {
         return Base64.getMimeEncoder().encodeToString(contentBytes);
     }
-
+    
     public static byte[] base64MimeDecode(String encodedMime) {
         return Base64.getMimeDecoder().decode(encodedMime);
     }
-
+    
     public static String base64Encode(byte[] contentBytes) {
         return Base64.getEncoder().encodeToString(contentBytes);
     }
-
+    
     public static byte[] base64Decode(String encodedMime) {
         return Base64.getDecoder().decode(encodedMime);
     }
@@ -213,11 +213,11 @@ public class FormatterUtil {
             return bytes;
         }
     }
-
+    
     public static String toString(ByteBuffer buffer) {
         return toString(buffer, true, true, 8, "    ");
     }
-
+    
     public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int showNumberOfBytesPerLine, String delimiter) {
         StringBuilder sb = new StringBuilder();
         if (showStatus) {
@@ -271,11 +271,11 @@ public class FormatterUtil {
         }
         return data;
     }
-
+    
     public static <T extends Object> Set<T> findDuplicates(List<T> listContainingDuplicates) {
         final Set<T> setToReturn = new HashSet<>();
         final Set<T> set1 = new HashSet<>();
-
+        
         for (T yourInt : listContainingDuplicates) {
             if (!set1.add(yourInt)) {
                 setToReturn.add(yourInt);
@@ -283,7 +283,7 @@ public class FormatterUtil {
         }
         return setToReturn;
     }
-
+    
     public static String protectContentNumber(String plain, String keyword, String delimiter, String replaceWith) {
         if (StringUtils.isBlank(plain)) {
             return plain;
@@ -292,7 +292,7 @@ public class FormatterUtil {
         String replacement = keyword + delimiter + replaceWith;
         return plain.replaceAll(regex, replacement);
     }
-
+    
     public static String protectContent(String plain, String keyword, String delimiter, String wrapper, String replaceWith) {
         if (StringUtils.isBlank(plain)) {
             return plain;
@@ -308,42 +308,42 @@ public class FormatterUtil {
         log.trace(() -> "replace " + plain + "\n\t regex=" + regex + "\n\t with=" + replacement);
         return plain.replaceAll(regex, replacement);
     }
-
+    
     public static String protectJsonString(String json, String key, String replaceWith) {
         final String regex = "(\"" + key + "\"\\s*:\\s*\")[^\"]*(\")";//("key"\s*:\s*")[^"]*(")
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
-
+    
     public static String protectJsonString_InString(String json, String key, String replaceWith) {
         final String regex = "(\"" + key + "\\\\\"\\s*:\\s*\\\\\")[^\"]*(\")";
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
-
+    
     public static String protectJsonNumber(String json, String key, String replaceWith) {
         String regex = "(\"" + key + "\"\\s*:\\s*)(\\d+)";
         return json.replaceAll(regex, "$1" + replaceWith);
     }
-
+    
     public static String protectJsonNumber_InString(String json, String key, String replaceWith) {
         String regex = "(\"" + key + "\\\\\"\\s*:\\s*)(\\d+)";
         return json.replaceAll(regex, "$1" + replaceWith);
     }
-
+    
     public static String protectJsonArray(String json, String key, String replaceWith) {
         final String regex = "(\"" + key + "\"\\s*:\\s*\\[)[^\\[]*(\\])";
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
-
+    
     public static String[] splitByLength(String plain, int chunckSize) {
         return plain.split("(?<=\\G.{" + chunckSize + "})");
     }
-
+    
     public static <T> T[] arrayCopy(T[] array1, T[] array2) {
         T[] result = Arrays.copyOf(array1, array1.length + array2.length);
         System.arraycopy(array2, 0, result, array1.length, array2.length);
         return result;
     }
-
+    
     public static <T> T[] arrayAdd(T[] array1, T newElement) {
         int size = array1.length;
         T[] result = Arrays.copyOf(array1, size + 1);
