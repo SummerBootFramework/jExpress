@@ -111,7 +111,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             return;
         }
         NioCounter.COUNTER_HIT.incrementAndGet();
-        final long hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
+        final String hitIndex = BootConstant.APP_ID + "-" + NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
 //        if (HttpUtil.is100ContinueExpected(req)) {
 //            ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE, Unpooled.EMPTY_BUFFER));
 //        }
@@ -291,7 +291,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    private String requestMetaInfo(ChannelHandlerContext ctx, long hitIndex, HttpMethod httpMethod, String httpRequestUri, boolean isKeepAlive, long dataSize) {
+    private String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, HttpMethod httpMethod, String httpRequestUri, boolean isKeepAlive, long dataSize) {
         return new StringBuilder()
                 .append("request_").append(hitIndex)
                 .append("=").append(httpMethod).append(" ").append(httpRequestUri)

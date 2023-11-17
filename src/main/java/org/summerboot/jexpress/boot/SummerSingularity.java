@@ -36,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -301,11 +300,8 @@ abstract public class SummerSingularity {
             System.exit(1);
         }
         //set log folder outside user specified config folder
-        Random rnd = new Random();
-        int number = rnd.nextInt(999999);
-        String logId = String.format("%06d", number);
         // this will convert any number sequence into 6 character.
-        System.setProperty(BootConstant.SYS_PROP_LOGID, logId);
+        System.setProperty(BootConstant.SYS_PROP_LOGID, BootConstant.APP_ID);
         System.setProperty(BootConstant.SYS_PROP_LOGFILEPATH, userSpecifiedConfigDir.getParent() + File.separator + BootConstant.DIR_LOG);//used by log4j2.xml
         pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
 //        }

@@ -68,7 +68,7 @@ public class ServiceContext {
     private final String requesURI;
     private final HttpHeaders requestHeaders;
     private final String requestBody;
-    private final long hit;
+    private final String txId;
     private final long startTs;
     private Caller caller;
     private String callerId;
@@ -107,11 +107,15 @@ public class ServiceContext {
     private boolean logResponseBody = true;
 
     public static ServiceContext build(long hit) {
-        return new ServiceContext(null, hit, System.currentTimeMillis(), null, null, null, null);
+        return build(BootConstant.APP_ID + "-" + hit);
     }
 
-    public static ServiceContext build(ChannelHandlerContext ctx, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
-        return new ServiceContext(ctx, hit, startTs, requestHeaders, requesMethod, requesURI, requestBody);
+    public static ServiceContext build(String txId) {
+        return new ServiceContext(null, txId, System.currentTimeMillis(), null, null, null, null);
+    }
+
+    public static ServiceContext build(ChannelHandlerContext ctx, String txId, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+        return new ServiceContext(ctx, txId, startTs, requestHeaders, requesMethod, requesURI, requestBody);
     }
 
     @Override
@@ -120,7 +124,7 @@ public class ServiceContext {
         return "ServiceContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
     }
 
-    private ServiceContext(ChannelHandlerContext ctx, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+    private ServiceContext(ChannelHandlerContext ctx, String txId, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
         if (ctx != null && ctx.channel() != null) {
             this.localIP = ctx.channel().localAddress();
             this.remoteIP = ctx.channel().remoteAddress();
@@ -128,7 +132,7 @@ public class ServiceContext {
             this.localIP = null;
             this.remoteIP = null;
         }
-        this.hit = hit;
+        this.txId = txId;
         this.startTs = startTs;
         this.requestHeaders = requestHeaders;
         this.requesMethod = requesMethod;
@@ -220,8 +224,8 @@ public class ServiceContext {
     }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
-    public long hit() {
-        return hit;
+    public String txId() {
+        return txId;
     }
 
     public HttpMethod method() {
@@ -661,7 +665,7 @@ public class ServiceContext {
      */
     public ServiceContext error(Err error) {
         if (serviceError == null) {
-            serviceError = new ServiceError(BootConstant.APP_ID + "-" + hit);
+            serviceError = new ServiceError(txId);
         }
         if (error == null) {
             return this;
@@ -693,7 +697,7 @@ public class ServiceContext {
             return this;
         }
         if (serviceError == null) {
-            serviceError = new ServiceError(BootConstant.APP_ID + "-" + hit);
+            serviceError = new ServiceError(txId);
         }
         serviceError.addErrors(es);
         for (Err e : es) {

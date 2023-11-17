@@ -120,7 +120,7 @@ public class NioHttpUtil {
         if (processorSettings != null) {
             String key = processorSettings.getHttpServiceResponseHeaderName_Reference();
             if (key != null) {
-                serviceContext.responseHeader(key, serviceContext.hit());
+                serviceContext.responseHeader(key, serviceContext.txId());
             }
             key = processorSettings.getHttpServiceResponseHeaderName_ServerTimestamp();
             if (key != null) {

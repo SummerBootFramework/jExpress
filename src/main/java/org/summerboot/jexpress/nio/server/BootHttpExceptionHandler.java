@@ -152,7 +152,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
         // 2. send sendAlertAsync
         if (po != null) {
             // build email content
-            String briefContent = "caller=" + context.callerId() + ", request#" + context.hit() + ": " + content;
+            String briefContent = "caller=" + context.callerId() + ", request#" + context.txId() + ": " + content;
             po.sendAlertAsync(emailTo, errorMessage, briefContent, ex, true);
         }
     }
