@@ -22,6 +22,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.persistence.PersistenceException;
+import java.io.IOException;
 import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpTimeoutException;
 import java.util.Collection;
@@ -69,7 +70,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
             if (cause == null) {
                 cause = ex;
             }
-            if (cause instanceof java.net.UnknownHostException) {
+            if (cause instanceof IOException) {// java.net.UnknownHostException
                 HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
                 nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
             } else {
@@ -85,7 +86,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
         if (cause == null) {
             cause = ex;
         }
-        if (cause instanceof java.net.ConnectException) {
+        if (cause instanceof IOException) {// java.net.ConnectException
             HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
             nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
         } else {
