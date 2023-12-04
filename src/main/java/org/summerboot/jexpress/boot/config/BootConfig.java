@@ -323,7 +323,8 @@ public abstract class BootConfig implements JExpressConfig {
                     valueInCfgFile = configFolder + File.separator + valueInCfgFile;
                 }
             }
-            ReflectionUtil.loadField(this, field, valueInCfgFile, autoDecrypt, isEmailRecipients);
+            String collectionDelimiter = cfgAnnotation.collectionDelimiter();
+            ReflectionUtil.loadField(this, field, valueInCfgFile, autoDecrypt, isEmailRecipients, collectionDelimiter);
         }
     }
 

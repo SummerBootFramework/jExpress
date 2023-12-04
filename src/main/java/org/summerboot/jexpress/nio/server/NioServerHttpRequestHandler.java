@@ -112,6 +112,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         }
         NioCounter.COUNTER_HIT.incrementAndGet();
         final long hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
+        final String txId = BootConstant.APP_ID + "-" + hitIndex;
 //        if (HttpUtil.is100ContinueExpected(req)) {
 //            ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE, Unpooled.EMPTY_BUFFER));
 //        }
@@ -126,7 +127,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         final String httpRequestUri = req.uri();
 
         final boolean isKeepAlive = HttpUtil.isKeepAlive(req);
-        final String requestMetaInfo = requestMetaInfo(ctx, hitIndex, httpMethod, httpRequestUri, isKeepAlive, dataSize);
+        final String requestMetaInfo = requestMetaInfo(ctx, txId, httpMethod, httpRequestUri, isKeepAlive, dataSize);
         log.debug(() -> requestMetaInfo);
 
         final HttpHeaders requestHeaders = req.headers();
@@ -140,7 +141,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequestUri, StandardCharsets.UTF_8);
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            ServiceContext context = ServiceContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             String acceptCharset = requestHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
             if (StringUtils.isNotBlank(acceptCharset)) {
                 context.charsetName(acceptCharset);//.contentType(ServiceContext.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
@@ -185,9 +186,9 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         //response#1=200 OK, error=0, r2q=7ms, r2r=60ms, caller=aaa#bbb, received#1=GET /a
                         StringBuilder sb = new StringBuilder();
                         //line1
-                        sb.append("request_").append(hitIndex).append(".caller=").append(caller == null ? context.callerId() : caller);
+                        sb.append("request_").append(txId).append(".caller=").append(caller == null ? context.callerId() : caller);
                         //line2,3
-                        sb.append("\n\t").append(requestMetaInfo).append("\n\tresponse_").append(hitIndex).append("=").append(status)
+                        sb.append("\n\t").append(requestMetaInfo).append("\n\tresponse_").append(txId).append("=").append(status)
                                 .append(", error=").append(errorCount)
                                 .append(", FullHttpRequest.t0=").append(TimeUtil.toOffsetDateTime(start, zoneId))
                                 .append(", queuing=").append(queuingTime).append("ms, process=").append(processTime);
@@ -247,14 +248,14 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             nioCfg.getBizExecutor().execute(asyncTask);
         } catch (RejectedExecutionException ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            ServiceContext context = ServiceContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             Err e = new Err(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, null, ex, "Too many request, try again later");
             context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
 
             StringBuilder sb = new StringBuilder();
-            sb.append("request_").append(hitIndex).append("=").append(ex.toString())
-                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(hitIndex)
+            sb.append("request_").append(txId).append("=").append(ex.toString())
+                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(txId)
                     .append("=").append(context.status())
                     .append(", errorCode=").append(e.getErrorCode())
                     .append(", queuing=").append(queuingTime)
@@ -264,13 +265,13 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             log.fatal(sb.toString());
         } catch (Throwable ex) {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            ServiceContext context = ServiceContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             Err e = new Err(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, null, ex, "NIO unexpected executor failure");
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
             StringBuilder sb = new StringBuilder();
-            sb.append("request_").append(hitIndex).append("=").append(ex.toString())
-                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(hitIndex)
+            sb.append("request_").append(txId).append("=").append(ex.toString())
+                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(txId)
                     .append("=").append(context.status())
                     .append(", errorCode=").append(e.getErrorCode())
                     .append(", queuing=").append(queuingTime)
@@ -291,7 +292,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    private String requestMetaInfo(ChannelHandlerContext ctx, long hitIndex, HttpMethod httpMethod, String httpRequestUri, boolean isKeepAlive, long dataSize) {
+    private String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, HttpMethod httpMethod, String httpRequestUri, boolean isKeepAlive, long dataSize) {
         return new StringBuilder()
                 .append("request_").append(hitIndex)
                 .append("=").append(httpMethod).append(" ").append(httpRequestUri)

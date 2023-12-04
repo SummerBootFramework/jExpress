@@ -588,7 +588,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         for (Class c : classes) {
             try {
                 triggers += QuartzUtil.addQuartzJob(scheduler, c);
-            } catch (SchedulerException ex) {
+            } catch (Throwable ex) {
                 throw new RuntimeException("Filed to addQuartzJob for " + c, ex);
             }
         }
