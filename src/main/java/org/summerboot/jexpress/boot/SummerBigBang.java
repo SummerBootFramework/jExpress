@@ -21,33 +21,13 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Stage;
 import com.google.inject.util.Modules;
-import org.summerboot.jexpress.security.JwtUtil;
-import org.summerboot.jexpress.security.SecurityUtil;
 import io.jsonwebtoken.SignatureAlgorithm;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InaccessibleObjectException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.List;
-import java.util.TreeSet;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.quartz.Job;
 import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Order;
 import org.summerboot.jexpress.boot.config.BootConfig;
@@ -59,8 +39,28 @@ import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.EncryptorUtil;
+import org.summerboot.jexpress.security.JwtUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InaccessibleObjectException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * In Code We Trust
@@ -73,6 +73,8 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected Injector guiceInjector;
     protected List<SummerInitializer> summerInitializers = new ArrayList();
     protected List<SummerRunner> summerRunners = new ArrayList();
+    protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
+    protected int schedulerTriggers = 0;
 
     protected SummerBigBang(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass, args);
@@ -86,6 +88,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     private void singularity() {
+        log.trace("");
         guiceInjector = null;
         summerInitializers.clear();
         summerRunners.clear();
@@ -93,17 +96,19 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     private <T extends SummerApplication> T aParallelUniverse(String... args) {
+        log.trace("");
         bigBang_LetThereBeCLI(args);
         bigBang_AndThereWasCLI();
 
         /*
-         * 2. load configs： 
+         * 2. load configs:
          * all configs depend on SummerBigBang.CLI_CONFIG_DOMAIN result
          * AuthConfig depends on Ioc scan result: JaxRsRequestProcessor scan @DeclareRoles to verify Role-Mapping in configuration file
          */
         loadBootConfigFiles(ConfigUtil.ConfigLoadMode.app_run);
 
         for (SummerInitializer summerInitializer : summerInitializers) {
+            log.trace("initApp: {}", summerInitializer);
             summerInitializer.initApp(userSpecifiedConfigDir);
         }
 
@@ -117,6 +122,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     protected void bigBang_LetThereBeCLI(String[] args) {
+        log.trace("");
         memo.append(BootConstant.BR).append("\t- CLI.init: args=").append(Arrays.asList(args));
         Option arg = Option.builder(BootConstant.CLI_USAGE)
                 .desc("Usage/Help")
@@ -226,6 +232,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     protected List<SummerInitializer> scanImplementation_SummerInitializer() {
+        log.trace("");
         List<SummerInitializer> summerCLIs = new ArrayList();
         Set<Class<? extends SummerInitializer>> summerCLI_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerInitializer.class, callerRootPackageNames);
         //prepare ordering
@@ -235,7 +242,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         for (Class<? extends SummerInitializer> c : summerCLI_ImplClasses) {
             //get order
             int order = 0;
-            Order o = (Order) c.getAnnotation(Order.class);
+            Order o = c.getAnnotation(Order.class);
             if (o != null) {
                 order = o.value();
             }
@@ -245,7 +252,8 @@ abstract public class SummerBigBang extends SummerSingularity {
                 Constructor<? extends SummerInitializer> cc = c.getConstructor();
                 cc.setAccessible(true);
                 instance = cc.newInstance();
-            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                     IllegalArgumentException | InvocationTargetException ex) {
                 throw new InaccessibleObjectException("Failed to call default constructor of " + c.getName());
             }
 
@@ -265,6 +273,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     protected boolean runCLI_Utils() {
+        log.trace("");
         boolean continueCLI = true;
         //usage
         if (cli.hasOption(BootConstant.CLI_USAGE)) {
@@ -300,6 +309,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     protected void bigBang_AndThereWasCLI() {
+        log.trace("");
         if (!runCLI_Utils()) {
             System.exit(0);
         }
@@ -309,7 +319,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
             String adminPwdFile = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD_FILE);
             Properties props = new Properties();
-            try (InputStream is = new FileInputStream(adminPwdFile);) {
+            try (InputStream is = new FileInputStream(adminPwdFile)) {
                 props.load(is);
             } catch (Throwable ex) {
                 throw new RuntimeException("failed to load " + adminPwdFile, ex);
@@ -431,6 +441,7 @@ abstract public class SummerBigBang extends SummerSingularity {
      * @return
      */
     protected int loadBootConfigFiles(ConfigUtil.ConfigLoadMode mode) {
+        log.trace("");
         Map<String, JExpressConfig> configs = new LinkedHashMap<>();
         int updated = 0;
 
@@ -491,6 +502,7 @@ abstract public class SummerBigBang extends SummerSingularity {
      * @param userSpecifiedImplTags
      */
     protected void genesis(Class primaryClass, Set<String> userSpecifiedImplTags) {
+        log.trace("");
         BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedImplTags, memo);
         ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedImplTags, channelHandlerNames, memo);
         Module bootModule = Modules.override(defaultModule).with(scanedModule);
@@ -528,17 +540,18 @@ abstract public class SummerBigBang extends SummerSingularity {
      * <code>Guice.createInjector(module) --> BootGuiceModule.configure() --> BootGuiceModule.scanAnnotation_BindInstance(...)</code>
      * to load all classes annotated with @Controller
      *
-     *
      * @param controllers
      */
     @Inject
     protected void onGuiceInjectorCreated_ControllersInjected(@Controller Map<String, Object> controllers) {
+        log.trace("");
         //1. scan and register controllers
         String pingURL = JaxRsRequestProcessorManager.registerControllers(controllers, memo);
         BackOffice.agent.setPingURL(pingURL);
     }
 
     protected void scanImplementation_SummerRunner(Injector injector) {
+        log.trace("");
         Set<Class<? extends SummerRunner>> summerRunner_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerRunner.class, callerRootPackageNames);
         //prepare ordering
         Set<Integer> orderSet = new TreeSet();
@@ -547,7 +560,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         for (Class<? extends SummerRunner> c : summerRunner_ImplClasses) {
             //get order
             int order = 0;
-            Order o = (Order) c.getAnnotation(Order.class);
+            Order o = c.getAnnotation(Order.class);
             if (o != null) {
                 order = o.value();
             }
@@ -568,10 +581,8 @@ abstract public class SummerBigBang extends SummerSingularity {
         }
     }
 
-    protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
-    protected int schedulerTriggers = 0;
-
     protected int scanAnnotation_Scheduled(Injector injector, String... rootPackageNames) {
+        log.trace("");
         int triggers = 0;
         Set<Class<? extends Job>> classes = ReflectionUtil.getAllImplementationsByInterface(Job.class, rootPackageNames);
 

@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.3.12</version>
+    <version>2.3.13-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
-    <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements, some of which Spring Boot has (may) not yet provided</description>
+    <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
+        some of which Spring Boot has (may) not yet provided
+    </description>
     <url>https://github.com/SummerBootFramework</url>
     <organization>
         <name>Summer Boot Org</name>
@@ -33,12 +36,16 @@
             <name>Apache License, Version 2.0</name>
             <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
-            <comments>The jExpress licenses this framework to you under the Apache License, version 2.0 (the "License"); you may not use this framework except in compliance with the License and you have no policy prohibiting employee contributions back to this framework (unless the contributor to this framework is your current or retired employee).</comments>
+            <comments>The jExpress licenses this framework to you under the Apache License, version 2.0 (the "License");
+                you may not use this framework except in compliance with the License and you have no policy prohibiting
+                employee contributions back to this framework (unless the contributor to this framework is your current
+                or retired employee).
+            </comments>
         </license>
     </licenses>
     <scm>
         <url>https://github.com/SummerBootFramework/jExpress.git</url>
-        <connection>scm:git:git@github.com:SummerBootFramework/jExpress.git</connection>        
+        <connection>scm:git:git@github.com:SummerBootFramework/jExpress.git</connection>
         <developerConnection>scm:git:git@github.com:SummerBootFramework/jExpress.git</developerConnection>
     </scm>
     <!--    <build>
@@ -61,7 +68,7 @@
         <profile>
             <id>release</id>
             <build>
-                <plugins>      
+                <plugins>
                     <plugin>
                         <!--for unit test-->
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -109,7 +116,7 @@
                             </execution>
                         </executions>
                     </plugin>
- 
+
                     <!--Deploy-->
                     <plugin>
                         <artifactId>maven-deploy-plugin</artifactId>
@@ -162,12 +169,12 @@
                     <id>ossrh</id>
                     <name>Central Repository OSSRH</name>
                     <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>                
+                </repository>
             </distributionManagement>
         </profile>
     </profiles>
-    
-    <properties>        
+
+    <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -191,14 +198,14 @@
         <netty.version>4.1.101.Final</netty.version>
         <netty-tcnative.version>2.0.62.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.59.1</grpc.version>
+        <grpc.version>1.60.0</grpc.version>
         <guava.version>32.1.3-jre</guava.version>
         <protobuf.version>3.25.1</protobuf.version>
-        <!-- Web JAX-RS -->        
+        <!-- Web JAX-RS -->
         <swagger.core.version>2.2.19</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
-        
-        
+
+
         <!-- MIME-Type -->
         <tika.version>2.9.1</tika.version>
         <!-- JAX-RS -->
@@ -221,7 +228,7 @@
 
         <!-- Cache -->
         <jedis.version>5.1.0</jedis.version>
-        
+
         <quartz.version>2.5.0-rc1</quartz.version>
 
         <!-- Template Engine -->
@@ -230,15 +237,15 @@
         <zxing.version>3.5.2</zxing.version>
         <!-- PDF - PDFBox 
         <pdfbox.version>2.0.25</pdfbox.version>-->
-        <!-- PDF - com.openhtmltopdf -->	       
+        <!-- PDF - com.openhtmltopdf -->
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.17</batik-transcoder.version>
         <!-- PDF - iText -->
         <itext7-core.version>8.0.2</itext7-core.version>
         <itext7-html2pdf.version>5.0.2</itext7-html2pdf.version>
-        
+
         <!-- Testing  -->
-        <testng.version>7.8.0</testng.version>        
+        <testng.version>7.8.0</testng.version>
         <jdbc.version>8.2.0</jdbc.version>
     </properties>
 
@@ -276,7 +283,7 @@
             <artifactId>encoder</artifactId>
             <version>${owasp.encoder.version}</version>
         </dependency>-->
-       
+
         <!-- Reflection -->
         <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
         <dependency>
@@ -304,7 +311,7 @@
             <groupId>com.lmax</groupId>
             <artifactId>disruptor</artifactId>
             <version>${log4j-disruptor.version}</version>
-        </dependency>        
+        </dependency>
         <!-- JDK Logging Adapter https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-jul -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -369,7 +376,6 @@
         </dependency>-->
 
 
-
         <!-- NIO Netty -->
         <!-- https://mvnrepository.com/artifact/io.netty/netty-all Apache 2.0-->
         <dependency>
@@ -400,8 +406,8 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-classes</artifactId>
             <version>${netty-tcnative.version}</version>
-        </dependency>        
-        
+        </dependency>
+
         <!-- gRPC and protobuf -->
         <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
         <dependency>
@@ -409,7 +415,7 @@
             <artifactId>protobuf-java</artifactId>
             <version>${protobuf.version}</version>
             <!--            <scope>provided</scope>-->
-        </dependency>     
+        </dependency>
         <!-- https://mvnrepository.com/artifact/io.grpc/grpc-protobuf -->
         <dependency>
             <groupId>io.grpc</groupId>
@@ -439,14 +445,14 @@
             <!--            <scope>provided</scope>-->
         </dependency>
 
-        <!-- Open API --> 
+        <!-- Open API -->
         <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
             <version>${swagger.core.version}</version>
         </dependency>
-        
+
         <!-- https://mvnrepository.com/artifact/co.elastic.apm/apm-agent-api 
         <dependency>
             <groupId>co.elastic.apm</groupId>
@@ -519,8 +525,8 @@
             <artifactId>jackson-dataformat-xml</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-        
-        
+
+
         <!-- Bean Validation -->
         <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator -->
         <dependency>
@@ -537,7 +543,7 @@
         </dependency>
 
         <!-- Injection -->
-        <!-- https://mvnrepository.com/artifact/com.google.inject/guice Apache 2.0-->            
+        <!-- https://mvnrepository.com/artifact/com.google.inject/guice Apache 2.0-->
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
@@ -581,8 +587,8 @@
             <version>${jedis.version}</version>
             <scope>provided</scope>
         </dependency>
-        
-              
+
+
         <!-- Scheduler -->
         <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
         <dependency>
@@ -610,7 +616,7 @@
             <artifactId>freemarker</artifactId>
             <version>${freemarker.version}</version>
         </dependency>
-        
+
         <!-- Barcode -->
         <!-- ZXing (“zebra crossing”) is an open-source, multi-format 1D/2D barcode image processing library implemented in Java, with ports to other languages. This is the main library that supports QR codes in Java. -->
         <!-- https://mvnrepository.com/artifact/com.google.zxing/core -->
@@ -627,8 +633,7 @@
             <version>${zxing.version}</version>
             <scope>provided</scope>
         </dependency>
-        
-        
+
 
         <!-- PDF - iText -->
         <!-- https://mvnrepository.com/artifact/com.itextpdf/itext7-core AGPL 3.0-->
@@ -652,8 +657,8 @@
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
             <version>${pdfbox.version}</version>
-        </dependency>-->        
-        
+        </dependency>-->
+
         <!-- PDF - com.openhtmltopdf -->
         <!-- https://mvnrepository.com/artifact/com.openhtmltopdf/openhtmltopdf-pdfbox LGPL 2.1-->
         <dependency>
@@ -667,19 +672,19 @@
             <groupId>com.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-pdfbox</artifactId>
             <version>${openhtml.version}</version>
-        </dependency>  	
+        </dependency>
         <dependency>
-            <!-- Required for image output only. -->  	
+            <!-- Required for image output only. -->
             <groupId>com.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-java2d</artifactId>
             <version>${openhtml.version}</version>
-        </dependency>  	
+        </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need right-to-left or bi-directional text support. -->
             <groupId>com.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-rtl-support</artifactId>
             <version>${openhtml.version}</version>
-        </dependency>  	 
+        </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need logging via slf4j. -->
             <groupId>com.openhtmltopdf</groupId>
@@ -691,7 +696,7 @@
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>  	
+        </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need SVG support. -->
             <groupId>com.openhtmltopdf</groupId>
@@ -712,7 +717,7 @@
             <artifactId>openhtmltopdf-mathml-support</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
-        
+
         <!-- Document to Image -->
         <!-- https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-all 
         <dependency>
@@ -737,6 +742,6 @@
             <artifactId>mysql-connector-j</artifactId>
             <version>${jdbc.version}</version>
             <scope>test</scope>
-        </dependency>  
-    </dependencies>  
+        </dependency>
+    </dependencies>
 </project>
