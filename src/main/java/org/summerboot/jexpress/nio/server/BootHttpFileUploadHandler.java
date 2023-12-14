@@ -15,12 +15,9 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.nio.server.domain.ServiceError;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.nio.server.multipart.MultipartUtil;
-import org.summerboot.jexpress.security.auth.Caller;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -41,18 +38,24 @@ import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder.EndOfDataDec
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType;
 import io.netty.util.ReferenceCountUtil;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import io.netty.handler.codec.DecoderException;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.domain.ServiceError;
+import org.summerboot.jexpress.nio.server.multipart.MultipartUtil;
+import org.summerboot.jexpress.security.auth.Caller;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 //NOT @ChannelHandler.Sharable due to BootHttpFileUploadHandler is stateful
@@ -69,10 +72,16 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
     protected static final NioConfig uploadCfg = NioConfig.cfg;
 
     static {
-        DiskFileUpload.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
-        DiskFileUpload.baseDirectory = uploadCfg.getTempUoloadDir(); // system temp directory
-        DiskAttribute.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
-        DiskAttribute.baseDirectory = uploadCfg.getTempUoloadDir(); // system temp directory
+        String tempUoloadDir = uploadCfg.getTempUoloadDir();
+        try {
+            Files.createDirectories(Path.of(tempUoloadDir));
+            DiskFileUpload.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
+            DiskFileUpload.baseDirectory = tempUoloadDir; // system temp directory
+            DiskAttribute.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
+            DiskAttribute.baseDirectory = tempUoloadDir; // system temp directory
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public BootHttpFileUploadHandler() {
@@ -250,7 +259,6 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
     }
 
     /**
-     *
      * @param ctx
      * @param req
      * @return quota (in bytes) of uploaded file size
