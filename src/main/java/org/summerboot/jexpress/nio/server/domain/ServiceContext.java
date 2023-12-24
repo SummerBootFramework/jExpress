@@ -15,8 +15,6 @@
  */
 package org.summerboot.jexpress.nio.server.domain;
 
-import org.summerboot.jexpress.nio.server.NioHttpUtil;
-import org.summerboot.jexpress.security.auth.Caller;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,6 +23,19 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.logging.log4j.Level;
+import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.boot.BootPOI;
+import org.summerboot.jexpress.nio.server.NioConfig;
+import org.summerboot.jexpress.nio.server.NioHttpUtil;
+import org.summerboot.jexpress.nio.server.ResponseEncoder;
+import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.util.ApplicationUtil;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -40,20 +51,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.Level;
-import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.BootPOI;
-import org.summerboot.jexpress.nio.server.NioConfig;
 import java.util.Set;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.summerboot.jexpress.boot.BackOffice;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.nio.server.ResponseEncoder;
-import org.summerboot.jexpress.util.ApplicationUtil;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -133,7 +133,7 @@ public class ServiceContext {
             this.localIP = null;
             this.remoteIP = null;
         }
-        this.txId = txId;        
+        this.txId = txId;
         this.hit = hit;
         this.startTs = startTs;
         this.requestHeaders = requestHeaders;
@@ -154,6 +154,7 @@ public class ServiceContext {
 //            attributes.clear();
 //        }
 //    }
+
     /**
      * get attribute value by kay
      *
@@ -229,7 +230,7 @@ public class ServiceContext {
     public String txId() {
         return txId;
     }
-    
+
     public long hit() {
         return hit;
     }
@@ -283,7 +284,7 @@ public class ServiceContext {
         return this;
     }
 
-//        public Response addHeader(String key, Object value) {
+    //        public Response addHeader(String key, Object value) {
 //            if (StringUtils.isBlank(key) || value == null) {
 //                return this;
 //            }
@@ -308,7 +309,7 @@ public class ServiceContext {
         return this;
     }
 
-//        public Response addHeaders(String key, Iterable<?> values) {
+    //        public Response addHeaders(String key, Iterable<?> values) {
 //            if (StringUtils.isBlank(key) || values == null) {
 //                return this;
 //            }
@@ -379,7 +380,7 @@ public class ServiceContext {
         return this;
     }
 
-//    public ServiceContext contentTypeTry(String contentType) {
+    //    public ServiceContext contentTypeTry(String contentType) {
 //        if (contentType != null) {
 //            this.contentType = contentType;
 //        }
@@ -511,7 +512,7 @@ public class ServiceContext {
         return true;
     }
 
-//    private static final List<Integer> ERRPR_PAGES = new ArrayList();
+    //    private static final List<Integer> ERRPR_PAGES = new ArrayList();
 //
 //    static {
 //        ERRPR_PAGES.add(HttpResponseStatus.UNAUTHORIZED.code());
@@ -624,7 +625,7 @@ public class ServiceContext {
         return this;
     }
 
-//    public int errorCode() {
+    //    public int errorCode() {
 //        return errorCode;
 //    }
 //
@@ -862,7 +863,7 @@ public class ServiceContext {
         if (errors != null && !errors.isEmpty()) {
             sb.append("\n\n\tErrors: ");
             for (var error : errors) {
-                sb.append("\n\t ").append(error.toStringEx(false));
+                sb.append("\n\t ").append(error.toStringEx(true));
             }
         }
 

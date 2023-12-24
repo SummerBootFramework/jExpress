@@ -15,15 +15,15 @@
  */
 package org.summerboot.jexpress.boot.instrumentation;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class Timeout implements AutoCloseable {
@@ -63,16 +63,16 @@ public class Timeout implements AutoCloseable {
         lock.lock();
         Runnable runnableTask = () -> {
             try {
-                log.info("Timeout watching: {} - {}", processName, System.currentTimeMillis());
+                log.info("Task started: {} - {}", processName, System.currentTimeMillis());
                 if (lock.tryLock(timeoutMilliseconds, TimeUnit.MILLISECONDS)) {
                     lock.unlock();
-                    log.info("Timeout ontime: {} - {}", processName, System.currentTimeMillis());
+                    log.info("Task finished: {} - {}", processName, System.currentTimeMillis());
                     return;
                 }
                 String desc = message == null
                         ? ""
                         : BootConstant.BR + "\t" + message;
-                log.warn(BootConstant.BR + BootConstant.BR + "\t*** Warning: " + processName + " has timed out for " + timeoutMilliseconds + " ms ***" + BootConstant.BR + desc + BootConstant.BR + BootConstant.BR);
+                log.warn(BootConstant.BR + BootConstant.BR + "\t*** Warning: " + processName + " has timed out over " + timeoutMilliseconds + " ms ***" + BootConstant.BR + desc + BootConstant.BR + BootConstant.BR);
                 if (task != null) {
                     BackOffice.execute(task);
                 }
@@ -87,5 +87,4 @@ public class Timeout implements AutoCloseable {
     public void close() throws Exception {
         lock.unlock();
     }
-
 }

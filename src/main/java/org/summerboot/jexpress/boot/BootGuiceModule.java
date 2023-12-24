@@ -21,10 +21,6 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 import io.grpc.ServerInterceptor;
 import io.netty.channel.ChannelHandler;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.Scheduler;
 import org.summerboot.jexpress.boot.annotation.Controller;
@@ -43,24 +39,30 @@ import org.summerboot.jexpress.integration.cache.AuthTokenCacheLocalImpl;
 import org.summerboot.jexpress.integration.quartz.GuiceSchedulerProvider;
 import org.summerboot.jexpress.integration.smtp.BootPostOfficeImpl;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
-import org.summerboot.jexpress.nio.server.BootHttpRequestHandler;
 import org.summerboot.jexpress.nio.server.BootHttpExceptionHandler;
 import org.summerboot.jexpress.nio.server.BootHttpLifecycleHandler;
+import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
+import org.summerboot.jexpress.nio.server.BootHttpRequestHandler;
+import org.summerboot.jexpress.nio.server.HttpExceptionHandler;
+import org.summerboot.jexpress.nio.server.HttpLifecycleHandler;
 import org.summerboot.jexpress.nio.server.HttpNioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.LDAPAuthenticator;
 import org.summerboot.jexpress.util.ReflectionUtil;
-import org.summerboot.jexpress.nio.server.HttpExceptionHandler;
-import org.summerboot.jexpress.nio.server.HttpLifecycleHandler;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Modifier;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class BootGuiceModule extends AbstractModule {
 
+    private final static String BIND_TO = " --> ";
+    private final static String INFO = BootConstant.BR + "\t- Ioc.default.binding: ";
     private final Object caller;
     private final Class callerClass;
     private final String callerRootPackageName;
@@ -78,9 +80,6 @@ public class BootGuiceModule extends AbstractModule {
     protected boolean isCliUseImplTag(String implTag) {
         return userSpecifiedImplTags != null && userSpecifiedImplTags.contains(implTag);
     }
-
-    private final static String BIND_TO = " --> ";
-    private final static String INFO = BootConstant.BR + "\t- Ioc.default.binding: ";
 
     @Override
     public void configure() {
@@ -152,8 +151,8 @@ public class BootGuiceModule extends AbstractModule {
      *
      * @param binder
      * @param rootPackageNames
-     * @param annotation the class level annotation to mark this class as a HTTP
-     * request controller
+     * @param annotation       the class level annotation to mark this class as a HTTP
+     *                         request controller
      */
     protected void scanAnnotation_BindInstance(Binder binder, Class<? extends Annotation> annotation, String... rootPackageNames) {
         MapBinder<String, Object> mapbinder = MapBinder.newMapBinder(binder, String.class, Object.class, annotation);

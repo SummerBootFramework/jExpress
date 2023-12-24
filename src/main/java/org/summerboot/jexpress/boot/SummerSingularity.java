@@ -20,6 +20,31 @@ import io.grpc.ServerServiceDefinition;
 import io.netty.channel.ChannelHandler;
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.boot.annotation.GrpcService;
+import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.boot.annotation.Service.ChannelHandlerType;
+import org.summerboot.jexpress.boot.annotation.Unique;
+import org.summerboot.jexpress.boot.annotation.Version;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.config.JExpressConfig;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.i18n.I18n;
+import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
+import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
+import org.summerboot.jexpress.nio.server.NioConfig;
+import org.summerboot.jexpress.security.auth.AuthConfig;
+import org.summerboot.jexpress.util.ApplicationUtil;
+import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.util.ReflectionUtil;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -39,30 +64,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.Unique;
-import org.summerboot.jexpress.boot.annotation.Version;
-import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
-import org.summerboot.jexpress.security.auth.AuthConfig;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.BeanUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
-import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.boot.annotation.GrpcService;
-import org.summerboot.jexpress.boot.annotation.Service.ChannelHandlerType;
-import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.i18n.I18n;
-import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
-import org.summerboot.jexpress.nio.server.NioConfig;
-import org.summerboot.jexpress.util.FormatterUtil;
 
 /**
  * In Code We Trust
@@ -145,7 +146,7 @@ abstract public class SummerSingularity {
     protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames = new HashMap();
 
     protected SummerSingularity(Class callerClass, String... args) {
-        System.out.println("SummerApplication loading from " + HOST);
+        System.out.println("jExpress loading from " + HOST);
         System.setProperty(BootConstant.SYS_PROP_SERVER_NAME, HOST);// used by log4j2.xml
         primaryClass = callerClass == null
                 ? this.getClass()
@@ -155,6 +156,9 @@ abstract public class SummerSingularity {
     }
 
     private void singularity() {
+        if (BackOffice.agent.isTraceWithSystemOut()) {
+            System.out.println("jExpress init.0");
+        }
         memo.setLength(0);
         userSpecifiedConfigDir = null;
         pluginDir = null;
@@ -188,6 +192,9 @@ abstract public class SummerSingularity {
     }
 
     private <T extends SummerApplication> T bigBang(String[] args) {
+        if (BackOffice.agent.isTraceWithSystemOut()) {
+            System.out.println("jExpress init.1");
+        }
         memo.append(BootConstant.BR).append("\t- deployee callerClass=").append(primaryClass.getName());
         Set<String> packageSet = new HashSet();
         Set<String> configuredPackageSet = BackOffice.agent.getRootPackageNames();
@@ -198,12 +205,18 @@ abstract public class SummerSingularity {
         packageSet.add(rootPackageName);
         BackOffice.agent.setRootPackageNames(packageSet);
         callerRootPackageNames = packageSet.toArray(String[]::new);
-
         memo.append(BootConstant.BR).append("\t- callerRootPackageName=").append(packageSet);
+
+        if (BackOffice.agent.isTraceWithSystemOut()) {
+            System.out.println("jExpress init.2");
+        }
         StringBuilder sb = new StringBuilder();
         jmxRequired = ApplicationUtil.scanJVM_StartCommand(sb);
         jvmStartCommand = sb.toString();
 
+        if (BackOffice.agent.isTraceWithSystemOut()) {
+            System.out.println("jExpress init.3");
+        }
         scanAnnotation_Version(primaryClass);
         System.setProperty(BootConstant.SYS_PROP_LOGFILENAME, logFileName);// used by log4j2.xml as log file name
         System.setProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME, rootPackageName);// used by log4j2.xml
@@ -235,6 +248,9 @@ abstract public class SummerSingularity {
     }
 
     protected void scanAnnotation_Version(Class callerClass) {
+        if (BackOffice.agent.isTraceWithSystemOut()) {
+            System.out.println("jExpress scanning version");
+        }
         Version version = (Version) callerClass.getAnnotation(Version.class);
         if (version != null) {
             String logManager = version.LogManager();
@@ -262,6 +278,9 @@ abstract public class SummerSingularity {
     }
 
     protected void scanArgsToInitializeLogging(String[] args) {
+        if (BackOffice.agent.isTraceWithSystemOut()) {
+            System.out.println("jExpress initLogger.1");
+        }
         /*
          * [Config File] Location - determine the configuration path: userSpecifiedConfigDir
          */
@@ -283,6 +302,9 @@ abstract public class SummerSingularity {
             }
         }
 
+        if (BackOffice.agent.isTraceWithSystemOut()) {
+            System.out.println("jExpress initLogger.2");
+        }
         if (userSpecifiedConfigDir == null) {
             userSpecifiedConfigDir = DEFAULT_CFG_DIR;
         }
@@ -290,6 +312,9 @@ abstract public class SummerSingularity {
             userSpecifiedConfigDir.mkdirs();
         }
 
+        if (BackOffice.agent.isTraceWithSystemOut()) {
+            System.out.println("jExpress initLogger.3");
+        }
 //        if (userSpecifiedConfigDir.getAbsolutePath().equals(CURRENT_DIR.getAbsolutePath())) {
 //            //set log folder inside user specified config folder
 //            System.setProperty(SYS_PROP_LOGFILEPATH, userSpecifiedConfigDir.getAbsolutePath());//used by log4j2.xml
@@ -309,6 +334,9 @@ abstract public class SummerSingularity {
         /*
          * [Config File] Log4J - init
          */
+        if (BackOffice.agent.isTraceWithSystemOut()) {
+            System.out.println("jExpress initLogger.4");
+        }
         String location = userSpecifiedConfigDir.getAbsolutePath();
         ClassLoader classLoader = this.getClass().getClassLoader();
         Path logFilePath = ApplicationUtil.createIfNotExist(location, classLoader, "log4j2.xml.temp", "log4j2.xml");
@@ -321,6 +349,7 @@ abstract public class SummerSingularity {
     }
 
     protected void scanPluginJars(File pluginDir, boolean failOnUndefinedClasses) throws IOException {
+        log.trace("{}, {}", pluginDir, failOnUndefinedClasses);
         pluginDir.mkdirs();
         if (!pluginDir.canRead() || !pluginDir.isDirectory()) {
             memo.append(BootConstant.BR).append("\t- loadPluginJars: invalid dir ").append(pluginDir);
@@ -344,13 +373,13 @@ abstract public class SummerSingularity {
     }
 
     /**
-     *
      * @param rootPackageNames
      * @param sb
      * @param displayByTags
      * @return error message
      */
     protected String scanAnnotation_Unique(String[] rootPackageNames, StringBuilder sb, String... displayByTags) {
+        log.trace("");
         StringBuilder errors = new StringBuilder();
         boolean error = false;
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Unique.class, false, rootPackageNames);
@@ -393,6 +422,7 @@ abstract public class SummerSingularity {
     }
 
     protected void scanAnnotation_JExpressConfigImportResource(String... rootPackageNames) {
+        log.trace("");
         Set<String> pakcages = Set.copyOf(List.of(rootPackageNames));
         //Set<Class<? extends JExpressConfig>> classesAll = new HashSet();//to remove duplicated
         //for (String rootPackageName : pakcages) {
@@ -440,6 +470,7 @@ abstract public class SummerSingularity {
     }
 
     protected void scanImplementation_gRPC(String... pakcages) {
+        log.trace("");
         //gRPCBindableServiceImplClasses.addAll(ReflectionUtil.getAllImplementationsByInterface(BindableService.class, callerRootPackageNames));
         //for (String rootPackageName : pakcages) {
         Set<Class<?>> gRPCServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcService.class, false, pakcages);
@@ -455,6 +486,7 @@ abstract public class SummerSingularity {
     }
 
     protected void scanAnnotation_Controller(String... rootPackageNames) {
+        log.trace("");
         //Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         //for (String rootPackageName : rootPackageNames) {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, false, rootPackageNames);
@@ -479,6 +511,7 @@ abstract public class SummerSingularity {
     }
 
     protected List<String> scanAnnotation_Service(String... rootPackageNames) {
+        log.trace("");
         //Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         //for (String rootPackageName : rootPackageNames) {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Service.class, false, rootPackageNames);
@@ -489,6 +522,7 @@ abstract public class SummerSingularity {
     }
 
     protected List<String> scanAnnotation_Service(Set<Class<?>> classesAll) {
+        log.trace("");
         List<String> tags = new ArrayList();
         StringBuilder sb = new StringBuilder();
         for (Class serviceImplClass : classesAll) {
@@ -551,6 +585,7 @@ abstract public class SummerSingularity {
     }
 
     protected void scanAnnotation_Service_Add2BindingMap(Class bindingClass, String uniqueKey, ServiceMetadata service, StringBuilder sb) {
+        log.trace("");
         memo.append(BootConstant.BR).append("\t- scan.taggedservice.add to guiceModule.bind(").append(bindingClass.getName()).append(").to(").append(service).append("), uniqueKey=").append(uniqueKey);
         Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(bindingClass);
         if (taggeServicedMap == null) {
@@ -572,6 +607,7 @@ abstract public class SummerSingularity {
     }
 
     protected void scanAnnotation_Service_ValidateBindingMap(StringBuilder sb) {
+        log.trace("");
         for (Class keyBindingClass : scanedServiceBindingMap.keySet()) {
             Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(keyBindingClass);
             for (String keyImplTag : taggeServicedMap.keySet()) {
@@ -585,6 +621,7 @@ abstract public class SummerSingularity {
     }
 
     protected void scanAnnotation_DeclareRoles(String... rootPackageNames) {
+        log.trace("");
         Set<String> declareRoles = new TreeSet();
         //Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         //for (String rootPackageName : rootPackageNames) {

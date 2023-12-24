@@ -15,6 +15,12 @@
  */
 package org.summerboot.jexpress.boot;
 
+import org.summerboot.jexpress.boot.config.BootConfig;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.config.annotation.Config;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.util.ReflectionUtil;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -23,15 +29,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
-import org.summerboot.jexpress.boot.config.BootConfig;
-import static org.summerboot.jexpress.boot.config.BootConfig.generateTemplate;
-import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.util.ReflectionUtil;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class BackOffice extends BootConfig {
@@ -60,8 +59,8 @@ public class BackOffice extends BootConfig {
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            tpe.shutdown();
-        }, "ShutdownHook.BackOffice")
+                    tpe.shutdown();
+                }, "ShutdownHook.BackOffice")
         );
     }
 
@@ -75,6 +74,7 @@ public class BackOffice extends BootConfig {
         }
         agent.tpe.execute(task);
     }
+
     protected ThreadPoolExecutor tpe;
     private String pingURL;
     private String version;
@@ -150,6 +150,9 @@ public class BackOffice extends BootConfig {
     private Set<String> rootPackageNames;
 
     @ConfigHeader(title = "3. Default Settings")
+    @Config(key = "log.traceWithSystemOut", defaultValue = "false", desc = "enable trace with system out before logger enabled")
+    private boolean traceWithSystemOut = false;
+
     @Config(key = "type.errorCodeAsInt", defaultValue = "false")
     private boolean errorCodeAsInt = false;
 
@@ -286,6 +289,10 @@ public class BackOffice extends BootConfig {
 
     public Set<String> getRootPackageNames() {
         return rootPackageNames;
+    }
+
+    public boolean isTraceWithSystemOut() {
+        return traceWithSystemOut;
     }
 
     public boolean isErrorCodeAsInt() {

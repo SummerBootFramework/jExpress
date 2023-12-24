@@ -15,16 +15,12 @@
  */
 package org.summerboot.jexpress.boot;
 
-import com.google.inject.Module;
 import com.google.inject.Inject;
+import com.google.inject.Module;
 import io.grpc.BindableService;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerServiceDefinition;
-import java.net.InetSocketAddress;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
@@ -40,12 +36,17 @@ import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
-import org.summerboot.jexpress.nio.server.NioServer;
-import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.nio.grpc.StatusReporter;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioConfig;
+import org.summerboot.jexpress.nio.server.NioServer;
 import org.summerboot.jexpress.util.ApplicationUtil;
+import org.summerboot.jexpress.util.BeanUtil;
+
+import java.net.InetSocketAddress;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * In Code We Trust
@@ -53,6 +54,22 @@ import org.summerboot.jexpress.util.ApplicationUtil;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 abstract public class SummerApplication extends SummerBigBang {
+
+    @Inject
+    protected ConfigChangeListener configChangeListener;
+    @Inject
+    protected InstrumentationMgr instrumentationMgr;
+    @Inject
+    protected HealthInspector healthInspector;
+    protected NioServer httpServer;
+    protected List<GRPCServer> gRPCServerList = new ArrayList();
+    @Inject
+    protected PostOffice postOffice;
+    private boolean memoLogged = false;
+
+    private SummerApplication(Class callerClass, Module userOverrideModule, String... args) {
+        super(callerClass, userOverrideModule, args);
+    }
 
     /**
      * Might not work on Non HotSpot VM implementations.
@@ -66,7 +83,6 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     /**
-     *
      * @param callerClass
      * @param args
      */
@@ -87,9 +103,7 @@ abstract public class SummerApplication extends SummerBigBang {
         int size = mainCommand.length;
         String[] args = size > 0 ? new String[size - 1] : ApplicationUtil.EMPTY_ARGS;
         String mainClassName = mainCommand[0];
-        for (int i = 1; i < size; i++) {
-            args[i - 1] = mainCommand[i];
-        }
+        System.arraycopy(mainCommand, 1, args, 0, size - 1);
         Class callerClass = null;
         StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
         for (StackTraceElement stackTraceElement : stackTrace) {
@@ -114,7 +128,6 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     /**
-     *
      * @param <T>
      * @param args
      * @return
@@ -125,7 +138,6 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     /**
-     *
      * @param <T>
      * @param args
      * @param userOverrideModule
@@ -150,7 +162,6 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     /**
-     *
      * @param <T>
      * @param callerClass
      * @param userOverrideModule
@@ -163,7 +174,6 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     /**
-     *
      * @param <T>
      * @param callerClass
      * @param userOverrideModule
@@ -178,7 +188,6 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     /**
-     *
      * @param <T>
      * @param callerClass
      * @param userOverrideModule
@@ -191,7 +200,6 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     /**
-     *
      * @param <T>
      * @param callerClass
      * @param userOverrideModule
@@ -205,28 +213,6 @@ abstract public class SummerApplication extends SummerBigBang {
         return (T) app;
     }
 
-    private SummerApplication(Class callerClass, Module userOverrideModule, String... args) {
-        super(callerClass, userOverrideModule, args);
-    }
-
-    @Inject
-    protected ConfigChangeListener configChangeListener;
-
-    @Inject
-    protected InstrumentationMgr instrumentationMgr;
-
-    @Inject
-    protected HealthInspector healthInspector;
-
-    protected NioServer httpServer;
-
-    protected List<GRPCServer> gRPCServerList = new ArrayList();
-
-    @Inject
-    protected PostOffice postOffice;
-
-    private boolean memoLogged = false;
-
     public List<GRPCServer> getgRPCServers() {
         return gRPCServerList;
     }
@@ -237,6 +223,7 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     protected void traceConfig() {
+        log.trace("");
         if (!memoLogged) {
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGID).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGID));
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILEPATH).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILEPATH));
@@ -256,39 +243,43 @@ abstract public class SummerApplication extends SummerBigBang {
     /**
      * run application with ping enabled, URI as webApiContextRoot +
      * loadBalancerHealthCheckPath
-     *
      */
     public void start() {
+        log.trace("");
         traceConfig();
         if (configChangeListener != null) {
             ConfigUtil.setConfigChangeListener(configChangeListener);
         }
 
         //1. init email
+        log.trace("1. init email");
         final SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
         if (postOffice != null) {
             HealthMonitor.setPostOffice(postOffice);
             postOffice.setAppVersion(super.appVersion);
             //gracefully shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                if (postOffice != null) {
-                    postOffice.sendAlertSync(smtpCfg.getEmailToAppSupport(), "Shutdown at " + OffsetDateTime.now() + " - " + super.appVersion, "EOM", null, false);
-                }
-            }, "ShutdownHook.BootApp")
+                        if (postOffice != null) {
+                            postOffice.sendAlertSync(smtpCfg.getEmailToAppSupport(), "Shutdown at " + OffsetDateTime.now() + " - " + super.appVersion, "EOM", null, false);
+                        }
+                    }, "ShutdownHook.BootApp")
             );
         }
         try {
             // 2. initialize JMX instrumentation
+            log.trace("2. initialize JMX instrumentation");
             if (instrumentationMgr != null/* && isJMXRequired()*/) {
                 instrumentationMgr.start(BootConstant.VERSION);
             }
 
-            // 3a. runner.run            
+            // 3a. runner.run
+            log.trace("3a. runner.run");
             SummerRunner.RunnerContext context = new SummerRunner.RunnerContext(cli, userSpecifiedConfigDir, guiceInjector, healthInspector, postOffice);
             for (SummerRunner summerRunner : summerRunners) {
                 summerRunner.run(context);
             }
             // 3b. start scheduler
+            log.trace("3b. start scheduler");
             if (schedulerTriggers > 0) {
                 scheduler.start();
                 StringBuilder sb = new StringBuilder();
@@ -300,6 +291,7 @@ abstract public class SummerApplication extends SummerBigBang {
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             // 4. health inspection
+            log.trace("4. health inspection");
             StringBuilder sb = new StringBuilder();
             sb.append(BootConstant.BR).append(HealthMonitor.PROMPT);
             if (healthInspector != null) {
@@ -325,9 +317,9 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 5a. start server: gRPC
-            log.trace("hasGRPCImpl.bs=" + gRPCBindableServiceImplClasses);
-            log.trace("hasGRPCImpl.ssd=" + gRPCServerServiceDefinitionImplClasses);
             if (hasGRPCImpl) {
+                log.trace("5a. start server: gRPC hasGRPCImpl.bs={}", gRPCBindableServiceImplClasses);
+                log.trace("5a. start server: gRPC hasGRPCImpl.ssd={}", gRPCServerServiceDefinitionImplClasses);
                 ServerInterceptor serverInterceptor = super.guiceInjector.getInstance(ServerInterceptor.class);
                 //2. init gRPC server
                 GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
@@ -336,6 +328,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 for (InetSocketAddress bindingAddress : bindingAddresses) {
                     String host = bindingAddress.getAddress().getHostAddress();
                     int port = bindingAddress.getPort();
+                    log.trace("5a. binding gRPC on {}:{}", host, port);
                     try (var a = Timeout.watch("starting gRPCServer at " + host + ":" + port, timeoutMs).withDesc(timeoutDesc)) {
                         GRPCServer gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf(), serverInterceptor, gRPCCfg.getTpe(), nioListener);
                         ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
@@ -359,7 +352,7 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 5b. start server: HTTP
-            log.trace("hasControllers=" + hasControllers);
+            log.trace("5b. start server: HTTP hasControllers={}", hasControllers);
             if (hasControllers && NioConfig.cfg.isAutoStart()) {
                 try (var a = Timeout.watch("starting Web Server", timeoutMs).withDesc(timeoutDesc)) {
                     NioChannelInitializer channelInitializer = super.guiceInjector.getInstance(NioChannelInitializer.class);
@@ -391,6 +384,7 @@ abstract public class SummerApplication extends SummerBigBang {
     }
 
     public void shutdown() {
+        log.trace("");
         if (gRPCServerList != null && !gRPCServerList.isEmpty()) {
             for (GRPCServer gRPCServer : gRPCServerList) {
                 gRPCServer.shutdown();
