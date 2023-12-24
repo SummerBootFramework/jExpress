@@ -15,17 +15,16 @@
  */
 package org.summerboot.jexpress.nio.server.domain;
 
-import org.summerboot.jexpress.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.summerboot.jexpress.util.BeanUtil;
 
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <T>
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class Err<T> {
 
@@ -70,7 +69,7 @@ public class Err<T> {
 //                : rootCause.toString();
     }
 
-//    void showRootCause(boolean isEnable) {
+    //    void showRootCause(boolean isEnable) {
 //        this.cause = isEnable ? this._cause : null;
 //    }
     public String toJson() {
