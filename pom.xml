@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.3.13</version>
+    <version>2.3.14-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -185,7 +185,7 @@
         <!--        <commons-text.version>1.11.0</commons-text.version>-->
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
-        <log4j-api.version>2.22.0</log4j-api.version>
+        <log4j-api.version>2.22.1</log4j-api.version>
         <log4j-disruptor.version>3.4.4</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
@@ -202,7 +202,7 @@
         <guava.version>33.0.0-jre</guava.version>
         <protobuf.version>3.25.1</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.19</swagger.core.version>
+        <swagger.core.version>2.2.20</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -214,7 +214,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.16.0</jackson.version>
+        <jackson.version>2.16.1</jackson.version>
         <!-- Bean Validation -->
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <el.Implementation.version>4.0.2</el.Implementation.version>
@@ -245,7 +245,7 @@
         <itext7-html2pdf.version>5.0.2</itext7-html2pdf.version>
 
         <!-- Testing  -->
-        <testng.version>7.8.0</testng.version>
+        <testng.version>7.9.0</testng.version>
         <jdbc.version>8.2.0</jdbc.version>
     </properties>
 

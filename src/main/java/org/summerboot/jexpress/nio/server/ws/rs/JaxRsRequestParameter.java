@@ -15,25 +15,15 @@
  */
 package org.summerboot.jexpress.nio.server.ws.rs;
 
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.util.BeanUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
-import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.FormParam;
@@ -42,12 +32,22 @@ import jakarta.ws.rs.MatrixParam;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-//import jakarta.xml.bind.JAXBException;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
+import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.ReflectionUtil;
+
+import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 class JaxRsRequestParameter {
@@ -64,6 +64,9 @@ class JaxRsRequestParameter {
     private final String key;
     private final String defaultValue;
     private final boolean isRequired;
+
+    private final Pattern pattern;
+
     //private final boolean requestBodyAllowed;
     private boolean autoBeanValidation = false;
     private boolean cookieParamObj = false;
@@ -103,6 +106,7 @@ class JaxRsRequestParameter {
             genericClassT = (Class) argTypes[0];
         }
 
+        pattern = param.getAnnotation(Pattern.class);
         DefaultValue dft = param.getAnnotation(DefaultValue.class);
         if (dft == null) {
             defaultValue = null;
@@ -256,7 +260,8 @@ class JaxRsRequestParameter {
                                     v = defaultValue;
                                 }
                             }
-                            return v;
+                            //return v;
+                            return parse(v, defaultValue, context);
                         }
                     }
                 }
@@ -373,6 +378,12 @@ class JaxRsRequestParameter {
                 }
                 return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
             }
+        }
+        String regex = pattern == null ? null : pattern.regexp();
+        if (regex != null && !value.matches(regex)) {
+            Err e = new Err(BootErrorCode.BAD_RQUEST_DATA, null, null, null, "Failed to parse data type: invalid " + type + "{" + key + "}=" + value + " by regex=" + regex);
+            context.status(HttpResponseStatus.BAD_REQUEST).error(e);
+            return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
         }
         try {
             return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, false, false, enumConvert, collectionDelimiter);
