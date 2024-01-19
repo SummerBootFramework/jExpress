@@ -195,7 +195,7 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.104.Final</netty.version>
+        <netty.version>4.1.105.Final</netty.version>
         <netty-tcnative.version>2.0.62.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.61.0</grpc.version>
@@ -246,7 +246,7 @@
 
         <!-- Testing  -->
         <testng.version>7.9.0</testng.version>
-        <jdbc.version>8.2.0</jdbc.version>
+        <jdbc.version>8.3.0</jdbc.version>
     </properties>
 
     <dependencies>

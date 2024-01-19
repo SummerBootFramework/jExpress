@@ -239,11 +239,11 @@ abstract public class SummerSingularity {
             System.exit(1);
         }
         String[] packages = FormatterUtil.arrayAdd(callerRootPackageNames, BootConstant.JEXPRESS_PACKAGE_NAME);
-        scanAnnotation_JExpressConfigImportResource(packages);
         scanImplementation_gRPC(callerRootPackageNames);
         scanAnnotation_Controller(callerRootPackageNames);
         scanAnnotation_Service(callerRootPackageNames);
         scanAnnotation_DeclareRoles(callerRootPackageNames);
+        scanAnnotation_JExpressConfigImportResource(packages);
         return (T) this;
     }
 
@@ -448,14 +448,14 @@ abstract public class SummerSingularity {
                 configFileName = ir.value();
                 checkImplTagUsed = ir.checkImplTagUsed();
                 loadWhenImplTagUsed = ir.loadWhenImplTagUsed();
-            } else if (jExpressConfigClass.equals(AuthConfig.class)) {
+            } else if (/*hasAuthImpl && */jExpressConfigClass.equals(AuthConfig.class)) {
                 configFileName = BootConstant.FILE_CFG_AUTH;
-            } else if (jExpressConfigClass.equals(NioConfig.class)) {
+            } else if (hasControllers && jExpressConfigClass.equals(NioConfig.class)) {
                 configFileName = BootConstant.FILE_CFG_NIO;
+            } else if (hasGRPCImpl && jExpressConfigClass.equals(GRPCServerConfig.class)) {
+                configFileName = BootConstant.FILE_CFG_GRPC;
             } else if (jExpressConfigClass.equals(SMTPClientConfig.class)) {
                 configFileName = BootConstant.FILE_CFG_SMTP;
-            } else if (jExpressConfigClass.equals(GRPCServerConfig.class)) {
-                configFileName = BootConstant.FILE_CFG_GRPC;
             } else {
                 continue;
             }
