@@ -175,9 +175,15 @@
     </profiles>
 
     <properties>
+        <!-- common properties and dependencies -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <maven.clean.version>3.3.2</maven.clean.version>
+        <maven.compiler.version>3.12.1</maven.compiler.version>
+        <maven.dependency.version>3.6.1</maven.dependency.version>
+        <maven.jar.version>3.3.0</maven.jar.version>
+        <maven.resources.version>3.3.1</maven.resources.version>
         <!-- Commons -->
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <commons-cli.version>1.6.0</commons-cli.version>
@@ -744,4 +750,129 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!-- To generate openapi -->
+            <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-maven-plugin-jakarta -->
+            <plugin>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-maven-plugin-jakarta</artifactId>
+                <version>${swagger.core.version}</version>
+                <configuration>
+                    <outputPath>.</outputPath>
+                    <outputFileName>openapi</outputFileName>
+                    <!-- <configurationFilePath>${project.basedir}/src/main/resources/openapi.json</configurationFilePath> -->
+                    <outputFormat>JSONANDYAML</outputFormat>
+                    <resourcePackages>
+                        <package>${api.package}</package>
+                    </resourcePackages>
+                    <prettyPrint>true</prettyPrint>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-clean-plugin -->
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>${maven.clean.version}</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>run</directory>
+                            <includes>
+                                <include>lib/*.*</include>
+                                <include>lib</include>
+                                <include>**/log/*.*</include>
+                                <include>**/log</include>
+                                <include>**/*.jar</include>
+                                <include>**/tempupload</include>
+                            </includes>
+                            <!-- <excludes>
+                                <exclude>**/important.log</exclude>
+                                <exclude>**/another-important.log</exclude>
+                            </excludes>-->
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                        <fileset>
+                            <directory>src</directory>
+                            <includes>
+                                <include>**/tempupload</include>
+                            </includes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+
+                    </filesets>
+                </configuration>
+            </plugin>
+            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-dependency-plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${maven.dependency.version}</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/../run/lib</outputDirectory>
+                            <outputDirectory>run/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <!-- disabled for local dependency -->
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.version}</version>
+                <configuration>
+                    <outputDirectory>run</outputDirectory>
+                    <archive>
+                        <manifest>
+                            <mainClass>${main.class}</mainClass>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <!-- enabled for local dependency
+                        <manifestEntries>
+                            <Class-Path>lib/lib1-1.0.jar lib/lib2-1.0.jar</Class-Path>
+                        </manifestEntries> -->
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.version}</version>
+                <configuration>
+                    <showDeprecation>true</showDeprecation>
+                </configuration>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven.resources.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
 </project>
