@@ -313,7 +313,6 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             }
             list.addAll(Arrays.asList(protectedJsonArrayFields));
         }
-        //logSettings.setSendRequestParsingErrorToClient(log.sendRequestParsingErrorToClient());
     }
 
     @Override

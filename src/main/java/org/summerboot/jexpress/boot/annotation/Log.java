@@ -45,6 +45,4 @@ public @interface Log {
     String[] hideJsonNumberFields() default {};
 
     String[] hideJsonArrayFields() default {};
-
-    //boolean sendRequestParsingErrorToClient() default false;
 }
