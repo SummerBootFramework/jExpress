@@ -16,7 +16,8 @@
 package org.summerboot.jexpress.boot.instrumentation.jmx;
 
 import com.google.inject.Inject;
-import java.lang.management.ManagementFactory;
+import com.google.inject.Singleton;
+
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -24,10 +25,9 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
-import com.google.inject.Singleton;
+import java.lang.management.ManagementFactory;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
@@ -49,9 +49,9 @@ public class InstrumentationMgrImpl implements InstrumentationMgr {
         //HikariPoolMXBean poolProxy = JMX.newMXBeanProxy(mBeanServer, poolName, HikariPoolMXBean.class);
         //int idleConnections = poolProxy.getIdleConnections();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println(Thread.currentThread().getName() + ": shutdown JMX");
-            shutdown();
-        }, "ShutdownHook.JMX")
+                    System.out.println(Thread.currentThread().getName() + ": shutdown JMX");
+                    shutdown();
+                }, "ShutdownHook.JMX")
         );
     }
 

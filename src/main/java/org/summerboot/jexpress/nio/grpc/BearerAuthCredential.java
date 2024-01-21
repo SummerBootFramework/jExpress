@@ -18,10 +18,10 @@ package org.summerboot.jexpress.nio.grpc;
 import io.grpc.CallCredentials;
 import io.grpc.Metadata;
 import io.grpc.Status;
+
 import java.util.concurrent.Executor;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class BearerAuthCredential extends CallCredentials {

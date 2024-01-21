@@ -29,6 +29,7 @@ import com.itextpdf.kernel.pdf.WriterProperties;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.font.FontProvider;
 import com.itextpdf.layout.font.FontSet;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -36,12 +37,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class IText {
 
-//    public static IText build(String baseDir, String fontDir) throws IOException {
+    //    public static IText build(String baseDir, String fontDir) throws IOException {
 //        return new IText(baseDir, fontDir);
 //    }
 //
@@ -89,16 +89,16 @@ public class IText {
     public static WriterProperties buildDefaultAccessPermission(String userPwd, String ownerPwd, boolean isFullCompressionMode, PdfVersion version) {
         WriterProperties writerProperties = new WriterProperties();
         writerProperties.setStandardEncryption(
-                userPwd == null ? null : userPwd.getBytes(),
-                ownerPwd == null ? null : ownerPwd.getBytes(),
-                EncryptionConstants.ALLOW_PRINTING
-                //| EncryptionConstants.ALLOW_COPY
-                //| EncryptionConstants.ALLOW_MODIFY_CONTENTS
-                | EncryptionConstants.ALLOW_FILL_IN
-                //| EncryptionConstants.ALLOW_ASSEMBLY
-                | EncryptionConstants.ALLOW_MODIFY_ANNOTATIONS
-                | EncryptionConstants.ALLOW_SCREENREADERS,
-                EncryptionConstants.ENCRYPTION_AES_256 | EncryptionConstants.DO_NOT_ENCRYPT_METADATA)
+                        userPwd == null ? null : userPwd.getBytes(),
+                        ownerPwd == null ? null : ownerPwd.getBytes(),
+                        EncryptionConstants.ALLOW_PRINTING
+                                //| EncryptionConstants.ALLOW_COPY
+                                //| EncryptionConstants.ALLOW_MODIFY_CONTENTS
+                                | EncryptionConstants.ALLOW_FILL_IN
+                                //| EncryptionConstants.ALLOW_ASSEMBLY
+                                | EncryptionConstants.ALLOW_MODIFY_ANNOTATIONS
+                                | EncryptionConstants.ALLOW_SCREENREADERS,
+                        EncryptionConstants.ENCRYPTION_AES_256 | EncryptionConstants.DO_NOT_ENCRYPT_METADATA)
                 .setInitialDocumentId(new PdfString("TEST"));
         writerProperties.setFullCompressionMode(isFullCompressionMode);
         if (version != null) {
@@ -115,8 +115,8 @@ public class IText {
         }
         prop.setBaseUri(baseDir.getAbsolutePath());
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                PdfWriter writer = new PdfWriter(baos, writerProperties);
-                PdfDocument pdfDoc = new PdfDocument(writer);) {
+             PdfWriter writer = new PdfWriter(baos, writerProperties);
+             PdfDocument pdfDoc = new PdfDocument(writer);) {
             pdfDoc.setTagged();
             HtmlConverter.convertToPdf(html, pdfDoc, prop);
             return baos.toByteArray();
@@ -136,8 +136,8 @@ public class IText {
     public static byte[] buildPDF(Writer writer, Object dto, WriterProperties writerProperties) throws IOException {
         //MemoryStream ms = null;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                PdfWriter pdfWriter = new PdfWriter(baos, writerProperties);
-                PdfDocument pdfDoc = new PdfDocument(pdfWriter); Document document = new Document(pdfDoc)) {
+             PdfWriter pdfWriter = new PdfWriter(baos, writerProperties);
+             PdfDocument pdfDoc = new PdfDocument(pdfWriter); Document document = new Document(pdfDoc)) {
             writer.write(pdfDoc, document, dto);
             return baos.toByteArray();
         }

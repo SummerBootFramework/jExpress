@@ -15,12 +15,26 @@
  */
 package org.summerboot.jexpress.nio.client;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.config.annotation.Config;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
+import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 import org.summerboot.jexpress.security.SSLUtil;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
 import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,22 +48,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import org.apache.commons.lang3.StringUtils;
-import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 //@ImportResource(SummerApplication.CFG_HTTP)
@@ -136,7 +136,7 @@ abstract public class HttpClientConfig extends BootConfig {
     @JsonIgnore
     private volatile String proxyAuthorizationBasicValue;
 
-//    @Config(key = "httpclient.proxy.useAuthenticator")
+    //    @Config(key = "httpclient.proxy.useAuthenticator")
 //    private volatile boolean useAuthenticator = false;
     @Config(key = "httpclient.redirectOption")
     private volatile HttpClient.Redirect redirectOption = HttpClient.Redirect.NEVER;
@@ -185,8 +185,8 @@ abstract public class HttpClientConfig extends BootConfig {
             desc = "put generic HTTP Client request headers here",
             format = HEADER_CLIENT_REQUEST + "<request_header_name>=<request_header_value>",
             example = HEADER_CLIENT_REQUEST + "Accept=application/json\n"
-            + HEADER_CLIENT_REQUEST + "Content-Type=application/json;charset=UTF-8\n"
-            + HEADER_CLIENT_REQUEST + "Accept-Language=en-ca",
+                    + HEADER_CLIENT_REQUEST + "Content-Type=application/json;charset=UTF-8\n"
+                    + HEADER_CLIENT_REQUEST + "Accept-Language=en-ca",
             callbackMethodName4Dump = "generateTemplate_RequestHeaders")
     private final Map<String, String> httpClientDefaultRequestHeaders = new HashMap<>();
 

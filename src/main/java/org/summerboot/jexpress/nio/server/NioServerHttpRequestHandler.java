@@ -27,31 +27,30 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.ReferenceCountUtil;
-import java.nio.charset.StandardCharsets;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.RejectedExecutionException;
 import org.apache.commons.lang3.StringUtils;
-//import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
-import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceError;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.domain.ServiceError;
+import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.TimeUtil;
 
+import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.RejectedExecutionException;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @ChannelHandler.Sharable
@@ -172,6 +171,10 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         level = Level.WARN;
                     }
                     if (log.isEnabled(level)) {
+                        boolean isTraceAll = log.isTraceEnabled();
+                        if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
+                            requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
+                        }
                         Caller caller = context.caller();
                         ServiceError error = context.error();
                         int errorCount = 0;
@@ -200,12 +203,13 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
                         //line4
                         context.reportPOI(nioCfg, sb);
-                        verboseClientServerCommunication(nioCfg, requestHeaders, httpPostRequestBody, context, sb);
+                        verboseClientServerCommunication(nioCfg, requestHeaders, httpPostRequestBody, context, sb, isTraceAll);
                         context.reportMemo(sb);
                         context.reportError(sb);
                         sb.append(BootConstant.BR);
                         report = sb.toString();
-                        if (processorSettings != null) {
+                        if (!isTraceAll && processorSettings != null) {
+                            //isSendRequestParsingErrorToClient
                             ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
                             if (logSettings != null) {
                                 List<String> protectedJsonNumberFields = logSettings.getProtectedJsonNumberFields();
@@ -304,7 +308,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    private void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb) {
+    private void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb, boolean isTraceAll) {
         boolean isInFilter = false;
         // 3a. caller filter
         Caller caller = context.caller();
@@ -395,23 +399,23 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         // 3c. verbose aspect
         // 3.1 request responseHeader
         //sb.append("\n\t1.client_req.headers=").append((context.logRequestHeader() && cfg.isVerboseReqHeader()) ? (httpHeaders == null ? "" : StringEscapeUtils.escapeJava(httpHeaders.toString())) : "***");
-        sb.append("\n\t1.client_req.headers=").append((context.logRequestHeader() && cfg.isVerboseReqHeader()) ? httpHeaders : "***");
+        sb.append("\n\t1.client_req.headers=").append((isTraceAll || context.logRequestHeader() && cfg.isVerboseReqHeader()) ? httpHeaders : "***");
         // 3.2 request body
         //sb.append("\n\t2.client_req.body=").append((context.logRequestBody() && cfg.isVerboseReqContent()) ? StringEscapeUtils.escapeJava(httpPostRequestBody) : "***");
-        sb.append("\n\t2.client_req.body=").append((context.logRequestBody() && cfg.isVerboseReqContent()) ? httpPostRequestBody : "***");
+        sb.append("\n\t2.client_req.body=").append((isTraceAll || context.logRequestBody() && cfg.isVerboseReqContent()) ? httpPostRequestBody : "***");
         // 3.3 context responseHeader
-        sb.append("\n\t3.server_resp.headers=").append((context.logResponseHeader() && cfg.isVerboseRespHeader()) ? context.responseHeaders() : "***");
+        sb.append("\n\t3.server_resp.headers=").append((isTraceAll || context.logResponseHeader() && cfg.isVerboseRespHeader()) ? context.responseHeaders() : "***");
         // 3.4 context body
-        sb.append("\n\t4.server_resp.body=").append((context.logResponseBody() && cfg.isVerboseRespContent()) ? context.txt() : "***");
+        sb.append("\n\t4.server_resp.body=").append((isTraceAll || context.logResponseBody() && cfg.isVerboseRespContent()) ? context.txt() : "***");
     }
 
     abstract protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
 
     abstract protected String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
+                                            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
 
     abstract protected void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
+                                         final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
 
     protected RequestProcessor getRequestProcessor(final HttpMethod httptMethod, final String httpRequestPath) {
         return JaxRsRequestProcessorManager.getRequestProcessor(httptMethod, httpRequestPath);

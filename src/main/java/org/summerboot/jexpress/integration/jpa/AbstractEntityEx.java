@@ -19,7 +19,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @MappedSuperclass

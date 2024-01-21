@@ -22,6 +22,13 @@ import io.grpc.ServerCredentials;
 import io.grpc.ServerInterceptor;
 import io.grpc.TlsServerCredentials;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
+import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
@@ -29,22 +36,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
-import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class GRPCServer {
 
     protected static final Logger log = LogManager.getLogger(GRPCServer.class.getName());
 
-//    @Inject
+    //    @Inject
 //    private NIOStatusListener nioListener;
 //    @Inject
 //    protected ServerInterceptor serverInterceptor;
@@ -137,15 +137,14 @@ public class GRPCServer {
     }
 
     /**
-     *
-     * @param poolCoreSize - the number of threads to keep in the pool, even if
-     * they are idle, unless allowCoreThreadTimeOutis set
+     * @param poolCoreSize       - the number of threads to keep in the pool, even if
+     *                           they are idle, unless allowCoreThreadTimeOutis set
      * @param poolMaxSizeMaxSize - the maximum number of threads to allow in the
-     * pool
-     * @param poolQueueSize - the size of the waiting list
-     * @param keepAliveSeconds - when the number of threads is greater than the
-     * core, this is the maximum time that excess idle threads will wait for new
-     * tasks before terminating.
+     *                           pool
+     * @param poolQueueSize      - the size of the waiting list
+     * @param keepAliveSeconds   - when the number of threads is greater than the
+     *                           core, this is the maximum time that excess idle threads will wait for new
+     *                           tasks before terminating.
      * @param nioListener
      * @return
      */

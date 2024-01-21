@@ -15,18 +15,15 @@
  */
 package org.summerboot.jexpress.integration.ldap;
 
-import java.io.Closeable;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.security.auth.AuthConfig;
+import org.summerboot.jexpress.security.auth.Authenticator;
+import org.summerboot.jexpress.security.auth.AuthenticatorListener;
+import org.summerboot.jexpress.security.auth.BootAuthenticator;
+import org.summerboot.jexpress.security.auth.User;
+
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
 import javax.naming.NameAlreadyBoundException;
@@ -43,17 +40,20 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.Control;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.security.auth.AuthConfig;
-import org.summerboot.jexpress.security.auth.Authenticator;
-import org.summerboot.jexpress.security.auth.AuthenticatorListener;
-import org.summerboot.jexpress.security.auth.BootAuthenticator;
-import org.summerboot.jexpress.security.auth.User;
+import java.io.Closeable;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class LdapAgent implements Closeable {
@@ -276,10 +276,9 @@ public class LdapAgent implements Closeable {
     }
 
     /**
-     *
      * @param password
      * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
-     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     *                  https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws NoSuchAlgorithmException
      */
@@ -291,6 +290,7 @@ public class LdapAgent implements Closeable {
         //return "{MD5}" + md5Password;
         return md5Password;
     }
+
     private static final int SALT_LENGTH = 4;
 
     public static String PASSWORD_ALGORITHM = "SHA3-256";
@@ -300,10 +300,9 @@ public class LdapAgent implements Closeable {
     }
 
     /**
-     *
      * @param _password
      * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
-     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     *                  https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws NoSuchAlgorithmException
      */

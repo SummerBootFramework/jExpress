@@ -15,6 +15,16 @@
  */
 package org.summerboot.jexpress.security;
 
+import org.apache.commons.lang3.StringUtils;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,18 +34,8 @@ import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-import org.apache.commons.lang3.StringUtils;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class SSLUtil {
@@ -54,22 +54,22 @@ public class SSLUtil {
 
     private static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
     public static final TrustManager[] TRUST_ALL_CERTIFICATES = new TrustManager[]{
-        new X509TrustManager() {
+            new X509TrustManager() {
 
-            @Override
-            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                return TRUSTED_CERTIFICATE;
-            }
+                @Override
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return TRUSTED_CERTIFICATE;
+                }
 
-            @Override
-            public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                //checkTrusted(Caller.client, certs, authType);
-            }
+                @Override
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    //checkTrusted(Caller.client, certs, authType);
+                }
 
-            @Override
-            public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                //checkTrusted(Caller.server, certs, authType);
-            }
+                @Override
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    //checkTrusted(Caller.server, certs, authType);
+                }
 
 //            private void checkTrusted(Caller caller, X509Certificate[] certs, String authType) {
 //                System.out.println(caller + ".authType=" + authType);
@@ -77,7 +77,7 @@ public class SSLUtil {
 //                    System.out.println(caller + ".cer=" + cer.getSubjectDN());
 //                }
 //            }
-        }
+            }
     };
     //public static final TrustManager[] TRUST_ALL_CERTIFICATES = null;
 

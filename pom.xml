@@ -201,7 +201,7 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.105.Final</netty.version>
+        <netty.version>4.1.106.Final</netty.version>
         <netty-tcnative.version>2.0.62.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.61.0</grpc.version>
@@ -229,7 +229,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.4.1.Final</hibernate.version>
+        <hibernate.version>6.4.2.Final</hibernate.version>
         <hikari-cp.version>5.1.0</hikari-cp.version>
 
         <!-- Cache -->
@@ -788,11 +788,15 @@
                         <fileset>
                             <directory>run</directory>
                             <includes>
-                                <include>lib/*.*</include>
+                                <include>*.jar</include>
+                                <include>lib/*/*</include>
+                                <include>lib/*</include>
                                 <include>lib</include>
-                                <include>**/log/*.*</include>
+                                <include>**/log/*/*</include>
+                                <include>**/log/*</include>
                                 <include>**/log</include>
-                                <include>**/*.jar</include>
+                                <include>**/tempupload/*/*</include>
+                                <include>**/tempupload/*</include>
                                 <include>**/tempupload</include>
                             </includes>
                             <!-- <excludes>

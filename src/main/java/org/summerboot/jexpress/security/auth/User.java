@@ -18,6 +18,7 @@ package org.summerboot.jexpress.security.auth;
 import org.summerboot.jexpress.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +27,6 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class User implements Serializable, Caller, Comparable<User> {

@@ -15,10 +15,6 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.BootPOI;
-import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.channel.ChannelHandler;
@@ -26,22 +22,26 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import jakarta.persistence.PersistenceException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.boot.BootPOI;
+import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
+import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.security.auth.Authenticator;
+
+import javax.naming.NamingException;
 import java.io.IOException;
 import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpTimeoutException;
+import java.nio.channels.UnresolvedAddressException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
-import javax.naming.NamingException;
-import jakarta.persistence.PersistenceException;
-import java.nio.channels.UnresolvedAddressException;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.summerboot.jexpress.integration.cache.AuthTokenCache;
-import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
-import org.summerboot.jexpress.security.auth.Authenticator;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 2.0
  */
@@ -65,7 +65,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     @Override
     protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
-            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
+                                        final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
         ProcessorSettings processorSettings = null;
         RequestProcessor processor = null;
         try {
@@ -115,7 +115,8 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             httpExceptionHandler.onNamingException(ex, httptMethod, httpRequestPath, context);
         } catch (PersistenceException ex) {
             httpExceptionHandler.onPersistenceException(ex, httptMethod, httpRequestPath, context);
-        } catch (HttpConnectTimeoutException ex) {// a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
+        } catch (
+                HttpConnectTimeoutException ex) {// a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
             httpExceptionHandler.onHttpConnectTimeoutException(ex, httptMethod, httpRequestPath, context);
         } catch (HttpTimeoutException ex) {// a context is not received within a specified time period.
             httpExceptionHandler.onHttpTimeoutException(ex, httptMethod, httpRequestPath, context);
@@ -164,13 +165,13 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     @Override
     protected String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
+                                   final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
         return httpLifecycleHandler.beforeLogging(originallLogContent, httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
     }
 
     @Override
     protected void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception {
+                                final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception {
         httpLifecycleHandler.afterLogging(logContent, httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
     }
 

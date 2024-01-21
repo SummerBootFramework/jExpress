@@ -18,11 +18,11 @@ package org.summerboot.jexpress.nio.server.domain;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import java.io.IOException;
 import org.summerboot.jexpress.boot.BootConstant;
 
+import java.io.IOException;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ErrorCodeSerializer extends JsonSerializer<String> {

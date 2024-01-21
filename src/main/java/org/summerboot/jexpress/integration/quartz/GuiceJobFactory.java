@@ -17,9 +17,6 @@ package org.summerboot.jexpress.integration.quartz;
 
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
 import org.quartz.Job;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -27,8 +24,11 @@ import org.quartz.simpl.SimpleJobFactory;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class GuiceJobFactory extends SimpleJobFactory implements JobFactory {
@@ -65,7 +65,8 @@ public class GuiceJobFactory extends SimpleJobFactory implements JobFactory {
             //return injector.getInstance(jobClass);
             try {
                 job = jobClass.getDeclaredConstructor().newInstance();
-            } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException |
+                     IllegalArgumentException | InvocationTargetException ex) {
                 throw new SchedulerException("Failed to create instance for " + jobClass, ex);
             }
         }

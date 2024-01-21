@@ -19,6 +19,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +30,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class FreeMarker {
@@ -101,8 +101,8 @@ public class FreeMarker {
 
     public static String generate(Template template, Object dataModel) throws IOException {
         String ret;
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
-                Writer out = new OutputStreamWriter(baos, StandardCharsets.UTF_8);) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             Writer out = new OutputStreamWriter(baos, StandardCharsets.UTF_8);) {
             template.process(dataModel, out);
             byte[] htmlData = baos.toByteArray();
             ret = new String(htmlData, StandardCharsets.UTF_8);

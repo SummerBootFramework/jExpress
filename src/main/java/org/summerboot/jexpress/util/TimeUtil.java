@@ -16,6 +16,8 @@
 package org.summerboot.jexpress.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.apache.commons.lang3.StringUtils;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
@@ -31,10 +33,8 @@ import java.time.zone.ZoneOffsetTransition;
 import java.time.zone.ZoneRules;
 import java.util.Calendar;
 import java.util.Random;
-import org.apache.commons.lang3.StringUtils;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class TimeUtil {
@@ -90,9 +90,7 @@ public class TimeUtil {
      *
      * @param utcTime UTC time to be formatted.
      * @param zoneId
-     *
      * @return ET formatted time.
-     *
      */
     public static String utcDateTimeToLocalDateTime(String utcTime, ZoneId zoneId) {
         if (StringUtils.isBlank(utcTime)) {
@@ -148,9 +146,9 @@ public class TimeUtil {
      * should be truncated by max retry. For the example, E(3) = 3.5 slots, the
      * expected backoff slots should between 3 ~ 7 slots
      *
-     * @param retry the (n)th retry
+     * @param retry             the (n)th retry
      * @param truncatedMaxRetry stop(truncate) exponential backoff when after
-     * truncatedMax retry
+     *                          truncatedMax retry
      * @return the expected backoff slots
      */
     public static double truncatedExponentialBackoffSlots(int retry, int truncatedMaxRetry) {
@@ -168,7 +166,7 @@ public class TimeUtil {
         return (Math.random() * (max - min)) + min;
     }
 
-//    public static void main(String[] args) {
+    //    public static void main(String[] args) {
 //        for (int i = -2; i < 10; i++) {
 //            double q = truncatedExponentialBackoffSlots(i, 5);
 //            System.out.println(q);
@@ -205,7 +203,6 @@ public class TimeUtil {
         }
 
         /**
-         *
          * @param epochTs
          * @param zoneIdName "America/Toronto"
          */
@@ -214,7 +211,6 @@ public class TimeUtil {
         }
 
         /**
-         *
          * @param epochTs
          * @param zoneId
          */
@@ -411,7 +407,6 @@ public class TimeUtil {
     }
 
     /**
-     *
      * @param zoneId
      * @param zdt
      * @return Two elements: array[0] is DST starting info or null if DST is not

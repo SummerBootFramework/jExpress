@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.integration.quartz;
 
-import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.JobDataMap;
@@ -31,8 +30,9 @@ import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.listeners.JobListenerSupport;
 
+import java.util.Date;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class BootJobListener extends JobListenerSupport {

@@ -15,6 +15,29 @@
  */
 package org.summerboot.jexpress.security;
 
+import jakarta.annotation.Nullable;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.bouncycastle.pkcs.PKCSException;
+import org.summerboot.jexpress.boot.BootConstant;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -51,37 +74,14 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import jakarta.annotation.Nullable;
-import java.security.spec.EncodedKeySpec;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
-import org.bouncycastle.operator.InputDecryptorProvider;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
-import org.bouncycastle.pkcs.PKCSException;
-import org.summerboot.jexpress.boot.BootConstant;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class EncryptorUtil {
@@ -139,6 +139,7 @@ public class EncryptorUtil {
         }
         return ret;
     }
+
     static Key SCERET_KEY = new SecretKeySpec(buildSecretKey(BootConstant.DEFAULT_ADMIN_MM), "AES");
 
     public static void init(String applicationPwd) {
@@ -146,7 +147,6 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param filename
      * @return
      * @throws NoSuchAlgorithmException
@@ -157,10 +157,9 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param filename
      * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
-     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     *                  https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws NoSuchAlgorithmException
      * @throws IOException
@@ -181,7 +180,6 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param text
      * @return
      * @throws UnsupportedEncodingException
@@ -192,7 +190,6 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param data
      * @return
      * @throws NoSuchAlgorithmException
@@ -206,11 +203,10 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param data
      * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
-     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
-     * (128-bit)
+     *                  https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     *                  (128-bit)
      * @return
      * @throws NoSuchAlgorithmException
      */
@@ -329,7 +325,6 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * <code>1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096</code>
      * <code>2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out public.pem</code>
      * <code>3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM</code>
@@ -366,7 +361,6 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param fileType
      * @param keystoreFile
      * @param keyStorePwd
@@ -446,7 +440,6 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param fileType
      * @param publicKeyFile
      * @param algorithm
@@ -486,11 +479,11 @@ public class EncryptorUtil {
                 break;
             case Certificate:
                 try (FileInputStream fin = new FileInputStream(publicKeyFile);) {
-                CertificateFactory f = CertificateFactory.getInstance("X.509");
-                X509Certificate certificate = (X509Certificate) f.generateCertificate(fin);
-                publicKey = certificate.getPublicKey();
-            }
-            break;
+                    CertificateFactory f = CertificateFactory.getInstance("X.509");
+                    X509Certificate certificate = (X509Certificate) f.generateCertificate(fin);
+                    publicKey = certificate.getPublicKey();
+                }
+                break;
             default:
                 throw new NoSuchAlgorithmException(fileType.name());
         }
@@ -605,8 +598,7 @@ public class EncryptorUtil {
     }
 
     /**
-     *
-     * @param cipherMode Cipher.ENCRYPT_MODE(1) or Cipher.DECRYPT_MODE(2)
+     * @param cipherMode    Cipher.ENCRYPT_MODE(1) or Cipher.DECRYPT_MODE(2)
      * @param asymmetricKey
      * @param in
      * @return
@@ -636,8 +628,8 @@ public class EncryptorUtil {
     /**
      * encrypt large file
      *
-     * @param asymmetricKey symmetric encryption will be used if null
-     * @param symmetricKey encrypt with random session key if null
+     * @param asymmetricKey       symmetric encryption will be used if null
+     * @param symmetricKey        encrypt with random session key if null
      * @param plainDataFileName
      * @param encryptedFileName
      * @param digitalSignatureKey - to sign the digital signature if not null
@@ -654,14 +646,13 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param asymmetricKey
      * @param symmetricKey
      * @param plainDataFileName
      * @param encryptedFileName
      * @param digitalSignatureKey
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
-     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm        MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                            https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -733,8 +724,8 @@ public class EncryptorUtil {
     /**
      * encrypt data in RAM
      *
-     * @param asymmetricKey symmetric encryption will be used if null
-     * @param symmetricKey encrypt with random session key if null
+     * @param asymmetricKey       symmetric encryption will be used if null
+     * @param symmetricKey        encrypt with random session key if null
      * @param plainData
      * @param digitalSignatureKey - to sign the digital signature if not null
      * @return
@@ -751,13 +742,12 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param asymmetricKey
      * @param symmetricKey
      * @param plainData
      * @param digitalSignatureKey
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
-     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm        MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                            https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -856,9 +846,9 @@ public class EncryptorUtil {
     /**
      * decrypt large file
      *
-     * @param asymmetricKey symmetric decryption if null
-     * @param symmetricKey decrypt with asymmetric encrypted random session key
-     * if null
+     * @param asymmetricKey       symmetric decryption if null
+     * @param symmetricKey        decrypt with asymmetric encrypted random session key
+     *                            if null
      * @param encryptedFileName
      * @param plainDataFileName
      * @param digitalSignatureKey - to verify the digital signature if not null
@@ -876,15 +866,14 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param asymmetricKey
      * @param symmetricKey
      * @param encryptedFileName
      * @param plainDataFileName
      * @param digitalSignatureKey
      * @param meta
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
-     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm        MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                            https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -972,9 +961,9 @@ public class EncryptorUtil {
     /**
      * decrypt data in RAM
      *
-     * @param asymmetricKey symmetric decryption if null
-     * @param symmetricKey decrypt with asymmetric encrypted random session key
-     * if null
+     * @param asymmetricKey       symmetric decryption if null
+     * @param symmetricKey        decrypt with asymmetric encrypted random session key
+     *                            if null
      * @param encryptedData
      * @param digitalSignatureKey - to verify the digital signature if not null
      * @param meta
@@ -992,14 +981,13 @@ public class EncryptorUtil {
     }
 
     /**
-     *
      * @param asymmetricKey
      * @param symmetricKey
      * @param encryptedData
      * @param digitalSignatureKey
      * @param meta
-     * @param md5Algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
-     * https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @param md5Algorithm        MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                            https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException

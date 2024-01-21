@@ -15,12 +15,22 @@
  */
 package org.summerboot.jexpress.integration.cache;
 
-import org.summerboot.jexpress.boot.config.ConfigUtil;
-import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
-import org.summerboot.jexpress.security.SecurityUtil;
-import org.summerboot.jexpress.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.config.JExpressConfig;
+import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.util.BeanUtil;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.Protocol;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisDataException;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -31,19 +41,10 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.Protocol;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.exceptions.JedisDataException;
-import org.summerboot.jexpress.boot.config.JExpressConfig;
+
+import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class RedisConfig implements JExpressConfig {

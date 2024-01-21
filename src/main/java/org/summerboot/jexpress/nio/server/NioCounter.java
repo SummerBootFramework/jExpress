@@ -18,7 +18,6 @@ package org.summerboot.jexpress.nio.server;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class NioCounter {//package access only, not a public class

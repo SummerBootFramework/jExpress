@@ -16,28 +16,11 @@
 package org.summerboot.jexpress.nio.server.ws.rs;
 
 //import co.elastic.apm.api.CaptureTransaction;
+
 import com.google.inject.Inject;
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import jakarta.annotation.security.RolesAllowed;
-import javax.naming.NamingException;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
-import org.summerboot.jexpress.integration.cache.AuthTokenCache;
-import org.summerboot.jexpress.nio.server.domain.ServiceError;
-import org.summerboot.jexpress.security.auth.AuthConfig;
-import org.summerboot.jexpress.security.auth.Authenticator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -51,21 +34,39 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.annotation.Log;
+import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
+import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.domain.ServiceError;
+import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
+import org.summerboot.jexpress.security.auth.AuthConfig;
+import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.Caller;
 
+import javax.naming.NamingException;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
@@ -84,7 +85,7 @@ import org.summerboot.jexpress.security.auth.Caller;
                 )
         ),
         servers = {
-            @Server(url = "https://localhost:8211", description = "Local Development server")
+                @Server(url = "https://localhost:8211", description = "Local Development server")
         }
 )
 @SecurityScheme(name = "BearerAuth", scheme = "bearer", type = SecuritySchemeType.HTTP, bearerFormat = "Authorization: Bearer <token>")
@@ -120,19 +121,19 @@ abstract public class BootController extends PingController {
             //                        parameters = {
             //                            @Parameter(name = "", in = ParameterIn.HEADER, required = true, description = "")},
             responses = {
-                @ApiResponse(responseCode = "200", description = "running application version"),
-                @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
-                @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
-                @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                )
+                    @ApiResponse(responseCode = "200", description = "running application version"),
+                    @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
             },
             security = {
-                @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = "BearerAuth")}
     )
     public void version(@Parameter(hidden = true) final ServiceContext context) {
         context.txt(getVersion()).status(HttpResponseStatus.OK);
@@ -157,20 +158,20 @@ abstract public class BootController extends PingController {
             summary = "Run application self inspection",
             description = "get running application health information",
             responses = {
-                @ApiResponse(responseCode = "200", description = "inspection success with current version"),
-                @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
-                @ApiResponse(responseCode = "500", description = "inspection error result"),
-                @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
-                @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                )
+                    @ApiResponse(responseCode = "200", description = "inspection success with current version"),
+                    @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "500", description = "inspection error result"),
+                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
             },
             security = {
-                @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = "BearerAuth")}
     )
     public void inspect(@Parameter(hidden = true) final ServiceContext context) {
         //HealthInspector healthInspector = getHealthInspector();        
@@ -195,19 +196,19 @@ abstract public class BootController extends PingController {
             summary = "Graceful shutdown by changing service status",
             description = "pause service if pause param is true, otherwise resume service",
             responses = {
-                @ApiResponse(responseCode = "204", description = "success"),
-                @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
-                @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
-                @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                )
+                    @ApiResponse(responseCode = "204", description = "success"),
+                    @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
             },
             security = {
-                @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = "BearerAuth")}
     )
     public void changeStatus(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final ServiceContext context) throws IOException {
         HealthMonitor.setPauseStatus(pause, "request by " + context.caller());
@@ -224,26 +225,26 @@ abstract public class BootController extends PingController {
             summary = "User login",
             description = "User login",
             responses = {
-                @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
-                        headers = {
-                            @Header(name = Config.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
-                        },
-                        content = @Content(schema = @Schema(implementation = Caller.class))
-                ),
-                @ApiResponse(responseCode = "401", description = "Invalid username or password",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
-                @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
-                @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                )
+                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
+                            headers = {
+                                    @Header(name = Config.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
+                            },
+                            content = @Content(schema = @Schema(implementation = Caller.class))
+                    ),
+                    @ApiResponse(responseCode = "401", description = "Invalid username or password",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
             }
     )
     public Caller login(@Parameter(required = true) @Nonnull @FormParam("j_username") String uid,
-            @FormParam("j_password") String pwd,
-            @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
+                        @FormParam("j_password") String pwd,
+                        @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
         if (auth == null) {
             context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
@@ -266,16 +267,16 @@ abstract public class BootController extends PingController {
             summary = "User logout",
             description = "User logout",
             responses = {
-                @ApiResponse(responseCode = "204", description = "success"),
-                @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                ),
-                @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
-                        content = @Content(schema = @Schema(implementation = ServiceError.class))
-                )
+                    @ApiResponse(responseCode = "204", description = "success"),
+                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
             },
             security = {
-                @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = "BearerAuth")}
     )
     public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final ServiceContext context) {
         //Authenticator auth = getAuthenticator();

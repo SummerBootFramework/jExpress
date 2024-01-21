@@ -16,11 +16,7 @@
 package org.summerboot.jexpress.integration.ldap;
 
 import org.summerboot.jexpress.security.SSLUtil;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.security.GeneralSecurityException;
-import java.util.concurrent.atomic.AtomicReference;
+
 import javax.net.SocketFactory;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -28,9 +24,13 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.security.GeneralSecurityException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class LdapSSLConnectionFactory6 extends SocketFactory {

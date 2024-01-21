@@ -18,7 +18,6 @@ package org.summerboot.jexpress.integration.cache;
 import com.google.inject.Singleton;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 2.0
  */

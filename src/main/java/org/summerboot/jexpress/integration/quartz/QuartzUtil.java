@@ -15,13 +15,6 @@
  */
 package org.summerboot.jexpress.integration.quartz;
 
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.quartz.CronScheduleBuilder;
@@ -43,8 +36,15 @@ import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.ReflectionMetadata;
 import org.summerboot.jexpress.util.TimeUtil;
 
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class QuartzUtil {
@@ -54,7 +54,6 @@ public class QuartzUtil {
     public static final TimeUtil.ZoneOffsetTransitionInfo DEFAULT_DST_Transition_INFO = TimeUtil.getZoneOffsetTransitionInfo(ZoneId.systemDefault());
 
     /**
-     *
      * @param scheduler
      * @param jobClass
      * @return number of triggers created
@@ -166,20 +165,19 @@ public class QuartzUtil {
     }
 
     /**
-     *
      * @param scheduler
      * @param jobClass
-     * @param daysOfMonth 1-31
-     * @param daysOfWeek 1-7 for SUN-SAT
-     * @param hour 0-23
-     * @param minute 0-59
-     * @param second 0-59
-     * @param fixedRateMs The fixedRateMs runs the scheduled task at every n
-     * millisecond
-     * @param fixedDelayMs The fixedDelayMs makes sure that there is a delay of
-     * n millisecond between the finish time of an execution of a task and the
-     * start time of the next execution of the task
-     * @param initialDelayMs start job after n millisecond
+     * @param daysOfMonth     1-31
+     * @param daysOfWeek      1-7 for SUN-SAT
+     * @param hour            0-23
+     * @param minute          0-59
+     * @param second          0-59
+     * @param fixedRateMs     The fixedRateMs runs the scheduled task at every n
+     *                        millisecond
+     * @param fixedDelayMs    The fixedDelayMs makes sure that there is a delay of
+     *                        n millisecond between the finish time of an execution of a task and the
+     *                        start time of the next execution of the task
+     * @param initialDelayMs  start job after n millisecond
      * @param cronExpressions
      * @return number of triggers created
      * @throws SchedulerException
@@ -203,26 +201,25 @@ public class QuartzUtil {
     }
 
     /**
-     *
      * @param scheduler
      * @param jobDetail
-     * @param daysOfMonth 1-31
-     * @param daysOfWeek 1-7 for SUN-SAT
-     * @param hour 0-23
-     * @param minute 0-59
-     * @param second 0-59
-     * @param fixedRateMs The fixedRateMs runs the scheduled task at every n
-     * millisecond
-     * @param fixedDelayMs The fixedDelayMs makes sure that there is a delay of
-     * n millisecond between the finish time of an execution of a task and the
-     * start time of the next execution of the task
-     * @param initialDelayMs start job after n millisecond
+     * @param daysOfMonth     1-31
+     * @param daysOfWeek      1-7 for SUN-SAT
+     * @param hour            0-23
+     * @param minute          0-59
+     * @param second          0-59
+     * @param fixedRateMs     The fixedRateMs runs the scheduled task at every n
+     *                        millisecond
+     * @param fixedDelayMs    The fixedDelayMs makes sure that there is a delay of
+     *                        n millisecond between the finish time of an execution of a task and the
+     *                        start time of the next execution of the task
+     * @param initialDelayMs  start job after n millisecond
      * @param cronExpressions
      * @return number of triggers created
      * @throws org.quartz.SchedulerException
      */
     public static int addQuartzJob(final Scheduler scheduler, final JobDetail jobDetail, final int[] daysOfMonth, final int[] daysOfWeek, final Integer hour, final Integer minute, final Integer second,
-            final Long fixedRateMs, final Long fixedDelayMs, final Long initialDelayMs, final String... cronExpressions) throws SchedulerException {
+                                   final Long fixedRateMs, final Long fixedDelayMs, final Long initialDelayMs, final String... cronExpressions) throws SchedulerException {
         boolean isCronJobs = cronExpressions != null && cronExpressions.length > 0;
 
         boolean isMonthlyJob = daysOfMonth != null && daysOfMonth.length > 0;

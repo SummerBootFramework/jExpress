@@ -16,7 +16,6 @@
 package org.summerboot.jexpress.integration.ldap;
 
 /**
- *
  * @author https://wiki.owasp.org/index.php/Preventing_LDAP_Injection_in_Java
  */
 public class LDAPEncoder {

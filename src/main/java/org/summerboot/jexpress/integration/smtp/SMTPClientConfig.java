@@ -15,19 +15,20 @@
  */
 package org.summerboot.jexpress.integration.smtp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.mail.Authenticator;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.mail.Authenticator;
+
 import java.io.File;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import jakarta.mail.PasswordAuthentication;
-import jakarta.mail.Session;
-import java.util.HashSet;
-import org.summerboot.jexpress.boot.BackOffice;
 
 /**
  * Volatile Bean　Pattern
@@ -63,7 +64,7 @@ public class SMTPClientConfig extends BootConfig {
     @JsonIgnore
     @Config(key = "mail.smtp.port", defaultValue = "25",
             desc = "25: The original standard SMTP port\n"
-            + "587: The standard secure SMTP port")
+                    + "587: The standard secure SMTP port")
     protected volatile int smtpPort = 25;
 
     @JsonIgnore

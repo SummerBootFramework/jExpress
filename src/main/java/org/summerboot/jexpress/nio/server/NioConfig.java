@@ -19,28 +19,28 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.ssl.SslProvider;
+import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.config.BootConfig;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.config.annotation.Config;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.util.BeanUtil;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.util.BeanUtil;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.boot.config.BootConfig;
-import org.summerboot.jexpress.boot.config.ConfigUtil;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 //@ImportResource(BootConstant.FILE_CFG_NIO)
@@ -103,7 +103,7 @@ public class NioConfig extends BootConfig {
     @JsonIgnore
     private volatile TrustManagerFactory tmf = null;
 
-//    protected void generateTemplate_truststore(StringBuilder sb) {
+    //    protected void generateTemplate_truststore(StringBuilder sb) {
 //        sb.append(KEY_tmf_key + "="+FILENAME_TRUSTSTORE_4SERVER+"\n");
 //        sb.append(KEY_tmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
 //        generateTemplate = true;
@@ -186,8 +186,8 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.server.BizExecutor.mode", defaultValue = "Mixed",
             desc = "valid value = CPU, IO (default), Mixed\nuse CPU core + 1 when application is CPU bound\n"
-            + "use CPU core x 2 + 1 when application is I/O bound\n"
-            + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
+                    + "use CPU core x 2 + 1 when application is I/O bound\n"
+                    + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     private volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
 
     @Config(key = "nio.server.BizExecutor.CoreSize", predefinedValue = "0",
@@ -261,16 +261,17 @@ public class NioConfig extends BootConfig {
     @ConfigHeader(title = "5. IO Communication logging filter")
     @Config(key = "nio.verbose.filter.usertype", defaultValue = "ignore",
             desc = "5.1 caller filter\n"
-            + "valid value = id, uid, group, role, ignore")
+                    + "valid value = id, uid, group, role, ignore")
     private volatile VerboseTargetUserType filterUserType = VerboseTargetUserType.ignore;
 
     public enum VerboseTargetUserType {
         id, uid, group, role, ignore
     }
+
     private static final String KEY_FILTER_USERTYPE_RANGE = "nio.verbose.filter.usertype.range";
     @Config(key = KEY_FILTER_USERTYPE_RANGE,
             desc = "user range (when type=CallerId): N1 - N2 or N1, N2, ... , Nn \n"
-            + "user range (when type=CallerName): johndoe, janedoe")
+                    + "user range (when type=CallerName): johndoe, janedoe")
     private volatile String filterUserVaue;
     private volatile Set<String> filterCallerNameSet;
     private volatile Set<Long> filterCallerIdSet;
@@ -281,13 +282,14 @@ public class NioConfig extends BootConfig {
     public enum VerboseTargetCodeType {
         HttpStatusCode, AppErrorCode, all, ignore
     }
+
     @Config(key = "nio.verbose.filter.codetype", defaultValue = "all",
             desc = "valid value = HttpStatusCode, AppErrorCode, all, ignore")
     private volatile VerboseTargetCodeType filterCodeType = VerboseTargetCodeType.all;
     private static final String KEY_FILTER_CODETYPE_RANGE = "nio.verbose.filter.codetype.range";
     @Config(key = KEY_FILTER_CODETYPE_RANGE,
             desc = "5.2 error code filter\n"
-            + "code range: N1 - N2 or N1, N2, ... , Nn")
+                    + "code range: N1 - N2 or N1, N2, ... , Nn")
     private volatile String filterCodeVaue;
     private volatile Set<Long> filterCodeSet;
     private volatile long filterCodeRangeFrom;
@@ -311,6 +313,7 @@ public class NioConfig extends BootConfig {
     public enum VerboseTargetPOIType {
         filter, all, ignore
     }
+
     @Config(key = "nio.verbose.ServiceTimePOI.filter", defaultValue = "auth.begin, auth.end, db.begin, db.end",
             desc = "CSV format")
     private volatile Set<String> filterPOISet;
@@ -339,18 +342,18 @@ public class NioConfig extends BootConfig {
             desc = "put generic HTTP response headers here",
             format = HEADER_SERVER_RESPONSE + "<response_header_name>=<response_header_value>",
             example = HEADER_SERVER_RESPONSE + "Access-Control-Allow-Origin=https://www.summerboot.org\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Headers=X-Requested-With, Content-Type, Origin, Authorization\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Methods=PUT,GET,POST,DELETE,OPTIONS,PATCH\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Credentials=false\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Credentials=false\n"
-            + HEADER_SERVER_RESPONSE + "Access-Control-Max-Age=3600\n"
-            + HEADER_SERVER_RESPONSE + "Content-Security-Policy=default-src 'self';script-src 'self' www.google-analytics.com www.google.com www.gstatic. js.stripe.com ajax.cloudflare.com;style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;img-src 'self' www.google-analytics.com stats.g.doubleclick.net www.gstatic.com;font-src 'self' cdnjs.cloudflare.com fonts.gstatic.com;base-uri 'self';child-src www.google.com js.stripe.com;form-action 'self';frame-ancestors 'none';report-uri=\"https://www.summerboot.org/report-uri\"\n"
-            + HEADER_SERVER_RESPONSE + "X-XSS-Protection=1; mode=block\n"
-            + HEADER_SERVER_RESPONSE + "Strict-Transport-Security=max-age=31536000;includeSubDomains;preload\n"
-            + HEADER_SERVER_RESPONSE + "X-Frame-Options=sameorigin\n"
-            + HEADER_SERVER_RESPONSE + "Expect-CT=max-age=86400, enforce, report-uri=\"https://www.summerboot.org/report-uri\"\n"
-            + HEADER_SERVER_RESPONSE + "X-Content-Type-Options=nosniff\n"
-            + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ",
+                    + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Headers=X-Requested-With, Content-Type, Origin, Authorization\n"
+                    + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Methods=PUT,GET,POST,DELETE,OPTIONS,PATCH\n"
+                    + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Credentials=false\n"
+                    + HEADER_SERVER_RESPONSE + "Access-Control-Allow-Credentials=false\n"
+                    + HEADER_SERVER_RESPONSE + "Access-Control-Max-Age=3600\n"
+                    + HEADER_SERVER_RESPONSE + "Content-Security-Policy=default-src 'self';script-src 'self' www.google-analytics.com www.google.com www.gstatic. js.stripe.com ajax.cloudflare.com;style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com;img-src 'self' www.google-analytics.com stats.g.doubleclick.net www.gstatic.com;font-src 'self' cdnjs.cloudflare.com fonts.gstatic.com;base-uri 'self';child-src www.google.com js.stripe.com;form-action 'self';frame-ancestors 'none';report-uri=\"https://www.summerboot.org/report-uri\"\n"
+                    + HEADER_SERVER_RESPONSE + "X-XSS-Protection=1; mode=block\n"
+                    + HEADER_SERVER_RESPONSE + "Strict-Transport-Security=max-age=31536000;includeSubDomains;preload\n"
+                    + HEADER_SERVER_RESPONSE + "X-Frame-Options=sameorigin\n"
+                    + HEADER_SERVER_RESPONSE + "Expect-CT=max-age=86400, enforce, report-uri=\"https://www.summerboot.org/report-uri\"\n"
+                    + HEADER_SERVER_RESPONSE + "X-Content-Type-Options=nosniff\n"
+                    + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ",
             callbackMethodName4Dump = "generateTemplate_ResponseHeaders")
     private HttpHeaders serverDefaultResponseHeaders;
 

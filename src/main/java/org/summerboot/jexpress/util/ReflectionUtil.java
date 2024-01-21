@@ -17,9 +17,12 @@ package org.summerboot.jexpress.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
-import org.summerboot.jexpress.security.SecurityUtil;
 import com.google.common.collect.ImmutableSortedSet;
+import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
+import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
+import org.summerboot.jexpress.security.SecurityUtil;
+
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -55,12 +58,10 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
-import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
+
+import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ReflectionUtil {
@@ -75,7 +76,6 @@ public class ReflectionUtil {
     }
 
     /**
-     *
      * @param <T>
      * @param interfaceClass
      * @param rootPackageNames
@@ -108,7 +108,6 @@ public class ReflectionUtil {
     }
 
     /**
-     *
      * @param annotation
      * @param rootPackageNames
      * @param honorInherited
@@ -143,7 +142,6 @@ public class ReflectionUtil {
     }
 
     /**
-     *
      * @param targetClass
      * @param includeSuperClasses
      * @return all interfaces of the targetClass
@@ -165,7 +163,6 @@ public class ReflectionUtil {
     }
 
     /**
-     *
      * @param targetClass
      * @return
      */
@@ -197,7 +194,6 @@ public class ReflectionUtil {
      * 7. TrustManagerFactory
      * }</pre>
      *
-     *
      * @param instance
      * @param field
      * @param value
@@ -216,7 +212,7 @@ public class ReflectionUtil {
     private static final Type[] DEFAULT_ARG_TYPES = {String.class, String.class};
 
     public static Object toJavaType(Class targetClass, Type genericType, String value, final boolean autoDecrypt,
-            final boolean isEmailRecipients, EnumConvert.To enumConvert, String collectionDelimiter) throws IllegalAccessException {
+                                    final boolean isEmailRecipients, EnumConvert.To enumConvert, String collectionDelimiter) throws IllegalAccessException {
         if (StringUtils.isBlank(value)) {
             Object nullValue = ReflectionUtil.toStandardJavaType(null, targetClass, autoDecrypt, false, enumConvert);
             return nullValue;
@@ -333,13 +329,13 @@ public class ReflectionUtil {
      *
      * @param value
      * @param targetClass
-     * @param autoDecrypt auto decrypt value in ENC() format if true
+     * @param autoDecrypt       auto decrypt value in ENC() format if true
      * @param enumConvert
      * @param isEmailRecipients
      * @return
      */
     public static Object toStandardJavaType(String value, final Class targetClass, final boolean autoDecrypt,
-            final boolean isEmailRecipients, EnumConvert.To enumConvert) {
+                                            final boolean isEmailRecipients, EnumConvert.To enumConvert) {
         if (value == null) {
             if (targetClass.equals(boolean.class)) {
                 return false;
@@ -476,7 +472,8 @@ public class ReflectionUtil {
                 return cst.newInstance(value);
             } catch (NoSuchMethodException | SecurityException ex) {
                 //no constructor with (String)
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException |
+                     InvocationTargetException ex) {
                 //failed to crate instance
             }
         }

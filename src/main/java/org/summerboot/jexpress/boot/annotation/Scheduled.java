@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.boot.annotation;
 
 import com.google.inject.BindingAnnotation;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -23,7 +24,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
  * <pre>Usage: {@code
  * @Scheduled(cron="0 15 10 ? * 6L 2012-2015")// org.quartz cron expression: Fire at 10:15am on every last Friday of every month during the years 2012, 2013, 2014 and 2015
  * @Scheduled(dayOfMonth = 1, hour=2, minute=3)// monthly: every 2:03am 1st day of the month
@@ -134,11 +134,11 @@ public @interface Scheduled {
     /**
      * The fixedRate runs the scheduled task at every n millisecond. It doesn't
      * check for any previous executions of the task.
-     *
+     * <p>
      * This is useful when all executions of the task are independent. If we
      * don't expect to exceed the size of the memory and the thread pool,
      * fixedRate should be quite handy.
-     *
+     * <p>
      * Although, if the incoming tasks do not finish quickly, it's possible they
      * end up with “Out of Memory exception”.
      *
@@ -158,11 +158,10 @@ public @interface Scheduled {
      * The fixedDelay makes sure that there is a delay of n millisecond between
      * the finish time of an execution of a task and the start time of the next
      * execution of the task.
-     *
+     * <p>
      * This property is specifically useful when you need to make sure that only
      * one instance of the task runs all the time. For dependent jobs, it is
      * quite helpful.
-     *
      *
      * @return
      */

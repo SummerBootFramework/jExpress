@@ -15,12 +15,6 @@
  */
 package org.summerboot.jexpress.integration.smtp;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 import jakarta.activation.DataHandler;
 import jakarta.activation.DataSource;
 import jakarta.mail.Message;
@@ -32,11 +26,17 @@ import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 import jakarta.mail.util.ByteArrayDataSource;
-import java.util.TreeSet;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class Email {
@@ -54,11 +54,10 @@ public class Email {
         private String cid;
 
         /**
-         *
-         * @param type - the file extention, ie. "pdf", image
+         * @param type       - the file extention, ie. "pdf", image
          * @param dataStream
          * @param fileName
-         * @param cid - {@code<img src="cid:logo">}
+         * @param cid        - {@code<img src="cid:logo">}
          */
         public Attachment(String type, byte[] dataStream, String fileName, String cid) {
             this.type = type;
@@ -92,6 +91,7 @@ public class Email {
     public enum Format {
         html, text
     }
+
     private String from;
     private Set<String> toList;
     private Set<String> ccList;

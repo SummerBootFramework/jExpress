@@ -19,22 +19,22 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.grpc.NameResolverProvider;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import java.io.File;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.util.List;
-import java.util.Properties;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.File;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.util.List;
+import java.util.Properties;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -68,8 +68,8 @@ abstract public class GRPCClientConfig extends BootConfig {
     //1. gRPC connection
     @Config(key = ID + ".target.url", defaultValue = "grpc:///",
             desc = "grpc:///\n"
-            + "grpc://127.0.0.1:8424\n"
-            + "unix:/tmp/grpcsrver.socket")
+                    + "grpc://127.0.0.1:8424\n"
+                    + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
 
     @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")// "TLSv1.2, TLSv1.3"

@@ -15,16 +15,16 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
+import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
-import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface RequestProcessor {

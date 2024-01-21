@@ -19,16 +19,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import io.netty.channel.ChannelHandler;
+import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.util.BeanUtil;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.util.BeanUtil;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ScanedGuiceModule extends AbstractModule {

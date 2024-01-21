@@ -15,15 +15,22 @@
  */
 package org.summerboot.jexpress.security.auth;
 
-import org.summerboot.jexpress.boot.config.BootConfig;
-import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.integration.ldap.LdapAgent;
-import org.summerboot.jexpress.integration.ldap.LdapSSLConnectionFactory1;
-import org.summerboot.jexpress.security.JwtUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.config.BootConfig;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.config.annotation.Config;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.integration.ldap.LdapAgent;
+import org.summerboot.jexpress.integration.ldap.LdapSSLConnectionFactory1;
+import org.summerboot.jexpress.security.EncryptorUtil;
+import org.summerboot.jexpress.security.JwtUtil;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -36,15 +43,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.security.EncryptorUtil;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 //@ImportResource(BootConstant.FILE_CFG_AUTH)
@@ -76,7 +76,7 @@ public class AuthConfig extends BootConfig {
     @ConfigHeader(title = "1.1 LDAP connection settings")
     @Config(key = "ldap.type.AD",
             desc = "set it true only when LDAP is implemented by Microsoft Active Directory (AD)\n"
-            + "false when use others like Open LDAP, IBM Tivoli, Apache")
+                    + "false when use others like Open LDAP, IBM Tivoli, Apache")
     private volatile boolean typeAD = false;
 
     @Config(key = "ldap.host",
@@ -136,10 +136,10 @@ public class AuthConfig extends BootConfig {
 
     @ConfigHeader(title = "2. JWT",
             example = "To generate the keypair manually:\n"
-            + "step1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
-            + "step2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out " + JWT_PUBLIC_KEY_FILE + " \n"
-            + "step3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM \n"
-            + "step4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out " + JWT_PRIVATE_KEY_FILE)
+                    + "step1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
+                    + "step2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out " + JWT_PUBLIC_KEY_FILE + " \n"
+                    + "step3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM \n"
+                    + "step4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out " + JWT_PRIVATE_KEY_FILE)
     @Config(key = KEY_privateKeyFile,
             desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size",
             callbackMethodName4Dump = "generateTemplate_privateKeyFile")
@@ -172,7 +172,7 @@ public class AuthConfig extends BootConfig {
     @JsonIgnore
     @Config(key = "jwt.symmetric.key", validate = Config.Validate.Encrypted,
             desc = "HMAC-SHA key for bothe signing and parsing, it will be ignored when asymmetric one is specified.\n"
-            + "Use this command to generate this key: java -jar <app>.jar -jwt <HS256, HS384, HS512>")
+                    + "Use this command to generate this key: java -jar <app>.jar -jwt <HS256, HS384, HS512>")
     private volatile String symmetricKey;
 
     @JsonIgnore
@@ -191,10 +191,10 @@ public class AuthConfig extends BootConfig {
     @ConfigHeader(title = "3. Role mapping",
             desc = "Map the role (defined as @RolesAllowed({\"AppAdmin\"})) with user group (no matter the group is defined in LDAP or DB)",
             format = "roles.<role name>.groups=csv list of groups\n"
-            + "roles.<role name>.users=csv list of users",
+                    + "roles.<role name>.users=csv list of users",
             example = "the following example maps one group(AppAdmin_Group) and two users(johndoe, janejoe) to a role(AppAdmin)\n"
-            + "roles.AppAdmin.groups=AppAdmin_Group\n"
-            + "roles.AppAdmin.users=johndoe, janejoe",
+                    + "roles.AppAdmin.groups=AppAdmin_Group\n"
+                    + "roles.AppAdmin.users=johndoe, janejoe",
             callbackMethodName4Dump = "generateTemplate_DumpRoleMapping")
     private Map<String, RoleMapping> roles = new HashMap();
 

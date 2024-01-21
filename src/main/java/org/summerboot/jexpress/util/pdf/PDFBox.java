@@ -20,16 +20,6 @@ import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.render.Box;
 import com.openhtmltopdf.render.PageBox;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.imageio.ImageIO;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -43,8 +33,18 @@ import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.rendering.RenderDestination;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class PDFBox {
@@ -96,7 +96,6 @@ public class PDFBox {
     }
 
     /**
-     *
      * @return {@code <font file, fontFamily>}
      */
     public static Map<File, String> getFonts() {
@@ -158,7 +157,7 @@ public class PDFBox {
     }
 
     public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion,
-            float pageWidth, float pageHeight, BaseRendererBuilder.PageSizeUnits units) throws IOException {
+                                  float pageWidth, float pageHeight, BaseRendererBuilder.PageSizeUnits units) throws IOException {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         useFonts(builder, null);
         builder.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
@@ -303,11 +302,10 @@ public class PDFBox {
     }
 
     /**
-     *
      * @param pdfData
      * @param dpi
-     * @param formatName a {@code String} containing the informal name of a
-     * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @param formatName  a {@code String} containing the informal name of a
+     *                    format (<i>e.g.</i>, "jpeg", "png" or "tiff".
      * @param destination
      * @return
      * @throws IOException
@@ -317,12 +315,11 @@ public class PDFBox {
     }
 
     /**
-     *
      * @param pdfData
      * @param dpi
      * @param imageType
-     * @param formatName a {@code String} containing the informal name of a
-     * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @param formatName  a {@code String} containing the informal name of a
+     *                    format (<i>e.g.</i>, "jpeg", "png" or "tiff".
      * @param destination
      * @return
      * @throws IOException
@@ -335,12 +332,11 @@ public class PDFBox {
     }
 
     /**
-     *
      * @param pdfFile
      * @param dpi
      * @param imageType
-     * @param formatName a {@code String} containing the informal name of a
-     * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     * @param formatName  a {@code String} containing the informal name of a
+     *                    format (<i>e.g.</i>, "jpeg", "png" or "tiff".
      * @param destination
      * @return
      * @throws IOException
@@ -366,9 +362,8 @@ public class PDFBox {
     }
 
     /**
-     *
-     * @param document make sure the caller will close the document
-     * @param dpi 300
+     * @param document    make sure the caller will close the document
+     * @param dpi         300
      * @param imageType
      * @param destination
      * @return
@@ -386,10 +381,9 @@ public class PDFBox {
     }
 
     /**
-     *
      * @param images
      * @param formatName a {@code String} containing the informal name of a
-     * format (<i>e.g.</i>, "jpeg", "png" or "tiff".
+     *                   format (<i>e.g.</i>, "jpeg", "png" or "tiff".
      * @return
      * @throws IOException
      */

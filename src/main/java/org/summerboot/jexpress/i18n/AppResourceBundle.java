@@ -33,7 +33,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class AppResourceBundle extends ResourceBundle {
@@ -88,7 +87,7 @@ public class AppResourceBundle extends ResourceBundle {
 
         POOL.forEach((languageTag, rb) -> {
             Path path = Paths.get(folder, languageTag + "_" + filename);
-            try ( BufferedWriter writer = Files.newBufferedWriter(path)) {
+            try (BufferedWriter writer = Files.newBufferedWriter(path)) {
                 for (String key : sorted) {
                     writer.write(key + " = " + rb.getString(key) + "\n");
                 }
@@ -99,7 +98,6 @@ public class AppResourceBundle extends ResourceBundle {
     }
 
     /**
-     *
      * @param languageTag - @see Locale.toLanguageTag
      * @param key
      * @param value
@@ -112,7 +110,6 @@ public class AppResourceBundle extends ResourceBundle {
     }
 
     /**
-     *
      * @param languageTag - @see Locale.toLanguageTag
      * @return
      */

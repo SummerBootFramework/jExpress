@@ -22,15 +22,15 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+
+import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.security.KeyPair;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
-import javax.crypto.spec.SecretKeySpec;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class JwtUtil {

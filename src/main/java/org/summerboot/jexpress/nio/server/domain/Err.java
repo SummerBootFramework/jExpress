@@ -95,7 +95,7 @@ public class Err<T> {
             rootCause = cause;
         }
         String trace = ExceptionUtils.getStackTrace(cause);
-        return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + ", \"internalInfo\": \"" + internalInfo + "\", \"cause\": \"" + rootCause + "\"}\n\t" + trace + "\n\n";
+        return "{" + "\"errorCode\": \"" + errorCode + "\", \"errorTag\"=\"" + errorTag + "\", \"errorDesc\": \"" + errorDesc + "\", \"internalInfo\": \"" + internalInfo + "\", \"cause\": \"" + rootCause + "\"}\n\t" + trace + "\n\n";
     }
 
     @JsonIgnore

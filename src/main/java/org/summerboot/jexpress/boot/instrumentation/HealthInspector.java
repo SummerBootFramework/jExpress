@@ -16,13 +16,13 @@
 package org.summerboot.jexpress.boot.instrumentation;
 
 import org.summerboot.jexpress.nio.server.domain.Err;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <T> parameter
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface HealthInspector<T extends Object> {
 

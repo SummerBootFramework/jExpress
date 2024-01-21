@@ -16,14 +16,14 @@
 package org.summerboot.jexpress.integration.cache;
 
 import com.google.inject.Singleton;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <K>
  * @param <V>
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
 public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
@@ -40,7 +40,6 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
     }
 
     /**
-     *
      * @param key
      * @param value
      * @param ttlMilliseconds
@@ -51,7 +50,6 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
     }
 
     /**
-     *
      * @param key
      * @return
      */
@@ -74,7 +72,6 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
     }
 
     /**
-     *
      * @param key
      * @return
      */
@@ -86,7 +83,6 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
     }
 
     /**
-     *
      * @param <V>
      */
     public static class CacheEntity<V> {

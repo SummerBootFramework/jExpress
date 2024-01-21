@@ -18,9 +18,8 @@ package org.summerboot.jexpress.nio.grpc;
 import io.grpc.Attributes;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
-import io.grpc.NameResolver.Listener2;
-import io.grpc.NameResolver.ResolutionResult;
 import io.grpc.NameResolverProvider;
+
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Arrays;
@@ -28,7 +27,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class BootLoadBalancerProvider extends NameResolverProvider {
