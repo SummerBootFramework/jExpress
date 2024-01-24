@@ -16,15 +16,15 @@
 package org.summerboot.jexpress.boot.annotation;
 
 import com.google.inject.BindingAnnotation;
+import org.summerboot.jexpress.boot.BootConstant;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.summerboot.jexpress.boot.BootConstant;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Target(value = {ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})

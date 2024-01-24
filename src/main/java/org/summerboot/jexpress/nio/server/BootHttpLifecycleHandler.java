@@ -17,15 +17,14 @@ package org.summerboot.jexpress.nio.server;
 
 import com.google.inject.Singleton;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import java.util.List;
-import java.util.Map;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
+import java.util.List;
+import java.util.Map;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
@@ -39,9 +38,9 @@ public class BootHttpLifecycleHandler implements HttpLifecycleHandler {
 
     @Override
     public void afterProcess(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
-        if (httpRequestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
-            httpRequestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
-        }
+//        if (httpRequestHeaders.contains(HttpHeaderNames.Sensitive_Header)) {
+//            httpRequestHeaders.set(HttpHeaderNames.Sensitive_Header, "***");// protect Sensitive_Header from being logged
+//        }
     }
 
     @Override
@@ -52,12 +51,12 @@ public class BootHttpLifecycleHandler implements HttpLifecycleHandler {
 
     @Override
     public String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
+                                final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
         return originallLogContent;
     }
 
     @Override
     public void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
+                             final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
     }
 }

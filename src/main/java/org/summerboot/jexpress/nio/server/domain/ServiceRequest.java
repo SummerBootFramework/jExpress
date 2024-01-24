@@ -19,14 +19,14 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import org.apache.commons.lang3.StringUtils;
+
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ServiceRequest {

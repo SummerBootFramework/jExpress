@@ -16,6 +16,14 @@
 package org.summerboot.jexpress.integration.jpa;
 
 import jakarta.persistence.EntityManager;
+import org.apache.logging.log4j.LogManager;
+import org.hibernate.cfg.Environment;
+import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.config.BootConfig;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.util.ReflectionUtil;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,16 +38,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.logging.log4j.LogManager;
-import org.hibernate.cfg.Environment;
-import org.summerboot.jexpress.boot.BackOffice;
-import org.summerboot.jexpress.boot.config.BootConfig;
-import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public abstract class JPAConfig extends BootConfig {
@@ -62,7 +62,6 @@ public abstract class JPAConfig extends BootConfig {
     }
 
     /**
-     *
      * @param cfgFile
      * @param packages in which contains the @Entity classes
      * @throws IOException

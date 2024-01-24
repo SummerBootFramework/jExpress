@@ -3,7 +3,6 @@ package org.summerboot.jexpress.util.pdf;
 import java.io.File;
 
 /**
- *
  * @author DuXiao
  */
 public class HtmlToImageUtil {

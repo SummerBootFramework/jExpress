@@ -15,29 +15,34 @@
  */
 package org.summerboot.jexpress.boot.config;
 
-import org.summerboot.jexpress.util.concurrent.EmptyBlockingQueue;
-import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
-import org.summerboot.jexpress.security.SecurityUtil;
-import org.summerboot.jexpress.util.BeanUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.util.Properties;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import org.apache.commons.lang3.StringUtils;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.util.ReflectionUtil;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.config.annotation.Config;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.util.ApplicationUtil;
+import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.ReflectionUtil;
+import org.summerboot.jexpress.util.concurrent.EmptyBlockingQueue;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -49,20 +54,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.util.ApplicationUtil;
+
+import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
@@ -128,7 +129,8 @@ public abstract class BootConfig implements JExpressConfig {
             Constructor<? extends BootConfig> cons = c.getDeclaredConstructor();
             cons.setAccessible(true);
             ret = (BootConfig) cons.newInstance();
-        } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+        } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException |
+                 IllegalArgumentException | InvocationTargetException ex) {
             if (logger == null) {
                 logger = LogManager.getLogger(getClass());
             }
@@ -428,7 +430,8 @@ public abstract class BootConfig implements JExpressConfig {
                             } else {
                                 sb.append("NoSuchMethodException: ").append(callbackFunc).append("\n");
                             }
-                        } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/ SecurityException | InvocationTargetException ex) {
+                        } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/
+                                 SecurityException | InvocationTargetException ex) {
                             sb.append(ex).append("\n");
                         }
                     }
@@ -489,7 +492,8 @@ public abstract class BootConfig implements JExpressConfig {
                             } else {
                                 sb.append("NoSuchMethodException: ").append(callbackFunc).append("\n");
                             }
-                        } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/ SecurityException | InvocationTargetException ex) {
+                        } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/
+                                 SecurityException | InvocationTargetException ex) {
                             sb.append(ex).append("\n");
                         }
                     }
@@ -579,8 +583,8 @@ public abstract class BootConfig implements JExpressConfig {
     }
 
     public static ThreadPoolExecutor buildThreadPoolExecutor(ThreadPoolExecutor tpe, String tpeName, ThreadingMode threadingMode,
-            int core, int max, int queue, long keepAliveSec, RejectedExecutionHandler rejectedExecutionHandler,
-            boolean prestartAllCoreThreads, boolean allowCoreThreadTimeOut, boolean isSingleton) {
+                                                             int core, int max, int queue, long keepAliveSec, RejectedExecutionHandler rejectedExecutionHandler,
+                                                             boolean prestartAllCoreThreads, boolean allowCoreThreadTimeOut, boolean isSingleton) {
         switch (threadingMode) {
             case CPU:// use CPU core + 1 when application is CPU bound
                 core = CPU_CORE + 1;

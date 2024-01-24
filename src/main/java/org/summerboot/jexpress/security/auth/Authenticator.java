@@ -18,15 +18,15 @@ package org.summerboot.jexpress.security.auth;
 import io.grpc.Context;
 import io.jsonwebtoken.JwtBuilder;
 import io.netty.handler.codec.http.HttpHeaders;
-import javax.naming.NamingException;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
+import javax.naming.NamingException;
+
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <T>
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface Authenticator<T> {
 
@@ -74,7 +74,6 @@ public interface Authenticator<T> {
     Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
 
     /**
-     *
      * @param authToken
      * @param cache
      * @param errorCode

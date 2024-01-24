@@ -15,27 +15,27 @@
  */
 package org.summerboot.jexpress.nio.client;
 
-import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.nio.server.domain.Err;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import java.net.http.HttpResponse;
-import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 
+import java.net.http.HttpResponse;
+import java.util.List;
+
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <T> Success(JSON) result type
  * @param <E> Err(JSON) result type
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class RPCResult<T, E extends ServiceErrorConvertible> {
 
@@ -152,7 +152,7 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
 
         } catch (Throwable ex) {
             if (context != null) {
-                Err e = new Err(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, null, ex, "Failed to parse RPC JSON response: " +rpcResponseBody);
+                Err e = new Err(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, null, ex, "Failed to parse RPC JSON response: " + rpcResponseBody);
                 context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
             }
             ret = null;

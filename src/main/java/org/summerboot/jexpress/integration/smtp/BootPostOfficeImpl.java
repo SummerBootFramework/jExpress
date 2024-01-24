@@ -15,24 +15,24 @@
  */
 package org.summerboot.jexpress.integration.smtp;
 
-import org.summerboot.jexpress.nio.server.domain.Err;
-import java.util.ArrayList;
-import java.util.List;
+import com.google.inject.Singleton;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import com.google.inject.Singleton;
+import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.nio.server.domain.Err;
+
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.summerboot.jexpress.boot.BackOffice;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.SummerApplication;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
@@ -163,6 +163,7 @@ public class BootPostOfficeImpl implements PostOffice {
         }
         return success;
     }
+
     protected final Map<String, Long> debouncingData = new ConcurrentHashMap<>();
 
     protected boolean debounced(String key, int ttlMinute) {

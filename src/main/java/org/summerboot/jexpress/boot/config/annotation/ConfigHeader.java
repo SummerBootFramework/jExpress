@@ -18,11 +18,11 @@ package org.summerboot.jexpress.boot.config.annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
 
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.ANNOTATION_TYPE})

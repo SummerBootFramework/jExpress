@@ -15,11 +15,6 @@
  */
 package org.summerboot.jexpress.boot.config;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
@@ -27,8 +22,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ConfigurationMonitor implements FileAlterationListener {
@@ -36,7 +36,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
     private static final Logger log = LogManager.getLogger(ConfigurationMonitor.class.getName());
 
     public static final ConfigurationMonitor listener = new ConfigurationMonitor();
-    
+
     public static final String APUSE_FILE_NAME = "pause";
 
     private volatile boolean running;

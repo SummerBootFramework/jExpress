@@ -15,17 +15,17 @@
  */
 package org.summerboot.jexpress.nio.server.domain;
 
-import org.summerboot.jexpress.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.summerboot.jexpress.util.BeanUtil;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ServiceError {
@@ -56,7 +56,7 @@ public class ServiceError {
         this.errors.add(new Err(errorCode, errorTag, errorDesc, ex, null));
     }
 
-//    ServiceError showRootCause(boolean isEnable) {
+    //    ServiceError showRootCause(boolean isEnable) {
 //        if (errors != null) {
 //            for (var err : errors) {
 //                err.showRootCause(isEnable);
@@ -90,7 +90,7 @@ public class ServiceError {
         return ref;
     }
 
-//    public void setRef(long ref) {
+    //    public void setRef(long ref) {
 //        this.ref = BootConstant.APP_ID + "-" + ref;
 //    }
     public Object getAttachedData() {

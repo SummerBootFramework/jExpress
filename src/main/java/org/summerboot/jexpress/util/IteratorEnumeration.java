@@ -19,9 +19,8 @@ import java.util.Enumeration;
 import java.util.Iterator;
 
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <E> type
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class IteratorEnumeration<E> implements Enumeration<E> {
 

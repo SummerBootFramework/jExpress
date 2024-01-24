@@ -15,14 +15,14 @@
  */
 package org.summerboot.jexpress.boot.config;
 
-import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.summerboot.jexpress.integration.smtp.PostOffice;
+import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
+
 import java.io.File;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton

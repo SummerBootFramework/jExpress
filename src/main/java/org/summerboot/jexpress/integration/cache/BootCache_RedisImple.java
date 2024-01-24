@@ -15,31 +15,31 @@
  */
 package org.summerboot.jexpress.integration.cache;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.integration.cache.domain.FlashSale;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.SetParams;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 1. download redis-cell from https://github.com/brandur/redis-cell/releases 2.
@@ -90,7 +90,7 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected static final RuntimeException REDIS_MASTER_NULL_EX = new RuntimeException("Redis master is null");
 
-    protected static RedisConfig redisCfg =RedisConfig.cfg;
+    protected static RedisConfig redisCfg = RedisConfig.cfg;
 
     protected static SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
 
@@ -218,14 +218,13 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
      * this is a Distributed non-blocking version of lock() method; it attempts
      * to acquire the lock immediately, return true if locking succeeds
      *
-     * @param lockName the name of the tryLock
-     * @param unlockPassword unlockPassword is to be used for unlock. To protect
-     * a tryLock from being unlocked by anyone, a tryLock cannot be released
-     * when unlockPassword not match
+     * @param lockName                                 the name of the tryLock
+     * @param unlockPassword                           unlockPassword is to be used for unlock. To protect
+     *                                                 a tryLock from being unlocked by anyone, a tryLock cannot be released
+     *                                                 when unlockPassword not match
      * @param millisecondsToExpireIncaseUnableToUnlock expire time of tryLock in
-     * case unable to unlock (e.g. exception/error before executing unlock)
+     *                                                 case unable to unlock (e.g. exception/error before executing unlock)
      * @return the result of get tryLock
-     *
      */
     @Override
     public boolean tryLock(String lockName, String unlockPassword, long millisecondsToExpireIncaseUnableToUnlock) {
@@ -243,11 +242,10 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
     /**
      * unlocks the Distributed Lock instance
      *
-     * @param lockName the name of the tryLock
+     * @param lockName       the name of the tryLock
      * @param unlockPassword to ensure only the owner is able to unlock, success
-     * only when this value equals the unlockPassword specified by tryLock
+     *                       only when this value equals the unlockPassword specified by tryLock
      * @return the result of get release
-     *
      */
     @Override
     public boolean unlock(String lockName, String unlockPassword) {
@@ -355,7 +353,7 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
      * @param key
      * @param initBurst
      * @param maxBurstPerPeriod
-     * @param period seconds
+     * @param period            seconds
      * @param requestQuota
      * @return The number of seconds until the user should retry, and always -1
      * if the action was allowed

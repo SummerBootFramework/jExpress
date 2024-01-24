@@ -15,14 +15,14 @@
  */
 package org.summerboot.jexpress.security.auth;
 
-import org.summerboot.jexpress.util.FormatterUtil;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import org.summerboot.jexpress.util.FormatterUtil;
+
 import java.util.Arrays;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)

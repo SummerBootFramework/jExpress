@@ -18,7 +18,6 @@ package org.summerboot.jexpress.integration.cache;
 import redis.clients.jedis.Jedis;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface JedisCall {

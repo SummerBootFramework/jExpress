@@ -15,12 +15,11 @@
  */
 package org.summerboot.jexpress.boot.instrumentation.jmx;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.summerboot.jexpress.boot.instrumentation.IOStatusData;
 import org.summerboot.jexpress.util.BeanUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class BootIOStatusData extends IOStatusData {

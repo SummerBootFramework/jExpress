@@ -25,16 +25,16 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.pdf417.encoder.Compaction;
 import com.google.zxing.pdf417.encoder.Dimensions;
+import org.summerboot.jexpress.util.FormatterUtil;
+
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import org.summerboot.jexpress.util.FormatterUtil;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class BarcodeUtil {
@@ -61,9 +61,9 @@ public class BarcodeUtil {
      * @param widthPixels
      * @param heightPixels
      * @param cfg
-     * @param imageFormat png, jpg, etc.
-     * @param onColor ARGB
-     * @param offColor ARGB
+     * @param imageFormat   png, jpg, etc.
+     * @param onColor       ARGB
+     * @param offColor      ARGB
      * @return
      * @throws IOException
      */
@@ -92,12 +92,12 @@ public class BarcodeUtil {
 //    public static byte[] toByteArray(BitMatrix matrix, String format) throws IOException {
 //        return toByteArray(matrix, format, ARGB_BLACK, ARGB_TRANSPARENT);
 //    }
+
     /**
-     *
      * @param matrix
      * @param imageFormat png
-     * @param onColor ARGB
-     * @param offColor ARGB
+     * @param onColor     ARGB
+     * @param offColor    ARGB
      * @return
      * @throws IOException
      */

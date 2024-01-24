@@ -100,9 +100,8 @@ final class HttpPostBodyUtil {
         }
 
         /**
-         *
          * @param minus this value will be used as (currentPos - minus) to set
-         * the current readerIndex in the buffer.
+         *              the current readerIndex in the buffer.
          */
         void setReadPosition(int minus) {
             pos -= minus;
@@ -111,7 +110,6 @@ final class HttpPostBodyUtil {
         }
 
         /**
-         *
          * @param index raw index of the array (pos in general)
          * @return the value equivalent of raw index to be used in
          * readerIndex(value)

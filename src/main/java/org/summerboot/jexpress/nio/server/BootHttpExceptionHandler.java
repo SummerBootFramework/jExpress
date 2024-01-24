@@ -22,26 +22,27 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.persistence.PersistenceException;
-import java.io.IOException;
-import java.net.http.HttpConnectTimeoutException;
-import java.net.http.HttpTimeoutException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import javax.naming.AuthenticationException;
-import javax.naming.NamingException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
-import static org.summerboot.jexpress.nio.server.BootHttpRequestHandler.cmtpCfg;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
+import javax.naming.AuthenticationException;
+import javax.naming.NamingException;
+import java.io.IOException;
+import java.net.http.HttpConnectTimeoutException;
+import java.net.http.HttpTimeoutException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import static org.summerboot.jexpress.nio.server.BootHttpRequestHandler.cmtpCfg;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
@@ -57,7 +58,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
     @Override
     public void onActionNotFound(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
         Err e = new Err(BootErrorCode.AUTH_INVALID_URL, null, null, null, "Action not found: " + httptMethod + " " + httpRequestPath);
-        context.error(e).status(HttpResponseStatus.NOT_FOUND);
+        context.error(e).status(HttpResponseStatus.NOT_FOUND).logRequestHeader(false).logRequestBody(false);
     }
 
     @Override

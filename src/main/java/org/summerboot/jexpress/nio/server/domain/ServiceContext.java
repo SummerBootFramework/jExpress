@@ -218,7 +218,7 @@ public class ServiceContext {
         serviceError = null;
         cause = null;
         // 2.2 logging control
-        level = Level.INFO;
+        level(Level.INFO);
         logRequestHeader = false;
         logResponseHeader = false;
         logRequestBody = false;
@@ -684,7 +684,7 @@ public class ServiceContext {
         }
         // set log level
         if (error.getCause() != null) {
-            level = Level.ERROR;
+            level(Level.ERROR);
         }
         return this;
     }
@@ -713,7 +713,7 @@ public class ServiceContext {
                 cause = t;
             }
             if (cause != null) {
-                level = Level.ERROR;
+                level(Level.ERROR);
                 //break;
             }
         }
@@ -725,12 +725,12 @@ public class ServiceContext {
         if (cause != null) {
             Throwable root = ExceptionUtils.getRootCause(cause);
             if (root == null || root.equals(cause)) {
-                if (level.isLessSpecificThan(Level.WARN)) {
-                    level = Level.WARN;
+                if (level().isLessSpecificThan(Level.WARN)) {
+                    level(Level.WARN);
                 }
             } else {
-                if (level.isLessSpecificThan(Level.ERROR)) {
-                    level = Level.ERROR;
+                if (level().isLessSpecificThan(Level.ERROR)) {
+                    level(Level.ERROR);
                 }
             }
         }
@@ -742,6 +742,16 @@ public class ServiceContext {
     }
 
     // 2.2 logging control
+    /*
+    OFF=0
+    FATAL=100
+    ERROR=200
+    WARN=300
+    INFO=400
+    DEBUG=500
+    TRACE=600
+    ALL=2147483647
+     */
     public Level level() {
         return level;
     }

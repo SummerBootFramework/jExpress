@@ -15,24 +15,23 @@
  */
 package org.summerboot.jexpress.boot.instrumentation;
 
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import com.google.inject.Singleton;
-import java.util.List;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ServiceError;
+
+import java.util.List;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
 public class BootHealthInspectorImpl implements HealthInspector {
 
     /**
-     *
      * @param args Logger, Boolean
      * @return
      */

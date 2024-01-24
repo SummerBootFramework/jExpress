@@ -22,9 +22,7 @@ import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.util.internal.StringUtil;
 
 /**
- *
- * @author
- * https://github.com/netty/netty/blob/4.1/codec-http/src/main/java/io/netty/handler/codec/http/multipart/HttpPostRequestDecoder.java
+ * @author https://github.com/netty/netty/blob/4.1/codec-http/src/main/java/io/netty/handler/codec/http/multipart/HttpPostRequestDecoder.java
  */
 public class MultipartUtil {
 

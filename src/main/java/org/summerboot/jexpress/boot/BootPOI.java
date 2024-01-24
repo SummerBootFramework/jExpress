@@ -16,7 +16,6 @@
 package org.summerboot.jexpress.boot;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface BootPOI {
@@ -37,7 +36,7 @@ public interface BootPOI {
     String DB_END = "db.end";
     String CACHE_BEGIN = "cache.begin";
     String CACHE_END = "cache.end";
-    
+
     String RPC_BEGIN = "rpc.begin";
     String RPC_END = "rpc.end";
     String GRPC_BEGIN = "gRPC.begin";

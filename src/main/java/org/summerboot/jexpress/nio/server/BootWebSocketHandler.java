@@ -22,16 +22,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.security.auth.Caller;
@@ -58,7 +54,6 @@ import org.summerboot.jexpress.security.auth.Caller;
  *
  * }
  * </pre>
- *
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 2.0
@@ -156,7 +151,6 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
     abstract protected String onCallerConnected(ChannelHandlerContext ctx, Caller caller);
 
     /**
-     *
      * @param ctx
      * @param caller
      * @param txt

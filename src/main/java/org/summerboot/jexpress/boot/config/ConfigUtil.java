@@ -15,10 +15,21 @@
  */
 package org.summerboot.jexpress.boot.config;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.boot.instrumentation.Timeout;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.security.SSLUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,19 +47,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.BackOffice;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
-import org.summerboot.jexpress.boot.instrumentation.Timeout;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ConfigUtil {
@@ -65,7 +65,7 @@ public class ConfigUtil {
         return p.toAbsolutePath();
     }
 
-//    public static File getConfigFile(Path configFolder, String cfgFile) {
+    //    public static File getConfigFile(Path configFolder, String cfgFile) {
 //        Path p = Paths.get(configFolder.toString(), cfgFile);
 //        return p.toFile();
 //    }
@@ -208,11 +208,10 @@ public class ConfigUtil {
     }
 
     /**
-     *
      * @param props
      * @param key
      * @param defaultValue the default value if value is not specified in props,
-     * null means required and no default value
+     *                     null means required and no default value
      * @return
      */
     public boolean getAsBoolean(Properties props, String key, Boolean defaultValue) {
@@ -234,11 +233,10 @@ public class ConfigUtil {
     }
 
     /**
-     *
      * @param props
      * @param key
      * @param defaultValue the default value if value is not specified in props,
-     * null means required and no default value
+     *                     null means required and no default value
      * @return
      */
     public int getAsInt(Properties props, String key, Integer defaultValue) {
@@ -260,11 +258,10 @@ public class ConfigUtil {
     }
 
     /**
-     *
      * @param props
      * @param key
      * @param defaultValue the default value if value is not specified in props,
-     * null means required and no default value
+     *                     null means required and no default value
      * @return
      */
     public long getAsLong(Properties props, String key, Long defaultValue) {
@@ -286,11 +283,10 @@ public class ConfigUtil {
     }
 
     /**
-     *
      * @param props
      * @param key
      * @param defaultValue the default value if value is not specified in props,
-     * null means required and no default value
+     *                     null means required and no default value
      * @return
      */
     public float getAsFloat(Properties props, String key, Float defaultValue) {
@@ -312,11 +308,10 @@ public class ConfigUtil {
     }
 
     /**
-     *
      * @param props
      * @param key
      * @param defaultValue the default value if value is not specified in props,
-     * null means required and no default value
+     *                     null means required and no default value
      * @return
      */
     public double getAsDouble(Properties props, String key, Double defaultValue) {
@@ -338,11 +333,10 @@ public class ConfigUtil {
     }
 
     /**
-     *
      * @param props
      * @param key
      * @param defaultValue the default value if value is not specified in props,
-     * null means required and no default value
+     *                     null means required and no default value
      * @return
      */
     public String getAsString(Properties props, String key, String defaultValue) {
@@ -359,11 +353,10 @@ public class ConfigUtil {
     }
 
     /**
-     *
      * @param props
      * @param key
      * @param defaultValue the default value if value is not specified in props,
-     * null means required and no default value
+     *                     null means required and no default value
      * @return
      */
     public String[] getAsCSV(Properties props, String key, String defaultValue) {

@@ -22,7 +22,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Target(value = {ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})

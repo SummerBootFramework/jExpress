@@ -15,15 +15,15 @@
  */
 package org.summerboot.jexpress.integration.jpa;
 
-import java.io.Serializable;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Version;
+
+import java.io.Serializable;
 import java.time.OffsetDateTime;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @MappedSuperclass

@@ -15,20 +15,19 @@
  */
 package org.summerboot.jexpress.security;
 
+import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.util.FormatterUtil;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.util.Base64;
-import java.util.regex.Pattern;
+
 import javax.crypto.Cipher;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
-//import jcifs.util.Base64;
-import org.apache.commons.lang3.StringUtils;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.util.Base64;
+import java.util.regex.Pattern;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public final class SecurityUtil {
@@ -42,10 +41,9 @@ public final class SecurityUtil {
     public static final String[] CIPHER_SUITES = {"TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256", "TLS_DHE_DSS_WITH_AES_256_CBC_SHA", "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256", "TLS_DHE_DSS_WITH_AES_128_CBC_SHA", "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384", "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256", "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384", "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384", "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256", "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256", "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384", "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDH_anon_WITH_AES_256_CBC_SHA", "TLS_ECDH_anon_WITH_AES_128_CBC_SHA", "TLS_ECDH_ECDSA_WITH_NULL_SHA", "TLS_ECDH_RSA_WITH_NULL_SHA", "TLS_ECDH_anon_WITH_NULL_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_NULL_SHA,TLS_ECDHE_RSA_WITH_NULL_SHA"};
 
     /**
-     *
      * @param plainData
-     * @param warped true if the encrypted value is in a warper like
-     * password=DEC(encrypted password)
+     * @param warped    true if the encrypted value is in a warper like
+     *                  password=DEC(encrypted password)
      * @return
      * @throws GeneralSecurityException
      */
@@ -72,8 +70,8 @@ public final class SecurityUtil {
      * decrypt encrypted value with prefix to plain text char array
      *
      * @param encrypted
-     * @param warped true if the encrypted value is in a warper like
-     * password=ENC(encrypted password)
+     * @param warped    true if the encrypted value is in a warper like
+     *                  password=ENC(encrypted password)
      * @return
      * @throws GeneralSecurityException
      */
@@ -86,8 +84,8 @@ public final class SecurityUtil {
      * decrypt encrypted value with prefix to plain text
      *
      * @param encrypted
-     * @param warped true if the encrypted value is in a warper like
-     * password=ENC(encrypted password)
+     * @param warped    true if the encrypted value is in a warper like
+     *                  password=ENC(encrypted password)
      * @return
      * @throws GeneralSecurityException
      */
@@ -122,7 +120,7 @@ public final class SecurityUtil {
         return result;
     }
 
-//    public static String base64MimeDecode(String base64Text) throws UnsupportedEncodingException {
+    //    public static String base64MimeDecode(String base64Text) throws UnsupportedEncodingException {
 //        // Decode base64 to get bytes
 //        //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
 //        byte[] dec = java.util.Base64.getDecoder().decode(base64Text);
@@ -138,7 +136,7 @@ public final class SecurityUtil {
         return new String(dec, StandardCharsets.UTF_8);
     }
 
-//    public static String base64MimeEncode(String plainText) throws UnsupportedEncodingException {
+    //    public static String base64MimeEncode(String plainText) throws UnsupportedEncodingException {
 //        // Decode base64 to get bytes
 //        //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
 //        byte[] dec = java.util.Base64.getEncoder().encode(plainText.getBytes(StandardCharsets.UTF_8));
@@ -176,8 +174,8 @@ public final class SecurityUtil {
         }
         return true;
     }
-    
-    
+
+
     public static final Pattern PATTERN_UNPRINTABLE = Pattern.compile("\\p{C}");
     public static final Pattern PATTERN_UNPRINTABLE_CRLFTAB = Pattern.compile("\\p{C}&&[^\\r\\n\\t]");
 

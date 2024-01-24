@@ -15,19 +15,31 @@
  */
 package org.summerboot.jexpress.nio.server.ws.rs;
 
-import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.BootPOI;
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.security.auth.Caller;
-import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.BeanUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.DenyAll;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.boot.BootPOI;
+import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.boot.annotation.Log;
+import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
+import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.FormatterUtil;
+
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -40,20 +52,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import jakarta.annotation.security.DenyAll;
-import jakarta.annotation.security.PermitAll;
-import jakarta.annotation.security.RolesAllowed;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import org.apache.commons.lang3.StringUtils;
-import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.Log;
-import org.summerboot.jexpress.nio.server.RequestProcessor;
-import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class JaxRsRequestProcessor implements RequestProcessor {
@@ -313,7 +313,6 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             }
             list.addAll(Arrays.asList(protectedJsonArrayFields));
         }
-        logSettings.setSendRequestParsingErrorToClient(log.sendRequestParsingErrorToClient());
     }
 
     @Override

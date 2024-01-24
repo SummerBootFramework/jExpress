@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.concurrent.Flow;
 
 /**
- *
  * @author daniel, Changski Tie Zheng Zhang, Du Xiao
  */
 public class HTTPClientStringSubscriber implements Flow.Subscriber<ByteBuffer> {

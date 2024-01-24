@@ -15,14 +15,6 @@
  */
 package org.summerboot.jexpress.integration.smtp;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 import jakarta.activation.DataHandler;
 import jakarta.activation.DataSource;
 import jakarta.mail.Message;
@@ -35,8 +27,16 @@ import jakarta.mail.internet.MimeMultipart;
 import jakarta.mail.util.ByteArrayDataSource;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Deprecated
@@ -60,8 +60,7 @@ public class EmailBuilder {
         private String cid;
 
         /**
-         *
-         * @param type - the file extention, ie. "pdf", image
+         * @param type       - the file extention, ie. "pdf", image
          * @param dataStream
          * @param fileName
          * @param cid
@@ -97,6 +96,7 @@ public class EmailBuilder {
     public enum Format {
         html, text
     }
+
     private String from;
     private String[] toList;
     private String[] ccList;

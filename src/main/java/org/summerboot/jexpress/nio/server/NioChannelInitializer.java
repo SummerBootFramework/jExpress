@@ -21,16 +21,16 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import java.util.Map;
-import java.util.Set;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.annotation.Service;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+import java.util.Map;
+import java.util.Set;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 abstract public class NioChannelInitializer extends ChannelInitializer<SocketChannel> {

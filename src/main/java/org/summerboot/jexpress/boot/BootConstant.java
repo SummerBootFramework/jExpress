@@ -18,7 +18,6 @@ package org.summerboot.jexpress.boot;
 import java.util.Random;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface BootConstant {
@@ -26,7 +25,7 @@ public interface BootConstant {
     String APP_ID = String.format("%06d", new Random().nextInt(999999));
 
     //version
-    String VERSION = "SummerBoot.jExpress 2.3.13";
+    String VERSION = "SummerBoot.jExpress 2.4.1";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
     String DEFAULT_ADMIN_MM = "changeit";
@@ -82,9 +81,9 @@ public interface BootConstant {
      * 5. Log4j2.xml variables
      *
      * Pass by System.setProperty() instead of making them public static, any better idea?
-     * ‘java.lang.System.getProperty()’ API underlyingly uses ‘java.util.Hashtable.get()’ API. 
-     * Please be advised that ‘java.util.Hashtable.get()’ is a synchronized API. 
-     * It means only one thread can invoke the ‘java.util.Hashtable.get()’ method at any given time. 
+     * ‘java.lang.System.getProperty()’ API underlyingly uses ‘java.util.Hashtable.get()’ API.
+     * Please be advised that ‘java.util.Hashtable.get()’ is a synchronized API.
+     * It means only one thread can invoke the ‘java.util.Hashtable.get()’ method at any given time.
      */
     String SYS_PROP_LOGID = BackOffice.agent.getLog4J2LogId();// "logid" // used by log4j2.xml ${sys:logid}
     String SYS_PROP_LOGFILEPATH = BackOffice.agent.getLog4j2LogFilePath();//"logPath"; // used by log4j2.xml ${sys:loggingPath}

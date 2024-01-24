@@ -15,12 +15,12 @@
  */
 package org.summerboot.jexpress.integration.cache;
 
-import org.summerboot.jexpress.integration.cache.domain.FlashSale;
-import java.util.UUID;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.integration.cache.domain.FlashSale;
+
+import java.util.UUID;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface BootCache {
@@ -29,25 +29,23 @@ public interface BootCache {
      * this is a Distributed non-blocking version of lock() method; it attempts
      * to acquire the lock immediately, return true if locking succeeds
      *
-     * @param lockName the name of the tryLock
-     * @param unlockPassword unlockPassword is to be used for unlock. To protect
-     * a tryLock from being unlocked by anyone, a tryLock cannot be released
-     * when unlockPassword not match
+     * @param lockName                                 the name of the tryLock
+     * @param unlockPassword                           unlockPassword is to be used for unlock. To protect
+     *                                                 a tryLock from being unlocked by anyone, a tryLock cannot be released
+     *                                                 when unlockPassword not match
      * @param millisecondsToExpireIncaseUnableToUnlock expire time of tryLock in
-     * case unable to unlock (e.g. exception/error before executing unlock)
+     *                                                 case unable to unlock (e.g. exception/error before executing unlock)
      * @return the result of get tryLock
-     *
      */
     boolean tryLock(String lockName, String unlockPassword, long millisecondsToExpireIncaseUnableToUnlock);
 
     /**
      * unlocks the Distributed Lock instance
      *
-     * @param lockName the name of the tryLock
+     * @param lockName       the name of the tryLock
      * @param unlockPassword to ensure only the owner is able to unlock, success
-     * only when this value equals the unlockPassword specified by tryLock
+     *                       only when this value equals the unlockPassword specified by tryLock
      * @return the result of get release
-     *
      */
     boolean unlock(String lockName, String unlockPassword);
 
@@ -56,7 +54,6 @@ public interface BootCache {
     }
 
     /**
-     *
      * @param key
      * @param unlockPassword
      * @param ttlMinute
@@ -80,7 +77,7 @@ public interface BootCache {
      *
      * @param itemId
      * @param totalAmount total inventory
-     * @param limit max orderAmount per order
+     * @param limit       max orderAmount per order
      * @return true if success
      */
     default boolean flashsaleInventoryInit(String itemId, long totalAmount, long limit) {

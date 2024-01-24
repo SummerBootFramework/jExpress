@@ -16,13 +16,13 @@
 package org.summerboot.jexpress.nio.client;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
-import java.util.List;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 
+import java.util.List;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class RPCError implements ServiceErrorConvertible {

@@ -16,13 +16,6 @@
 package org.summerboot.jexpress.security.auth;
 
 import com.google.inject.Inject;
-import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.BootPOI;
-import org.summerboot.jexpress.integration.cache.AuthTokenCache;
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.security.JwtUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
 import com.google.inject.Singleton;
 import io.grpc.Context;
 import io.grpc.Contexts;
@@ -40,20 +33,27 @@ import io.jsonwebtoken.Jwts;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.boot.BootPOI;
+import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+import org.summerboot.jexpress.nio.grpc.BearerAuthCredential;
+import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.security.JwtUtil;
+import org.summerboot.jexpress.util.FormatterUtil;
+
+import javax.naming.NamingException;
 import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.naming.NamingException;
-import org.apache.commons.lang3.StringUtils;
-import org.summerboot.jexpress.nio.grpc.BearerAuthCredential;
-import org.summerboot.jexpress.nio.server.RequestProcessor;
 
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <E> authenticate(T metaData)
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
 public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerInterceptor {
@@ -67,7 +67,6 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     protected AuthTokenCache authTokenCache;
 
     /**
-     *
      * @param usename
      * @param pwd
      * @param validForMinutes
@@ -115,7 +114,6 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     /**
-     *
      * @param usename
      * @param password
      * @param metaData
@@ -262,7 +260,6 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     /**
-     *
      * @param httpRequestHeaders
      * @param cache
      * @param errorCode
@@ -276,7 +273,6 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     /**
-     *
      * @param authToken
      * @param cache
      * @param errorCode
@@ -326,7 +322,6 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     /**
-     *
      * @param httpRequestHeaders
      * @param cache
      * @param context
@@ -338,7 +333,6 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     /**
-     *
      * @param authToken
      * @param cache
      * @param context

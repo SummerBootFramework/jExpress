@@ -16,10 +16,10 @@
 package org.summerboot.jexpress.integration.smtp;
 
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
+
 import java.util.Collection;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface PostOffice extends HealthInspector<String> {

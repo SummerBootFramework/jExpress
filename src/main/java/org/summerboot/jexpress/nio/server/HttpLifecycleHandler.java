@@ -18,12 +18,12 @@ package org.summerboot.jexpress.nio.server;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import java.util.List;
-import java.util.Map;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
+import java.util.List;
+import java.util.Map;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
@@ -54,7 +54,7 @@ public interface HttpLifecycleHandler {
      * @param context
      */
     void afterProcess(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath,
-            Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context);
+                      Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context);
 
     /**
      * step2
@@ -81,7 +81,7 @@ public interface HttpLifecycleHandler {
      * @return
      */
     String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx);
+                         final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx);
 
     /**
      * step4
@@ -100,5 +100,5 @@ public interface HttpLifecycleHandler {
      * @throws Exception
      */
     void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
+                      final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
 }

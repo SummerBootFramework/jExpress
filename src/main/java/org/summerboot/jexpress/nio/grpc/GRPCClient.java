@@ -27,18 +27,18 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import java.net.URI;
 import jakarta.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <T>
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public abstract class GRPCClient<T extends GRPCClient<T>> {
 
@@ -60,21 +60,20 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     private static final List<NameResolverProvider> NR_Providers = new ArrayList();
 
     /**
-     *
      * @param nameResolverProvider for client side load balancing
      * @param loadBalancingPolicy
-     * @param uri The URI format should be one of grpc://host:port,
-     * grpcs://host:port, or unix:///path/to/uds.sock
-     * @param keyManagerFactory The Remote Caller identity
-     * @param trustManagerFactory The Remote Caller trusted identities
+     * @param uri                  The URI format should be one of grpc://host:port,
+     *                             grpcs://host:port, or unix:///path/to/uds.sock
+     * @param keyManagerFactory    The Remote Caller identity
+     * @param trustManagerFactory  The Remote Caller trusted identities
      * @param overrideAuthority
      * @param ciphers
-     * @param tlsVersionProtocols "TLSv1.2", "TLSv1.3"
+     * @param tlsVersionProtocols  "TLSv1.2", "TLSv1.3"
      * @return
      * @throws javax.net.ssl.SSLException
      */
     public static NettyChannelBuilder getNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
-            @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
+                                                             @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
         final NettyChannelBuilder channelBuilder;
         String target = uri.toString();//"grpcs://"+uri.getAuthority()+"/service";// "grpcs:///"
         switch (uri.getScheme()) {
@@ -132,8 +131,8 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
 
     /**
      * @param nameResolverProvider for client side load balancing
-     * @param uri The URI format should be one of grpc://host:port or
-     * unix:///path/to/uds.sock
+     * @param uri                  The URI format should be one of grpc://host:port or
+     *                             unix:///path/to/uds.sock
      * @return
      * @throws SSLException
      */
@@ -147,10 +146,9 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     protected ManagedChannel channel;
 
     /**
-     *
      * @param nameResolverProvider for client side load balancing
-     * @param uri The URI format should be one of grpc://host:port or
-     * unix:///path/to/uds.sock
+     * @param uri                  The URI format should be one of grpc://host:port or
+     *                             unix:///path/to/uds.sock
      * @throws SSLException
      */
     public GRPCClient(NameResolverProvider nameResolverProvider, URI uri) throws SSLException {
@@ -158,26 +156,24 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     }
 
     /**
-     *
      * @param nameResolverProvider for client side load balancing
-     * @param uri The URI format should be one of grpc://host:port,
-     * grpcs://host:port, or unix:///path/to/uds.sock
-     * @param keyManagerFactory The Remote Caller identity
-     * @param trustManagerFactory The Remote Caller trusted identities
+     * @param uri                  The URI format should be one of grpc://host:port,
+     *                             grpcs://host:port, or unix:///path/to/uds.sock
+     * @param keyManagerFactory    The Remote Caller identity
+     * @param trustManagerFactory  The Remote Caller trusted identities
      * @param overrideAuthority
      * @param ciphers
-     * @param tlsVersionProtocols "TLSv1.2", "TLSv1.3"
+     * @param tlsVersionProtocols  "TLSv1.2", "TLSv1.3"
      * @throws SSLException
      */
     public GRPCClient(NameResolverProvider nameResolverProvider, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
-            @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
+                      @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
         this.nameResolverProvider = nameResolverProvider;
         this.uri = uri;
         this.channelBuilder = getNettyChannelBuilder(nameResolverProvider, LoadBalancingPolicy.ROUND_ROBIN, uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, tlsVersionProtocols);
     }
 
     /**
-     *
      * @param channelBuilder
      */
     public GRPCClient(NettyChannelBuilder channelBuilder) {
@@ -203,7 +199,6 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     }
 
     /**
-     *
      * @param channel
      */
     protected abstract void onConnected(ManagedChannel channel);

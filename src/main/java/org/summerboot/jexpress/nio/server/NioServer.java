@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.nio.server;
 
-import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -37,6 +36,19 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
+import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
+import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManagerFactory;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
@@ -45,21 +57,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.SSLException;
-import org.summerboot.jexpress.boot.BackOffice;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
-import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class NioServer {
@@ -80,7 +80,6 @@ public class NioServer {
     }
 
     /**
-     *
      * @param nioCfg
      * @throws InterruptedException
      * @throws SSLException

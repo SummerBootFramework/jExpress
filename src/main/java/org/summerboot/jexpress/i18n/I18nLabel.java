@@ -15,15 +15,15 @@
  */
 package org.summerboot.jexpress.i18n;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.lang.reflect.Field;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.regex.Matcher;
-import org.apache.commons.lang3.StringUtils;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class I18nLabel {
@@ -91,7 +91,6 @@ public class I18nLabel {
     }
 
     /**
-     *
      * @param rootPrefix
      * @param rootI18nClass
      * @param translationIndex

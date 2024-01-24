@@ -15,14 +15,14 @@
  */
 package org.summerboot.jexpress.security.auth;
 
-import javax.naming.NamingException;
 import org.summerboot.jexpress.integration.ldap.LdapAgent;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
+import javax.naming.NamingException;
+
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <M>
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class LDAPAuthenticator<M> extends BootAuthenticator<M> {
 

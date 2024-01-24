@@ -4,13 +4,12 @@
  */
 package org.summerboot.jexpress.util.annotation;
 
-import java.util.Arrays;
-import java.util.List;
-
+import com.google.common.base.Preconditions;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-import com.google.common.base.Preconditions;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Checks against one of the specified values. Returns isValid false if the

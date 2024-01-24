@@ -29,14 +29,14 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
+import org.apache.commons.lang3.StringUtils;
+
 import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class BeanUtil {
@@ -215,6 +215,7 @@ public class BeanUtil {
 //        String schemaString = JacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(schema);
 //        System.out.println(schemaString);
 //    }
+
     /**
      * Good for all type of arrays, including primitive array
      *

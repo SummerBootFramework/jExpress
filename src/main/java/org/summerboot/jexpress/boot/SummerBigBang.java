@@ -35,8 +35,6 @@ import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.quartz.QuartzUtil;
-import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
-import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.JwtUtil;
@@ -252,8 +250,8 @@ abstract public class SummerBigBang extends SummerSingularity {
                 Constructor<? extends SummerInitializer> cc = c.getConstructor();
                 cc.setAccessible(true);
                 instance = cc.newInstance();
-            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                     IllegalArgumentException | InvocationTargetException ex) {
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException
+                     | IllegalArgumentException | InvocationTargetException ex) {
                 throw new InaccessibleObjectException("Failed to call default constructor of " + c.getName());
             }
 
@@ -445,7 +443,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         Map<String, JExpressConfig> configs = new LinkedHashMap<>();
         int updated = 0;
 
-        switch (mode) {
+        /*switch (mode) {
             case app_run:
                 if (!hasControllers) {
                     memo.append(BootConstant.BR).append("\t- cfg.loading.skip: no @Controller found, skip=").append(NioConfig.class.getSimpleName());
@@ -460,7 +458,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 //                    scanedJExpressConfigs.remove(AuthConfig.class.getSimpleName());
 //                }
                 break;
-        }
+        }*/
         try {
             //1. get main configurations
             for (ConfigMetadata registeredAppConfig : scanedJExpressConfigs.values()) {

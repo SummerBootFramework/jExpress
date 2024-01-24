@@ -15,12 +15,12 @@
  */
 package org.summerboot.jexpress.nio.server.domain;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ProcessorSettings {
@@ -70,8 +70,6 @@ public class ProcessorSettings {
         private List<String> protectedJsonNumberFields;
 
         private List<String> protectedJsonArrayFields;
-
-        private boolean sendRequestParsingErrorToClient;
 
         public void removeDuplicates() {
             if (protectedJsonStringFields != null) {
@@ -140,15 +138,6 @@ public class ProcessorSettings {
         public void setProtectedJsonArrayFields(List<String> protectedJsonArrayFields) {
             this.protectedJsonArrayFields = protectedJsonArrayFields;
         }
-
-        public boolean isSendRequestParsingErrorToClient() {
-            return sendRequestParsingErrorToClient;
-        }
-
-        public void setSendRequestParsingErrorToClient(boolean sendRequestParsingErrorToClient) {
-            this.sendRequestParsingErrorToClient = sendRequestParsingErrorToClient;
-        }
-
     }
 
 }

@@ -16,10 +16,9 @@
 package org.summerboot.jexpress.integration.cache;
 
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <K>
  * @param <V>
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface SimpleLocalCache<K, V> {
 

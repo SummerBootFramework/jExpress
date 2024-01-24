@@ -19,22 +19,22 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import jakarta.persistence.PersistenceException;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+
+import javax.naming.NamingException;
 import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpTimeoutException;
 import java.util.List;
 import java.util.Map;
-import javax.naming.NamingException;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 /**
- *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
 public interface HttpExceptionHandler {
 
     void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
-            final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
+                          final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
 
     void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
 
@@ -68,5 +68,5 @@ public interface HttpExceptionHandler {
     void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
 
     void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams,
-            String httpPostRequestBody, ServiceContext context);
+                               String httpPostRequestBody, ServiceContext context);
 }

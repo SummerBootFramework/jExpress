@@ -15,14 +15,14 @@
  */
 package org.summerboot.jexpress.util;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import org.apache.commons.lang3.StringUtils;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
 /**
- *
- * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @param <T>
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class ReflectionMetadata<T> {
 
