@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.3.14-SNAPSHOT</version>
+    <version>2.4.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -734,7 +734,7 @@
         </dependency>
         -->
 
-        <!-- Testing  -->
+        <!-- Testing -->
         <!-- https://mvnrepository.com/artifact/org.testng/testng Apache 2.0-->
         <dependency>
             <groupId>org.testng</groupId>
@@ -799,10 +799,9 @@
                                 <include>**/tempupload/*</include>
                                 <include>**/tempupload</include>
                             </includes>
-                            <!-- <excludes>
-                                <exclude>**/important.log</exclude>
-                                <exclude>**/another-important.log</exclude>
-                            </excludes>-->
+                            <excludes>
+                                <exclude>plugin/*.jar</exclude>
+                            </excludes>
                             <followSymlinks>false</followSymlinks>
                         </fileset>
                         <fileset>

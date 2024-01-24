@@ -398,10 +398,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
         // 3c. verbose aspect
         // 3.1 request responseHeader
-        //sb.append("\n\t1.client_req.headers=").append((context.logRequestHeader() && cfg.isVerboseReqHeader()) ? (httpHeaders == null ? "" : StringEscapeUtils.escapeJava(httpHeaders.toString())) : "***");
         sb.append("\n\t1.client_req.headers=").append((isTraceAll || context.logRequestHeader() && cfg.isVerboseReqHeader()) ? httpHeaders : "***");
         // 3.2 request body
-        //sb.append("\n\t2.client_req.body=").append((context.logRequestBody() && cfg.isVerboseReqContent()) ? StringEscapeUtils.escapeJava(httpPostRequestBody) : "***");
         sb.append("\n\t2.client_req.body=").append((isTraceAll || context.logRequestBody() && cfg.isVerboseReqContent()) ? httpPostRequestBody : "***");
         // 3.3 context responseHeader
         sb.append("\n\t3.server_resp.headers=").append((isTraceAll || context.logResponseHeader() && cfg.isVerboseRespHeader()) ? context.responseHeaders() : "***");
