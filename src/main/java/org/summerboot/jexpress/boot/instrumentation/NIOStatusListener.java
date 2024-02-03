@@ -15,6 +15,8 @@
  */
 package org.summerboot.jexpress.boot.instrumentation;
 
+import java.util.List;
+
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
@@ -22,5 +24,5 @@ public interface NIOStatusListener {
 
     void onNIOAccessReportUpdate(String id, long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest);
 
-    void onNIOBindNewPort(String id, String sslMode, String protocol, String bindAddr, int listeningPort, String loadBalancingEndpoint);
+    void onNIOBindNewPort(String id, String sslMode, String protocol, String bindAddr, int listeningPort, List<String> loadBalancingEndpoints);
 }

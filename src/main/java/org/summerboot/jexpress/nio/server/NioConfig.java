@@ -165,14 +165,14 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.multiplexer", defaultValue = "AVAILABLE")
     private volatile IoMultiplexer multiplexer = IoMultiplexer.AVAILABLE;
 
-    @Config(key = "nio.server.httpServerCodec.MaxInitialLineLength", defaultValue = "4096")
-    private volatile int httpServerCodec_MaxInitialLineLength = 4096;
+    @Config(key = "nio.server.httpServerCodec.MaxInitialLineLength", defaultValue = "8192")
+    private volatile int httpServerCodec_MaxInitialLineLength = 8192;
 
-    @Config(key = "nio.server.httpServerCodec.MaxHeaderSize", defaultValue = "4096")
-    private volatile int httpServerCodec_MaxHeaderSize = 4096;
+    @Config(key = "nio.server.httpServerCodec.MaxHeaderSize", defaultValue = "8192")
+    private volatile int httpServerCodec_MaxHeaderSize = 8192;
 
-    @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "4096")
-    private volatile int httpServerCodec_MaxChunkSize = 4096;
+    @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "8192")
+    private volatile int httpServerCodec_MaxChunkSize = 8192;
 
     @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Exector Pool")
     @Config(key = "nio.server.EventLoopGroup.AcceptorSize", defaultValue = "0",
@@ -331,8 +331,8 @@ public class NioConfig extends BootConfig {
     @Config(key = "server.http.web.welcomePage", defaultValue = "index.html")
     private volatile String welcomePage = "index.html";
 
-    @Config(key = "server.http.web-server.tempupload", defaultValue = "tempupload")
-    private volatile String tempUoload = "tempupload";
+    @Config(key = "server.http.web-server.tempupload", defaultValue = "temp/upload")
+    private volatile String tempUoload = "temp/upload";
 
     private volatile boolean downloadMode;
     private volatile File rootFolder;

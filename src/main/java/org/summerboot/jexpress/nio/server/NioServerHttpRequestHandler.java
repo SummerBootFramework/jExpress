@@ -105,26 +105,17 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     @Override
     public void channelRead0(final ChannelHandlerContext ctx, final FullHttpRequest req) {
         final long start = System.currentTimeMillis();
-        if (!req.decoderResult().isSuccess()) {
-            NioHttpUtil.sendError(ctx, HttpResponseStatus.BAD_REQUEST, BootErrorCode.NIO_REQUEST_BAD_ENCODING, "failed to decode request", null);
-            return;
-        }
         NioCounter.COUNTER_HIT.incrementAndGet();
         final long hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
         final String txId = BootConstant.APP_ID + "-" + hitIndex;
+        boolean isDecoderSuccess = req.decoderResult().isSuccess();
+
 //        if (HttpUtil.is100ContinueExpected(req)) {
 //            ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE, Unpooled.EMPTY_BUFFER));
 //        }
         long dataSize = req.content().capacity();
-//        if (dataSize > _5MB) {
-//            ServiceError e = new ServiceError(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "Upload file cannot over 5MB", null);
-//            ServiceContext context = ServiceContext.build(hitIndex).txt(e.toJson()).status(HttpResponseStatus.INSUFFICIENT_STORAGE).errorCode(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT).level(Level.DEBUG);
-//            NioHttpUtil.sendText(ctx, true, null, context.status(), context.txt(), context.contentType(), true);
-//            return;
-//        }
         final HttpMethod httpMethod = req.method();
         final String httpRequestUri = req.uri();
-
         final boolean isKeepAlive = HttpUtil.isKeepAlive(req);
         final String requestMetaInfo = requestMetaInfo(ctx, txId, httpMethod, httpRequestUri, isKeepAlive, dataSize);
         log.debug(() -> requestMetaInfo);
@@ -137,6 +128,13 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             httpPostRequestBody = null;
         }
         ReferenceCountUtil.release(req);
+
+//        if (dataSize > _5MB) {
+//            ServiceError e = new ServiceError(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "Upload file cannot over 5MB", null);
+//            ServiceContext context = ServiceContext.build(hitIndex).txt(e.toJson()).status(HttpResponseStatus.INSUFFICIENT_STORAGE).errorCode(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT).level(Level.DEBUG);
+//            NioHttpUtil.sendText(ctx, true, null, context.status(), context.txt(), context.contentType(), true);
+//            return;
+//        }
         final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequestUri, StandardCharsets.UTF_8);
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
@@ -150,8 +148,14 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             long processTime = -1;
             ProcessorSettings processorSettings = null;
             try {
-                processorSettings = service(ctx, requestHeaders, httpMethod, queryStringDecoder.path(), queryStringDecoder.parameters(), httpPostRequestBody, context);
-                processTime = System.currentTimeMillis() - start;
+                if (isDecoderSuccess) {
+                    processorSettings = service(ctx, requestHeaders, httpMethod, queryStringDecoder.path(), queryStringDecoder.parameters(), httpPostRequestBody, context);
+                    processTime = System.currentTimeMillis() - start;
+                } else {
+                    Throwable cause = req.decoderResult().cause();
+                    Err err = new Err(BootErrorCode.NIO_REQUEST_BAD_ENCODING, null, cause == null ? "" : cause.getMessage(), null, cause.toString());
+                    context.error(err).status(HttpResponseStatus.BAD_REQUEST);
+                }
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
                 context.poi(BootPOI.SERVICE_END);
             } catch (Throwable ex) {

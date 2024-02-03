@@ -25,6 +25,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Ping;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
@@ -87,10 +88,15 @@ public class JaxRsRequestProcessorManager {
 
     public static final String KEY_PING = Ping.class.getName();
 
-    private static String checkDuplicated(StringBuilder errors, StringBuilder memo) {
-        String pingURL = null;
+    private static void checkDuplicated(StringBuilder errors, StringBuilder memo) {
         List<ProcessorMeta> pingProcessors = registeredProcessors.remove(KEY_PING);
-        if (pingProcessors != null) {//only allow either one default @Ping without overridden, or one overridden @Ping
+        if (pingProcessors != null) {
+            for (ProcessorMeta pingProcessor : pingProcessors) {
+                BackOffice.agent.addLoadBalancingPingEndpoint(pingProcessor.url.toString());
+                memo.append("\n\t- ").append("* GET").append(" ").append(pingProcessor.url).append(" (").append(pingProcessor.info).append(" )");
+            }
+            /*
+            //only allow either one default @Ping without overridden, or one overridden @Ping
             ProcessorMeta targetPingProcessor = null;
             int pintImplCount = pingProcessors.size();
             if (pintImplCount == 1) {//it is ok if either one default @Ping or one overridden @Ping
@@ -115,11 +121,9 @@ public class JaxRsRequestProcessorManager {
                     }
                 }
             }
-
             if (targetPingProcessor != null) {
-                pingURL = targetPingProcessor.url;
                 memo.append("\n\t- ").append("* GET").append(" ").append(targetPingProcessor.url).append(" (").append(targetPingProcessor.info).append(" )");
-            }
+            }*/
         }
 
         for (String key : registeredProcessors.keySet()) {
@@ -132,12 +136,12 @@ public class JaxRsRequestProcessorManager {
                 errors.append("\n\t").append("@ ").append(p.info);
             }
         }
-        return pingURL;
+        //return pingURL;
     }
 
-    public static String registerControllers(@Controller Map<String, Object> controllers, StringBuilder memo) {
+    public static void registerControllers(@Controller Map<String, Object> controllers, StringBuilder memo) {
         if (controllers == null || controllers.isEmpty()) {
-            return null;
+            return;
         }
         registeredProcessors.clear();
         final Set<String> declareRoles = new HashSet();
@@ -243,7 +247,7 @@ public class JaxRsRequestProcessorManager {
                 }
             }
         }
-        String pingURL = checkDuplicated(errors, memo);
+        checkDuplicated(errors, memo);
         //Java 17 if (!errors.isEmpty()) {
         String error = errors.toString();
         if (!error.isBlank()) {
@@ -256,7 +260,6 @@ public class JaxRsRequestProcessorManager {
         memo.append("\n\t- * DeclareRoles=").append(declareRoles);
         processorMapString = stringMap;
         processorMapRegex = regexMap;
-        return pingURL;
     }
 
     private static Map<HttpMethod, Map<String, RequestProcessor>> processorMapString;

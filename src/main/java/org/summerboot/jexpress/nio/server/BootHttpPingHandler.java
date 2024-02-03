@@ -26,11 +26,12 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.util.ReferenceCountUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
+
+import java.util.List;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -41,24 +42,21 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
 
     protected static Logger log = LogManager.getLogger(BootHttpPingHandler.class.getName());
 
-    private final String pingURL;
+    private final List<String> pingURLs;
+    private final boolean hasPingURL;
 
     public BootHttpPingHandler(/*String pingURL*/) {
         super(FullHttpRequest.class, false);
-        String endpointCfg = BackOffice.agent.getPingURL();
-        if (StringUtils.isNotBlank(endpointCfg)) {
-            pingURL = endpointCfg;
-        } else {
-            pingURL = null;
-        }
+        pingURLs = BackOffice.agent.getLoadBalancingPingEndpoints();
+        hasPingURL = pingURLs != null && !pingURLs.isEmpty();
     }
 
     @Override
     protected void channelRead0(final ChannelHandlerContext ctx, final HttpObject httpObject) throws Exception {
         boolean isPingRequest = false;
-        if (pingURL != null && (httpObject instanceof HttpRequest)) {
+        if (hasPingURL && (httpObject instanceof HttpRequest)) {
             HttpRequest req = (HttpRequest) httpObject;
-            if (HttpMethod.GET.equals(req.method()) && pingURL.equals(req.uri())) {
+            if (HttpMethod.GET.equals(req.method()) && pingURLs.contains(req.uri())) {
                 isPingRequest = true;
                 NioCounter.COUNTER_PING_HIT.incrementAndGet();
                 try {

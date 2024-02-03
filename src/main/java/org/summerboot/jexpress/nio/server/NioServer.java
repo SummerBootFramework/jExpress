@@ -180,7 +180,7 @@ public class NioServer {
                 .childHandler(channelInitializer);
 
         String appInfo = BootConstant.VERSION + " " + BootConstant.PID;
-        String loadBalancingPingEndpoint = BackOffice.agent.getPingURL();
+        List<String> loadBalancingEndpoints = BackOffice.agent.getLoadBalancingPingEndpoints();
         //for (String bindAddr : bindingAddresses.keySet()) {
         for (InetSocketAddress addr : bindingAddresses) {
             // info
@@ -201,10 +201,13 @@ public class NioServer {
                 //shutdown();
                 System.out.println("Server " + appInfo + " (" + sslMode + ") is stopped");
             });
-            log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint));
+            List<String> loadBalancingPingEndpoints = BackOffice.agent.getLoadBalancingPingEndpoints();
+            for (String loadBalancingPingEndpoint : loadBalancingPingEndpoints) {
+                log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint));
+            }
 
             if (nioListener != null) {
-                nioListener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, loadBalancingPingEndpoint);
+                nioListener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, loadBalancingEndpoints);
             }
         }
 

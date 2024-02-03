@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.4.1</version>
+    <version>2.4.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -789,15 +789,12 @@
                             <directory>run</directory>
                             <includes>
                                 <include>*.jar</include>
-                                <include>lib/*/*</include>
-                                <include>lib/*</include>
+                                <include>lib/**</include>
                                 <include>lib</include>
-                                <include>**/log/*/*</include>
-                                <include>**/log/*</include>
+                                <include>**/log/**</include>
                                 <include>**/log</include>
-                                <include>**/tempupload/*/*</include>
-                                <include>**/tempupload/*</include>
-                                <include>**/tempupload</include>
+                                <include>**/temp/**</include>
+                                <include>**/temp</include>
                             </includes>
                             <excludes>
                                 <exclude>plugin/*.jar</exclude>
@@ -805,13 +802,21 @@
                             <followSymlinks>false</followSymlinks>
                         </fileset>
                         <fileset>
-                            <directory>src</directory>
+                            <directory>src/test</directory>
                             <includes>
-                                <include>**/tempupload</include>
+                                <include>**/temp/**</include>
+                                <include>**/temp</include>
                             </includes>
                             <followSymlinks>false</followSymlinks>
                         </fileset>
-
+                        <fileset>
+                            <directory>.</directory>
+                            <includes>
+                                <include>etc/*</include>
+                                <include>etc</include>
+                            </includes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
                     </filesets>
                 </configuration>
             </plugin>
