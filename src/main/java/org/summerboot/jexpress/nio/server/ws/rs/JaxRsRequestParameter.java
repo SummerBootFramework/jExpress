@@ -204,12 +204,6 @@ class JaxRsRequestParameter {
         return key;
     }
 
-    public static void main(String[] args) {
-        String a = "abcde";
-        System.out.println(a.contains("bc"));
-        System.out.println(a.contains("Bc"));
-    }
-
     public Object value(ServiceRequest request, ServiceContext context) /*throws JAXBException*/ {
         ParamType currentType = type;
         if (currentType.equals(ParamType.Body_OnDemond_BylClientRquestType)) {

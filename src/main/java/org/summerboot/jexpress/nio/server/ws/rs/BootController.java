@@ -54,6 +54,7 @@ import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.LoginVo;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
@@ -98,6 +99,21 @@ abstract public class BootController extends PingController {
     public static final String TAG_APP_ADMIN = "App Admin";
     public static final String TAG_USER_AUTH = "App User Authentication";
 
+
+    public static final String DESC_400 = "All other 4xx code. The client cannot continue and should not re-try again with the request without modification.";
+    public static final String DESC_401 = "Unauthorized. The client should sign-on again, but not retransmit the same request again";
+    public static final String DESC_403 = "Client has  no permission. Client should not retransmit the same request again.";
+    public static final String DESC_404 = "Not Found. The client should not retransmit the same request again.";
+    public static final String DESC_405 = "Method Not Allowed. The client should not retransmit the same request again.";
+    public static final String DESC_406 = "Not Acceptable. The client should not retransmit the same request again.";
+    public static final String DESC_407 = "Proxy Authentication Required. The client should not retransmit the same request again.";
+    public static final String DESC_408 = "Request Timeout. The client should not retransmit the same request again.";
+    public static final String DESC_500 = "All other 5xx code. Server errors due to unexpected failures. The client can continue and try again with the request without modification.";
+    public static final String DESC_501 = "Not Implemented. The client can continue and try again with the request without modification.";
+    public static final String DESC_502 = "Bad Gateway. The client can continue and try again with the request without modification.";
+    public static final String DESC_503 = "Service Unavailable. The client can continue and try again with the request without modification.";
+    public static final String DESC_504 = "Gateway Timeout. The client can continue and try again with the request without modification.";
+
     @Inject
     protected AuthTokenCache authTokenCache;
     //abstract protected AuthTokenCache getAuthTokenCache();
@@ -122,13 +138,25 @@ abstract public class BootController extends PingController {
             //                            @Parameter(name = "", in = ParameterIn.HEADER, required = true, description = "")},
             responses = {
                     @ApiResponse(responseCode = "200", description = "running application version"),
-                    @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
+                    @ApiResponse(responseCode = "400", description = DESC_400,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                    @ApiResponse(responseCode = "401", description = DESC_401,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                    @ApiResponse(responseCode = "403", description = DESC_403,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "404", description = DESC_404,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "500", description = DESC_500,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "501", description = DESC_501,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "503", description = DESC_503,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
@@ -159,14 +187,25 @@ abstract public class BootController extends PingController {
             description = "get running application health information",
             responses = {
                     @ApiResponse(responseCode = "200", description = "inspection success with current version"),
-                    @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
+                    @ApiResponse(responseCode = "400", description = DESC_400,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "500", description = "inspection error result"),
-                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                    @ApiResponse(responseCode = "401", description = DESC_401,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                    @ApiResponse(responseCode = "403", description = DESC_403,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "404", description = DESC_404,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "500", description = DESC_500,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "501", description = DESC_501,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "503", description = DESC_503,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
@@ -197,13 +236,25 @@ abstract public class BootController extends PingController {
             description = "pause service if pause param is true, otherwise resume service",
             responses = {
                     @ApiResponse(responseCode = "204", description = "success"),
-                    @ApiResponse(responseCode = "401", description = "caller is not in Admin role",
+                    @ApiResponse(responseCode = "400", description = DESC_400,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                    @ApiResponse(responseCode = "401", description = DESC_401,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                    @ApiResponse(responseCode = "403", description = DESC_403,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "404", description = DESC_404,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "500", description = DESC_500,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "501", description = DESC_501,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "503", description = DESC_503,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
@@ -217,13 +268,13 @@ abstract public class BootController extends PingController {
 
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
+    @Path(Config.CURRENT_VERSION + Config.API_NF_JSECURITYCHECK)
     //@CaptureTransaction("user.signJWT")
     @Log(requestBody = false, responseHeader = false)
     @Operation(
             tags = {TAG_USER_AUTH},
             summary = "User login",
-            description = "User login",
+            description = "Accept Form based parameters for login",
             responses = {
                     @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
                             headers = {
@@ -231,25 +282,85 @@ abstract public class BootController extends PingController {
                             },
                             content = @Content(schema = @Schema(implementation = Caller.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = "Invalid username or password",
+                    @ApiResponse(responseCode = "400", description = DESC_400,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                    @ApiResponse(responseCode = "401", description = DESC_401,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                    @ApiResponse(responseCode = "403", description = DESC_403,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "404", description = DESC_404,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "500", description = DESC_500,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "501", description = DESC_501,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "503", description = DESC_503,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             }
     )
-    public Caller login(@Parameter(required = true) @Nonnull @FormParam("j_username") String uid,
-                        @FormParam("j_password") String pwd,
-                        @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
+    public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
+                                        @FormParam("j_password") String password,
+                                        @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
+        return login(auth, userId, password, context);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
+    //@CaptureTransaction("user.signJWT")
+    @Log(requestBody = false, responseHeader = false)
+    @Operation(
+            tags = {TAG_USER_AUTH},
+            summary = "User login",
+            description = "Accept JSON based parameters for login",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
+                            headers = {
+                                    @Header(name = Config.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
+                            },
+                            content = @Content(schema = @Schema(implementation = Caller.class))
+                    ),
+                    @ApiResponse(responseCode = "400", description = DESC_400,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "401", description = DESC_401,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "403", description = DESC_403,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "404", description = DESC_404,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "500", description = DESC_500,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "501", description = DESC_501,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "503", description = DESC_503,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            }
+    )
+    public Caller longin_JSON(@Nonnull LoginVo loginVo,
+                              @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
+        return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
+    }
+
+    public static Caller login(Authenticator auth, String userId, String password, ServiceContext context) throws NamingException {
         if (auth == null) {
             context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
         }
-        String jwt = auth.signJWT(uid, pwd, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
+        String jwt = auth.signJWT(userId, password, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
         if (jwt == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
         } else {
@@ -268,10 +379,25 @@ abstract public class BootController extends PingController {
             description = "User logout",
             responses = {
                     @ApiResponse(responseCode = "204", description = "success"),
-                    @ApiResponse(responseCode = "4XX", description = "A fault has taken place on client side. Client should not retransmit the same request again, but fix the error first.",
+                    @ApiResponse(responseCode = "400", description = DESC_400,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "5XX", description = "Something happened on the server side. The client can continue and try again with the request without modification.",
+                    @ApiResponse(responseCode = "401", description = DESC_401,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "403", description = DESC_403,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "404", description = DESC_404,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "500", description = DESC_500,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "501", description = DESC_501,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "503", description = DESC_503,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
@@ -346,24 +472,26 @@ abstract public class BootController extends PingController {
         }
         context.status(HttpResponseStatus.OK).txt(request.getHttpRequestPath());
     }
-}
 
-interface Config {
+    public interface Config {
 
-    String ROLE_ADMIN = "AppAdmin";
+        String ROLE_ADMIN = "AppAdmin";
 
-    String CURRENT_VERSION = "";// "/admin";
+        String CURRENT_VERSION = "";// "/admin";
 
-    //Anonymous Non-Functional API
-    String LOAD_BALANCER_HEALTH_CHECK = "/ping";
-    String API_NF_LOADTEST = "/loadtest";
-    String API_NF_LOGIN = "/j_security_check";
+        //Anonymous Non-Functional API
+        String LOAD_BALANCER_HEALTH_CHECK = "/ping";
+        String API_NF_LOADTEST = "/loadtest";
+        String API_NF_JSECURITYCHECK = "/j_security_check";
 
-    //Role based Non-Functional API
-    String API_USER_LOGOUT = "/logout";
-    String API_ADMIN_VERSION = "/version";
-    String API_ADMIN_STATUS = "/status";
-    String API_ADMIN_INSPECTION = "/inspection";
+        String API_NF_LOGIN = "/login";
 
-    String X_AUTH_TOKEN = "X-AuthToken";// Response: JWT from Auth Center
+        //Role based Non-Functional API
+        String API_USER_LOGOUT = "/logout";
+        String API_ADMIN_VERSION = "/version";
+        String API_ADMIN_STATUS = "/status";
+        String API_ADMIN_INSPECTION = "/inspection";
+
+        String X_AUTH_TOKEN = "X-AuthToken";// Response: JWT from Auth Center
+    }
 }

@@ -166,12 +166,6 @@ public class TimeUtil {
         return (Math.random() * (max - min)) + min;
     }
 
-    //    public static void main(String[] args) {
-//        for (int i = -2; i < 10; i++) {
-//            double q = truncatedExponentialBackoffSlots(i, 5);
-//            System.out.println(q);
-//        }
-//    }
     public static class TimeDto {
 
         @JsonIgnoreProperties

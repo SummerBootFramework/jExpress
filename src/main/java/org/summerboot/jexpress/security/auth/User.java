@@ -15,9 +15,9 @@
  */
 package org.summerboot.jexpress.security.auth;
 
-import org.summerboot.jexpress.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.summerboot.jexpress.util.BeanUtil;
 
 import java.io.Serializable;
 import java.util.HashMap;

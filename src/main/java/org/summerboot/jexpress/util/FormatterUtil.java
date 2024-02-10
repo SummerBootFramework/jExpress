@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.util;
 
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +26,9 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Base64;
@@ -61,6 +64,10 @@ public class FormatterUtil {
     public static final String REGEX_EMAIL = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     public static final Pattern REGEX_EMAIL_PATTERN = Pattern.compile(REGEX_EMAIL);
 
+    public static String[] parseLines(String txt) {
+        return StringUtils.isBlank(txt) ? EMPTY_STR_ARRAY : txt.split("\\r?\\n");
+    }
+
     public static String[] parseDsv(String csv, String delimiter) {
         if (StringUtils.isBlank(delimiter) || ",".equals(delimiter)) {
             return parseCsv(csv);
@@ -81,6 +88,71 @@ public class FormatterUtil {
                 ? EMPTY_STR_ARRAY
                 : trim ? url.trim().split(REGEX_URL) : url.split(REGEX_URL);
     }
+
+    public static String parseUrlQueryParam(String url, Map<String, String> queryParam) {
+        final QueryStringDecoder qd = new QueryStringDecoder(url, StandardCharsets.UTF_8, true);
+        Map<String, List<String>> pms = qd.parameters();
+        for (String key : pms.keySet()) {
+            queryParam.put(key, pms.get(key).get(0));
+        }
+        String action = qd.path();
+        return action;
+    }
+
+    @Deprecated
+    public static String parseUrlQueryParamEx(String url, Map<String, String> queryParam) {
+        String[] request = url.split("\\?", 2);
+        String action = request[0];
+        String query;
+        if (request.length < 2) {
+            if (!action.contains("=") && !action.contains("&")) {
+                return action;
+            }
+            action = null;
+            query = request[0];
+        } else {
+            query = request[1];
+        }
+        //String queryParamString = isUrlEncoded ? URLDecoder.decode(query, StandardCharsets.UTF_8) : query;
+        parseFormParam(query, queryParam);
+        return action;
+    }
+
+    /**
+     * Break on #
+     *
+     * @param formBody
+     * @param queryParam
+     */
+    public static void parseFormParam_Netty(String formBody, Map<String, String> queryParam) {
+        QueryStringDecoder qd = new QueryStringDecoder(formBody, StandardCharsets.UTF_8, false);
+        Map<String, List<String>> pms = qd.parameters();
+        for (String key : pms.keySet()) {
+            queryParam.put(key, pms.get(key).get(0));
+        }
+    }
+
+    /**
+     * Will not break on #
+     *
+     * @param formBody
+     * @param queryParam
+     */
+    public static void parseFormParam(String formBody, Map<String, String> queryParam) {
+        String[] pairs = formBody.split("&");
+        for (String param : pairs) {
+            String[] keyValuePair = param.split("=", 2);
+            String key = URLDecoder.decode(keyValuePair[0], StandardCharsets.UTF_8);
+            if (keyValuePair.length < 2) {
+                queryParam.put(key, "");
+            } else {
+                String value = keyValuePair[1];
+                value = URLDecoder.decode(value, StandardCharsets.UTF_8);
+                queryParam.put(key, value);
+            }
+        }
+    }
+
 
     public static <T extends Object> String toCSV(Collection<T> a) {
         return a.stream().map(String::valueOf).collect(Collectors.joining(", "));
@@ -332,6 +404,11 @@ public class FormatterUtil {
     public static String protectJsonArray(String json, String key, String replaceWith) {
         final String regex = "(\"" + key + "\"\\s*:\\s*\\[)[^\\[]*(\\])";
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
+    }
+
+    public static String protectFormParam(String formRequest, String key, String replaceWith) {
+        final String regex = "(?i)" + key + "=[^&]*";
+        return formRequest.replaceAll(regex, key + "=" + replaceWith);
     }
 
     public static String[] splitByLength(String plain, int chunckSize) {
