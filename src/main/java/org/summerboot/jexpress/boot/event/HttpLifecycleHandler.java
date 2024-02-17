@@ -13,12 +13,14 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.nio.server;
+package org.summerboot.jexpress.boot.event;
 
 import com.google.inject.Singleton;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 import java.util.List;
@@ -29,7 +31,15 @@ import java.util.Map;
  * @version 1.0
  */
 @Singleton
-public class BootHttpLifecycleHandler implements HttpLifecycleHandler {
+public class HttpLifecycleHandler implements HttpLifecycleListener {
+    @Override
+    public boolean beforeProcessPingRequest(ChannelHandlerContext ctx, String uri, long hit, HttpResponseStatus status) {
+        return true;
+    }
+
+    @Override
+    public void afterSendPingResponse(ChannelHandlerContext ctx, String uri, long hit, HttpResponseStatus status) {
+    }
 
     @Override
     public boolean beofreProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {

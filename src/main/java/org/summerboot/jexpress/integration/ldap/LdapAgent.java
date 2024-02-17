@@ -59,11 +59,12 @@ import java.util.Set;
 public class LdapAgent implements Closeable {
 
     protected static String escape(String value) {
-        return LDAPEncoder.escapeDN(value);
+        //return LDAPEncoder.escapeDN(value);// let controller layer to handle
+        return value;
     }
 
     protected static String escapeQuery(String value) {
-        //return LDAPEncoder.escapeLDAPSearchFilter(value);
+        //return LDAPEncoder.escapeLDAPSearchFilter(value);// let controller layer to handle
         return value;
     }
 

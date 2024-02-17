@@ -228,7 +228,7 @@ public class JaxRsRequestProcessorManager {
                     }
                     Map<HttpMethod, Map<String, RequestProcessor>> httpMethodMapRef;
                     Map<String, RequestProcessor> processorMapPerHttpMethod;
-                    boolean isRegexMap = processor.isUsingPathParam() || processor.isUsingMatrixPara();
+                    boolean isRegexMap = processor.hasPathParam() || processor.hasMatrixPara();
                     httpMethodMapRef = isRegexMap ? regexMap : stringMap;
                     processorMapPerHttpMethod = httpMethodMapRef.get(httpMethod);
                     if (processorMapPerHttpMethod == null) {

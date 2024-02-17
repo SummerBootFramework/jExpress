@@ -13,12 +13,13 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.nio.server;
+package org.summerboot.jexpress.boot.event;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import jakarta.persistence.PersistenceException;
+import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 import javax.naming.NamingException;
@@ -31,7 +32,7 @@ import java.util.Map;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
-public interface HttpExceptionHandler {
+public interface HttpExceptionListener {
 
     void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
                           final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);

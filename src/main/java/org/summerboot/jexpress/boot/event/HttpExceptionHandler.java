@@ -13,7 +13,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.nio.server;
+package org.summerboot.jexpress.boot.event;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -28,6 +28,8 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
+import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
+import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
@@ -40,14 +42,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.summerboot.jexpress.nio.server.BootHttpRequestHandler.cmtpCfg;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  * @version 1.0
  */
 @Singleton
-public class BootHttpExceptionHandler implements HttpExceptionHandler {
+public class HttpExceptionHandler implements HttpExceptionListener {
 
     @Inject
     protected HealthInspector healthInspector;
@@ -73,7 +74,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
             }
             if (cause instanceof IOException) {// java.net.UnknownHostException
                 HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
-                nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+                nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
             } else {
                 Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, null, ex, cause.getClass().getSimpleName());
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -89,7 +90,7 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
         }
         if (cause instanceof IOException) {// java.net.ConnectException
             HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
-            nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+            nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
         } else {
             Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -120,19 +121,19 @@ public class BootHttpExceptionHandler implements HttpExceptionHandler {
     @Override
     public void onIOException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
-        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_BASE, "IO issue: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_BASE, "IO issue: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
 
     }
 
     @Override
     public void onInterruptedException(InterruptedException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         Thread.currentThread().interrupt();
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, SMTPClientConfig.cfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
     @Override
     public void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
-        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_PROCESSOR_FAILURE, "Unexpected Failure: " + ex.getClass().getSimpleName(), ex, cmtpCfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
+        nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_PROCESSOR_FAILURE, "Unexpected Failure: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
     /**

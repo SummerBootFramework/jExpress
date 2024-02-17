@@ -27,9 +27,9 @@ import javax.naming.NamingException;
 public class LDAPAuthenticator<M> extends BootAuthenticator<M> {
 
     @Override
-    protected Caller authenticate(String usename, String password, M metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException {
+    protected Caller authenticate(String username, String password, M metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException {
         try (LdapAgent ldap = LdapAgent.build()) {
-            return ldap.authenticateUser(usename, password, listener);
+            return ldap.authenticateUser(username, password, listener);
         }
     }
 }

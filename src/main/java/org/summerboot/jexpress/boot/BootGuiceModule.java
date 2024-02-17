@@ -26,6 +26,12 @@ import org.quartz.Scheduler;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigChangeListenerImpl;
+import org.summerboot.jexpress.boot.event.AppLifecycleHandler;
+import org.summerboot.jexpress.boot.event.AppLifecycleListener;
+import org.summerboot.jexpress.boot.event.HttpExceptionHandler;
+import org.summerboot.jexpress.boot.event.HttpExceptionListener;
+import org.summerboot.jexpress.boot.event.HttpLifecycleHandler;
+import org.summerboot.jexpress.boot.event.HttpLifecycleListener;
 import org.summerboot.jexpress.boot.instrumentation.BootHealthInspectorImpl;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
@@ -39,12 +45,8 @@ import org.summerboot.jexpress.integration.cache.AuthTokenCacheLocalImpl;
 import org.summerboot.jexpress.integration.quartz.GuiceSchedulerProvider;
 import org.summerboot.jexpress.integration.smtp.BootPostOfficeImpl;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.nio.server.BootHttpExceptionHandler;
-import org.summerboot.jexpress.nio.server.BootHttpLifecycleHandler;
 import org.summerboot.jexpress.nio.server.BootHttpPingHandler;
 import org.summerboot.jexpress.nio.server.BootHttpRequestHandler;
-import org.summerboot.jexpress.nio.server.HttpExceptionHandler;
-import org.summerboot.jexpress.nio.server.HttpLifecycleHandler;
 import org.summerboot.jexpress.nio.server.HttpNioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.security.auth.Authenticator;
@@ -119,11 +121,14 @@ public class BootGuiceModule extends AbstractModule {
         bind(ServerInterceptor.class).to(LDAPAuthenticator.class);
         memo.append(INFO).append(ServerInterceptor.class.getName()).append(BIND_TO).append(LDAPAuthenticator.class.getName());
 
-        bind(HttpExceptionHandler.class).to(BootHttpExceptionHandler.class);
-        memo.append(INFO).append(HttpExceptionHandler.class.getName()).append(BIND_TO).append(BootHttpExceptionHandler.class.getName());
+        bind(HttpExceptionListener.class).to(HttpExceptionHandler.class);
+        memo.append(INFO).append(HttpExceptionListener.class.getName()).append(BIND_TO).append(HttpExceptionHandler.class.getName());
 
-        bind(HttpLifecycleHandler.class).to(BootHttpLifecycleHandler.class);
-        memo.append(INFO).append(HttpLifecycleHandler.class.getName()).append(BIND_TO).append(BootHttpLifecycleHandler.class.getName());
+        bind(HttpLifecycleListener.class).to(HttpLifecycleHandler.class);
+        memo.append(INFO).append(HttpLifecycleListener.class.getName()).append(BIND_TO).append(HttpLifecycleHandler.class.getName());
+
+        bind(AppLifecycleListener.class).to(AppLifecycleHandler.class);
+        memo.append(INFO).append(AppLifecycleListener.class.getName()).append(BIND_TO).append(AppLifecycleHandler.class.getName());
 
         bind(PostOffice.class).to(BootPostOfficeImpl.class);
         memo.append(INFO).append(PostOffice.class.getName()).append(BIND_TO).append(BootPostOfficeImpl.class.getName());

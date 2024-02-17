@@ -13,32 +13,25 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.config;
-
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-
-import java.io.File;
+package org.summerboot.jexpress.boot.event;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Singleton
-public class ConfigChangeListenerImpl implements ConfigChangeListener {
+public interface AppLifecycleListener {
+    void onApplicationStart(String appVersion, String fullConfigInfo);
 
-    @Inject
-    protected PostOffice po;
+    void onApplicationStop(String appVersion);
 
-    @Override
-    public void onBefore(File configFile, JExpressConfig cfg) {
-        po.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Config Changed - before", cfg.info(), null, false);
-    }
+    /**
+     * called when application paused or resumed by configuration/pause file or BottController's ${context-root}/status?pause=true|false
+     *
+     * @param healthOk
+     * @param paused
+     * @param serviceStatusChanged
+     * @param reason
+     */
+    void onApplicationStatusUpdated(boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason);
 
-    @Override
-    public void onAfter(File configFile, JExpressConfig cfg, Throwable ex) {
-        po.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Config Changed - after", cfg.info(), ex, false);
-    }
-
+    void onHealthInspectionDone(boolean healthOk, String reason);
 }

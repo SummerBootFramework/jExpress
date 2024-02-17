@@ -43,6 +43,7 @@ import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.TimeUtil;
 
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.util.List;
@@ -115,11 +116,9 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 //        }
         long dataSize = req.content().capacity();
         final HttpMethod httpMethod = req.method();
-        final String httpRequestUri = req.uri();
+        final String httpRequestUriRaw = req.uri();
+        final String httpRequestUriRawDecoded = URLDecoder.decode(httpRequestUriRaw, StandardCharsets.UTF_8);
         final boolean isKeepAlive = HttpUtil.isKeepAlive(req);
-        final String requestMetaInfo = requestMetaInfo(ctx, txId, httpMethod, httpRequestUri, isKeepAlive, dataSize);
-        log.debug(() -> requestMetaInfo);
-
         final HttpHeaders requestHeaders = req.headers();
         final String httpPostRequestBody;
         if (HttpMethod.POST.equals(httpMethod) || HttpMethod.PUT.equals(httpMethod) || HttpMethod.PATCH.equals(httpMethod) || HttpMethod.DELETE.equals(httpMethod)) {
@@ -135,10 +134,13 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 //            NioHttpUtil.sendText(ctx, true, null, context.status(), context.txt(), context.contentType(), true);
 //            return;
 //        }
-        final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequestUri, StandardCharsets.UTF_8);
+        final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequestUriRaw, StandardCharsets.UTF_8, true);
+        final String httpRequestUri = queryStringDecoder.path();
+        final String requestMetaInfo = requestMetaInfo(ctx, txId, httpMethod, httpRequestUriRaw, httpRequestUriRawDecoded, isKeepAlive, dataSize);
+        log.debug(() -> requestMetaInfo);
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
-            ServiceContext context = ServiceContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            ServiceContext context = ServiceContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
             String acceptCharset = requestHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
             if (StringUtils.isNotBlank(acceptCharset)) {
                 context.charsetName(acceptCharset);//.contentType(ServiceContext.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
@@ -149,7 +151,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             ProcessorSettings processorSettings = null;
             try {
                 if (isDecoderSuccess) {
-                    processorSettings = service(ctx, requestHeaders, httpMethod, queryStringDecoder.path(), queryStringDecoder.parameters(), httpPostRequestBody, context);
+                    processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
                     processTime = System.currentTimeMillis() - start;
                 } else {
                     Throwable cause = req.decoderResult().cause();
@@ -236,7 +238,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                                 }
                             }
                         }
-                        report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
+                        report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
                         //report = StringEscapeUtils.escapeJava(report);
                         //log.log(level, report, context.cause());
                         log.log(level, report);
@@ -245,7 +247,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     log.fatal("logging failed \n{}", report, ex);
                 }
                 try {
-                    afterLogging(report, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
+                    afterLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
                 } catch (Throwable ex) {
                     log.error("afterLogging failed", ex);
                 }
@@ -300,16 +302,19 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    private String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, HttpMethod httpMethod, String httpRequestUri, boolean isKeepAlive, long dataSize) {
-        return new StringBuilder()
+    private String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, HttpMethod httpMethod, String httpRequestUriRaw, String httpRequestUriDecoded, boolean isKeepAlive, long dataSize) {
+        StringBuilder sb = new StringBuilder()
                 .append("request_").append(hitIndex)
-                .append("=").append(httpMethod).append(" ").append(httpRequestUri)
+                .append("=").append(httpMethod).append(" ").append(httpRequestUriDecoded)
                 .append(", dataSize=").append(dataSize)
                 .append(", KeepAlive=").append(isKeepAlive)
                 .append(", chn=").append(ctx.channel())
                 .append(", ctx=").append(ctx.hashCode())
-                .append(me)
-                .toString();
+                .append(me);
+        if (!httpRequestUriRaw.equals(httpRequestUriDecoded)) {
+            sb.append(BootConstant.BR).append("\trawURI=").append(httpRequestUriRaw).append(BootConstant.BR);
+        }
+        return sb.toString();
     }
 
     private void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb, boolean isTraceAll) {

@@ -42,14 +42,11 @@ import java.util.List;
 @Deprecated
 public class EmailBuilder {
 
-    protected static SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
-
     public static void config(File cfgFile) throws IOException, GeneralSecurityException {
-
     }
 
     public static String configInfo() {
-        return smtpCfg.toString();
+        return SMTPClientConfig.cfg.toString();
     }
 
     public static class EmailAttachment implements Serializable {
@@ -212,7 +209,7 @@ public class EmailBuilder {
     }
 
     public MimeMessage buildMimeMessage() throws MessagingException {
-        return buildMimeMessage(smtpCfg.getMailSession());
+        return buildMimeMessage(SMTPClientConfig.cfg.getMailSession());
     }
 
     public MimeMessage buildMimeMessage(Session emailSession) throws MessagingException {

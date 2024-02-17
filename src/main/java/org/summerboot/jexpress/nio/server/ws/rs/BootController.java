@@ -104,15 +104,9 @@ abstract public class BootController extends PingController {
     public static final String DESC_401 = "Unauthorized. The client should sign-on again, but not retransmit the same request again";
     public static final String DESC_403 = "Client has  no permission. Client should not retransmit the same request again.";
     public static final String DESC_404 = "Not Found. The client should not retransmit the same request again.";
-    public static final String DESC_405 = "Method Not Allowed. The client should not retransmit the same request again.";
-    public static final String DESC_406 = "Not Acceptable. The client should not retransmit the same request again.";
-    public static final String DESC_407 = "Proxy Authentication Required. The client should not retransmit the same request again.";
-    public static final String DESC_408 = "Request Timeout. The client should not retransmit the same request again.";
     public static final String DESC_500 = "All other 5xx code. Server errors due to unexpected failures. The client can continue and try again with the request without modification.";
     public static final String DESC_501 = "Not Implemented. The client can continue and try again with the request without modification.";
-    public static final String DESC_502 = "Bad Gateway. The client can continue and try again with the request without modification.";
     public static final String DESC_503 = "Service Unavailable. The client can continue and try again with the request without modification.";
-    public static final String DESC_504 = "Gateway Timeout. The client can continue and try again with the request without modification.";
 
     @Inject
     protected AuthTokenCache authTokenCache;
@@ -370,7 +364,7 @@ abstract public class BootController extends PingController {
     }
 
     @DELETE
-    @Path(Config.CURRENT_VERSION + Config.API_USER_LOGOUT)
+    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
     //@PermitAll
     //@CaptureTransaction("user.logoutToken")
     @Operation(
@@ -487,7 +481,6 @@ abstract public class BootController extends PingController {
         String API_NF_LOGIN = "/login";
 
         //Role based Non-Functional API
-        String API_USER_LOGOUT = "/logout";
         String API_ADMIN_VERSION = "/version";
         String API_ADMIN_STATUS = "/status";
         String API_ADMIN_INSPECTION = "/inspection";

@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.nio.server;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -29,6 +30,7 @@ import io.netty.util.ReferenceCountUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.event.HttpLifecycleListener;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 import java.util.List;
@@ -45,6 +47,9 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
     private final List<String> pingURLs;
     private final boolean hasPingURL;
 
+    @Inject
+    protected HttpLifecycleListener httpLifecycleListener;
+
     public BootHttpPingHandler(/*String pingURL*/) {
         super(FullHttpRequest.class, false);
         pingURLs = BackOffice.agent.getLoadBalancingPingEndpoints();
@@ -58,10 +63,14 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
             HttpRequest req = (HttpRequest) httpObject;
             if (HttpMethod.GET.equals(req.method()) && pingURLs.contains(req.uri())) {
                 isPingRequest = true;
-                NioCounter.COUNTER_PING_HIT.incrementAndGet();
+                long hit = NioCounter.COUNTER_PING_HIT.incrementAndGet();
                 try {
                     HttpResponseStatus status = HealthMonitor.isServiceAvaliable() ? HttpResponseStatus.OK : HttpResponseStatus.SERVICE_UNAVAILABLE;
-                    NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, null, null, null, true, null);
+                    boolean isContinue = httpLifecycleListener.beforeProcessPingRequest(ctx, req.uri(), hit, status);
+                    if (isContinue) {
+                        NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, null, null, null, true, null);
+                        httpLifecycleListener.afterSendPingResponse(ctx, req.uri(), hit, status);
+                    }
                 } finally {
                     ReferenceCountUtil.release(req);
                 }
@@ -72,4 +81,6 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
             ctx.fireChannelRead(httpObject);
         }
     }
+
+
 }

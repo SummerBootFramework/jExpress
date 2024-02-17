@@ -15,13 +15,11 @@
  */
 package org.summerboot.jexpress.boot.instrumentation;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
+import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -41,10 +39,10 @@ public class HealthMonitor {
 
     public static final String PROMPT = "\tSelf Inspection Result: ";
 
-    private static PostOffice postOffice;
+    private static AppLifecycleListener appLifecycleListener;
 
-    public static void setPostOffice(PostOffice po) {
-        postOffice = po;
+    public static void setAppLifecycleListener(AppLifecycleListener listener) {
+        appLifecycleListener = listener;
     }
 
     private static void startHealthInspectionSingleton(int inspectionIntervalSeconds, HealthInspector healthInspector) {
@@ -83,8 +81,8 @@ public class HealthMonitor {
                         sb.append(inspectionReport);
                         sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
                         log.warn(sb);
-                        if (postOffice != null) {
-                            postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Health Inspection Failed", sb.toString(), null, true);
+                        if (appLifecycleListener != null) {
+                            appLifecycleListener.onHealthInspectionDone(false, sb.toString());
                         }
                         try {
                             TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
@@ -137,19 +135,9 @@ public class HealthMonitor {
 
     private static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
         statusReason = reason;
-//        status = paused
-//                ? HttpResponseStatus.SERVICE_UNAVAILABLE
-//                : (serviceOk ? HttpResponseStatus.OK : HttpResponseStatus.SERVICE_UNAVAILABLE);
-//        if (serviceStatusChanged) {
-//            log.log(serviceOk ? Level.WARN : Level.FATAL, "\n\t server status changed: paused=" + paused + ", OK=" + serviceOk + ", status=" + status + "\n\t reason: " + reason);
-//        }
         serviceAvaliable = healthOk && !paused;
-        if (serviceStatusChanged) {
-            String content = "\n\t server status changed: paused=" + paused + ", OK=" + healthOk + ", serviceAvaliable=" + serviceAvaliable + "\n\t reason: " + reason;
-            log.log(healthOk ? Level.WARN : Level.FATAL, content);
-            if (postOffice != null) {
-                postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Service Status Changed", content, null, false);
-            }
+        if (appLifecycleListener != null) {
+            appLifecycleListener.onApplicationStatusUpdated(healthOk, paused, serviceStatusChanged, reason);
         }
     }
 
