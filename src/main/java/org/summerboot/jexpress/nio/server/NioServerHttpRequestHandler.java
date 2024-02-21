@@ -114,7 +114,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 //        if (HttpUtil.is100ContinueExpected(req)) {
 //            ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE, Unpooled.EMPTY_BUFFER));
 //        }
-        long dataSize = req.content().capacity();
+        final String protocol = req.protocolVersion().toString();
+        final long dataSize = req.content().capacity();
         final HttpMethod httpMethod = req.method();
         final String httpRequestUriRaw = req.uri();
         final String httpRequestUriRawDecoded = URLDecoder.decode(httpRequestUriRaw, StandardCharsets.UTF_8);
@@ -136,7 +137,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 //        }
         final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequestUriRaw, StandardCharsets.UTF_8, true);
         final String httpRequestUri = queryStringDecoder.path();
-        final String requestMetaInfo = requestMetaInfo(ctx, txId, httpMethod, httpRequestUriRaw, httpRequestUriRawDecoded, isKeepAlive, dataSize);
+        final String requestMetaInfo = requestMetaInfo(ctx, txId, protocol, httpMethod, httpRequestUriRaw, httpRequestUriRawDecoded, isKeepAlive, dataSize);
         log.debug(() -> requestMetaInfo);
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
@@ -302,9 +303,9 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    private String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, HttpMethod httpMethod, String httpRequestUriRaw, String httpRequestUriDecoded, boolean isKeepAlive, long dataSize) {
-        StringBuilder sb = new StringBuilder()
-                .append("request_").append(hitIndex)
+    private String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, String protol, HttpMethod httpMethod, String httpRequestUriRaw, String httpRequestUriDecoded, boolean isKeepAlive, long dataSize) {
+        StringBuilder sb = new StringBuilder().append(protol)
+                .append("_request_").append(hitIndex)
                 .append("=").append(httpMethod).append(" ").append(httpRequestUriDecoded)
                 .append(", dataSize=").append(dataSize)
                 .append(", KeepAlive=").append(isKeepAlive)

@@ -76,10 +76,14 @@ public class HttpExceptionHandler implements HttpExceptionListener {
                 HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
                 nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
             } else {
-                Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, null, ex, cause.getClass().getSimpleName());
-                context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                onNamingException(ex, cause, httptMethod, httpRequestPath, context);
             }
         }
+    }
+
+    protected void onNamingException(NamingException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+        Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, null, ex, cause.toString());
+        context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -92,9 +96,13 @@ public class HttpExceptionHandler implements HttpExceptionListener {
             HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
             nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
         } else {
-            Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause);
-            context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            onPersistenceException(ex, cause, httptMethod, httpRequestPath, context);
         }
+    }
+
+    public void onPersistenceException(PersistenceException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+        Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause.toString());
+        context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override

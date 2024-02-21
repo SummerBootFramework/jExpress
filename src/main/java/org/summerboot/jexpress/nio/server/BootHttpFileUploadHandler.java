@@ -269,7 +269,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
      * @return quota (in bytes) of uploaded file size
      */
     private long precheck(ChannelHandlerContext ctx, HttpRequest req) {
-        if (!isValidRequestPath(req.uri()) || !HttpMethod.POST.equals(req.method())) {
+        if (!isValidRequestPath(req.method(), req.uri())) {
             Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_BAD_REQUEST, null, "invalid request:" + req.method() + " " + req.uri(), null);
             ServiceError e = new ServiceError(txId).addError(err);
             NioHttpUtil.sendText(ctx, true, null, HttpResponseStatus.BAD_REQUEST, e.toJson(), null, null, true, null);
@@ -313,7 +313,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
         return maxAllowedSize;
     }
 
-    protected abstract boolean isValidRequestPath(String httpRequestPath);
+    protected abstract boolean isValidRequestPath(HttpMethod method, String httpRequestPath);
 
     protected abstract Caller authenticate(final HttpHeaders httpHeaders, ServiceContext context);
 
