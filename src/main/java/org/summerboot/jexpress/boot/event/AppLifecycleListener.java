@@ -26,10 +26,10 @@ public interface AppLifecycleListener {
     /**
      * called when application paused or resumed by configuration/pause file or BottController's ${context-root}/status?pause=true|false
      *
-     * @param healthOk
-     * @param paused
-     * @param serviceStatusChanged
-     * @param reason
+     * @param healthOk             true if health is ok
+     * @param paused               true if paused
+     * @param serviceStatusChanged true if service status changed
+     * @param reason               the reason
      */
     void onApplicationStatusUpdated(boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason);
 

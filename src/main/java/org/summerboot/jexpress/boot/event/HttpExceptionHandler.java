@@ -65,7 +65,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
     @Override
     public void onNamingException(NamingException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         if (ex instanceof AuthenticationException) {
-            Err e = new Err(BootErrorCode.AUTH_INVALID_USER, null, null, null, "Authentication failed");
+            Err e = new Err(BootErrorCode.AUTH_LOGIN_FAILED, null, null, null, "Authentication failed");
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             Throwable cause = ExceptionUtils.getRootCause(ex);
@@ -74,7 +74,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
             }
             if (cause instanceof IOException) {// java.net.UnknownHostException
                 HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
-                nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_LDAP, "LDAP " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+                nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.NETWORK_ERROR, "LDAP " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
             } else {
                 onNamingException(ex, cause, httptMethod, httpRequestPath, context);
             }
@@ -83,7 +83,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
 
     protected void onNamingException(NamingException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, null, ex, cause.toString());
-        context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        context.error(e).status(HttpResponseStatus.BAD_GATEWAY);
     }
 
     @Override

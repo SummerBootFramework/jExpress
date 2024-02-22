@@ -31,7 +31,7 @@ import java.time.OffsetDateTime;
 @Singleton
 public class AppLifecycleHandler implements AppLifecycleListener {
 
-    protected static final Logger log = LogManager.getLogger(AppLifecycleListener.class.getName());
+    protected static final Logger log = LogManager.getLogger(AppLifecycleHandler.class.getName());
 
     @Inject
     protected PostOffice postOffice;
@@ -73,10 +73,8 @@ public class AppLifecycleHandler implements AppLifecycleListener {
 
     @Override
     public void onHealthInspectionDone(boolean healthOk, String reason) {
-        if (!healthOk) {
-            if (postOffice != null) {
-                postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Health Inspection Failed", reason, null, true);
-            }
+        if (!healthOk && postOffice != null) {
+            postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Health Inspection Failed", reason, null, true);
         }
     }
 }

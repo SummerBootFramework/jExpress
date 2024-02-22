@@ -92,11 +92,11 @@
                         <version>3.6.3</version>
                         <configuration>
                             <source>11</source>
-                            <aggregate>true</aggregate>
+                            <!--                            <aggregate>true</aggregate>-->
                             <charset>UTF-8</charset>
                             <encoding>UTF-8</encoding>
                             <docencoding>UTF-8</docencoding>
-                            <additionalparam>-Xdoclint:none</additionalparam>
+                            <!--                            <additionalparam>-Xdoclint:none</additionalparam>-->
                         </configuration>
                         <executions>
                             <execution>
@@ -184,7 +184,7 @@
         <!--        <commons-text.version>1.11.0</commons-text.version>-->
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
-        <log4j-api.version>2.22.1</log4j-api.version>
+        <log4j-api.version>2.23.0</log4j-api.version>
         <log4j-disruptor.version>3.4.4</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
