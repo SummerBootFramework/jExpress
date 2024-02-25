@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.4.2-SNAPSHOT</version>
+    <version>2.4.2</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -195,7 +195,7 @@
 
         <!-- NIO Netty -->
         <netty.version>4.1.107.Final</netty.version>
-        <netty-tcnative.version>2.0.62.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.63.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.61.1</grpc.version>
         <guava.version>33.0.0-jre</guava.version>
