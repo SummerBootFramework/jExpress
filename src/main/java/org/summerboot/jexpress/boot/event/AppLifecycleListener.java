@@ -13,16 +13,25 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.instrumentation;
-
-import java.util.List;
+package org.summerboot.jexpress.boot.event;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface NIOStatusListener {
+public interface AppLifecycleListener {
+    void onApplicationStart(String appVersion, String fullConfigInfo);
 
-    void onNIOAccessReportUpdate(String id, long hps, long tps, long totalHit, long pingHit, long bizHit, long totalChannel, long activeChannel, long task, long completed, long queue, long active, long pool, long core, long max, long largest);
+    void onApplicationStop(String appVersion);
 
-    void onNIOBindNewPort(String id, String sslMode, String protocol, String bindAddr, int listeningPort, List<String> loadBalancingEndpoints);
+    /**
+     * called when application paused or resumed by configuration/pause file or BottController's ${context-root}/status?pause=true|false
+     *
+     * @param healthOk             true if health is ok
+     * @param paused               true if paused
+     * @param serviceStatusChanged true if service status changed
+     * @param reason               the reason
+     */
+    void onApplicationStatusUpdated(boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason);
+
+    void onHealthInspectionDone(boolean healthOk, String reason);
 }

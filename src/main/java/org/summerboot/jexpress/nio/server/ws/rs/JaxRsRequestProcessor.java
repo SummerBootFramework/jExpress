@@ -73,8 +73,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 
     //param info    
     private final List<JaxRsRequestParameter> parameterList;
-    protected final boolean usingMatrixParam;
-    protected final boolean usingPathParam;
+    protected final boolean hasMatrixParam;
+    protected final boolean hasPathParam;
     private final Map<String, MetaPathParam> pathParamMap;
     private final List<MetaMatrixParam> metaMatrixParamList;
     protected final Pattern regexPattern;
@@ -211,8 +211,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         parameterList = List.copyOf(parameterListTemp);
         parameterSize = parameterList.size();
-        usingMatrixParam = !metaMatrixParamListTemp.isEmpty();
-        metaMatrixParamList = usingMatrixParam ? List.copyOf(metaMatrixParamListTemp) : null;
+        hasMatrixParam = !metaMatrixParamListTemp.isEmpty();
+        metaMatrixParamList = hasMatrixParam ? List.copyOf(metaMatrixParamListTemp) : null;
 
         //6. Build path regex pattern - Method level preprocess - path parameter
         String pathParamRegex = "(\\/.*)";
@@ -221,34 +221,37 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         Map<String, MetaPathParam> pathParamMapTemp = new HashMap<>();
         String[] pathMembers = FormatterUtil.parseURL(path);
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < pathMembers.length; i++) {
+        int size = pathMembers.length;
+        int last = size - 1;
+        for (int i = 0; i < size; i++) {
             String pathMember = pathMembers[i];
             if (StringUtils.isBlank(pathMember)) {
                 continue;
             }
             if (pathMember.startsWith("{") && pathMember.endsWith("}")) {
+                boolean isLast = i == last;
                 String pathParamName = pathMember.substring(1, pathMember.length() - 1);
                 String[] regexPathParamNames = pathParamName.split(":");
-                MetaPathParam meta = new MetaPathParam(i, regexPathParamNames.length > 1 ? regexPathParamNames[1] : null);
+                MetaPathParam meta = new MetaPathParam(i, regexPathParamNames.length > 1 ? regexPathParamNames[1] : null, isLast);
                 pathParamMapTemp.put(regexPathParamNames[0], meta);
                 if (i < pathMembers.length - 1) {
                     sb.append(pathParamRegex);
                 } else {
                     sb.append(pathParamRegex_OptionalInURL);
                 }
-            } else if (usingMatrixParam) {
+            } else if (hasMatrixParam) {
                 sb.append("\\/").append(pathMember);
             } else {
                 sb.append("/").append(pathMember);
             }
-            if (usingMatrixParam) {
+            if (hasMatrixParam) {
                 sb.append(matrixParamRegx);
             }
         }
-        this.usingPathParam = !pathParamMapTemp.isEmpty();
-        this.pathParamMap = usingPathParam ? Map.copyOf(pathParamMapTemp) : null;
-        this.declaredPath = (usingPathParam || usingMatrixParam) ? sb.toString() : path;
-        this.regexPattern = (usingPathParam || usingMatrixParam) ? Pattern.compile(this.declaredPath) : null;
+        this.hasPathParam = !pathParamMapTemp.isEmpty();
+        this.pathParamMap = hasPathParam ? Map.copyOf(pathParamMapTemp) : null;
+        this.declaredPath = (hasPathParam || hasMatrixParam) ? sb.toString() : path;
+        this.regexPattern = (hasPathParam || hasMatrixParam) ? Pattern.compile(this.declaredPath) : null;
 
         //logging info
         classLevelLogAnnotation = (Log) controllerClass.getAnnotation(Log.class);
@@ -468,35 +471,50 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
     }
 
-    public boolean isUsingMatrixPara() {
-        return usingMatrixParam;
+    public boolean hasMatrixPara() {
+        return hasMatrixParam;
     }
 
-    public boolean isUsingPathParam() {
-        return usingPathParam;
+    public boolean hasPathParam() {
+        return hasPathParam;
     }
 
     public ServiceRequest buildServiceRequest(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody) {
         ServiceRequest req = new ServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody);
-        if (usingPathParam) {
+        if (hasPathParam) {
             String[] pathList = FormatterUtil.parseURL(httpRequestPath);
+            int size = pathList.length;
             pathParamMap.keySet().forEach(pathParamName -> {
                 MetaPathParam meta = pathParamMap.get(pathParamName);
                 int i = meta.getParamOrderIndex();
-                if (i >= 0 && i < pathList.length) {
+                if (i >= 0 && i < size) {
                     String value = pathList[i];
-                    int k = value.indexOf(";");
-                    if (k > 0) {
-                        value = value.substring(0, k);
+//                    if (meta.isIsLast()) {
+//                        StringBuilder sb = new StringBuilder();
+//                        for (int k = i; k < size; k++) {
+//                            sb.append(pathList[k]);
+//                            if (k < (size - 1)) {
+//                                sb.append("/");
+//                            }
+//                        }
+//                        value = sb.toString();
+//                    } else {
+//                        value = pathList[i];
+//                    }                    
+                    if (hasMatrixParam) {
+                        int k = value.indexOf(";");
+                        int e = value.indexOf("=");
+                        if (k > 0 && e > k) {
+                            value = value.substring(0, k);
+                        }
                     }
                     if (meta.matches(value)) {
                         req.addPathParam(pathParamName, value);
                     }
                 }
             });
-
         }
-        if (usingMatrixParam) {
+        if (hasMatrixParam) {
             metaMatrixParamList.forEach(matrixParamMeta -> {
                 String key = matrixParamMeta.getKey();
                 String value = matrixParamMeta.value(httpRequestPath);

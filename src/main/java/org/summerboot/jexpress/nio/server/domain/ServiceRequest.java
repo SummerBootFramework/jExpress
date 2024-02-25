@@ -18,11 +18,11 @@ package org.summerboot.jexpress.nio.server.domain;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.QueryStringDecoder;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.util.FormatterUtil;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -111,25 +111,14 @@ public class ServiceRequest {
     }
 
     //Form Parameter
+    private Map<String, String> formParams = null;
+
     public String getFormParam(String key) {
-        return getFormParam(key, null, 0);
-    }
-
-    private QueryStringDecoder qd = null;
-    private Map<String, List<String>> pms = null;
-
-    public String getFormParam(String key, final ServiceContext context, int errorCode) {
-        if (qd == null) {
-            qd = new QueryStringDecoder(httpPostRequestBody, StandardCharsets.UTF_8, false);
+        if (formParams == null) {
+            formParams = new LinkedHashMap();
+            FormatterUtil.parseFormParam(httpPostRequestBody, formParams);
         }
-        if (pms == null) {
-            pms = qd.parameters();
-        }
-        return getParam(pms, key);
-    }
-
-    private String getParam(Map<String, List<String>> pms, String key) {
-        return getParam(pms, key, null, 0);
+        return formParams.get(key);
     }
 
     private String getParam(Map<String, List<String>> pms, String key, final ServiceContext context, int errorCode) {

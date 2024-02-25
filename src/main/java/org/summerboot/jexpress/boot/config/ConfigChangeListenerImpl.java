@@ -31,16 +31,14 @@ public class ConfigChangeListenerImpl implements ConfigChangeListener {
     @Inject
     protected PostOffice po;
 
-    protected static SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
-
     @Override
     public void onBefore(File configFile, JExpressConfig cfg) {
-        po.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Config Changed - before", cfg.info(), null, false);
+        po.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Config Changed - before", cfg.info(), null, false);
     }
 
     @Override
     public void onAfter(File configFile, JExpressConfig cfg, Throwable ex) {
-        po.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Config Changed - after", cfg.info(), ex, false);
+        po.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Config Changed - after", cfg.info(), ex, false);
     }
 
 }

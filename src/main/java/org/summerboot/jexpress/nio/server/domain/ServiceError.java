@@ -43,18 +43,18 @@ public class ServiceError {
         this.ref = ref;
     }
 
-    public ServiceError(int errorCode, String errorTag, String errorDesc, Throwable ex) {
-        //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
-        this("" + errorCode, errorTag, errorDesc, ex);
-    }
-
-    public ServiceError(String errorCode, String errorTag, String errorDesc, Throwable ex) {
-        this.ref = null;
-        if (errors == null) {
-            errors = new ArrayList();
-        }
-        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex, null));
-    }
+//    public ServiceError(int errorCode, String errorTag, String errorDesc, Throwable ex) {
+//        //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
+//        this("" + errorCode, errorTag, errorDesc, ex);
+//    }
+//
+//    public ServiceError(String errorCode, String errorTag, String errorDesc, Throwable ex) {
+//        this.ref = null;
+//        if (errors == null) {
+//            errors = new ArrayList();
+//        }
+//        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex, null));
+//    }
 
     //    ServiceError showRootCause(boolean isEnable) {
 //        if (errors != null) {
@@ -105,47 +105,52 @@ public class ServiceError {
         return errors;
     }
 
-    public void setErrors(List<Err> errors) {
+    public ServiceError setErrors(List<Err> errors) {
         this.errors = errors;
+        return this;
     }
 
-    public void addErrors(Err... error) {
+    public ServiceError addErrors(Err... error) {
         if (errors == null) {
             errors = new ArrayList();
         }
         this.errors.addAll(Arrays.asList(error));
+        return this;
     }
 
-    public void addErrors(Collection<Err> es) {
+    public ServiceError addErrors(Collection<Err> es) {
         if (es == null || es.isEmpty()) {
-            return;
+            return this;
         }
         if (errors == null) {
             errors = new ArrayList();
         }
         this.errors.addAll(es);
+        return this;
     }
 
     @JsonIgnore
-    public void addError(Err error) {
+    public ServiceError addError(Err error) {
         if (error == null) {
-            return;
+            return this;
         }
         if (errors == null) {
             errors = new ArrayList();
         }
         this.errors.add(error);
+        return this;
     }
 
-    public void addError(int errorCode, String errorTag, String errorDesc, Throwable ex) {
-        addError(errorCode, errorTag, errorDesc, ex, null);
+    public ServiceError addError(int errorCode, String errorTag, String errorDesc, Throwable ex) {
+        return addError(errorCode, errorTag, errorDesc, ex, null);
     }
 
-    public void addError(int errorCode, String errorTag, String errorDesc, Throwable ex, String internalInfo) {
+    public ServiceError addError(int errorCode, String errorTag, String errorDesc, Throwable ex, String internalInfo) {
         if (errors == null) {
             errors = new ArrayList();
         }
         this.errors.add(new Err(errorCode, errorTag, errorDesc, ex, internalInfo));
+        return this;
     }
 
 }

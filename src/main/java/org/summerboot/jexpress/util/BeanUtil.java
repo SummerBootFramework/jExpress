@@ -30,6 +30,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BackOffice;
 
 import java.lang.reflect.Array;
 import java.util.Iterator;
@@ -53,6 +54,7 @@ public class BeanUtil {
 
     public static void update(ObjectMapper objectMapper) {
         objectMapper.registerModules(new JavaTimeModule());
+        objectMapper.setTimeZone(BackOffice.agent.getTimeZone());
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);

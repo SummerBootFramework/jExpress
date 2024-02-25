@@ -34,7 +34,6 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.AsciiString;
-import io.netty.util.CharsetUtil;
 import jakarta.activation.MimetypesFileTypeMap;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.io.FileUtils;
@@ -50,7 +49,6 @@ import org.summerboot.jexpress.integration.cache.SimpleLocalCacheImpl;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.util.TimeUtil;
 
@@ -101,13 +99,6 @@ public class NioHttpUtil {
     public static final AsciiString KEEP_ALIVE = new AsciiString("keep-alive");
     public static final AsciiString CONNECTION = new AsciiString("Connection");
 
-    public static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, int errorCode, String msg, Throwable ex) {
-        ServiceError e = new ServiceError(errorCode, null, msg, ex);
-        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.copiedBuffer(e.toJson(), CharsetUtil.UTF_8));
-        resp.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
-        ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
-    }
-
     public static void sendRedirect(ChannelHandlerContext ctx, String newUri, HttpResponseStatus status) {
         FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);//HttpResponseStatus.FOUND, HttpResponseStatus.PERMANENT_REDIRECT : HttpResponseStatus.TEMPORARY_REDIRECT
         resp.headers().set(HttpHeaderNames.LOCATION, newUri);
@@ -155,7 +146,7 @@ public class NioHttpUtil {
             return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true, responseEncoder);
         }
         if (serviceContext.redirect() != null) {
-            NioHttpUtil.sendRedirect(ctx, serviceContext.redirect(), status);
+            sendRedirect(ctx, serviceContext.redirect(), status);
             return 0;
         }
 
@@ -233,6 +224,9 @@ public class NioHttpUtil {
     }
 
     public static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext) {
+        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, serviceContext.status());
+        HttpHeaders h = response.headers();
+        h.set(serviceContext.responseHeaders());
         long fileLength = -1;
         final RandomAccessFile randomAccessFile;
         File file = serviceContext.file();
@@ -240,9 +234,6 @@ public class NioHttpUtil {
         try {
             randomAccessFile = new RandomAccessFile(file, "r");
             fileLength = randomAccessFile.length();
-            HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, serviceContext.status());
-            HttpHeaders h = response.headers();
-            h.set(serviceContext.responseHeaders());
 
             if (isKeepAlive) {
                 // Add keep alive responseHeader as per:
@@ -273,8 +264,9 @@ public class NioHttpUtil {
                 lastContentFuture.addListener(ChannelFutureListener.CLOSE);
             }
         } catch (IOException ex) {
-            log.error("download " + filePath, ex);
-            sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, "faild to download", null);
+            Err err = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to download", ex);
+            serviceContext.error(err).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), serviceContext.status(), serviceContext.error().toJson(), serviceContext.contentType(), serviceContext.charsetName(), true, serviceContext.responseEncoder());
         }
         return fileLength;
     }

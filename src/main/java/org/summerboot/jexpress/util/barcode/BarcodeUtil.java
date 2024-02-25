@@ -39,13 +39,6 @@ import java.util.Map;
  */
 public class BarcodeUtil {
 
-    //    public static void main(String[] args) throws IOException {
-//        BitMatrix bitMatrix = generatePDF417("123451234567812", 480, 200);
-//        byte[] data = toByteArray(bitMatrix, "png");
-//        java.io.File f = new java.io.File("run/pdf417.png").getAbsoluteFile();
-//        System.out.println("save to " + f);
-//        Files.write(f.toPath(), data);
-//    }
     public static final int ARGB_BLACK = 0xff000000;
     public static final int ARGB_WHITE = 0xffffffff;//0xfffffae7;
     public static final int ARGB_TRANSPARENT = 0x00ffffff;//0xfffffae7;

@@ -25,16 +25,18 @@ class MetaPathParam {
     private final int paramOrderIndex;
     private final Pattern pathParamMetaPattern;
     private final boolean ispathParamMetaRegex;
+    private final boolean isLast;
 
-    public MetaPathParam(int index, String regex) {
+    public MetaPathParam(int index, String regex, boolean isLast) {
         this.paramOrderIndex = index;
         ispathParamMetaRegex = regex != null;
         if (ispathParamMetaRegex) {
-            regex = regex.trim();
+            regex = regex == null ? regex : regex.trim();
             pathParamMetaPattern = Pattern.compile(regex);
         } else {
             pathParamMetaPattern = null;
         }
+        this.isLast = isLast;
     }
 
     public boolean matches(String value) {
@@ -45,6 +47,10 @@ class MetaPathParam {
 
     public int getParamOrderIndex() {
         return paramOrderIndex;
+    }
+
+    public boolean isIsLast() {
+        return isLast;
     }
 
 }

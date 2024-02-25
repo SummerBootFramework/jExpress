@@ -26,8 +26,6 @@ import java.util.Map;
 @Unique(name = "SystemErrorCode", type = int.class)
 public interface BootErrorCode {
 
-    Map<Integer, Integer> Mapping = BackOffice.agent.getBootErrorCodeMapping();
-
     interface CustomHttpStatus {
 
         HttpResponseStatus UNAVAILABLE_FOR_LEGAL_REASONS = HttpResponseStatus.valueOf(451, "Unavailable For Legal Reasons");
@@ -35,10 +33,11 @@ public interface BootErrorCode {
     }
 
     private static int getErrorCode(int code) {
-        if (Mapping == null) {
+        Map<Integer, Integer> errorCodeMapping = BackOffice.agent.getBootErrorCodeMapping();
+        if (errorCodeMapping == null) {
             return code;
         }
-        Integer ret = Mapping.get(code);
+        Integer ret = errorCodeMapping.get(code);
         return ret == null ? code : ret;
     }
 
@@ -54,7 +53,7 @@ public interface BootErrorCode {
     int NIO_FILE_UPLOAD_BAD_LENGTH = getErrorCode(NIO_BASE + 6);
     int NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT = getErrorCode(NIO_BASE + 7);
     int NIO_REQUEST_BAD_HEADER = getErrorCode(NIO_BASE + 8);
-    int BAD_RQUEST_DATA = getErrorCode(NIO_BASE + 9);
+    int BAD_REQUEST_DATA = getErrorCode(NIO_BASE + 9);
     int NIO_REQUEST_BAD_ENCODING = getErrorCode(NIO_BASE + 10);
     int NIO_REQUEST_BAD_DOWNLOAD = getErrorCode(NIO_BASE + 11);
 
@@ -90,13 +89,13 @@ public interface BootErrorCode {
 
     // Bad Request
     int BR_BASE = 60;
-    int BAD_RQUEST_UNKNOWN_JSON_REQUEST_BODY = BR_BASE + 1;
-    int BAD_RQUEST_UNKNOWN_XML_REQUEST_BODY = BR_BASE + 2;
-    int BAD_RQUEST_MISSING_JSON_REQUEST_BODY = BR_BASE + 3;
-    int BAD_RQUEST_MISSING_REQUEST_BODY = BR_BASE + 4;
-    int BAD_RQUEST_MISSING_XML_REQUEST_BODY = BR_BASE + 5;
-    int BAD_RQUEST_INVALID_JSON_REQUEST_BODY = BR_BASE + 6;
-    int BAD_RQUEST_INVALID_XML_REQUEST_BODY = BR_BASE + 7;
-    int BAD_RQUEST_INVALID_REQUEST_BODY = BR_BASE + 8;
-    int BAD_RQUEST_MISSING_REQUIRED_FILED = BR_BASE + 9;
+    int BAD_REQUEST_UNKNOWN_JSON_REQUEST_BODY = BR_BASE + 1;
+    int BAD_REQUEST_UNKNOWN_XML_REQUEST_BODY = BR_BASE + 2;
+    int BAD_REQUEST_MISSING_JSON_REQUEST_BODY = BR_BASE + 3;
+    int BAD_REQUEST_MISSING_REQUEST_BODY = BR_BASE + 4;
+    int BAD_REQUEST_MISSING_XML_REQUEST_BODY = BR_BASE + 5;
+    int BAD_REQUEST_INVALID_JSON_REQUEST_BODY = BR_BASE + 6;
+    int BAD_REQUEST_INVALID_XML_REQUEST_BODY = BR_BASE + 7;
+    int BAD_REQUEST_INVALID_REQUEST_BODY = BR_BASE + 8;
+    int BAD_REQUEST_MISSING_REQUIRED_FILED = BR_BASE + 9;
 }

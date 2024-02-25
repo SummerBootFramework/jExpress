@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -336,7 +337,7 @@ public class ReflectionUtil {
      */
     public static Object toStandardJavaType(String value, final Class targetClass, final boolean autoDecrypt,
                                             final boolean isEmailRecipients, EnumConvert.To enumConvert) {
-        if (value == null) {
+        if (StringUtils.isBlank(value)) {
             if (targetClass.equals(boolean.class)) {
                 return false;
             } else if (targetClass.equals(char.class)) {
@@ -348,6 +349,8 @@ public class ReflectionUtil {
                     || targetClass.equals(float.class)
                     || targetClass.equals(double.class)) {
                 return (byte) 0;
+            } else if (targetClass.equals(TimeZone.class)) {
+                return TimeZone.getDefault();
             } else {
                 return null;
             }
@@ -424,6 +427,11 @@ public class ReflectionUtil {
             return ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
         } else if (targetClass.equals(LocalDateTime.class)) {
             return LocalDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME);
+        } else if (targetClass.equals(TimeZone.class)) {
+            if (value.equals("default")) {
+                return TimeZone.getDefault();
+            }
+            return TimeZone.getTimeZone(value);
         } else if (targetClass.equals(InetSocketAddress.class) || targetClass.equals(SocketAddress.class)) {
             //String[] ap = value.trim().split(FormatterUtil.REGEX_BINDING_MAP);
             String[] ap = value.trim().split(":");

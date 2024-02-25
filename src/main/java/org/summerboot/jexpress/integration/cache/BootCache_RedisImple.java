@@ -92,8 +92,6 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected static RedisConfig redisCfg = RedisConfig.cfg;
 
-    protected static SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
-
     protected class Holder<T> {
 
         private T value;
@@ -204,13 +202,13 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected void onNoticeRedisDown(String info, Throwable ex) {
         if (po != null) {
-            po.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Redis is Down", info, ex, false);
+            po.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Redis is Down", info, ex, false);
         }
     }
 
     protected void onNoticeAutoFailover(String info, String newNode) {
         if (po != null) {
-            po.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Redis Auto Failover to " + newNode, info, null, false);
+            po.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Redis Auto Failover to " + newNode, info, null, false);
         }
     }
 

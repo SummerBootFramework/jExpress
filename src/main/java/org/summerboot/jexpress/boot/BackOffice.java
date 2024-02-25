@@ -22,11 +22,14 @@ import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
@@ -43,6 +46,7 @@ public class BackOffice extends BootConfig {
     public static final BackOffice agent = new BackOffice();
 
     protected BackOffice() {
+        loadBalancingPingEndpoints = new ArrayList<>();
     }
 
     @Override
@@ -76,16 +80,16 @@ public class BackOffice extends BootConfig {
     }
 
     protected ThreadPoolExecutor tpe;
-    private String pingURL;
+    private List<String> loadBalancingPingEndpoints;
     private String version;
     private String versionShort;
 
-    public String getPingURL() {
-        return pingURL;
+    public List<String> getLoadBalancingPingEndpoints() {
+        return loadBalancingPingEndpoints;
     }
 
-    void setPingURL(String pingURL) {
-        this.pingURL = pingURL;
+    public void addLoadBalancingPingEndpoint(String loadBalancingPingEndpoint) {
+        loadBalancingPingEndpoints.add(loadBalancingPingEndpoint);
     }
 
     public String getVersion() {
@@ -202,6 +206,9 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "backoffice.executor.allowCoreThreadTimeOut", defaultValue = "false")
     private boolean allowCoreThreadTimeOut = false;
+
+    @Config(key = "backoffice.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"PST\", a full name such as \"America/Los_Angeles\", or a custom ID such as \"GMT-8:00\", or \"default\" as system default timezone.", defaultValue = "UTC")
+    private TimeZone timeZone = TimeZone.getTimeZone("UTC");//TimeZone.getDefault();
 
     @ConfigHeader(title = "4.1 Default Path/File Naming")
     @Config(key = "naming.folder.domainPrefix", defaultValue = "standalone")
@@ -321,6 +328,10 @@ public class BackOffice extends BootConfig {
 
     public String getPortInUseAlertMessage() {
         return portInUseAlertMessage;
+    }
+
+    public TimeZone getTimeZone() {
+        return timeZone;
     }
 
     public String getDomainFolderPrefix() {

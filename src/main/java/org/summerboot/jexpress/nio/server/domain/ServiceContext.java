@@ -16,7 +16,6 @@
 package org.summerboot.jexpress.nio.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -851,7 +850,7 @@ public class ServiceContext {
 
     }
 
-    public ServiceContext reportError(StringBuilder sb) throws JsonProcessingException {
+    public ServiceContext reportError(StringBuilder sb) {
         if (serviceError == null /*|| file == null*/) {// log error only for file request
             return this;
         }

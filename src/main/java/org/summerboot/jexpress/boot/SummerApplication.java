@@ -25,6 +25,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
@@ -33,7 +34,6 @@ import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.grpc.StatusReporter;
@@ -44,7 +44,6 @@ import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 
 import java.net.InetSocketAddress;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +64,8 @@ abstract public class SummerApplication extends SummerBigBang {
     protected List<GRPCServer> gRPCServerList = new ArrayList();
     @Inject
     protected PostOffice postOffice;
+    @Inject
+    protected AppLifecycleListener appLifecycleListener;
     private boolean memoLogged = false;
 
     private SummerApplication(Class callerClass, Module userOverrideModule, String... args) {
@@ -253,17 +254,18 @@ abstract public class SummerApplication extends SummerBigBang {
 
         //1. init email
         log.trace("1. init email");
-        final SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
         if (postOffice != null) {
-            HealthMonitor.setPostOffice(postOffice);
             postOffice.setAppVersion(super.appVersion);
             //gracefully shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                        if (postOffice != null) {
-                            postOffice.sendAlertSync(smtpCfg.getEmailToAppSupport(), "Shutdown at " + OffsetDateTime.now() + " - " + super.appVersion, "EOM", null, false);
+                        if (appLifecycleListener != null) {
+                            appLifecycleListener.onApplicationStop(super.appVersion);
                         }
                     }, "ShutdownHook.BootApp")
             );
+        }
+        if (appLifecycleListener != null) {
+            HealthMonitor.setAppLifecycleListener(appLifecycleListener);
         }
         try {
             // 2. initialize JMX instrumentation
@@ -366,8 +368,8 @@ abstract public class SummerApplication extends SummerBigBang {
             log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID));
 
             String fullConfigInfo = sb.toString();
-            if (postOffice != null) {
-                postOffice.sendAlertAsync(smtpCfg.getEmailToAppSupport(), "Started at " + OffsetDateTime.now(), fullConfigInfo, null, false);
+            if (appLifecycleListener != null) {
+                appLifecycleListener.onApplicationStart(super.appVersion, fullConfigInfo);
             }
         } catch (java.net.BindException ex) {// from NioServer
             log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());

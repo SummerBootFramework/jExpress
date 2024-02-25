@@ -34,7 +34,7 @@ abstract public class PingController {
      */
     @Ping
     @GET
-    @Path(Config.CURRENT_VERSION + Config.LOAD_BALANCER_HEALTH_CHECK)
+    @Path(BootController.Config.CURRENT_VERSION + BootController.Config.LOAD_BALANCER_HEALTH_CHECK)
     @Operation(
             tags = {"Load Balancing"},
             summary = "ping service status",

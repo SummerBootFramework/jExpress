@@ -38,8 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class BootPostOfficeImpl implements PostOffice {
 
-    protected static SMTPClientConfig smtpCfg = SMTPClientConfig.cfg;
-
     private String appVersion = BootConstant.VERSION;
 
     @Override
@@ -109,13 +107,13 @@ public class BootPostOfficeImpl implements PostOffice {
                 if (rootCause != null) {
                     key = key + rootCause.getClass().getName();
                 }
-                if (debounced(key, smtpCfg.getEmailAlertDebouncingIntervalMinutes())) {
+                if (debounced(key, SMTPClientConfig.cfg.getEmailAlertDebouncingIntervalMinutes())) {
                     return;
                 }
             }
             Email email = Email.compose(updateAlertTitle(title), updateAlertContent(content, cause), Email.Format.text).to(to);
             try {
-                email.send(smtpCfg.getMailSession());
+                email.send(SMTPClientConfig.cfg.getMailSession());
             } catch (Throwable ex) {
                 log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
             }
@@ -145,14 +143,14 @@ public class BootPostOfficeImpl implements PostOffice {
                 if (async) {
                     Runnable postman = () -> {
                         try {
-                            email.send(smtpCfg.getMailSession());
+                            email.send(SMTPClientConfig.cfg.getMailSession());
                         } catch (Throwable ex) {
                             log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
                         }
                     };
                     BackOffice.execute(postman);
                 } else {
-                    email.send(smtpCfg.getMailSession());
+                    email.send(SMTPClientConfig.cfg.getMailSession());
                 }
                 success = true;
             } catch (Throwable ex) {

@@ -15,9 +15,9 @@
  */
 package org.summerboot.jexpress.security.auth;
 
-import org.summerboot.jexpress.util.BeanUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.summerboot.jexpress.util.BeanUtil;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -30,8 +30,6 @@ import java.util.Set;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class User implements Serializable, Caller, Comparable<User> {
-
-    protected static AuthConfig authCfg = AuthConfig.cfg;
     protected Long tenantId = 0L;
     protected String tenantName;
     protected Long id = 0L;
@@ -131,7 +129,7 @@ public class User implements Serializable, Caller, Comparable<User> {
 
     @Override
     public boolean isInRole(String role) {
-        RoleMapping rm = authCfg.getRole(role);
+        RoleMapping rm = AuthConfig.cfg.getRole(role);
         if (rm == null) {
             return false;
         }
