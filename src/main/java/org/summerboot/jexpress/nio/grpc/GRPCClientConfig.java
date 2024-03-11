@@ -48,6 +48,8 @@ abstract public class GRPCClientConfig extends BootConfig {
         System.out.println(t);
     }
 
+    protected static final String FILENAME_TRUSTSTORE_4CLIENT = "truststore_grpc_client.p12";
+
     protected final static String ID = "gRpc.client";
 
     protected GRPCClientConfig() {
@@ -125,8 +127,8 @@ abstract public class GRPCClientConfig extends BootConfig {
         loadBalancingServers = null;
         nameResolverProvider = null;
         channelBuilder = null;
-        createIfNotExist(FILENAME_KEYSTORE);
-        createIfNotExist(FILENAME_TRUSTSTORE_4CLIENT);
+        createIfNotExist(FILENAME_KEYSTORE, FILENAME_KEYSTORE);
+        createIfNotExist(FILENAME_SRC_TRUSTSTORE, FILENAME_TRUSTSTORE_4CLIENT);
     }
 
     @Override

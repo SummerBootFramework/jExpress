@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.4.2</version>
+    <version>2.4.3</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -185,7 +185,7 @@
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.23.0</log4j-api.version>
-        <log4j-disruptor.version>3.4.4</log4j-disruptor.version>
+        <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <!-- Security -->
@@ -195,9 +195,9 @@
 
         <!-- NIO Netty -->
         <netty.version>4.1.107.Final</netty.version>
-        <netty-tcnative.version>2.0.63.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.65.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.61.1</grpc.version>
+        <grpc.version>1.62.2</grpc.version>
         <guava.version>33.0.0-jre</guava.version>
         <protobuf.version>3.25.3</protobuf.version>
         <!-- Web JAX-RS -->
@@ -213,10 +213,10 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.16.1</jackson.version>
+        <jackson.version>2.16.2</jackson.version>
         <!-- Bean Validation -->
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
-        <el.Implementation.version>4.0.2</el.Implementation.version>
+        <jakarta.el.version>5.0.1</jakarta.el.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
@@ -226,9 +226,10 @@
         <hikari-cp.version>5.1.0</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>5.1.0</jedis.version>
+        <jedis.version>5.1.2</jedis.version>
 
         <quartz.version>2.5.0-rc1</quartz.version>
+        <mqtt.version>1.2.5</mqtt.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.32</freemarker.version>
@@ -537,9 +538,15 @@
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>jakarta.el</artifactId>
-            <version>${el.Implementation.version}</version>
-            <!-- <scope>test</scope>-->
+            <version>4.0.2</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/jakarta.el/jakarta.el-api -->
+        <dependency>
+            <groupId>jakarta.el</groupId>
+            <artifactId>jakarta.el-api</artifactId>
+            <version>${jakarta.el.version}</version>
+        </dependency>
+
 
         <!-- Injection -->
         <!-- https://mvnrepository.com/artifact/com.google.inject/guice Apache 2.0-->
@@ -605,6 +612,12 @@
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz-jobs</artifactId>
             <version>${quartz.version}</version>
+        </dependency>
+        <!-- MQTT -->
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+            <version>${mqtt.version}</version>
         </dependency>
 
 

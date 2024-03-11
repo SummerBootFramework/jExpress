@@ -76,9 +76,8 @@ public abstract class BootConfig implements JExpressConfig {
     protected static final String DESC_KMF = "Path to key store file. Use SSL/TLS when keystore is provided, otherwise use plain socket";
     protected static final String DESC_TMF = "Path to trust store file. Auth the remote peer certificate when a truststore is provided, otherwise blindly trust all remote peer certificate";
     public static final String DESC_PLAINPWD = "plain text inside DEC() will be automatically encrypted by app root password when the application starts or is running";
-    protected static final String FILENAME_KEYSTORE = "tls_keystore.p12";
-    protected static final String FILENAME_TRUSTSTORE_4SERVER = "tls_truststore_4server.p12";
-    protected static final String FILENAME_TRUSTSTORE_4CLIENT = "tls_truststore_4client.p12";
+    protected static final String FILENAME_KEYSTORE = "keystore.p12";
+    protected static final String FILENAME_SRC_TRUSTSTORE = "truststore.p12";
 
     public static <T extends JExpressConfig> T instance(Class<T> implclass) {
         JExpressConfig instance = cache.get(implclass);
@@ -169,13 +168,13 @@ public abstract class BootConfig implements JExpressConfig {
         }
     }
 
-    protected void createIfNotExist(String fileName) {
+    protected void createIfNotExist(String srcFileName, String destFileName) {
         if (cfgFile == null || !generateTemplate) {
             return;
         }
         String location = cfgFile.getParentFile().getAbsolutePath();
         ClassLoader classLoader = this.getClass().getClassLoader();
-        ApplicationUtil.createIfNotExist(location, classLoader, fileName, fileName);
+        ApplicationUtil.createIfNotExist(location, classLoader, srcFileName, destFileName);
     }
 
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
@@ -381,7 +380,7 @@ public abstract class BootConfig implements JExpressConfig {
             }
         }
 
-        List<Field> configItems = ReflectionUtil.getDeclaredAndSuperClassesFields(configClass);
+        List<Field> configItems = ReflectionUtil.getDeclaredAndSuperClassesFields(configClass, true);
         boolean hasConfig = false;
         StringBuilder sb = new StringBuilder();
         for (Field field : configItems) {

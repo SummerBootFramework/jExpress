@@ -37,7 +37,7 @@ public class LdapSSLConnectionFactory2 extends SocketFactory {
 
     private static final AtomicReference<LdapSSLConnectionFactory2> defaultFactory = new AtomicReference<>();
 
-    private SSLSocketFactory sf;
+    private final SSLSocketFactory sf;
 
     public static String TLS_PROTOCOL = "TLSv1.3";
     private static KeyManager[] KMS;
