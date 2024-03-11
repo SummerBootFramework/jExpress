@@ -245,11 +245,11 @@ public class AuthConfig extends BootConfig {
         }
         //File rootFolder = cfgFile.getParentFile().getParentFile();
         if (privateKeyFile != null) {
-            createIfNotExist(JWT_PRIVATE_KEY_FILE);
+            createIfNotExist(JWT_PRIVATE_KEY_FILE, JWT_PRIVATE_KEY_FILE);
             jwtSigningKey = EncryptorUtil.loadPrivateKey(privateKeyFile, privateKeyPwd.toCharArray());
         }
         if (publicKeyFile != null) {
-            createIfNotExist(JWT_PUBLIC_KEY_FILE);
+            createIfNotExist(JWT_PUBLIC_KEY_FILE, JWT_PUBLIC_KEY_FILE);
             PublicKey publicKey = EncryptorUtil.loadPublicKey(EncryptorUtil.KeyFileType.PKCS12, publicKeyFile);
             jwtParser = Jwts.parserBuilder() // (1)
                     .setSigningKey(publicKey) // (2)

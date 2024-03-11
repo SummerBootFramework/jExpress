@@ -13,7 +13,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.nio.client;
+package org.summerboot.jexpress.integration.httpclient;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.summerboot.jexpress.boot.BootErrorCode;

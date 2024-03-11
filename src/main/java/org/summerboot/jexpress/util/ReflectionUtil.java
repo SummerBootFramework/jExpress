@@ -49,6 +49,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -556,6 +557,27 @@ public class ReflectionUtil {
             ret.addAll(Arrays.asList(fields));
             targetClass = targetClass.getSuperclass();
         } while (targetClass != null);
+        return ret;
+    }
+
+    public static List<Field> getDeclaredAndSuperClassesFields(Class targetClass, boolean isParentFirst) {
+        List<Field> ret = new ArrayList();
+        /*do {
+            Field[] fields = targetClass.getDeclaredFields();
+            ret.addAll(Arrays.asList(fields));
+            targetClass = targetClass.getSuperclass();
+        } while (targetClass != null);*/
+
+        List<Class> classes = getAllSuperClasses(targetClass);
+        classes.add(0, targetClass);
+        if (isParentFirst) {
+            Collections.reverse(classes);
+        }
+
+        for (Class c : classes) {
+            Field[] fields = c.getDeclaredFields();
+            ret.addAll(Arrays.asList(fields));
+        }
         return ret;
     }
 
