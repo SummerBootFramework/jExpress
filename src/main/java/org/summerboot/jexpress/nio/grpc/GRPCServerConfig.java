@@ -45,6 +45,7 @@ public class GRPCServerConfig extends BootConfig {
         System.out.println(t);
     }
 
+    protected static final String FILENAME_TRUSTSTORE_4SERVER = "truststore_grpc_server.p12";
     protected final static String ID = "gRpc.server";
 
     public static final GRPCServerConfig cfg = new GRPCServerConfig();
@@ -126,8 +127,8 @@ public class GRPCServerConfig extends BootConfig {
 
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
-        createIfNotExist(FILENAME_KEYSTORE);
-        createIfNotExist(FILENAME_TRUSTSTORE_4SERVER);
+        createIfNotExist(FILENAME_SRC_TRUSTSTORE, FILENAME_KEYSTORE);
+        createIfNotExist(FILENAME_SRC_TRUSTSTORE, FILENAME_TRUSTSTORE_4SERVER);
     }
 
     @Override

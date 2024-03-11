@@ -58,8 +58,6 @@ import java.util.Set;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ServiceContext {
 
-    private static final NioConfig nioCfg = NioConfig.cfg;
-
     //private ChannelHandlerContext ctx;
     private final SocketAddress localIP;
     private final SocketAddress remoteIP;
@@ -91,7 +89,9 @@ public class ServiceContext {
     private String redirect;
     private final List<POI> poi = new ArrayList<>();
     private List<Memo> memo;
-    private Map<String, Object> attributes;
+
+    // Session attributes
+    private Map<String, Object> sessionAttributes;
 
     // 2.1 error
 //    private int errorCode;
@@ -155,34 +155,56 @@ public class ServiceContext {
 //    }
 
     /**
+     * This method always returns a HttpSession object. It returns the session object attached with the request, if the request has no session attached, then it creates a new session and return it.
+     *
+     * @return
+     */
+    public Map<String, Object> session() {
+        return session(true);
+    }
+
+    /**
+     * This method returns HttpSession object if request has session else it returns null.
+     *
+     * @param create
+     * @return
+     */
+    public Map<String, Object> session(boolean create) {
+        if (sessionAttributes == null && create) {
+            sessionAttributes = new HashMap();
+        }
+        return sessionAttributes;
+    }
+
+    /**
      * get attribute value by kay
      *
      * @param key
      * @return
      */
-    public Object attribute(String key) {
-        return attributes == null ? null : attributes.get(key);
+    public Object sessionAttribute(String key) {
+        return sessionAttributes == null ? null : sessionAttributes.get(key);
     }
 
     /**
-     * set or remove attribute value
+     * set or remove attribute value, or clear all attributes when both key and value are null
      *
      * @param key
      * @param value remove key-value if value is null, otherwise add key-value
      * @return current ServiceContext instance
      */
-    public ServiceContext attribute(String key, Object value) {
-        if (attributes == null) {
-            if (key == null || value == null) {
-                return this;
-            } else {
-                attributes = new HashMap();
-            }
+    public ServiceContext sessionAttribute(String key, Object value) {
+        if (sessionAttributes == null) {
+            sessionAttributes = new HashMap();
+        }
+        if (key == null && value == null) {
+            sessionAttributes.clear();
+            return this;
         }
         if (value == null) {
-            attributes.remove(key);
+            sessionAttributes.remove(key);
         } else {
-            attributes.put(key, value);
+            sessionAttributes.put(key, value);
         }
         return this;
     }
@@ -531,6 +553,7 @@ public class ServiceContext {
     private File buildErrorFile(HttpResponseStatus status, boolean isDownloadMode) {
         int errorCode = status.code();
         String errorFileName = errorCode + (isDownloadMode ? ".txt" : ".html");
+        final NioConfig nioCfg = NioConfig.cfg;
         String errorPageFolderName = nioCfg.getErrorPageFolderName();
         File errorFile;
         if (StringUtils.isBlank(errorPageFolderName)) {

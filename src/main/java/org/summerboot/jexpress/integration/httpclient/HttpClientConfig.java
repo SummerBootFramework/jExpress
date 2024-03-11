@@ -13,7 +13,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.nio.client;
+package org.summerboot.jexpress.integration.httpclient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
@@ -61,6 +61,9 @@ abstract public class HttpClientConfig extends BootConfig {
         String t = generateTemplate(a.class);
         System.out.println(t);
     }
+
+    protected static final String FILENAME_KEYSTORE = "keystore.p12";
+    protected static final String FILENAME_TRUSTSTORE_4CLIENT = "truststore_httpclient.p12";
 
     protected HttpClientConfig() {
     }
@@ -117,8 +120,8 @@ abstract public class HttpClientConfig extends BootConfig {
         generateTemplate = true;
     }
 
-    @Config(key = "httpclient.ssl.HostnameVerification")
-    private volatile Boolean hostnameVerification = false;
+    @Config(key = "httpclient.ssl.HostnameVerification", defaultValue = "true")
+    private volatile Boolean hostnameVerification = true;
 
     @Config(key = "httpclient.proxy.host")
     private volatile String proxyHost;
@@ -202,8 +205,8 @@ abstract public class HttpClientConfig extends BootConfig {
 
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
-        createIfNotExist(FILENAME_KEYSTORE);
-        createIfNotExist(FILENAME_TRUSTSTORE_4CLIENT);
+        createIfNotExist(FILENAME_KEYSTORE, FILENAME_KEYSTORE);
+        createIfNotExist(FILENAME_SRC_TRUSTSTORE, FILENAME_TRUSTSTORE_4CLIENT);
     }
 
     @Override

@@ -370,7 +370,7 @@ public class NioConfig extends BootConfig {
 
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
-        createIfNotExist(FILENAME_KEYSTORE);
+        createIfNotExist(FILENAME_KEYSTORE, FILENAME_KEYSTORE);
         //createIfNotExist(FILENAME_TRUSTSTORE_4SERVER);
     }
 

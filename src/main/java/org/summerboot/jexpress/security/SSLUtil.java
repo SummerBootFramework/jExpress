@@ -46,7 +46,7 @@ public class SSLUtil {
     /**
      * To ignore the host name verification
      */
-    public static final HostnameVerifier IGNORE_HOST_NAME_VERIFIER = (String hostname, SSLSession session) -> true;
+    public static final HostnameVerifier IGNORE_HOST_NAME_VERIFIER = (String hostname, SSLSession session) -> true;//(hostname, session) -> true
 
     enum Caller {
         client, server
