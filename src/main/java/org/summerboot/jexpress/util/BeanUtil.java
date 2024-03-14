@@ -42,9 +42,9 @@ import java.util.Set;
  */
 public class BeanUtil {
 
-    private static boolean isToJsonIgnoreNull = true;
-    private static boolean isToJsonPretty = false;
-    private static boolean isFromJsonFailOnUnknownProperties = true;
+    protected static boolean isToJsonIgnoreNull = true;
+    protected static boolean isToJsonPretty = false;
+    protected static boolean isFromJsonFailOnUnknownProperties = true;
 
     public static ObjectMapper JacksonMapper = new ObjectMapper();//JsonMapper.builder().init(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
     public static ObjectMapper JacksonMapperIgnoreNull = new ObjectMapper()

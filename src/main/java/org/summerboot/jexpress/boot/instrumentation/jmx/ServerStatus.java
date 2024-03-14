@@ -43,11 +43,11 @@ import java.util.stream.Collectors;
 @Singleton
 public class ServerStatus extends NotificationBroadcasterSupport implements NIOStatusListener, HTTPClientStatusListener, ServerStatusMBean {
 
-    private static final DateTimeFormatter DTF = DateTimeFormatter.ISO_LOCAL_DATE_TIME;//DateTimeFormatter.ofPattern("yyyy-MM-dd E HH:mm:ss");
+    protected static final DateTimeFormatter DTF = DateTimeFormatter.ISO_LOCAL_DATE_TIME;//DateTimeFormatter.ofPattern("yyyy-MM-dd E HH:mm:ss");
 
-    private static final ExecutorService QPS_SERVICE = Executors.newSingleThreadExecutor(new NamedDefaultThreadFactory("ServerStatus"));
+    protected static final ExecutorService QPS_SERVICE = Executors.newSingleThreadExecutor(new NamedDefaultThreadFactory("ServerStatus"));
 
-    private final LinkedList<BootIOStatusData> events;
+    protected final LinkedList<BootIOStatusData> events;
 
     public ServerStatus() {
         events = new LinkedList();// 1. onUpdate is called every 1 second. 2. EXEC_POOL is single thread pool
@@ -96,9 +96,9 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
         QPS_SERVICE.execute(asyncTask);
     }
 
-    private final AtomicLong sequenceNumber = new AtomicLong(1);
+    protected final AtomicLong sequenceNumber = new AtomicLong(1);
 
-    private synchronized void setLastIOStatus(String status, String source) {
+    protected synchronized void setLastIOStatus(String status, String source) {
         Notification n = new AttributeChangeNotification(
                 source,//this.getClass().getSimpleName(),
                 sequenceNumber.getAndIncrement(),

@@ -24,10 +24,10 @@ public class FlashSale {
     public static final String Total = "Total";
     public static final String Limit = "Limit";
     public static final String Booked = "Booked";
-    private int status;
-    private long total;
-    private long limit;
-    private long booked;
+    protected int status;
+    protected long total;
+    protected long limit;
+    protected long booked;
 
     public FlashSale() {
     }

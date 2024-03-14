@@ -5,10 +5,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class NamedDefaultThreadFactory implements ThreadFactory {
 
-    private static final AtomicInteger poolNumber = new AtomicInteger(1);
-    private final ThreadGroup group;
-    private final AtomicInteger threadNumber = new AtomicInteger(1);
-    private final String namePrefix;
+    protected static final AtomicInteger poolNumber = new AtomicInteger(1);
+    protected final ThreadGroup group;
+    protected final AtomicInteger threadNumber = new AtomicInteger(1);
+    protected final String namePrefix;
 
     public NamedDefaultThreadFactory(String name) {
         group = Thread.currentThread().getThreadGroup();

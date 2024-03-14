@@ -27,9 +27,9 @@ class MetaMatrixParam {
     public static final String MATRIX_REGEX_POSTFIX = "\\s*=\\s*(.*?)[;|/]";// works for a, b, c, not work for color
     public static final String MATRIX_REGEX_POSTFIX_END = "\\s*=\\s*(.*?)$"; //works for color, not work for a, b, c, 
 
-    private final String key;
-    private final Pattern matrixParamPattern;
-    private final Pattern matrixParamPatternEnd;
+    protected final String key;
+    protected final Pattern matrixParamPattern;
+    protected final Pattern matrixParamPatternEnd;
 
     public MetaMatrixParam(String key) {
         this.key = key;

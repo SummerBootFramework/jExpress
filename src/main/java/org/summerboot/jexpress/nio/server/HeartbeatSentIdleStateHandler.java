@@ -32,10 +32,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class HeartbeatSentIdleStateHandler extends IdleStateHandler {
 
-    private static final Logger log = LogManager.getLogger(HeartbeatSentIdleStateHandler.class.getName());
+    protected static final Logger log = LogManager.getLogger(HeartbeatSentIdleStateHandler.class.getName());
 
-    private final int writerIdleTime;// home divice=45/180/wechat=300;
-    private static final ByteBuf HEARTBEAT_SEQUENCE = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ping", CharsetUtil.UTF_8));
+    protected final int writerIdleTime;// home divice=45/180/wechat=300;
+    protected static final ByteBuf HEARTBEAT_SEQUENCE = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("ping", CharsetUtil.UTF_8));
 
     public HeartbeatSentIdleStateHandler(int writerIdleTime) {
         super(0, writerIdleTime, 0, TimeUnit.SECONDS);

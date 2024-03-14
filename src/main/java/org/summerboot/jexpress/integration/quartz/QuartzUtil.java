@@ -49,7 +49,7 @@ import java.util.Set;
  */
 public class QuartzUtil {
 
-    private static final org.apache.logging.log4j.Logger log = LogManager.getLogger(QuartzUtil.class);
+    protected static final org.apache.logging.log4j.Logger log = LogManager.getLogger(QuartzUtil.class);
 
     public static final TimeUtil.ZoneOffsetTransitionInfo DEFAULT_DST_Transition_INFO = TimeUtil.getZoneOffsetTransitionInfo(ZoneId.systemDefault());
 
@@ -193,7 +193,7 @@ public class QuartzUtil {
 
     public static final Map<Integer, String> QUARTZ_WEEKDAY_MAP = Map.of(1, "SUN", 2, "MON", 3, "TUE", 4, "WED", 5, "THU", 6, "FRI", 7, "SAT");
 
-    private static int trim(Integer hour_minute) {
+    protected static int trim(Integer hour_minute) {
         if (hour_minute == null || hour_minute < 0) {
             return 0;
         }

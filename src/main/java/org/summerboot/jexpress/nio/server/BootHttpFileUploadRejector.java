@@ -36,7 +36,7 @@ public class BootHttpFileUploadRejector extends SimpleChannelInboundHandler<Http
 
     protected static Logger log = LogManager.getLogger(BootHttpFileUploadRejector.class.getName());
 
-    private static final boolean AUTO_RELEASE = false;
+    protected static final boolean AUTO_RELEASE = false;
 
     public BootHttpFileUploadRejector() {
         super(AUTO_RELEASE);

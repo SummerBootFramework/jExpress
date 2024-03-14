@@ -68,7 +68,7 @@ import java.util.regex.Pattern;
  */
 public class NioHttpUtil {
 
-    private static final Logger log = LogManager.getLogger(NioHttpUtil.class.getName());
+    protected static final Logger log = LogManager.getLogger(NioHttpUtil.class.getName());
 
     //security
     public static final String HTTP_HEADER_AUTH_TOKEN = "Authorization";// "X-Auth-Token";// "X_Authorization"; //RFC 7235, sec. 4.2
@@ -156,7 +156,7 @@ public class NioHttpUtil {
         return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true, responseEncoder);
     }
 
-    private static final String DEFAULT_CHARSET = "UTF-8";
+    protected static final String DEFAULT_CHARSET = "UTF-8";
 
     public static long sendText(ChannelHandlerContext ctx, boolean isKeepAlive, HttpHeaders serviceHeaders, HttpResponseStatus status, String content, String contentType, String charsetName, boolean flush, ResponseEncoder responseEncoder) {
         if (content == null) {
@@ -314,7 +314,7 @@ public class NioHttpUtil {
         return mimeType;
     }
 
-    private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[A-Za-z0-9][-_A-Za-z0-9\\.]*");
+    protected static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[A-Za-z0-9][-_A-Za-z0-9\\.]*");
 
     public static String getHttpPostBodyString(FullHttpRequest fullHttpRequest) {
         ByteBuf buf = fullHttpRequest.content();
@@ -332,7 +332,7 @@ public class NioHttpUtil {
         }
     }
 
-    private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
+    protected static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
 
     public static boolean sanitizeUri(String uri) {
         try {

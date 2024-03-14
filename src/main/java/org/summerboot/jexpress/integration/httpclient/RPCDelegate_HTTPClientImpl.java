@@ -127,16 +127,16 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @param <E>
      * @param context
      * @param req
-     * @param reqbody
+     * @param reqBody
      * @param successStatusList
      * @return a Non-Null RPCResult
      * @throws IOException
      */
-    protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext context, HttpRequest req, String reqbody, HttpResponseStatus... successStatusList) throws IOException {
+    protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext context, HttpRequest req, String reqBody, HttpResponseStatus... successStatusList) throws IOException {
         //1. log memo
         context.memo(RPCMemo.MEMO_RPC_REQUEST, req.toString() + " caller=" + context.caller());
-        if (reqbody != null) {
-            context.memo(RPCMemo.MEMO_RPC_REQUEST_DATA, reqbody);
+        if (reqBody != null) {
+            context.memo(RPCMemo.MEMO_RPC_REQUEST_DATA, reqBody);
         }
         //2. call remote sever
         HttpResponse httpResponse;
@@ -170,7 +170,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
         context.memo(RPCMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + httpResponse.headers());
         context.memo(RPCMemo.MEMO_RPC_RESPONSE_DATA, rpcResponseJsonBody);
-        //rpcResult.update(successResponseClass, errorResponseClass, context);
+        // let caller decide how to process the RPCResult - rpcResult.update(successResponseClass, errorResponseClass, context);
         return rpcResult;
     }
 

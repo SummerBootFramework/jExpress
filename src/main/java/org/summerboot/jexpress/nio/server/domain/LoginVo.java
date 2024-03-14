@@ -1,8 +1,8 @@
 package org.summerboot.jexpress.nio.server.domain;
 
 public class LoginVo {
-    private String username;
-    private String password;
+    protected String username;
+    protected String password;
 
     public LoginVo() {
     }

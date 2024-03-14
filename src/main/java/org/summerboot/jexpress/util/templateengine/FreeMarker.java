@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FreeMarker {
 
-    private static Map<String, FreeMarker> POOL = new ConcurrentHashMap();
+    protected static Map<String, FreeMarker> POOL = new ConcurrentHashMap();
 
     public static FreeMarker get(File directoryForTemplateLoading) throws IOException {
         String key = directoryForTemplateLoading.getAbsolutePath();
@@ -49,9 +49,9 @@ public class FreeMarker {
     // Create your Configuration instance, and specify if up to what FreeMarker
     // version (here 2.3.31) do you want to apply the fixes that are not 100%
     // backward-compatible. See the Configuration JavaDoc for details.
-    private final Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
+    protected final Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
 
-    private FreeMarker(File directoryForTemplateLoading) throws IOException {
+    protected FreeMarker(File directoryForTemplateLoading) throws IOException {
         // Specify the source where the template files come from. Here I set a
         // plain directory for it, but non-file-system sources are possible too:
         cfg.setDirectoryForTemplateLoading(directoryForTemplateLoading);

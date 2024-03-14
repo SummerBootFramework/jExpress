@@ -69,7 +69,7 @@ import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PR
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
 public abstract class BootConfig implements JExpressConfig {
 
-    private static final Map<Class, JExpressConfig> cache = new HashMap();
+    protected static final Map<Class, JExpressConfig> cache = new HashMap();
 
     protected static String BR = System.lineSeparator();
 
@@ -111,7 +111,7 @@ public abstract class BootConfig implements JExpressConfig {
         registerSingleton();
     }
 
-    private void registerSingleton() {
+    protected void registerSingleton() {
         Class key = this.getClass();
         if (cache.containsKey(key)) {
             //throw new FindException("No a singleton: " + key.getName());
@@ -541,7 +541,7 @@ public abstract class BootConfig implements JExpressConfig {
         return hasConfig ? sb.substring(2) : sb.toString();
     }
 
-    private static List<String> parse(ConfigHeader memo) {
+    protected static List<String> parse(ConfigHeader memo) {
         List<String> ret = new ArrayList<>();
         lineBreak(memo.title(), null, ret);
         lineBreak(memo.desc(), null, ret);
@@ -551,7 +551,7 @@ public abstract class BootConfig implements JExpressConfig {
         return ret;
     }
 
-    private static String[] lineBreak(String s, String prefix, List<String> list) {
+    protected static String[] lineBreak(String s, String prefix, List<String> list) {
         if (StringUtils.isBlank(s)) {
             return null;
         }
@@ -571,7 +571,7 @@ public abstract class BootConfig implements JExpressConfig {
         return ret;
     }
 
-    private static int getLength(String s) {
+    protected static int getLength(String s) {
         return StringUtils.isBlank(s) ? 0 : s.trim().length();
     }
 

@@ -22,10 +22,10 @@ import java.util.regex.Pattern;
  */
 class MetaPathParam {
 
-    private final int paramOrderIndex;
-    private final Pattern pathParamMetaPattern;
-    private final boolean ispathParamMetaRegex;
-    private final boolean isLast;
+    protected final int paramOrderIndex;
+    protected final Pattern pathParamMetaPattern;
+    protected final boolean ispathParamMetaRegex;
+    protected final boolean isLast;
 
     public MetaPathParam(int index, String regex, boolean isLast) {
         this.paramOrderIndex = index;

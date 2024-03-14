@@ -45,7 +45,7 @@ public class SMTPClientConfig extends BootConfig {
 
     public static final SMTPClientConfig cfg = new SMTPClientConfig();
 
-    private SMTPClientConfig() {
+    protected SMTPClientConfig() {
     }
 
     @Override
@@ -53,7 +53,7 @@ public class SMTPClientConfig extends BootConfig {
     }
 
     @JsonIgnore
-    private volatile Session mailSession;
+    protected volatile Session mailSession;
 
     //1. SMTP Settings
     @ConfigHeader(title = "1. SMTP Settings")
@@ -115,7 +115,7 @@ public class SMTPClientConfig extends BootConfig {
     protected volatile int emailAlertDebouncingIntervalMinutes = 30;
 
     //3. mail session for Json display only
-    private Properties mailSessionProp;
+    protected Properties mailSessionProp;
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {

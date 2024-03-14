@@ -94,7 +94,7 @@ public class MultipartUtil {
      *
      * @return the array of 3 Strings
      */
-    private static String[] splitHeaderContentType(String sb) {
+    protected static String[] splitHeaderContentType(String sb) {
         int aStart;
         int aEnd;
         int bStart;

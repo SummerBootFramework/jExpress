@@ -33,13 +33,13 @@ import java.util.Map;
  */
 public class GuiceJobFactory extends SimpleJobFactory implements JobFactory {
 
-    private final Injector injector;
+    protected final Injector injector;
 
     public GuiceJobFactory(final Injector injector) {
         this.injector = injector;
     }
 
-    private final Map<Class, Job> singletonJobs = new HashMap();
+    protected final Map<Class, Job> singletonJobs = new HashMap();
 
     @Override
     public Job newJob(TriggerFiredBundle triggerFiredBundle, Scheduler scheduler) throws SchedulerException {

@@ -31,13 +31,13 @@ import java.util.Map;
  */
 public class ServiceRequest {
 
-    private final ChannelHandlerContext channelHandlerCtx;
-    private final HttpHeaders httpHeaders;
-    private final String httpRequestPath;
-    private final Map<String, List<String>> queryParams;
-    private final String httpPostRequestBody;
-    private Map<String, String> pathParams;
-    private Map<String, String> matrixParams;
+    protected final ChannelHandlerContext channelHandlerCtx;
+    protected final HttpHeaders httpHeaders;
+    protected final String httpRequestPath;
+    protected final Map<String, List<String>> queryParams;
+    protected final String httpPostRequestBody;
+    protected Map<String, String> pathParams;
+    protected Map<String, String> matrixParams;
 
     public ServiceRequest(ChannelHandlerContext channelHandlerCtx, HttpHeaders httpHeaders, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody) {
         this.channelHandlerCtx = channelHandlerCtx;
@@ -111,7 +111,7 @@ public class ServiceRequest {
     }
 
     //Form Parameter
-    private Map<String, String> formParams = null;
+    protected Map<String, String> formParams = null;
 
     public String getFormParam(String key) {
         if (formParams == null) {
@@ -121,7 +121,7 @@ public class ServiceRequest {
         return formParams.get(key);
     }
 
-    private String getParam(Map<String, List<String>> pms, String key, final ServiceContext context, int errorCode) {
+    protected String getParam(Map<String, List<String>> pms, String key, final ServiceContext context, int errorCode) {
         String value = null;
         if (pms != null && !pms.isEmpty()) {
             List<String> vs = pms.get(key);

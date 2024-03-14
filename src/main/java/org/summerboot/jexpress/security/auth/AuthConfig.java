@@ -77,31 +77,31 @@ public class AuthConfig extends BootConfig {
     @Config(key = "ldap.type.AD",
             desc = "set it true only when LDAP is implemented by Microsoft Active Directory (AD)\n"
                     + "false when use others like Open LDAP, IBM Tivoli, Apache")
-    private volatile boolean typeAD = false;
+    protected volatile boolean typeAD = false;
 
     @Config(key = "ldap.host",
             desc = "LDAP will be disabled when host is not provided")
-    private volatile String ldapHost;
+    protected volatile String ldapHost;
 
     @Config(key = "ldap.port",
             desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global voer SSL 3269")
-    private volatile int ldapPort;
+    protected volatile int ldapPort;
 
     @Config(key = "ldap.baseDN")
-    private volatile String ldapBaseDN;
+    protected volatile String ldapBaseDN;
 
     @Config(key = "ldap.bindingUserDN")
-    private volatile String bindingUserDN;
+    protected volatile String bindingUserDN;
 
     @JsonIgnore
     @Config(key = "ldap.bindingPassword", validate = Config.Validate.Encrypted)
-    private volatile String bindingPassword;
+    protected volatile String bindingPassword;
 
     @Config(key = "ldap.PasswordAlgorithm", defaultValue = "SHA3-256")
-    private volatile String passwordAlgorithm = "SHA3-256";
+    protected volatile String passwordAlgorithm = "SHA3-256";
 
     @Config(key = "ldap.schema.TenantGroup.ou")
-    private volatile String ldapScheamTenantGroupOU;
+    protected volatile String ldapScheamTenantGroupOU;
 
     //1.2 LDAP Client keystore
     @ConfigHeader(title = "1.2 LDAP Client keystore")
@@ -109,30 +109,30 @@ public class AuthConfig extends BootConfig {
     @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
             AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd",
             desc = DESC_KMF)
-    private volatile KeyManagerFactory kmf;
+    protected volatile KeyManagerFactory kmf;
 
     @Config(key = "ldap.ssl.protocol")
-    private volatile String ldapTLSProtocol = "TLSv1.3";
+    protected volatile String ldapTLSProtocol = "TLSv1.3";
 
     @Config(key = "ldap.SSLConnectionFactoryClass")
-    private volatile String ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+    protected volatile String ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
 
     //1.3 LDAP Client truststore
     @ConfigHeader(title = "1.3 LDAP Client truststore")
     @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd",
             desc = DESC_TMF)
     @JsonIgnore
-    private volatile TrustManagerFactory tmf;
+    protected volatile TrustManagerFactory tmf;
 
-    private volatile Properties ldapConfig;
+    protected volatile Properties ldapConfig;
 
     //2. JWT
-    private static final String KEY_privateKeyFile = "jwt.asymmetric.SigningKeyFile";
-    private static final String KEY_privateKeyPwd = "jwt.asymmetric.SigningKeyPwd";
-    private static final String KEY_publicKeyFile = "jwt.asymmetric.ParsingKeyFile";
+    protected static final String KEY_privateKeyFile = "jwt.asymmetric.SigningKeyFile";
+    protected static final String KEY_privateKeyPwd = "jwt.asymmetric.SigningKeyPwd";
+    protected static final String KEY_publicKeyFile = "jwt.asymmetric.ParsingKeyFile";
 
-    private static final String JWT_PRIVATE_KEY_FILE = "jwt_private.key";
-    private static final String JWT_PUBLIC_KEY_FILE = "jwt_public.key";
+    protected static final String JWT_PRIVATE_KEY_FILE = "jwt_private.key";
+    protected static final String JWT_PUBLIC_KEY_FILE = "jwt_public.key";
 
     @ConfigHeader(title = "2. JWT",
             example = "To generate the keypair manually:\n"
@@ -143,7 +143,7 @@ public class AuthConfig extends BootConfig {
     @Config(key = KEY_privateKeyFile,
             desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size",
             callbackMethodName4Dump = "generateTemplate_privateKeyFile")
-    private volatile File privateKeyFile;
+    protected volatile File privateKeyFile;
 
     protected void generateTemplate_privateKeyFile(StringBuilder sb) {
         sb.append(KEY_privateKeyFile + "=" + JWT_PRIVATE_KEY_FILE + "\n");
@@ -154,7 +154,7 @@ public class AuthConfig extends BootConfig {
     @Config(key = KEY_privateKeyPwd, validate = Config.Validate.Encrypted,
             desc = "The password of this private key",
             callbackMethodName4Dump = "generateTemplate_privateKeyPwd")
-    private volatile String privateKeyPwd;
+    protected volatile String privateKeyPwd;
 
     protected void generateTemplate_privateKeyPwd(StringBuilder sb) {
         sb.append(KEY_privateKeyPwd + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
@@ -163,7 +163,7 @@ public class AuthConfig extends BootConfig {
     @Config(key = KEY_publicKeyFile,
             desc = "Path to the public key file corresponding to this private key",
             callbackMethodName4Dump = "generateTemplate_publicKeyFile")
-    private volatile File publicKeyFile;
+    protected volatile File publicKeyFile;
 
     protected void generateTemplate_publicKeyFile(StringBuilder sb) {
         sb.append(KEY_publicKeyFile + "=" + JWT_PUBLIC_KEY_FILE + "\n");
@@ -173,19 +173,19 @@ public class AuthConfig extends BootConfig {
     @Config(key = "jwt.symmetric.key", validate = Config.Validate.Encrypted,
             desc = "HMAC-SHA key for bothe signing and parsing, it will be ignored when asymmetric one is specified.\n"
                     + "Use this command to generate this key: java -jar <app>.jar -jwt <HS256, HS384, HS512>")
-    private volatile String symmetricKey;
+    protected volatile String symmetricKey;
 
     @JsonIgnore
-    private volatile Key jwtSigningKey;
+    protected volatile Key jwtSigningKey;
 
     @JsonIgnore
-    private volatile JwtParser jwtParser;
+    protected volatile JwtParser jwtParser;
 
     @Config(key = "jwt.ttl.minutes")
-    private volatile int jwtTTLMinutes = 1440;
+    protected volatile int jwtTTLMinutes = 1440;
 
     @Config(key = "jwt.issuer")
-    private volatile String jwtIssuer;
+    protected volatile String jwtIssuer;
 
     //3. Role mapping
     @ConfigHeader(title = "3. Role mapping",
@@ -196,7 +196,7 @@ public class AuthConfig extends BootConfig {
                     + "roles.AppAdmin.groups=AppAdmin_Group\n"
                     + "roles.AppAdmin.users=johndoe, janejoe",
             callbackMethodName4Dump = "generateTemplate_DumpRoleMapping")
-    private Map<String, RoleMapping> roles = new HashMap();
+    protected Map<String, RoleMapping> roles = new HashMap();
 
     /**
      * called by @ConfigHeader.callbackMethodName4Dump value
@@ -397,7 +397,7 @@ public class AuthConfig extends BootConfig {
 //    public Set<String> getRoleNames() {
 //        return Set.copyOf(roles.keySet());
 //    }
-    private final Set<String> declareRoles = new TreeSet();
+    protected final Set<String> declareRoles = new TreeSet();
 
     public void addDeclareRoles(Set<String> scanedDeclareRoles) {
         this.declareRoles.addAll(Set.copyOf(scanedDeclareRoles));

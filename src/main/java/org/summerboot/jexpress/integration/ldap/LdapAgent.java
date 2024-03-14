@@ -170,7 +170,7 @@ public class LdapAgent implements Closeable {
         }
     }
 
-    private void connect() throws NamingException {
+    protected void connect() throws NamingException {
         close();
         log.debug(baseDN + ", isAD=" + isAD);
         m_ctx = new InitialLdapContext(cfg, null);
@@ -253,7 +253,7 @@ public class LdapAgent implements Closeable {
         return ret;
     }
 
-    private List<String>[] parseAddedAndRemoved(List<Attributes> currentGroup, String[] newGroup) throws NamingException {
+    protected List<String>[] parseAddedAndRemoved(List<Attributes> currentGroup, String[] newGroup) throws NamingException {
         List<String> addedList = newGroup == null ? new ArrayList() : new ArrayList(Arrays.asList(newGroup));
         List<String> removedList = new ArrayList();
         List[] ret = {addedList, removedList};
@@ -292,7 +292,7 @@ public class LdapAgent implements Closeable {
         return md5Password;
     }
 
-    private static final int SALT_LENGTH = 4;
+    protected static final int SALT_LENGTH = 4;
 
     public static String PASSWORD_ALGORITHM = "SHA3-256";
 

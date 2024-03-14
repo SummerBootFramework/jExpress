@@ -67,7 +67,7 @@ import java.util.TreeSet;
  */
 abstract public class SummerBigBang extends SummerSingularity {
 
-    private final Module userOverrideModule;
+    protected final Module userOverrideModule;
     protected Injector guiceInjector;
     protected List<SummerInitializer> summerInitializers = new ArrayList();
     protected List<SummerRunner> summerRunners = new ArrayList();
@@ -77,7 +77,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected SummerBigBang(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass, args);
         this.userOverrideModule = userOverrideModule;
-        singularity();
+        bang();
         aParallelUniverse(args);
     }
 
@@ -85,7 +85,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         return guiceInjector;
     }
 
-    private void singularity() {
+    protected void bang() {
         log.trace("");
         guiceInjector = null;
         summerInitializers.clear();
@@ -93,7 +93,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         schedulerTriggers = 0;
     }
 
-    private <T extends SummerApplication> T aParallelUniverse(String... args) {
+    protected <T extends SummerApplication> T aParallelUniverse(String... args) {
         log.trace("");
         bigBang_LetThereBeCLI(args);
         bigBang_AndThereWasCLI();

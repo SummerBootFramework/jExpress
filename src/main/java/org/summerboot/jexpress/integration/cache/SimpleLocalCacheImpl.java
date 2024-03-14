@@ -87,8 +87,8 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
      */
     public static class CacheEntity<V> {
 
-        private final V value;
-        private final long ttlMillis;
+        protected final V value;
+        protected final long ttlMillis;
 
         public CacheEntity(V value, Long ttlMilliseconds) {
             this.value = value;

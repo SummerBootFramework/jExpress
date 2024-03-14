@@ -28,10 +28,10 @@ import java.util.regex.Matcher;
  */
 public class I18nLabel {
 
-    private final String code;
-    private String key;
-    private final boolean critical;
-    private final String[] values;
+    protected final String code;
+    protected String key;
+    protected final boolean critical;
+    protected final String[] values;
 
     public I18nLabel(String code, boolean critical, String... values) {
         this.code = code;

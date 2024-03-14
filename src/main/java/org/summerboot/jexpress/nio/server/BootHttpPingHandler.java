@@ -44,8 +44,8 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
 
     protected static Logger log = LogManager.getLogger(BootHttpPingHandler.class.getName());
 
-    private final List<String> pingURLs;
-    private final boolean hasPingURL;
+    protected final List<String> pingURLs;
+    protected final boolean hasPingURL;
 
     @Inject
     protected HttpLifecycleListener httpLifecycleListener;

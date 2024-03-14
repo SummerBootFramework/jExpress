@@ -40,8 +40,8 @@ public class AppResourceBundle extends ResourceBundle {
     /**
      * key - @see Locale.toLanguageTag
      */
-    private static final ConcurrentHashMap<String, AppResourceBundle> POOL = new ConcurrentHashMap();
-    private static AppResourceBundle defaultRB;
+    protected static final ConcurrentHashMap<String, AppResourceBundle> POOL = new ConcurrentHashMap();
+    protected static AppResourceBundle defaultRB;
 
     public static synchronized void clear() {
         POOL.clear();
@@ -124,11 +124,11 @@ public class AppResourceBundle extends ResourceBundle {
         return ret;
     }
 
-    private final ConcurrentMap<String, String> translationsMap;
+    protected final ConcurrentMap<String, String> translationsMap;
 
-    private final AppResourceCfg cfg;
+    protected final AppResourceCfg cfg;
 
-    private AppResourceBundle(AppResourceCfg cfg, Map<String, String> translations) {
+    protected AppResourceBundle(AppResourceCfg cfg, Map<String, String> translations) {
         this.cfg = cfg;
         this.translationsMap = new ConcurrentHashMap<>(translations.size());
         this.translationsMap.putAll(translations);
@@ -158,15 +158,15 @@ public class AppResourceBundle extends ResourceBundle {
         return parent;
     }
 
-    private void update(String key, String value) {
+    protected void update(String key, String value) {
         if (value != null && !value.trim().isEmpty()) {
             translationsMap.put(key, value);
         }
     }
 
-    private static class IteratorEnumeration<E> implements Enumeration<E> {
+    protected static class IteratorEnumeration<E> implements Enumeration<E> {
 
-        private final Iterator<E> iterator;
+        protected final Iterator<E> iterator;
 
         public IteratorEnumeration(Iterator<E> iterator) {
             this.iterator = iterator;

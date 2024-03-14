@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.util;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class ApplicationUtil {
     public static String[] getApplicationArgs() {
         String commandLine = System.getProperty(JAVA_COMMAND_SUN);
         if (commandLine != null) {
-            return commandLine.split(" ");
+            return StringUtils.chomp(commandLine).split(" ");
         }
         return EMPTY_ARGS;
     }

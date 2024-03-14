@@ -50,15 +50,15 @@ import java.util.Map;
 public class PDFBox {
 
     public static final float POINTS_PER_MM = 75f;
-    private static final Map<String, PDFont> FONTS = new HashMap();
+    protected static final Map<String, PDFont> FONTS = new HashMap();
 
     public static PDFont getFont(String name) {
         return FONTS.get(name);
     }
 
-    private static File[] fontFiles = null;
+    protected static File[] fontFiles = null;
 
-    private static Map<File, String> fonts = null;
+    protected static Map<File, String> fonts = null;
 
     public static int loadFonts(File fontCacheDir, File fontDir) throws IOException {
         if (fontCacheDir != null) {
@@ -126,8 +126,8 @@ public class PDFBox {
         return fontFiles.length;
     }
 
-    private static final AccessPermission DEFAULT_AP = buildDefaultAccessPermission();
-    private static final int DEFAULT_KEY_LENGTH = 256;
+    protected static final AccessPermission DEFAULT_AP = buildDefaultAccessPermission();
+    protected static final int DEFAULT_KEY_LENGTH = 256;
 
     public static AccessPermission buildDefaultAccessPermission() {
         AccessPermission ap = new AccessPermission();
@@ -193,9 +193,9 @@ public class PDFBox {
 
     public static class LayoutInfo {
 
-        private final int pageCount;
-        private final int pageWidth;
-        private final int pageHeight;
+        protected final int pageCount;
+        protected final int pageWidth;
+        protected final int pageHeight;
 
         public LayoutInfo(int pageCount, int pageWidth, int pageHeight) {
             this.pageCount = pageCount;
@@ -292,7 +292,7 @@ public class PDFBox {
         }
     }
 
-    private static String buildBaseDocumentUri1(File baseDirectory) throws IOException {
+    protected static String buildBaseDocumentUri1(File baseDirectory) throws IOException {
         try {
             //return new File(baseDirectory, htmlFileName).toURI().toURL().toExternalForm();
             return baseDirectory.toURI().toURL().toExternalForm();

@@ -293,9 +293,9 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         }
     }
 
-    private final String me = ", hdl=" + this.toString();
+    protected final String me = ", hdl=" + this.toString();
 
-    private String info(ChannelHandlerContext ctx) {
+    protected String info(ChannelHandlerContext ctx) {
         return new StringBuilder()
                 .append(", chn=").append(ctx.channel())
                 .append(", ctx=").append(ctx.hashCode())
@@ -303,7 +303,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    private String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, String protol, HttpMethod httpMethod, String httpRequestUriRaw, String httpRequestUriDecoded, boolean isKeepAlive, long dataSize) {
+    protected String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, String protol, HttpMethod httpMethod, String httpRequestUriRaw, String httpRequestUriDecoded, boolean isKeepAlive, long dataSize) {
         StringBuilder sb = new StringBuilder().append(protol)
                 .append("_request_").append(hitIndex)
                 .append("=").append(httpMethod).append(" ").append(httpRequestUriDecoded)
@@ -318,7 +318,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         return sb.toString();
     }
 
-    private void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb, boolean isTraceAll) {
+    protected void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb, boolean isTraceAll) {
         boolean isInFilter = false;
         // 3a. caller filter
         Caller caller = context.caller();

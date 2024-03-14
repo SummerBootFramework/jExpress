@@ -66,7 +66,7 @@ abstract public class SummerApplication extends SummerBigBang {
     protected PostOffice postOffice;
     @Inject
     protected AppLifecycleListener appLifecycleListener;
-    private boolean memoLogged = false;
+    protected boolean memoLogged = false;
 
     private SummerApplication(Class callerClass, Module userOverrideModule, String... args) {
         super(callerClass, userOverrideModule, args);

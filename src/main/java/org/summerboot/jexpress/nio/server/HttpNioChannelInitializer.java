@@ -36,19 +36,19 @@ import org.apache.logging.log4j.Logger;
  */
 public class HttpNioChannelInitializer extends NioChannelInitializer {
 
-    private final static ChannelHandler DefaultFileUploadRejector = new BootHttpFileUploadRejector();
+    protected final static ChannelHandler DefaultFileUploadRejector = new BootHttpFileUploadRejector();
 
-    private static final Logger LoggingHandlerLogger = LogManager.getLogger(LoggingHandler.class);
+    protected static final Logger LoggingHandlerLogger = LogManager.getLogger(LoggingHandler.class);
 
     @Inject
     @Named("BootHttpPingHandler")
-    private ChannelHandler defaultHttpPingHandler;
+    protected ChannelHandler defaultHttpPingHandler;
 
     @Inject
     @Named("BootHttpRequestHandler")
-    private ChannelHandler defaultHttpRequestHandler;
+    protected ChannelHandler defaultHttpRequestHandler;
 
-    private final ChannelHandler defaultLoggingHandler = new LoggingHandler(LogLevel.DEBUG);
+    protected final ChannelHandler defaultLoggingHandler = new LoggingHandler(LogLevel.DEBUG);
 
     @Override
     protected void initChannelPipeline(ChannelPipeline channelPipeline, NioConfig nioCfg) {

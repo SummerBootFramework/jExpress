@@ -33,19 +33,19 @@ import java.util.concurrent.TimeUnit;
  */
 public class HealthMonitor {
 
-    private static final Logger log = LogManager.getLogger(HealthMonitor.class.getName());
+    protected static final Logger log = LogManager.getLogger(HealthMonitor.class.getName());
 
     protected static NioConfig nioCfg = NioConfig.cfg;
 
     public static final String PROMPT = "\tSelf Inspection Result: ";
 
-    private static AppLifecycleListener appLifecycleListener;
+    protected static AppLifecycleListener appLifecycleListener;
 
     public static void setAppLifecycleListener(AppLifecycleListener listener) {
         appLifecycleListener = listener;
     }
 
-    private static void startHealthInspectionSingleton(int inspectionIntervalSeconds, HealthInspector healthInspector) {
+    protected static void startHealthInspectionSingleton(int inspectionIntervalSeconds, HealthInspector healthInspector) {
         if (healthInspector == null || inspectionIntervalSeconds < 1) {
             log.debug(() -> "HealthInspection Skipped: healthInspector=" + healthInspector + ", inspectionIntervalSeconds=" + inspectionIntervalSeconds);
             return;
@@ -109,10 +109,10 @@ public class HealthMonitor {
         }
     }
 
-    private static boolean healthOk = true, paused = false;
-    private static String statusReason;
-    //private static HttpResponseStatus status = HttpResponseStatus.OK;
-    private static boolean serviceAvaliable = true;
+    protected static boolean healthOk = true, paused = false;
+    protected static String statusReason;
+    //protected static HttpResponseStatus status = HttpResponseStatus.OK;
+    protected static boolean serviceAvaliable = true;
 
     public static void setHealthStatus(boolean newStatus, String reason, HealthInspector healthInspector) {
         setHealthStatus(newStatus, reason, healthInspector, nioCfg.getHealthInspectionIntervalSeconds());
@@ -133,7 +133,7 @@ public class HealthMonitor {
         updateServiceStatus(serviceStatusChanged, reason);
     }
 
-    private static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
+    protected static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
         statusReason = reason;
         serviceAvaliable = healthOk && !paused;
         if (appLifecycleListener != null) {

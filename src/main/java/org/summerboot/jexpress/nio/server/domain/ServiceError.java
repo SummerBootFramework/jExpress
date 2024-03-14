@@ -31,13 +31,13 @@ import java.util.List;
 public class ServiceError {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The index of requests received by current server since start")
-    private final String ref;
+    protected final String ref;
 
     @JsonIgnore
-    private Object attachedData;
+    protected Object attachedData;
 
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "The optional error list")
-    private List<Err> errors;
+    protected List<Err> errors;
 
     public ServiceError(String ref) {
         this.ref = ref;

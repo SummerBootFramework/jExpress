@@ -33,11 +33,11 @@ import java.lang.management.ManagementFactory;
 @Singleton
 public class InstrumentationMgrImpl implements InstrumentationMgr {
 
-    private MBeanServer mBeanServer;
-    private ObjectName mbeanName;
+    protected MBeanServer mBeanServer;
+    protected ObjectName mbeanName;
 
     @Inject
-    private ServerStatusMBean mbean;
+    protected ServerStatusMBean mbean;
 
     @Override
     public void start(String beanName) throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {

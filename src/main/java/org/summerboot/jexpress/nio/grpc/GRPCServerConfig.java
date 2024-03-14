@@ -58,42 +58,42 @@ public class GRPCServerConfig extends BootConfig {
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8424, 127.0.0.1:8424, 0.0.0.0:8424")
     @Config(key = ID + ".bindings", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = true)
-    private volatile List<InetSocketAddress> bindingAddresses;
+    protected volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = ID + ".autostart", defaultValue = "true")
-    private volatile boolean autoStart;
+    protected volatile boolean autoStart;
 
     @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "Mixed",
             desc = "valid value = CPU (default), IO, Mixed")
-    private volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
+    protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
 
     @Config(key = ID + ".pool.coreSize", predefinedValue = "0",
             desc = "coreSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int tpeCore = BootConstant.CPU_CORE * 2 + 1;
+    protected volatile int tpeCore = BootConstant.CPU_CORE * 2 + 1;
 
     @Config(key = ID + ".pool.maxSize", predefinedValue = "0",
             desc = "maxSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int tpeMax = BootConstant.CPU_CORE * 2 + 1;
+    protected volatile int tpeMax = BootConstant.CPU_CORE * 2 + 1;
 
     @Config(key = ID + ".pool.queueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
-    private volatile int tpeQueue = Integer.MAX_VALUE;
+    protected volatile int tpeQueue = Integer.MAX_VALUE;
 
     @Config(key = ID + ".pool.keepAliveSeconds", defaultValue = "60")
-    private volatile long tpeKeepAliveSeconds = 60;
+    protected volatile long tpeKeepAliveSeconds = 60;
 
     @Config(key = ID + ".pool.prestartAllCoreThreads", defaultValue = "false")
-    private boolean prestartAllCoreThreads = false;
+    protected boolean prestartAllCoreThreads = false;
 
     @Config(key = ID + ".pool.allowCoreThreadTimeOut", defaultValue = "false")
-    private boolean allowCoreThreadTimeOut = false;
+    protected boolean allowCoreThreadTimeOut = false;
 
-    private ThreadPoolExecutor tpe = null;
+    protected ThreadPoolExecutor tpe = null;
 
     //2. TRC (The Remote Callee) keystore
-    private static final String KEY_kmf_key = ID + ".ssl.KeyStore";
-    private static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
-    private static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
-    private static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
+    protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    protected static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    protected static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    protected static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
 
     @ConfigHeader(title = "2. " + ID + " keystore")
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
@@ -111,8 +111,8 @@ public class GRPCServerConfig extends BootConfig {
     }
 
     //3. TRC (The Remote Callee) truststore    
-    private static final String KEY_tmf_key = ID + ".ssl.TrustStore";
-    private static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
+    protected static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    protected static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
             desc = DESC_TMF)

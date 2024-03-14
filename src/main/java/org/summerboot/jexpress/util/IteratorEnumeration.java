@@ -25,7 +25,7 @@ import java.util.Iterator;
 public class IteratorEnumeration<E> implements Enumeration<E> {
 
 
-    private final Iterator<E> iterator;
+    protected final Iterator<E> iterator;
 
     public IteratorEnumeration(Iterator<E> iterator) {
         this.iterator = iterator;

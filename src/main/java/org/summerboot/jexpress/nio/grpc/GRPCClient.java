@@ -57,7 +57,7 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
 
     }
 
-    private static final List<NameResolverProvider> NR_Providers = new ArrayList();
+    protected static final List<NameResolverProvider> NR_Providers = new ArrayList();
 
     /**
      * @param nameResolverProvider for client side load balancing

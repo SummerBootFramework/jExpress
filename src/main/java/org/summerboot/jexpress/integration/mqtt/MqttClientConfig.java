@@ -44,17 +44,17 @@ abstract public class MqttClientConfig extends BootConfig {
             format = "protocol://servername:port",
             example = "ssl://localhost:8883")// tcp/ssl/local/ws/wss
     @Config(key = ID + ".serverURI", predefinedValue = "ssl://localhost:8883", required = true)
-    private volatile String serverURI;
+    protected volatile String serverURI;
 
 
     @Config(key = ID + ".ssl.Protocol", defaultValue = "TLSv1.3")// "TLSv1.2, TLSv1.3"
     protected String sslProtocol;
 
     // 2. keystore
-    private static final String KEY_kmf_key = ID + ".ssl.KeyStore";
-    private static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
-    private static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
-    private static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
+    protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    protected static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    protected static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    protected static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
 
     @ConfigHeader(title = "2. " + ID + " keystore")
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
@@ -72,8 +72,8 @@ abstract public class MqttClientConfig extends BootConfig {
     }
 
     // 3. truststore
-    private static final String KEY_tmf_key = ID + ".ssl.TrustStore";
-    private static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
+    protected static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    protected static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
             desc = DESC_TMF)
@@ -89,6 +89,7 @@ abstract public class MqttClientConfig extends BootConfig {
     @Config(key = ID + ".VerifyHostname", defaultValue = "true")
     protected volatile boolean verifyHostname;
 
+    @JsonIgnore
     protected volatile SocketFactory socketFactory;
 
     @ConfigHeader(title = "4. " + ID + " user credential")
@@ -124,10 +125,13 @@ abstract public class MqttClientConfig extends BootConfig {
     public void shutdown() {
     }
 
+    public MqttAsyncClient build() throws MqttException {
+        return new MqttAsyncClient(serverURI, clientId, null, null, null);
+    }
+
 
     public MqttAsyncClient build(MqttClientPersistence persistence, MqttPingSender pingSender, ScheduledExecutorService executorService) throws MqttException {
-        MqttAsyncClient asyncClient = new MqttAsyncClient(serverURI, clientId, persistence, pingSender, executorService);
-        return asyncClient;
+        return new MqttAsyncClient(serverURI, clientId, persistence, pingSender, executorService);
     }
 
     public MqttConnectionOptions buildConnectionOptions() {

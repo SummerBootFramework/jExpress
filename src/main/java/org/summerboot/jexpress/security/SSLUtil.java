@@ -52,7 +52,7 @@ public class SSLUtil {
         client, server
     }
 
-    private static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
+    protected static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
     public static final TrustManager[] TRUST_ALL_CERTIFICATES = new TrustManager[]{
             new X509TrustManager() {
 
@@ -71,7 +71,7 @@ public class SSLUtil {
                     //checkTrusted(Caller.server, certs, authType);
                 }
 
-//            private void checkTrusted(Caller caller, X509Certificate[] certs, String authType) {
+//            protected void checkTrusted(Caller caller, X509Certificate[] certs, String authType) {
 //                System.out.println(caller + ".authType=" + authType);
 //                for (X509Certificate cer : certs) {
 //                    System.out.println(caller + ".cer=" + cer.getSubjectDN());

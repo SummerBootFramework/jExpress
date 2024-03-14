@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class RPCResult<T, E extends ServiceErrorConvertible> {
 
-    private static boolean isFromJsonFailOnUnknownProperties = true;
+    protected static boolean isFromJsonFailOnUnknownProperties = true;
 
     public static ObjectMapper DefaultJacksonMapper = new ObjectMapper();
 
@@ -65,13 +65,13 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         init(true, false);
     }
 
-    private final HttpResponse httpResponse;
-    private final String rpcResponseBody;
-    private final int httpStatusCode;
-    private final HttpResponseStatus httpStatus;
-    private final boolean remoteSuccess;
-    private T successResponse;
-    private E errorResponse;
+    protected final HttpResponse httpResponse;
+    protected final String rpcResponseBody;
+    protected final int httpStatusCode;
+    protected final HttpResponseStatus httpStatus;
+    protected final boolean remoteSuccess;
+    protected T successResponse;
+    protected E errorResponse;
 
     public RPCResult(HttpResponse httpResponse, boolean remoteSuccess) {
         this.httpResponse = httpResponse;

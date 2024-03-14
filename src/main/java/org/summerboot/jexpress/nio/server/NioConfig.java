@@ -70,23 +70,23 @@ public class NioConfig extends BootConfig {
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
             example = "192.168.1.10:8311, 127.0.0.1:8311, 0.0.0.0:8311")
     @Config(key = "nio.server.bindings", predefinedValue = "0.0.0.0:8211, 0.0.0.0:8311", required = true)
-    private volatile List<InetSocketAddress> bindingAddresses;
+    protected volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = "nio.server.autostart", defaultValue = "true")
-    private volatile boolean autoStart = true;
+    protected volatile boolean autoStart = true;
 
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")
 
-    private static final String KEY_kmf_key = "nio.server.ssl.KeyStore";
-    private static final String KEY_kmf_StorePwdKey = "nio.server.ssl.KeyStorePwd";
-    private static final String KEY_kmf_AliasKey = "nio.server.ssl.KeyAlias";
-    private static final String KEY_kmf_AliasPwdKey = "nio.server.ssl.KeyPwd";
+    protected static final String KEY_kmf_key = "nio.server.ssl.KeyStore";
+    protected static final String KEY_kmf_StorePwdKey = "nio.server.ssl.KeyStorePwd";
+    protected static final String KEY_kmf_AliasKey = "nio.server.ssl.KeyAlias";
+    protected static final String KEY_kmf_AliasPwdKey = "nio.server.ssl.KeyPwd";
 
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
             desc = DESC_KMF,
             callbackMethodName4Dump = "generateTemplate_keystore")
-    private volatile KeyManagerFactory kmf = null;
+    protected volatile KeyManagerFactory kmf = null;
 
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
@@ -96,12 +96,12 @@ public class NioConfig extends BootConfig {
         generateTemplate = true;
     }
 
-    private static final String KEY_tmf_key = "nio.server.ssl.TrustStore";
-    private static final String KEY_tmf_StorePwdKey = "nio.server.ssl.TrustStorePwd";
+    protected static final String KEY_tmf_key = "nio.server.ssl.TrustStore";
+    protected static final String KEY_tmf_StorePwdKey = "nio.server.ssl.TrustStorePwd";
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
             desc = DESC_TMF)
     @JsonIgnore
-    private volatile TrustManagerFactory tmf = null;
+    protected volatile TrustManagerFactory tmf = null;
 
     //    protected void generateTemplate_truststore(StringBuilder sb) {
 //        sb.append(KEY_tmf_key + "="+FILENAME_TRUSTSTORE_4SERVER+"\n");
@@ -109,174 +109,174 @@ public class NioConfig extends BootConfig {
 //        generateTemplate = true;
 //    }
     @Config(key = "nio.server.ssl.VerifyCertificateHost", defaultValue = "false")
-    private volatile boolean verifyCertificateHost = false;
+    protected volatile boolean verifyCertificateHost = false;
 
     @Config(key = "nio.server.ssl.Provider", defaultValue = "OPENSSL")
-    private volatile SslProvider sslProvider = SslProvider.OPENSSL;
+    protected volatile SslProvider sslProvider = SslProvider.OPENSSL;
 
     @Config(key = "nio.server.ssl.Protocols", defaultValue = "TLSv1.2, TLSv1.3")
-    private String[] sslProtocols = {"TLSv1.2", "TLSv1.3"};
+    protected String[] sslProtocols = {"TLSv1.2", "TLSv1.3"};
 
     @Config(key = "nio.server.ssl.CipherSuites",
             desc = "use system default ciphersuites when not specified")
-    private String[] sslCipherSuites;
+    protected String[] sslCipherSuites;
 
     //3.1 Socket controller
     @ConfigHeader(title = "3.1 Socket controller")
 
     @Config(key = "nio.server.socket.SO_REUSEADDR", defaultValue = "true")
-    private volatile boolean soReuseAddr = true;
+    protected volatile boolean soReuseAddr = true;
 
     @Config(key = "nio.server.socket.SO_KEEPALIVE", defaultValue = "true")
-    private volatile boolean soKeepAlive = true;
+    protected volatile boolean soKeepAlive = true;
 
     @Config(key = "nio.server.socket.TCP_NODELAY", defaultValue = "true")
-    private volatile boolean soTcpNodelay = true;
+    protected volatile boolean soTcpNodelay = true;
 
     @Config(key = "nio.server.socket.SO_LINGER", defaultValue = "-1")
-    private volatile int soLinger = -1;
+    protected volatile int soLinger = -1;
 
     //3.2 Socket Performance
     @ConfigHeader(title = "3.2 Socket Performance")
 
     @Config(key = "nio.server.ssl.HandshakeTimeout.second", defaultValue = "30")
-    private volatile int sslHandshakeTimeoutSeconds = 30;
+    protected volatile int sslHandshakeTimeoutSeconds = 30;
 
     @Config(key = "nio.server.socket.CONNECT_TIMEOUT.second", defaultValue = "30")
-    private volatile int soConnectionTimeoutSeconds = 30;
+    protected volatile int soConnectionTimeoutSeconds = 30;
 
     @Config(key = "nio.server.socket.SO_BACKLOG", defaultValue = "1024")
-    private volatile int soBacklog = 1024;
+    protected volatile int soBacklog = 1024;
 
     @Config(key = "nio.server.socket.SO_RCVBUF", defaultValue = "1048576",
             desc = " - cat /proc/sys/net/ipv4/tcp_rmem (max 1024k)")
-    private volatile int soRcvBuf = 1048576;
+    protected volatile int soRcvBuf = 1048576;
 
     @Config(key = "nio.server.socket.SO_SNDBUF", defaultValue = "1048576",
             desc = " - cat /proc/sys/net/ipv4/tcp_smem (max 1024k)")
-    private volatile int soSndBuf = 1048576;
+    protected volatile int soSndBuf = 1048576;
     @Config(key = "nio.server.HttpObjectAggregator.maxContentLength", defaultValue = "65536",
             desc = "default - 64kb")
-    private volatile int httpObjectAggregatorMaxContentLength = 65536;
+    protected volatile int httpObjectAggregatorMaxContentLength = 65536;
 
     //4.1 Netty controller
     @ConfigHeader(title = "4.1 Netty controller")
 
     @Config(key = "nio.server.multiplexer", defaultValue = "AVAILABLE")
-    private volatile IoMultiplexer multiplexer = IoMultiplexer.AVAILABLE;
+    protected volatile IoMultiplexer multiplexer = IoMultiplexer.AVAILABLE;
 
     @Config(key = "nio.server.httpServerCodec.MaxInitialLineLength", defaultValue = "8192")
-    private volatile int httpServerCodec_MaxInitialLineLength = 8192;
+    protected volatile int httpServerCodec_MaxInitialLineLength = 8192;
 
     @Config(key = "nio.server.httpServerCodec.MaxHeaderSize", defaultValue = "8192")
-    private volatile int httpServerCodec_MaxHeaderSize = 8192;
+    protected volatile int httpServerCodec_MaxHeaderSize = 8192;
 
     @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "8192")
-    private volatile int httpServerCodec_MaxChunkSize = 8192;
+    protected volatile int httpServerCodec_MaxChunkSize = 8192;
 
     @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Exector Pool")
     @Config(key = "nio.server.EventLoopGroup.AcceptorSize", defaultValue = "0",
             desc = "AcceptorSize 0 = number of bindings")
-    private volatile int nioEventLoopGroupAcceptorSize = 0;
+    protected volatile int nioEventLoopGroupAcceptorSize = 0;
 
     @Config(key = "nio.server.EventLoopGroup.WorkerSize", predefinedValue = "0",
             desc = "WorkerSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
-    //private volatile int nioEventLoopGroupExecutorSize;
+    protected volatile int nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
+    //protected volatile int nioEventLoopGroupExecutorSize;
 
     @Config(key = "nio.server.BizExecutor.mode", defaultValue = "Mixed",
             desc = "valid value = CPU, IO (default), Mixed\nuse CPU core + 1 when application is CPU bound\n"
                     + "use CPU core x 2 + 1 when application is I/O bound\n"
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
-    private volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
+    protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
 
     @Config(key = "nio.server.BizExecutor.CoreSize", predefinedValue = "0",
             desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int tpeCore = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+    protected volatile int tpeCore = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
 
     @Config(key = "nio.server.BizExecutor.MaxSize", predefinedValue = "0",
             desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
-    private volatile int tpeMax = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+    protected volatile int tpeMax = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
 
     @Config(key = "nio.server.BizExecutor.KeepAliveSec", defaultValue = "60")
-    private volatile int tpeKeepAliveSeconds = 60;
+    protected volatile int tpeKeepAliveSeconds = 60;
 
     @Config(key = "nio.server.BizExecutor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
-    private volatile int tpeQueue = Integer.MAX_VALUE;// waiting list size when the pool is full
+    protected volatile int tpeQueue = Integer.MAX_VALUE;// waiting list size when the pool is full
 
     @Config(key = "nio.server.BizExecutor.prestartAllCoreThreads", defaultValue = "false")
-    private boolean prestartAllCoreThreads = false;
+    protected boolean prestartAllCoreThreads = false;
 
     @Config(key = "nio.server.BizExecutor.allowCoreThreadTimeOut", defaultValue = "false")
-    private boolean allowCoreThreadTimeOut = false;
+    protected boolean allowCoreThreadTimeOut = false;
 
     //4.2 Netty Performance - NIO and Biz Exector Pool
-    private ThreadPoolExecutor tpe = null;
+    protected ThreadPoolExecutor tpe = null;
 
     @Config(key = "nio.server.BizExecutor.bizTimeoutWarnThresholdMs", defaultValue = "5000")
-    private volatile long bizTimeoutWarnThresholdMs = 5000L;
+    protected volatile long bizTimeoutWarnThresholdMs = 5000L;
 
     //4.3 Netty Channel Handler
     @ConfigHeader(title = "4.3 Netty Channel Handler")
     @Config(key = "nio.server.ReaderIdleSeconds", defaultValue = "0",
             desc = "rec Idle enabled only when value > 0")
-    private volatile int readerIdleSeconds = 0;
+    protected volatile int readerIdleSeconds = 0;
 
     @Config(key = "nio.server.WriterIdleSeconds", defaultValue = "0",
             desc = "Sent Idle enabled only when value > 0")
-    private volatile int writerIdleSeconds = 0;
+    protected volatile int writerIdleSeconds = 0;
 
     @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
-    private volatile int healthInspectionIntervalSeconds = 5;
+    protected volatile int healthInspectionIntervalSeconds = 5;
 
     @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive", defaultValue = "false")
-    private volatile boolean fromJsonCaseInsensitive = false;
+    protected volatile boolean fromJsonCaseInsensitive = false;
     @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
-    private volatile boolean fromJsonFailOnUnknownProperties = true;
+    protected volatile boolean fromJsonFailOnUnknownProperties = true;
     @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
-    private volatile boolean toJsonIgnoreNull = true;
+    protected volatile boolean toJsonIgnoreNull = true;
     @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
-    private volatile boolean toJsonPretty = false;
+    protected volatile boolean toJsonPretty = false;
 
     @Config(key = "nio.WebSocket.Compress", defaultValue = "true")
-    private volatile boolean webSocketCompress = true;
+    protected volatile boolean webSocketCompress = true;
 
     @Config(key = "nio.WebSocket.AllowExtensions", defaultValue = "true")
-    private volatile boolean webSocketAllowExtensions = true;
+    protected volatile boolean webSocketAllowExtensions = true;
 
     @Config(key = "nio.WebSocket.maxFrameSize", defaultValue = "5242880")
-    private volatile int webSocketMaxFrameSize = 5242880;
+    protected volatile int webSocketMaxFrameSize = 5242880;
 
     @Config(key = "nio.WebSocket.AllowMaskMismatch", defaultValue = "false")
-    private volatile boolean webSocketAllowMaskMismatch = false;
+    protected volatile boolean webSocketAllowMaskMismatch = false;
     @Config(key = "nio.WebSocket.CheckStartsWith", defaultValue = "false")
-    private volatile boolean webSocketCheckStartsWith = false;
+    protected volatile boolean webSocketCheckStartsWith = false;
     @Config(key = "nio.WebSocket.DropPongFrames", defaultValue = "true")
-    private volatile boolean webSocketDropPongFrames = true;
+    protected volatile boolean webSocketDropPongFrames = true;
     @Config(key = "nio.WebSocket.HandshakeTimeoutMs", defaultValue = "10000")
-    private volatile long webSocketHandshakeTimeoutMs = 10000L;//io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig.DEFAULT_HANDSHAKE_TIMEOUT_MILLIS;
+    protected volatile long webSocketHandshakeTimeoutMs = 10000L;//io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig.DEFAULT_HANDSHAKE_TIMEOUT_MILLIS;
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
     @Config(key = "nio.verbose.filter.usertype", defaultValue = "ignore",
             desc = "5.1 caller filter\n"
                     + "valid value = id, uid, group, role, ignore")
-    private volatile VerboseTargetUserType filterUserType = VerboseTargetUserType.ignore;
+    protected volatile VerboseTargetUserType filterUserType = VerboseTargetUserType.ignore;
 
     public enum VerboseTargetUserType {
         id, uid, group, role, ignore
     }
 
-    private static final String KEY_FILTER_USERTYPE_RANGE = "nio.verbose.filter.usertype.range";
+    protected static final String KEY_FILTER_USERTYPE_RANGE = "nio.verbose.filter.usertype.range";
     @Config(key = KEY_FILTER_USERTYPE_RANGE,
             desc = "user range (when type=CallerId): N1 - N2 or N1, N2, ... , Nn \n"
                     + "user range (when type=CallerName): johndoe, janedoe")
-    private volatile String filterUserVaue;
-    private volatile Set<String> filterCallerNameSet;
-    private volatile Set<Long> filterCallerIdSet;
-    private volatile long filterCallerIdFrom;
-    private volatile long filterCallerIdTo;
+    protected volatile String filterUserVaue;
+    protected volatile Set<String> filterCallerNameSet;
+    protected volatile Set<Long> filterCallerIdSet;
+    protected volatile long filterCallerIdFrom;
+    protected volatile long filterCallerIdTo;
 
     //5.2 error code filter
     public enum VerboseTargetCodeType {
@@ -285,30 +285,30 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.verbose.filter.codetype", defaultValue = "all",
             desc = "valid value = HttpStatusCode, AppErrorCode, all, ignore")
-    private volatile VerboseTargetCodeType filterCodeType = VerboseTargetCodeType.all;
-    private static final String KEY_FILTER_CODETYPE_RANGE = "nio.verbose.filter.codetype.range";
+    protected volatile VerboseTargetCodeType filterCodeType = VerboseTargetCodeType.all;
+    protected static final String KEY_FILTER_CODETYPE_RANGE = "nio.verbose.filter.codetype.range";
     @Config(key = KEY_FILTER_CODETYPE_RANGE,
             desc = "5.2 error code filter\n"
                     + "code range: N1 - N2 or N1, N2, ... , Nn")
-    private volatile String filterCodeVaue;
-    private volatile Set<Long> filterCodeSet;
-    private volatile long filterCodeRangeFrom;
-    private volatile long filterCodeRangeTo;
+    protected volatile String filterCodeVaue;
+    protected volatile Set<Long> filterCodeSet;
+    protected volatile long filterCodeRangeFrom;
+    protected volatile long filterCodeRangeTo;
     //5.3 verbose aspect
     @Config(key = "nio.verbose.aspect.ReqHeader", defaultValue = "true")
-    private volatile boolean verboseReqHeader = true;
+    protected volatile boolean verboseReqHeader = true;
     @Config(key = "nio.verbose.aspect.ReqContent", defaultValue = "true")
-    private volatile boolean verboseReqContent = true;
+    protected volatile boolean verboseReqContent = true;
     @Config(key = "nio.verbose.aspect.RespHeader", defaultValue = "true")
-    private volatile boolean verboseRespHeader = true;
+    protected volatile boolean verboseRespHeader = true;
     @Config(key = "nio.verbose.aspect.RespContent", defaultValue = "true")
-    private volatile boolean verboseRespContent = true;
+    protected volatile boolean verboseRespContent = true;
 
     //6. POI filter
     @ConfigHeader(title = "6. POI logging filter")
     @Config(key = "nio.verbose.ServiceTimePOI.type", defaultValue = "all",
             desc = "valid value = filter, all, ignore")
-    private volatile VerboseTargetPOIType filterPOIType = VerboseTargetPOIType.all;
+    protected volatile VerboseTargetPOIType filterPOIType = VerboseTargetPOIType.all;
 
     public enum VerboseTargetPOIType {
         filter, all, ignore
@@ -316,26 +316,26 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.verbose.ServiceTimePOI.filter", defaultValue = "auth.begin, auth.end, db.begin, db.end",
             desc = "CSV format")
-    private volatile Set<String> filterPOISet;
+    protected volatile Set<String> filterPOISet;
 
-    private static final String HEADER_SERVER_RESPONSE = "server.DefaultResponseHttpHeaders.";
+    protected static final String HEADER_SERVER_RESPONSE = "server.DefaultResponseHttpHeaders.";
 
     //7. Web Server Mode
     @ConfigHeader(title = "7. Web Server Mode")
     @Config(key = "server.http.web.docroot", defaultValue = "docroot")
-    private volatile String docroot = "docroot";
+    protected volatile String docroot = "docroot";
 
     @Config(key = "server.http.web.docroot.errorPageFolderName", defaultValue = "errorpages")
-    private volatile String errorPageFolderName = "errorpages";
+    protected volatile String errorPageFolderName = "errorpages";
 
     @Config(key = "server.http.web.welcomePage", defaultValue = "index.html")
-    private volatile String welcomePage = "index.html";
+    protected volatile String welcomePage = "index.html";
 
     @Config(key = "server.http.web-server.tempupload", defaultValue = "temp/upload")
-    private volatile String tempUoload = "temp/upload";
+    protected volatile String tempUoload = "temp/upload";
 
-    private volatile boolean downloadMode;
-    private volatile File rootFolder;
+    protected volatile boolean downloadMode;
+    protected volatile File rootFolder;
 
     //8. Default NIO Response HTTP Headers
     @ConfigHeader(title = "8. Default Server Response HTTP Headers",
@@ -355,7 +355,7 @@ public class NioConfig extends BootConfig {
                     + HEADER_SERVER_RESPONSE + "X-Content-Type-Options=nosniff\n"
                     + HEADER_SERVER_RESPONSE + "Feature-Policy=autoplay 'none';camera 'none' ",
             callbackMethodName4Dump = "generateTemplate_ResponseHeaders")
-    private HttpHeaders serverDefaultResponseHeaders;
+    protected HttpHeaders serverDefaultResponseHeaders;
 
     protected void generateTemplate_ResponseHeaders(StringBuilder sb) {
         sb.append("#").append(HEADER_SERVER_RESPONSE).append("response_header_name=response_header_value\n");
@@ -365,8 +365,8 @@ public class NioConfig extends BootConfig {
         return serverDefaultResponseHeaders;
     }
 
-    private String docrootDir;
-    private String tempUoloadDir;
+    protected String docrootDir;
+    protected String tempUoloadDir;
 
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {

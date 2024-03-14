@@ -31,7 +31,7 @@ import org.quartz.impl.StdSchedulerFactory;
 public class GuiceSchedulerProvider implements Provider<Scheduler> {
 
     @Inject
-    private Injector injector;
+    protected Injector injector;
 
     @Override
     public Scheduler get() {

@@ -161,7 +161,7 @@ abstract public class BootController extends PingController {
         context.txt(getVersion()).status(HttpResponseStatus.OK);
     }
 
-    private String version;
+    protected String version;
 
     protected String getVersion() {
         if (version == null) {

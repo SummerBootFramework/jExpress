@@ -49,7 +49,7 @@ import java.util.function.Function;
  */
 public class JaxRsRequestProcessorManager {
 
-    private static class ProcessorMeta {
+    protected static class ProcessorMeta {
 
         final String key;
         final String url;
@@ -75,9 +75,9 @@ public class JaxRsRequestProcessorManager {
 
     }
 
-    private static final Map<String, List<ProcessorMeta>> registeredProcessors = new HashMap();
+    protected static final Map<String, List<ProcessorMeta>> registeredProcessors = new HashMap();
 
-    private static void registerProcessor(String key, String path, Method method, Object instance) {
+    protected static void registerProcessor(String key, String path, Method method, Object instance) {
         List<ProcessorMeta> processors = registeredProcessors.get(key);
         if (processors == null) {
             processors = new ArrayList();
@@ -88,7 +88,7 @@ public class JaxRsRequestProcessorManager {
 
     public static final String KEY_PING = Ping.class.getName();
 
-    private static void checkDuplicated(StringBuilder errors, StringBuilder memo) {
+    protected static void checkDuplicated(StringBuilder errors, StringBuilder memo) {
         List<ProcessorMeta> pingProcessors = registeredProcessors.remove(KEY_PING);
         if (pingProcessors != null) {
             for (ProcessorMeta pingProcessor : pingProcessors) {
@@ -262,8 +262,8 @@ public class JaxRsRequestProcessorManager {
         processorMapRegex = regexMap;
     }
 
-    private static Map<HttpMethod, Map<String, RequestProcessor>> processorMapString;
-    private static Map<HttpMethod, Map<String, RequestProcessor>> processorMapRegex;
+    protected static Map<HttpMethod, Map<String, RequestProcessor>> processorMapString;
+    protected static Map<HttpMethod, Map<String, RequestProcessor>> processorMapRegex;
 
     public static RequestProcessor getRequestProcessor(final HttpMethod httptMethod, final String httpRequestPath) {
         if (processorMapString == null) {
@@ -290,7 +290,7 @@ public class JaxRsRequestProcessorManager {
     }
 
     //@SuppressWarnings("unchecked")
-    private static <T> T create(Class<T> clazz) {
+    protected static <T> T create(Class<T> clazz) {
         return (T) Proxy.newProxyInstance(clazz.getClassLoader(), clazz.getInterfaces(), new InvocationHandler() {
             @Override
 

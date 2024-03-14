@@ -69,7 +69,7 @@ public class ConfigUtil {
 //        Path p = Paths.get(configFolder.toString(), cfgFile);
 //        return p.toFile();
 //    }
-    private static ConfigChangeListener listener;
+    protected static ConfigChangeListener listener;
 
     public static void setConfigChangeListener(ConfigChangeListener l) {
         listener = l;
@@ -188,8 +188,8 @@ public class ConfigUtil {
         return updated;
     }
 
-    private StringBuilder sb = null;
-    private final String cfgFile;
+    protected StringBuilder sb = null;
+    protected final String cfgFile;
 
     public ConfigUtil(String cfgFile) {
         this.cfgFile = cfgFile;

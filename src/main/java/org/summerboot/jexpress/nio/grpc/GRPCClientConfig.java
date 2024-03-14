@@ -57,15 +57,15 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     //1. NIO Network Listeners
     @ConfigHeader(title = "1. " + ID + " provider",
-            format = "ip1:port1, ip2:port2, ..., ipN:portN",
-            example = "192.168.1.10:8424, 127.0.0.1:8425, 0.0.0.0:8426")
+            format = "server1:port1, server2:port2, ..., serverN:portN",
+            example = "localhost:8424, remotehost:8425, 127.0.0.1:8426")
     @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = false)
-    private volatile List<InetSocketAddress> loadBalancingServers;
+    protected volatile List<InetSocketAddress> loadBalancingServers;
 
     @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN", desc = "available options: ROUND_ROBIN, PICK_FIRST")
-    private volatile GRPCClient.LoadBalancingPolicy loadBalancingPolicy;
+    protected volatile GRPCClient.LoadBalancingPolicy loadBalancingPolicy;
 
-    private volatile NameResolverProvider nameResolverProvider;
+    protected volatile NameResolverProvider nameResolverProvider;
 
     //1. gRPC connection
     @Config(key = ID + ".target.url", defaultValue = "grpc:///",
@@ -80,10 +80,10 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected List ciphers;
 
     //2. TRC (The Remote Caller) keystore    
-    private static final String KEY_kmf_key = ID + ".ssl.KeyStore";
-    private static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
-    private static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
-    private static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
+    protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    protected static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    protected static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    protected static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
 
     @ConfigHeader(title = "2. " + ID + " keystore")
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
@@ -101,8 +101,8 @@ abstract public class GRPCClientConfig extends BootConfig {
     }
 
     //3. TRC (The Remote Caller) truststore
-    private static final String KEY_tmf_key = ID + ".ssl.TrustStore";
-    private static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
+    protected static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    protected static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
             desc = DESC_TMF)

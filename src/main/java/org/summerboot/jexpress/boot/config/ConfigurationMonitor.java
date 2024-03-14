@@ -33,17 +33,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConfigurationMonitor implements FileAlterationListener {
 
-    private static final Logger log = LogManager.getLogger(ConfigurationMonitor.class.getName());
+    protected static final Logger log = LogManager.getLogger(ConfigurationMonitor.class.getName());
 
     public static final ConfigurationMonitor listener = new ConfigurationMonitor();
 
     public static final String APUSE_FILE_NAME = "pause";
 
-    private volatile boolean running;
-    private Map<File, Runnable> cfgUpdateTasks;
-    private FileAlterationMonitor monitor;
+    protected volatile boolean running;
+    protected Map<File, Runnable> cfgUpdateTasks;
+    protected FileAlterationMonitor monitor;
 
-    private ConfigurationMonitor() {
+    protected ConfigurationMonitor() {
     }
 
     public void start(File folder, int intervalSec, Map<File, Runnable> cfgUpdateTasks) throws Exception {
