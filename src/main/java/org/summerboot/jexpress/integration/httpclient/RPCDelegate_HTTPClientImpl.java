@@ -126,27 +126,27 @@ public abstract class RPCDelegate_HTTPClientImpl {
      * @param <T>
      * @param <E>
      * @param context
-     * @param req
-     * @param reqBody
+     * @param originRequest
+     * @param originRequestBody
      * @param successStatusList
      * @return a Non-Null RPCResult
      * @throws IOException
      */
-    protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext context, HttpRequest req, String reqBody, HttpResponseStatus... successStatusList) throws IOException {
+    protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException {
         //1. log memo
-        context.memo(RPCMemo.MEMO_RPC_REQUEST, req.toString() + " caller=" + context.caller());
-        if (reqBody != null) {
-            context.memo(RPCMemo.MEMO_RPC_REQUEST_DATA, reqBody);
+        context.memo(RPCMemo.MEMO_RPC_REQUEST, originRequest.toString() + " caller=" + context.caller());
+        if (originRequestBody != null) {
+            context.memo(RPCMemo.MEMO_RPC_REQUEST_DATA, originRequestBody);
         }
         //2. call remote sever
         HttpResponse httpResponse;
         context.poi(BootPOI.RPC_BEGIN);
         try {
             HttpClientConfig httpCfg = getHttpClientConfig();
-            httpResponse = httpCfg.getHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
+            httpResponse = httpCfg.getHttpClient().send(originRequest, HttpResponse.BodyHandlers.ofString());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            return onInterrupted(req, context, ex);
+            return onInterrupted(originRequest, originRequestBody, context, ex);
         } finally {
             context.poi(BootPOI.RPC_END);
         }
@@ -166,7 +166,7 @@ public abstract class RPCDelegate_HTTPClientImpl {
         }
 
         //3b. update status   
-        RPCResult<T, E> rpcResult = new RPCResult(httpResponse, isRemoteSuccess);
+        RPCResult<T, E> rpcResult = new RPCResult(originRequest, originRequestBody, httpResponse, isRemoteSuccess);
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
         context.memo(RPCMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + httpResponse.headers());
         context.memo(RPCMemo.MEMO_RPC_RESPONSE_DATA, rpcResponseJsonBody);
@@ -175,17 +175,33 @@ public abstract class RPCDelegate_HTTPClientImpl {
     }
 
     /**
+     * Reset request
+     *
+     * @param context
+     * @param request
+     * @param successStatusList
      * @param <T>
      * @param <E>
-     * @param req
+     * @return
+     * @throws IOException
+     */
+    protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext context, RPCResult<T, E> request, HttpResponseStatus... successStatusList) throws IOException {
+        return this.rpcEx(context, request.getOriginRequest(), request.getOriginRequestBody(), successStatusList);
+    }
+
+    /**
+     * @param originRequest
+     * @param originRequestBody
      * @param serviceContext
      * @param ex
+     * @param <T>
+     * @param <E>
      * @return
      */
-    protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> onInterrupted(HttpRequest req, ServiceContext serviceContext, Throwable ex) {
+    protected <T, E extends ServiceErrorConvertible> RPCResult<T, E> onInterrupted(HttpRequest originRequest, String originRequestBody, ServiceContext serviceContext, Throwable ex) {
         Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, null, ex, "RPC Interrupted");
         serviceContext.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
-        return new RPCResult(null, false);
+        return new RPCResult(originRequest, originRequestBody, null, false);
     }
 
 }

@@ -30,6 +30,7 @@ import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
@@ -65,6 +66,9 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         init(true, false);
     }
 
+    protected final HttpRequest originRequest;
+
+    protected final String originRequestBody;
     protected final HttpResponse httpResponse;
     protected final String rpcResponseBody;
     protected final int httpStatusCode;
@@ -73,12 +77,22 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
     protected T successResponse;
     protected E errorResponse;
 
-    public RPCResult(HttpResponse httpResponse, boolean remoteSuccess) {
+    public RPCResult(HttpRequest originRequest, String originRequestBody, HttpResponse httpResponse, boolean remoteSuccess) {
+        this.originRequest = originRequest;
+        this.originRequestBody = originRequestBody;
         this.httpResponse = httpResponse;
         this.rpcResponseBody = httpResponse == null ? null : String.valueOf(httpResponse.body());
         this.httpStatusCode = httpResponse == null ? 0 : httpResponse.statusCode();
         this.httpStatus = HttpResponseStatus.valueOf(httpStatusCode);
         this.remoteSuccess = remoteSuccess;
+    }
+
+    public HttpRequest getOriginRequest() {
+        return originRequest;
+    }
+
+    public String getOriginRequestBody() {
+        return originRequestBody;
     }
 
     public HttpResponse httpResponse() {
