@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.4.4-SNAPSHOT</version>
+    <version>2.4.4</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -194,14 +194,14 @@
         <jwt.version>0.11.5</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.107.Final</netty.version>
+        <netty.version>4.1.108.Final</netty.version>
         <netty-tcnative.version>2.0.65.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.62.2</grpc.version>
-        <guava.version>33.0.0-jre</guava.version>
-        <protobuf.version>3.25.3</protobuf.version>
+        <guava.version>33.1.0-jre</guava.version>
+        <protobuf.version>4.26.0</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.20</swagger.core.version>
+        <swagger.core.version>2.2.21</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -213,7 +213,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.16.2</jackson.version>
+        <jackson.version>2.17.0</jackson.version>
         <!-- Bean Validation -->
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <jakarta.el.version>5.0.1</jakarta.el.version>

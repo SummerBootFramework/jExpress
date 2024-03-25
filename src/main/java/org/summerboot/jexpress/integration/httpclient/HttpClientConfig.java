@@ -36,6 +36,7 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -154,7 +155,13 @@ abstract public class HttpClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile HttpClient httpClient;
 
-    @Config(key = "httpclient.timeout.ms")
+    @JsonIgnore
+    protected volatile HttpClient.Builder builder;
+
+    @Config(key = "httpclient.timeout.connect.ms", desc = "The maximum time to wait for only the connection to be established, should be less than httpclient.timeout.ms")
+    protected volatile long httpConnectTimeoutMs = 3000;
+
+    @Config(key = "httpclient.timeout.ms", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
     protected volatile long httpClientTimeoutMs = 5000;
 
     @Config(key = "httpclient.executor.CoreSize", predefinedValue = "0",
@@ -232,9 +239,9 @@ abstract public class HttpClientConfig extends BootConfig {
 
         RPCResult.init(fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive);
 
-        // 3.1 HTTP Client keystore        
+        // 3.1 HTTP Client keystore
         KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
-        // 3.2 HTTP Client truststore        
+        // 3.2 HTTP Client truststore
         TrustManager[] trustManagers = tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
         SSLContext sslContext = SSLUtil.buildSSLContext(keyManagers, trustManagers, protocol);
         if (hostnameVerification != null) {
@@ -273,17 +280,18 @@ abstract public class HttpClientConfig extends BootConfig {
         boolean isHttpClientSettingsChanged = tpe.hashCode() != currentTpeHashCode;
         // 1. save
         ScheduledExecutorService sesold = ses;
-        // 2. build new 
+        // 2. build new
 //                tpe = new ThreadPoolExecutor(currentCore, currentMax, 60L, TimeUnit.SECONDS,
 //                        new LinkedBlockingQueue<>(currentQueue), new NamedDefaultThreadFactory("HttpClient"), new AbortPolicyWithReport("HttpClientExecutor"));
 
-        HttpClient.Builder builder = HttpClient.newBuilder()
-                .executor(tpe);
+        builder = HttpClient.newBuilder()
+                .executor(tpe)
+                .version(HttpClient.Version.HTTP_2)
+                .followRedirects(redirectOption)
+                .connectTimeout(Duration.ofMillis(httpConnectTimeoutMs));
         if (sslContext != null) {
             builder.sslContext(sslContext);
         }
-        builder.version(HttpClient.Version.HTTP_2)
-                .followRedirects(redirectOption);
         if (StringUtils.isNotBlank(proxyHost)) {
             builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
         }
@@ -345,6 +353,16 @@ abstract public class HttpClientConfig extends BootConfig {
         return httpClient;
     }
 
+    public HttpClient.Builder getBuilder() {
+        return builder;
+    }
+
+    public HttpClient updateBuilder(HttpClient.Builder builder) {
+        this.builder = builder;
+        this.httpClient = builder.build();
+        return this.httpClient;
+    }
+
     public Map<String, String> getHttpClientDefaultRequestHeaders() {
         return httpClientDefaultRequestHeaders;
     }
@@ -383,6 +401,10 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public boolean isFromJsonFailOnUnknownProperties() {
         return fromJsonFailOnUnknownProperties;
+    }
+
+    public long getHttpConnectTimeoutMs() {
+        return httpConnectTimeoutMs;
     }
 
     public long getHttpClientTimeoutMs() {

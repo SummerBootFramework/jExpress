@@ -35,6 +35,7 @@ import org.summerboot.jexpress.security.auth.Authenticator;
 
 import javax.naming.NamingException;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpTimeoutException;
 import java.nio.channels.UnresolvedAddressException;
@@ -114,14 +115,17 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             httpExceptionListener.onNamingException(ex, httptMethod, httpRequestPath, context);
         } catch (PersistenceException ex) {
             httpExceptionListener.onPersistenceException(ex, httptMethod, httpRequestPath, context);
-        } catch (
-                HttpConnectTimeoutException ex) {// a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
+        } catch (HttpConnectTimeoutException ex) {
+            // a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
             httpExceptionListener.onHttpConnectTimeoutException(ex, httptMethod, httpRequestPath, context);
-        } catch (HttpTimeoutException ex) {// a context is not received within a specified time period.
+        } catch (HttpTimeoutException ex) {
+            // a context is not received within a specified time period.
             httpExceptionListener.onHttpTimeoutException(ex, httptMethod, httpRequestPath, context);
         } catch (RejectedExecutionException ex) {
             httpExceptionListener.onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
-        } catch (IOException | UnresolvedAddressException ex) {//SocketException, 
+        } catch (ConnectException ex) {
+            httpExceptionListener.onConnectException(ex, httptMethod, httpRequestPath, context);
+        } catch (IOException | UnresolvedAddressException ex) {//SocketException,
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause == null) {
                 cause = ex;

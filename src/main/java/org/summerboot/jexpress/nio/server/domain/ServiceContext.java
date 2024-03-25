@@ -91,7 +91,7 @@ public class ServiceContext {
     protected List<Memo> memo;
 
     // Session attributes
-    protected Map<String, Object> sessionAttributes;
+    protected Map<Object, Object> sessionAttributes;
 
     // 2.1 error
 //    protected int errorCode;
@@ -159,7 +159,7 @@ public class ServiceContext {
      *
      * @return
      */
-    public Map<String, Object> session() {
+    public Map<Object, Object> session() {
         return session(true);
     }
 
@@ -169,7 +169,7 @@ public class ServiceContext {
      * @param create
      * @return
      */
-    public Map<String, Object> session(boolean create) {
+    public Map<Object, Object> session(boolean create) {
         if (sessionAttributes == null && create) {
             sessionAttributes = new HashMap();
         }
@@ -182,8 +182,8 @@ public class ServiceContext {
      * @param key
      * @return
      */
-    public Object sessionAttribute(String key) {
-        return sessionAttributes == null ? null : sessionAttributes.get(key);
+    public <T extends Object> T sessionAttribute(Object key) {
+        return sessionAttributes == null ? null : (T) sessionAttributes.get(key);
     }
 
     /**
@@ -193,7 +193,7 @@ public class ServiceContext {
      * @param value remove key-value if value is null, otherwise add key-value
      * @return current ServiceContext instance
      */
-    public ServiceContext sessionAttribute(String key, Object value) {
+    public ServiceContext sessionAttribute(Object key, Object value) {
         if (sessionAttributes == null) {
             sessionAttributes = new HashMap();
         }
@@ -678,6 +678,15 @@ public class ServiceContext {
 //        }
 //        return this;
 //    }
+
+    public boolean hasError() {
+        return serviceError != null && serviceError.getErrors() != null && !serviceError.getErrors().isEmpty();
+    }
+
+    public List<Err> errors() {
+        return hasError() ? serviceError.getErrors() : null;
+    }
+
     //@JsonInclude(JsonInclude.Include.NON_NULL)
     public ServiceError error() {
 //        if (serviceError == null || serviceError.getErrors() == null || serviceError.getErrors().isEmpty()) {

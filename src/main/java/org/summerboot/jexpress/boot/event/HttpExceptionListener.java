@@ -64,10 +64,13 @@ public interface HttpExceptionListener {
 
     void onRejectedExecutionException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
 
+    void onConnectException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context);
+
     void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
 
     void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
 
     void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams,
                                String httpPostRequestBody, ServiceContext context);
+
 }
