@@ -22,10 +22,10 @@ import java.util.Locale;
  */
 public class AppResourceCfg {
 
-    private final int i18nLabelIndex;
-    private final Locale locale, parent;
-    private final String languageTag;
-    private final String displayName;
+    protected final int i18nLabelIndex;
+    protected final Locale locale, parent;
+    protected final String languageTag;
+    protected final String displayName;
 
     public AppResourceCfg(int i18nLabelIndex, Locale parent, Locale locale, String displayName) {
         this.i18nLabelIndex = i18nLabelIndex;

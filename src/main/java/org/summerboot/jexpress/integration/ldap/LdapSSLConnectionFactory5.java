@@ -35,13 +35,13 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class LdapSSLConnectionFactory5 extends SocketFactory {
 
-    private static final AtomicReference<LdapSSLConnectionFactory5> defaultFactory = new AtomicReference<>();
+    protected static final AtomicReference<LdapSSLConnectionFactory5> defaultFactory = new AtomicReference<>();
 
-    private final SSLSocketFactory sf;
+    protected final SSLSocketFactory sf;
 
     public static String TLS_PROTOCOL = "TLSv1.3";
-    private static KeyManager[] KMS;
-    private static TrustManager[] TMS;
+    protected static KeyManager[] KMS;
+    protected static TrustManager[] TMS;
 
     public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol) {
         KMS = kmf == null ? null : kmf.getKeyManagers();

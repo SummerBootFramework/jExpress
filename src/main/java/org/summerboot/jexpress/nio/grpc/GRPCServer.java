@@ -45,7 +45,7 @@ public class GRPCServer {
     protected static final Logger log = LogManager.getLogger(GRPCServer.class.getName());
 
     //    @Inject
-//    private NIOStatusListener nioListener;
+//    protected NIOStatusListener nioListener;
 //    @Inject
 //    protected ServerInterceptor serverInterceptor;
     protected final String bindingAddr;
@@ -124,7 +124,7 @@ public class GRPCServer {
         initThreadPool(tpe, nioListener);
     }
 
-    private ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
+    protected ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
         if (kmf == null) {
             return null;
         }
@@ -137,18 +137,11 @@ public class GRPCServer {
     }
 
     /**
-     * @param poolCoreSize       - the number of threads to keep in the pool, even if
-     *                           they are idle, unless allowCoreThreadTimeOutis set
-     * @param poolMaxSizeMaxSize - the maximum number of threads to allow in the
-     *                           pool
-     * @param poolQueueSize      - the size of the waiting list
-     * @param keepAliveSeconds   - when the number of threads is greater than the
-     *                           core, this is the maximum time that excess idle threads will wait for new
-     *                           tasks before terminating.
+     * @param tpe
      * @param nioListener
      * @return
      */
-    private GRPCServiceCounter initThreadPool(ThreadPoolExecutor tpe, NIOStatusListener nioListener) {
+    protected GRPCServiceCounter initThreadPool(ThreadPoolExecutor tpe, NIOStatusListener nioListener) {
         serverBuilder.executor(tpe);
 
         int interval = 1;

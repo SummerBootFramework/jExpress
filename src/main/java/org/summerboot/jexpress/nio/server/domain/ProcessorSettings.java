@@ -25,9 +25,9 @@ import java.util.stream.Collectors;
  */
 public class ProcessorSettings {
 
-    private String httpServiceResponseHeaderName_ServerTimestamp = "X-ServerTs";
+    protected String httpServiceResponseHeaderName_ServerTimestamp = "X-ServerTs";
 
-    private String httpServiceResponseHeaderName_Reference = "X-Reference";
+    protected String httpServiceResponseHeaderName_Reference = "X-Reference";
 
     public String getHttpServiceResponseHeaderName_ServerTimestamp() {
         return httpServiceResponseHeaderName_ServerTimestamp;
@@ -45,7 +45,7 @@ public class ProcessorSettings {
         this.httpServiceResponseHeaderName_Reference = StringUtils.isBlank(httpServiceResponseHeaderName_Reference) ? null : httpServiceResponseHeaderName_Reference;
     }
 
-    private LogSettings logSettings;
+    protected LogSettings logSettings;
 
     public LogSettings getLogSettings() {
         return logSettings;
@@ -57,19 +57,19 @@ public class ProcessorSettings {
 
     public class LogSettings {
 
-        private boolean logRequestHeader;
+        protected boolean logRequestHeader;
 
-        private boolean logRequestBody;
+        protected boolean logRequestBody;
 
-        private boolean logResponseHeader;
+        protected boolean logResponseHeader;
 
-        private boolean logResponseBody;
+        protected boolean logResponseBody;
 
-        private List<String> protectedJsonStringFields;
+        protected List<String> protectedJsonStringFields;
 
-        private List<String> protectedJsonNumberFields;
+        protected List<String> protectedJsonNumberFields;
 
-        private List<String> protectedJsonArrayFields;
+        protected List<String> protectedJsonArrayFields;
 
         public void removeDuplicates() {
             if (protectedJsonStringFields != null) {

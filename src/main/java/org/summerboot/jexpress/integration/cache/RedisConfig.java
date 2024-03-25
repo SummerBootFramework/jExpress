@@ -49,15 +49,15 @@ import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PR
  */
 public class RedisConfig implements JExpressConfig {
 
-    private static final String PK = "primary";
+    protected static final String PK = "primary";
 
-    private static Logger log = LogManager.getLogger(RedisConfig.class);
-    private File cfgFile;
-    private volatile List<JedisPool> jedisPools;
-    private volatile JedisPool masterPool;
-    private volatile List<String> nodes;
-    private volatile int reconnectRetryIntervalMinutes;
-    private volatile int sendAlertIntervalMinutes;
+    protected static Logger log = LogManager.getLogger(RedisConfig.class);
+    protected File cfgFile;
+    protected volatile List<JedisPool> jedisPools;
+    protected volatile JedisPool masterPool;
+    protected volatile List<String> nodes;
+    protected volatile int reconnectRetryIntervalMinutes;
+    protected volatile int sendAlertIntervalMinutes;
 
     public static final RedisConfig cfg = new RedisConfig();
 

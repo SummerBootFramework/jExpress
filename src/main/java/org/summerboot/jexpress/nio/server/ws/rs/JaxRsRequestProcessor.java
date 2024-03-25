@@ -72,11 +72,11 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     protected final Log classLevelLogAnnotation;
 
     //param info    
-    private final List<JaxRsRequestParameter> parameterList;
+    protected final List<JaxRsRequestParameter> parameterList;
     protected final boolean hasMatrixParam;
     protected final boolean hasPathParam;
-    private final Map<String, MetaPathParam> pathParamMap;
-    private final List<MetaMatrixParam> metaMatrixParamList;
+    protected final Map<String, MetaPathParam> pathParamMap;
+    protected final List<MetaMatrixParam> metaMatrixParamList;
     protected final Pattern regexPattern;
     protected final int parameterSize;
     public static final List<String> SupportedProducesWithReturnType = Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON_PATCH_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML);
@@ -275,7 +275,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
     }
 
-    private void updateLogSettings(Log log) {
+    protected void updateLogSettings(Log log) {
         if (log == null) {
             return;
         }

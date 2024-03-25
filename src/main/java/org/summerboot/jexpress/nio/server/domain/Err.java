@@ -30,15 +30,15 @@ public class Err<T> {
 
     @JsonSerialize(using = ErrorCodeSerializer.class)
     @JsonDeserialize(using = ErrorCodeDeserializer.class)
-    private String errorCode;
-    private String errorTag;
-    private String errorDesc;
+    protected String errorCode;
+    protected String errorTag;
+    protected String errorDesc;
 
     @JsonIgnore
-    private Throwable cause;
+    protected Throwable cause;
 
     @JsonIgnore
-    private T internalInfo;
+    protected T internalInfo;
 
     public Err(int errorCode, String errorTag, String errorDesc, Throwable ex) {
         //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/

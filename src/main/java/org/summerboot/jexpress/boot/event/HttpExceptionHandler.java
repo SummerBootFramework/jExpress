@@ -127,6 +127,12 @@ public class HttpExceptionHandler implements HttpExceptionListener {
     }
 
     @Override
+    public void onConnectException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+        HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
+        nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.IO_BASE, "Failed to connect: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+    }
+
+    @Override
     public void onIOException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
         nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_BASE, "IO issue: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
@@ -143,6 +149,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
     public void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
         nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_PROCESSOR_FAILURE, "Unexpected Failure: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
+
 
     /**
      * Build negative acknowledgement context with exception at FATAL level, no

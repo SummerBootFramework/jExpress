@@ -58,53 +58,53 @@ import java.util.Set;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ServiceContext {
 
-    //private ChannelHandlerContext ctx;
-    private final SocketAddress localIP;
-    private final SocketAddress remoteIP;
-    private final HttpMethod requesMethod;
-    private final String requesURI;
-    private final HttpHeaders requestHeaders;
-    private final String requestBody;
-    private final String txId;
-    private final long hit;
-    private final long startTs;
-    private Caller caller;
-    private String callerId;
+    //protected ChannelHandlerContext ctx;
+    protected final SocketAddress localIP;
+    protected final SocketAddress remoteIP;
+    protected final HttpMethod requesMethod;
+    protected final String requesURI;
+    protected final HttpHeaders requestHeaders;
+    protected final String requestBody;
+    protected final String txId;
+    protected final long hit;
+    protected final long startTs;
+    protected Caller caller;
+    protected String callerId;
 
     //  1.1 status
-    private HttpResponseStatus status = HttpResponseStatus.OK;
-    private boolean autoConvertBlank200To204 = true;
+    protected HttpResponseStatus status = HttpResponseStatus.OK;
+    protected boolean autoConvertBlank200To204 = true;
     // 1.2 responseHeader
-    private HttpHeaders responseHeaders;
-    private ResponseEncoder responseEncoder = null;
+    protected HttpHeaders responseHeaders;
+    protected ResponseEncoder responseEncoder = null;
     // 1.3 content type    
-    private String contentType;// = MediaType.APPLICATION_JSON;
-    private String clientAcceptContentType;
-    private String charsetName;
+    protected String contentType;// = MediaType.APPLICATION_JSON;
+    protected String clientAcceptContentType;
+    protected String charsetName;
     // 1.4 data
-    private byte[] data;
-    private String txt = "";
-    private File file;
-    private boolean downloadMode = true;
-    private String redirect;
-    private final List<POI> poi = new ArrayList<>();
-    private List<Memo> memo;
+    protected byte[] data;
+    protected String txt = "";
+    protected File file;
+    protected boolean downloadMode = true;
+    protected String redirect;
+    protected final List<POI> poi = new ArrayList<>();
+    protected List<Memo> memo;
 
     // Session attributes
-    private Map<String, Object> sessionAttributes;
+    protected Map<Object, Object> sessionAttributes;
 
     // 2.1 error
-//    private int errorCode;
-//    private String errorTag;
-//    private Throwable cause;
-    private ServiceError serviceError;
-    private Throwable cause;
+//    protected int errorCode;
+//    protected String errorTag;
+//    protected Throwable cause;
+    protected ServiceError serviceError;
+    protected Throwable cause;
     // 2.2 logging control
-    private Level level = Level.INFO;
-    private boolean logRequestHeader = true;
-    private boolean logResponseHeader = true;
-    private boolean logRequestBody = true;
-    private boolean logResponseBody = true;
+    protected Level level = Level.INFO;
+    protected boolean logRequestHeader = true;
+    protected boolean logResponseHeader = true;
+    protected boolean logRequestBody = true;
+    protected boolean logResponseBody = true;
 
     public static ServiceContext build(long hit) {
         return build(BootConstant.APP_ID + "-" + hit, hit);
@@ -124,7 +124,7 @@ public class ServiceContext {
         return "ServiceContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
     }
 
-    private ServiceContext(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+    protected ServiceContext(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
         if (ctx != null && ctx.channel() != null) {
             this.localIP = ctx.channel().localAddress();
             this.remoteIP = ctx.channel().remoteAddress();
@@ -159,7 +159,7 @@ public class ServiceContext {
      *
      * @return
      */
-    public Map<String, Object> session() {
+    public Map<Object, Object> session() {
         return session(true);
     }
 
@@ -169,7 +169,7 @@ public class ServiceContext {
      * @param create
      * @return
      */
-    public Map<String, Object> session(boolean create) {
+    public Map<Object, Object> session(boolean create) {
         if (sessionAttributes == null && create) {
             sessionAttributes = new HashMap();
         }
@@ -182,8 +182,8 @@ public class ServiceContext {
      * @param key
      * @return
      */
-    public Object sessionAttribute(String key) {
-        return sessionAttributes == null ? null : sessionAttributes.get(key);
+    public <T extends Object> T sessionAttribute(Object key) {
+        return sessionAttributes == null ? null : (T) sessionAttributes.get(key);
     }
 
     /**
@@ -193,7 +193,7 @@ public class ServiceContext {
      * @param value remove key-value if value is null, otherwise add key-value
      * @return current ServiceContext instance
      */
-    public ServiceContext sessionAttribute(String key, Object value) {
+    public ServiceContext sessionAttribute(Object key, Object value) {
         if (sessionAttributes == null) {
             sessionAttributes = new HashMap();
         }
@@ -533,7 +533,7 @@ public class ServiceContext {
         return true;
     }
 
-    //    private static final List<Integer> ERRPR_PAGES = new ArrayList();
+    //    protected static final List<Integer> ERRPR_PAGES = new ArrayList();
 //
 //    static {
 //        ERRPR_PAGES.add(HttpResponseStatus.UNAUTHORIZED.code());
@@ -550,7 +550,7 @@ public class ServiceContext {
 //        }
 //        return this;
 //    }
-    private File buildErrorFile(HttpResponseStatus status, boolean isDownloadMode) {
+    protected File buildErrorFile(HttpResponseStatus status, boolean isDownloadMode) {
         int errorCode = status.code();
         String errorFileName = errorCode + (isDownloadMode ? ".txt" : ".html");
         final NioConfig nioCfg = NioConfig.cfg;
@@ -678,6 +678,15 @@ public class ServiceContext {
 //        }
 //        return this;
 //    }
+
+    public boolean hasError() {
+        return serviceError != null && serviceError.getErrors() != null && !serviceError.getErrors().isEmpty();
+    }
+
+    public List<Err> errors() {
+        return hasError() ? serviceError.getErrors() : null;
+    }
+
     //@JsonInclude(JsonInclude.Include.NON_NULL)
     public ServiceError error() {
 //        if (serviceError == null || serviceError.getErrors() == null || serviceError.getErrors().isEmpty()) {

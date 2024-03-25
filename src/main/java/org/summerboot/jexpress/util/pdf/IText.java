@@ -45,18 +45,18 @@ public class IText {
 //        return new IText(baseDir, fontDir);
 //    }
 //
-//    private final ITextConfig cfg;
+//    protected final ITextConfig cfg;
 //
-//    private IText(String baseDir, String fontDir) throws IOException {
+//    protected IText(String baseDir, String fontDir) throws IOException {
 //        cfg = new ITextConfig(baseDir, fontDir);
 //    }
-    private static final Map<String, PdfFont> FONTS = new HashMap<>();
+    protected static final Map<String, PdfFont> FONTS = new HashMap<>();
 
     public static PdfFont getFont(String name) {
         return FONTS.get(name);
     }
 
-    private static FontSet fontSet = null;
+    protected static FontSet fontSet = null;
 
     public static FontSet loadFonts(File fontDir) throws IOException {
         if (!fontDir.isDirectory()) {
@@ -156,7 +156,7 @@ public class IText {
 //        return new String(bytes, StandardCharsets.UTF_8);
 //    }
     /*
-    private byte[] sample1(Ticket lottoTicket) throws IOException {
+    protected byte[] sample1(Ticket lottoTicket) throws IOException {
         return ITextBuilder.html2PDF((ticket) -> {
             String html = ITextBuilder.loadTemplateFromResources("resources/html/649.html");
             html = html.replaceAll("_title", String.valueOf(System.currentTimeMillis()));
@@ -164,7 +164,7 @@ public class IText {
         }, lottoTicket, null);
     }
 
-    private byte[] sample2() throws IOException {
+    protected byte[] sample2() throws IOException {
         Ticket lottoTicket = new Ticket();
         Writer writer = (pdfDoc, document, ticket) -> {
             String line = "Hello! 中文 Welcome to iTextPdf byte【】[] option1";
@@ -173,7 +173,7 @@ public class IText {
         return ITextBuilder.writePDF(writer, lottoTicket, null);
     }
 
-    private byte[] sample3() throws IOException {
+    protected byte[] sample3() throws IOException {
         Ticket lottoTicket = new Ticket();
         return ITextBuilder.writePDF((pdfDoc, document, ticket) -> {
             String line = "Hello! 中文 Welcome to iTextPdf byte【】[] option2";
@@ -181,7 +181,7 @@ public class IText {
         }, lottoTicket, null);
     }
 
-    private byte[] sample4(Ticket lottoTicket) throws IOException {
+    protected byte[] sample4(Ticket lottoTicket) throws IOException {
         return ITextBuilder.writePDF((pdfDoc, document, ticket) -> {
             Document doc = document;
             String line = "Hello! 中文 Welcome to iTextPdf byte【】[]4";

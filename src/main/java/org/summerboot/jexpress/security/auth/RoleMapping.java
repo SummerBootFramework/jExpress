@@ -32,9 +32,9 @@ public class RoleMapping {
         users, groups
     }
 
-    private final String roleName;
-    private final Set<String> groups = new HashSet();
-    private final Set<String> users = new HashSet();
+    protected final String roleName;
+    protected final Set<String> groups = new HashSet();
+    protected final Set<String> users = new HashSet();
 
     public RoleMapping(String roleName) {
         this.roleName = roleName;

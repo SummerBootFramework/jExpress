@@ -16,7 +16,7 @@ import java.security.GeneralSecurityException;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class SSLConnectionFactory extends SSLSocketFactory {
-    private final SSLSocketFactory sf;
+    protected final SSLSocketFactory sf;
 
     /**
      * @param kmf

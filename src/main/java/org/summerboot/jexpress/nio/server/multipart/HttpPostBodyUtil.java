@@ -53,7 +53,7 @@ final class HttpPostBodyUtil {
          */
         BINARY("binary");
 
-        private final String value;
+        protected final String value;
 
         TransferEncodingMechanism(String value) {
             this.value = value;
@@ -69,7 +69,7 @@ final class HttpPostBodyUtil {
         }
     }
 
-    private HttpPostBodyUtil() {
+    protected HttpPostBodyUtil() {
     }
 
     /**

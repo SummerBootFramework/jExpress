@@ -68,7 +68,7 @@ public class NioServer {
 
     protected EventLoopGroup bossGroup;// the pool to accept new connection requests
     protected EventLoopGroup workerGroup;// the pool to process IO logic
-    //private  EventExecutorGroup sharedNioExecutorGroup;// a thread pool to handle time-consuming business
+    //protected  EventExecutorGroup sharedNioExecutorGroup;// a thread pool to handle time-consuming business
     protected ScheduledExecutorService QPS_SERVICE;// = Executors.newSingleThreadScheduledExecutor();
 
     protected final NioChannelInitializer channelInitializer;

@@ -74,7 +74,7 @@ abstract public class SummerSingularity {
 
     public static final String HOST = jExpressInit();
 
-    private static String jExpressInit() {
+    protected static String jExpressInit() {
         String FILE_CFG_SYSTEM = "boot.conf";
         File currentDir = new File("etc").getAbsoluteFile();
         if (!currentDir.exists()) {
@@ -155,7 +155,7 @@ abstract public class SummerSingularity {
         bigBang(args);
     }
 
-    private void singularity() {
+    protected void singularity() {
         if (BackOffice.agent.isTraceWithSystemOut()) {
             System.out.println("jExpress init.0");
         }
@@ -191,7 +191,7 @@ abstract public class SummerSingularity {
         hasAuthImpl = false;
     }
 
-    private <T extends SummerApplication> T bigBang(String[] args) {
+    protected <T extends SummerApplication> T bigBang(String[] args) {
         if (BackOffice.agent.isTraceWithSystemOut()) {
             System.out.println("jExpress init.1");
         }

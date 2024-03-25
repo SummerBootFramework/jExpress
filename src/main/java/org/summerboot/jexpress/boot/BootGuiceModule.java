@@ -63,13 +63,13 @@ import java.util.Set;
  */
 public class BootGuiceModule extends AbstractModule {
 
-    private final static String BIND_TO = " --> ";
-    private final static String INFO = BootConstant.BR + "\t- Ioc.default.binding: ";
-    private final Object caller;
-    private final Class callerClass;
-    private final String callerRootPackageName;
-    private final Set<String> userSpecifiedImplTags;
-    private final StringBuilder memo;
+    protected final static String BIND_TO = " --> ";
+    protected final static String INFO = BootConstant.BR + "\t- Ioc.default.binding: ";
+    protected final Object caller;
+    protected final Class callerClass;
+    protected final String callerRootPackageName;
+    protected final Set<String> userSpecifiedImplTags;
+    protected final StringBuilder memo;
 
     public BootGuiceModule(Object caller, Class callerClass, Set<String> userSpecifiedImplTags, StringBuilder memo) {
         this.caller = caller;

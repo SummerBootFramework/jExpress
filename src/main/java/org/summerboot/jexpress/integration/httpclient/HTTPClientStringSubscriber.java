@@ -25,9 +25,9 @@ import java.util.concurrent.Flow;
  */
 public class HTTPClientStringSubscriber implements Flow.Subscriber<ByteBuffer> {
 
-    final BodySubscriber<String> wrapped;
+    protected final BodySubscriber<String> wrapped;
 
-    HTTPClientStringSubscriber(BodySubscriber<String> wrapped) {
+    public HTTPClientStringSubscriber(BodySubscriber<String> wrapped) {
         this.wrapped = wrapped;
     }
 

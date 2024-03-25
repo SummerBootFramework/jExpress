@@ -169,10 +169,10 @@ public class BackOffice extends BootConfig {
     @Config(key = "reflection.package.level", defaultValue = "2")
     private int reflectionPackageLevel = 2;
 
-    @Config(key = "timeout.alert.milliseconds", defaultValue = "3000")
-    private long processTimeoutMilliseconds = 3000;
+    @Config(key = "timeout.alert.milliseconds", defaultValue = "10000")
+    private long processTimeoutMilliseconds = 10000;
 
-    private static final String ALERT_MSG_TIMEOUT = "Note: This is a known issue in Linux systems where the/dev/random runs out of \"entropy\" and it causes the system to blockthreads. \n\tTo verify: cat /dev/random or install haveged.\n";
+    private static final String ALERT_MSG_TIMEOUT = "Note: This is a known issue in Linux systems where the/dev/random runs out of \"entropy\" and it causes the system to blockthreads. \n\tTo verify: cat /dev/random or install rng-tools and/or haveged.\n\tOr add a JVM argument to the runner: -Djava.security.egd=file:/dev/./urandom";
     @Config(key = "timeout.alert.message", defaultValue = ALERT_MSG_TIMEOUT)
     private String processTimeoutAlertMessage = ALERT_MSG_TIMEOUT;
 

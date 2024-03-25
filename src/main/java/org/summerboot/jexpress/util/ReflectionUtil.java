@@ -68,7 +68,7 @@ import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PR
  */
 public class ReflectionUtil {
 
-    private static final Set<Class<?>> PluginClasses = new HashSet();
+    protected static final Set<Class<?>> PluginClasses = new HashSet();
 
     public static void setPluginClasses(Set<Class<?>> pluginClasses) {
         PluginClasses.clear();
@@ -211,7 +211,7 @@ public class ReflectionUtil {
         field.set(instance, toJavaType(targetClass, genericType, value, autoDecrypt, isEmailRecipients, null, collectionDelimiter));
     }
 
-    private static final Type[] DEFAULT_ARG_TYPES = {String.class, String.class};
+    protected static final Type[] DEFAULT_ARG_TYPES = {String.class, String.class};
 
     public static Object toJavaType(Class targetClass, Type genericType, String value, final boolean autoDecrypt,
                                     final boolean isEmailRecipients, EnumConvert.To enumConvert, String collectionDelimiter) throws IllegalAccessException {
@@ -524,7 +524,7 @@ public class ReflectionUtil {
         return BeanUtil.toJson(sorted, true, false);
     }
 
-    //private static final String MY_PACKAGE_ROOT = "org.";
+    //protected static final String MY_PACKAGE_ROOT = "org.";
     public static String getRootPackageName(Class callerClass, int level) {
         String packageName = callerClass.getPackageName();
         if (level < 1) {

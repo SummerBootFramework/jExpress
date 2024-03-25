@@ -66,10 +66,10 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
 
     protected Logger log = LogManager.getLogger(this.getClass());
 
-    private static final boolean AUTO_RELEASE = false;
-    private static final boolean USER_DISK = true;
-    private static final HttpDataFactory HDF = new DefaultHttpDataFactory(USER_DISK);
-    //private static final Authenticator auth = new AuthenticatorImple_LDAP();
+    protected static final boolean AUTO_RELEASE = false;
+    protected static final boolean USER_DISK = true;
+    protected static final HttpDataFactory HDF = new DefaultHttpDataFactory(USER_DISK);
+    //protected static final Authenticator auth = new AuthenticatorImple_LDAP();
 
     protected static final NioConfig uploadCfg = NioConfig.cfg;
 
@@ -90,15 +90,15 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
         super(AUTO_RELEASE);
     }
 
-    private HttpRequest request;
-    private boolean isMultipart;
-    private HttpPostRequestDecoder httpDecoder;
-    private long hitIndex;
-    private HttpData partialContent;
-    private long fileSizeQuota;
-    private Caller caller;
-    private Map<String, String> params;
-    private String txId;
+    protected HttpRequest request;
+    protected boolean isMultipart;
+    protected HttpPostRequestDecoder httpDecoder;
+    protected long hitIndex;
+    protected HttpData partialContent;
+    protected long fileSizeQuota;
+    protected Caller caller;
+    protected Map<String, String> params;
+    protected String txId;
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable ex) {
@@ -171,7 +171,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
         }
     }
 
-    private void reset() {
+    protected void reset() {
         //关闭httpDecoder
         if (httpDecoder != null) {
             httpDecoder.cleanFiles();
@@ -181,7 +181,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
         partialContent = null;
     }
 
-    private boolean onPartialChunk(ChannelHandlerContext ctx, long maxAllowedSize) throws IOException {
+    protected boolean onPartialChunk(ChannelHandlerContext ctx, long maxAllowedSize) throws IOException {
         long totalReceivedBytes = 0;
         try {
             while (httpDecoder.hasNext()) {
@@ -251,7 +251,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
         return totalReceivedBytes > maxAllowedSize;
     }
 
-    private void onLastChunk(ChannelHandlerContext ctx) throws IOException {
+    protected void onLastChunk(ChannelHandlerContext ctx) throws IOException {
 //        if (httpDecoder.hasNext()) {
 //            partialContent = null;
 //            InterfaceHttpData data = httpDecoder.next();
@@ -268,7 +268,7 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
      * @param req
      * @return quota (in bytes) of uploaded file size
      */
-    private long precheck(ChannelHandlerContext ctx, HttpRequest req) {
+    protected long precheck(ChannelHandlerContext ctx, HttpRequest req) {
         if (!isValidRequestPath(req.method(), req.uri())) {
             Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_BAD_REQUEST, null, "invalid request:" + req.method() + " " + req.uri(), null);
             ServiceError e = new ServiceError(txId).addError(err);

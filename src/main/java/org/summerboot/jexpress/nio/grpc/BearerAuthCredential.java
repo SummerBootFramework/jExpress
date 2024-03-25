@@ -30,7 +30,7 @@ public class BearerAuthCredential extends CallCredentials {
 
     public static final Metadata.Key<String> AUTHORIZATION_METADATA_KEY = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
-    private final String jwt;
+    protected final String jwt;
 
     public BearerAuthCredential(String jwt) {
         this.jwt = jwt;

@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.boot;
 
+import com.google.inject.Injector;
 import org.apache.commons.cli.Options;
 
 import java.io.File;
@@ -32,5 +33,5 @@ public interface SummerInitializer {
     /**
      * @param configDir
      */
-    void initApp(File configDir);
+    void initApp(File configDir, Injector guiceInjector);
 }

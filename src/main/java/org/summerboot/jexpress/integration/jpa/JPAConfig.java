@@ -43,8 +43,6 @@ import java.util.stream.Collectors;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public abstract class JPAConfig extends BootConfig {
-
-    //private File cfgFile;
     protected final Map<String, Object> settings = new HashMap<>();
     protected final List<Class<?>> entityClasses = new ArrayList();
 

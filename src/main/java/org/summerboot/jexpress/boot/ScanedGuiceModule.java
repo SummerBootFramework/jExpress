@@ -37,11 +37,11 @@ public class ScanedGuiceModule extends AbstractModule {
      * Annotation scan results as ScanedGuiceModule input
      * Format: bindingClass <--> {key=(ImplTag+named) <--> [@Service impl list]}
      */
-    private final Map<Class, Map<String, List<SummerSingularity.ServiceMetadata>>> scanedServiceBindingMap;
-    private final Set<String> userSpecifiedImplTags;
-    private final StringBuilder memo;
+    protected final Map<Class, Map<String, List<SummerSingularity.ServiceMetadata>>> scanedServiceBindingMap;
+    protected final Set<String> userSpecifiedImplTags;
+    protected final StringBuilder memo;
 
-    private final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames;
+    protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames;
 
     public ScanedGuiceModule(Map<Class, Map<String, List<SummerSingularity.ServiceMetadata>>> scanedServiceBindingMap, Set<String> userSpecifiedImplTags, Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames, StringBuilder memo) {
         this.scanedServiceBindingMap = scanedServiceBindingMap;
@@ -54,9 +54,9 @@ public class ScanedGuiceModule extends AbstractModule {
         return userSpecifiedImplTags.contains(implTag);
     }
 
-    private final static String BIND_TO = " --> ";
-    private final static String INFO_FOUND = BootConstant.BR + "\t- Ioc.scan.found: ";
-    private final static String INFO_BIND = BootConstant.BR + "\t- Ioc.override.binding: ";
+    protected final static String BIND_TO = " --> ";
+    protected final static String INFO_FOUND = BootConstant.BR + "\t- Ioc.scan.found: ";
+    protected final static String INFO_BIND = BootConstant.BR + "\t- Ioc.override.binding: ";
 
     @Override
     public void configure() {

@@ -26,9 +26,9 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
-    private static final Logger log = LogManager.getLogger(AbortPolicyWithReport.class.getName());
+    protected static final Logger log = LogManager.getLogger(AbortPolicyWithReport.class.getName());
 
-    private final String threadName;
+    protected final String threadName;
 
     public AbortPolicyWithReport(String threadName) {
         this.threadName = threadName;

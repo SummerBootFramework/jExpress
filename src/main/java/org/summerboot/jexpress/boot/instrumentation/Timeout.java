@@ -30,18 +30,18 @@ public class Timeout implements AutoCloseable {
 
     protected static Logger log = LogManager.getLogger(Timeout.class);
 
-    private final String processName;
-    private final long timeoutMilliseconds;
-    private String message;
-    private Runnable task;
+    protected final String processName;
+    protected final long timeoutMilliseconds;
+    protected String message;
+    protected Runnable task;
 
-    private final ReentrantLock lock = new ReentrantLock();
+    protected final ReentrantLock lock = new ReentrantLock();
 
     public static Timeout watch(String processName, long timeoutMilliseconds) {
         return new Timeout(processName, timeoutMilliseconds, null, null);
     }
 
-    private Timeout(String processName, long timeoutMilliseconds, String message, Runnable task) {
+    protected Timeout(String processName, long timeoutMilliseconds, String message, Runnable task) {
         this.processName = processName;
         this.timeoutMilliseconds = timeoutMilliseconds;
         this.message = message;
@@ -59,7 +59,7 @@ public class Timeout implements AutoCloseable {
         return this;
     }
 
-    private void startTheTimer() {
+    protected void startTheTimer() {
         lock.lock();
         Runnable runnableTask = () -> {
             try {

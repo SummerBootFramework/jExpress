@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class OneOfValidator implements ConstraintValidator<OneOf, List<String>> {
 
-    private List<String> theOneOfList;
+    protected List<String> theOneOfList;
 
     @Override
     public void initialize(OneOf constraintAnnotation) {

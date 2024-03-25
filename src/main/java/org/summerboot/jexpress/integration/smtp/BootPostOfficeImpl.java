@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class BootPostOfficeImpl implements PostOffice {
 
-    private String appVersion = BootConstant.VERSION;
+    protected String appVersion = BootConstant.VERSION;
 
     @Override
     public void setAppVersion(String appVersion) {

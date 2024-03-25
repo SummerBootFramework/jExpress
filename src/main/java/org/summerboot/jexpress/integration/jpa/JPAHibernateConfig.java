@@ -39,7 +39,7 @@ abstract public class JPAHibernateConfig extends JPAConfig {
 
     @ConfigHeader(title = "1. Hibernate properties for Database Connection",
             callbackMethodName4Dump = "generateTemplate_JPAConnection")
-    private final String dummyfield4annotion1 = null;
+    protected final String dummyfield4annotion1 = null;
 
     protected void generateTemplate_JPAConnection(StringBuilder sb) {
         sb.append(Environment.URL + "=\n");
@@ -55,7 +55,7 @@ abstract public class JPAHibernateConfig extends JPAConfig {
 
     @ConfigHeader(title = "2. Connection Pool",
             callbackMethodName4Dump = "generateTemplate_ConnectionPool")
-    private final String dummyfield4annotion2 = null;
+    protected final String dummyfield4annotion2 = null;
 
     protected void generateTemplate_ConnectionPool(StringBuilder sb) {
         sb.append("# Maximum waiting time for a connection from the pool\n");
@@ -69,9 +69,9 @@ abstract public class JPAHibernateConfig extends JPAConfig {
         sb.append("hibernate.hikari.registerMbeans=true\n");
     }
 
-    //private static volatile Logger log = null;
+    //protected static volatile Logger log = null;
     @JsonIgnore
-    private volatile SessionFactory sessionFactory;
+    protected volatile SessionFactory sessionFactory;
 
     protected JPAHibernateConfig() {
     }

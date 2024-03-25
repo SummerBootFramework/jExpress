@@ -94,7 +94,7 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected class Holder<T> {
 
-        private T value;
+        protected T value;
 
         public Holder(T value) {
             this.value = value;

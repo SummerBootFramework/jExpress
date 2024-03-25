@@ -48,10 +48,10 @@ public class Email {
 
     public static class Attachment implements Serializable {
 
-        private final String type;
-        private final byte[] dataStream;
-        private final String fileName;
-        private String cid;
+        protected final String type;
+        protected final byte[] dataStream;
+        protected final String fileName;
+        protected String cid;
 
         /**
          * @param type       - the file extention, ie. "pdf", image
@@ -92,16 +92,16 @@ public class Email {
         html, text
     }
 
-    private String from;
-    private Set<String> toList;
-    private Set<String> ccList;
-    private Set<String> bccList;
-    private String subject;
-    private String body;
-    private Format format;
-    private List<Attachment> attachments;
+    protected String from;
+    protected Set<String> toList;
+    protected Set<String> ccList;
+    protected Set<String> bccList;
+    protected String subject;
+    protected String body;
+    protected Format format;
+    protected List<Attachment> attachments;
 
-    private Email(String subject, String body, Format format) {
+    protected Email(String subject, String body, Format format) {
         this.subject = subject;// + " at " + (new Date());
         this.body = body;
         this.format = format;

@@ -29,10 +29,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class HeartbeatRecIdleStateHandler extends IdleStateHandler {
 
-    private static final Logger log = LogManager.getLogger(HeartbeatRecIdleStateHandler.class.getName());
+    protected static final Logger log = LogManager.getLogger(HeartbeatRecIdleStateHandler.class.getName());
     // Failure counter: did not receive the ping request sent by the client
 
-    private final int readerIdleSeconds;// home divice=45/180/wechat=300;
+    protected final int readerIdleSeconds;// home divice=45/180/wechat=300;
 
     public HeartbeatRecIdleStateHandler(int readerIdleSeconds) {
         super(readerIdleSeconds, 0, 0, TimeUnit.SECONDS);

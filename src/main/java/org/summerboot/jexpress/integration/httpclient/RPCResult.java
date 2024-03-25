@@ -30,6 +30,7 @@ import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
@@ -40,7 +41,7 @@ import java.util.List;
  */
 public class RPCResult<T, E extends ServiceErrorConvertible> {
 
-    private static boolean isFromJsonFailOnUnknownProperties = true;
+    protected static boolean isFromJsonFailOnUnknownProperties = true;
 
     public static ObjectMapper DefaultJacksonMapper = new ObjectMapper();
 
@@ -65,20 +66,33 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         init(true, false);
     }
 
-    private final HttpResponse httpResponse;
-    private final String rpcResponseBody;
-    private final int httpStatusCode;
-    private final HttpResponseStatus httpStatus;
-    private final boolean remoteSuccess;
-    private T successResponse;
-    private E errorResponse;
+    protected final HttpRequest originRequest;
 
-    public RPCResult(HttpResponse httpResponse, boolean remoteSuccess) {
+    protected final String originRequestBody;
+    protected final HttpResponse httpResponse;
+    protected final String rpcResponseBody;
+    protected final int httpStatusCode;
+    protected final HttpResponseStatus httpStatus;
+    protected final boolean remoteSuccess;
+    protected T successResponse;
+    protected E errorResponse;
+
+    public RPCResult(HttpRequest originRequest, String originRequestBody, HttpResponse httpResponse, boolean remoteSuccess) {
+        this.originRequest = originRequest;
+        this.originRequestBody = originRequestBody;
         this.httpResponse = httpResponse;
         this.rpcResponseBody = httpResponse == null ? null : String.valueOf(httpResponse.body());
         this.httpStatusCode = httpResponse == null ? 0 : httpResponse.statusCode();
         this.httpStatus = HttpResponseStatus.valueOf(httpStatusCode);
         this.remoteSuccess = remoteSuccess;
+    }
+
+    public HttpRequest getOriginRequest() {
+        return originRequest;
+    }
+
+    public String getOriginRequestBody() {
+        return originRequestBody;
     }
 
     public HttpResponse httpResponse() {

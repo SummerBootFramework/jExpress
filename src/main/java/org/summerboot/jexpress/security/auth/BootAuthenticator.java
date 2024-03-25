@@ -363,7 +363,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
-    private static final String ERROR = "Bearer Authorization Failed: ";
+    protected static final String ERROR = "Bearer Authorization Failed: ";
 
     /**
      * gRPC JWT verification

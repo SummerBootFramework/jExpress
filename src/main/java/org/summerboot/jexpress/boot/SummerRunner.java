@@ -29,11 +29,11 @@ public interface SummerRunner {
 
     class RunnerContext {
 
-        private final CommandLine cli;
-        private final File configDir;
-        private final Injector guiceInjector;
-        private final HealthInspector healthInspector;
-        private final PostOffice postOffice;
+        protected final CommandLine cli;
+        protected final File configDir;
+        protected final Injector guiceInjector;
+        protected final HealthInspector healthInspector;
+        protected final PostOffice postOffice;
 
         public RunnerContext(CommandLine cli, File configDir, Injector guiceInjector, HealthInspector healthInspector, PostOffice postOffice) {
             this.cli = cli;

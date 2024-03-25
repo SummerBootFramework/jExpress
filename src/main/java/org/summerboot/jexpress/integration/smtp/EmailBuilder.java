@@ -51,10 +51,10 @@ public class EmailBuilder {
 
     public static class EmailAttachment implements Serializable {
 
-        private final String type;
-        private final byte[] dataStream;
-        private final String fileName;
-        private String cid;
+        protected final String type;
+        protected final byte[] dataStream;
+        protected final String fileName;
+        protected String cid;
 
         /**
          * @param type       - the file extention, ie. "pdf", image
@@ -94,14 +94,14 @@ public class EmailBuilder {
         html, text
     }
 
-    private String from;
-    private String[] toList;
-    private String[] ccList;
-    private String[] bccList;
-    private String subject;
-    private String body;
-    private Format format;
-    private List<EmailAttachment> attachments;
+    protected String from;
+    protected String[] toList;
+    protected String[] ccList;
+    protected String[] bccList;
+    protected String subject;
+    protected String body;
+    protected Format format;
+    protected List<EmailAttachment> attachments;
 
     public EmailBuilder() {
     }

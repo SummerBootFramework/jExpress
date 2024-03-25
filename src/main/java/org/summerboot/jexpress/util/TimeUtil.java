@@ -169,10 +169,10 @@ public class TimeUtil {
     public static class TimeDto {
 
         @JsonIgnoreProperties
-        private ZoneId zoneId;
+        protected ZoneId zoneId;
 
         @JsonIgnoreProperties
-        private long epochTs;
+        protected long epochTs;
 
         //@JsonDeserialize(using = LocalDateTimeDeserializer.class)
         //@JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -180,18 +180,18 @@ public class TimeUtil {
         //@JsonProperty("EffectiveDate")
         //@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYYY-MM-DD'T'hh:mm:ss.sTZD")
         @JsonIgnoreProperties
-        private Timestamp timestamp;
+        protected Timestamp timestamp;
 
         //@JsonDeserialize(using = LocalDateTimeDeserializer.class)
         //@JsonSerialize(using = LocalDateTimeSerializer.class)
         @JsonIgnoreProperties
-        private LocalDateTime localDateTime;
+        protected LocalDateTime localDateTime;
 
         @JsonIgnoreProperties
-        private OffsetDateTime offsetDateTime;
+        protected OffsetDateTime offsetDateTime;
 
         @JsonIgnoreProperties
-        private ZonedDateTime zonedDateTime;
+        protected ZonedDateTime zonedDateTime;
 
         public TimeDto() {
         }
@@ -288,13 +288,13 @@ public class TimeUtil {
 
     public static class ZoneOffsetTransitionInfo {
 
-        private final ZoneId zoneId;
-        private final ZoneOffsetTransition dstStartTransition;
-        private final int dstStartHour;
-        private final long durationMinutes;
+        protected final ZoneId zoneId;
+        protected final ZoneOffsetTransition dstStartTransition;
+        protected final int dstStartHour;
+        protected final long durationMinutes;
 
-        private final long dstStartMinuteOfDay;
-        private final long dstEndMinuteOfDay;
+        protected final long dstStartMinuteOfDay;
+        protected final long dstEndMinuteOfDay;
 
         public ZoneOffsetTransitionInfo(ZoneId zoneId, ZoneOffsetTransition dstStartTransition) {
             this.zoneId = zoneId;
@@ -454,13 +454,13 @@ public class TimeUtil {
         System.out.println("\ttransition.isOverlap=" + transition.isOverlap());
     }
 
-    private static final BigDecimal MINUTES60 = BigDecimal.valueOf(60);
+    protected static final BigDecimal MINUTES60 = BigDecimal.valueOf(60);
 
     public static int toDurationHours(long durationMinutes) {
         return BigDecimal.valueOf(durationMinutes).divide(MINUTES60, RoundingMode.CEILING).intValue();
     }
 
-    private static final BigDecimal DAYS7 = BigDecimal.valueOf(7);
+    protected static final BigDecimal DAYS7 = BigDecimal.valueOf(7);
 
     /**
      * Not working for Israel: Friday before last Sunday

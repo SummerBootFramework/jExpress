@@ -56,22 +56,22 @@ class JaxRsRequestParameter {
         Request, Response, Body_STRING, Body_JSON, Body_XML, Body_OnDemond_BylClientRquestType, PathParam, MatrixParam, QueryParam, FormParam, HeaderParam, CookieParam
     }
 
-    private final Class targetClass;
-    private final Type parameterizedType;
-    private final Type[] argTypes;
-    private final Class genericClassT;
-    private final ParamType type;
-    private final String key;
-    private final String defaultValue;
-    private final boolean isRequired;
+    protected final Class targetClass;
+    protected final Type parameterizedType;
+    protected final Type[] argTypes;
+    protected final Class genericClassT;
+    protected final ParamType type;
+    protected final String key;
+    protected final String defaultValue;
+    protected final boolean isRequired;
 
-    private final Pattern pattern;
+    protected final Pattern pattern;
 
-    //private final boolean requestBodyAllowed;
-    private boolean autoBeanValidation = false;
-    private boolean cookieParamObj = false;
-    private final EnumConvert.To enumConvert;
-    private final String collectionDelimiter = null;// TODO
+    //protected final boolean requestBodyAllowed;
+    protected boolean autoBeanValidation = false;
+    protected boolean cookieParamObj = false;
+    protected final EnumConvert.To enumConvert;
+    protected final String collectionDelimiter = null;// TODO
 
     public JaxRsRequestParameter(String info, HttpMethod httpMethod, List<String> consumes, Parameter param) {
         String error = "\n\tparameter is not allowed in " + info + "(" + param + ")\n\t - ";
@@ -361,7 +361,7 @@ class JaxRsRequestParameter {
         return null;
     }
 
-    private Object parse(String value, String defaultValue, ServiceContext context) {
+    protected Object parse(String value, String defaultValue, ServiceContext context) {
         if (StringUtils.isBlank(value)) {
             if (defaultValue != null) {
                 value = defaultValue;

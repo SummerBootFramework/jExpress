@@ -608,7 +608,7 @@ public class EncryptorUtil {
      * @throws IllegalBlockSizeException
      * @throws BadPaddingException
      */
-    private static byte[] asymmetric(int cipherMode, Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+    protected static byte[] asymmetric(int cipherMode, Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
         Cipher rsaCipher = Cipher.getInstance(RSA_CIPHER_ALGORITHM);
         rsaCipher.init(cipherMode, asymmetricKey);
         // Encrypt the Rijndael key with the RSA cipher
@@ -818,8 +818,8 @@ public class EncryptorUtil {
 
     public static class EncryptionMeta {
 
-        private String info;
-        private String md5;
+        protected String info;
+        protected String md5;
 
         public String getInfo() {
             return info;

@@ -26,10 +26,10 @@ import java.lang.reflect.Modifier;
  */
 public class ReflectionMetadata<T> {
 
-    private final Class targetClass;
-    private final String fieldName;
-    private Field field;
-    private T value;
+    protected final Class targetClass;
+    protected final String fieldName;
+    protected Field field;
+    protected T value;
 
     public ReflectionMetadata(Class targetClass, String fieldName) {
         this.targetClass = targetClass;
@@ -67,11 +67,11 @@ public class ReflectionMetadata<T> {
                 + "\n\t expected: " + getFieldDefinationExpected(null, expectedType) + " " + fieldName;
     }
 
-    private String getFieldDefinationDefault() {
+    protected String getFieldDefinationDefault() {
         return getFieldDefinationExpected(null, null);
     }
 
-    private String getFieldDefinationExpected(Boolean shouldBeStatic, String expectedType) {
+    protected String getFieldDefinationExpected(Boolean shouldBeStatic, String expectedType) {
         if (field == null) {
             return null;
         }
