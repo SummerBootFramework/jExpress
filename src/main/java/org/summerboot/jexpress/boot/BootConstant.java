@@ -76,6 +76,7 @@ public interface BootConstant {
     String CLI_JWT = BackOffice.agent.getCliName_jwt();
     String CLI_ENCRYPT = BackOffice.agent.getCliName_encrypt();
     String CLI_DECRYPT = BackOffice.agent.getCliName_decrypt();
+    String MEMO_DELIMITER = BackOffice.agent.getMemoDelimiter();
 
     /*
      * 5. Log4j2.xml variables

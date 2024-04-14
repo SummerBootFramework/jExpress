@@ -843,6 +843,10 @@ public class ServiceContext {
         return poi;
     }
 
+    public ServiceContext memo(String desc) {
+        return this.memo(null, desc);
+    }
+
     public ServiceContext memo(String id, String desc) {
         if (memo == null) {
             memo = new ArrayList();
@@ -918,7 +922,11 @@ public class ServiceContext {
         }
         sb.append("\n\n\tMemo: ");
         memo.forEach((m) -> {
-            sb.append("\n\t\t").append(m.id).append("=").append(m.desc);
+            if (m.id == null || m.id.isEmpty()) {
+                sb.append("\n\t\t").append(m.desc);
+            } else {
+                sb.append("\n\t\t").append(m.id).append(BootConstant.MEMO_DELIMITER).append(m.desc);
+            }
         });
         return this;
     }

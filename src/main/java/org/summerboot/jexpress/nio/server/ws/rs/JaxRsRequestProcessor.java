@@ -30,7 +30,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.boot.annotation.Deamon;
 import org.summerboot.jexpress.boot.annotation.Log;
+import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
@@ -42,7 +44,6 @@ import org.summerboot.jexpress.util.FormatterUtil;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -70,6 +71,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     protected final String produce_ExplicitType;
     protected final String produce_DefaultType;
     protected final Log classLevelLogAnnotation;
+    protected final boolean rejectWhenPaused;
+    protected final boolean rejectWhenHealthCheckFailed;
 
     //param info    
     protected final List<JaxRsRequestParameter> parameterList;
@@ -97,6 +100,19 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         DeclareRoles drs = (DeclareRoles) controllerClass.getAnnotation(DeclareRoles.class);
         if (drs != null) {
             declareRoles.addAll(Arrays.asList(drs.value()));
+        }
+        // Reject ASAP
+        Deamon classLevelDeamon = (Deamon) controllerClass.getAnnotation(Deamon.class);
+        Deamon methodLevelDeamon = javaMethod.getAnnotation(Deamon.class);
+        if (methodLevelDeamon != null) {
+            rejectWhenPaused = !methodLevelDeamon.ignorePause();
+            rejectWhenHealthCheckFailed = !methodLevelDeamon.ignoreHealthCheck();
+        } else if (classLevelDeamon != null) {
+            rejectWhenPaused = !classLevelDeamon.ignorePause();
+            rejectWhenHealthCheckFailed = !classLevelDeamon.ignoreHealthCheck();
+        } else {
+            rejectWhenPaused = true;
+            rejectWhenHealthCheckFailed = true;
         }
 
         //2. Parse @RolesAllowed, @PermitAll and @DenyAll - Method level preprocess - Authoritarian - Role based 
@@ -379,33 +395,36 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) throws Throwable {
         //2. invoke
         Object ret;
+        Object[] paramValues = new Object[parameterSize];
         if (parameterSize > 0) {
             ServiceRequest request = buildServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody);
-            Object[] paramValues = new Object[parameterSize];
             for (int i = 0; i < parameterSize; i++) {
                 paramValues[i] = parameterList.get(i).value(request, context);
             }
             if (context.error() != null) {
                 return;
             }
-            try {
-                context.poi(BootPOI.BIZ_BEGIN);
-                ret = javaMethod.invoke(javaInstance, paramValues);
-            } catch (InvocationTargetException ex) {
-                throw ex.getCause();
-            } finally {
-                context.poi(BootPOI.BIZ_END);
-            }
-        } else {
-            try {
-                context.poi(BootPOI.BIZ_BEGIN);
-                ret = javaMethod.invoke(javaInstance);
-            } catch (InvocationTargetException ex) {
-                throw ex.getCause();
-            } finally {
-                context.poi(BootPOI.BIZ_END);
-            }
         }
+        try {
+            context.poi(BootPOI.BIZ_BEGIN);
+            if (rejectWhenHealthCheckFailed && !HealthMonitor.isServiceStatusOk()) {
+                context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
+                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getServiceStatusReason()));
+                return;
+            }
+            if (rejectWhenPaused && HealthMonitor.isServicePaused()) {
+                context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
+                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, null, null, "Service is paused: " + HealthMonitor.getServiceStatusReason()));
+                return;
+            }
+
+            ret = javaMethod.invoke(javaInstance, paramValues);
+        } /*catch (InvocationTargetException ex) {
+                throw ex.getCause();
+            }*/ finally {
+            context.poi(BootPOI.BIZ_END);
+        }
+
         //3. process return object
         if (ret != null) {
             if (ret instanceof File) {
