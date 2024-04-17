@@ -20,9 +20,11 @@ import com.google.inject.Singleton;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 
+import java.io.File;
 import java.time.OffsetDateTime;
 
 /**
@@ -45,6 +47,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
 
     @Override
     public void onApplicationStop(String appVersion) {
+        log.info(appVersion);
         if (postOffice != null) {
             postOffice.sendAlertSync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Shutdown at " + OffsetDateTime.now() + " - " + appVersion, "EOM", null, false);
         }
@@ -72,9 +75,24 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     }
 
     @Override
-    public void onHealthInspectionDone(boolean healthOk, String reason) {
-        if (!healthOk && postOffice != null) {
+    public void onHealthInspectionFailed(int retryIndex, String reason, int nextInspectionIntervalSeconds) {
+        if (postOffice != null) {
             postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Health Inspection Failed", reason, null, true);
+        }
+    }
+
+
+    @Override
+    public void onConfigChangeBefore(File configFile, JExpressConfig cfg) {
+        if (postOffice != null) {
+            postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Config Changed - before", cfg.info(), null, false);
+        }
+    }
+
+    @Override
+    public void onConfigChangedAfter(File configFile, JExpressConfig cfg, Throwable ex) {
+        if (postOffice != null) {
+            postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Config Changed - after", cfg.info(), ex, false);
         }
     }
 }
