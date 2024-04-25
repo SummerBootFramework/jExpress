@@ -181,7 +181,7 @@
         <maven-surefire.version>3.2.5</maven-surefire.version>
         <!-- Commons -->
         <commons-lang3.version>3.14.0</commons-lang3.version>
-        <commons-cli.version>1.6.0</commons-cli.version>
+        <commons-cli.version>1.7.0</commons-cli.version>
         <commons-io.version>2.16.1</commons-io.version>
         <!--        <commons-text.version>1.11.0</commons-text.version>-->
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
@@ -191,7 +191,7 @@
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <!-- Security -->
-        <bouncycastle.version>1.78</bouncycastle.version>
+        <bouncycastle.version>1.78.1</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.11.5</jwt.version>
 
@@ -218,7 +218,7 @@
         <jackson.version>2.17.0</jackson.version>
         <!-- Bean Validation -->
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
-        <jakarta.el.version>5.0.1</jakarta.el.version>
+        <jakarta.el.version>6.0.0</jakarta.el.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
