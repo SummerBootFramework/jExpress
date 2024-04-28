@@ -106,17 +106,25 @@ abstract public class SummerBigBang extends SummerSingularity {
         loadBootConfigFiles(ConfigUtil.ConfigLoadMode.app_run);
 
         /*
-         * 3. should be invoked after log4j was initialized to avoid caller invokes LogManager.static{}
+         * 3. let caller to init app
+         */
+        for (SummerInitializer summerInitializer : summerInitializers) {
+            log.trace("initApp.before.guiceInjector: {}", summerInitializer);
+            summerInitializer.initAppBeforeIoC(userSpecifiedConfigDir);
+        }
+
+        /*
+         * 4. should be invoked after log4j was initialized to avoid caller invokes LogManager.static{}
          * on User Specified ImplTags Ready
          */
         genesis(primaryClass, userSpecifiedImplTags);//trigger subclass to init IoC container
 
         /*
-         * 4. let caller to init app
+         * 5. let caller to init app
          */
         for (SummerInitializer summerInitializer : summerInitializers) {
-            log.trace("initApp: {}", summerInitializer);
-            summerInitializer.initApp(userSpecifiedConfigDir, guiceInjector);
+            log.trace("initApp.after.guiceInjector: {}", summerInitializer);
+            summerInitializer.initAppAfterIoC(userSpecifiedConfigDir, guiceInjector);
         }
 
         return (T) this;

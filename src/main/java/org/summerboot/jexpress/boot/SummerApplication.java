@@ -23,7 +23,6 @@ import io.grpc.ServerInterceptor;
 import io.grpc.ServerServiceDefinition;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.SchedulerException;
-import org.summerboot.jexpress.boot.config.ConfigChangeListener;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
@@ -54,8 +53,7 @@ import java.util.List;
  */
 abstract public class SummerApplication extends SummerBigBang {
 
-    @Inject
-    protected ConfigChangeListener configChangeListener;
+
     @Inject
     protected InstrumentationMgr instrumentationMgr;
     @Inject
@@ -248,8 +246,8 @@ abstract public class SummerApplication extends SummerBigBang {
     public void start() {
         log.trace("");
         traceConfig();
-        if (configChangeListener != null) {
-            ConfigUtil.setConfigChangeListener(configChangeListener);
+        if (appLifecycleListener != null) {
+            ConfigUtil.setConfigChangeListener(appLifecycleListener);
         }
 
         //1. init email

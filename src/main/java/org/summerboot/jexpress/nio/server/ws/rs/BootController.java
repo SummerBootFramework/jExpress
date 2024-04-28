@@ -49,6 +49,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.boot.annotation.Deamon;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
@@ -119,11 +120,6 @@ abstract public class BootController extends PingController {
     protected Authenticator auth;
     //abstract protected Authenticator getAuthenticator();
 
-    @GET
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
-    @Produces(MediaType.TEXT_HTML)
-    @RolesAllowed({Config.ROLE_ADMIN})
-    //@CaptureTransaction("admin.version")
     @Operation(
             tags = {TAG_APP_ADMIN},
             summary = "Check application version",
@@ -157,6 +153,12 @@ abstract public class BootController extends PingController {
             security = {
                     @SecurityRequirement(name = "BearerAuth")}
     )
+    @GET
+    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
+    @Produces(MediaType.TEXT_HTML)
+    @RolesAllowed({Config.ROLE_ADMIN})
+    @Deamon
+    //@CaptureTransaction("admin.version")
     public void version(@Parameter(hidden = true) final ServiceContext context) {
         context.txt(getVersion()).status(HttpResponseStatus.OK);
     }
@@ -170,11 +172,7 @@ abstract public class BootController extends PingController {
         return version;
     }
 
-    @GET
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
-    @Produces(MediaType.TEXT_HTML)
-    @RolesAllowed({Config.ROLE_ADMIN})
-    //@CaptureTransaction("admin.inspect")
+
     @Operation(
             tags = {TAG_APP_ADMIN},
             summary = "Run application self inspection",
@@ -206,6 +204,12 @@ abstract public class BootController extends PingController {
             security = {
                     @SecurityRequirement(name = "BearerAuth")}
     )
+    @GET
+    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
+    @Produces(MediaType.TEXT_HTML)
+    @RolesAllowed({Config.ROLE_ADMIN})
+    @Deamon
+    //@CaptureTransaction("admin.inspect")
     public void inspect(@Parameter(hidden = true) final ServiceContext context) {
         //HealthInspector healthInspector = getHealthInspector();        
         if (healthInspector == null) {
@@ -220,10 +224,6 @@ abstract public class BootController extends PingController {
         }
     }
 
-    @PUT
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
-    @RolesAllowed({Config.ROLE_ADMIN})
-    //@CaptureTransaction("admin.changeStatus")
     @Operation(
             tags = {TAG_APP_ADMIN},
             summary = "Graceful shutdown by changing service status",
@@ -255,16 +255,16 @@ abstract public class BootController extends PingController {
             security = {
                     @SecurityRequirement(name = "BearerAuth")}
     )
-    public void changeStatus(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final ServiceContext context) throws IOException {
+    @PUT
+    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
+    @RolesAllowed({Config.ROLE_ADMIN})
+    @Deamon
+    //@CaptureTransaction("admin.changeStatus")
+    public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final ServiceContext context) throws IOException {
         HealthMonitor.setPauseStatus(pause, "request by " + context.caller());
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
-    @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Path(Config.CURRENT_VERSION + Config.API_NF_JSECURITYCHECK)
-    //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, responseHeader = false)
     @Operation(
             tags = {TAG_USER_AUTH},
             summary = "User login",
@@ -299,17 +299,18 @@ abstract public class BootController extends PingController {
                     )
             }
     )
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Path(Config.CURRENT_VERSION + Config.API_NF_JSECURITYCHECK)
+    @Deamon
+    //@CaptureTransaction("user.signJWT")
+    @Log(requestBody = false, responseHeader = false)
     public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
                                         @FormParam("j_password") String password,
                                         @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
         return login(auth, userId, password, context);
     }
 
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
-    //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, responseHeader = false)
     @Operation(
             tags = {TAG_USER_AUTH},
             summary = "User login",
@@ -344,6 +345,12 @@ abstract public class BootController extends PingController {
                     )
             }
     )
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
+    @Deamon
+    //@CaptureTransaction("user.signJWT")
+    @Log(requestBody = false, responseHeader = false)
     public Caller longin_JSON(@Nonnull LoginVo loginVo,
                               @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
         return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
@@ -363,10 +370,6 @@ abstract public class BootController extends PingController {
         return context.caller();
     }
 
-    @DELETE
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
-    //@PermitAll
-    //@CaptureTransaction("user.logoutToken")
     @Operation(
             tags = {TAG_USER_AUTH},
             summary = "User logout",
@@ -398,6 +401,11 @@ abstract public class BootController extends PingController {
             security = {
                     @SecurityRequirement(name = "BearerAuth")}
     )
+    @DELETE
+    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
+    @Deamon
+    //@PermitAll
+    //@CaptureTransaction("user.logoutToken")
     public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final ServiceContext context) {
         //Authenticator auth = getAuthenticator();
         if (auth == null) {
@@ -413,6 +421,7 @@ abstract public class BootController extends PingController {
     @POST
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({Config.ROLE_ADMIN})
+    @Deamon
     public void loadTestBenchmarkPost1(final ServiceRequest request, final ServiceContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -427,6 +436,7 @@ abstract public class BootController extends PingController {
     @Operation(hidden = true)
     @POST
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
+    @Deamon
     public void loadTestBenchmarkPost2(final ServiceRequest request, final ServiceContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -442,6 +452,7 @@ abstract public class BootController extends PingController {
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({Config.ROLE_ADMIN})
+    @Deamon
     public void loadTestBenchmarkGet1(final ServiceRequest request, final ServiceContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -456,6 +467,7 @@ abstract public class BootController extends PingController {
     @Operation(hidden = true)
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
+    @Deamon
     public void loadTestBenchmarkGet2(final ServiceRequest request, final ServiceContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {

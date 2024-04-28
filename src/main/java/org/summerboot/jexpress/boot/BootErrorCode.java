@@ -56,6 +56,9 @@ public interface BootErrorCode {
     int BAD_REQUEST_DATA = getErrorCode(NIO_BASE + 9);
     int NIO_REQUEST_BAD_ENCODING = getErrorCode(NIO_BASE + 10);
     int NIO_REQUEST_BAD_DOWNLOAD = getErrorCode(NIO_BASE + 11);
+    int SERVICE_UNAVAILABLE = getErrorCode(NIO_BASE + 12);
+    int SERVICE_HEALTH_CHECK_FAILED = getErrorCode(NIO_BASE + 13);
+    int SERVICE_PAUSED = getErrorCode(NIO_BASE + 14);
 
     //IO
     int IO_BASE = getErrorCode(20);
