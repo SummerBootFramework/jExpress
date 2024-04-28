@@ -110,7 +110,7 @@ abstract public class SummerBigBang extends SummerSingularity {
          */
         for (SummerInitializer summerInitializer : summerInitializers) {
             log.trace("initApp.before.guiceInjector: {}", summerInitializer);
-            summerInitializer.initApp(userSpecifiedConfigDir);
+            summerInitializer.initAppBeforeIoC(userSpecifiedConfigDir);
         }
 
         /*
@@ -124,7 +124,7 @@ abstract public class SummerBigBang extends SummerSingularity {
          */
         for (SummerInitializer summerInitializer : summerInitializers) {
             log.trace("initApp.after.guiceInjector: {}", summerInitializer);
-            summerInitializer.initApp(userSpecifiedConfigDir, guiceInjector);
+            summerInitializer.initAppAfterIoC(userSpecifiedConfigDir, guiceInjector);
         }
 
         return (T) this;

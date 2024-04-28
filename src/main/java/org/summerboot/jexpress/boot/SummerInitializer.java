@@ -35,7 +35,7 @@ public interface SummerInitializer {
      *
      * @param configDir
      */
-    void initApp(File configDir);
+    void initAppBeforeIoC(File configDir);
 
     /**
      * called after IoC (Guice module) is initialized
@@ -43,5 +43,5 @@ public interface SummerInitializer {
      * @param configDir
      * @param guiceInjector
      */
-    void initApp(File configDir, Injector guiceInjector);
+    void initAppAfterIoC(File configDir, Injector guiceInjector);
 }
