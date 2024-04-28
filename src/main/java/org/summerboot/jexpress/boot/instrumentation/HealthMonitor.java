@@ -61,6 +61,7 @@ public class HealthMonitor {
             HealthInspector.healthInspectorCounter.incrementAndGet();
             boolean inspectionFailed;
             try {
+                int retryIndex = 0;
                 do {
                     StringBuilder sb = new StringBuilder();
                     sb.append(BootConstant.BR).append(PROMPT);
@@ -82,7 +83,7 @@ public class HealthMonitor {
                         sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
                         log.warn(sb);
                         if (appLifecycleListener != null) {
-                            appLifecycleListener.onHealthInspectionDone(false, sb.toString());
+                            appLifecycleListener.onHealthInspectionFailed(retryIndex, sb.toString(), inspectionIntervalSeconds);
                         }
                         try {
                             TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
@@ -136,6 +137,7 @@ public class HealthMonitor {
     protected static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
         statusReason = reason;
         serviceAvaliable = healthOk && !paused;
+        log.warn("server status changed: paused={}, healthOk={}, serviceStatusChanged={}, reason: {}", paused, healthOk, serviceStatusChanged, reason);
         if (appLifecycleListener != null) {
             appLifecycleListener.onApplicationStatusUpdated(healthOk, paused, serviceStatusChanged, reason);
         }

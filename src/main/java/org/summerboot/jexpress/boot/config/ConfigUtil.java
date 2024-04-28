@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.boot.instrumentation.Timeout;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.security.SSLUtil;
@@ -69,10 +70,10 @@ public class ConfigUtil {
 //        Path p = Paths.get(configFolder.toString(), cfgFile);
 //        return p.toFile();
 //    }
-    protected static ConfigChangeListener listener;
+    protected static AppLifecycleListener cfgListener;
 
-    public static void setConfigChangeListener(ConfigChangeListener l) {
-        listener = l;
+    public static void setConfigChangeListener(AppLifecycleListener listener) {
+        cfgListener = listener;
     }
 
     public static enum ConfigLoadMode {
@@ -109,7 +110,7 @@ public class ConfigUtil {
         }
         // 2. monitor the change of config files
         if (!mode.isCliMode() && CfgMonitorInterval > 0) {
-            ConfigurationMonitor.listener.start(configFolder.toFile(), CfgMonitorInterval, cfgUpdateTasks);
+            ConfigurationMonitor.cfgMonitor.start(configFolder.toFile(), CfgMonitorInterval, cfgUpdateTasks);
         }
         return updated;
     }
@@ -146,7 +147,7 @@ public class ConfigUtil {
             }
             createConfigFile(cfg.getClass(), cfgConfigDir, configFile.getName(), false);
         }
-        //ConfigurationMonitor.listener.stop();
+        //ConfigurationMonitor.cfgMonitor.stop();
         int updated = updatePasswords(configFile, null, mode.isEncryptMode());
         if (mode.isCliMode()) {
             System.out.println(updated + " config items have been " + (mode.isEncryptMode() ? "encrypted" : "decrypted") + " in " + configFile.getAbsolutePath());
@@ -156,14 +157,14 @@ public class ConfigUtil {
         log.debug(() -> cfg.info());
         cfgUpdateTasks.put(configFile, () -> {
             Throwable cause = null;
-            if (listener != null) {
-                listener.onBefore(configFile, cfg);
+            if (cfgListener != null) {
+                cfgListener.onConfigChangeBefore(configFile, cfg);
             }
             log.warn(I18n.info.cfgChangedBefore.format(defaultRB, cfg.info()));
             try {
-                //ConfigurationMonitor.listener.stop();
+                //ConfigurationMonitor.cfgMonitor.stop();
                 updatePasswords(configFile, null, true);
-                //ConfigurationMonitor.listener.start();
+                //ConfigurationMonitor.cfgMonitor.start();
                 JExpressConfig temp = cfg.temp();
                 if (temp != null) {
                     temp.load(configFile, false);// try it first on a temp vo to avoid bad CFG file damage the current settings
@@ -174,8 +175,8 @@ public class ConfigUtil {
                 log.error(configFile, ex);
             } finally {
                 log.warn(I18n.info.cfgChangedAfter.format(defaultRB, cfg.info()));
-                if (listener != null) {
-                    listener.onAfter(configFile, cfg, cause);
+                if (cfgListener != null) {
+                    cfgListener.onConfigChangedAfter(configFile, cfg, cause);
                 }
             }
         });

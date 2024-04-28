@@ -31,7 +31,17 @@ public interface SummerInitializer {
     void initCLI(Options options);
 
     /**
+     * called before IoC (Guice module) is initialized
+     *
      * @param configDir
      */
-    void initApp(File configDir, Injector guiceInjector);
+    void initAppBeforeIoC(File configDir);
+
+    /**
+     * called after IoC (Guice module) is initialized
+     *
+     * @param configDir
+     * @param guiceInjector
+     */
+    void initAppAfterIoC(File configDir, Injector guiceInjector);
 }

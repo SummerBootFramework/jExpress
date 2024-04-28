@@ -210,6 +210,7 @@ public class BackOffice extends BootConfig {
     @Config(key = "backoffice.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"PST\", a full name such as \"America/Los_Angeles\", or a custom ID such as \"GMT-8:00\", or \"default\" as system default timezone.", defaultValue = "UTC")
     private TimeZone timeZone = TimeZone.getTimeZone("UTC");//TimeZone.getDefault();
 
+
     @ConfigHeader(title = "4.1 Default Path/File Naming")
     @Config(key = "naming.folder.domainPrefix", defaultValue = "standalone")
     private String domainFolderPrefix = "standalone";
@@ -293,6 +294,9 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "naming.cli.decrypt", defaultValue = "decrypt")
     private String cliName_decrypt = "decrypt";
+
+    @Config(key = "naming.memo.delimiter", defaultValue = ": ")
+    private String memoDelimiter = ": ";
 
     public Set<String> getRootPackageNames() {
         return rootPackageNames;
@@ -442,4 +446,7 @@ public class BackOffice extends BootConfig {
         return cliName_decrypt;
     }
 
+    public String getMemoDelimiter() {
+        return memoDelimiter;
+    }
 }

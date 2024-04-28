@@ -35,7 +35,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     protected static final Logger log = LogManager.getLogger(ConfigurationMonitor.class.getName());
 
-    public static final ConfigurationMonitor listener = new ConfigurationMonitor();
+    public static final ConfigurationMonitor cfgMonitor = new ConfigurationMonitor();
 
     public static final String APUSE_FILE_NAME = "pause";
 
@@ -59,13 +59,13 @@ public class ConfigurationMonitor implements FileAlterationListener {
         for (File listenFile : cfgUpdateTasks.keySet()) {
             FileFilter filter = (File pathname) -> listenFile.getAbsolutePath().equals(pathname.getAbsolutePath());
             FileAlterationObserver observer = new FileAlterationObserver(folder, filter);
-            observer.addListener(listener);
+            observer.addListener(cfgMonitor);
             monitor.addObserver(observer);
         }
         // pause trigger file
         FileFilter filter = (File pathname) -> pauseFile.getAbsolutePath().equals(pathname.getAbsolutePath());
         FileAlterationObserver observer = new FileAlterationObserver(folder, filter);
-        observer.addListener(listener);
+        observer.addListener(cfgMonitor);
         monitor.addObserver(observer);
         // start
         monitor.start();

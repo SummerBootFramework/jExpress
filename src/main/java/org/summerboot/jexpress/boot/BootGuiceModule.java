@@ -24,8 +24,6 @@ import io.netty.channel.ChannelHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.Scheduler;
 import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.config.ConfigChangeListener;
-import org.summerboot.jexpress.boot.config.ConfigChangeListenerImpl;
 import org.summerboot.jexpress.boot.event.AppLifecycleHandler;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.boot.event.HttpExceptionHandler;
@@ -99,8 +97,8 @@ public class BootGuiceModule extends AbstractModule {
         memo.append(INFO).append(InstrumentationMgr.class.getName()).append(BIND_TO).append(InstrumentationMgrImpl.class.getName());
 
         // 2. Non-Functinal services
-        bind(ConfigChangeListener.class).to(ConfigChangeListenerImpl.class);
-        memo.append(INFO).append(ConfigChangeListener.class.getName()).append(BIND_TO).append(ConfigChangeListenerImpl.class.getName());
+//        bind(ConfigChangeListener.class).to(ConfigChangeListenerImpl.class);
+//        memo.append(INFO).append(ConfigChangeListener.class.getName()).append(BIND_TO).append(ConfigChangeListenerImpl.class.getName());
 
         // 3. NIO Controllers
         bind(NioChannelInitializer.class).to(HttpNioChannelInitializer.class);
