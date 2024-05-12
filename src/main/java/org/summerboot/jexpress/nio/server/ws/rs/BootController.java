@@ -211,12 +211,11 @@ abstract public class BootController extends PingController {
     @Deamon
     //@CaptureTransaction("admin.inspect")
     public void inspect(@Parameter(hidden = true) final ServiceContext context) {
-        //HealthInspector healthInspector = getHealthInspector();        
         if (healthInspector == null) {
             context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "HealthInspector not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return;
         }
-        List<Err> error = healthInspector.ping(true);
+        List<Err> error = healthInspector.ping();
         if (error == null || error.isEmpty()) {
             context.txt("inspection passed").errors(null).status(HttpResponseStatus.OK);
         } else {

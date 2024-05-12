@@ -42,6 +42,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
@@ -428,6 +429,8 @@ public class ReflectionUtil {
             return ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
         } else if (targetClass.equals(LocalDateTime.class)) {
             return LocalDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME);
+        } else if (targetClass.equals(LocalDate.class)) {
+            return LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE);
         } else if (targetClass.equals(TimeZone.class)) {
             if (value.equals("default")) {
                 return TimeZone.getDefault();
