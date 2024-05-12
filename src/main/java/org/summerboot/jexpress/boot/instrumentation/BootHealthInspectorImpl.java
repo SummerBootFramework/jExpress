@@ -17,8 +17,6 @@ package org.summerboot.jexpress.boot.instrumentation;
 
 import com.google.inject.Singleton;
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
-import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
@@ -38,12 +36,12 @@ public class BootHealthInspectorImpl implements HealthInspector {
     @Override
     public List<Err> ping(Object... args) {
         ServiceError error = new ServiceError(BootConstant.APP_ID + "- ping");
-        healthCheck(error, null);
+        healthCheck(error, args);
         List<Err> errors = error.getErrors();
         return errors;
     }
 
-    protected void healthCheck(@Nonnull ServiceError error, @Nullable Logger callerLog) {
+    protected void healthCheck(@Nonnull ServiceError error, Object... args) {
     }
 
 }
