@@ -47,7 +47,7 @@ public interface HttpLifecycleListener {
     boolean beofreProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
 
     /**
-     * step1
+     * step1 - after process is done, before sending response to client
      *
      * @param processor
      * @param ctx
@@ -61,8 +61,21 @@ public interface HttpLifecycleListener {
     void afterProcess(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath,
                       Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context);
 
+
     /**
-     * step2
+     * step2 - after sending response to client, before starting logging
+     *
+     * @param httpHeaders
+     * @param httpMethod
+     * @param httpRequestPath
+     * @param queryParams
+     * @param httpPostRequestBody
+     * @param context
+     */
+    void afterService(HttpHeaders httpHeaders, HttpMethod httpMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context);
+
+    /**
+     * step3
      *
      * @param errorContent
      * @return
@@ -70,7 +83,7 @@ public interface HttpLifecycleListener {
     String beforeSendingError(String errorContent);
 
     /**
-     * step3
+     * step4
      *
      * @param originallLogContent
      * @param httpHeaders
@@ -89,7 +102,7 @@ public interface HttpLifecycleListener {
                          final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx);
 
     /**
-     * step4
+     * step5
      *
      * @param logContent
      * @param httpHeaders

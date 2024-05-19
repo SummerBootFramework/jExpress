@@ -169,6 +169,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             } finally {
                 NioCounter.COUNTER_SENT.incrementAndGet();
                 long responseTime = System.currentTimeMillis() - start;
+                this.afterService(requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
                 String report = null;
                 try {
                     boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThresholdMs();
@@ -418,6 +419,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     }
 
     abstract protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
+
+    abstract protected void afterService(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
 
     abstract protected String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
                                             final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
