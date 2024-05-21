@@ -54,6 +54,10 @@ public class HttpLifecycleHandler implements HttpLifecycleListener {
     }
 
     @Override
+    public void afterService(HttpHeaders httpHeaders, HttpMethod httpMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
+    }
+
+    @Override
     public String beforeSendingError(String errorContent) {
         //return FormatterUtil.protectContent(errorContent, "UnknownHostException", ":", null, " ***");
         return errorContent;
