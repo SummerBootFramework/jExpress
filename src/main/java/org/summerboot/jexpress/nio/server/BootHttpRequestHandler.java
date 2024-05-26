@@ -146,6 +146,11 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         return processorSettings;
     }
 
+    @Override
+    protected void afterService(HttpHeaders httpHeaders, HttpMethod httpMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
+        httpLifecycleListener.afterService(httpHeaders, httpMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
+    }
+
     /**
      * create User object based on token in the header, then set User object to
      * context
