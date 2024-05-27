@@ -886,6 +886,21 @@ public class ServiceContext {
 
     }
 
+    public StringBuilder report() {
+        StringBuilder sb = new StringBuilder();
+        reportPOI(sb);
+        reportMemo(sb);
+        reportError(sb);
+        return sb;
+    }
+
+    public ServiceContext report(StringBuilder sb) {
+        reportPOI(sb);
+        reportMemo(sb);
+        reportError(sb);
+        return this;
+    }
+
     public ServiceContext reportError(StringBuilder sb) {
         if (serviceError == null /*|| file == null*/) {// log error only for file request
             return this;

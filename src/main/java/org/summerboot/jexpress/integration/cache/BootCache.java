@@ -19,6 +19,7 @@ import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.integration.cache.domain.FlashSale;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -57,10 +58,21 @@ public interface BootCache {
      * @param key
      * @param unlockPassword
      * @param ttlMinute
-     * @return true when debounced
+     * @return true is debounced (failed to acquire lock), false is not debounced (acquired lock successfully
      */
-    default boolean debounced(String key, String unlockPassword, int ttlMinute) {
+    default boolean debounced(String key, String unlockPassword, long ttlMinute) {
         return !tryLock(key, unlockPassword, ttlMinute * 60000);
+    }
+
+    /**
+     * @param key
+     * @param unlockPassword
+     * @param ttl
+     * @param timeUnit
+     * @return true is debounced (failed to acquire lock), false is not debounced (acquired lock successfully
+     */
+    default boolean debounced(String key, String unlockPassword, long ttl, TimeUnit timeUnit) {
+        return !tryLock(key, unlockPassword, timeUnit.toMillis(ttl));
     }
 
     /**
