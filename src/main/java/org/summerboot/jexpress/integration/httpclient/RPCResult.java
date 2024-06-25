@@ -145,10 +145,10 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
             errorResponse = fromJson(jacksonMapper, null, errorResponseClass, context);
             if (errorResponse != null & context != null) {
                 if (errorResponse.isSingleError()) {
-                    Err e = errorResponse.toSerivceError(httpStatus);
+                    Err e = errorResponse.toServiceError(httpStatus);
                     context.error(e);
                 } else {
-                    List<Err> errors = errorResponse.toSerivceErrors(httpStatus);
+                    List<Err> errors = errorResponse.toServiceErrors(httpStatus);
                     context.errors(errors);
                 }
             }
