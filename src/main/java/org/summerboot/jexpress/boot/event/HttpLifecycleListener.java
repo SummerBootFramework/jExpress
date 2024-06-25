@@ -44,7 +44,7 @@ public interface HttpLifecycleListener {
      * @return true if good to process request, otherwise false
      * @throws Exception
      */
-    boolean beofreProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
+    boolean beforeProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
 
     /**
      * step1 - after process is done, before sending response to client

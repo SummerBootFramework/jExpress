@@ -26,7 +26,7 @@ public interface ServiceErrorConvertible {
 
     boolean isSingleError();
 
-    Err toSerivceError(HttpResponseStatus status);
+    Err toServiceError(HttpResponseStatus status);
 
-    List<Err> toSerivceErrors(HttpResponseStatus status);
+    List<Err> toServiceErrors(HttpResponseStatus status);
 }

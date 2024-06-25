@@ -42,7 +42,7 @@ public class HttpLifecycleHandler implements HttpLifecycleListener {
     }
 
     @Override
-    public boolean beofreProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+    public boolean beforeProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
         return true;
     }
 

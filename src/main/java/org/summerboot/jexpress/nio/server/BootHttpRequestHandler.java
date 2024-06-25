@@ -105,7 +105,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             if (authenticator != null && !authenticator.customizedAuthorizationCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return processorSettings;
             }
-            if (!httpLifecycleListener.beofreProcess(processor, httpRequestHeaders, httpRequestPath, context)) {
+            if (!httpLifecycleListener.beforeProcess(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return processorSettings;
             }
             processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context);
