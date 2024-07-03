@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
-import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
@@ -33,6 +32,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * @param <T> Success(JSON) result type
@@ -41,29 +41,27 @@ import java.util.List;
  */
 public class RPCResult<T, E extends ServiceErrorConvertible> {
 
-    protected static boolean isFromJsonFailOnUnknownProperties = true;
 
     public static ObjectMapper DefaultJacksonMapper = new ObjectMapper();
 
-    public static void update(ObjectMapper objectMapper) {
+    public static void update(ObjectMapper objectMapper, TimeZone timeZone, boolean isFromJsonFailOnUnknownProperties) {
         objectMapper.registerModules(new JavaTimeModule());
-        objectMapper.setTimeZone(BackOffice.agent.getTimeZone());
+        objectMapper.setTimeZone(timeZone);
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
     }
 
-    public static void init(boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive) {
-        isFromJsonFailOnUnknownProperties = fromJsonFailOnUnknownProperties;
+    public static void init(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive) {
         if (fromJsonCaseInsensitive) {
             DefaultJacksonMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
         }
-        update(DefaultJacksonMapper);
+        update(DefaultJacksonMapper, timeZone, fromJsonFailOnUnknownProperties);
     }
 
     static {
-        init(true, false);
+        init(TimeZone.getDefault(), true, false);
     }
 
     protected final HttpRequest originRequest;

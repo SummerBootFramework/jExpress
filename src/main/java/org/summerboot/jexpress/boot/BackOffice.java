@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
@@ -207,10 +206,6 @@ public class BackOffice extends BootConfig {
     @Config(key = "backoffice.executor.allowCoreThreadTimeOut", defaultValue = "false")
     private boolean allowCoreThreadTimeOut = false;
 
-    @Config(key = "backoffice.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"PST\", a full name such as \"America/Los_Angeles\", or a custom ID such as \"GMT-8:00\", or \"default\" as system default timezone.", defaultValue = "UTC")
-    private TimeZone timeZone = TimeZone.getTimeZone("UTC");//TimeZone.getDefault();
-
-
     @ConfigHeader(title = "4.1 Default Path/File Naming")
     @Config(key = "naming.folder.domainPrefix", defaultValue = "standalone")
     private String domainFolderPrefix = "standalone";
@@ -332,10 +327,6 @@ public class BackOffice extends BootConfig {
 
     public String getPortInUseAlertMessage() {
         return portInUseAlertMessage;
-    }
-
-    public TimeZone getTimeZone() {
-        return timeZone;
     }
 
     public String getDomainFolderPrefix() {

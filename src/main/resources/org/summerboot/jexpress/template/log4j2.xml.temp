@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- version 2.4.5 -->
+<!-- version 2.4.9 -->
 <Configuration status="WARN" monitorInterval="30">
     <Properties>
         <Property name="logPattern" value="[${sys:logId}] %d{ISO8601} %p %c{}.%M() [%t] %m %ex%n"/>
@@ -30,11 +30,23 @@
                 <SizeBasedTriggeringPolicy size="2MB" />
             </Policies>
             <DefaultRolloverStrategy max="50" />
-        </RollingRandomAccessFile>  
+        </RollingRandomAccessFile>
         <RollingRandomAccessFile
             name="RequestLogFile"
             fileName="${sys:logPath}/${sys:appName}_requests_${sys:serverName}.log"
             filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_requests_${sys:serverName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
+            immediateFlush="false"
+            ignoreExceptions="false">
+            <PatternLayout pattern="${sys:logPattern}"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="500" />
+        </RollingRandomAccessFile>
+        <RollingRandomAccessFile
+            name="ScheduledLogFile"
+            fileName="${sys:logPath}/${sys:appName}_schedule_${sys:serverName}.log"
+            filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_schedule_${sys:serverName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
             immediateFlush="false"
             ignoreExceptions="false">
             <PatternLayout pattern="${sys:logPattern}"/>
@@ -73,7 +85,7 @@
             <AppenderRef ref="Console"/>
         </Logger>       
         <Logger level="info" name="org.summerboot.jexpress.integration.quartz.BootJobListener" includeLocation="false" additivity="false">
-            <AppenderRef ref="RequestLogFile"/>
+            <AppenderRef ref="ScheduledLogFile"/>
             <!-- -->
             <AppenderRef ref="Console"/>
         </Logger>

@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -149,6 +150,8 @@ abstract public class HttpClientConfig extends BootConfig {
     protected volatile boolean fromJsonCaseInsensitive = false;
     @Config(key = "httpclient.fromJson.failOnUnknownProperties")
     protected volatile boolean fromJsonFailOnUnknownProperties = true;
+    @Config(key = "httpclient.fromJson.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
+    protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
     //3.2 HTTP Client Performance    
     @ConfigHeader(title = "2. HTTP Client Performance")
@@ -237,7 +240,7 @@ abstract public class HttpClientConfig extends BootConfig {
             }
         });
 
-        RPCResult.init(fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive);
+        RPCResult.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive);
 
         // 3.1 HTTP Client keystore
         KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
@@ -401,6 +404,10 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public boolean isFromJsonFailOnUnknownProperties() {
         return fromJsonFailOnUnknownProperties;
+    }
+
+    public TimeZone getJsonParserTimeZone() {
+        return jsonParserTimeZone;
     }
 
     public long getHttpConnectTimeoutMs() {

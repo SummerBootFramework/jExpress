@@ -432,7 +432,7 @@ public class ReflectionUtil {
         } else if (targetClass.equals(LocalDate.class)) {
             return LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE);
         } else if (targetClass.equals(TimeZone.class)) {
-            if (value.equals("default")) {
+            if (value.equals("system") || value.equals("default")) {
                 return TimeZone.getDefault();
             }
             return TimeZone.getTimeZone(value);

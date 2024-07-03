@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
@@ -185,7 +186,7 @@ public class NioConfig extends BootConfig {
     //protected volatile int nioEventLoopGroupExecutorSize;
 
     @Config(key = "nio.server.BizExecutor.mode", defaultValue = "Mixed",
-            desc = "valid value = CPU, IO (default), Mixed\nuse CPU core + 1 when application is CPU bound\n"
+            desc = "valid value = CPU, IO and Mixed (default) \nuse CPU core + 1 when application is CPU bound\n"
                     + "use CPU core x 2 + 1 when application is I/O bound\n"
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
@@ -238,6 +239,9 @@ public class NioConfig extends BootConfig {
     protected volatile boolean toJsonIgnoreNull = true;
     @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
     protected volatile boolean toJsonPretty = false;
+
+    @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
+    protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
     @Config(key = "nio.WebSocket.Compress", defaultValue = "true")
     protected volatile boolean webSocketCompress = true;
@@ -414,7 +418,7 @@ public class NioConfig extends BootConfig {
         tpe = buildThreadPoolExecutor(tpe, "NIO.Biz", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, new AbortPolicyWithReport("NIOBizThreadPoolExecutor"),
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
-        BeanUtil.init(fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull);
+        BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull);
 
         //5.1 caller filter
         switch (filterUserType) {
@@ -617,6 +621,10 @@ public class NioConfig extends BootConfig {
 
     public boolean isFromJsonFailOnUnknownProperties() {
         return fromJsonFailOnUnknownProperties;
+    }
+
+    public TimeZone getJsonParserTimeZone() {
+        return jsonParserTimeZone;
     }
 
     public boolean isToJsonIgnoreNull() {
