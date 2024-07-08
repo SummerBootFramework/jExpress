@@ -36,6 +36,7 @@ public interface BootCache {
      *                                        when unlockPassword not match
      * @param ttlToExpireIncaseUnableToUnlock expire time of tryLock in
      *                                        case unable to unlock (e.g. exception/error before executing unlock)
+     * @param timeUnit
      * @return the result of get tryLock
      */
     boolean tryLock(String lockName, String unlockPassword, long ttlToExpireIncaseUnableToUnlock, TimeUnit timeUnit);
@@ -52,16 +53,6 @@ public interface BootCache {
 
     default String generateUnlockPassword() {
         return UUID.randomUUID().toString() + "_" + BootConstant.PID + "_" + Thread.currentThread().getName();
-    }
-
-    /**
-     * @param key
-     * @param unlockPassword
-     * @param ttlMinute
-     * @return true is debounced (failed to acquire lock), false is not debounced (acquired lock successfully
-     */
-    default boolean debounced(String key, String unlockPassword, long ttlMinute) {
-        return debounced(key, unlockPassword, ttlMinute, TimeUnit.MINUTES);
     }
 
     /**
