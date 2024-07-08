@@ -216,19 +216,19 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
      * this is a Distributed non-blocking version of lock() method; it attempts
      * to acquire the lock immediately, return true if locking succeeds
      *
-     * @param lockName                                 the name of the tryLock
-     * @param unlockPassword                           unlockPassword is to be used for unlock. To protect
-     *                                                 a tryLock from being unlocked by anyone, a tryLock cannot be released
-     *                                                 when unlockPassword not match
-     * @param millisecondsToExpireIncaseUnableToUnlock expire time of tryLock in
-     *                                                 case unable to unlock (e.g. exception/error before executing unlock)
+     * @param lockName                        the name of the tryLock
+     * @param unlockPassword                  unlockPassword is to be used for unlock. To protect
+     *                                        a tryLock from being unlocked by anyone, a tryLock cannot be released
+     *                                        when unlockPassword not match
+     * @param ttlToExpireIncaseUnableToUnlock expire time of tryLock in
+     *                                        case unable to unlock (e.g. exception/error before executing unlock)
      * @return the result of get tryLock
      */
     @Override
-    public boolean tryLock(String lockName, String unlockPassword, long millisecondsToExpireIncaseUnableToUnlock) {
+    public boolean tryLock(String lockName, String unlockPassword, long ttlToExpireIncaseUnableToUnlock, TimeUnit timeUnit) {
         final Holder<Boolean> holder = new Holder<>(false);
         execute(true, jedis -> {
-            SetParams p = new SetParams().nx().px(millisecondsToExpireIncaseUnableToUnlock);
+            SetParams p = new SetParams().nx().px(timeUnit.toMillis(ttlToExpireIncaseUnableToUnlock));
             String result = jedis.set(lockName, unlockPassword, p);
 
             boolean isLocked = REDIS_SUCCESS.equalsIgnoreCase(result);

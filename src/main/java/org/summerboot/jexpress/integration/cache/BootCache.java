@@ -30,15 +30,15 @@ public interface BootCache {
      * this is a Distributed non-blocking version of lock() method; it attempts
      * to acquire the lock immediately, return true if locking succeeds
      *
-     * @param lockName                                 the name of the tryLock
-     * @param unlockPassword                           unlockPassword is to be used for unlock. To protect
-     *                                                 a tryLock from being unlocked by anyone, a tryLock cannot be released
-     *                                                 when unlockPassword not match
-     * @param millisecondsToExpireIncaseUnableToUnlock expire time of tryLock in
-     *                                                 case unable to unlock (e.g. exception/error before executing unlock)
+     * @param lockName                        the name of the tryLock
+     * @param unlockPassword                  unlockPassword is to be used for unlock. To protect
+     *                                        a tryLock from being unlocked by anyone, a tryLock cannot be released
+     *                                        when unlockPassword not match
+     * @param ttlToExpireIncaseUnableToUnlock expire time of tryLock in
+     *                                        case unable to unlock (e.g. exception/error before executing unlock)
      * @return the result of get tryLock
      */
-    boolean tryLock(String lockName, String unlockPassword, long millisecondsToExpireIncaseUnableToUnlock);
+    boolean tryLock(String lockName, String unlockPassword, long ttlToExpireIncaseUnableToUnlock, TimeUnit timeUnit);
 
     /**
      * unlocks the Distributed Lock instance
@@ -61,7 +61,7 @@ public interface BootCache {
      * @return true is debounced (failed to acquire lock), false is not debounced (acquired lock successfully
      */
     default boolean debounced(String key, String unlockPassword, long ttlMinute) {
-        return !tryLock(key, unlockPassword, ttlMinute * 60000);
+        return debounced(key, unlockPassword, ttlMinute, TimeUnit.MINUTES);
     }
 
     /**
@@ -72,7 +72,7 @@ public interface BootCache {
      * @return true is debounced (failed to acquire lock), false is not debounced (acquired lock successfully
      */
     default boolean debounced(String key, String unlockPassword, long ttl, TimeUnit timeUnit) {
-        return !tryLock(key, unlockPassword, timeUnit.toMillis(ttl));
+        return !tryLock(key, unlockPassword, ttl, timeUnit);
     }
 
     /**
