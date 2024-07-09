@@ -87,7 +87,7 @@ public class HttpNioChannelInitializer extends NioChannelInitializer {
         //channelPipeline.addLast(new HttpContentCompressor());
 
         // 3*. File upload: after codec, chunked and before aggregator
-        if (namedFileUpload != null) {
+        if (namedFileUpload != null && !namedFileUpload.isEmpty()) {
             for (String named : namedFileUpload) {
                 ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
                 channelPipeline.addLast("FileUpload_" + named, ch);// to support file upload, must before HttpObjectAggregator

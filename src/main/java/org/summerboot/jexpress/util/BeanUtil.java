@@ -30,12 +30,12 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import org.apache.commons.lang3.StringUtils;
-import org.summerboot.jexpress.boot.BackOffice;
 
 import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TimeZone;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -44,7 +44,6 @@ public class BeanUtil {
 
     protected static boolean isToJsonIgnoreNull = true;
     protected static boolean isToJsonPretty = false;
-    protected static boolean isFromJsonFailOnUnknownProperties = true;
 
     public static ObjectMapper JacksonMapper = new ObjectMapper();//JsonMapper.builder().init(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
     public static ObjectMapper JacksonMapperIgnoreNull = new ObjectMapper()
@@ -52,30 +51,29 @@ public class BeanUtil {
             .setSerializationInclusion(Include.NON_EMPTY);
     public static XmlMapper XMLMapper = new XmlMapper();
 
-    public static void update(ObjectMapper objectMapper) {
+    public static void update(ObjectMapper objectMapper, TimeZone timeZone, boolean isFromJsonFailOnUnknownProperties) {
         objectMapper.registerModules(new JavaTimeModule());
-        objectMapper.setTimeZone(BackOffice.agent.getTimeZone());
+        objectMapper.setTimeZone(timeZone);
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
     }
 
-    public static void init(boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive, boolean toJsonPretty, boolean toJsonIgnoreNull) {
-        isFromJsonFailOnUnknownProperties = fromJsonFailOnUnknownProperties;
+    public static void init(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive, boolean toJsonPretty, boolean toJsonIgnoreNull) {
         isToJsonPretty = toJsonPretty;
         isToJsonIgnoreNull = toJsonIgnoreNull;
         if (fromJsonCaseInsensitive) {
             JacksonMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
             XMLMapper = XmlMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
         }
-        update(JacksonMapper);
-        update(JacksonMapperIgnoreNull);
-        update(XMLMapper);
+        update(JacksonMapper, timeZone, fromJsonFailOnUnknownProperties);
+        update(JacksonMapperIgnoreNull, timeZone, fromJsonFailOnUnknownProperties);
+        update(XMLMapper, timeZone, fromJsonFailOnUnknownProperties);
     }
 
     static {
-        init(true, false, false, true);
+        init(TimeZone.getDefault(), true, false, false, true);
     }
 
     /**

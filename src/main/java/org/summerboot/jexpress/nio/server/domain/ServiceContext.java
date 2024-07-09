@@ -45,6 +45,7 @@ import java.net.SocketAddress;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -68,6 +69,7 @@ public class ServiceContext {
     protected final String txId;
     protected final long hit;
     protected final long startTs;
+    protected final OffsetDateTime startDateTime;
     protected Caller caller;
     protected String callerId;
 
@@ -135,6 +137,7 @@ public class ServiceContext {
         this.txId = txId;
         this.hit = hit;
         this.startTs = startTs;
+        this.startDateTime = OffsetDateTime.ofInstant(java.time.Instant.ofEpochMilli(startTs), java.time.ZoneId.systemDefault());
         this.requestHeaders = requestHeaders;
         this.requesMethod = requesMethod;
         this.requesURI = requesURI;
@@ -221,6 +224,10 @@ public class ServiceContext {
 
     public long startTimestamp() {
         return startTs;
+    }
+
+    public OffsetDateTime startDateTime() {
+        return startDateTime;
     }
 
     public ServiceContext reset() {
@@ -956,7 +963,7 @@ public class ServiceContext {
             return this;
         }
         NioConfig.VerboseTargetPOIType filterType = cfg == null ? NioConfig.VerboseTargetPOIType.all : cfg.getFilterPOIType();
-        sb.append("\n\tPOI: ");
+        sb.append("\n\tPOI.t0=").append(startDateTime).append(" ");
         switch (filterType) {
             case all:
                 poi.forEach((p) -> {

@@ -105,7 +105,6 @@ public class BootJobListener extends JobListenerSupport {
                     .build();
             scheduler.rescheduleJob(currentTriggerKey, nextTrigger);
             log.info(desc + " scheduled@" + nextTime);
-
         } catch (SchedulerException ex) {
             log.error("failed to reschedule the job with triger: {}", currentTriggerKey, ex);
         }
