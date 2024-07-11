@@ -110,12 +110,27 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     @Override
     public void onFileCreate(File file) {
+        if (!isPauseFile(file)) {
+            return;
+        }
         log.info(() -> "new " + file.getAbsoluteFile());
         HealthMonitor.setPauseStatus(true, "file created " + file.getAbsolutePath());
     }
 
     @Override
+    public void onFileDelete(File file) {
+        if (!isPauseFile(file)) {
+            return;
+        }
+        log.info(() -> "del " + file.getAbsoluteFile());
+        HealthMonitor.setPauseStatus(false, "file deleted " + file.getAbsolutePath());
+    }
+
+    @Override
     public void onFileChange(File file) {
+        if (isPauseFile(file)) {
+            return;
+        }
         log.info(() -> "mod " + file.getAbsoluteFile());
         // decouple business logic from framework logic
         // bad example: if(file.equals(AppConstant.CFG_PATH_EMAIL)){...} 
@@ -125,10 +140,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
         }
     }
 
-    @Override
-    public void onFileDelete(File file) {
-        log.info(() -> "del " + file.getAbsoluteFile());
-        HealthMonitor.setPauseStatus(false, "file deleted " + file.getAbsolutePath());
+    private boolean isPauseFile(File file) {
+        return APUSE_FILE_NAME.equals(file.getName());
     }
-
 }
