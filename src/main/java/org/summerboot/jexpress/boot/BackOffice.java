@@ -290,6 +290,9 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.cli.decrypt", defaultValue = "decrypt")
     private String cliName_decrypt = "decrypt";
 
+    @Config(key = "naming.cli.psv", defaultValue = "psv")
+    private String cliName_psv = "psv";
+
     @Config(key = "naming.memo.delimiter", defaultValue = ": ")
     private String memoDelimiter = ": ";
 
@@ -435,6 +438,10 @@ public class BackOffice extends BootConfig {
 
     public String getCliName_decrypt() {
         return cliName_decrypt;
+    }
+
+    public String getCliName_psv() {
+        return cliName_psv;
     }
 
     public String getMemoDelimiter() {

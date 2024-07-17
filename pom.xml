@@ -209,7 +209,7 @@
         <netty.version>4.1.111.Final</netty.version>
         <netty-tcnative.version>2.0.65.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.65.0</grpc.version>
+        <grpc.version>1.65.1</grpc.version>
         <guava.version>33.2.1-jre</guava.version>
         <protobuf.version>4.27.2</protobuf.version>
         <!-- Web JAX-RS -->

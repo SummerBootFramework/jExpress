@@ -26,6 +26,8 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.quartz.Job;
 import org.quartz.Scheduler;
 import org.summerboot.jexpress.boot.annotation.Controller;
@@ -40,8 +42,10 @@ import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.util.PropertiesFile;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -219,6 +223,13 @@ abstract public class SummerBigBang extends SummerSingularity {
                 .build();
         cliOptions.addOption(arg);
 
+        arg = Option.builder(BootConstant.CLI_PSV)
+                .hasArg().argName("envId")
+                .desc("Generate configuration list in PSV format with the specified environment id"
+                        + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_PSV + " <envId> -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain>")
+                .build();
+        cliOptions.addOption(arg);
+
         arg = Option.builder(BootConstant.CLI_DECRYPT)
                 .desc("Decrypt config file content with all \"ENC(encrypted text)\" using password:"
                         + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_DECRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
@@ -284,12 +295,12 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected boolean runCLI_Utils() {
         log.trace("");
         boolean continueCLI = true;
-        //usage
+        // usage
         if (cli.hasOption(BootConstant.CLI_USAGE)) {
             continueCLI = false;
             cliHelpFormatter.printHelp(appVersion, cliOptions);
         }
-        //callerVersion
+        // callerVersion
         if (cli.hasOption(BootConstant.CLI_VERSION)) {
             continueCLI = false;
             System.out.println(appVersion);
@@ -302,7 +313,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             String jwt = JwtUtil.buildSigningKey(signatureAlgorithm);
             System.out.println(jwt);
         }
-        //check unique
+        // check unique
         if (cli.hasOption(BootConstant.CLI_LIST_UNIQUE)) {
             continueCLI = false;
             String tag = cli.getOptionValue(BootConstant.CLI_LIST_UNIQUE);
@@ -386,6 +397,41 @@ abstract public class SummerBigBang extends SummerSingularity {
             }
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
             System.out.println(BootConstant.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
+            System.exit(0);
+        }
+
+        /*
+         * [generate configurations list in PSV format]
+         */
+        if (cli.hasOption(BootConstant.CLI_PSV)) {
+            String envId = cli.getOptionValue(BootConstant.CLI_PSV);
+            StringBuilder sb = new StringBuilder();
+            //File path = Paths.get(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_CONFIGURATION).toFile();
+            System.out.println("loading from " + userSpecifiedConfigDir.getAbsolutePath());
+            for (final File configFile : userSpecifiedConfigDir.listFiles()) {
+                if (!configFile.isFile()) {
+                    continue;
+                }
+                String fileName = configFile.getName();
+                if (!fileName.endsWith(".properties")) {
+                    continue; //skip non-properties file
+                }
+
+                System.out.println("loading " + configFile.getAbsolutePath());
+                try {
+                    PropertiesFile propertiesFile = new PropertiesFile();
+                    List<ImmutablePair<String, String>> pairs = propertiesFile.load(configFile);
+                    for (ImmutablePair<String, String> pair : pairs) {
+                        String key = pair.getKey();
+                        String value = pair.getValue();
+                        sb.append(key).append("|").append(value).append("|").append(envId).append("|").append(fileName).append(BootConstant.BR);
+                    }
+                } catch (IOException ex) {
+                    sb.append("Failed to generate configurations list in PSV format: " + configFile.getAbsolutePath()).append(BootConstant.BR);
+                    sb.append(ExceptionUtils.getRootCauseMessage(ex)).append(BootConstant.BR);
+                }
+            }
+            System.out.println("\n\n" + sb);
             System.exit(0);
         }
 
