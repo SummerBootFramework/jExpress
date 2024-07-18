@@ -26,6 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -380,6 +381,15 @@ public abstract class BootConfig implements JExpressConfig {
             }
         }
 
+        String namespace = "";
+        ImportResource ir = (ImportResource) configClass.getAnnotation(ImportResource.class);
+        if (ir != null) {
+            namespace = ir.namespace();
+        }
+        if (!namespace.isBlank()) {
+            namespace += ".";
+        }
+
         List<Field> configItems = ReflectionUtil.getDeclaredAndSuperClassesFields(configClass, true);
         boolean hasConfig = false;
         StringBuilder sb = new StringBuilder();
@@ -501,7 +511,7 @@ public abstract class BootConfig implements JExpressConfig {
                     if (!hasPredefinedValue && !isRequired || hasDefaultValue) {
                         sb.append("#");
                     }
-                    String key = cfg.key();
+                    String key = namespace + cfg.key();
                     sb.append(key).append("=");
                     if (isEncrypted) {
                         sb.append("DEC(");
