@@ -363,7 +363,7 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 6. announcement
-            log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID));
+            log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + BootConstant.BR + BootConstant.BR);
 
             String fullConfigInfo = sb.toString();
             if (appLifecycleListener != null) {
