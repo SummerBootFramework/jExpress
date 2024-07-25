@@ -59,6 +59,9 @@ public interface BootConstant {
     String FILE_CFG_NIO = BackOffice.agent.getNioConfigFileName();
     String FILE_CFG_GRPC = BackOffice.agent.getgRPCConfigFileName();
 
+    String RESPONSE_HEADER_KEY_REF = "X-Reference";
+    String RESPONSE_HEADER_KEY_TS = "X-ServerTs";
+
     /*
      * 4. jExpress Default CLI Name
      */

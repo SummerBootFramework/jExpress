@@ -99,23 +99,24 @@ public class NioHttpUtil {
     public static final AsciiString KEEP_ALIVE = new AsciiString("keep-alive");
     public static final AsciiString CONNECTION = new AsciiString("Connection");
 
-    public static void sendRedirect(ChannelHandlerContext ctx, String newUri, HttpResponseStatus status) {
+    private static void sendRedirect(ChannelHandlerContext ctx, String newUri, HttpResponseStatus status) {
         FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);//HttpResponseStatus.FOUND, HttpResponseStatus.PERMANENT_REDIRECT : HttpResponseStatus.TEMPORARY_REDIRECT
         resp.headers().set(HttpHeaderNames.LOCATION, newUri);
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
 
     public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings) {
-        if (processorSettings != null) {
-            String key = processorSettings.getHttpServiceResponseHeaderName_Reference();
-            if (key != null) {
-                serviceContext.responseHeader(key, serviceContext.txId());
-            }
-            key = processorSettings.getHttpServiceResponseHeaderName_ServerTimestamp();
-            if (key != null) {
-                serviceContext.responseHeader(key, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
-            }
+        String headerKey_reference;
+        String headerKey_serverTimestamp;
+        if (processorSettings == null) {
+            headerKey_reference = BootConstant.RESPONSE_HEADER_KEY_REF;
+            headerKey_serverTimestamp = BootConstant.RESPONSE_HEADER_KEY_TS;
+        } else {
+            headerKey_reference = processorSettings.getHttpServiceResponseHeaderName_Reference();
+            headerKey_serverTimestamp = processorSettings.getHttpServiceResponseHeaderName_ServerTimestamp();
         }
+        serviceContext.responseHeader(headerKey_reference, serviceContext.txId());
+        serviceContext.responseHeader(headerKey_serverTimestamp, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
 
         if (serviceContext.file() != null) {
             return sendFile(ctx, isKeepAlive, serviceContext);
@@ -158,7 +159,7 @@ public class NioHttpUtil {
 
     protected static final String DEFAULT_CHARSET = "UTF-8";
 
-    public static long sendText(ChannelHandlerContext ctx, boolean isKeepAlive, HttpHeaders serviceHeaders, HttpResponseStatus status, String content, String contentType, String charsetName, boolean flush, ResponseEncoder responseEncoder) {
+    protected static long sendText(ChannelHandlerContext ctx, boolean isKeepAlive, HttpHeaders serviceHeaders, HttpResponseStatus status, String content, String contentType, String charsetName, boolean flush, ResponseEncoder responseEncoder) {
         if (content == null) {
             content = "";
         }
@@ -223,7 +224,7 @@ public class NioHttpUtil {
         return contentLength;
     }
 
-    public static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext) {
+    private static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext) {
         HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, serviceContext.status());
         HttpHeaders h = response.headers();
         h.set(serviceContext.responseHeaders());
@@ -384,43 +385,6 @@ public class NioHttpUtil {
             return null;
         }
         return System.getProperty("user.dir") + uri;
-    }
-
-    @Deprecated
-    public static void sendListing(ChannelHandlerContext ctx, File dir) {
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
-        StringBuilder sb = new StringBuilder();
-        String dirPath = dir.getPath();
-        sb.append("<!DOCTYPE html>\r\n");
-        sb.append("<html><head><title>");
-        sb.append(dirPath);
-        sb.append(" dir：");
-        sb.append("</title></head><body>\r\n");
-        sb.append("<h3>");
-        sb.append(dirPath).append(" dir：");
-        sb.append("</h3>\r\n");
-        sb.append("<ul>");
-        sb.append("<li>Link：<a href=\"../\">..</a></li>\r\n");
-        for (File f : dir.listFiles()) {
-            if (f.isHidden() || !f.canRead()) {
-                continue;
-            }
-            String name = f.getName();
-            if (!ALLOWED_FILE_NAME.matcher(name).matches()) {
-                continue;
-            }
-            sb.append("<li>Link：<a href=\"");
-            sb.append(name);
-            sb.append("\">");
-            sb.append(name);
-            sb.append("</a></li>\r\n");
-        }
-        sb.append("</ul></body></html>\r\n");
-        ByteBuf buffer = Unpooled.copiedBuffer(sb, io.netty.util.CharsetUtil.UTF_8);
-        response.content().writeBytes(buffer);
-        buffer.release();
-        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 }
 
