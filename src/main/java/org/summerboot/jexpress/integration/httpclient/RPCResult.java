@@ -134,9 +134,6 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
     }
 
     public RPCResult<T, E> update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
-        if (context != null) {
-            context.status(httpStatus);
-        }
         if (remoteSuccess) {
             successResponse = fromJson(jacksonMapper, successResponseType, successResponseClass, context);
         } else {
