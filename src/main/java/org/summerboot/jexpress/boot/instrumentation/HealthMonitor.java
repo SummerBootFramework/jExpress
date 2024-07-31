@@ -147,7 +147,7 @@ public class HealthMonitor {
         return paused;
     }
 
-    public static boolean isServiceStatusOk() {
+    public static boolean isHealthCheckOk() {
         return healthOk;
     }
 

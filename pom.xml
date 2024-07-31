@@ -253,8 +253,8 @@
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.17</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext7-core.version>8.0.4</itext7-core.version>
-        <itext7-html2pdf.version>5.0.4</itext7-html2pdf.version>
+        <itext7-core.version>8.0.5</itext7-core.version>
+        <itext7-html2pdf.version>5.0.5</itext7-html2pdf.version>
 
         <!-- Testing  -->
         <testng.version>7.10.2</testng.version>

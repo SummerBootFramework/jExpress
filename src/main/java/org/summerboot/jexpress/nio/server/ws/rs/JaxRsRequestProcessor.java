@@ -407,7 +407,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         try {
             context.poi(BootPOI.BIZ_BEGIN);
-            if (rejectWhenHealthCheckFailed && !HealthMonitor.isServiceStatusOk()) {
+            if (rejectWhenHealthCheckFailed && !HealthMonitor.isServiceAvaliable()) {
                 context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
                         .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getServiceStatusReason()));
                 return;
