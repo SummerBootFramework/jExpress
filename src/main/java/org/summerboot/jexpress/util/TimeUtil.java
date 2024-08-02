@@ -45,6 +45,37 @@ public class TimeUtil {
             .appendOffset("+HH:MM", "Z")
             .toFormatter();
 
+
+    public static final DateTimeFormatter ISO8601_OFFSET_DATE_TIME = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            .parseLenient()
+            .optionalStart().appendOffset("+H", "Z").optionalEnd()
+            .optionalStart().appendOffset("+HH", "Z").optionalEnd()
+            .optionalStart().appendOffset("+HHmm", "Z").optionalEnd()
+            .optionalStart().appendOffset("+HH:mm", "Z").optionalEnd()
+            .optionalStart().appendOffset("+HHMM", "Z").optionalEnd()// no need
+            .optionalStart().appendOffset("+HH:MM", "Z").optionalEnd()// no need
+            .optionalStart().appendOffset("+HHMMss", "Z").optionalEnd()// no need
+            .optionalStart().appendOffset("+HH:MM:ss", "Z").optionalEnd()// no need
+            .optionalStart().appendOffset("+HHMMSS", "Z").optionalEnd()// no need
+            .optionalStart().appendOffset("+HH:MM:SS", "Z").optionalEnd()// no need
+            .optionalStart().appendOffset("+HHmmss", "Z").optionalEnd()
+            .optionalStart().appendOffset("+HH:mm:ss", "Z").optionalEnd()
+            //.optionalStart().appendOffsetId().optionalEnd()
+            .parseStrict()
+            .toFormatter();
+
+    public static final DateTimeFormatter ISO8601_ZONED_DATE_TIME = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .append(ISO8601_OFFSET_DATE_TIME)
+            .optionalStart()
+            .appendLiteral('[')
+            .parseCaseSensitive()
+            .appendZoneRegionId()
+            .appendLiteral(']')
+            .toFormatter();
+
     public static long getSecondsSinceMidnight(Calendar c) {
         return 3600 * c.get(Calendar.HOUR_OF_DAY) + 60 * c.get(Calendar.MINUTE) + c.get(Calendar.SECOND);
     }

@@ -211,7 +211,7 @@
         <!-- gRPC and protobuf -->
         <grpc.version>1.65.1</grpc.version>
         <guava.version>33.2.1-jre</guava.version>
-        <protobuf.version>4.27.2</protobuf.version>
+        <protobuf.version>4.27.3</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>2.2.22</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
