@@ -66,7 +66,7 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                 long hit = NioCounter.COUNTER_PING_HIT.incrementAndGet();
                 try {
                     HttpResponseStatus status;
-                    final String internalReason = null;// Do NOT expose to caller!
+                    final String internalReason = null;// Do NOT expose to external caller!
                     if (!HealthMonitor.isHealthCheckSuccess()) {
                         status = HttpResponseStatus.BAD_GATEWAY;
                         //internalReason = HealthMonitor.getStatusReasonHealthCheck();

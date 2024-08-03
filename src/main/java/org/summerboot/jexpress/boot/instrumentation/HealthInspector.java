@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.boot.instrumentation;
 
+import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.nio.server.domain.Err;
 
 import java.util.List;
@@ -29,4 +30,19 @@ public interface HealthInspector<T extends Object> {
     AtomicLong healthInspectorCounter = new AtomicLong(0);
 
     List<Err> ping(T... param);
+
+    default Status getStatus() {
+        return Status.HealthCheckFailed;
+    }
+
+    /**
+     * @return null to disable logging
+     */
+    default Level logLevel() {
+        return Level.WARN;
+    }
+
+    enum Status {
+        HealthCheckFailed, ServicePaused
+    }
 }

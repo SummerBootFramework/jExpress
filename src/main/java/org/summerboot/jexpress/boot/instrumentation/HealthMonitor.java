@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.boot.instrumentation;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
@@ -70,29 +71,52 @@ public class HealthMonitor {
                         errors = healthInspector.ping();
                     } catch (Throwable ex) {
                     }
+                    HealthInspector.Status status = healthInspector.getStatus();
 
                     inspectionFailed = errors != null && !errors.isEmpty();
                     if (inspectionFailed) {
-                        String inspectionReport;
-                        try {
-                            inspectionReport = BeanUtil.toJson(errors, true, true);
-                        } catch (Throwable ex) {
-                            inspectionReport = "total " + ex;
+                        // log error
+                        Level level = healthInspector.logLevel();
+                        if (level != null && log.isEnabled(level)) {
+                            String inspectionReport;
+                            try {
+                                inspectionReport = BeanUtil.toJson(errors, true, true);
+                            } catch (Throwable ex) {
+                                inspectionReport = "total " + ex;
+                            }
+                            sb.append(inspectionReport);
+                            sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
+                            log.log(level, sb);
                         }
-                        sb.append(inspectionReport);
-                        sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
-                        log.warn(sb);
-                        if (appLifecycleListener != null) {
-                            appLifecycleListener.onHealthInspectionFailed(retryIndex, sb.toString(), inspectionIntervalSeconds);
+                        // notify
+                        switch (status) {
+                            case ServicePaused -> {
+                                setPauseStatus(true, sb.toString());
+                            }
+                            case HealthCheckFailed -> {
+                                if (appLifecycleListener != null) {
+                                    appLifecycleListener.onHealthInspectionFailed(retryIndex, sb.toString(), inspectionIntervalSeconds);
+                                }
+                            }
                         }
+                        // wait
                         try {
                             TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
                         } catch (InterruptedException ex) {
                             Thread.currentThread().interrupt();
                         }
                     } else {
+                        // log success
                         sb.append("passed");
-                        setHealthStatus(true, sb.toString(), null);
+                        // notify
+                        switch (status) {
+                            case ServicePaused -> {
+                                setPauseStatus(false, sb.toString());
+                            }
+                            case HealthCheckFailed -> {
+                                setHealthStatus(true, sb.toString(), null);
+                            }
+                        }
                     }
                 } while (inspectionFailed);
             } finally {
@@ -143,6 +167,9 @@ public class HealthMonitor {
     protected static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
         statusReasonLastKnown = reason;
         serviceAvaliable = isHealthCheckSuccess && !paused;
+        if (!serviceStatusChanged) {
+            return;
+        }
         log.warn("server status changed: paused={}, healthOk={}, serviceStatusChanged={}, reason: {}", paused, isHealthCheckSuccess, serviceStatusChanged, reason);
         if (appLifecycleListener != null) {
             appLifecycleListener.onApplicationStatusUpdated(isHealthCheckSuccess, paused, serviceStatusChanged, reason);
