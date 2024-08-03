@@ -66,20 +66,19 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                 long hit = NioCounter.COUNTER_PING_HIT.incrementAndGet();
                 try {
                     HttpResponseStatus status;
-                    String reason;
+                    final String internalReason = null;// Do NOT expose to caller!
                     if (!HealthMonitor.isHealthCheckSuccess()) {
                         status = HttpResponseStatus.BAD_GATEWAY;
-                        reason = HealthMonitor.getStatusReasonHealthCheck();
+                        //internalReason = HealthMonitor.getStatusReasonHealthCheck();
                     } else if (HealthMonitor.isServicePaused()) {
                         status = HttpResponseStatus.SERVICE_UNAVAILABLE;
-                        reason = HealthMonitor.getStatusReasonPaused();
+                        //internalReason = HealthMonitor.getStatusReasonPaused();
                     } else {
                         status = HttpResponseStatus.OK;
-                        reason = null;
                     }
                     boolean isContinue = httpLifecycleListener.beforeProcessPingRequest(ctx, req.uri(), hit, status);
                     if (isContinue) {
-                        NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, reason, null, null, true, null);
+                        NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, internalReason, null, null, true, null);
                         httpLifecycleListener.afterSendPingResponse(ctx, req.uri(), hit, status);
                     }
                 } finally {
