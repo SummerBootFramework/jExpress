@@ -407,14 +407,14 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         try {
             context.poi(BootPOI.BIZ_BEGIN);
-            if (rejectWhenHealthCheckFailed && !HealthMonitor.isServiceAvaliable()) {
-                context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
-                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getServiceStatusReason()));
+            if (rejectWhenHealthCheckFailed && !HealthMonitor.isHealthCheckSuccess()) {
+                context.status(HttpResponseStatus.BAD_GATEWAY)
+                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getStatusReasonHealthCheck()));
                 return;
             }
             if (rejectWhenPaused && HealthMonitor.isServicePaused()) {
                 context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
-                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, null, null, "Service is paused: " + HealthMonitor.getServiceStatusReason()));
+                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, null, null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
                 return;
             }
 

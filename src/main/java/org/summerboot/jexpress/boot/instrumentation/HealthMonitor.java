@@ -110,36 +110,42 @@ public class HealthMonitor {
         }
     }
 
-    protected static boolean healthOk = true, paused = false;
-    protected static String statusReason;
+    protected static volatile boolean isHealthCheckSuccess = true;
+    protected static volatile boolean paused = false;
+    protected static volatile String statusReasonHealthCheck;
+    protected static volatile String statusReasonPaused;
+    protected static volatile String statusReasonLastKnown;
     //protected static HttpResponseStatus status = HttpResponseStatus.OK;
-    protected static boolean serviceAvaliable = true;
+    protected static volatile boolean serviceAvaliable = true;
 
     public static void setHealthStatus(boolean newStatus, String reason, HealthInspector healthInspector) {
         setHealthStatus(newStatus, reason, healthInspector, nioCfg.getHealthInspectionIntervalSeconds());
     }
 
     public static void setHealthStatus(boolean newStatus, String reason, HealthInspector healthInspector, int healthInspectionIntervalSeconds) {
-        boolean serviceStatusChanged = healthOk != newStatus;
-        healthOk = newStatus;
+        boolean serviceStatusChanged = isHealthCheckSuccess ^ newStatus;
+        isHealthCheckSuccess = newStatus;
+        statusReasonHealthCheck = reason;
         updateServiceStatus(serviceStatusChanged, reason);
-        if (!healthOk && healthInspector != null) {
+
+        if (!isHealthCheckSuccess && healthInspector != null) {
             startHealthInspectionSingleton(healthInspectionIntervalSeconds, healthInspector);
         }
     }
 
     public static void setPauseStatus(boolean newStatus, String reason) {
-        boolean serviceStatusChanged = paused != newStatus;
+        boolean serviceStatusChanged = paused ^ newStatus;
         paused = newStatus;
+        statusReasonPaused = reason;
         updateServiceStatus(serviceStatusChanged, reason);
     }
 
     protected static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
-        statusReason = reason;
-        serviceAvaliable = healthOk && !paused;
-        log.warn("server status changed: paused={}, healthOk={}, serviceStatusChanged={}, reason: {}", paused, healthOk, serviceStatusChanged, reason);
+        statusReasonLastKnown = reason;
+        serviceAvaliable = isHealthCheckSuccess && !paused;
+        log.warn("server status changed: paused={}, healthOk={}, serviceStatusChanged={}, reason: {}", paused, isHealthCheckSuccess, serviceStatusChanged, reason);
         if (appLifecycleListener != null) {
-            appLifecycleListener.onApplicationStatusUpdated(healthOk, paused, serviceStatusChanged, reason);
+            appLifecycleListener.onApplicationStatusUpdated(isHealthCheckSuccess, paused, serviceStatusChanged, reason);
         }
     }
 
@@ -147,18 +153,23 @@ public class HealthMonitor {
         return paused;
     }
 
-    public static boolean isHealthCheckOk() {
-        return healthOk;
+    public static String getStatusReasonPaused() {
+        return statusReasonPaused;
     }
 
-    //    public static HttpResponseStatus getServiceStatus() {
-//        return status;
-//    }
+    public static boolean isHealthCheckSuccess() {
+        return isHealthCheckSuccess;
+    }
+
+    public static String getStatusReasonHealthCheck() {
+        return statusReasonHealthCheck;
+    }
+
     public static boolean isServiceAvaliable() {
         return serviceAvaliable;
     }
 
     public static String getServiceStatusReason() {
-        return statusReason;
+        return statusReasonLastKnown;
     }
 }
