@@ -233,9 +233,9 @@ public class NioServer {
                 ThreadPoolExecutor tpe = nioCfg.getBizExecutor();
                 int active = tpe.getActiveCount();
                 int queue = tpe.getQueue().size();
-                if (hps > 0 || tps > 0 || active > 0 || queue > 0 || HealthMonitor.isServicePaused()) {
+                long activeChannel = NioCounter.COUNTER_ACTIVE_CHANNEL.get();
+                if (hps > 0 || tps > 0 || active > 0 || queue > 0 || activeChannel > 0) {
                     long totalChannel = NioCounter.COUNTER_TOTAL_CHANNEL.get();
-                    long activeChannel = NioCounter.COUNTER_ACTIVE_CHANNEL.get();
                     long pool = tpe.getPoolSize();
                     int core = tpe.getCorePoolSize();
                     //int queueRemainingCapacity = tpe.getQueue().remainingCapacity();
