@@ -187,15 +187,15 @@ public class BackOffice extends BootConfig {
     private String portInUseAlertMessage = ALERT_MSG_PORT_IN_USE;
 
     @Config(key = "backoffice.executor.core", defaultValue = "3",
-            desc = "MaxSize 0 = current computer/VM's available processors + 1")
+            desc = "0 = current computer/VM's available processors + 1")
     private int tpeCore = 3;
 
-    @Config(key = "backoffice.executor.max", defaultValue = "" + Integer.MAX_VALUE,
-            desc = "MaxSize 0 = current computer/VM's available processors + 1")
-    private int tpeMax = Integer.MAX_VALUE;
+    @Config(key = "backoffice.executor.max", defaultValue = "3",
+            desc = "0 = current computer/VM's available processors + 1")
+    private int tpeMax = 3;
 
-    @Config(key = "backoffice.executor.queue", defaultValue = "0")
-    private int tpeQueue = 0;
+    @Config(key = "backoffice.executor.queue", defaultValue = "" + Integer.MAX_VALUE)
+    private int tpeQueue = Integer.MAX_VALUE;
 
     @Config(key = "backoffice.executor.keepAliveTimeSec", defaultValue = "60")
     private int tpeKeepAliveSeconds = 60;
@@ -230,6 +230,12 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "naming.file.gRPCConfig", defaultValue = "cfg_grpc.properties")
     private String gRPCConfigFileName = "cfg_grpc.properties";
+
+    @Config(key = "HealthMonitor.ReleasePausePassword.viaFile", defaultValue = "releasePausePasswordViafile")
+    private String healthMonitorReleasePausePasswordViaFile = "releasePausePasswordViafile";
+
+    @Config(key = "HealthMonitor.ReleasePausePassword.viaWeb", defaultValue = "releasePausePasswordViaWeb")
+    private String healthMonitorReleasePausePasswordViaWeb = "releasePausePasswordViaWeb";
 
     @ConfigHeader(title = "4.2 Default Log4j2.xml Variables Naming")
     @Config(key = "naming.log4j2.xml.var.logId", defaultValue = "logId")
@@ -362,6 +368,14 @@ public class BackOffice extends BootConfig {
 
     public String getgRPCConfigFileName() {
         return gRPCConfigFileName;
+    }
+
+    public String getHealthMonitorReleasePausePasswordViaFile() {
+        return healthMonitorReleasePausePasswordViaFile;
+    }
+
+    public String getHealthMonitorReleasePausePasswordViaWeb() {
+        return healthMonitorReleasePausePasswordViaWeb;
     }
 
     public String getLog4J2LogId() {

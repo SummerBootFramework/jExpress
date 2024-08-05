@@ -24,15 +24,14 @@ import io.netty.channel.ChannelHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.Scheduler;
 import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.boot.annotation.DefaultHealthInspector;
 import org.summerboot.jexpress.boot.event.AppLifecycleHandler;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.boot.event.HttpExceptionHandler;
 import org.summerboot.jexpress.boot.event.HttpExceptionListener;
 import org.summerboot.jexpress.boot.event.HttpLifecycleHandler;
 import org.summerboot.jexpress.boot.event.HttpLifecycleListener;
-import org.summerboot.jexpress.boot.instrumentation.BootHealthInspectorImpl;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgrImpl;
@@ -107,9 +106,6 @@ public class BootGuiceModule extends AbstractModule {
         memo.append(INFO).append(ChannelHandler.class.getName()).append(BIND_TO).append(BootHttpPingHandler.class.getSimpleName()).append(", named=").append(BootHttpPingHandler.class.getSimpleName());
 
         // 4. @Services
-        bind(HealthInspector.class).to(BootHealthInspectorImpl.class);
-        memo.append(INFO).append(HealthInspector.class.getName()).append(BIND_TO).append(BootHealthInspectorImpl.class.getName());
-
         bind(AuthTokenCache.class).to(AuthTokenCacheLocalImpl.class);
         memo.append(INFO).append(AuthTokenCache.class.getName()).append(BIND_TO).append(AuthTokenCacheLocalImpl.class.getName());
 
@@ -134,8 +130,9 @@ public class BootGuiceModule extends AbstractModule {
         bind(ChannelHandler.class).annotatedWith(Names.named(BootHttpRequestHandler.class.getSimpleName())).to(BootHttpRequestHandler.class);
         memo.append(INFO).append(ChannelHandler.class.getName()).append(BIND_TO).append(BootHttpRequestHandler.class.getSimpleName()).append(", named=").append(BootHttpRequestHandler.class.getSimpleName());
 
-        // 5. Controllers
+        // 5. get instances
         scanAnnotation_BindInstance(binder(), Controller.class, callerRootPackageName);
+        scanAnnotation_BindInstance(binder(), DefaultHealthInspector.class, callerRootPackageName);
 
         // 6. caller's Main class (App.Main)
         if (caller != null) {
@@ -149,7 +146,8 @@ public class BootGuiceModule extends AbstractModule {
     /**
      * This method will be called by
      * <pre>
-     * Guice.createInjector(...) from SummerBigBang.genesis(...) to trigger SummerBigBang.onGuiceInjectorCreated_ControllersInjected(@Controller {@code Map<String, Object>} controllers)
+     * Guice.createInjector(...) from SummerBigBang.genesis(...)
+     * it will trigger SummerBigBang.onGuiceInjectorCreated_ControllersInjected(@Controller {@code Map<String, Object>} controllers)
      * </pre>
      *
      * @param binder
@@ -167,15 +165,18 @@ public class BootGuiceModule extends AbstractModule {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(annotation, false, rootPackageNames);
         //classesAll.addAll(classes);
         for (Class c : classes) {
-            Controller a = (Controller) c.getAnnotation(annotation);
-            String implTag = a.implTag();
-            if (StringUtils.isNotBlank(implTag) && !isCliUseImplTag(implTag)) {
-                continue;
-            }
-
+            //<A extends Annotation>
+            Annotation a = c.getAnnotation(annotation);
             int mod = c.getModifiers();
             if (Modifier.isAbstract(mod) || Modifier.isInterface(mod)) {
                 continue;
+            }
+            if (a instanceof Controller) {
+                Controller ca = (Controller) a;
+                String implTag = ca.implTag();
+                if (StringUtils.isNotBlank(implTag) && !isCliUseImplTag(implTag)) {
+                    continue;
+                }
             }
             classesAll.add(c);
         }

@@ -23,10 +23,17 @@ import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.util.BeanUtil;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,102 +43,151 @@ public class HealthMonitor {
 
     protected static final Logger log = LogManager.getLogger(HealthMonitor.class.getName());
 
-    protected static NioConfig nioCfg = NioConfig.cfg;
-
     public static final String PROMPT = "\tSelf Inspection Result: ";
 
-    protected static AppLifecycleListener appLifecycleListener;
+    protected static volatile AppLifecycleListener appLifecycleListener;
+
+    protected static volatile ExecutorService tpe = Executors.newSingleThreadExecutor();
+    protected static volatile LinkedBlockingQueue<HealthInspector> healthInspectorQueue = new LinkedBlockingQueue<>();
+
+    protected static volatile Set<HealthInspector> registeredHealthInspectors = new HashSet<>();
 
     public static void setAppLifecycleListener(AppLifecycleListener listener) {
         appLifecycleListener = listener;
     }
 
-    protected static void startHealthInspectionSingleton(int inspectionIntervalSeconds, HealthInspector healthInspector) {
-        if (healthInspector == null || inspectionIntervalSeconds < 1) {
-            log.debug(() -> "HealthInspection Skipped: healthInspector=" + healthInspector + ", inspectionIntervalSeconds=" + inspectionIntervalSeconds);
+    public static void registerDefaultHealthInspectors(Map<String, Object> defaultHealthInspectors, StringBuilder memo) {
+        registeredHealthInspectors.clear();
+        if (defaultHealthInspectors == null || defaultHealthInspectors.isEmpty()) {
             return;
         }
-        long i = HealthInspector.healthInspectorCounter.incrementAndGet();
-        if (i > 1) {
-            log.debug(() -> "Duplicated HealthInspection Rejected: total=" + i);
-            return;
+        for (Map.Entry<String, Object> entry : defaultHealthInspectors.entrySet()) {
+            String name = entry.getKey();
+            Object healthInspector = entry.getValue();
+            if (healthInspector instanceof HealthInspector) {
+                registeredHealthInspectors.add((HealthInspector) healthInspector);
+                memo.append(BootConstant.BR).append("\t- DefaultHealthInspector registered: ").append(name).append("=").append(healthInspector.getClass().getName());
+            }
         }
-        final long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
-        final String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
-        Runnable asyncTask = () -> {
-            HealthInspector.healthInspectorCounter.incrementAndGet();
-            boolean inspectionFailed;
-            try {
-                int retryIndex = 0;
-                do {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(BootConstant.BR).append(PROMPT);
-                    List<Err> errors = null;
-                    try (var a = Timeout.watch(healthInspector.getClass().getName() + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
-                        errors = healthInspector.ping();
-                    } catch (Throwable ex) {
-                    }
-                    HealthInspector.Status status = healthInspector.getStatus();
+    }
 
-                    inspectionFailed = errors != null && !errors.isEmpty();
-                    if (inspectionFailed) {
-                        // log error
-                        Level level = healthInspector.logLevel();
-                        if (level != null && log.isEnabled(level)) {
-                            String inspectionReport;
-                            try {
-                                inspectionReport = BeanUtil.toJson(errors, true, true);
-                            } catch (Throwable ex) {
-                                inspectionReport = "total " + ex;
+    private static boolean keepRunning = true;
+
+    public static void start() {
+        inspect();
+        Runnable asyncTask = () -> {
+            int inspectionIntervalSeconds = NioConfig.cfg.getHealthInspectionIntervalSeconds();
+            long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
+            String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
+            final Set<HealthInspector> batchInspectors = new TreeSet<>();
+            do {
+                ServiceError healthCheckFailedReport = new ServiceError(BootConstant.APP_ID + "-HealthMonitor");
+                StringBuilder sb = new StringBuilder();
+                sb.append(BootConstant.BR).append(PROMPT);
+                batchInspectors.clear();
+                boolean healthCheckAllPassed = true;
+                try {
+                    // take all health inspectors from the queue, remove duplicated
+                    do {
+                        HealthInspector healthInspector = healthInspectorQueue.take();// block/wait here for health inspectors
+                        batchInspectors.add(healthInspector);
+                    } while (!healthInspectorQueue.isEmpty());
+                    // inspect
+                    for (HealthInspector healthInspector : batchInspectors) {
+                        String name = healthInspector.getClass().getName();
+                        try (var a = Timeout.watch(name + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
+                            HealthInspector.Type type = healthInspector.type();
+                            List<Err> errs = healthInspector.ping();
+                            boolean currentInspectionPassed = errs == null || errs.isEmpty();
+                            if (!currentInspectionPassed) {
+                                healthInspectorQueue.offer(healthInspector);
                             }
-                            sb.append(inspectionReport);
-                            sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
-                            log.log(level, sb);
-                        }
-                        // notify
-                        switch (status) {
-                            case ServicePaused -> {
-                                setPauseStatus(true, sb.toString());
-                            }
-                            case HealthCheckFailed -> {
-                                if (appLifecycleListener != null) {
-                                    appLifecycleListener.onHealthInspectionFailed(retryIndex, sb.toString(), inspectionIntervalSeconds);
+                            switch (type) {
+                                case ServicePaused -> {
+                                    String relasePausePassword = healthInspector.releasePausePassword();
+                                    String reason;
+                                    if (currentInspectionPassed) {
+                                        reason = name + " success";
+                                        setPauseStatus(false, reason, relasePausePassword);
+                                    } else {
+                                        try {
+                                            reason = BeanUtil.toJson(errs, true, true);
+                                        } catch (Throwable ex) {
+                                            reason = name + " failed " + ex;
+                                        }
+                                        setPauseStatus(true, reason, relasePausePassword);
+                                    }
+                                }
+                                case HealthCheck -> {
+                                    if (currentInspectionPassed) {
+                                        //sb.append(name).append(" passed");
+                                    } else {
+                                        healthCheckAllPassed = false;
+                                        Level level = healthInspector.logLevel();
+                                        if (level != null && log.isEnabled(level)) {
+                                            healthCheckFailedReport.addErrors(errs);
+                                        }
+                                    }
                                 }
                             }
-                        }
-                        // wait
-                        try {
-                            TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
-                        } catch (InterruptedException ex) {
-                            Thread.currentThread().interrupt();
-                        }
-                    } else {
-                        // log success
-                        sb.append("passed");
-                        // notify
-                        switch (status) {
-                            case ServicePaused -> {
-                                setPauseStatus(false, sb.toString());
-                            }
-                            case HealthCheckFailed -> {
-                                setHealthStatus(true, sb.toString(), null);
-                            }
+                        } catch (Throwable ex) {
+                            healthInspectorQueue.offer(healthInspector);
+                            log.error("HealthInspector error: " + name, ex);
                         }
                     }
-                } while (inspectionFailed);
-            } finally {
-                HealthInspector.healthInspectorCounter.set(0);
-            }
+                    if (healthCheckAllPassed) {
+                        // log success
+                        sb.append("passed");
+                        log.info(sb);
+                    } else {
+                        String inspectionReport;
+                        try {
+                            inspectionReport = BeanUtil.toJson(healthCheckFailedReport, true, true);
+                        } catch (Throwable ex) {
+                            inspectionReport = " toJson failed " + ex;
+                        }
+                        sb.append(inspectionReport);
+                        sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
+                        log.warn(sb);
+                    }
+                    setHealthStatus(healthCheckAllPassed, sb.toString());
+                    // wait
+                    TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    log.error("HealthMonitor interrupted", ex);
+                }
+            } while (keepRunning);
         };
-        if (i <= 1) {
-            try {
-                BackOffice.execute(asyncTask);
-            } catch (RejectedExecutionException ex2) {
-                log.debug(() -> "Duplicated HealthInspection Rejected: " + ex2);
-            }
-        } else {
-            log.debug("HealthInspection Skipped");
+        tpe.execute(asyncTask);
+    }
+
+    public static void inspect() {
+        registeredHealthInspectors.forEach(healthInspectorQueue::offer);
+    }
+
+    public static void inspect(HealthInspector... healthInspectors) {
+        if (healthInspectors == null || healthInspectors.length == 0) {
+            return;
         }
+        for (HealthInspector healthInspector : healthInspectors) {
+            if (healthInspector == null) {
+                continue;
+            }
+            healthInspectorQueue.add(healthInspector);
+        }
+    }
+
+    public static void shutdown() {
+        keepRunning = false;
+        tpe.shutdown();
+    }
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    HealthMonitor.shutdown();
+                }, "HealthMonitor.shutdownHook")
+        );
     }
 
     protected static volatile boolean isHealthCheckSuccess = true;
@@ -139,34 +195,46 @@ public class HealthMonitor {
     protected static volatile String statusReasonHealthCheck;
     protected static volatile String statusReasonPaused;
     protected static volatile String statusReasonLastKnown;
-    //protected static HttpResponseStatus status = HttpResponseStatus.OK;
-    protected static volatile boolean serviceAvaliable = true;
+    protected static volatile Set<String> relasePausePasswords = new HashSet<>();
 
-    public static void setHealthStatus(boolean newStatus, String reason, HealthInspector healthInspector) {
-        setHealthStatus(newStatus, reason, healthInspector, nioCfg.getHealthInspectionIntervalSeconds());
-    }
-
-    public static void setHealthStatus(boolean newStatus, String reason, HealthInspector healthInspector, int healthInspectionIntervalSeconds) {
+    public static void setHealthStatus(boolean newStatus, String reason, HealthInspector... healthInspectors) {
         boolean serviceStatusChanged = isHealthCheckSuccess ^ newStatus;
         isHealthCheckSuccess = newStatus;
         statusReasonHealthCheck = reason;
         updateServiceStatus(serviceStatusChanged, reason);
 
-        if (!isHealthCheckSuccess && healthInspector != null) {
-            startHealthInspectionSingleton(healthInspectionIntervalSeconds, healthInspector);
+        if (!isHealthCheckSuccess) {
+            if (healthInspectors != null && healthInspectors.length > 0) {
+                inspect(healthInspectors);
+            } else {
+                inspect();// use default health inspectors
+            }
         }
     }
 
-    public static void setPauseStatus(boolean newStatus, String reason) {
-        boolean serviceStatusChanged = paused ^ newStatus;
-        paused = newStatus;
+    public static void setPauseStatus(boolean pauseService, String reason, String relasePausePassword) {
+        // check lock
+        if (relasePausePassword == null) {
+            relasePausePassword = "";
+        }
+        if (pauseService) {
+            relasePausePasswords.add(relasePausePassword);
+        } else {
+            relasePausePasswords.remove(relasePausePassword);
+            int size = relasePausePasswords.size();
+            if (size > 0) {// keep paused by other reasons with different passwords
+                pauseService = true;
+                reason += ", still paused by other " + size + " reason(s) with different password(s)";
+            }
+        }
+        boolean serviceStatusChanged = paused ^ pauseService;
+        paused = pauseService;
         statusReasonPaused = reason;
         updateServiceStatus(serviceStatusChanged, reason);
     }
 
     protected static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
         statusReasonLastKnown = reason;
-        serviceAvaliable = isHealthCheckSuccess && !paused;
         if (!serviceStatusChanged) {
             return;
         }
@@ -193,7 +261,7 @@ public class HealthMonitor {
     }
 
     public static boolean isServiceAvaliable() {
-        return serviceAvaliable;
+        return isHealthCheckSuccess && !paused;
     }
 
     public static String getServiceStatusReason() {

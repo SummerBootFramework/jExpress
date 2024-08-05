@@ -31,10 +31,12 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.quartz.Job;
 import org.quartz.Scheduler;
 import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.boot.annotation.DefaultHealthInspector;
 import org.summerboot.jexpress.boot.annotation.Order;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
+import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
@@ -602,7 +604,12 @@ abstract public class SummerBigBang extends SummerSingularity {
         log.trace("");
         //1. scan and register controllers
         JaxRsRequestProcessorManager.registerControllers(controllers, memo);
+    }
 
+    @Inject
+    protected void onGuiceInjectorCreated_DefaultHealthInspectorInjected(@DefaultHealthInspector Map<String, Object> defaultHealthInspectors) {
+        log.trace("");
+        HealthMonitor.registerDefaultHealthInspectors(defaultHealthInspectors, memo);
     }
 
     protected void scanImplementation_SummerRunner(Injector injector) {

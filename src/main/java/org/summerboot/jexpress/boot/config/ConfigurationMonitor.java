@@ -20,6 +20,7 @@ import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 import java.io.File;
@@ -46,9 +47,11 @@ public class ConfigurationMonitor implements FileAlterationListener {
     protected ConfigurationMonitor() {
     }
 
+    private static final String RELEASE_PAUSE_PASSWORD = BootConstant.HEALTHMONITOR_RELEASEPAUSE_PASSWORD_FILE;
+
     public void start(File folder, int intervalSec, Map<File, Runnable> cfgUpdateTasks) throws Exception {
         File pauseFile = Paths.get(folder.getAbsolutePath(), APUSE_FILE_NAME).toFile();
-        HealthMonitor.setPauseStatus(pauseFile.exists(), "by file detection " + pauseFile.getAbsolutePath());
+        HealthMonitor.setPauseStatus(pauseFile.exists(), "by file detection " + pauseFile.getAbsolutePath(), RELEASE_PAUSE_PASSWORD);
         if (running) {
             return;
         }
@@ -114,7 +117,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
             return;
         }
         log.info(() -> "new " + file.getAbsoluteFile());
-        HealthMonitor.setPauseStatus(true, "file created " + file.getAbsolutePath());
+        HealthMonitor.setPauseStatus(true, "file created " + file.getAbsolutePath(), RELEASE_PAUSE_PASSWORD);
     }
 
     @Override
@@ -123,7 +126,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
             return;
         }
         log.info(() -> "del " + file.getAbsoluteFile());
-        HealthMonitor.setPauseStatus(false, "file deleted " + file.getAbsolutePath());
+        HealthMonitor.setPauseStatus(false, "file deleted " + file.getAbsolutePath(), RELEASE_PAUSE_PASSWORD);
     }
 
     @Override

@@ -25,14 +25,14 @@ import java.util.concurrent.atomic.AtomicLong;
  * @param <T> parameter
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface HealthInspector<T extends Object> {
+public interface HealthInspector<T extends Object> extends Comparable<T> {
 
     AtomicLong healthInspectorCounter = new AtomicLong(0);
 
     List<Err> ping(T... param);
 
-    default Status getStatus() {
-        return Status.HealthCheckFailed;
+    default Type type() {
+        return Type.HealthCheck;
     }
 
     /**
@@ -42,7 +42,16 @@ public interface HealthInspector<T extends Object> {
         return Level.WARN;
     }
 
-    enum Status {
-        HealthCheckFailed, ServicePaused
+    default String releasePausePassword() {
+        return this.getClass().getName();
+    }
+
+    enum Type {
+        HealthCheck, ServicePaused
+    }
+
+    //@Override Comparable
+    default int compareTo(T o) {
+        return this.getClass().getName().compareTo(o.getClass().getName());
     }
 }

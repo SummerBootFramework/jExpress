@@ -25,7 +25,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.boot.instrumentation.Timeout;
@@ -40,7 +39,6 @@ import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
 import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.BeanUtil;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -56,8 +54,6 @@ abstract public class SummerApplication extends SummerBigBang {
 
     @Inject
     protected InstrumentationMgr instrumentationMgr;
-    @Inject
-    protected HealthInspector healthInspector;
     protected NioServer httpServer;
     protected List<GRPCServer> gRPCServerList = new ArrayList();
     @Inject
@@ -231,7 +227,6 @@ abstract public class SummerApplication extends SummerBigBang {
             memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME));
 
             memo.append(BootConstant.BR).append("\t- start: PostOffice=").append(postOffice.getClass().getName());
-            memo.append(BootConstant.BR).append("\t- start: HealthInspector=").append(healthInspector.getClass().getName());
             //memo.append(BootConstant.BR).append("\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
             memo.append(BootConstant.BR).append("\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
             memoLogged = true;
@@ -274,7 +269,7 @@ abstract public class SummerApplication extends SummerBigBang {
 
             // 3a. runner.run
             log.trace("3a. runner.run");
-            SummerRunner.RunnerContext context = new SummerRunner.RunnerContext(cli, userSpecifiedConfigDir, guiceInjector, healthInspector, postOffice);
+            SummerRunner.RunnerContext context = new SummerRunner.RunnerContext(cli, userSpecifiedConfigDir, guiceInjector, postOffice);
             for (SummerRunner summerRunner : summerRunners) {
                 summerRunner.run(context);
             }
@@ -292,29 +287,7 @@ abstract public class SummerApplication extends SummerBigBang {
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             // 4. health inspection
             log.trace("4. health inspection");
-            StringBuilder sb = new StringBuilder();
-            sb.append(BootConstant.BR).append(HealthMonitor.PROMPT);
-            if (healthInspector != null) {
-                try (var a = Timeout.watch(healthInspector.getClass().getName() + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
-                    List<Error> errors = healthInspector.ping(log);
-                    if (errors == null || errors.isEmpty()) {
-                        sb.append("passed");
-                        log.info(sb);
-                    } else {
-                        String inspectionReport;
-                        try {
-                            inspectionReport = BeanUtil.toJson(errors, true, true);
-                        } catch (Throwable ex) {
-                            inspectionReport = "total " + errors.size();
-                        }
-                        sb.append(inspectionReport);
-                        HealthMonitor.setHealthStatus(false, sb.toString(), healthInspector);
-                    }
-                }
-            } else {
-                sb.append("skipped");
-                log.warn(sb);
-            }
+            HealthMonitor.start();
 
             // 5a. start server: gRPC
             if (hasGRPCImpl) {
@@ -365,7 +338,7 @@ abstract public class SummerApplication extends SummerBigBang {
             // 6. announcement
             log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + BootConstant.BR + BootConstant.BR);
 
-            String fullConfigInfo = sb.toString();
+            String fullConfigInfo = "";//sb.toString();
             if (appLifecycleListener != null) {
                 appLifecycleListener.onApplicationStart(super.appVersion, fullConfigInfo);
             }

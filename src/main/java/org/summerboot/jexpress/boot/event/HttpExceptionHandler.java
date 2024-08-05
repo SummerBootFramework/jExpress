@@ -25,7 +25,6 @@ import jakarta.persistence.PersistenceException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
@@ -51,9 +50,6 @@ import java.util.Map;
 public class HttpExceptionHandler implements HttpExceptionListener {
 
     @Inject
-    protected HealthInspector healthInspector;
-
-    @Inject
     protected PostOffice po;
 
     @Override
@@ -73,7 +69,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
                 cause = ex;
             }
             if (cause instanceof IOException) {// java.net.UnknownHostException
-                HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
+                HealthMonitor.setHealthStatus(false, ex.toString());
                 nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.NETWORK_ERROR, "LDAP " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
             } else {
                 onNamingException(ex, cause, httptMethod, httpRequestPath, context);
@@ -93,7 +89,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
             cause = ex;
         }
         if (cause instanceof IOException) {// java.net.ConnectException
-            HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
+            HealthMonitor.setHealthStatus(false, ex.toString());
             nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
         } else {
             onPersistenceException(ex, cause, httptMethod, httpRequestPath, context);
@@ -128,13 +124,13 @@ public class HttpExceptionHandler implements HttpExceptionListener {
 
     @Override
     public void onConnectException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
+        HealthMonitor.setHealthStatus(false, ex.toString());
         nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.IO_BASE, "Failed to connect: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     @Override
     public void onIOException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        HealthMonitor.setHealthStatus(false, ex.toString(), healthInspector);
+        HealthMonitor.setHealthStatus(false, ex.toString());
         nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_BASE, "IO issue: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
 
     }
