@@ -17,10 +17,10 @@ package org.summerboot.jexpress.boot.event;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
+import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 
@@ -66,8 +66,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     public void onApplicationStatusUpdated(boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) {
         if (serviceStatusChanged) {
             boolean serviceAvaliable = healthOk && !paused;
-            String content = "\n\t server status changed: paused=" + paused + ", OK=" + healthOk + ", serviceAvaliable=" + serviceAvaliable + "\n\t reason: " + reason;
-            log.log(healthOk ? Level.WARN : Level.FATAL, content);
+            String content = HealthMonitor.buildMessage();
             if (postOffice != null) {
                 postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Service Status Changed", content, null, false);
             }

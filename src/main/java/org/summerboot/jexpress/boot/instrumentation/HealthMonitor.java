@@ -43,8 +43,6 @@ public class HealthMonitor {
 
     protected static final Logger log = LogManager.getLogger(HealthMonitor.class.getName());
 
-    public static final String PROMPT = "\tSelf Inspection Result: ";
-
     protected static volatile AppLifecycleListener appLifecycleListener;
 
     protected static volatile ExecutorService tpe = Executors.newSingleThreadExecutor();
@@ -82,8 +80,6 @@ public class HealthMonitor {
             final Set<HealthInspector> batchInspectors = new TreeSet<>();
             do {
                 ServiceError healthCheckFailedReport = new ServiceError(BootConstant.APP_ID + "-HealthMonitor");
-                StringBuilder sb = new StringBuilder();
-                sb.append(BootConstant.BR).append(PROMPT);
                 batchInspectors.clear();
                 boolean healthCheckAllPassed = true;
                 try {
@@ -135,22 +131,17 @@ public class HealthMonitor {
                             log.error("HealthInspector error: " + name, ex);
                         }
                     }
+                    String inspectionReport;
                     if (healthCheckAllPassed) {
-                        // log success
-                        sb.append("passed");
-                        log.info(sb);
+                        inspectionReport = "All health inspectors passed";
                     } else {
-                        String inspectionReport;
                         try {
                             inspectionReport = BeanUtil.toJson(healthCheckFailedReport, true, true);
                         } catch (Throwable ex) {
                             inspectionReport = " toJson failed " + ex;
                         }
-                        sb.append(inspectionReport);
-                        sb.append(BootConstant.BR).append(", will inspect again in ").append(inspectionIntervalSeconds).append(" seconds");
-                        log.warn(sb);
                     }
-                    setHealthStatus(healthCheckAllPassed, sb.toString());
+                    setHealthStatus(healthCheckAllPassed, inspectionReport);
                     // wait
                     TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
                 } catch (InterruptedException ex) {
@@ -190,15 +181,15 @@ public class HealthMonitor {
         );
     }
 
-    protected static volatile boolean isHealthCheckSuccess = true;
-    protected static volatile boolean paused = false;
+    protected static volatile Boolean isHealthCheckSuccess = null;
+    protected static volatile Boolean isServicePaused = null;
     protected static volatile String statusReasonHealthCheck;
     protected static volatile String statusReasonPaused;
     protected static volatile String statusReasonLastKnown;
     protected static volatile Set<String> relasePausePasswords = new HashSet<>();
 
     public static void setHealthStatus(boolean newStatus, String reason, HealthInspector... healthInspectors) {
-        boolean serviceStatusChanged = isHealthCheckSuccess ^ newStatus;
+        boolean serviceStatusChanged = isHealthCheckSuccess == null || isHealthCheckSuccess ^ newStatus;
         isHealthCheckSuccess = newStatus;
         statusReasonHealthCheck = reason;
         updateServiceStatus(serviceStatusChanged, reason);
@@ -227,25 +218,35 @@ public class HealthMonitor {
                 reason += ", still paused by other " + size + " reason(s) with different password(s)";
             }
         }
-        boolean serviceStatusChanged = paused ^ pauseService;
-        paused = pauseService;
+        boolean serviceStatusChanged = isServicePaused == null || isServicePaused ^ pauseService;
+        isServicePaused = pauseService;
         statusReasonPaused = reason;
         updateServiceStatus(serviceStatusChanged, reason);
     }
 
     protected static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
         statusReasonLastKnown = reason;
+        log.warn(buildMessage());
         if (!serviceStatusChanged) {
             return;
         }
-        log.warn("server status changed: paused={}, healthOk={}, serviceStatusChanged={}, reason: {}", paused, isHealthCheckSuccess, serviceStatusChanged, reason);
         if (appLifecycleListener != null) {
-            appLifecycleListener.onApplicationStatusUpdated(isHealthCheckSuccess, paused, serviceStatusChanged, reason);
+            appLifecycleListener.onApplicationStatusUpdated(isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);
         }
     }
 
+    public static String buildMessage() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(BootConstant.BR)
+                .append("\t Self Inspection Result: ").append(isHealthCheckSuccess != null && isHealthCheckSuccess ? "passed" : "failed").append(BootConstant.BR)
+                .append("\t\t cause: ").append(statusReasonHealthCheck).append(BootConstant.BR)
+                .append("\t Service Status: ").append(isServicePaused != null && isServicePaused ? "paused" : "running").append(BootConstant.BR)
+                .append("\t\t cause: ").append(statusReasonPaused).append(BootConstant.BR);
+        return sb.toString();
+    }
+
     public static boolean isServicePaused() {
-        return paused;
+        return isServicePaused;
     }
 
     public static String getStatusReasonPaused() {
@@ -261,7 +262,7 @@ public class HealthMonitor {
     }
 
     public static boolean isServiceAvaliable() {
-        return isHealthCheckSuccess && !paused;
+        return isHealthCheckSuccess && !isServicePaused;
     }
 
     public static String getServiceStatusReason() {
