@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.RUNTIME)
 @Documented
 @BindingAnnotation
-public @interface DefaultHealthInspector {
+public @interface Inspector {
 
     String[] poi() default {};
 }

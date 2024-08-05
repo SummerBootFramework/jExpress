@@ -246,7 +246,7 @@ abstract public class BootController extends PingController {
     @Deamon
     //@CaptureTransaction("admin.changeStatus")
     public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final ServiceContext context) throws IOException {
-        HealthMonitor.setPauseStatus(pause, "request by " + context.caller(), BootConstant.HEALTHMONITOR_RELEASEPAUSE_PASSWORD_WEB);
+        HealthMonitor.setPauseStatus(pause, "request by " + context.caller(), BootConstant.PAUSE_LOCK_CODE_VIAWEB);
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 

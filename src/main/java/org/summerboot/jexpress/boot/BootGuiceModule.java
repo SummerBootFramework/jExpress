@@ -24,7 +24,7 @@ import io.netty.channel.ChannelHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.Scheduler;
 import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.DefaultHealthInspector;
+import org.summerboot.jexpress.boot.annotation.Inspector;
 import org.summerboot.jexpress.boot.event.AppLifecycleHandler;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.boot.event.HttpExceptionHandler;
@@ -132,7 +132,7 @@ public class BootGuiceModule extends AbstractModule {
 
         // 5. get instances
         scanAnnotation_BindInstance(binder(), Controller.class, callerRootPackageName);
-        scanAnnotation_BindInstance(binder(), DefaultHealthInspector.class, callerRootPackageName);
+        scanAnnotation_BindInstance(binder(), Inspector.class, callerRootPackageName);
 
         // 6. caller's Main class (App.Main)
         if (caller != null) {

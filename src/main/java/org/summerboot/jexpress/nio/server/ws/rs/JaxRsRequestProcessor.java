@@ -44,6 +44,7 @@ import org.summerboot.jexpress.util.FormatterUtil;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -419,9 +420,9 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             }
 
             ret = javaMethod.invoke(javaInstance, paramValues);
-        } /*catch (InvocationTargetException ex) {
-                throw ex.getCause();
-            }*/ finally {
+        } catch (InvocationTargetException ex) {
+            throw ex.getCause();
+        } finally {
             context.poi(BootPOI.BIZ_END);
         }
 

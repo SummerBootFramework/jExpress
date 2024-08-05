@@ -79,7 +79,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
 
     protected void onNamingException(NamingException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, null, ex, cause.toString());
-        context.error(e).status(HttpResponseStatus.BAD_GATEWAY);
+        context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -90,19 +90,20 @@ public class HttpExceptionHandler implements HttpExceptionListener {
         }
         if (cause instanceof IOException) {// java.net.ConnectException
             HealthMonitor.setHealthStatus(false, ex.toString());
-            nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
+            nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
         } else {
             onPersistenceException(ex, cause, httptMethod, httpRequestPath, context);
         }
     }
 
-    public void onPersistenceException(PersistenceException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    protected void onPersistenceException(PersistenceException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause.toString());
         context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
     public void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+        HealthMonitor.setHealthStatus(false, ex.toString());
         context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
                 .level(Level.WARN)
                 .error(new Err(BootErrorCode.HTTP_CONNECTION_TIMEOUT, null, null, ex, "Http Connect Timeout: " + ex.getMessage()));
@@ -131,8 +132,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
     @Override
     public void onIOException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
         HealthMonitor.setHealthStatus(false, ex.toString());
-        nakFatal(context, HttpResponseStatus.SERVICE_UNAVAILABLE, BootErrorCode.IO_BASE, "IO issue: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
-
+        nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.IO_BASE, "IO issue: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     @Override

@@ -131,7 +131,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
 
     @Override
     public long getHealthInspector() {
-        return HealthInspector.healthInspectorCounter.get();
+        return HealthInspector.retryIndex.get();
     }
 
     @Override

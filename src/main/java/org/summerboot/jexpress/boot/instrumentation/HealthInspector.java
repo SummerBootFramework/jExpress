@@ -25,9 +25,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * @param <T> parameter
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface HealthInspector<T extends Object> extends Comparable<T> {
+public interface HealthInspector<T extends Object> extends Comparable<Object> {
 
-    AtomicLong healthInspectorCounter = new AtomicLong(0);
+    AtomicLong retryIndex = new AtomicLong(0);
 
     List<Err> ping(T... param);
 
@@ -42,7 +42,7 @@ public interface HealthInspector<T extends Object> extends Comparable<T> {
         return Level.WARN;
     }
 
-    default String releasePausePassword() {
+    default String pauseLockCode() {
         return this.getClass().getName();
     }
 
@@ -51,7 +51,7 @@ public interface HealthInspector<T extends Object> extends Comparable<T> {
     }
 
     //@Override Comparable
-    default int compareTo(T o) {
+    default int compareTo(Object o) {
         return this.getClass().getName().compareTo(o.getClass().getName());
     }
 }

@@ -231,11 +231,11 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.file.gRPCConfig", defaultValue = "cfg_grpc.properties")
     private String gRPCConfigFileName = "cfg_grpc.properties";
 
-    @Config(key = "HealthMonitor.ReleasePausePassword.viaFile", defaultValue = "releasePausePasswordViafile")
-    private String healthMonitorReleasePausePasswordViaFile = "releasePausePasswordViafile";
+    @Config(key = "HealthMonitor.PauseLockCode.viaFile", defaultValue = "PauseLockCode.file")
+    private String pauseLockCodeViaFile = "PauseLockCode.file";
 
-    @Config(key = "HealthMonitor.ReleasePausePassword.viaWeb", defaultValue = "releasePausePasswordViaWeb")
-    private String healthMonitorReleasePausePasswordViaWeb = "releasePausePasswordViaWeb";
+    @Config(key = "HealthMonitor.PauseLockCode.viaWeb", defaultValue = "PauseLockCode.web")
+    private String pauseLockCodeViaWeb = "PauseLockCode.web";
 
     @ConfigHeader(title = "4.2 Default Log4j2.xml Variables Naming")
     @Config(key = "naming.log4j2.xml.var.logId", defaultValue = "logId")
@@ -370,12 +370,12 @@ public class BackOffice extends BootConfig {
         return gRPCConfigFileName;
     }
 
-    public String getHealthMonitorReleasePausePasswordViaFile() {
-        return healthMonitorReleasePausePasswordViaFile;
+    public String getPauseLockCodeViaFile() {
+        return pauseLockCodeViaFile;
     }
 
-    public String getHealthMonitorReleasePausePasswordViaWeb() {
-        return healthMonitorReleasePausePasswordViaWeb;
+    public String getPauseLockCodeViaWeb() {
+        return pauseLockCodeViaWeb;
     }
 
     public String getLog4J2LogId() {

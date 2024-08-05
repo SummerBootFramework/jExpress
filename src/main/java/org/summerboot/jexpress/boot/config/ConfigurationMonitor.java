@@ -47,11 +47,18 @@ public class ConfigurationMonitor implements FileAlterationListener {
     protected ConfigurationMonitor() {
     }
 
-    private static final String RELEASE_PAUSE_PASSWORD = BootConstant.HEALTHMONITOR_RELEASEPAUSE_PASSWORD_FILE;
+    private static final String PAUSE_LOCK_CODE = BootConstant.PAUSE_LOCK_CODE_VIAFILE;
 
     public void start(File folder, int intervalSec, Map<File, Runnable> cfgUpdateTasks) throws Exception {
         File pauseFile = Paths.get(folder.getAbsolutePath(), APUSE_FILE_NAME).toFile();
-        HealthMonitor.setPauseStatus(pauseFile.exists(), "by file detection " + pauseFile.getAbsolutePath(), RELEASE_PAUSE_PASSWORD);
+        boolean pause = pauseFile.exists();
+        String cause;
+        if (pause) {
+            cause = "File detected: " + pauseFile.getAbsolutePath();
+        } else {
+            cause = "File not detected: " + pauseFile.getAbsolutePath();
+        }
+        HealthMonitor.setPauseStatus(pause, cause, PAUSE_LOCK_CODE);
         if (running) {
             return;
         }
@@ -117,7 +124,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
             return;
         }
         log.info(() -> "new " + file.getAbsoluteFile());
-        HealthMonitor.setPauseStatus(true, "file created " + file.getAbsolutePath(), RELEASE_PAUSE_PASSWORD);
+        HealthMonitor.setPauseStatus(true, "file created " + file.getAbsolutePath(), PAUSE_LOCK_CODE);
     }
 
     @Override
@@ -126,7 +133,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
             return;
         }
         log.info(() -> "del " + file.getAbsoluteFile());
-        HealthMonitor.setPauseStatus(false, "file deleted " + file.getAbsolutePath(), RELEASE_PAUSE_PASSWORD);
+        HealthMonitor.setPauseStatus(false, "file deleted " + file.getAbsolutePath(), PAUSE_LOCK_CODE);
     }
 
     @Override

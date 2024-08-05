@@ -62,9 +62,9 @@ public interface BootConstant {
     String RESPONSE_HEADER_KEY_REF = "X-Reference";
     String RESPONSE_HEADER_KEY_TS = "X-ServerTs";
 
-    String HEALTHMONITOR_RELEASEPAUSE_PASSWORD_FILE = BackOffice.agent.getHealthMonitorReleasePausePasswordViaFile();
-    String HEALTHMONITOR_RELEASEPAUSE_PASSWORD_WEB = BackOffice.agent.getHealthMonitorReleasePausePasswordViaWeb();
-    ;
+    String PAUSE_LOCK_CODE_VIAFILE = BackOffice.agent.getPauseLockCodeViaFile();
+    String PAUSE_LOCK_CODE_VIAWEB = BackOffice.agent.getPauseLockCodeViaWeb();
+
 
     /*
      * 4. jExpress Default CLI Name
