@@ -47,7 +47,7 @@ public interface HealthInspector<T extends Object> extends Comparable<Object> {
     }
 
     enum Type {
-        HealthCheck, ServicePaused
+        HealthCheck, PauseCheck
     }
 
     //@Override Comparable

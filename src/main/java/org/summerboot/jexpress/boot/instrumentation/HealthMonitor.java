@@ -134,7 +134,7 @@ public class HealthMonitor {
                                 healthInspectorQueue.offer(healthInspector);
                             }
                             switch (type) {
-                                case ServicePaused -> {
+                                case PauseCheck -> {
                                     String lockCode = healthInspector.pauseLockCode();
                                     String reason;
                                     if (currentInspectionPassed) {
