@@ -65,7 +65,8 @@
         <Logger level="warn" name="io.netty" includeLocation="true"/>
         <!-- Note: "java.lang.UnsupportedOperationException: sun.misc.Unsafe unavailable" can be seen, also can be ignored, when -Dio.netty.noUnsafe=true and io.netty.util.internal.CleanerJava9 log level is below INFO (either TRACE or DEBUG) -->
         <Logger level="info" name="io.netty.util.internal.CleanerJava9" includeLocation="true"/>
-        <Logger level="trace" name="org.summerboot.jexpress.boot" includeLocation="true"/>
+        <Logger level="debug" name="org.summerboot.jexpress.boot" includeLocation="true"/>
+        <Logger level="warn" org.summerboot.jexpress.boot.instrumentation.Timeout includeLocation="true"/>
         <Logger level="info" name="org.summerboot.jexpress.integration.httpclient.HttpClientConfig" includeLocation="true"/>
         <Logger level="info" name="org.summerboot.jexpress.nio.server.NioServerHttpInitializer" includeLocation="true"/>
         <Logger level="debug" name="org.summerboot.jexpress.nio.server.NioServer" includeLocation="true"/>

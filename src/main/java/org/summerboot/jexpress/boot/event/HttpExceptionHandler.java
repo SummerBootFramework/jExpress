@@ -69,7 +69,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
                 cause = ex;
             }
             if (cause instanceof IOException) {// java.net.UnknownHostException
-                HealthMonitor.setHealthStatus(false, ex.toString());
+                HealthMonitor.inspect();
                 nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.NETWORK_ERROR, "LDAP " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
             } else {
                 onNamingException(ex, cause, httptMethod, httpRequestPath, context);
@@ -89,7 +89,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
             cause = ex;
         }
         if (cause instanceof IOException) {// java.net.ConnectException
-            HealthMonitor.setHealthStatus(false, ex.toString());
+            HealthMonitor.inspect();
             nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.ACCESS_ERROR_DATABASE, "DB " + cause.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
         } else {
             onPersistenceException(ex, cause, httptMethod, httpRequestPath, context);
@@ -103,7 +103,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
 
     @Override
     public void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        HealthMonitor.setHealthStatus(false, ex.toString());
+        HealthMonitor.inspect();
         context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
                 .level(Level.WARN)
                 .error(new Err(BootErrorCode.HTTP_CONNECTION_TIMEOUT, null, null, ex, "Http Connect Timeout: " + ex.getMessage()));
@@ -125,13 +125,13 @@ public class HttpExceptionHandler implements HttpExceptionListener {
 
     @Override
     public void onConnectException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        HealthMonitor.setHealthStatus(false, ex.toString());
+        HealthMonitor.inspect();
         nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.IO_BASE, "Failed to connect: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     @Override
     public void onIOException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
-        HealthMonitor.setHealthStatus(false, ex.toString());
+        HealthMonitor.inspect();
         nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.IO_BASE, "IO issue: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 

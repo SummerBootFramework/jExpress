@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.boot.instrumentation;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
@@ -46,18 +45,21 @@ public class HealthMonitor {
 
     protected static volatile AppLifecycleListener appLifecycleListener;
 
-    protected static volatile ExecutorService tpe = Executors.newSingleThreadExecutor();
-    protected static volatile LinkedBlockingQueue<HealthInspector> healthInspectorQueue = new LinkedBlockingQueue<>();
+    protected static final ExecutorService tpe = Executors.newSingleThreadExecutor();
+    protected static final LinkedBlockingQueue<HealthInspector> healthInspectorQueue = new LinkedBlockingQueue<>();
 
-    protected static volatile Set<HealthInspector> registeredHealthInspectors = new HashSet<>();
+    protected static final Set<HealthInspector> registeredHealthInspectors = new HashSet<>();
 
     public static void setAppLifecycleListener(AppLifecycleListener listener) {
         appLifecycleListener = listener;
     }
 
+    private static final String ANNOTATION = HealthInspector.class.getSimpleName();
+
     public static void registerDefaultHealthInspectors(Map<String, Object> defaultHealthInspectors, StringBuilder memo) {
         registeredHealthInspectors.clear();
         if (defaultHealthInspectors == null || defaultHealthInspectors.isEmpty()) {
+            memo.append(BootConstant.BR).append("\t- @" + ANNOTATION + " registered: none");
             return;
         }
         StringBuilder sb = new StringBuilder();
@@ -76,6 +78,29 @@ public class HealthMonitor {
         if (error) {
             log.fatal(BootConstant.BR + sb + BootConstant.BR);
             System.exit(2);
+        }
+    }
+
+    /**
+     * use default inspectors
+     */
+    public static void inspect() {
+        registeredHealthInspectors.forEach(healthInspectorQueue::offer);
+    }
+
+    /**
+     * @param healthInspectors use specified inspectors, if null or empty, use default inspectors
+     */
+    public static void inspect(HealthInspector... healthInspectors) {
+        if (healthInspectors == null || healthInspectors.length == 0) {// use specified inspectors
+            inspect();
+            return;
+        }
+        for (HealthInspector healthInspector : healthInspectors) {// use specified inspectors
+            if (healthInspector == null) {
+                continue;
+            }
+            healthInspectorQueue.add(healthInspector);
         }
     }
 
@@ -114,14 +139,14 @@ public class HealthMonitor {
                                     String reason;
                                     if (currentInspectionPassed) {
                                         reason = name + " success";
-                                        setPauseStatus(false, reason, lockCode, null);
+                                        pauseService(false, lockCode, reason);
                                     } else {
                                         try {
                                             reason = BeanUtil.toJson(errs, true, true);
                                         } catch (Throwable ex) {
                                             reason = name + " failed " + ex;
                                         }
-                                        setPauseStatus(true, reason, lockCode, null);
+                                        pauseService(true, lockCode, reason);
                                     }
                                 }
                                 case HealthCheck -> {
@@ -133,10 +158,11 @@ public class HealthMonitor {
                                         }
                                     } else {
                                         healthCheckAllPassed = false;
-                                        Level level = healthInspector.logLevel();
+                                        healthCheckFailedReport.addErrors(errs);
+                                        /*Level level = healthInspector.logLevel();
                                         if (level != null && log.isEnabled(level)) {
                                             healthCheckFailedReport.addErrors(errs);
-                                        }
+                                        }*/
                                     }
                                 }
                             }
@@ -160,13 +186,15 @@ public class HealthMonitor {
                                 appLifecycleListener.onHealthInspectionFailed(isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
                             }
                         }
-                        setHealthStatus(healthCheckAllPassed, inspectionReport, null);
+                        setHealthStatus(healthCheckAllPassed, inspectionReport);
                     }
-                    log.warn(buildMessage());
+
+                    /*if (!isServiceAvaliable()) {
+                        log.warn(buildMessage() + "\n\t will check again in " + inspectionIntervalSeconds + " seconds");
+                    } else {
+                        log.info(buildMessage());
+                    }*/
                     // wait
-                    if (!isServiceAvaliable()) {
-                        log.warn("will check again in " + inspectionIntervalSeconds + " seconds");
-                    }
                     TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -175,26 +203,6 @@ public class HealthMonitor {
             } while (keepRunning);
         };
         tpe.execute(asyncTask);
-    }
-
-    public static void inspect() {
-        registeredHealthInspectors.forEach(healthInspectorQueue::offer);
-    }
-
-    public static void inspect(HealthInspector... healthInspectors) {
-        if (healthInspectors == null) {// no inspectors
-            return;
-        }
-        if (healthInspectors.length == 0) {// use default inspectors
-            inspect();
-            return;
-        }
-        for (HealthInspector healthInspector : healthInspectors) {// use specified inspectors
-            if (healthInspector == null) {
-                continue;
-            }
-            healthInspectorQueue.add(healthInspector);
-        }
     }
 
     public static void shutdown() {
@@ -211,24 +219,20 @@ public class HealthMonitor {
 
     protected static volatile boolean isHealthCheckSuccess = true;
     protected static volatile boolean isServicePaused = false;
-    protected static volatile boolean isServiceStatusChanged = false;
     protected static volatile String statusReasonHealthCheck;
     protected static volatile String statusReasonPaused;
     protected static volatile String statusReasonLastKnown;
-    protected static volatile Set<String> pauseReleaseCodes = new HashSet<>();
+    protected static final Set<String> pauseReleaseCodes = new HashSet<>();
 
-    public static void setHealthStatus(boolean newStatus, String reason, HealthInspector... healthInspectors) {
+    protected static void setHealthStatus(boolean newStatus, String reason) {
         boolean serviceStatusChanged = isHealthCheckSuccess ^ newStatus;
         isHealthCheckSuccess = newStatus;
         statusReasonHealthCheck = reason;
         updateServiceStatus(serviceStatusChanged, reason);
-
-        if (!isHealthCheckSuccess) {
-            inspect(healthInspectors);
-        }
     }
 
-    public static void setPauseStatus(boolean pauseService, String reason, String lockCode, HealthInspector... healthInspectors) {
+    public static void pauseService(boolean pauseService, String lockCode, String reason) {
+        boolean serviceStatusChanged = isServicePaused ^ pauseService;
         // check lock
         if (lockCode == null) {
             lockCode = "";
@@ -240,17 +244,13 @@ public class HealthMonitor {
             int size = pauseReleaseCodes.size();
             if (size > 0) {// keep paused by other reasons with different passwords
                 pauseService = true;
-                reason += ", still paused by other " + size + " reason(s) with different password(s)";
+                reason += ", still paused by other " + size + " reason(s) with different lock code(s)";
             }
         }
-        boolean serviceStatusChanged = isServicePaused ^ pauseService;
+        //serviceStatusChanged = isServicePaused ^ pauseService;
         isServicePaused = pauseService;
         statusReasonPaused = reason;
         updateServiceStatus(serviceStatusChanged, reason);
-
-        if (isServicePaused) {
-            inspect(healthInspectors);
-        }
     }
 
     protected static void updateServiceStatus(boolean serviceStatusChanged, String reason) {

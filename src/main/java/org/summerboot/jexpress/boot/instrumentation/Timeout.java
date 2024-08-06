@@ -63,10 +63,10 @@ public class Timeout implements AutoCloseable {
         lock.lock();
         Runnable runnableTask = () -> {
             try {
-                log.info("Task started: {} - {}", processName, System.currentTimeMillis());
+                log.trace("Task started: {} - {}", processName, System.currentTimeMillis());
                 if (lock.tryLock(timeoutMilliseconds, TimeUnit.MILLISECONDS)) {
                     lock.unlock();
-                    log.info("Task finished: {} - {}", processName, System.currentTimeMillis());
+                    log.trace("Task finished: {} - {}", processName, System.currentTimeMillis());
                     return;
                 }
                 String desc = message == null

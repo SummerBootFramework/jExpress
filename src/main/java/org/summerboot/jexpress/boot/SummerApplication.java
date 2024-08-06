@@ -288,6 +288,7 @@ abstract public class SummerApplication extends SummerBigBang {
             // 4. health inspection
             log.trace("4. health inspection");
             HealthMonitor.start();
+            HealthMonitor.inspect();
 
             // 5a. start server: gRPC
             if (hasGRPCImpl) {
@@ -337,10 +338,15 @@ abstract public class SummerApplication extends SummerBigBang {
 
             // 6. announcement
             log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + BootConstant.BR + BootConstant.BR);
+            String serviceStatus = HealthMonitor.buildMessage();
+            if (!HealthMonitor.isServiceAvaliable()) {
+                log.warn(serviceStatus);
+            } else {
+                log.info(serviceStatus);
+            }
 
-            String fullConfigInfo = "";//sb.toString();
             if (appLifecycleListener != null) {
-                appLifecycleListener.onApplicationStart(super.appVersion, fullConfigInfo);
+                appLifecycleListener.onApplicationStart(super.appVersion, serviceStatus);
             }
         } catch (java.net.BindException ex) {// from NioServer
             log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
