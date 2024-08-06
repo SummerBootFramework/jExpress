@@ -105,6 +105,7 @@ public class HealthMonitor {
     }
 
     private static boolean keepRunning = true;
+    private static volatile boolean ready = false;
 
     public static void start() {
         inspect();
@@ -189,11 +190,7 @@ public class HealthMonitor {
                         setHealthStatus(healthCheckAllPassed, inspectionReport);
                     }
 
-                    /*if (!isServiceAvaliable()) {
-                        log.warn(buildMessage() + "\n\t will check again in " + inspectionIntervalSeconds + " seconds");
-                    } else {
-                        log.info(buildMessage());
-                    }*/
+                    ready = true;
                     // wait
                     TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
                 } catch (InterruptedException ex) {
@@ -253,11 +250,12 @@ public class HealthMonitor {
         updateServiceStatus(serviceStatusChanged, reason);
     }
 
+
     protected static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
-        if (!serviceStatusChanged) {
+        statusReasonLastKnown = reason;
+        if (!serviceStatusChanged || !ready) {
             return;
         }
-        statusReasonLastKnown = reason;
         log.warn(buildMessage());// always warn for status changed
         if (appLifecycleListener != null) {
             appLifecycleListener.onApplicationStatusUpdated(isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);

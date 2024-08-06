@@ -51,7 +51,6 @@ import java.util.List;
  */
 abstract public class SummerApplication extends SummerBigBang {
 
-
     @Inject
     protected InstrumentationMgr instrumentationMgr;
     protected NioServer httpServer;
@@ -288,7 +287,6 @@ abstract public class SummerApplication extends SummerBigBang {
             // 4. health inspection
             log.trace("4. health inspection");
             HealthMonitor.start();
-            HealthMonitor.inspect();
 
             // 5a. start server: gRPC
             if (hasGRPCImpl) {
@@ -339,7 +337,6 @@ abstract public class SummerApplication extends SummerBigBang {
             // 6. announcement
             String serviceStatus = HealthMonitor.buildMessage();
             log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus);
-
             if (appLifecycleListener != null) {
                 appLifecycleListener.onApplicationStart(super.appVersion, serviceStatus);
             }
@@ -356,6 +353,8 @@ abstract public class SummerApplication extends SummerBigBang {
             System.exit(1);
         }
     }
+
+    protected static boolean a = true;
 
     public void shutdown() {
         log.trace("");
