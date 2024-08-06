@@ -68,7 +68,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
             boolean serviceAvaliable = healthOk && !paused;
             String content = HealthMonitor.buildMessage();
             if (postOffice != null) {
-                postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Service Status Changed", content, null, false);
+                postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Service Status Changed at " + OffsetDateTime.now(), content, null, false);
             }
         }
     }
