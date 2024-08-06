@@ -127,13 +127,13 @@ public class HealthMonitor {
                     for (HealthInspector healthInspector : batchInspectors) {
                         String name = healthInspector.getClass().getName();
                         try (var a = Timeout.watch(name + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
-                            HealthInspector.Type type = healthInspector.type();
+                            HealthInspector.InspectionType inspectionType = healthInspector.inspectionType();
                             List<Err> errs = healthInspector.ping();
                             boolean currentInspectionPassed = errs == null || errs.isEmpty();
                             if (!currentInspectionPassed) {
                                 healthInspectorQueue.offer(healthInspector);
                             }
-                            switch (type) {
+                            switch (inspectionType) {
                                 case PauseCheck -> {
                                     String lockCode = healthInspector.pauseLockCode();
                                     String reason;
@@ -258,7 +258,7 @@ public class HealthMonitor {
             return;
         }
         statusReasonLastKnown = reason;
-        log.warn(buildMessage());
+        log.warn(buildMessage());// always warn for status changed
         if (appLifecycleListener != null) {
             appLifecycleListener.onApplicationStatusUpdated(isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);
         }

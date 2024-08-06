@@ -337,13 +337,8 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 6. announcement
-            log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + BootConstant.BR + BootConstant.BR);
             String serviceStatus = HealthMonitor.buildMessage();
-            if (!HealthMonitor.isServiceAvaliable()) {
-                log.warn(serviceStatus);
-            } else {
-                log.info(serviceStatus);
-            }
+            log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus);
 
             if (appLifecycleListener != null) {
                 appLifecycleListener.onApplicationStart(super.appVersion, serviceStatus);

@@ -31,8 +31,8 @@ public interface HealthInspector<T extends Object> extends Comparable<Object> {
 
     List<Err> ping(T... param);
 
-    default Type type() {
-        return Type.HealthCheck;
+    default InspectionType inspectionType() {
+        return InspectionType.HealthCheck;
     }
 
     /**
@@ -46,7 +46,7 @@ public interface HealthInspector<T extends Object> extends Comparable<Object> {
         return this.getClass().getName();
     }
 
-    enum Type {
+    enum InspectionType {
         HealthCheck, PauseCheck
     }
 
