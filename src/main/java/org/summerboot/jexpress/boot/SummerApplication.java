@@ -286,7 +286,7 @@ abstract public class SummerApplication extends SummerBigBang {
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             // 4. health inspection
             log.trace("4. health inspection");
-            HealthMonitor.start();
+            String serviceStatus = HealthMonitor.start();
 
             // 5a. start server: gRPC
             if (hasGRPCImpl) {
@@ -335,7 +335,6 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 6. announcement
-            String serviceStatus = HealthMonitor.buildMessage();
             log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus);
             if (appLifecycleListener != null) {
                 appLifecycleListener.onApplicationStart(super.appVersion, serviceStatus);
