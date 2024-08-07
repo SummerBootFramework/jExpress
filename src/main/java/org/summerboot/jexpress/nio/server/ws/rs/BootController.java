@@ -51,7 +51,6 @@ import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.annotation.Deamon;
 import org.summerboot.jexpress.boot.annotation.Log;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.server.domain.Err;
@@ -65,7 +64,6 @@ import org.summerboot.jexpress.security.auth.Caller;
 
 import javax.naming.NamingException;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -112,9 +110,6 @@ abstract public class BootController extends PingController {
     @Inject
     protected AuthTokenCache authTokenCache;
     //abstract protected AuthTokenCache getAuthTokenCache();
-
-    @Inject
-    protected HealthInspector healthInspector;
 
     @Inject
     protected Authenticator auth;
@@ -211,16 +206,7 @@ abstract public class BootController extends PingController {
     @Deamon
     //@CaptureTransaction("admin.inspect")
     public void inspect(@Parameter(hidden = true) final ServiceContext context) {
-        if (healthInspector == null) {
-            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "HealthInspector not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
-            return;
-        }
-        List<Err> error = healthInspector.ping();
-        if (error == null || error.isEmpty()) {
-            context.txt("inspection passed").errors(null).status(HttpResponseStatus.OK);
-        } else {
-            context.errors(error).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        }
+        HealthMonitor.inspect();
     }
 
     @Operation(
@@ -260,7 +246,7 @@ abstract public class BootController extends PingController {
     @Deamon
     //@CaptureTransaction("admin.changeStatus")
     public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final ServiceContext context) throws IOException {
-        HealthMonitor.setPauseStatus(pause, "request by " + context.caller());
+        HealthMonitor.pauseService(pause, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 

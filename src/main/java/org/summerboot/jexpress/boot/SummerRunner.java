@@ -17,7 +17,6 @@ package org.summerboot.jexpress.boot;
 
 import com.google.inject.Injector;
 import org.apache.commons.cli.CommandLine;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 
 import java.io.File;
@@ -32,14 +31,12 @@ public interface SummerRunner {
         protected final CommandLine cli;
         protected final File configDir;
         protected final Injector guiceInjector;
-        protected final HealthInspector healthInspector;
         protected final PostOffice postOffice;
 
-        public RunnerContext(CommandLine cli, File configDir, Injector guiceInjector, HealthInspector healthInspector, PostOffice postOffice) {
+        public RunnerContext(CommandLine cli, File configDir, Injector guiceInjector, PostOffice postOffice) {
             this.cli = cli;
             this.configDir = configDir;
             this.guiceInjector = guiceInjector;
-            this.healthInspector = healthInspector;
             this.postOffice = postOffice;
         }
 
@@ -53,10 +50,6 @@ public interface SummerRunner {
 
         public Injector getGuiceInjector() {
             return guiceInjector;
-        }
-
-        public HealthInspector getHealthInspector() {
-            return healthInspector;
         }
 
         public PostOffice getPostOffice() {

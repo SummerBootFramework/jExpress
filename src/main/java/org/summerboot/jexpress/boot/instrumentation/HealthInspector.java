@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.boot.instrumentation;
 
+import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.nio.server.domain.Err;
 
 import java.util.List;
@@ -24,9 +25,33 @@ import java.util.concurrent.atomic.AtomicLong;
  * @param <T> parameter
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface HealthInspector<T extends Object> {
+public interface HealthInspector<T extends Object> extends Comparable<Object> {
 
-    AtomicLong healthInspectorCounter = new AtomicLong(0);
+    AtomicLong retryIndex = new AtomicLong(0);
 
     List<Err> ping(T... param);
+
+    default InspectionType inspectionType() {
+        return InspectionType.HealthCheck;
+    }
+
+    /**
+     * @return null to disable logging
+     */
+    default Level logLevel() {
+        return Level.WARN;
+    }
+
+    default String pauseLockCode() {
+        return this.getClass().getName();
+    }
+
+    enum InspectionType {
+        HealthCheck, PauseCheck
+    }
+
+    //@Override Comparable
+    default int compareTo(Object o) {
+        return this.getClass().getName().compareTo(o.getClass().getName());
+    }
 }

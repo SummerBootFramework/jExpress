@@ -37,7 +37,7 @@ public interface AppLifecycleListener {
      */
     void onApplicationStatusUpdated(boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason);
 
-    void onHealthInspectionFailed(int retryIndex, String reason, int nextInspectionIntervalSeconds);
+    void onHealthInspectionFailed(boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds);
 
     void onConfigChangeBefore(File configFile, JExpressConfig cfg);
 

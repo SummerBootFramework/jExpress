@@ -44,6 +44,7 @@ import org.summerboot.jexpress.util.FormatterUtil;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -407,21 +408,21 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         try {
             context.poi(BootPOI.BIZ_BEGIN);
-            if (rejectWhenHealthCheckFailed && !HealthMonitor.isServiceStatusOk()) {
-                context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
-                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getServiceStatusReason()));
+            if (rejectWhenHealthCheckFailed && !HealthMonitor.isHealthCheckSuccess()) {
+                context.status(HttpResponseStatus.BAD_GATEWAY)
+                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getStatusReasonHealthCheck()));
                 return;
             }
             if (rejectWhenPaused && HealthMonitor.isServicePaused()) {
                 context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
-                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, null, null, "Service is paused: " + HealthMonitor.getServiceStatusReason()));
+                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, null, null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
                 return;
             }
 
             ret = javaMethod.invoke(javaInstance, paramValues);
-        } /*catch (InvocationTargetException ex) {
-                throw ex.getCause();
-            }*/ finally {
+        } catch (InvocationTargetException ex) {
+            throw ex.getCause();
+        } finally {
             context.poi(BootPOI.BIZ_END);
         }
 

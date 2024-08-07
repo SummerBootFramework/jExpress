@@ -424,9 +424,9 @@ public class ReflectionUtil {
             }
             return Enum.valueOf((Class<Enum>) targetClass, value);
         } else if (targetClass.equals(OffsetDateTime.class)) {
-            return OffsetDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+            return OffsetDateTime.parse(value, TimeUtil.ISO8601_ZONED_DATE_TIME);
         } else if (targetClass.equals(ZonedDateTime.class)) {
-            return ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+            return ZonedDateTime.parse(value, TimeUtil.ISO8601_ZONED_DATE_TIME);
         } else if (targetClass.equals(LocalDateTime.class)) {
             return LocalDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME);
         } else if (targetClass.equals(LocalDate.class)) {

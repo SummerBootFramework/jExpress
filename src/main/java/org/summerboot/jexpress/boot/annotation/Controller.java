@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.boot.annotation;
 
 import com.google.inject.BindingAnnotation;
+import org.summerboot.jexpress.boot.BootConstant;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -36,7 +37,7 @@ public @interface Controller {
 
     String implTag() default NOT_TAGGED;
 
-    String responseHeader_ServerTs() default "X-ServerTs";
+    String responseHeader_ServerTs() default BootConstant.RESPONSE_HEADER_KEY_TS;
 
-    String responseHeader_Reference() default "X-Reference";
+    String responseHeader_Reference() default BootConstant.RESPONSE_HEADER_KEY_REF;
 }

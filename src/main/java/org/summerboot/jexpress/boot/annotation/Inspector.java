@@ -13,35 +13,24 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.instrumentation;
+package org.summerboot.jexpress.boot.annotation;
 
-import com.google.inject.Singleton;
-import jakarta.annotation.Nonnull;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceError;
+import com.google.inject.BindingAnnotation;
 
-import java.util.List;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Singleton
-public class BootHealthInspectorImpl implements HealthInspector {
+@Target(value = {ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
+@Retention(value = RetentionPolicy.RUNTIME)
+@Documented
+@BindingAnnotation
+public @interface Inspector {
 
-    /**
-     * @param args Logger, Boolean
-     * @return
-     */
-    @Override
-    public List<Err> ping(Object... args) {
-        ServiceError error = new ServiceError(BootConstant.APP_ID + "- ping");
-        healthCheck(error, args);
-        List<Err> errors = error.getErrors();
-        return errors;
-    }
-
-    protected void healthCheck(@Nonnull ServiceError error, Object... args) {
-    }
-
+    String[] poi() default {};
 }

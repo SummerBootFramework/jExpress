@@ -64,6 +64,7 @@ public class FormatterUtil {
     public static final String REGEX_EMAIL = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     public static final Pattern REGEX_EMAIL_PATTERN = Pattern.compile(REGEX_EMAIL);
 
+
     public static String[] parseLines(String txt) {
         return StringUtils.isBlank(txt) ? EMPTY_STR_ARRAY : txt.split("\\r?\\n");
     }

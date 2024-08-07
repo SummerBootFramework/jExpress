@@ -20,6 +20,7 @@ import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 import java.io.File;
@@ -46,9 +47,18 @@ public class ConfigurationMonitor implements FileAlterationListener {
     protected ConfigurationMonitor() {
     }
 
+    private static final String PAUSE_LOCK_CODE = BootConstant.PAUSE_LOCK_CODE_VIAFILE;
+
     public void start(File folder, int intervalSec, Map<File, Runnable> cfgUpdateTasks) throws Exception {
         File pauseFile = Paths.get(folder.getAbsolutePath(), APUSE_FILE_NAME).toFile();
-        HealthMonitor.setPauseStatus(pauseFile.exists(), "by file detection " + pauseFile.getAbsolutePath());
+        boolean pause = pauseFile.exists();
+        String cause;
+        if (pause) {
+            cause = "File detected: " + pauseFile.getAbsolutePath();
+        } else {
+            cause = "File not detected: " + pauseFile.getAbsolutePath();
+        }
+        HealthMonitor.pauseService(pause, PAUSE_LOCK_CODE, cause);
         if (running) {
             return;
         }
@@ -110,12 +120,27 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     @Override
     public void onFileCreate(File file) {
+        if (!isPauseFile(file)) {
+            return;
+        }
         log.info(() -> "new " + file.getAbsoluteFile());
-        HealthMonitor.setPauseStatus(true, "file created " + file.getAbsolutePath());
+        HealthMonitor.pauseService(true, PAUSE_LOCK_CODE, "file created " + file.getAbsolutePath());
+    }
+
+    @Override
+    public void onFileDelete(File file) {
+        if (!isPauseFile(file)) {
+            return;
+        }
+        log.info(() -> "del " + file.getAbsoluteFile());
+        HealthMonitor.pauseService(false, PAUSE_LOCK_CODE, "file deleted " + file.getAbsolutePath());
     }
 
     @Override
     public void onFileChange(File file) {
+        if (isPauseFile(file)) {
+            return;
+        }
         log.info(() -> "mod " + file.getAbsoluteFile());
         // decouple business logic from framework logic
         // bad example: if(file.equals(AppConstant.CFG_PATH_EMAIL)){...} 
@@ -125,10 +150,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
         }
     }
 
-    @Override
-    public void onFileDelete(File file) {
-        log.info(() -> "del " + file.getAbsoluteFile());
-        HealthMonitor.setPauseStatus(false, "file deleted " + file.getAbsolutePath());
+    private boolean isPauseFile(File file) {
+        return APUSE_FILE_NAME.equals(file.getName());
     }
-
 }
