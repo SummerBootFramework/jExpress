@@ -208,12 +208,15 @@ public class HealthMonitor {
         } while (keepRunning);
     };
 
-    public static String start() {
-        // start sync to get result
-        inspect();
-        keepRunning = false;
-        AsyncTask.run();
-        String ret = buildMessage();
+    public static String start(boolean returnRsult) {
+        String ret = null;
+        if (returnRsult) {
+            // start sync to get result
+            inspect();
+            keepRunning = false;
+            AsyncTask.run();
+            ret = buildMessage();
+        }
 
         // start async in background
         keepRunning = true;

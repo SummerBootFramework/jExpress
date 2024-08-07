@@ -286,7 +286,7 @@ abstract public class SummerApplication extends SummerBigBang {
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             // 4. health inspection
             log.trace("4. health inspection");
-            String serviceStatus = HealthMonitor.start();
+            String serviceStatus = HealthMonitor.start(true);
 
             // 5a. start server: gRPC
             if (hasGRPCImpl) {
