@@ -136,7 +136,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
 
     @Override
     public String getServiceStatus() {
-        return HealthMonitor.isServiceAvaliable() ? "OK" : "Service Unavaliable";
+        return HealthMonitor.isServiceAvailable() ? "OK" : "Service Unavaliable";
     }
 
     @Override

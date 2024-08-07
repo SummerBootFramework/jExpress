@@ -217,7 +217,9 @@ public class HealthMonitor {
 
         // start async in background
         keepRunning = true;
-        inspect();
+        if (!isServiceAvailable()) {
+            inspect();
+        }
         tpe.execute(AsyncTask);
 
         // return sync result
@@ -306,7 +308,7 @@ public class HealthMonitor {
         return statusReasonHealthCheck;
     }
 
-    public static boolean isServiceAvaliable() {
+    public static boolean isServiceAvailable() {
         return isHealthCheckSuccess && !isServicePaused;
     }
 
