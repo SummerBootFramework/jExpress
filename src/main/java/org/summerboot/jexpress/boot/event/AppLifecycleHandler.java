@@ -49,7 +49,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     public void onApplicationStop(String appVersion) {
         log.warn(appVersion);
         if (postOffice != null) {
-            postOffice.sendAlertSync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Shutdow", "pid#" + BootConstant.PID, null, false);
+            postOffice.sendAlertSync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Shutdown", "pid#" + BootConstant.PID, null, false);
         }
     }
 
