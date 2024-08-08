@@ -24,6 +24,7 @@ import io.grpc.TlsServerCredentials;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 
@@ -191,8 +192,8 @@ public class GRPCServer {
         return serviceCounter;
     }
 
-    public void start() throws IOException {
-        this.start(false);
+    public void start(StringBuilder memo) throws IOException {
+        this.start(false, memo);
     }
 
     /**
@@ -201,14 +202,16 @@ public class GRPCServer {
      * @param isBlockingMode
      * @throws IOException
      */
-    public void start(boolean isBlockingMode) throws IOException {
+    public void start(boolean isBlockingMode, StringBuilder memo) throws IOException {
         if (server != null) {
             shutdown();
         }
-
+        String appInfo = BootConstant.VERSION + " " + BootConstant.PID;
         server = serverBuilder.build().start();
         String schema = serverCredentials == null ? "grpc" : "grpcs";
-        log.info("*** GRPCServer is listening on " + schema + "://" + bindingAddr + ":" + port);
+        String info = "Netty GRPC server [" + appInfo + "] is listening on " + schema + "://" + bindingAddr + ":" + port;
+        memo.append(BootConstant.BR).append(info);
+        log.info(info);
         Runtime.getRuntime().addShutdownHook(
                 new Thread(() -> {
                     shutdown();

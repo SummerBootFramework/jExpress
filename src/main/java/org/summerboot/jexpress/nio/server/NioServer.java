@@ -84,7 +84,7 @@ public class NioServer {
      * @throws InterruptedException
      * @throws SSLException
      */
-    public void bind(NioConfig nioCfg) throws InterruptedException, SSLException {
+    public void bind(NioConfig nioCfg, StringBuilder memo) throws InterruptedException, SSLException {
         List<InetSocketAddress> bindingAddresses = nioCfg.getBindingAddresses();
         if (bindingAddresses == null || bindingAddresses.isEmpty()) {
             log.info("Skip HTTP server due to no bindingAddresses in config file: " + nioCfg.getCfgFile());
@@ -188,26 +188,29 @@ public class NioServer {
             String protocol;
             if (jdkSslContext == null && nettySslContext == null) {
                 sslMode = "non-ssl";
-                protocol = multiplexer + " http://";
+                protocol = "http://";
             } else {
                 sslMode = "Client Auth: " + clientAuth;
-                protocol = multiplexer + " https://";
+                protocol = "https://";
             }
+            String listenerInfo = "[multiplexer=" + multiplexer + "] " + sslMode;
             String bindAddr = addr.getAddress().getHostAddress();
             int listeningPort = addr.getPort();
-            // bind
+// bind
             ChannelFuture f = boot.bind(bindAddr, listeningPort).sync();
             f.channel().closeFuture().addListener((ChannelFutureListener) (ChannelFuture f1) -> {
                 //shutdown();
-                System.out.println("Server " + appInfo + " (" + sslMode + ") is stopped");
+                System.out.println("Server " + appInfo + " (" + listenerInfo + ") is stopped");
             });
             List<String> loadBalancingPingEndpoints = BackOffice.agent.getLoadBalancingPingEndpoints();
             for (String loadBalancingPingEndpoint : loadBalancingPingEndpoints) {
-                log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint));
+                String info = "Netty HTTP server [" + appInfo + "] (" + listenerInfo + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint);
+                memo.append(BootConstant.BR).append(info);
+                log.info(() -> info);
             }
 
             if (nioListener != null) {
-                nioListener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, loadBalancingEndpoints);
+                nioListener.onNIOBindNewPort(appInfo, listenerInfo, protocol, bindAddr, listeningPort, loadBalancingEndpoints);
             }
         }
 

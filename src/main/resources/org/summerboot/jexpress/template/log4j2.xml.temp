@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- version 2.4.10 -->
+<!-- version 2.4.11 -->
 <Configuration status="WARN" monitorInterval="30">
     <Properties>
         <Property name="logPattern" value="[${sys:logId}] %d{ISO8601} %p %c{}.%M() [%t] %m %ex%n"/>
-        <!-- usage: %replace{pattern}{regex}{substitution} -->
+        <!-- usage: %replace{pattern}{regex}{substitution}
         <Property name="logPattern2" value="[${sys:logId}] %d{ISO8601} %p %c{}.%M() [%t] %replace{%enc{%m}{CRLF}}{\\r|\\n|%0D|%0A|%0d|%0a}{|} %uEx%n"/>
+		 -->
     </Properties>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <!-- <PatternLayout pattern="%d{ISO8601}{Canada/Eastern} %p %c{}.%M() [%t] %enc{%m}{CRLF} %ex%n"/>-->
+            <!-- set to OFF or WARN for production env -->
+            <LevelRangeFilter maxLevel="ALL"/>
             <PatternLayout pattern="${sys:logPattern}"/>
         </Console>
 
@@ -58,7 +60,6 @@
     <Loggers>
         <Root level="warn" includeLocation="true">
             <AppenderRef ref="StatusLogFile"/>
-            <!-- -->
             <AppenderRef ref="Console"/>
         </Root>
         <Logger level="info" name="com.hazelcast" includeLocation="true"/>
@@ -74,41 +75,32 @@
 
         <Logger level="warn" name="io.netty.handler" includeLocation="false" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
-            <!-- -->
             <AppenderRef ref="Console"/>
         </Logger>
 
-        <Logger level="info" name="org.summerboot.jexpress.nio.server.BootHttpRequestHandler" includeLocation="false"
-                additivity="false">
+        <Logger level="info" name="org.summerboot.jexpress.nio.server.BootHttpRequestHandler" includeLocation="false" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
-            <!-- -->
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger level="info" name="org.summerboot.jexpress.integration.quartz.BootJobListener" includeLocation="false"
-                additivity="false">
+        <Logger level="info" name="org.summerboot.jexpress.integration.quartz.BootJobListener" includeLocation="false" additivity="false">
             <AppenderRef ref="ScheduledLogFile"/>
-            <!-- -->
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger level="warn" name="org.summerboot.jexpress.integration.ldap" includeLocation="true" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
-            <!-- -->
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger level="debug" name="org.hibernate.SQL" includeLocation="true" additivity="false">
+        <Logger level="info" name="org.hibernate.SQL" includeLocation="true" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
-            <!-- -->
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger level="debug" name="org.hibernate.type" includeLocation="true" additivity="false">
+        <Logger level="info" name="org.hibernate.type" includeLocation="true" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
-            <!-- -->
             <AppenderRef ref="Console"/>
         </Logger>
 
         <Logger level="debug" name="${sys:appPackageName}" includeLocation="true" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
-            <!-- -->
             <AppenderRef ref="Console"/>
         </Logger>
     </Loggers>

@@ -19,13 +19,13 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 
 import java.io.File;
-import java.time.OffsetDateTime;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -41,15 +41,15 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     @Override
     public void onApplicationStart(String appVersion, String fullConfigInfo) {
         if (postOffice != null) {
-            postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Started at " + OffsetDateTime.now(), fullConfigInfo, null, false);
+            postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Started", fullConfigInfo, null, false);
         }
     }
 
     @Override
     public void onApplicationStop(String appVersion) {
-        log.info(appVersion);
+        log.warn(appVersion);
         if (postOffice != null) {
-            postOffice.sendAlertSync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Shutdown at " + OffsetDateTime.now() + " - " + appVersion, "EOM", null, false);
+            postOffice.sendAlertSync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Shutdow", "pid#" + BootConstant.PID, null, false);
         }
     }
 
@@ -68,7 +68,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
             boolean serviceAvaliable = healthOk && !paused;
             String content = HealthMonitor.buildMessage();
             if (postOffice != null) {
-                postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Service Status Changed at " + OffsetDateTime.now(), content, null, false);
+                postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Service Status Changed", content, null, false);
             }
         }
     }

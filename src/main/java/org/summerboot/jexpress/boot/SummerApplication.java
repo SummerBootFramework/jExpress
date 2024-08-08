@@ -282,11 +282,12 @@ abstract public class SummerApplication extends SummerBigBang {
                 log.info(() -> sb.toString());
             }
 
-            long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
-            String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             // 4. health inspection
             log.trace("4. health inspection");
             String serviceStatus = HealthMonitor.start(true);
+            long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
+            String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
+            StringBuilder startingMemo = new StringBuilder();
 
             // 5a. start server: gRPC
             if (hasGRPCImpl) {
@@ -316,7 +317,7 @@ abstract public class SummerApplication extends SummerBigBang {
                             serverBuilder.addService(impl);
                         }
                         if (gRPCCfg.isAutoStart()) {
-                            gRPCServer.start();
+                            gRPCServer.start(startingMemo);
                         }
                         gRPCServerList.add(gRPCServer);
                     }
@@ -330,14 +331,16 @@ abstract public class SummerApplication extends SummerBigBang {
                     NioChannelInitializer channelInitializer = super.guiceInjector.getInstance(NioChannelInitializer.class);
                     NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
                     httpServer = new NioServer(channelInitializer.init(guiceInjector, channelHandlerNames), nioListener);
-                    httpServer.bind(NioConfig.cfg);
+                    httpServer.bind(NioConfig.cfg, startingMemo);
                 }
             }
 
             // 6. announcement
+            startingMemo.append(BootConstant.BR).append(serviceStatus);
+            startingMemo.append(BootConstant.BR).append("pid#" + BootConstant.PID);
             log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus);
             if (appLifecycleListener != null) {
-                appLifecycleListener.onApplicationStart(super.appVersion, serviceStatus);
+                appLifecycleListener.onApplicationStart(super.appVersion, startingMemo.toString());
             }
         } catch (java.net.BindException ex) {// from NioServer
             log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());

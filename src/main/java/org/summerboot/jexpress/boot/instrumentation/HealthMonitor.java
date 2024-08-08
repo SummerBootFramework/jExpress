@@ -286,12 +286,12 @@ public class HealthMonitor {
     public static String buildMessage() {
         StringBuilder sb = new StringBuilder();
         sb.append(BootConstant.BR)
-                .append("\t Self Inspection Result: ").append(isHealthCheckSuccess ? "passed" : "failed").append(BootConstant.BR);
+                .append("Self Inspection Result: ").append(isHealthCheckSuccess ? "passed" : "failed").append(BootConstant.BR);
         if (!isHealthCheckSuccess) {
-            sb.append("\t\t cause: ").append(statusReasonHealthCheck).append(BootConstant.BR);
+            sb.append("\t cause: ").append(statusReasonHealthCheck).append(BootConstant.BR);
         }
-        sb.append("\t Service Status: ").append(isServicePaused ? "paused" : "running").append(BootConstant.BR)
-                .append("\t\t cause: ").append(statusReasonPaused).append(BootConstant.BR);
+        sb.append("Service Status: ").append(isServicePaused ? "paused" : "running").append(BootConstant.BR)
+                .append("\t cause: ").append(statusReasonPaused).append(BootConstant.BR);
         return sb.toString();
     }
 

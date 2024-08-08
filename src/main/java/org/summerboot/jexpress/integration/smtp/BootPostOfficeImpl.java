@@ -25,6 +25,7 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.nio.server.domain.Err;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,7 +55,7 @@ public class BootPostOfficeImpl implements PostOffice {
      * @return
      */
     protected String updateAlertTitle(String title) {
-        return "Alert@" + SummerApplication.HOST + " " + appVersion + " - " + title;
+        return "Alert@" + SummerApplication.HOST + " " + appVersion + "[" + BootConstant.APP_ID + "] - " + title + " [" + OffsetDateTime.now() + "]";
     }
 
     /**
