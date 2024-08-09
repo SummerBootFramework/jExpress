@@ -23,7 +23,7 @@
         <RollingRandomAccessFile
                 name="StatusLogFile"
                 fileName="${sys:logPath}/${sys:appName}_status_${sys:serverName}.log"
-                filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_status_${sys:serverName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
+                filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_status_${sys:serverName}_%d{yyyy-MM-dd-HHmm}.%i.log.gz"
                 immediateFlush="false"
                 ignoreExceptions="false">
             <PatternLayout pattern="${sys:logPattern}"/>
@@ -35,7 +35,7 @@
         <RollingRandomAccessFile
                 name="RequestLogFile"
                 fileName="${sys:logPath}/${sys:appName}_requests_${sys:serverName}.log"
-                filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_requests_${sys:serverName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
+                filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_requests_${sys:serverName}_%d{yyyy-MM-dd-HHmm}.%i.log.gz"
                 immediateFlush="false"
                 ignoreExceptions="false">
             <PatternLayout pattern="${sys:logPattern}"/>
@@ -47,7 +47,7 @@
         <RollingRandomAccessFile
                 name="ScheduledLogFile"
                 fileName="${sys:logPath}/${sys:appName}_schedule_${sys:serverName}.log"
-                filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_schedule_${sys:serverName}_%d{yyyy-MM-dd HH:mm}.%i.log.gz"
+                filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_schedule_${sys:serverName}_%d{yyyy-MM-dd-HHmm}.%i.log.gz"
                 immediateFlush="false"
                 ignoreExceptions="false">
             <PatternLayout pattern="${sys:logPattern}"/>
