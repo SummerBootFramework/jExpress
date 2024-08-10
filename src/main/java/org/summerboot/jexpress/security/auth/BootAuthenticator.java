@@ -42,14 +42,12 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.security.JwtUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
 
 import javax.naming.NamingException;
 import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @param <E> authenticate(T metaData)
@@ -137,35 +135,34 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         String issuer = AuthConfig.cfg.getJwtIssuer();
         String userName = caller.getUid();
         Set<String> groups = caller.getGroups();
-        String groupsCsv = groups == null || groups.size() < 1
+        /*String groupsCsv = groups == null || groups.size() < 1
                 ? null
                 : groups.stream().collect(Collectors.joining(","));
-        String audience = groupsCsv;
+        String audience = groupsCsv;*/
 
-        Claims claims = Jwts.claims();
-        claims.setId(jti)
-                .setIssuer(issuer)
-                .setSubject(userName)
-                .setAudience(audience);
+        JwtBuilder builder = Jwts.builder();
+        builder.id(jti)
+                .issuer(issuer)
+                .subject(userName)
+                .audience().add(groups);
         if (caller.getId() != null) {
-            claims.put("callerId", caller.getId());
+            builder.claim("callerId", caller.getId());
         }
         if (caller.getTenantId() != null) {
-            claims.put("tenantId", caller.getTenantId());
+            builder.claim("tenantId", caller.getTenantId());
         }
         if (caller.getTenantName() != null) {
-            claims.put("tenantName", caller.getTenantName());
+            builder.claim("tenantName", caller.getTenantName());
         }
         Set<String> keys = caller.propKeySet();
         if (keys != null) {
             for (String key : keys) {
                 Object v = caller.getProp(key, Object.class);
-                claims.put(key, v);
+                builder.claim(key, v);
             }
         }
 
-        JwtBuilder builder = Jwts.builder().setClaims(claims);
-
+        //JwtBuilder builder = Jwts.builder().setClaims(claims);
         return builder;
     }
 
@@ -174,7 +171,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         if (jwtParser == null) {
             throw new UnsupportedOperationException(ERROR_NO_CFG);
         }
-        return JwtUtil.parseJWT(jwtParser, jwt).getBody();
+        return JwtUtil.parseJWT(jwtParser, jwt).getPayload();
     }
 
     /**
@@ -188,17 +185,15 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         //String jti = claims.getId();
         //String issuer = claims.getIssuer();
         String userName = claims.getSubject();
-        String audience = claims.getAudience();
+        Set<String> audience = claims.getAudience();
         Long userId = claims.get("callerId", Long.class);
         Long tenantId = claims.get("tenantId", Long.class);
         String tenantName = claims.get("tenantName", String.class);
 
         User caller = new User(tenantId, tenantName, userId, userName);
 
-        String userGroups = audience;
-        if (StringUtils.isNotBlank(userGroups)) {
-            String[] groups = FormatterUtil.parseCsv(userGroups);
-            for (String group : groups) {
+        if (audience != null) {
+            for (String group : audience) {
                 caller.addGroup(group);
             }
         }

@@ -309,7 +309,7 @@ public class ServiceContext {
             return this;
         }
         if (this.responseHeaders == null) {
-            this.responseHeaders = new DefaultHttpHeaders(true);
+            this.responseHeaders = new DefaultHttpHeaders();
         }
         this.responseHeaders.set(headers);
         return this;
@@ -330,7 +330,7 @@ public class ServiceContext {
             return this;
         }
         if (responseHeaders == null) {
-            responseHeaders = new DefaultHttpHeaders(true);
+            responseHeaders = new DefaultHttpHeaders();
         }
         if (value == null) {
             responseHeaders.remove(key);
@@ -355,7 +355,7 @@ public class ServiceContext {
             return this;
         }
         if (responseHeaders == null) {
-            responseHeaders = new DefaultHttpHeaders(true);
+            responseHeaders = new DefaultHttpHeaders();
         }
         if (values == null) {
             responseHeaders.remove(key);
@@ -370,7 +370,7 @@ public class ServiceContext {
             return this;
         }
         if (responseHeaders == null) {
-            responseHeaders = new DefaultHttpHeaders(true);
+            responseHeaders = new DefaultHttpHeaders();
         }
         hs.keySet().stream().filter((key) -> (StringUtils.isNotBlank(key))).forEachOrdered((key) -> {
             Iterable<?> values = hs.get(key);
@@ -617,7 +617,7 @@ public class ServiceContext {
 //        }
 
         if (responseHeaders == null) {
-            responseHeaders = new DefaultHttpHeaders(true);
+            responseHeaders = new DefaultHttpHeaders();
         }
         long fileLength = file.length();
         if (fileLength > Integer.MAX_VALUE) {
