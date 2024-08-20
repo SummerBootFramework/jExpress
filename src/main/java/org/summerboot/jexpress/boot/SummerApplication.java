@@ -22,6 +22,11 @@ import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerServiceDefinition;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.appender.ConsoleAppender;
+import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
@@ -40,9 +45,11 @@ import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
 import org.summerboot.jexpress.util.ApplicationUtil;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * In Code We Trust
@@ -284,7 +291,7 @@ abstract public class SummerApplication extends SummerBigBang {
 
             // 4. health inspection
             log.trace("4. health inspection");
-            String serviceStatus = HealthMonitor.start(true);
+            String serviceStatus = HealthMonitor.start(true, guiceInjector);
 
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
@@ -353,10 +360,41 @@ abstract public class SummerApplication extends SummerBigBang {
                 log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             }
             System.exit(1);
+        } finally {
+            // show prompt only with default log4j2.xml in case user is not familiar with log4j2.xml (only one ConsoleAppender with maxLevel is NOT "ALL"), no prompt if user modify the default log4j2.xml due to user knows what he/she is doing
+            String prompt = null;
+            try {
+                org.apache.logging.log4j.core.Logger c = (org.apache.logging.log4j.core.Logger) log;
+                Map<String, Appender> as = c.getContext().getConfiguration().getAppenders();
+                int countConsoleAppender = 0;
+                for (Map.Entry<String, Appender> entry : as.entrySet()) {
+                    Appender appender = entry.getValue();
+                    if (appender instanceof ConsoleAppender) {
+                        countConsoleAppender++;
+                        if (countConsoleAppender > 1) {
+                            prompt = null;
+                            break;
+                        }
+                        ConsoleAppender sa = (ConsoleAppender) appender;
+                        Filter f = sa.getFilter();
+                        if (f instanceof LevelRangeFilter) {
+                            LevelRangeFilter lrf = (LevelRangeFilter) f;
+                            Level maxLevel = lrf.getMaxLevel();
+                            if (!Level.ALL.equals(maxLevel)) {
+                                prompt = "\nTo show logs in console, please edit " + this.userSpecifiedConfigDir + File.separator
+                                        + "log4j2.xml \n\t<Configuration ...>\n\t  <Appenders>\n\t    <Console name=\"" + sa.getName() + "\" target=\"" + sa.getTarget() + "\">\n\t      <LevelRangeFilter maxLevel=\"" + maxLevel + "\"/>\n\tchange around line#13: set maxLevel=\"" + Level.ALL + "\"";
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable ex) {
+                log.error("Failed to inspect " + this.userSpecifiedConfigDir + File.separator + "log4j2.xml", ex);
+            }
+            if (prompt != null) {
+                System.out.println(prompt);
+            }
         }
     }
-
-    protected static boolean a = true;
 
     public void shutdown() {
         log.trace("");

@@ -191,7 +191,7 @@
         <maven-surefire.version>3.2.5</maven-surefire.version>
         <!-- Commons -->
         <commons-lang3.version>3.16.0</commons-lang3.version>
-        <commons-cli.version>1.8.0</commons-cli.version>
+        <commons-cli.version>1.9.0</commons-cli.version>
         <commons-io.version>2.16.1</commons-io.version>
         <!--        <commons-text.version>1.11.0</commons-text.version>-->
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
@@ -210,7 +210,7 @@
         <netty-tcnative.version>2.0.65.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.66.0</grpc.version>
-        <guava.version>33.2.1-jre</guava.version>
+        <guava.version>33.3.0-jre</guava.version>
         <protobuf.version>4.27.3</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>2.2.22</swagger.core.version>
@@ -227,8 +227,9 @@
         <!-- JSON/XML/Bean Validation -->
         <jackson.version>2.17.2</jackson.version>
         <!-- Bean Validation -->
-        <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <jakarta.el.version>6.0.1</jakarta.el.version>
+        <tomcat-embed-el.version>11.0.0-M24</tomcat-embed-el.version>
+        <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
@@ -263,12 +264,6 @@
 
     <dependencies>
         <!-- Commons -->
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 Apache 2.0-->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${commons-lang3.version}</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/commons-cli/commons-cli Apache 2.0-->
         <dependency>
             <groupId>commons-cli</groupId>
@@ -281,6 +276,12 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>${commons-io.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 Apache 2.0-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
         <!--        <dependency>
@@ -540,23 +541,29 @@
 
 
         <!-- Bean Validation -->
-        <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator -->
-        <dependency>
-            <groupId>org.hibernate.validator</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <version>${hibernate-validator.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.glassfish/jakarta.el -->
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.el</artifactId>
-            <version>4.0.2</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/jakarta.el/jakarta.el-api -->
         <dependency>
             <groupId>jakarta.el</groupId>
             <artifactId>jakarta.el-api</artifactId>
             <version>${jakarta.el.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.glassfish/jakarta.el -->
+        <!--        <dependency>-->
+        <!--            <groupId>org.glassfish</groupId>-->
+        <!--            <artifactId>jakarta.el</artifactId>-->
+        <!--            <version>4.0.2</version>-->
+        <!--        </dependency>-->
+        <!-- https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-el -->
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-el</artifactId>
+            <version>${tomcat-embed-el.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${hibernate-validator.version}</version>
         </dependency>
 
 

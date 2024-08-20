@@ -10,7 +10,7 @@
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <!-- WARN or OFF for production, WARN or ALL for development -->
-            <LevelRangeFilter maxLevel="ALL"/>
+            <LevelRangeFilter maxLevel="WARN"/>
             <PatternLayout pattern="${sys:logPattern}"/>
         </Console>
 
@@ -55,6 +55,18 @@
                 <SizeBasedTriggeringPolicy size="10MB"/>
             </Policies>
             <DefaultRolloverStrategy max="500"/>
+        </RollingRandomAccessFile>
+		<RollingRandomAccessFile
+                name="BackServiceLogFile"
+                fileName="${sys:logPath}/${sys:appName}_backservice_${sys:serverName}.log"
+                filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_backservice_${sys:serverName}_%d{yyyy-MM-dd HHmm}.%i.log.gz"
+                immediateFlush="false"
+                ignoreExceptions="false">
+            <PatternLayout pattern="${sys:logPattern}"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="2MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="50"/>
         </RollingRandomAccessFile>
     </Appenders>
     <Loggers>

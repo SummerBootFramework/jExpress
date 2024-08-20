@@ -94,36 +94,20 @@ public class BootPostOfficeImpl implements PostOffice {
      * @param async
      */
     protected void sendAlert(Collection<String> to, final String title, final String content, final Throwable cause, boolean debouncing, boolean async) {
-        if (to == null || to.isEmpty()) {
-            //log.warn(() -> "unknown recipient: " + title + "\n" + _content);
-            return;
-        }
-        Runnable postman = () -> {
-            if (debouncing) {
-                String key = title;
-                Throwable rootCause = ExceptionUtils.getRootCause(cause);
-                if (rootCause == null) {
-                    rootCause = cause;
-                }
-                if (rootCause != null) {
-                    key = key + rootCause.getClass().getName();
-                }
-                if (debounced(key, SMTPClientConfig.cfg.getEmailAlertDebouncingIntervalMinutes())) {
-                    return;
-                }
+        if (debouncing) {
+            String key = title;
+            Throwable rootCause = ExceptionUtils.getRootCause(cause);
+            if (rootCause == null) {
+                rootCause = cause;
             }
-            Email email = Email.compose(updateAlertTitle(title), updateAlertContent(content, cause), Email.Format.text).to(to);
-            try {
-                email.send(SMTPClientConfig.cfg.getMailSession());
-            } catch (Throwable ex) {
-                log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
+            if (rootCause != null) {
+                key = key + rootCause.getClass().getName();
             }
-        };
-        if (async) {
-            BackOffice.execute(postman);
-        } else {
-            postman.run();
+            if (debounced(key, SMTPClientConfig.cfg.getEmailAlertDebouncingIntervalMinutes())) {
+                return;
+            }
         }
+        sendEmail(to, updateAlertTitle(title), updateAlertContent(content, cause), false, async);
     }
 
     @Override
@@ -137,28 +121,29 @@ public class BootPostOfficeImpl implements PostOffice {
     }
 
     protected boolean sendEmail(Collection<String> to, String title, String content, boolean isHTMLFormat, boolean async) {
-        boolean success = false;
         Email email = Email.compose(title, content, isHTMLFormat ? Email.Format.html : Email.Format.text).to(to);
-        if (to != null && !to.isEmpty()) {
-            try {
-                if (async) {
-                    Runnable postman = () -> {
-                        try {
-                            email.send(SMTPClientConfig.cfg.getMailSession());
-                        } catch (Throwable ex) {
-                            log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
-                        }
-                    };
-                    BackOffice.execute(postman);
-                } else {
-                    email.send(SMTPClientConfig.cfg.getMailSession());
-                }
-                success = true;
-            } catch (Throwable ex) {
-                log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
+        if (to == null || to.isEmpty()) {
+            log.warn(() -> "unknown recipient: " + email);
+            return false;
+        }
+
+        boolean success = false;
+        try {
+            if (async) {
+                Runnable postman = () -> {
+                    try {
+                        email.send(SMTPClientConfig.cfg.getMailSession());
+                    } catch (Throwable ex) {
+                        log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
+                    }
+                };
+                BackOffice.execute(postman);
+            } else {
+                email.send(SMTPClientConfig.cfg.getMailSession());
             }
-        } else {
-            log.error(() -> "unknown recipient: " + email);
+            success = true;
+        } catch (Throwable ex) {
+            log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
         }
         return success;
     }

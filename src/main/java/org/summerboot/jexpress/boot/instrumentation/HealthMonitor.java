@@ -15,11 +15,13 @@
  */
 package org.summerboot.jexpress.boot.instrumentation;
 
+import com.google.inject.Injector;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.annotation.Inspector;
+import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
@@ -27,6 +29,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.util.BeanUtil;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -82,7 +85,7 @@ public class HealthMonitor {
             Object healthInspector = entry.getValue();
             if (healthInspector instanceof HealthInspector) {
                 registeredHealthInspectors.add((HealthInspector) healthInspector);
-                memo.append(BootConstant.BR).append("\t- @DefaultHealthInspector registered: ").append(name).append("=").append(healthInspector.getClass().getName());
+                memo.append(BootConstant.BR).append("\t- @Inspector registered: ").append(name).append("=").append(healthInspector.getClass().getName());
             } else {
                 error = true;
                 sb.append(BootConstant.BR).append("\tCoding Error: class ").append(healthInspector.getClass().getName()).append(" has annotation @").append(Inspector.class.getSimpleName()).append(", should implement ").append(HealthInspector.class.getName());
@@ -97,8 +100,9 @@ public class HealthMonitor {
     /**
      * use default inspectors
      */
-    public static void inspect() {
+    public static int inspect() {
         registeredHealthInspectors.forEach(healthInspectorQueue::offer);
+        return registeredHealthInspectors.size();
     }
 
     /**
@@ -184,18 +188,19 @@ public class HealthMonitor {
                     String inspectionReport;
                     if (healthCheckAllPassed) {
                         inspectionReport = "Current all health inspectors passed";
+                        setHealthStatus(healthCheckAllPassed, inspectionReport);
                     } else {
                         try {
                             inspectionReport = BeanUtil.toJson(healthCheckFailedReport, true, true);
                         } catch (Throwable ex) {
                             inspectionReport = " toJson failed " + ex;
                         }
+                        setHealthStatus(healthCheckAllPassed, inspectionReport);
                         long retryIndex = HealthInspector.retryIndex.get();// not being set yet
-                        if (appLifecycleListener != null) {
+                        if (appLifecycleListener != null && started) {
                             appLifecycleListener.onHealthInspectionFailed(isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
                         }
                     }
-                    setHealthStatus(healthCheckAllPassed, inspectionReport);
                 }
                 started = true;
 
@@ -208,17 +213,57 @@ public class HealthMonitor {
         } while (keepRunning);
     };
 
-    public static String start(boolean returnRsult) {
+    public static String start(boolean returnRsult, Injector guiceInjector) {
+        if (keepRunning) {
+            return "HealthMonitor is already running";
+        }
+        StringBuilder memo = new StringBuilder();
+        boolean hasUnregistered = false;
+        // 1. remove unused (via -use <implTag>) inspectors with @Service annotation
+        Iterator<HealthInspector> iterator = registeredHealthInspectors.iterator();
+        while (iterator.hasNext()) {
+            HealthInspector healthInspector = iterator.next();
+            Service serviceAnnotation = healthInspector.getClass().getAnnotation(Service.class);
+            if (serviceAnnotation != null) {
+                Class c = healthInspector.getClass();
+                boolean usedByTag = false;
+                Class[] bindingClasses = serviceAnnotation.binding();
+                if (bindingClasses == null || bindingClasses.length < 1) {
+                    bindingClasses = c.getInterfaces();
+                }
+                for (Class bindingClasse : bindingClasses) {
+                    Object o = guiceInjector.getInstance(bindingClasse);
+                    if (o.getClass().equals(c)) {
+                        usedByTag = true;
+                        break;
+                    }
+                }
+                if (!usedByTag) {
+                    hasUnregistered = true;
+                    memo.append(BootConstant.BR).append("\t- @Inspector unused due to CLI argument -" + BootConstant.CLI_USE_IMPL + " <implTag>: ").append(c.getName());
+                    iterator.remove();
+                }
+            }
+        }
+        if (hasUnregistered) {
+            log.warn(memo);
+        }
+
+        // 2. start health monitor sync to return result
         String ret = null;
         if (returnRsult) {
             // start sync to get result
-            inspect();
+            int size = inspect();
             keepRunning = false;
-            AsyncTask.run();
-            ret = buildMessage();
+            if (size > 0) {
+                AsyncTask.run();
+                ret = buildMessage();
+            } else {
+                ret = "No health inspectors registered";
+            }
         }
 
-        // start async in background
+        // 3. start async in background
         keepRunning = true;
         if (!isServiceAvailable()) {
             inspect();

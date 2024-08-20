@@ -175,20 +175,9 @@ public class JwtUtil {
     }
 
     public static String createJWT(Key privateKey, JwtBuilder builder, Duration ttl) {
-        //0. We will sign our JWT with our ApiKey secret
-        //byte[] apiKeySecretBytes = parseSigningKey(jwtRootSigningKeyString);
-        //The JWT signature algorithm we will be using to sign the token
-        //Key signingKey = new SecretKeySpec(jwtSigningKey, signatureAlgorithm.getJcaName());
-
-        //1. set ecpire time
         setJwtExpireTime(builder, ttl);
-
-        //2. Let's set the JWT Claims
-        builder.issuedAt(new Date());
-        //builder.signWith(signatureAlgorithm, privateKey);
-        builder.signWith(privateKey);
-
-        //3. Builds the JWT and serializes it to a compact, URL-safe string
+        builder.issuedAt(new Date()).signWith(privateKey);
+        // Builds the JWT and serializes it to a compact, URL-safe string
         return builder.compact();
     }
 
