@@ -103,12 +103,12 @@ abstract public class BootController extends PingController {
     public static final String DESC_401 = "Unauthorized. The client should sign-on again, but not retransmit the same request again";
     public static final String DESC_403 = "Client has  no permission. Client should not retransmit the same request again.";
     public static final String DESC_404 = "Not Found. The client should not retransmit the same request again.";
-    private static final String DESC_429 = "Too Many Requests";
+    public static final String DESC_429 = "Too Many Requests";
     public static final String DESC_500 = "All other 5xx code. Server errors due to unexpected failures. The client can continue and try again with the request without modification.";
     public static final String DESC_501 = "Not Implemented. The client can continue and try again with the request without modification.";
     public static final String DESC_503 = "Service Unavailable. The client can continue and try again with the request without modification.";
-    private static final String DESC_504 = "Gateway Timeout. The client can continue and try again with the request without modification.";
-    private static final String DESC_507 = "Insufficient Storage. The client should contact the system administrator. Do not try the request again.";
+    public static final String DESC_504 = "Gateway Timeout. The client can continue and try again with the request without modification.";
+    public static final String DESC_507 = "Insufficient Storage. The client should contact the system administrator. Do not try the request again.";
 
     @Inject
     protected AuthTokenCache authTokenCache;
