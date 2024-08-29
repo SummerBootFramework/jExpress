@@ -61,18 +61,20 @@ abstract public class GRPCClientConfig extends BootConfig {
             example = "localhost:8424, remotehost:8425, 127.0.0.1:8426")
     @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = false)
     protected volatile List<InetSocketAddress> loadBalancingServers;
+    @Config(key = ID + ".LoadBalancing.schema", defaultValue = "grpc", desc = "In case you have more than one gRPC client needs to connect to different gRPC services, you can set this to distinguish them")
+    protected volatile String loadBalancingTargetSchema = "grpc";
 
     @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN", desc = "available options: ROUND_ROBIN, PICK_FIRST")
     protected volatile GRPCClient.LoadBalancingPolicy loadBalancingPolicy;
 
     protected volatile NameResolverProvider nameResolverProvider;
 
-    //1. gRPC connection
-    @Config(key = ID + ".target.url", defaultValue = "grpc:///",
-            desc = "grpc:///\n"
-                    + "grpc://127.0.0.1:8424\n"
-                    + "unix:/tmp/grpcsrver.socket")
-    protected volatile URI uri;
+//    //1. gRPC connection
+//    @Config(key = ID + ".target.url", defaultValue = "grpc:///",
+//            desc = "grpc:///\n"
+//                    + "grpc://127.0.0.1:8424\n"
+//                    + "unix:/tmp/grpcsrver.socket")
+//    protected volatile URI uri;
 
     @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")// "TLSv1.2, TLSv1.3"
     protected String[] sslProtocols;
@@ -134,8 +136,9 @@ abstract public class GRPCClientConfig extends BootConfig {
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
         if (loadBalancingServers != null && !loadBalancingServers.isEmpty()) {
-            nameResolverProvider = new BootLoadBalancerProvider(uri.getScheme(), loadBalancingServers);
+            nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetSchema, loadBalancingServers);
         }
+        URI uri = null;//new URI("grpc:///");
         channelBuilder = GRPCClient.getNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
     }
 
@@ -147,6 +150,10 @@ abstract public class GRPCClientConfig extends BootConfig {
         return loadBalancingServers;
     }
 
+    public String getLoadBalancingTargetSchema() {
+        return loadBalancingTargetSchema;
+    }
+
     public GRPCClient.LoadBalancingPolicy getLoadBalancingPolicy() {
         return loadBalancingPolicy;
     }
@@ -155,9 +162,10 @@ abstract public class GRPCClientConfig extends BootConfig {
         return nameResolverProvider;
     }
 
-    public URI getUri() {
-        return uri;
-    }
+
+//    public URI getUri() {
+//        return uri;
+//    }
 
     public String[] getSslProtocols() {
         return sslProtocols;

@@ -33,8 +33,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @param <T>
@@ -57,7 +55,7 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
 
     }
 
-    protected static final List<NameResolverProvider> NR_Providers = new ArrayList();
+    //protected static final List<NameResolverProvider> NR_Providers = new ArrayList();
 
     /**
      * @param nameResolverProvider for client side load balancing
@@ -75,7 +73,7 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     public static NettyChannelBuilder getNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
                                                              @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
         final NettyChannelBuilder channelBuilder;
-        String target = uri.toString();//"grpcs://"+uri.getAuthority()+"/service";// "grpcs:///"
+        //String target = uri.toString();//"grpcs://"+uri.getAuthority()+"/service";// "grpcs:///"
         switch (uri.getScheme()) {
             case "unix": //https://github.com/grpc/grpc-java/issues/1539
                 channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
@@ -85,14 +83,19 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                 break;
             default:
                 if (nameResolverProvider != null) {
-                    NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();
-                    for (NameResolverProvider nrp : NR_Providers) {
-                        nameResolverRegistry.deregister(nrp);
-                    }
-                    nameResolverRegistry.register(nameResolverProvider);// use client side load balancing        
-                    NR_Providers.add(nameResolverProvider);
+                    //NameResolverRegistry nameResolverRegistry = new NameResolverRegistry();
+                    NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// this is a singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(nameResolverRegistry.asFactory());
+                    nameResolverRegistry.register(nameResolverProvider);// use client side load balancing
+//                    for (NameResolverProvider nrp : NR_Providers) {
+//                        nameResolverRegistry.deregister(nrp);
+//                    }
+//                    NR_Providers.add(nameResolverProvider);
                     String policy = loadBalancingPolicy.getValue();
-                    channelBuilder = NettyChannelBuilder.forTarget(target).defaultLoadBalancingPolicy(policy);
+                    String target = uri.toString();//"grpcs://"+uri.getAuthority()+"/service";// "grpcs:///" nameResolverProvider.getDefaultScheme()
+                    target = nameResolverProvider.getDefaultScheme() + ":///";
+                    channelBuilder = NettyChannelBuilder.forTarget(target)
+                            .defaultLoadBalancingPolicy(policy);
+                    //.nameResolverFactory(nameResolverRegistry.asFactory());deprecated use target to distinguish different gRPC services
                 } else {
                     String host = uri.getHost();
                     int port = uri.getPort();

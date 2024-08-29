@@ -55,7 +55,7 @@ public class GRPCServer {
     protected Server server = null;
 
     protected ScheduledExecutorService statusReporter = null;
-    protected boolean servicePaused = false;
+    //protected boolean servicePaused = false;
     protected final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
 
     public ServerBuilder getServerBuilder() {
@@ -64,46 +64,6 @@ public class GRPCServer {
 
     public GRPCServiceCounter getServiceCounter() {
         return serviceCounter;
-    }
-//    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
-//        this(bindingAddr, port, initTLS(kmf, tmf));
-//    }
-//
-//    public GRPCServer(String bindingAddr, int port, ServerCredentials serverCredentials) {
-//        this.bindingAddr = bindingAddr;
-//        this.port = port;
-//        this.serverCredentials = serverCredentials;
-//        if (serverCredentials == null) {
-//            serverBuilder = NettyServerBuilder.forAddress(new InetSocketAddress(bindingAddr, port));
-//        } else {
-//            serverBuilder = Grpc.newServerBuilderForPort(port, serverCredentials);
-//        }
-//        if (serverInterceptor != null) {
-//            serverBuilder.intercept(serverInterceptor);
-//        }
-//        //serverBuilder.executor(tpe)
-//        //AbstractImplBase implBase = 
-//        //serverBuilder.addService(implBase);
-//    }
-//    public ServerInterceptor getServerInterceptor() {
-//        return serverInterceptor;
-//    }
-//
-//    public void setContext(SummerRunner.RunnerContext context) {
-//        this.context = context;
-//        try {
-//            serverInterceptor = context.getGuiceInjector().getInstance(ServerInterceptor.class);
-//        } catch (ConfigurationException ex) {
-//
-//        }
-//        if (serverInterceptor != null) {
-//            serverBuilder.intercept(serverInterceptor);
-//        }
-//    }
-
-    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
-        //ServerInterceptor serverInterceptor, int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener;
-        this(bindingAddr, port, kmf, tmf, null, GRPCServerConfig.cfg.getTpe(), null);
     }
 
     public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, ThreadPoolExecutor tpe, NIOStatusListener nioListener) {

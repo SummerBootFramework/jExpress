@@ -386,6 +386,9 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                 Caller caller = verifyToken(jwt, authTokenCache, null, context);
                 if (caller == null) {
                     String desc = context.error().getErrors().get(0).getErrorDesc();
+                    if (StringUtils.isBlank(desc)) {
+                        desc = context.status() + "";
+                    }
                     status = Status.INVALID_ARGUMENT.withDescription(ERROR + desc);
                     //throw new StatusRuntimeException(status);
                 } else {
