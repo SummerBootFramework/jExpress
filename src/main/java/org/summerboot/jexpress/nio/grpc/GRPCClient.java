@@ -73,38 +73,31 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     public static NettyChannelBuilder getNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
                                                              @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
         final NettyChannelBuilder channelBuilder;
-        //String target = uri.toString();//"grpcs://"+uri.getAuthority()+"/service";// "grpcs:///"
-        switch (uri.getScheme()) {
-            case "unix": //https://github.com/grpc/grpc-java/issues/1539
-                channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
-                        .eventLoopGroup(new EpollEventLoopGroup())
-                        .channelType(EpollDomainSocketChannel.class)
-                        .usePlaintext();
-                break;
-            default:
-                if (nameResolverProvider != null) {
-                    //NameResolverRegistry nameResolverRegistry = new NameResolverRegistry();
-                    NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// this is a singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(nameResolverRegistry.asFactory());
-                    nameResolverRegistry.register(nameResolverProvider);// use client side load balancing
-//                    for (NameResolverProvider nrp : NR_Providers) {
-//                        nameResolverRegistry.deregister(nrp);
-//                    }
-//                    NR_Providers.add(nameResolverProvider);
-                    String policy = loadBalancingPolicy.getValue();
-                    String target = uri.toString();//"grpcs://"+uri.getAuthority()+"/service";// "grpcs:///" nameResolverProvider.getDefaultScheme()
-                    target = nameResolverProvider.getDefaultScheme() + ":///";
-                    channelBuilder = NettyChannelBuilder.forTarget(target)
-                            .defaultLoadBalancingPolicy(policy);
-                    //.nameResolverFactory(nameResolverRegistry.asFactory());deprecated use target to distinguish different gRPC services
-                } else {
+        if (nameResolverProvider != null) {// use client side load balancing
+            // register
+            NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// Use singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(new nameResolverRegistry().asFactory());
+            nameResolverRegistry.register(nameResolverProvider);
+            // init
+            String policy = loadBalancingPolicy.getValue();
+            String target = nameResolverProvider.getDefaultScheme() + ":///"; // build target as URI
+            channelBuilder = NettyChannelBuilder.forTarget(target)
+                    .defaultLoadBalancingPolicy(policy);
+        } else {
+            switch (uri.getScheme()) {
+                case "unix": //https://github.com/grpc/grpc-java/issues/1539
+                    channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
+                            .eventLoopGroup(new EpollEventLoopGroup())
+                            .channelType(EpollDomainSocketChannel.class);
+                    break;
+                default:
                     String host = uri.getHost();
                     int port = uri.getPort();
                     if (host == null) {
                         throw new IllegalArgumentException("The URI format should contains host information, like <scheme>://[host:port]/[service], like grpc:///, grpc://host:port, grpcs://host:port, or unix:///path/to/uds.sock. gRpc.client.LoadBalancing.servers should be provided when host/port are not provided.");
                     }
                     channelBuilder = NettyChannelBuilder.forAddress(host, port);
-                }
-                break;
+                    break;
+            }
         }
         if (keyManagerFactory == null) {
             channelBuilder.usePlaintext();

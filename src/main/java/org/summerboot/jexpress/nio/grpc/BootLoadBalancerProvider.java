@@ -33,33 +33,36 @@ public class BootLoadBalancerProvider extends NameResolverProvider {
 
     protected final List<EquivalentAddressGroup> servers;
     protected final String scheme;
-    protected final String authority;
+    protected final int priority;
+    //protected final String authority;
 
-    public BootLoadBalancerProvider(String scheme, InetSocketAddress... addresses) {
+    public BootLoadBalancerProvider(String scheme, int priority, InetSocketAddress... addresses) {
         this.scheme = scheme;
+        this.priority = priority;
 //        this.authority = Arrays.stream(addresses)
 //                .map(InetSocketAddress::getHostName)
 //                .collect(Collectors.joining(", "));
-        if (addresses != null && addresses.length > 0) {
-            this.authority = addresses[0].getHostName();
-        } else {
-            this.authority = "unknownhost";
-        }
+//        if (addresses != null && addresses.length > 0) {
+//            this.authority = addresses[0].getHostName();
+//        } else {
+//            this.authority = "unknownhost";
+//        }
         this.servers = Arrays.stream(addresses)
                 .map(EquivalentAddressGroup::new)
                 .collect(Collectors.toList());
     }
 
-    public BootLoadBalancerProvider(String scheme, List<? extends InetSocketAddress> addresses) {
+    public BootLoadBalancerProvider(String scheme, int priority, List<? extends InetSocketAddress> addresses) {
         this.scheme = scheme;
+        this.priority = priority;
 //        this.authority = addresses.stream()
 //                .map(InetSocketAddress::getHostName)// getHostString
 //                .collect(Collectors.joining(", "));
-        if (addresses != null && !addresses.isEmpty()) {
-            this.authority = addresses.get(0).getHostName();
-        } else {
-            this.authority = "unknownhost";
-        }
+//        if (addresses != null && !addresses.isEmpty()) {
+//            this.authority = addresses.get(0).getHostName();
+//        } else {
+//            this.authority = "unknownhost";
+//        }
         this.servers = addresses.stream()
                 .map(EquivalentAddressGroup::new)
                 .collect(Collectors.toList());
@@ -70,8 +73,8 @@ public class BootLoadBalancerProvider extends NameResolverProvider {
         return new NameResolver() {
             @Override
             public String getServiceAuthority() {
-                //return notUsedTargetUri.toString();
-                return authority;
+                return notUsedTargetUri.getAuthority();
+                //return authority;
             }
 
             @Override
