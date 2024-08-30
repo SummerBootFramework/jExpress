@@ -141,9 +141,12 @@ abstract public class GRPCClientConfig extends BootConfig {
         if (!isReal) {
             return;
         }
+        NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// Use singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(new nameResolverRegistry().asFactory());
+        if (nameResolverProvider != null) {
+            nameResolverRegistry.deregister(nameResolverProvider);
+        }
         if (loadBalancingServers != null && !loadBalancingServers.isEmpty()) {
             nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
-            NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// Use singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(new nameResolverRegistry().asFactory());
             nameResolverRegistry.register(nameResolverProvider);
         }
         channelBuilder = GRPCClient.getNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
