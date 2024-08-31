@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *
@@ -16,23 +17,12 @@
 package org.summerboot.jexpress.nio.grpc;
 
 import io.grpc.ManagedChannel;
-import io.grpc.NameResolverProvider;
-import io.grpc.NameResolverRegistry;
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.channel.epoll.EpollDomainSocketChannel;
-import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
-import io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
-import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import jakarta.annotation.Nullable;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.TrustManagerFactory;
-import java.net.URI;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @param <T>
@@ -40,165 +30,118 @@ import java.net.URI;
  */
 public abstract class GRPCClient<T extends GRPCClient<T>> {
 
-    public enum LoadBalancingPolicy {
-        ROUND_ROBIN("round_robin"), PICK_FIRST("pick_first");
-
-        private final String value;
-
-        private LoadBalancingPolicy(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-    }
-
-    //protected static final List<NameResolverProvider> NR_Providers = new ArrayList();
-
-    /**
-     * @param nameResolverProvider for client side load balancing
-     * @param loadBalancingPolicy
-     * @param uri                  The URI format should be one of grpc://host:port,
-     *                             grpcs://host:port, or unix:///path/to/uds.sock
-     * @param keyManagerFactory    The Remote Caller identity
-     * @param trustManagerFactory  The Remote Caller trusted identities
-     * @param overrideAuthority
-     * @param ciphers
-     * @param tlsVersionProtocols  "TLSv1.2", "TLSv1.3"
-     * @return
-     * @throws javax.net.ssl.SSLException
-     */
-    public static NettyChannelBuilder getNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
-                                                             @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
-        final NettyChannelBuilder channelBuilder;
-        if (nameResolverProvider != null) {// use client side load balancing
-            // register
-            NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// Use singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(new nameResolverRegistry().asFactory());
-            nameResolverRegistry.register(nameResolverProvider);
-            // init
-            String policy = loadBalancingPolicy.getValue();
-            String target = nameResolverProvider.getDefaultScheme() + ":///"; // build target as URI
-            channelBuilder = NettyChannelBuilder.forTarget(target)
-                    .defaultLoadBalancingPolicy(policy);
-        } else {
-            switch (uri.getScheme()) {
-                case "unix": //https://github.com/grpc/grpc-java/issues/1539
-                    channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
-                            .eventLoopGroup(new EpollEventLoopGroup())
-                            .channelType(EpollDomainSocketChannel.class);
-                    break;
-                default:
-                    String host = uri.getHost();
-                    int port = uri.getPort();
-                    if (host == null) {
-                        throw new IllegalArgumentException("The URI format should contains host information, like <scheme>://[host:port]/[service], like grpc:///, grpc://host:port, grpcs://host:port, or unix:///path/to/uds.sock. gRpc.client.LoadBalancing.servers should be provided when host/port are not provided.");
-                    }
-                    channelBuilder = NettyChannelBuilder.forAddress(host, port);
-                    break;
-            }
-        }
-        if (keyManagerFactory == null) {
-            channelBuilder.usePlaintext();
-        } else {
-            final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
-            sslBuilder.keyManager(keyManagerFactory);
-            if (trustManagerFactory == null) {//ignore Server Certificate
-                sslBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
-            } else {
-                sslBuilder.trustManager(trustManagerFactory);
-                if (overrideAuthority != null) {
-                    channelBuilder.overrideAuthority(overrideAuthority);
-                }
-            }
-            GrpcSslContexts.configure(sslBuilder, SslProvider.OPENSSL);
-            if (tlsVersionProtocols != null) {
-                sslBuilder.protocols(tlsVersionProtocols);
-            }
-            if (ciphers != null) {
-                sslBuilder.ciphers(ciphers);
-            }
-            SslContext sslContext = sslBuilder.build();
-            channelBuilder.sslContext(sslContext).useTransportSecurity();
-        }
-        return channelBuilder;
-    }
-
-    /**
-     * @param nameResolverProvider for client side load balancing
-     * @param uri                  The URI format should be one of grpc://host:port or
-     *                             unix:///path/to/uds.sock
-     * @return
-     * @throws SSLException
-     */
-    public static NettyChannelBuilder NettyChannelBuilder(NameResolverProvider nameResolverProvider, URI uri) throws SSLException {
-        return getNettyChannelBuilder(nameResolverProvider, LoadBalancingPolicy.ROUND_ROBIN, uri, null, null, null, null);
-    }
-
-    protected final NameResolverProvider nameResolverProvider;
-    protected final URI uri;
-    protected final NettyChannelBuilder channelBuilder;
+    protected NettyChannelBuilder channelBuilder;
     protected ManagedChannel channel;
+    protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    protected final Lock readLock = rwLock.readLock();
+    protected Thread shutdownHook;
 
-    /**
-     * @param nameResolverProvider for client side load balancing
-     * @param uri                  The URI format should be one of grpc://host:port or
-     *                             unix:///path/to/uds.sock
-     * @throws SSLException
-     */
-    public GRPCClient(NameResolverProvider nameResolverProvider, URI uri) throws SSLException {
-        this(nameResolverProvider, uri, null, null, null, null);
-    }
-
-    /**
-     * @param nameResolverProvider for client side load balancing
-     * @param uri                  The URI format should be one of grpc://host:port,
-     *                             grpcs://host:port, or unix:///path/to/uds.sock
-     * @param keyManagerFactory    The Remote Caller identity
-     * @param trustManagerFactory  The Remote Caller trusted identities
-     * @param overrideAuthority
-     * @param ciphers
-     * @param tlsVersionProtocols  "TLSv1.2", "TLSv1.3"
-     * @throws SSLException
-     */
-    public GRPCClient(NameResolverProvider nameResolverProvider, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
-                      @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
-        this.nameResolverProvider = nameResolverProvider;
-        this.uri = uri;
-        this.channelBuilder = getNettyChannelBuilder(nameResolverProvider, LoadBalancingPolicy.ROUND_ROBIN, uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, tlsVersionProtocols);
+    public GRPCClient(GRPCClientConfig cfg) {
+        this.channelBuilder = cfg.getChannelBuilder();
+        cfg.addConfigUpdateListener(this);
     }
 
     /**
      * @param channelBuilder
      */
     public GRPCClient(NettyChannelBuilder channelBuilder) {
-        this.nameResolverProvider = null;
-        this.uri = null;
         this.channelBuilder = channelBuilder;
     }
 
+    /**
+     * callback when config file updated if GRPCClientConfig.addConfigUpdateListener(this);
+     *
+     * @param channelBuilder
+     */
+    protected void updateChannelBuilder(NettyChannelBuilder channelBuilder) {
+        rwLock.writeLock().lock();
+        this.channelBuilder = channelBuilder;
+        rwLock.writeLock().unlock();
+        onChannelBuilderUpdated();
+    }
+
+    /**
+     * Disconnect the current connection and build a new connection within a write lock
+     *
+     * @return
+     */
     public T connect() {
-        disconnect();
-        channel = channelBuilder.build();
-        //String info = uri == null ? channel.toString() : uri.toString();
-        String info = channel.authority();
-        Runtime.getRuntime().addShutdownHook(
-                new Thread(() -> {
-                    try {
-                        channel.shutdownNow();
-                    } catch (Throwable ex) {
-                    }
-                }, "GRPCClient.shutdown and disconnect from " + info));
-        onConnected(channel);
+        rwLock.writeLock().lock();
+        try {
+            disconnect();
+            channel = channelBuilder.build();
+            String info = channel.authority();
+            shutdownHook = new Thread(() -> {
+                try {
+                    channel.shutdownNow();
+                } catch (Throwable ex) {
+                }
+            }, "GRPCClient.shutdown and disconnect from " + info);
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
+            onConnected(channel);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
         return (T) this;
     }
+
+    /**
+     * normally just call connect() to establish a new connection with the updated settings; or do nothing to keep using current connection.
+     */
+    protected abstract void onChannelBuilderUpdated();
 
     /**
      * @param channel
      */
     protected abstract void onConnected(ManagedChannel channel);
 
+    /**
+     * Set a read lock for business method to prevent being called while connect/disconnect
+     */
+    protected void lock() {
+        readLock.lock();
+    }
+
+    /**
+     * Try a read lock for business method to prevent being called while connect/disconnect
+     *
+     * @return
+     */
+    protected boolean tryLock() {
+        return readLock.tryLock();
+    }
+
+    /**
+     * Try a read lock in a given time period for business method to prevent being called while connect/disconnect
+     *
+     * @param time
+     * @param unit
+     * @return
+     * @throws InterruptedException
+     */
+    protected boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
+        return readLock.tryLock(time, unit);
+    }
+
+    /**
+     * Release the read lock for business method to prevent being called while connect/disconnect
+     */
+    protected void unlock() {
+        readLock.unlock();
+    }
+
+    /**
+     * Get the read lock
+     *
+     * @return
+     */
+    protected Lock getLock() {
+        return readLock;
+    }
+
+    /**
+     * Disconnect the current connection
+     */
     public void disconnect() {
 //        ManagedChannel c = (ManagedChannel) blockingStub.getChannel();
         if (channel != null) {
@@ -209,8 +152,13 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
                 channel = null;
             }
         }
-//        if(nameResolverProvider!=null) {
-//            NameResolverRegistry.getDefaultRegistry().deregister(nameResolverProvider);
-//        }
+        if (shutdownHook != null) {
+            try {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            } catch (Throwable ex) {
+            } finally {
+                shutdownHook = null;
+            }
+        }
     }
 }

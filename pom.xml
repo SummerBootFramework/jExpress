@@ -190,7 +190,7 @@
         <maven.resources.version>3.3.1</maven.resources.version>
         <maven-surefire.version>3.2.5</maven-surefire.version>
         <!-- Commons -->
-        <commons-lang3.version>3.16.0</commons-lang3.version>
+        <commons-lang3.version>3.17.0</commons-lang3.version>
         <commons-cli.version>1.9.0</commons-cli.version>
         <commons-io.version>2.16.1</commons-io.version>
         <!--        <commons-text.version>1.11.0</commons-text.version>-->

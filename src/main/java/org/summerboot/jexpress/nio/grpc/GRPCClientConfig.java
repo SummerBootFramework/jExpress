@@ -19,7 +19,16 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.grpc.NameResolverProvider;
 import io.grpc.NameResolverRegistry;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
+import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import jakarta.annotation.Nullable;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
@@ -27,13 +36,16 @@ import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 
 import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -53,6 +65,21 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     protected final static String ID = "gRpc.client";
 
+    public enum LoadBalancingPolicy {
+        ROUND_ROBIN("round_robin"), PICK_FIRST("pick_first");
+
+        private final String value;
+
+        private LoadBalancingPolicy(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+    }
+
     protected GRPCClientConfig() {
     }
 
@@ -66,7 +93,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected volatile String loadBalancingTargetScheme = "grpc";
 
     @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN", desc = "available options: ROUND_ROBIN, PICK_FIRST")
-    protected volatile GRPCClient.LoadBalancingPolicy loadBalancingPolicy;
+    protected volatile LoadBalancingPolicy loadBalancingPolicy;
 
     protected volatile NameResolverProvider nameResolverProvider;
 
@@ -127,9 +154,6 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
-        loadBalancingServers = null;
-        nameResolverProvider = null;
-        channelBuilder = null;
         createIfNotExist(FILENAME_KEYSTORE, FILENAME_KEYSTORE);
         createIfNotExist(FILENAME_SRC_TRUSTSTORE, FILENAME_TRUSTSTORE_4CLIENT);
     }
@@ -149,18 +173,105 @@ abstract public class GRPCClientConfig extends BootConfig {
             nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
             nameResolverRegistry.register(nameResolverProvider);
         }
-        channelBuilder = GRPCClient.getNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
+        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
+        for (GRPCClient listener : listeners) {
+            listener.updateChannelBuilder(channelBuilder);
+        }
     }
 
     @Override
     public void shutdown() {
     }
 
+    private Set<GRPCClient> listeners = new HashSet<>();
+
+    public void addConfigUpdateListener(GRPCClient listener) {
+        if (listener == null) {
+            return;
+        }
+        listeners.add(listener);
+    }
+
+    public void removeConfigUpdateListener(GRPCClient listener) {
+        if (listener == null) {
+            return;
+        }
+        listeners.remove(listener);
+    }
+
+    /**
+     * @param nameResolverProvider for client side load balancing
+     * @param loadBalancingPolicy
+     * @param uri                  The URI format should be one of grpc://host:port,
+     *                             grpcs://host:port, or unix:///path/to/uds.sock
+     * @param keyManagerFactory    The Remote Caller identity
+     * @param trustManagerFactory  The Remote Caller trusted identities
+     * @param overrideAuthority
+     * @param ciphers
+     * @param tlsVersionProtocols  "TLSv1.2", "TLSv1.3"
+     * @return
+     * @throws javax.net.ssl.SSLException
+     */
+    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+                                                              @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
+        final NettyChannelBuilder channelBuilder;
+        if (nameResolverProvider != null) {// use client side load balancing
+            // register
+            NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// Use singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(new nameResolverRegistry().asFactory());
+            nameResolverRegistry.register(nameResolverProvider);
+            // init
+            String policy = loadBalancingPolicy.getValue();
+            String target = nameResolverProvider.getDefaultScheme() + ":///"; // build target as URI
+            channelBuilder = NettyChannelBuilder.forTarget(target)
+                    .defaultLoadBalancingPolicy(policy);
+        } else {
+            switch (uri.getScheme()) {
+                case "unix": //https://github.com/grpc/grpc-java/issues/1539
+                    channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
+                            .eventLoopGroup(new EpollEventLoopGroup())
+                            .channelType(EpollDomainSocketChannel.class);
+                    break;
+                default:
+                    String host = uri.getHost();
+                    int port = uri.getPort();
+                    if (host == null) {
+                        throw new IllegalArgumentException("The URI format should contains host information, like <scheme>://[host:port]/[service], like grpc:///, grpc://host:port, grpcs://host:port, or unix:///path/to/uds.sock. gRpc.client.LoadBalancing.servers should be provided when host/port are not provided.");
+                    }
+                    channelBuilder = NettyChannelBuilder.forAddress(host, port);
+                    break;
+            }
+        }
+        if (keyManagerFactory == null) {
+            channelBuilder.usePlaintext();
+        } else {
+            final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
+            sslBuilder.keyManager(keyManagerFactory);
+            if (trustManagerFactory == null) {//ignore Server Certificate
+                sslBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+            } else {
+                sslBuilder.trustManager(trustManagerFactory);
+                if (overrideAuthority != null) {
+                    channelBuilder.overrideAuthority(overrideAuthority);
+                }
+            }
+            GrpcSslContexts.configure(sslBuilder, SslProvider.OPENSSL);
+            if (tlsVersionProtocols != null) {
+                sslBuilder.protocols(tlsVersionProtocols);
+            }
+            if (ciphers != null) {
+                sslBuilder.ciphers(ciphers);
+            }
+            SslContext sslContext = sslBuilder.build();
+            channelBuilder.sslContext(sslContext).useTransportSecurity();
+        }
+        return channelBuilder;
+    }
+
     public List<InetSocketAddress> getLoadBalancingServers() {
         return loadBalancingServers;
     }
 
-    public GRPCClient.LoadBalancingPolicy getLoadBalancingPolicy() {
+    public LoadBalancingPolicy getLoadBalancingPolicy() {
         return loadBalancingPolicy;
     }
 
