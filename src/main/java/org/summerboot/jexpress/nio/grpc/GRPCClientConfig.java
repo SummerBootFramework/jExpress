@@ -46,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -152,6 +153,34 @@ abstract public class GRPCClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile NettyChannelBuilder channelBuilder;
 
+    @ConfigHeader(title = "4. " + ID + " Channel Settings")
+    @Config(key = ID + ".channel.userAgent", desc = "string: default null")
+    protected volatile String userAgent = null;
+    @Config(key = ID + ".channel.maxInboundMessageSize", desc = "int: default 4194304 is not set")
+    protected volatile Integer maxInboundMessageSize = null;//4194304;
+    @Config(key = ID + ".channel.maxHeaderListSize", desc = "int: default 8192 is not set")
+    protected volatile Integer maxHeaderListSize = null;//8192;
+    @Config(key = ID + ".channel.perRpcBufferLimit", desc = "long: default 1048576L is not set")
+    protected volatile Long perRpcBufferLimit = null;//1048576L;
+    @Config(key = ID + ".channel.maxHedgedAttempts", desc = "int: default 5 is not set")
+    protected volatile Integer maxHedgedAttempts = null;//5;
+
+    @Config(key = ID + ".channel.idleTimeoutSeconds", desc = "long: default 1800 (30 minutes) is not set")
+    protected volatile Long idleTimeoutSeconds = null;//TimeUnit.MINUTES.toSeconds(30L);
+    @Config(key = ID + ".channel.keepAliveTimeSeconds", desc = "long: default Long.MAX_VALUE is not set")
+    protected volatile Long keepAliveTimeSeconds = null;//Long.MAX_VALUE;
+    @Config(key = ID + ".channel.keepAliveTimeoutSeconds", desc = "long: default 20 seconds is not set")
+    protected volatile Long keepAliveTimeoutSeconds = null;//TimeUnit.SECONDS.toSeconds(20L);
+    @Config(key = ID + ".channel.keepAliveWithoutCalls", desc = "boolean: default false is not set")
+    protected volatile Boolean keepAliveWithoutCalls = null;//false
+
+    @Config(key = ID + ".channel.retryEnabled", desc = "boolean: default true is not set")
+    protected volatile Boolean retryEnabled = null;// true
+    @Config(key = ID + ".channel.maxRetryAttempts", desc = "int: default 5 is not set")
+    protected volatile Integer maxRetryAttempts = null;//5;
+    @Config(key = ID + ".channel.retryBufferSize", desc = "int: default 16777216L is not set")
+    protected volatile Long retryBufferSize = null;//16777216L
+
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
         createIfNotExist(FILENAME_KEYSTORE, FILENAME_KEYSTORE);
@@ -174,9 +203,60 @@ abstract public class GRPCClientConfig extends BootConfig {
             nameResolverRegistry.register(nameResolverProvider);
         }
         channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
+        configNettyChannelBuilder(cfgFile, isReal, helper, props);
         for (GRPCClient listener : listeners) {
             listener.updateChannelBuilder(channelBuilder);
         }
+    }
+
+    protected void configNettyChannelBuilder(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
+        if (userAgent != null) {
+            channelBuilder.userAgent(userAgent);
+        }
+        if (maxInboundMessageSize != null) {
+            channelBuilder.maxInboundMessageSize(maxInboundMessageSize);
+        }
+        if (maxHeaderListSize != null) {
+            channelBuilder.maxInboundMetadataSize(maxHeaderListSize);
+        }
+        if (perRpcBufferLimit != null) {
+            channelBuilder.perRpcBufferLimit(perRpcBufferLimit);
+        }
+        if (maxHedgedAttempts != null) {
+            channelBuilder.maxHedgedAttempts(maxHedgedAttempts);
+        }
+
+        // channel timeout
+        if (idleTimeoutSeconds != null) {
+            channelBuilder.idleTimeout(idleTimeoutSeconds, TimeUnit.SECONDS);
+        }
+        if (keepAliveTimeSeconds != null) {
+            channelBuilder.keepAliveTime(keepAliveTimeSeconds, TimeUnit.SECONDS);
+        }
+        if (keepAliveTimeoutSeconds != null) {
+            channelBuilder.keepAliveTimeout(keepAliveTimeoutSeconds, TimeUnit.SECONDS);
+        }
+        if (keepAliveWithoutCalls != null) {
+            channelBuilder.keepAliveWithoutCalls(keepAliveWithoutCalls);
+        }
+
+        // channel retry
+        if (retryEnabled != null) {
+            if (retryEnabled) {
+                channelBuilder.enableRetry();
+                if (maxRetryAttempts != null) {
+                    channelBuilder.maxRetryAttempts(maxRetryAttempts);
+                }
+                if (retryBufferSize != null) {
+                    channelBuilder.retryBufferSize(retryBufferSize);
+                }
+            } else {
+                channelBuilder.disableRetry();
+            }
+        }
+
+        //channelBuilder.flowControlWindow(NettyChannelBuilder.DEFAULT_FLOW_CONTROL_WINDOW);
+        //channelBuilder.initialFlowControlWindow(NettyChannelBuilder.DEFAULT_FLOW_CONTROL_WINDOW);
     }
 
     @Override

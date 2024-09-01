@@ -36,16 +36,18 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     protected final Lock readLock = rwLock.readLock();
     protected Thread shutdownHook;
 
-    public GRPCClient(GRPCClientConfig cfg) {
+    public T withConfig(GRPCClientConfig cfg) {
         this.channelBuilder = cfg.getChannelBuilder();
         cfg.addConfigUpdateListener(this);
+        return (T) this;
     }
 
     /**
      * @param channelBuilder
      */
-    public GRPCClient(NettyChannelBuilder channelBuilder) {
+    public T withNettyChannelBuilder(NettyChannelBuilder channelBuilder) {
         this.channelBuilder = channelBuilder;
+        return (T) this;
     }
 
     /**
@@ -61,6 +63,13 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     }
 
     /**
+     * By default, just call connect() to establish a new connection with the updated settings; or do nothing to keep using current connection.
+     */
+    protected void onChannelBuilderUpdated() {
+        connect();
+    }
+
+    /**
      * Disconnect the current connection and build a new connection within a write lock
      *
      * @return
@@ -68,7 +77,7 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     public T connect() {
         rwLock.writeLock().lock();
         try {
-            disconnect();
+            disconnect(false);
             channel = channelBuilder.build();
             String info = channel.authority();
             shutdownHook = new Thread(() -> {
@@ -86,14 +95,45 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
     }
 
     /**
-     * normally just call connect() to establish a new connection with the updated settings; or do nothing to keep using current connection.
-     */
-    protected abstract void onChannelBuilderUpdated();
-
-    /**
      * @param channel
      */
     protected abstract void onConnected(ManagedChannel channel);
+
+    /**
+     * Disconnect the current connection
+     */
+    public void disconnect() {
+        disconnect(true);
+    }
+
+    protected void disconnect(boolean withLock) {
+//        ManagedChannel c = (ManagedChannel) blockingStub.getChannel();
+        if (withLock) {
+            rwLock.writeLock().lock();
+        }
+        try {
+            if (channel != null) {
+                try {
+                    channel.shutdownNow();
+                } catch (Throwable ex) {
+                } finally {
+                    channel = null;
+                }
+            }
+            if (shutdownHook != null) {
+                try {
+                    Runtime.getRuntime().removeShutdownHook(shutdownHook);
+                } catch (Throwable ex) {
+                } finally {
+                    shutdownHook = null;
+                }
+            }
+        } finally {
+            if (withLock) {
+                rwLock.writeLock().unlock();
+            }
+        }
+    }
 
     /**
      * Set a read lock for business method to prevent being called while connect/disconnect
@@ -137,28 +177,5 @@ public abstract class GRPCClient<T extends GRPCClient<T>> {
      */
     protected Lock getLock() {
         return readLock;
-    }
-
-    /**
-     * Disconnect the current connection
-     */
-    public void disconnect() {
-//        ManagedChannel c = (ManagedChannel) blockingStub.getChannel();
-        if (channel != null) {
-            try {
-                channel.shutdownNow();
-            } catch (Throwable ex) {
-            } finally {
-                channel = null;
-            }
-        }
-        if (shutdownHook != null) {
-            try {
-                Runtime.getRuntime().removeShutdownHook(shutdownHook);
-            } catch (Throwable ex) {
-            } finally {
-                shutdownHook = null;
-            }
-        }
     }
 }
