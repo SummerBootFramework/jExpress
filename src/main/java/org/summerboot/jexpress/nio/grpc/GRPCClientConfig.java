@@ -154,11 +154,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected volatile NettyChannelBuilder channelBuilder;
 
     @ConfigHeader(title = "4. " + ID + " Channel Settings",
-            desc = "To see debug info, use JAVA_OPTS=-Djava.util.logging.config.file=logging.properties \n" +
-                    "-Dio.grpc.internal.DnsNameResolverProvider.enable_grpclb=true \n" +
-                    "-Dio.grpc.internal.DnsNameResolverProvider.enable_service_config=true \n" +
-                    "-Dio.grpc.internal.DnsNameResolverProvider.enable_service_config_ttl=true \n" +
-                    "-Dio.grpc.internal.DnsNameResolverProvider.enable_service_config_retries=true \n")
+            desc = "The following settings are for NettyChannelBuilder, which is used to create a gRPC channel")
     @Config(key = ID + ".channel.userAgent", desc = "string: default null")
     protected volatile String userAgent = null;
     @Config(key = ID + ".channel.maxInboundMessageSize", desc = "int: default 4194304 if not set")

@@ -76,6 +76,7 @@
         </Root>
         <Logger level="info" name="com.hazelcast" includeLocation="true"/>
         <Logger level="warn" name="io.netty" includeLocation="true"/>
+        <Logger level="warn" name="io.grpc" includeLocation="true"/>
         <!-- Note: "java.lang.UnsupportedOperationException: sun.misc.Unsafe unavailable" can be seen, also can be ignored, when -Dio.netty.noUnsafe=true and io.netty.util.internal.CleanerJava9 log level is below INFO (either TRACE or DEBUG) -->
         <Logger level="info" name="io.netty.util.internal.CleanerJava9" includeLocation="true"/>
         <Logger level="debug" name="org.summerboot.jexpress.boot" includeLocation="true"/>
