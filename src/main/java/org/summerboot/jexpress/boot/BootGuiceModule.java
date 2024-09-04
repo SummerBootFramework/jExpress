@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.quartz.Scheduler;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Inspector;
+import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.event.AppLifecycleHandler;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.boot.event.HttpExceptionHandler;
@@ -76,7 +77,7 @@ public class BootGuiceModule extends AbstractModule {
         this.memo = memo;
     }
 
-    protected boolean isCliUseImplTag(String implTag) {
+    protected boolean isTagSpecifiedViaCLI(String implTag) {
         return userSpecifiedImplTags != null && userSpecifiedImplTags.contains(implTag);
     }
 
@@ -171,12 +172,19 @@ public class BootGuiceModule extends AbstractModule {
             if (Modifier.isAbstract(mod) || Modifier.isInterface(mod)) {
                 continue;
             }
+            String implTag = null;
             if (a instanceof Controller) {
                 Controller ca = (Controller) a;
-                String implTag = ca.implTag();
-                if (StringUtils.isNotBlank(implTag) && !isCliUseImplTag(implTag)) {
-                    continue;
+                implTag = ca.implTag();
+            } else if (a instanceof Inspector) {
+                Service sa = (Service) c.getAnnotation(Service.class);
+                if (sa != null) {
+                    implTag = sa.implTag();
                 }
+            }
+            // no tag = always use this controller, with tag = only use this controller when -use <tag> specified
+            if (StringUtils.isNotBlank(implTag) && !isTagSpecifiedViaCLI(implTag)) {
+                continue;
             }
             classesAll.add(c);
         }

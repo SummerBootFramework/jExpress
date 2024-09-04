@@ -16,12 +16,14 @@
 package org.summerboot.jexpress.nio.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
@@ -34,6 +36,7 @@ import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.ApplicationUtil;
+import org.summerboot.jexpress.util.BeanUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -306,7 +309,7 @@ public class ServiceContext {
             return this;
         }
         if (this.responseHeaders == null) {
-            this.responseHeaders = new DefaultHttpHeaders(true);
+            this.responseHeaders = new DefaultHttpHeaders();
         }
         this.responseHeaders.set(headers);
         return this;
@@ -327,7 +330,7 @@ public class ServiceContext {
             return this;
         }
         if (responseHeaders == null) {
-            responseHeaders = new DefaultHttpHeaders(true);
+            responseHeaders = new DefaultHttpHeaders();
         }
         if (value == null) {
             responseHeaders.remove(key);
@@ -352,7 +355,7 @@ public class ServiceContext {
             return this;
         }
         if (responseHeaders == null) {
-            responseHeaders = new DefaultHttpHeaders(true);
+            responseHeaders = new DefaultHttpHeaders();
         }
         if (values == null) {
             responseHeaders.remove(key);
@@ -367,7 +370,7 @@ public class ServiceContext {
             return this;
         }
         if (responseHeaders == null) {
-            responseHeaders = new DefaultHttpHeaders(true);
+            responseHeaders = new DefaultHttpHeaders();
         }
         hs.keySet().stream().filter((key) -> (StringUtils.isNotBlank(key))).forEachOrdered((key) -> {
             Iterable<?> values = hs.get(key);
@@ -614,7 +617,7 @@ public class ServiceContext {
 //        }
 
         if (responseHeaders == null) {
-            responseHeaders = new DefaultHttpHeaders(true);
+            responseHeaders = new DefaultHttpHeaders();
         }
         long fileLength = file.length();
         if (fileLength > Integer.MAX_VALUE) {
@@ -631,6 +634,54 @@ public class ServiceContext {
             }
             responseHeaders.set(HttpHeaderNames.CONTENT_DISPOSITION, "attachment;filename=" + fileName + ";filename*=UTF-8''" + fileName);
         }
+        return this;
+    }
+
+    public ServiceContext content(Object ret) throws JsonProcessingException {
+        if (ret == null) {
+            return this;
+        }
+        if (ret instanceof File) {
+            this.file((File) ret, true);
+        } else {
+            String responseContentType;
+            //1. calculate responseContentType
+            if (clientAcceptContentType == null) {// client not specified
+                responseContentType = MediaType.APPLICATION_JSON;
+            } else if (clientAcceptContentType.contains("json")) {
+                responseContentType = MediaType.APPLICATION_JSON;
+            } else if (clientAcceptContentType.contains("xml")) {
+                responseContentType = MediaType.APPLICATION_XML;
+            } else if (clientAcceptContentType.contains("txt")) {
+                responseContentType = MediaType.TEXT_HTML;
+            } else {
+                responseContentType = MediaType.APPLICATION_JSON;
+            }
+
+            //2. set content and contentType
+            if (ret instanceof String) {
+                this.txt((String) ret);
+            } else {
+                switch (responseContentType) {
+                    case MediaType.APPLICATION_JSON:
+                        this.txt(BeanUtil.toJson(ret));
+                        break;
+                    case MediaType.APPLICATION_XML:
+                    case MediaType.TEXT_XML:
+                        this.txt(BeanUtil.toXML(ret));
+                        break;
+                    case MediaType.TEXT_HTML:
+                    case MediaType.TEXT_PLAIN:
+                        this.txt(ret.toString());
+                        break;
+                }
+            }
+            //3. update content type
+            if (this.contentType() == null) {
+                this.contentType(responseContentType);
+            }
+        }
+
         return this;
     }
 
@@ -654,7 +705,7 @@ public class ServiceContext {
         return this;
     }
 
-    //    public int errorCode() {
+//    public int errorCode() {
 //        return errorCode;
 //    }
 //

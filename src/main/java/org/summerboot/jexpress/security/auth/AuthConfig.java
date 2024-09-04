@@ -29,6 +29,7 @@ import org.summerboot.jexpress.integration.ldap.LdapSSLConnectionFactory1;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.JwtUtil;
 
+import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
@@ -239,8 +240,8 @@ public class AuthConfig extends BootConfig {
         if (symmetricKey != null) {
             //jwtSigningKey = EncryptorUtil.keyFromString(jwtSigningKeyString, jwtSignatureAlgorithm.getJcaName());
             jwtSigningKey = JwtUtil.parseSigningKey(symmetricKey);
-            jwtParser = Jwts.parserBuilder() // (1)
-                    .setSigningKey(jwtSigningKey) // (2)
+            jwtParser = Jwts.parser() // (1)
+                    .verifyWith((SecretKey) jwtSigningKey) // (2)
                     .build(); // (3)
         }
         //File rootFolder = cfgFile.getParentFile().getParentFile();
@@ -251,8 +252,8 @@ public class AuthConfig extends BootConfig {
         if (publicKeyFile != null) {
             createIfNotExist(JWT_PUBLIC_KEY_FILE, JWT_PUBLIC_KEY_FILE);
             PublicKey publicKey = EncryptorUtil.loadPublicKey(EncryptorUtil.KeyFileType.PKCS12, publicKeyFile);
-            jwtParser = Jwts.parserBuilder() // (1)
-                    .setSigningKey(publicKey) // (2)
+            jwtParser = Jwts.parser() // (1)
+                    .verifyWith(publicKey) // (2)
                     .build(); // (3)
         }
 

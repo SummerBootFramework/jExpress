@@ -24,6 +24,7 @@ import io.grpc.TlsServerCredentials;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 
@@ -35,6 +36,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -44,10 +46,6 @@ public class GRPCServer {
 
     protected static final Logger log = LogManager.getLogger(GRPCServer.class.getName());
 
-    //    @Inject
-//    protected NIOStatusListener nioListener;
-//    @Inject
-//    protected ServerInterceptor serverInterceptor;
     protected final String bindingAddr;
     protected final int port;
     protected final ServerCredentials serverCredentials;
@@ -57,8 +55,7 @@ public class GRPCServer {
     protected Server server = null;
 
     protected ScheduledExecutorService statusReporter = null;
-    //protected ThreadPoolExecutor tpe = null;
-    protected boolean servicePaused = false;
+    //protected boolean servicePaused = false;
     protected final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
 
     public ServerBuilder getServerBuilder() {
@@ -67,46 +64,6 @@ public class GRPCServer {
 
     public GRPCServiceCounter getServiceCounter() {
         return serviceCounter;
-    }
-//    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
-//        this(bindingAddr, port, initTLS(kmf, tmf));
-//    }
-//
-//    public GRPCServer(String bindingAddr, int port, ServerCredentials serverCredentials) {
-//        this.bindingAddr = bindingAddr;
-//        this.port = port;
-//        this.serverCredentials = serverCredentials;
-//        if (serverCredentials == null) {
-//            serverBuilder = NettyServerBuilder.forAddress(new InetSocketAddress(bindingAddr, port));
-//        } else {
-//            serverBuilder = Grpc.newServerBuilderForPort(port, serverCredentials);
-//        }
-//        if (serverInterceptor != null) {
-//            serverBuilder.intercept(serverInterceptor);
-//        }
-//        //serverBuilder.executor(tpe)
-//        //AbstractImplBase implBase = 
-//        //serverBuilder.addService(implBase);
-//    }
-//    public ServerInterceptor getServerInterceptor() {
-//        return serverInterceptor;
-//    }
-//
-//    public void setContext(SummerRunner.RunnerContext context) {
-//        this.context = context;
-//        try {
-//            serverInterceptor = context.getGuiceInjector().getInstance(ServerInterceptor.class);
-//        } catch (ConfigurationException ex) {
-//
-//        }
-//        if (serverInterceptor != null) {
-//            serverBuilder.intercept(serverInterceptor);
-//        }
-//    }
-
-    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf) {
-        //ServerInterceptor serverInterceptor, int poolCoreSize, int poolMaxSizeMaxSize, int poolQueueSize, long keepAliveSeconds, NIOStatusListener nioListener;
-        this(bindingAddr, port, kmf, tmf, null, GRPCServerConfig.cfg.getTpe(), null);
     }
 
     public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, ThreadPoolExecutor tpe, NIOStatusListener nioListener) {
@@ -121,7 +78,8 @@ public class GRPCServer {
         if (serverInterceptor != null) {
             serverBuilder.intercept(serverInterceptor);
         }
-        initThreadPool(tpe, nioListener);
+        serverBuilder.executor(tpe);
+        initThreadPool(tpe, nioListener, bindingAddr, port);
     }
 
     protected ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
@@ -141,25 +99,24 @@ public class GRPCServer {
      * @param nioListener
      * @return
      */
-    protected GRPCServiceCounter initThreadPool(ThreadPoolExecutor tpe, NIOStatusListener nioListener) {
-        serverBuilder.executor(tpe);
-
+    protected GRPCServiceCounter initThreadPool(ThreadPoolExecutor tpe, NIOStatusListener nioListener, String bindingAddr, int port) {
         int interval = 1;
         final AtomicReference<Long> lastBizHitRef = new AtomicReference<>();
         lastBizHitRef.set(-1L);
         long totalChannel = -1;//NioServerContext.COUNTER_TOTAL_CHANNEL.get();
         long activeChannel = -1;//NioServerContext.COUNTER_ACTIVE_CHANNEL.get();
         ScheduledExecutorService old2 = statusReporter;
-        statusReporter = Executors.newSingleThreadScheduledExecutor(new NamedDefaultThreadFactory("gRPC.QPS_SERVICE"));
+        statusReporter = Executors.newSingleThreadScheduledExecutor(new NamedDefaultThreadFactory("gRPC.QPS_SERVICE@" + bindingAddr + ":" + port));
+        final AtomicLong lastChecksum = new AtomicLong(0);
+        String appInfo = "gRPC@" + BootConstant.VERSION + " " + BootConstant.PID;
         statusReporter.scheduleAtFixedRate(() -> {
             if (nioListener == null && !log.isDebugEnabled()) {
                 return;
             }
             long bizHit = serviceCounter.getBiz();
-            //if (lastBizHit[0] == bizHit && !servicePaused) {
-            if (lastBizHitRef.get() == bizHit && !servicePaused) {
-                return;
-            }
+//            if (lastBizHitRef.get() == bizHit && !servicePaused) {
+//                return;
+//            }
             lastBizHitRef.set(bizHit);
             long hps = serviceCounter.getHitAndReset();
             long tps = serviceCounter.getProcessedAndReset();
@@ -168,22 +125,28 @@ public class GRPCServer {
 
             int active = tpe.getActiveCount();
             int queue = tpe.getQueue().size();
-            if (hps > 0 || tps > 0 || active > 0 || queue > 0 || servicePaused) {
+            //if (hps > 0 || tps > 0 || active > 0 || queue > 0 || servicePaused) {
 //                long totalChannel = NioServerContext.COUNTER_TOTAL_CHANNEL.get();
 //                long activeChannel = NioServerContext.COUNTER_ACTIVE_CHANNEL.get();
-                long pool = tpe.getPoolSize();
-                int core = tpe.getCorePoolSize();
-                //int queueRemainingCapacity = tpe.getQueue().remainingCapacity();
-                long max = tpe.getMaximumPoolSize();
-                long largest = tpe.getLargestPoolSize();
-                long task = tpe.getTaskCount();
-                long completed = tpe.getCompletedTaskCount();
-                log.debug(() -> "hps=" + hps + ", tps=" + tps + ", totalHit=" + totalHit + " (ping " + pingHit + " + biz " + bizHit + "), queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest + ", task=" + task + ", completed=" + completed + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel);
+            long pool = tpe.getPoolSize();
+            int core = tpe.getCorePoolSize();
+            //int queueRemainingCapacity = tpe.getQueue().remainingCapacity();
+            long max = tpe.getMaximumPoolSize();
+            long largest = tpe.getLargestPoolSize();
+            long task = tpe.getTaskCount();
+            long completed = tpe.getCompletedTaskCount();
+            //long checksum = hps + tps + active + queue + activeChannel + totalChannel + totalHit + bizHit + task + completed + active + pool + core + max + largest;
+            long checksum = hps + tps + active + queue + totalHit + bizHit + /*task + completed +*/ active + pool + core + max + largest;
+            if (lastChecksum.get() != checksum) {
+                lastChecksum.set(checksum);
+                //log.debug(() -> "hps=" + hps + ", tps=" + tps + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
+                log.debug(() -> "hps=" + hps + ", tps=" + tps + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
                 if (nioListener != null) {
-                    nioListener.onNIOAccessReportUpdate("gRPC", hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
+                    nioListener.onNIOAccessReportUpdate(appInfo, hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
                     //listener.onUpdate(data);//bad performance
                 }
             }
+            //}
         }, 0, interval, TimeUnit.SECONDS);
         if (old2 != null) {
             old2.shutdownNow();
@@ -191,8 +154,8 @@ public class GRPCServer {
         return serviceCounter;
     }
 
-    public void start() throws IOException {
-        this.start(false);
+    public void start(StringBuilder memo) throws IOException {
+        this.start(false, memo);
     }
 
     /**
@@ -201,14 +164,16 @@ public class GRPCServer {
      * @param isBlockingMode
      * @throws IOException
      */
-    public void start(boolean isBlockingMode) throws IOException {
+    public void start(boolean isBlockingMode, StringBuilder memo) throws IOException {
         if (server != null) {
             shutdown();
         }
-
+        String appInfo = BootConstant.VERSION + " " + BootConstant.PID;
         server = serverBuilder.build().start();
         String schema = serverCredentials == null ? "grpc" : "grpcs";
-        log.info("*** GRPCServer is listening on " + schema + "://" + bindingAddr + ":" + port);
+        String info = "Netty GRPC server [" + appInfo + "] is listening on " + schema + "://" + bindingAddr + ":" + port;
+        memo.append(BootConstant.BR).append(info);
+        log.info(info);
         Runtime.getRuntime().addShutdownHook(
                 new Thread(() -> {
                     shutdown();
