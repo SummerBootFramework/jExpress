@@ -49,6 +49,9 @@ public interface HttpLifecycleListener {
     /**
      * step1 - after process is done, before sending response to client
      *
+     * @param preProcessResult
+     * @param processResult
+     * @param processException
      * @param processor
      * @param ctx
      * @param httpRequestHeaders
@@ -58,7 +61,7 @@ public interface HttpLifecycleListener {
      * @param httpPostRequestBody
      * @param context
      */
-    void afterProcess(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath,
+    void afterProcess(boolean preProcessResult, Object processResult, Throwable processException, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath,
                       Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context);
 
 

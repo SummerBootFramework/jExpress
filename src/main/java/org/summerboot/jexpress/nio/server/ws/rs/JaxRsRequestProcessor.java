@@ -393,7 +393,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public void process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) throws Throwable {
+    public Object process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) throws Throwable {
         //2. invoke
         Object ret;
         Object[] paramValues = new Object[parameterSize];
@@ -403,7 +403,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 paramValues[i] = parameterList.get(i).value(request, context);
             }
             if (context.error() != null) {
-                return;
+                return null;
             }
         }
         try {
@@ -411,12 +411,12 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             if (rejectWhenHealthCheckFailed && !HealthMonitor.isHealthCheckSuccess()) {
                 context.status(HttpResponseStatus.BAD_GATEWAY)
                         .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getStatusReasonHealthCheck()));
-                return;
+                return null;
             }
             if (rejectWhenPaused && HealthMonitor.isServicePaused()) {
                 context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
                         .error(new Err(BootErrorCode.SERVICE_PAUSED, null, null, null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
-                return;
+                return null;
             }
 
             ret = javaMethod.invoke(javaInstance, paramValues);
@@ -489,6 +489,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 }
             }
         }
+        return ret;
     }
 
     public boolean hasMatrixPara() {
