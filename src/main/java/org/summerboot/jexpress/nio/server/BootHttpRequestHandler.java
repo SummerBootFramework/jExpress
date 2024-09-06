@@ -68,7 +68,9 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
                                         final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
         ProcessorSettings processorSettings = null;
         RequestProcessor processor = null;
-        boolean preProcessSuccess = false;
+        boolean preProcessResult = false;
+        Object processResult = null;
+        Throwable processException = null;
         try {
             // step1. find controller and the action in it
             processor = getRequestProcessor(httptMethod, httpRequestPath);
@@ -106,29 +108,33 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             if (authenticator != null && !authenticator.customizedAuthorizationCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
                 return processorSettings;
             }
-            preProcessSuccess = httpLifecycleListener.beforeProcess(processor, httpRequestHeaders, httpRequestPath, context);
-            if (preProcessSuccess) {
-                processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context);
-            } else {
+            preProcessResult = httpLifecycleListener.beforeProcess(processor, httpRequestHeaders, httpRequestPath, context);
+            if (!preProcessResult) {
                 return processorSettings;
             }
-            //} catch (ExpiredJwtException | SignatureException | MalformedJwtException ex) {
-            //    nak(context, HttpResponseStatus.UNAUTHORIZED, BootErrorCode.AUTH_INVALID_TOKEN, "Invalid JWT");
+            processResult = processor.process(ctx, httpRequestHeaders, httpRequestPath, queryParams, httpPostRequestBody, context);
         } catch (NamingException ex) {
+            processException = ex;
             httpExceptionListener.onNamingException(ex, httptMethod, httpRequestPath, context);
         } catch (PersistenceException ex) {
+            processException = ex;
             httpExceptionListener.onPersistenceException(ex, httptMethod, httpRequestPath, context);
         } catch (HttpConnectTimeoutException ex) {
+            processException = ex;
             // a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
             httpExceptionListener.onHttpConnectTimeoutException(ex, httptMethod, httpRequestPath, context);
         } catch (HttpTimeoutException ex) {
+            processException = ex;
             // a context is not received within a specified time period.
             httpExceptionListener.onHttpTimeoutException(ex, httptMethod, httpRequestPath, context);
         } catch (RejectedExecutionException ex) {
+            processException = ex;
             httpExceptionListener.onRejectedExecutionException(ex, httptMethod, httpRequestPath, context);
         } catch (ConnectException ex) {
+            processException = ex;
             httpExceptionListener.onConnectException(ex, httptMethod, httpRequestPath, context);
         } catch (IOException | UnresolvedAddressException ex) {//SocketException,
+            processException = ex;
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause == null) {
                 cause = ex;
@@ -139,13 +145,13 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
                 httpExceptionListener.onIOException(ex, httptMethod, httpRequestPath, context);
             }
         } catch (InterruptedException ex) {
+            processException = ex;
             httpExceptionListener.onInterruptedException(ex, httptMethod, httpRequestPath, context);
         } catch (Throwable ex) {
+            processException = ex;
             httpExceptionListener.onUnexpectedException(ex, processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
         } finally {
-            if (preProcessSuccess) {
-                httpLifecycleListener.afterProcess(processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
-            }
+            httpLifecycleListener.afterProcess(preProcessResult, processResult, processException, processor, ctx, httpRequestHeaders, httptMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
             context.poi(BootPOI.PROCESS_END);
         }
         return processorSettings;

@@ -249,7 +249,7 @@ public class NioServer {
                 long completed = tpe.getCompletedTaskCount();
                 long pingHit = NioCounter.COUNTER_PING_HIT.get();
                 long totalHit = bizHit + pingHit;
-                long checksum = hps + tps + active + queue + activeChannel + totalChannel + totalHit + bizHit + task + completed + active + pool + core + max + largest;
+                long checksum = hps + tps + active + queue + activeChannel + bizHit + task + completed + active + pool + core + max + largest;
                 if (lastChecksum.get() != checksum) {
                     lastChecksum.set(checksum);
                     log.debug(() -> "hps=" + hps + ", tps=" + tps + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);

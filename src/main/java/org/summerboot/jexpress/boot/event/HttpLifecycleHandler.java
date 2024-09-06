@@ -47,7 +47,7 @@ public class HttpLifecycleHandler implements HttpLifecycleListener {
     }
 
     @Override
-    public void afterProcess(RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
+    public void afterProcess(boolean preProcessResult, Object processResult, Throwable processException, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
 //        if (httpRequestHeaders.contains(HttpHeaderNames.Sensitive_Header)) {
 //            httpRequestHeaders.set(HttpHeaderNames.Sensitive_Header, "***");// protect Sensitive_Header from being logged
 //        }
