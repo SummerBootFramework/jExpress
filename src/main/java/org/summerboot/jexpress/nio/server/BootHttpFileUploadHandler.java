@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
  */
 //NOT @ChannelHandler.Sharable due to BootHttpFileUploadHandler is stateful
 //NOT @Singleton
-public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHandler<HttpObject> {
+public abstract class BootHttpFileUploadHandler<T extends Object> extends SimpleChannelInboundHandler<HttpObject> {
 
     protected Logger log = LogManager.getLogger(this.getClass());
 
@@ -209,7 +209,9 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
                             FileUpload fileUpload = (FileUpload) data;
                             if (fileUpload.isCompleted()) {
                                 log.debug("file completed " + fileUpload.length());
-                                onFileUploaded(ctx, fileUpload.getFilename(), fileUpload.getFile(), params, caller, context);
+                                T ret = onFileUploaded(ctx, fileUpload.getFilename(), fileUpload.getFile(), params, caller, context);
+                                context.content(ret);
+                                NioHttpUtil.sendResponse(ctx, true, context, null, null);
                             }
                             break;
                     }
@@ -307,6 +309,9 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
             NioHttpUtil.sendResponse(ctx, true, context, null, null);
             return 0;
         }
+
+        context.clientAcceptContentType(httpHeaders.get(HttpHeaderNames.ACCEPT));
+
         return maxAllowedSize;
     }
 
@@ -316,6 +321,6 @@ public abstract class BootHttpFileUploadHandler extends SimpleChannelInboundHand
 
     protected abstract long getCallerFileUploadSizeLimit_Bytes(Caller caller, ServiceContext context);
 
-    protected abstract void onFileUploaded(ChannelHandlerContext ctx, String fileName, File file, Map<String, String> params, Caller caller, ServiceContext context);
+    protected abstract T onFileUploaded(ChannelHandlerContext ctx, String fileName, File file, Map<String, String> params, Caller caller, ServiceContext context);
 
 }

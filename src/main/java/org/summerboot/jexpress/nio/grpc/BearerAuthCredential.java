@@ -48,8 +48,4 @@ public class BearerAuthCredential extends CallCredentials {
             }
         });
     }
-
-    @Override
-    public void thisUsesUnstableApi() {
-    }
 }

@@ -20,14 +20,18 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.MacAlgorithm;
+import io.jsonwebtoken.security.SignatureAlgorithm;
 
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.security.KeyPair;
+import java.security.PublicKey;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -35,9 +39,15 @@ import java.util.Date;
  */
 public class JwtUtil {
 
-    public static String buildSigningKey(SignatureAlgorithm signatureAlgorithm) {
-        final Key signingKey = Keys.secretKeyFor(signatureAlgorithm);
-        return EncryptorUtil.keyToString(signingKey);
+    public static String buildSigningKey(MacAlgorithm signatureAlgorithm) {
+        SecretKey key = signatureAlgorithm.key().build();
+        return EncryptorUtil.keyToString(key);
+    }
+
+    public static Key parseSigningKey(String encodedKey) {
+        //return EncryptorUtil.keyFromString(sk, signatureAlgorithm.getJcaName()); "HmacSHA256"
+        byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
+        return Keys.hmacShaKeyFor(decodedKey);
     }
 
     /**
@@ -50,13 +60,7 @@ public class JwtUtil {
      * @return
      */
     public static KeyPair buildSigningParsingKeyPair(SignatureAlgorithm signatureAlgorithm) {
-        return Keys.keyPairFor(signatureAlgorithm);
-    }
-
-    public static Key parseSigningKey(String encodedKey) {
-        //return EncryptorUtil.keyFromString(sk, signatureAlgorithm.getJcaName()); "HmacSHA256"
-        byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
-        return Keys.hmacShaKeyFor(decodedKey);
+        return signatureAlgorithm.keyPair().build();
     }
 
 //    @Deprecated
@@ -119,12 +123,12 @@ public class JwtUtil {
 //        return builder.compact();
 //    }
 
-    public static String createJWT(String keyAlgorithm, String jwtSigningKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
+    public static String createJWT(String keyAlgorithm, String jwtSigningKey, int ttlSeconds, String id, String issuer, String subject, Collection<String> audience) {
         JwtBuilder builder = Jwts.builder()
-                .setId(id)
-                .setIssuer(issuer)
-                .setSubject(subject)
-                .setAudience(audience);
+                .id(id)
+                .issuer(issuer)
+                .subject(subject);
+        builder.audience().add(audience);
         return createJWT(keyAlgorithm, jwtSigningKey, builder, Duration.ofSeconds(ttlSeconds));
     }
 
@@ -133,12 +137,12 @@ public class JwtUtil {
         return createJWT(keyAlgorithm, key, builder, ttl);
     }
 
-    public static String createJWT(String keyAlgorithm, byte[] jwtSigningKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
+    public static String createJWT(String keyAlgorithm, byte[] jwtSigningKey, int ttlSeconds, String id, String issuer, String subject, Collection<String> audience) {
         JwtBuilder builder = Jwts.builder()
-                .setId(id)
-                .setIssuer(issuer)
-                .setSubject(subject)
-                .setAudience(audience);
+                .id(id)
+                .issuer(issuer)
+                .subject(subject);
+        builder.audience().add(audience);
         return createJWT(keyAlgorithm, jwtSigningKey, builder, Duration.ofSeconds(ttlSeconds));
     }
 
@@ -156,56 +160,61 @@ public class JwtUtil {
             long expireTimeMilsec = System.currentTimeMillis() + ttlMilsec;
             if (expireTimeMilsec > 0) {// no expire if (nowMillis + ttlMillis) overflow
                 Date exp = new Date(expireTimeMilsec);
-                builder.setExpiration(exp);
+                builder.expiration(exp);
             }
         }
     }
 
-    public static String createJWT(Key privateKey, String id, String issuer, String subject, String audience, int ttlSeconds) {
+    public static String createJWT(Key privateKey, int ttlSeconds, String id, String issuer, String subject, Collection<String> audience) {
         JwtBuilder builder = Jwts.builder()
-                .setId(id)
-                .setIssuer(issuer)
-                .setSubject(subject)
-                .setAudience(audience);
+                .id(id)
+                .issuer(issuer)
+                .subject(subject);
+        builder.audience().add(audience);
         return createJWT(privateKey, builder, Duration.ofSeconds(ttlSeconds));
     }
 
     public static String createJWT(Key privateKey, JwtBuilder builder, Duration ttl) {
-        //0. We will sign our JWT with our ApiKey secret
-        //byte[] apiKeySecretBytes = parseSigningKey(jwtRootSigningKeyString);
-        //The JWT signature algorithm we will be using to sign the token
-        //Key signingKey = new SecretKeySpec(jwtSigningKey, signatureAlgorithm.getJcaName());
-
-        //1. set ecpire time
         setJwtExpireTime(builder, ttl);
-
-        //2. Let's set the JWT Claims
-        builder.setIssuedAt(new Date());
-        //builder.signWith(signatureAlgorithm, privateKey);
-        builder.signWith(privateKey);
-
-        //3. Builds the JWT and serializes it to a compact, URL-safe string
+        builder.issuedAt(new Date()).signWith(privateKey);
+        // Builds the JWT and serializes it to a compact, URL-safe string
         return builder.compact();
     }
 
-    public static Jws<Claims> parseJWT(Key jwtRootSigningKey, String token) {
-        JwtParser parser = Jwts.parserBuilder() // (1)
-                .setSigningKey(jwtRootSigningKey) // (2)
-                .build(); // (3)
-        return parser.parseClaimsJws(token); // (4)
-//        JwsHeader h = ret.getHeader();
-//        return ret.getBody();
+    public static Jws<Claims> parseJWT(Key verifyKey, String token) {
+        if (verifyKey instanceof SecretKey) {
+            return parseJWT((SecretKey) verifyKey, token);
+        } else if (verifyKey instanceof PublicKey) {
+            return parseJWT((PublicKey) verifyKey, token);
+        } else {
+            throw new IllegalArgumentException("Unsupported Key type: " + verifyKey.getClass().getName());
+        }
     }
 
-    public static Jws<Claims> parseJWT(byte[] jwtRootSigningKey, String token) {
-        JwtParser parser = Jwts.parserBuilder() // (1)
-                .setSigningKey(jwtRootSigningKey) // (2)
+    public static Jws<Claims> parseJWT(SecretKey jwtRootSigningKey, String token) {
+        JwtParser parser = Jwts.parser() // (1)
+                .verifyWith(jwtRootSigningKey) // (2)
+                .build(); // (3)
+        return parseJWT(parser, token); // (4)
+    }
+
+    public static Jws<Claims> parseJWT(PublicKey publicKey, String token) {
+        JwtParser parser = Jwts.parser() // (1)
+                .verifyWith(publicKey) // (2)
+                .build(); // (3)
+        return parseJWT(parser, token); // (4)
+    }
+
+    /*public static Jws<Claims> parseJWT(byte[] jwtRootSigningKey, String token) {
+        JwtParser parser = Jwts.parser() // (1)
+                .verifyWith(jwtRootSigningKey) // (2)
                 .build(); // (3)
         return parser.parseClaimsJws(token); // (4)
-    }
+    }*/
 
     public static Jws<Claims> parseJWT(JwtParser parser, String token) {
-        return parser.parseClaimsJws(token); // (4)
+        //return parser.parseClaimsJws(token); // (4)
+        return parser.parseSignedClaims(token);
     }
 
 }

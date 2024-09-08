@@ -50,7 +50,7 @@ public class ScanedGuiceModule extends AbstractModule {
         this.memo = memo;
     }
 
-    protected boolean isCliUseImplTag(String implTag) {
+    protected boolean isTagSpecifiedViaCLI(String implTag) {
         return userSpecifiedImplTags.contains(implTag);
     }
 
@@ -72,7 +72,7 @@ public class ScanedGuiceModule extends AbstractModule {
                     continue;
                 }
                 String implTag = serviceImpl.getImplTag();
-                boolean isCliUseImplTag = isCliUseImplTag(implTag);
+                boolean isCliUseImplTag = isTagSpecifiedViaCLI(implTag);
                 memo.append(INFO_FOUND).append(interfaceClass.getName()).append(", implTag=").append(uniqueKey).append(BIND_TO).append(serviceImpl).append(", isCliUseImplTag=").append(isCliUseImplTag);
 
                 String named = serviceImpl.getNamed();

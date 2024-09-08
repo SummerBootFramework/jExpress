@@ -33,45 +33,59 @@ public class BootLoadBalancerProvider extends NameResolverProvider {
 
     protected final List<EquivalentAddressGroup> servers;
     protected final String scheme;
-    protected final String authority;
+    protected final int priority;
+    protected final String defaultAuthorityWhitoutTrustManager;
 
-    public BootLoadBalancerProvider(String scheme, InetSocketAddress... addresses) {
+    public BootLoadBalancerProvider(String scheme, int priority, InetSocketAddress... addresses) {
         this.scheme = scheme;
-//        this.authority = Arrays.stream(addresses)
-//                .map(InetSocketAddress::getHostName)
-//                .collect(Collectors.joining(", "));
-        if (addresses != null && addresses.length > 0) {
-            this.authority = addresses[0].getHostName();
-        } else {
-            this.authority = "unknownhost";
-        }
+        this.priority = priority;
+        this.defaultAuthorityWhitoutTrustManager = getAuthorityFromAddress(addresses);
         this.servers = Arrays.stream(addresses)
                 .map(EquivalentAddressGroup::new)
                 .collect(Collectors.toList());
     }
 
-    public BootLoadBalancerProvider(String scheme, List<? extends InetSocketAddress> addresses) {
+    public BootLoadBalancerProvider(String scheme, int priority, List<? extends InetSocketAddress> addresses) {
         this.scheme = scheme;
-//        this.authority = addresses.stream()
-//                .map(InetSocketAddress::getHostName)// getHostString
-//                .collect(Collectors.joining(", "));
-        if (addresses != null && !addresses.isEmpty()) {
-            this.authority = addresses.get(0).getHostName();
-        } else {
-            this.authority = "unknownhost";
-        }
+        this.priority = priority;
+        this.defaultAuthorityWhitoutTrustManager = getAuthorityFromAddress(addresses);
         this.servers = addresses.stream()
                 .map(EquivalentAddressGroup::new)
                 .collect(Collectors.toList());
+    }
+
+    public String getAuthorityFromAddress(InetSocketAddress... addresses) {
+//        this.authority = Arrays.stream(addresses)
+//                .map(InetSocketAddress::getHostName)
+//                .collect(Collectors.joining(", "));
+        if (addresses == null || addresses.length < 1) {
+            return "unknownhost";
+        }
+        InetSocketAddress addr = addresses[0];
+        return addr.getHostName() + ":" + addr.getPort();
+    }
+
+    public String getAuthorityFromAddress(List<? extends InetSocketAddress> addresses) {
+//        this.authority = addresses.stream()
+//                .map(InetSocketAddress::getHostName)// getHostString
+//                .collect(Collectors.joining(", "));
+        if (addresses == null || addresses.isEmpty()) {
+            return "unknownhost";
+        }
+        InetSocketAddress addr = addresses.get(0);
+        return addr.getHostName() + ":" + addr.getPort();
     }
 
     @Override
     public NameResolver newNameResolver(URI notUsedTargetUri, NameResolver.Args args) {
         return new NameResolver() {
             @Override
-            public String getServiceAuthority() {
-                //return notUsedTargetUri.toString();
-                return authority;
+            public String getServiceAuthority() {// called when trust manager is null
+                String auth = notUsedTargetUri.getAuthority();
+                if (auth == null) {
+                    auth = defaultAuthorityWhitoutTrustManager;
+                }
+                return auth;
             }
 
             @Override
