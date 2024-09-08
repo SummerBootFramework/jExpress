@@ -42,7 +42,6 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
-import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -57,6 +56,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -84,7 +84,7 @@ public class NioServer {
      * @throws InterruptedException
      * @throws SSLException
      */
-    public void bind(NioConfig nioCfg) throws InterruptedException, SSLException {
+    public void bind(NioConfig nioCfg, StringBuilder memo) throws InterruptedException, SSLException {
         List<InetSocketAddress> bindingAddresses = nioCfg.getBindingAddresses();
         if (bindingAddresses == null || bindingAddresses.isEmpty()) {
             log.info("Skip HTTP server due to no bindingAddresses in config file: " + nioCfg.getCfgFile());
@@ -188,26 +188,29 @@ public class NioServer {
             String protocol;
             if (jdkSslContext == null && nettySslContext == null) {
                 sslMode = "non-ssl";
-                protocol = multiplexer + " http://";
+                protocol = "http://";
             } else {
                 sslMode = "Client Auth: " + clientAuth;
-                protocol = multiplexer + " https://";
+                protocol = "https://";
             }
+            String listenerInfo = "[multiplexer=" + multiplexer + "] " + sslMode;
             String bindAddr = addr.getAddress().getHostAddress();
             int listeningPort = addr.getPort();
-            // bind
+// bind
             ChannelFuture f = boot.bind(bindAddr, listeningPort).sync();
             f.channel().closeFuture().addListener((ChannelFutureListener) (ChannelFuture f1) -> {
                 //shutdown();
-                System.out.println("Server " + appInfo + " (" + sslMode + ") is stopped");
+                System.out.println("Server " + appInfo + " (" + listenerInfo + ") is stopped");
             });
             List<String> loadBalancingPingEndpoints = BackOffice.agent.getLoadBalancingPingEndpoints();
             for (String loadBalancingPingEndpoint : loadBalancingPingEndpoints) {
-                log.info(() -> "Server " + appInfo + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint));
+                String info = "Netty HTTP server [" + appInfo + "] (" + listenerInfo + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint);
+                memo.append(BootConstant.BR).append(info);
+                log.info(() -> info);
             }
 
             if (nioListener != null) {
-                nioListener.onNIOBindNewPort(appInfo, sslMode, protocol, bindAddr, listeningPort, loadBalancingEndpoints);
+                nioListener.onNIOBindNewPort(appInfo, listenerInfo, protocol, bindAddr, listeningPort, loadBalancingEndpoints);
             }
         }
 
@@ -215,6 +218,7 @@ public class NioServer {
         final AtomicReference<Long> lastBizHitRef = new AtomicReference<>();
         lastBizHitRef.set(-1L);
         if (nioListener != null || log.isDebugEnabled()) {
+            final AtomicLong lastChecksum = new AtomicLong(0);
             int interval = 1;
             QPS_SERVICE = Executors.newSingleThreadScheduledExecutor(new NamedDefaultThreadFactory("NIO.QPS_SERVICE"));
             QPS_SERVICE.scheduleAtFixedRate(() -> {
@@ -225,26 +229,29 @@ public class NioServer {
                 }
                 long bizHit = NioCounter.COUNTER_BIZ_HIT.get();
                 //if (lastBizHit[0] == bizHit && !servicePaused) {
-                if (lastBizHitRef.get() == bizHit && !HealthMonitor.isServicePaused()) {
-                    return;
-                }
+//                if (lastBizHitRef.get() == bizHit && !HealthMonitor.isServicePaused()) {
+//                    return;
+//                }
                 //lastBizHit[0] = bizHit;
                 lastBizHitRef.set(bizHit);
                 ThreadPoolExecutor tpe = nioCfg.getBizExecutor();
                 int active = tpe.getActiveCount();
                 int queue = tpe.getQueue().size();
                 long activeChannel = NioCounter.COUNTER_ACTIVE_CHANNEL.get();
-                if (hps > 0 || tps > 0 || active > 0 || queue > 0 || activeChannel > 0) {
-                    long totalChannel = NioCounter.COUNTER_TOTAL_CHANNEL.get();
-                    long pool = tpe.getPoolSize();
-                    int core = tpe.getCorePoolSize();
-                    //int queueRemainingCapacity = tpe.getQueue().remainingCapacity();
-                    long max = tpe.getMaximumPoolSize();
-                    long largest = tpe.getLargestPoolSize();
-                    long task = tpe.getTaskCount();
-                    long completed = tpe.getCompletedTaskCount();
-                    long pingHit = NioCounter.COUNTER_PING_HIT.get();
-                    long totalHit = bizHit + pingHit;
+                //if (hps > 0 || tps > 0 || active > 0 || queue > 0 || activeChannel > 0) {
+                long totalChannel = NioCounter.COUNTER_TOTAL_CHANNEL.get();
+                long pool = tpe.getPoolSize();
+                int core = tpe.getCorePoolSize();
+                //int queueRemainingCapacity = tpe.getQueue().remainingCapacity();
+                long max = tpe.getMaximumPoolSize();
+                long largest = tpe.getLargestPoolSize();
+                long task = tpe.getTaskCount();
+                long completed = tpe.getCompletedTaskCount();
+                long pingHit = NioCounter.COUNTER_PING_HIT.get();
+                long totalHit = bizHit + pingHit;
+                long checksum = hps + tps + active + queue + activeChannel + bizHit + task + completed + active + pool + core + max + largest;
+                if (lastChecksum.get() != checksum) {
+                    lastChecksum.set(checksum);
                     log.debug(() -> "hps=" + hps + ", tps=" + tps + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
                     if (nioListener != null) {
                         nioListener.onNIOAccessReportUpdate(appInfo, hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);

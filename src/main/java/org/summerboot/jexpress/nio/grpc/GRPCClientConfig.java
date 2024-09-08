@@ -18,7 +18,17 @@ package org.summerboot.jexpress.nio.grpc;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.grpc.NameResolverProvider;
+import io.grpc.NameResolverRegistry;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
+import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import jakarta.annotation.Nullable;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
@@ -26,13 +36,17 @@ import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 
 import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -52,6 +66,21 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     protected final static String ID = "gRpc.client";
 
+    public enum LoadBalancingPolicy {
+        ROUND_ROBIN("round_robin"), PICK_FIRST("pick_first");
+
+        private final String value;
+
+        private LoadBalancingPolicy(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+    }
+
     protected GRPCClientConfig() {
     }
 
@@ -61,9 +90,11 @@ abstract public class GRPCClientConfig extends BootConfig {
             example = "localhost:8424, remotehost:8425, 127.0.0.1:8426")
     @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = false)
     protected volatile List<InetSocketAddress> loadBalancingServers;
+    @Config(key = ID + ".LoadBalancing.scheme", defaultValue = "grpc", desc = "In case you have more than one gRPC client needs to connect to different gRPC services, you can set this to distinguish them")
+    protected volatile String loadBalancingTargetScheme = "grpc";
 
     @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN", desc = "available options: ROUND_ROBIN, PICK_FIRST")
-    protected volatile GRPCClient.LoadBalancingPolicy loadBalancingPolicy;
+    protected volatile LoadBalancingPolicy loadBalancingPolicy;
 
     protected volatile NameResolverProvider nameResolverProvider;
 
@@ -122,32 +153,206 @@ abstract public class GRPCClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile NettyChannelBuilder channelBuilder;
 
+    @ConfigHeader(title = "4. " + ID + " Channel Settings",
+            desc = "The following settings are for NettyChannelBuilder, which is used to create a gRPC channel")
+    @Config(key = ID + ".channel.userAgent", desc = "string: default null")
+    protected volatile String userAgent = null;
+    @Config(key = ID + ".channel.maxInboundMessageSize", desc = "int: default 4194304 if not set")
+    protected volatile Integer maxInboundMessageSize = null;//4194304;
+    @Config(key = ID + ".channel.maxHeaderListSize", desc = "int: default 8192 if not set")
+    protected volatile Integer maxHeaderListSize = null;//8192;
+    @Config(key = ID + ".channel.perRpcBufferLimit", desc = "long: default 1048576L if not set")
+    protected volatile Long perRpcBufferLimit = null;//1048576L;
+    @Config(key = ID + ".channel.maxHedgedAttempts", desc = "int: default 5 if not set")
+    protected volatile Integer maxHedgedAttempts = null;//5;
+
+    @Config(key = ID + ".channel.idleTimeoutSeconds", desc = "long: default 1800 (30 minutes) if not set")
+    protected volatile Long idleTimeoutSeconds = null;//TimeUnit.MINUTES.toSeconds(30L);
+    @Config(key = ID + ".channel.keepAliveWithoutCalls", desc = "boolean: default false if not set. keepAliveWithoutCalls is used when you are willing to spend client, server, and network resources to have lower latency for very infrequent RPCs")
+    protected volatile Boolean keepAliveWithoutCalls = null;//false
+    @Config(key = ID + ".channel.keepAliveTimeSeconds", desc = "long: default Long.MAX_VALUE (never) if not set. The interval in seconds between PING frames.")
+    protected volatile Long keepAliveTimeSeconds = null;//Long.MAX_VALUE;
+    @Config(key = ID + ".channel.keepAliveTimeoutSeconds", desc = "long: default 20 seconds if not set. The timeout in seconds for a PING frame to be acknowledged. If sender does not receive an acknowledgment within this time, it will close the connection.")
+    protected volatile Long keepAliveTimeoutSeconds = null;//TimeUnit.SECONDS.toSeconds(20L);
+
+    @Config(key = ID + ".channel.retryEnabled", desc = "boolean: default true if not set")
+    protected volatile Boolean retryEnabled = null;// true
+    @Config(key = ID + ".channel.maxRetryAttempts", desc = "int: default 5 if not set")
+    protected volatile Integer maxRetryAttempts = null;//5;
+    @Config(key = ID + ".channel.retryBufferSize", desc = "int: default 16777216L if not set")
+    protected volatile Long retryBufferSize = null;//16777216L
+
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
-        loadBalancingServers = null;
-        nameResolverProvider = null;
-        channelBuilder = null;
         createIfNotExist(FILENAME_KEYSTORE, FILENAME_KEYSTORE);
         createIfNotExist(FILENAME_SRC_TRUSTSTORE, FILENAME_TRUSTSTORE_4CLIENT);
     }
 
+    protected static int priority = 0;
+
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        if (loadBalancingServers != null && !loadBalancingServers.isEmpty()) {
-            nameResolverProvider = new BootLoadBalancerProvider(uri.getScheme(), loadBalancingServers);
+        if (!isReal) {
+            return;
         }
-        channelBuilder = GRPCClient.getNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
+        NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// Use singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(new nameResolverRegistry().asFactory());
+        if (nameResolverProvider != null) {
+            nameResolverRegistry.deregister(nameResolverProvider);
+        }
+        if (loadBalancingServers != null && !loadBalancingServers.isEmpty()) {
+            nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
+            nameResolverRegistry.register(nameResolverProvider);
+        }
+        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
+        configNettyChannelBuilder(channelBuilder);
+        for (GRPCClient listener : listeners) {
+            listener.updateChannelBuilder(channelBuilder);
+        }
+    }
+
+    protected void configNettyChannelBuilder(NettyChannelBuilder nettyChannelBuilder) {
+        if (userAgent != null) {
+            nettyChannelBuilder.userAgent(userAgent);
+        }
+        if (maxInboundMessageSize != null) {
+            nettyChannelBuilder.maxInboundMessageSize(maxInboundMessageSize);
+        }
+        if (maxHeaderListSize != null) {
+            nettyChannelBuilder.maxInboundMetadataSize(maxHeaderListSize);
+        }
+        if (perRpcBufferLimit != null) {
+            nettyChannelBuilder.perRpcBufferLimit(perRpcBufferLimit);
+        }
+        if (maxHedgedAttempts != null) {
+            nettyChannelBuilder.maxHedgedAttempts(maxHedgedAttempts);
+        }
+
+        // channel timeout
+        if (idleTimeoutSeconds != null) {
+            nettyChannelBuilder.idleTimeout(idleTimeoutSeconds, TimeUnit.SECONDS);
+        }
+        if (keepAliveWithoutCalls != null) {
+            nettyChannelBuilder.keepAliveWithoutCalls(keepAliveWithoutCalls);
+        }
+        if (keepAliveTimeSeconds != null) {
+            nettyChannelBuilder.keepAliveTime(keepAliveTimeSeconds, TimeUnit.SECONDS);
+        }
+        if (keepAliveTimeoutSeconds != null) {
+            nettyChannelBuilder.keepAliveTimeout(keepAliveTimeoutSeconds, TimeUnit.SECONDS);
+        }
+
+        // channel retry
+        if (retryEnabled != null) {
+            if (retryEnabled) {
+                nettyChannelBuilder.enableRetry();
+                if (maxRetryAttempts != null) {
+                    nettyChannelBuilder.maxRetryAttempts(maxRetryAttempts);
+                }
+                if (retryBufferSize != null) {
+                    nettyChannelBuilder.retryBufferSize(retryBufferSize);
+                }
+            } else {
+                nettyChannelBuilder.disableRetry();
+            }
+        }
+
+        //nettyChannelBuilder.flowControlWindow(NettyChannelBuilder.DEFAULT_FLOW_CONTROL_WINDOW);
+        //nettyChannelBuilder.initialFlowControlWindow(NettyChannelBuilder.DEFAULT_FLOW_CONTROL_WINDOW);
     }
 
     @Override
     public void shutdown() {
     }
 
+    private Set<GRPCClient> listeners = new HashSet<>();
+
+    public void addConfigUpdateListener(GRPCClient listener) {
+        if (listener == null) {
+            return;
+        }
+        listeners.add(listener);
+    }
+
+    public void removeConfigUpdateListener(GRPCClient listener) {
+        if (listener == null) {
+            return;
+        }
+        listeners.remove(listener);
+    }
+
+    /**
+     * @param nameResolverProvider for client side load balancing
+     * @param loadBalancingPolicy
+     * @param uri                  The URI format should be one of grpc://host:port,
+     *                             grpcs://host:port, or unix:///path/to/uds.sock
+     * @param keyManagerFactory    The Remote Caller identity
+     * @param trustManagerFactory  The Remote Caller trusted identities
+     * @param overrideAuthority
+     * @param ciphers
+     * @param tlsVersionProtocols  "TLSv1.2", "TLSv1.3"
+     * @return
+     * @throws javax.net.ssl.SSLException
+     */
+    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+                                                              @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
+        final NettyChannelBuilder channelBuilder;
+        if (nameResolverProvider != null) {// use client side load balancing
+            // register
+            NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// Use singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(new nameResolverRegistry().asFactory());
+            nameResolverRegistry.register(nameResolverProvider);
+            // init
+            String policy = loadBalancingPolicy.getValue();
+            String target = nameResolverProvider.getDefaultScheme() + ":///"; // build target as URI
+            channelBuilder = NettyChannelBuilder.forTarget(target)
+                    .defaultLoadBalancingPolicy(policy);
+        } else {
+            switch (uri.getScheme()) {
+                case "unix": //https://github.com/grpc/grpc-java/issues/1539
+                    channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
+                            .eventLoopGroup(new EpollEventLoopGroup())
+                            .channelType(EpollDomainSocketChannel.class);
+                    break;
+                default:
+                    String host = uri.getHost();
+                    int port = uri.getPort();
+                    if (host == null) {
+                        throw new IllegalArgumentException("The URI format should contains host information, like <scheme>://[host:port]/[service], like grpc:///, grpc://host:port, grpcs://host:port, or unix:///path/to/uds.sock. gRpc.client.LoadBalancing.servers should be provided when host/port are not provided.");
+                    }
+                    channelBuilder = NettyChannelBuilder.forAddress(host, port);
+                    break;
+            }
+        }
+        if (keyManagerFactory == null) {
+            channelBuilder.usePlaintext();
+        } else {
+            final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
+            sslBuilder.keyManager(keyManagerFactory);
+            if (trustManagerFactory == null) {//ignore Server Certificate
+                sslBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+            } else {
+                sslBuilder.trustManager(trustManagerFactory);
+                if (overrideAuthority != null) {
+                    channelBuilder.overrideAuthority(overrideAuthority);
+                }
+            }
+            GrpcSslContexts.configure(sslBuilder, SslProvider.OPENSSL);
+            if (tlsVersionProtocols != null) {
+                sslBuilder.protocols(tlsVersionProtocols);
+            }
+            if (ciphers != null) {
+                sslBuilder.ciphers(ciphers);
+            }
+            SslContext sslContext = sslBuilder.build();
+            channelBuilder.sslContext(sslContext).useTransportSecurity();
+        }
+        return channelBuilder;
+    }
+
     public List<InetSocketAddress> getLoadBalancingServers() {
         return loadBalancingServers;
     }
 
-    public GRPCClient.LoadBalancingPolicy getLoadBalancingPolicy() {
+    public LoadBalancingPolicy getLoadBalancingPolicy() {
         return loadBalancingPolicy;
     }
 

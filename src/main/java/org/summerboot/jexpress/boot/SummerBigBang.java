@@ -21,7 +21,8 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Stage;
 import com.google.inject.util.Modules;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.MacAlgorithm;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
@@ -310,8 +311,17 @@ abstract public class SummerBigBang extends SummerSingularity {
         // generate CLI_JWT root signing key
         if (cli.hasOption(BootConstant.CLI_JWT)) {
             continueCLI = false;
-            String algorithm = cli.getOptionValue(BootConstant.CLI_JWT);
-            SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.forName(algorithm);
+            String algorithm = cli.getOptionValue(BootConstant.CLI_JWT);// <HS256, HS384, HS512>
+            MacAlgorithm signatureAlgorithm;
+            switch (algorithm) {
+                case "HS256" -> signatureAlgorithm = Jwts.SIG.HS256;
+                case "HS384" -> signatureAlgorithm = Jwts.SIG.HS384;
+                case "HS512" -> signatureAlgorithm = Jwts.SIG.HS512;
+                default -> {
+                    System.out.println("invalid -" + BootConstant.CLI_JWT + " value: " + algorithm + ", valid -" + BootConstant.CLI_JWT + " values: <HS256, HS384, HS512>");
+                    return false;
+                }
+            }
             String jwt = JwtUtil.buildSigningKey(signatureAlgorithm);
             System.out.println(jwt);
         }
