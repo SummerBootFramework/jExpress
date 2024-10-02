@@ -25,7 +25,7 @@ public interface BootConstant {
     String APP_ID = String.format("%06d", new Random().nextInt(999999));
 
     //version
-    String VERSION = "jExpress 2.4.14";
+    String VERSION = "jExpress 2.4.15";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
     String DEFAULT_ADMIN_MM = "changeit";
