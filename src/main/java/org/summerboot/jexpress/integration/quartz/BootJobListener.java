@@ -57,7 +57,7 @@ public class BootJobListener extends JobListenerSupport {
 
     protected Date logNextFireTime(final JobExecutionContext context, final JobExecutionException exception) {
         Date nextFireTime = context.getNextFireTime();
-        if (nextFireTime != null && log.isInfoEnabled()) {
+        if (nextFireTime != null && log.isTraceEnabled()) {
             StringBuilder sb = new StringBuilder();
             sb.append("Scheduled jobs next fire time by triggers: ");
             try {
@@ -66,7 +66,7 @@ public class BootJobListener extends JobListenerSupport {
             } catch (Throwable ex) {
                 sb.append(ex);
             }
-            log.info(() -> sb.toString());
+            log.trace(() -> sb.toString());
         }
         return nextFireTime;
     }
@@ -75,7 +75,7 @@ public class BootJobListener extends JobListenerSupport {
         JobDetail jobDetail = context.getJobDetail();
         JobDataMap jobData = jobDetail.getJobDataMap();
         if (!jobData.containsKey(FIXED_DELAY_VALUE)) {
-            log.info("Scheduled jobs next fire time by triggers: none");
+            log.trace("Scheduled jobs next fire time by triggers: none");
             return;
         }
 
@@ -104,7 +104,7 @@ public class BootJobListener extends JobListenerSupport {
                     .startAt(nextTime)
                     .build();
             scheduler.rescheduleJob(currentTriggerKey, nextTrigger);
-            log.info(desc + " scheduled@" + nextTime);
+            log.trace(desc + " scheduled@" + nextTime);
         } catch (SchedulerException ex) {
             log.error("failed to reschedule the job with triger: {}", currentTriggerKey, ex);
         }
