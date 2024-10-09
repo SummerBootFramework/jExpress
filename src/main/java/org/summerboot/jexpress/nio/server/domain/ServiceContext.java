@@ -233,7 +233,7 @@ public class ServiceContext {
         return startDateTime;
     }
 
-    public ServiceContext reset() {
+    public ServiceContext resetResponseData() {
         status = HttpResponseStatus.OK;
         //autoConvertBlank200To204 = true;
         // 1.4 data
