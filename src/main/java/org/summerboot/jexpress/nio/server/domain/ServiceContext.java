@@ -234,26 +234,17 @@ public class ServiceContext {
     }
 
     public ServiceContext resetResponseData() {
-        status = HttpResponseStatus.OK;
-        //autoConvertBlank200To204 = true;
-        // 1.4 data
-        data = null;
+        // 1. data
         txt = "";
         file = null;
         redirect = null;
+        data = null;
 
-        // 2.1 error
-//        errorCode = 0;
-//        errorTag = null;
-//        cause = null;
+        // 2. error
         serviceError = null;
         cause = null;
-        // 2.2 logging control
+        status = HttpResponseStatus.OK;
         level(Level.INFO);
-//        logRequestHeader = false;
-//        logResponseHeader = false;
-//        logRequestBody = false;
-//        logResponseBody = false;
         return this;
     }
 
