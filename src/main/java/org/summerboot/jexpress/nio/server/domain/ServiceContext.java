@@ -235,7 +235,7 @@ public class ServiceContext {
 
     public ServiceContext reset() {
         status = HttpResponseStatus.OK;
-        autoConvertBlank200To204 = true;
+        //autoConvertBlank200To204 = true;
         // 1.4 data
         data = null;
         txt = "";
@@ -250,10 +250,10 @@ public class ServiceContext {
         cause = null;
         // 2.2 logging control
         level(Level.INFO);
-        logRequestHeader = false;
-        logResponseHeader = false;
-        logRequestBody = false;
-        logResponseBody = false;
+//        logRequestHeader = false;
+//        logResponseHeader = false;
+//        logRequestBody = false;
+//        logResponseBody = false;
         return this;
     }
 
