@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.integration.quartz;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.JobDataMap;
@@ -29,6 +30,7 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.listeners.JobListenerSupport;
+import org.summerboot.jexpress.boot.BootConstant;
 
 import java.util.Date;
 
@@ -42,6 +44,8 @@ public class BootJobListener extends JobListenerSupport {
     public static final String FIXED_DELAY_VALUE = "jExpress_FIXED_DELAY_VALUE";
     public static final String FIXED_DELAY_DESC = "jExpress_FIXED_DELAY_DESC";
     protected static final String JOB_LISTENER_NAME = BootJobListener.class.getSimpleName();
+
+    private static Level level = BootConstant.JOB_LISTENER_LOG_LEVEL;
 
     @Override
     public String getName() {
@@ -57,7 +61,7 @@ public class BootJobListener extends JobListenerSupport {
 
     protected Date logNextFireTime(final JobExecutionContext context, final JobExecutionException exception) {
         Date nextFireTime = context.getNextFireTime();
-        if (nextFireTime != null && log.isTraceEnabled()) {
+        if (nextFireTime != null && log.isEnabled(level)) {
             StringBuilder sb = new StringBuilder();
             sb.append("Scheduled jobs next fire time by triggers: ");
             try {
@@ -66,7 +70,7 @@ public class BootJobListener extends JobListenerSupport {
             } catch (Throwable ex) {
                 sb.append(ex);
             }
-            log.trace(() -> sb.toString());
+            log.log(level, () -> sb.toString());
         }
         return nextFireTime;
     }
@@ -75,7 +79,7 @@ public class BootJobListener extends JobListenerSupport {
         JobDetail jobDetail = context.getJobDetail();
         JobDataMap jobData = jobDetail.getJobDataMap();
         if (!jobData.containsKey(FIXED_DELAY_VALUE)) {
-            log.trace("Scheduled jobs next fire time by triggers: none");
+            log.log(level, "Scheduled jobs next fire time by triggers: none");
             return;
         }
 
@@ -104,7 +108,7 @@ public class BootJobListener extends JobListenerSupport {
                     .startAt(nextTime)
                     .build();
             scheduler.rescheduleJob(currentTriggerKey, nextTrigger);
-            log.trace(desc + " scheduled@" + nextTime);
+            log.log(level, desc + " scheduled@" + nextTime);
         } catch (SchedulerException ex) {
             log.error("failed to reschedule the job with triger: {}", currentTriggerKey, ex);
         }

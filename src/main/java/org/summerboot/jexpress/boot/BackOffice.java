@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.boot;
 
+import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
@@ -65,6 +66,7 @@ public class BackOffice extends BootConfig {
                     tpe.shutdown();
                 }, "ShutdownHook.BackOffice")
         );
+        jboListenerLogLevel = Level.getLevel(jboListenerLogLevelString);
     }
 
     @Override
@@ -252,6 +254,10 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "naming.log4j2.xml.var.appPackageName", defaultValue = "appPackageName")
     private String log4j2AppPackageName = "appPackageName";
+
+    @Config(key = "naming.log4j2.jboListenerLogLevel", defaultValue = "DEBUG")
+    private String jboListenerLogLevelString = Level.DEBUG.toString();
+    private Level jboListenerLogLevel = Level.DEBUG;
 
     @ConfigHeader(title = "4.3 Default CLI Naming")
     @Config(key = "naming.cli.usage", defaultValue = "?")
@@ -460,5 +466,9 @@ public class BackOffice extends BootConfig {
 
     public String getMemoDelimiter() {
         return memoDelimiter;
+    }
+
+    public Level getJobListenerLogLevel() {
+        return jboListenerLogLevel;
     }
 }

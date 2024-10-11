@@ -254,7 +254,7 @@
         <pdfbox.version>2.0.25</pdfbox.version>-->
         <!-- PDF - com.openhtmltopdf -->
         <openhtml.version>1.0.10</openhtml.version>
-        <batik-transcoder.version>1.17</batik-transcoder.version>
+        <batik-transcoder.version>1.18</batik-transcoder.version>
         <!-- PDF - iText -->
         <itext7-core.version>8.0.5</itext7-core.version>
         <itext7-html2pdf.version>5.0.5</itext7-html2pdf.version>

@@ -15,6 +15,8 @@
  */
 package org.summerboot.jexpress.boot;
 
+import org.apache.logging.log4j.Level;
+
 import java.util.Random;
 
 /**
@@ -99,5 +101,5 @@ public interface BootConstant {
     String SYS_PROP_LOGFILENAME = BackOffice.agent.getLog4j2LogFileName();//"appName"; // used by log4j2.xml ${sys:appappName} as log file name
     String SYS_PROP_SERVER_NAME = BackOffice.agent.getLog4j2ServerName();//"serverName"; // used by log4j2.xml ${hostName}
     String SYS_PROP_APP_PACKAGE_NAME = BackOffice.agent.getLog4j2AppPackageName();//"appPackageName"; // used by both log4j2.xml ${sys:appPackage} and JPAHibernateConfig to scan @Entity
-
+    Level JOB_LISTENER_LOG_LEVEL = BackOffice.agent.getJobListenerLogLevel();
 }
