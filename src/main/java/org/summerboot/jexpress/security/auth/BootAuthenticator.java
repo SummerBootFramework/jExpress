@@ -42,6 +42,7 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.security.JwtUtil;
+import org.summerboot.jexpress.util.FormatterUtil;
 
 import javax.naming.NamingException;
 import java.security.Key;
@@ -195,6 +196,14 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         if (audience != null) {
             for (String group : audience) {
                 caller.addGroup(group);
+                String[] arr = FormatterUtil.parseCsv(group);
+                if (arr != null) {
+                    for (String g : arr) {
+                        if (StringUtils.isNotBlank(g)) {
+                            caller.addGroup(g);
+                        }
+                    }
+                }
             }
         }
 
