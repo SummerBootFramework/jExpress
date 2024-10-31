@@ -205,9 +205,9 @@
 
         <!-- NIO Netty -->
         <netty.version>4.1.114.Final</netty.version>
-        <netty-tcnative.version>2.0.66.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.67.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.68.0</grpc.version>
+        <grpc.version>1.68.1</grpc.version>
         <guava.version>33.3.1-jre</guava.version>
         <protobuf.version>4.28.3</protobuf.version>
         <!-- Web JAX-RS -->
@@ -223,7 +223,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.18.0</jackson.version>
+        <jackson.version>2.18.1</jackson.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
         <tomcat-embed-el.version>11.0.0</tomcat-embed-el.version>
@@ -239,7 +239,7 @@
         <!-- Cache -->
         <jedis.version>5.2.0</jedis.version>
 
-        <quartz.version>2.5.0-rc1</quartz.version>
+        <quartz.version>2.5.0-rc2</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
 
         <!-- Template Engine -->

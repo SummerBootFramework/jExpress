@@ -34,6 +34,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
@@ -196,11 +197,13 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         if (audience != null) {
             for (String group : audience) {
                 caller.addGroup(group);
-                String[] arr = FormatterUtil.parseCsv(group);
-                if (arr != null) {
-                    for (String g : arr) {
-                        if (StringUtils.isNotBlank(g)) {
-                            caller.addGroup(g);
+                if (BootConstant.CFG_JWT_AUD_AS_CSV) {
+                    String[] arr = FormatterUtil.parseCsv(group);
+                    if (arr != null) {
+                        for (String g : arr) {
+                            if (StringUtils.isNotBlank(g)) {
+                                caller.addGroup(g);
+                            }
                         }
                     }
                 }

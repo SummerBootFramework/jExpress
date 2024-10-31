@@ -161,6 +161,9 @@ public class BackOffice extends BootConfig {
     @Config(key = "type.errorCodeAsInt", defaultValue = "false")
     private boolean errorCodeAsInt = false;
 
+    @Config(key = "type.JWTAudAsCSV", defaultValue = "true", desc = "Parse JWT Audience value as CSV for JWT backward compatibility")
+    private boolean jwtAudAsCSV = true;
+
     @Config(key = "default.interval.ConfigChangeMonitor", defaultValue = "30")
     private int CfgChangeMonitorIntervalSec = 30;
 
@@ -318,6 +321,10 @@ public class BackOffice extends BootConfig {
 
     public boolean isErrorCodeAsInt() {
         return errorCodeAsInt;
+    }
+
+    public boolean isJwtAudAsCSV() {
+        return jwtAudAsCSV;
     }
 
     public int getCfgChangeMonitorIntervalSec() {
