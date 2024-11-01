@@ -197,7 +197,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         if (audience != null) {
             for (String group : audience) {
                 caller.addGroup(group);
-                if (BootConstant.CFG_JWT_AUD_AS_CSV) {
+                if (BootConstant.CFG_JWT_AUD_AS_CSV && audience.size() == 1) {
                     String[] arr = FormatterUtil.parseCsv(group);
                     if (arr != null) {
                         for (String g : arr) {
