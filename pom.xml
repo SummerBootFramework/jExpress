@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.4.17-SNAPSHOT</version>
+    <version>2.4.17</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -211,7 +211,7 @@
         <guava.version>33.3.1-jre</guava.version>
         <protobuf.version>4.28.3</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.25</swagger.core.version>
+        <swagger.core.version>2.2.26</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 

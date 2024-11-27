@@ -61,7 +61,6 @@ public interface Authenticator<T> {
      * @param validForMinutes
      * @param context
      * @return
-     * @throws NamingException
      */
     String signJWT(Caller caller, int validForMinutes, final ServiceContext context);
 
