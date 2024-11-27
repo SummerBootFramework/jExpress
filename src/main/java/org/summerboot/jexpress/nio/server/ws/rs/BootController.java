@@ -96,7 +96,7 @@ import java.util.concurrent.TimeUnit;
 abstract public class BootController extends PingController {
 
     public static final String TAG_APP_ADMIN = "App Admin";
-    public static final String TAG_USER_AUTH = "App User Authentication";
+    public static final String TAG_USER_AUTH = "App Authentication";
 
 
     public static final String DESC_400 = "All other 4xx code. The client cannot continue and should not re-try again with the request without modification.";

@@ -53,14 +53,26 @@ public interface Authenticator<T> {
      */
     String signJWT(String username, String pwd, T metaData, int validForMinutes, final ServiceContext context) throws NamingException;
 
+
+    /**
+     * Success HTTP Status: 201 Created
+     *
+     * @param caller
+     * @param validForMinutes
+     * @param context
+     * @return
+     */
+    String signJWT(Caller caller, int validForMinutes, final ServiceContext context);
+
     /**
      * Convert Caller to auth token, override this method to implement
      * customized token format
      *
      * @param caller
+     * @param txId
      * @return formatted auth token builder
      */
-    JwtBuilder toJwt(Caller caller);
+    JwtBuilder toJwt(Caller caller, String txId);
 
     /**
      * Success HTTP Status: 200 OK

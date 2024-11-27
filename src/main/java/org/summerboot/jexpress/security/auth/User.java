@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.summerboot.jexpress.util.BeanUtil;
 
@@ -30,29 +31,32 @@ import java.util.Set;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class User implements Serializable, Caller, Comparable<User> {
-    protected Long tenantId = 0L;
+    protected Long tenantId;
     protected String tenantName;
-    protected Long id = 0L;
+    protected Long id;
     protected String uid;
+
     protected String displayName;
     @JsonIgnore
     protected String password;
-    protected Set<String> groups;
     protected int type = 1;
-    protected Map prop = null;
     protected boolean enabled = true;
     protected Long tokenTtlSec;
 
-    public User(Long tenantId, String tenantName, Long id, String uid) {
-        this.tenantId = tenantId;
-        this.tenantName = tenantName;
-        this.id = id;
-        this.uid = uid;
-    }
+    protected Set<String> groups;
+    protected Map<String, Object> customizedFields;
+
 
     public User(Long id, String uid) {
-        this.id = id;
-        this.uid = uid;
+        this(null, null, id, uid);
+    }
+
+    public User(@JsonProperty("tenantId") Long tenantId, @JsonProperty("tenantName") String tenantName, @JsonProperty("id") Long id, @JsonProperty("uid") String uid) {
+        this.tenantId = tenantId == null ? 0L : tenantId;
+        this.tenantName = tenantName == null ? "0" : tenantName;
+        this.id = id == null ? 0L : id;
+        this.uid = uid == null ? "0" : uid;
+        this.displayName = uid;
     }
 
     @Override
@@ -62,6 +66,70 @@ public class User implements Serializable, Caller, Comparable<User> {
             return BeanUtil.toJson(this, false, true);
         } catch (JsonProcessingException ex) {
             return "User{" + "id=" + id + ", uid=" + uid + ", type=" + type + ", ex=" + ex + '}';
+        }
+    }
+
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 59 * hash + Objects.hashCode(this.tenantId);
+        hash = 59 * hash + Objects.hashCode(this.id);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final User other = (User) obj;
+        if (!Objects.equals(this.tenantId, other.tenantId)) {
+            return false;
+        }
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int compareTo(User arg0) {
+        if (arg0 == null) {
+            return 1;
+        }
+
+
+        Long id2 = arg0.getId();
+        if (id == null) {
+            if (id2 == null) {
+                return 0;
+            } else {
+                return -1;
+            }
+        } else {
+            if (id2 == null) {
+                return 1;
+            } else {
+                Long tenantId1 = this.getTenantId();
+                if (tenantId1 == null) {
+                    tenantId1 = 0L;
+                }
+                Long tenantId2 = arg0.getTenantId();
+                if (tenantId2 == null) {
+                    tenantId2 = 0L;
+                }
+                if (!tenantId1.equals(tenantId2)) {
+                    return tenantId1.compareTo(tenantId2);
+                }
+                return id.compareTo(id2);
+            }
         }
     }
 
@@ -103,6 +171,33 @@ public class User implements Serializable, Caller, Comparable<User> {
         this.password = password;
     }
 
+    @Override
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    @Override
+    public Long getTokenTtlSec() {
+        return tokenTtlSec;
+    }
+
+    public void setTokenTtlSec(Long tokenTtlSec) {
+        this.tokenTtlSec = tokenTtlSec;
+    }
+
     public void addGroup(String group) {
         if (group == null) {
             return;
@@ -140,108 +235,55 @@ public class User implements Serializable, Caller, Comparable<User> {
         return rm.getGroups().stream().anyMatch((group) -> (isInGroup(group)));
     }
 
-    @Override
-    public boolean isEnabled() {
-        return enabled;
+    public void setCustomizedFields(Map<String, Object> customizedFields) {
+        this.customizedFields = customizedFields;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    @Override
-    public int getType() {
-        return type;
+    public Map<String, Object> getCustomizedFields() {
+        return customizedFields;
     }
 
     @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 59 * hash + Objects.hashCode(this.tenantId);
-        hash = 59 * hash + Objects.hashCode(this.id);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final User other = (User) obj;
-        if (!Objects.equals(this.tenantId, other.tenantId)) {
-            return false;
-        }
-        if (!Objects.equals(this.id, other.id)) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public int compareTo(User arg0) {
-        if (arg0 == null) {
-            return 1;
-        }
-        Long id2 = arg0.getId();
-        if (id == null) {
-            if (id2 == null) {
-                return 0;
-            } else {
-                return -1;
-            }
-        } else {
-            if (id2 == null) {
-                return 1;
-            } else {
-                return id.compareTo(id2);
-            }
-        }
-    }
-
-    @Override
-    public <T> T getProp(String key, Class<T> type) {
-        if (prop == null) {
+    public <T> T getCustomizedField(String key) {
+        if (customizedFields == null || key == null) {
             return null;
         }
-        return (T) prop.get(key);
+        return (T) customizedFields.get(key);
     }
 
     @Override
-    public void putProp(String key, Object value) {
-        if (prop == null) {
-            prop = new HashMap();
+    public void setCustomizedField(String key, Object value) {
+        if (key == null || value == null) {
+            return;
         }
-        prop.put(key, value);
-    }
-
-    @Override
-    public void remove(String key) {
-        if (prop != null) {
-            prop.remove(key);
+        if (customizedFields == null) {
+            customizedFields = new HashMap();
         }
+        customizedFields.put(key, value);
     }
 
     @Override
-    public Set<String> propKeySet() {
-        if (prop == null) {
+    public <T> T removeCustomizedField(String key) {
+        if (customizedFields == null || key == null) {
             return null;
         }
-        return prop.keySet();
+        return (T) customizedFields.remove(key);
     }
 
     @Override
-    public Long getTokenTtlSec() {
-        return tokenTtlSec;
+    public Set<String> customizedFieldKeys() {
+        if (customizedFields == null) {
+            return null;
+        }
+        return customizedFields.keySet();
     }
 
-    public void setTokenTtlSec(Long tokenTtlSec) {
-        this.tokenTtlSec = tokenTtlSec;
+    @Override
+    public Set<Map.Entry<String, Object>> customizedFields() {
+        if (customizedFields == null) {
+            return null;
+        }
+        return customizedFields.entrySet();
     }
 
 }

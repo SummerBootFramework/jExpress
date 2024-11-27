@@ -27,7 +27,7 @@ public interface BootConstant {
     String APP_ID = String.format("%06d", new Random().nextInt(999999));
 
     //version
-    String VERSION = "jExpress 2.4.16";
+    String VERSION = "jExpress 2.4.17";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
     String DEFAULT_ADMIN_MM = "changeit";
@@ -48,6 +48,7 @@ public interface BootConstant {
      * 3. jExpress Default Settings
      */
     boolean CFG_ERROR_CODE_AS_INT = BackOffice.agent.isErrorCodeAsInt();
+    boolean CFG_JWT_AUD_AS_CSV = BackOffice.agent.isJwtAudAsCSV();
     int CFG_CHANGE_MONITOR_INTERVAL_SEC = BackOffice.agent.getCfgChangeMonitorIntervalSec();
     int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
     long WEB_RESOURCE_TTL_MS = BackOffice.agent.getWebResourceCacheTtlSec() * 1000;
