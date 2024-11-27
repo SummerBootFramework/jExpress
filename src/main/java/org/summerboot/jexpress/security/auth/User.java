@@ -31,10 +31,10 @@ import java.util.Set;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class User implements Serializable, Caller, Comparable<User> {
-    protected final Long tenantId;
-    protected final String tenantName;
-    protected final Long id;
-    protected final String uid;
+    protected Long tenantId;
+    protected String tenantName;
+    protected Long id;
+    protected String uid;
 
     protected String displayName;
     @JsonIgnore
