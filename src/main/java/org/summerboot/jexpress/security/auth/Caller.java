@@ -17,6 +17,7 @@ package org.summerboot.jexpress.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -37,23 +38,25 @@ public interface Caller {
     @JsonIgnore
     String getPassword();
 
+    int getType();
+
+    boolean isEnabled();
+
+    Long getTokenTtlSec();
+
     boolean isInGroup(String group);
 
     boolean isInRole(String role);
 
-    boolean isEnabled();
-
     Set<String> getGroups();
 
-    int getType();
+    <T extends Object> T getCustomizedField(String key);
 
-    <T extends Object> T getProp(String key, Class<T> type);
+    void setCustomizedField(String key, Object value);
 
-    void putProp(String key, Object value);
+    <T> T removeCustomizedField(String key);
 
-    void remove(String key);
+    Set<String> customizedFieldKeys();
 
-    Set<String> propKeySet();
-
-    Long getTokenTtlSec();
+    Set<Map.Entry<String, Object>> customizedFields();
 }

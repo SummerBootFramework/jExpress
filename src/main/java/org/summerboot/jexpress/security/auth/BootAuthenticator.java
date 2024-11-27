@@ -49,6 +49,7 @@ import javax.naming.NamingException;
 import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -83,28 +84,27 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         context.poi(BootPOI.LDAP_BEGIN);
         Caller caller = authenticate(username, pwd, (E) metaData, authenticatorListener, context);
         context.poi(BootPOI.LDAP_END);
+
+        return signJWT(caller, validForMinutes, context);
+    }
+
+    @Override
+    public String signJWT(Caller caller, int validForMinutes, final ServiceContext context) {
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
             return null;
         }
 
-        // get token TTL from caller, otherwise use default
-        Long tokenTtlSec = caller.getTokenTtlSec();
-        Duration tokenTTL;
-        if (tokenTtlSec != null) {
-            tokenTTL = Duration.ofSeconds(tokenTtlSec);
-        } else {
-            tokenTTL = Duration.ofMinutes(validForMinutes);
-        }
+        //3. format JWT and set token TTL from caller
+        JwtBuilder builder = toJwt(caller, context.txId());
 
-        //3. format JWT
-        JwtBuilder builder = toJwt(caller);
-
-        //4. create JWT
+        //5. create JWT
         Key signingKey = AuthConfig.cfg.getJwtSigningKey();
         if (signingKey == null) {
             throw new UnsupportedOperationException(ERROR_NO_CFG);
         }
+        // override caller TTL if validForMinutes is greater than 0
+        Duration tokenTTL = Duration.ofMinutes(validForMinutes);
         String token = JwtUtil.createJWT(signingKey, builder, tokenTTL);
         if (authenticatorListener != null) {
             authenticatorListener.onLoginSuccess(caller.getUid(), token);
@@ -129,11 +129,12 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * customized token format
      *
      * @param caller
+     * @param txId
      * @return formatted auth token builder
      */
     @Override
-    public JwtBuilder toJwt(Caller caller) {
-        String jti = caller.getTenantId() + "." + caller.getId() + "_" + caller.getUid() + "_" + System.currentTimeMillis();
+    public JwtBuilder toJwt(Caller caller, String txId) {
+        String jti = caller.getTenantId() + "-" + caller.getId() + "@" + txId; // tenantId-userId@txId
         String issuer = AuthConfig.cfg.getJwtIssuer();
         String userName = caller.getUid();
         Set<String> groups = caller.getGroups();
@@ -147,24 +148,31 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                 .issuer(issuer)
                 .subject(userName)
                 .audience().add(groups);
-        if (caller.getId() != null) {
-            builder.claim("callerId", caller.getId());
+//        if (caller.getId() != null) {
+//            builder.claim(KEY_CALLERID, caller.getId());
+//        }
+//        if (caller.getTenantId() != null) {
+//            builder.claim(KEY_TENANTID, caller.getTenantId());
+//        }
+        if (StringUtils.isNotBlank(caller.getTenantName())) {
+            builder.claim(KEY_TENANTNAME, caller.getTenantName());
         }
-        if (caller.getTenantId() != null) {
-            builder.claim("tenantId", caller.getTenantId());
-        }
-        if (caller.getTenantName() != null) {
-            builder.claim("tenantName", caller.getTenantName());
-        }
-        Set<String> keys = caller.propKeySet();
-        if (keys != null) {
-            for (String key : keys) {
-                Object v = caller.getProp(key, Object.class);
-                builder.claim(key, v);
+        Set<Map.Entry<String, Object>> callerCustomizedFields = caller.customizedFields();
+        if (callerCustomizedFields != null) {
+            for (Map.Entry<String, Object> entry : callerCustomizedFields) {
+                if (StringUtils.isBlank(entry.getKey()) || entry.getValue() == null) {
+                    continue;
+                }
+                builder.claim(entry.getKey(), entry.getValue());
             }
         }
 
         //JwtBuilder builder = Jwts.builder().setClaims(claims);
+        Long tokenTtlSec = caller.getTokenTtlSec();
+        if (tokenTtlSec != null) {
+            Duration tokenTTL = Duration.ofSeconds(tokenTtlSec);
+            JwtUtil.setJwtExpireTime(builder, tokenTTL);
+        }
         return builder;
     }
 
@@ -176,6 +184,10 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         return JwtUtil.parseJWT(jwtParser, jwt).getPayload();
     }
 
+    //    private static final String KEY_CALLERID = "callerId";
+//    private static final String KEY_TENANTID = "tenantId";
+    private static final String KEY_TENANTNAME = "tenantName";
+
     /**
      * Convert Caller back from auth token, override this method to implement
      * customized token format
@@ -184,13 +196,25 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @return Caller
      */
     protected Caller fromJwt(Claims claims) {
-        //String jti = claims.getId();
         //String issuer = claims.getIssuer();
         String userName = claims.getSubject();
         Set<String> audience = claims.getAudience();
-        Long userId = claims.get("callerId", Long.class);
-        Long tenantId = claims.get("tenantId", Long.class);
-        String tenantName = claims.get("tenantName", String.class);
+//        Long userId = claims.get(KEY_CALLERID, Long.class);
+//        Long tenantId = claims.get(KEY_TENANTID, Long.class);
+        String jti = claims.getId(); // tenantId-userId@txId
+        Long tenantId = 0L, userId = 0L;
+        // parse jti into tenantId and userId
+        try {
+            String[] arr0 = FormatterUtil.parseDsv(jti, "-");
+            if (arr0 != null && arr0.length > 1) {
+                tenantId = Long.parseLong(arr0[0]);
+                String[] arr1 = FormatterUtil.parseDsv(arr0[1], "@");
+                userId = Long.parseLong(arr1[0]);
+            }
+        } catch (Exception ex) {
+            //ignore
+        }
+        String tenantName = claims.get(KEY_TENANTNAME, String.class);
 
         User caller = new User(tenantId, tenantName, userId, userName);
 
@@ -214,19 +238,19 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         if (keys != null) {
             for (String key : keys) {
                 Object v = claims.get(key);
-                caller.putProp(key, v);
+                caller.setCustomizedField(key, v);
             }
         }
-        caller.remove(Claims.AUDIENCE);
-        caller.remove(Claims.EXPIRATION);
-        caller.remove(Claims.ID);
-        caller.remove(Claims.ISSUED_AT);
-        caller.remove(Claims.ISSUER);
-        caller.remove(Claims.NOT_BEFORE);
-        caller.remove(Claims.SUBJECT);
-        caller.remove("callerId");
-        caller.remove("tenantId");
-        caller.remove("tenantName");
+        caller.removeCustomizedField(Claims.AUDIENCE);
+        caller.removeCustomizedField(Claims.EXPIRATION);
+        caller.removeCustomizedField(Claims.ID);
+        caller.removeCustomizedField(Claims.ISSUED_AT);
+        caller.removeCustomizedField(Claims.ISSUER);
+        caller.removeCustomizedField(Claims.NOT_BEFORE);
+        caller.removeCustomizedField(Claims.SUBJECT);
+//        caller.removeCustomizedField(KEY_CALLERID);
+//        caller.removeCustomizedField(KEY_TENANTID);
+        caller.removeCustomizedField(KEY_TENANTNAME);
 
         return caller;
     }
