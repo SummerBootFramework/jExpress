@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -59,6 +60,7 @@ import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -588,22 +590,23 @@ public abstract class BootConfig implements JExpressConfig {
     protected static final int CPU_CORE = Runtime.getRuntime().availableProcessors();
 
     public enum ThreadingMode {
-        CPU, IO, Mixed
+        VirtualThread, CPU, IO, Mixed
+    }
+
+    public static ThreadPoolExecutor buildThreadPoolExecutor(String tpeName) {
+        return buildThreadPoolExecutor(null, tpeName, ThreadingMode.VirtualThread, 0, 0, Integer.MAX_VALUE, 60, null, false, true, false);
+    }
+
+    public static ThreadPoolExecutor buildThreadPoolExecutor(String tpeName, ThreadingMode threadingMode, int core, int max, int queue, long keepAliveSec) {
+        return buildThreadPoolExecutor(null, tpeName, threadingMode, core, max, queue, keepAliveSec, null, false, false, false);
     }
 
     public static ThreadPoolExecutor buildThreadPoolExecutor(ThreadPoolExecutor tpe, String tpeName, ThreadingMode threadingMode,
                                                              int core, int max, int queue, long keepAliveSec, RejectedExecutionHandler rejectedExecutionHandler,
                                                              boolean prestartAllCoreThreads, boolean allowCoreThreadTimeOut, boolean isSingleton) {
+        boolean useVirtualThread = false;
         switch (threadingMode) {
-            case CPU:// use CPU core + 1 when application is CPU bound
-                core = CPU_CORE + 1;
-                max = CPU_CORE + 1;
-                break;
-            case IO:// use CPU core x 2 + 1 when application is I/O bound
-                core = CPU_CORE * 2 + 1;
-                max = CPU_CORE * 2 + 1;
-                break;
-            case Mixed:// manual config is required when it is mixed
+            case Mixed, VirtualThread -> {// manual config is required when it is mixed
                 if (core < 1) {
                     core = CPU_CORE * 2 + 1;
                 }
@@ -614,7 +617,15 @@ public abstract class BootConfig implements JExpressConfig {
                     //helper.addError("BizExecutor.MaxSize should not less than BizExecutor.CoreSize");
                     max = core;
                 }
-                break;
+            }
+            case CPU -> {// use CPU core + 1 when application is CPU bound
+                core = CPU_CORE + 1;
+                max = CPU_CORE + 1;
+            }
+            case IO -> {// use CPU core x 2 + 1 when application is I/O bound
+                core = CPU_CORE * 2 + 1;
+                max = CPU_CORE * 2 + 1;
+            }
         }
 
         boolean isQueueChanged = false;
@@ -627,9 +638,13 @@ public abstract class BootConfig implements JExpressConfig {
             //backup old
             ThreadPoolExecutor old = tpe;
             //create new
-            BlockingQueue<Runnable> bq = queue > 0 ? new LinkedBlockingQueue<>(queue) : new EmptyBlockingQueue();
-            tpe = new ThreadPoolExecutor(core, max, keepAliveSec, TimeUnit.SECONDS, bq,
-                    new NamedDefaultThreadFactory(tpeName), rejectedExecutionHandler);//.DiscardOldestPolicy()
+            ThreadFactory factory = NamedDefaultThreadFactory.build(tpeName, useVirtualThread);
+            BlockingQueue<Runnable> workQueue = queue > 0 ? new LinkedBlockingQueue<>(queue) : new EmptyBlockingQueue();
+            if (rejectedExecutionHandler == null) {
+                rejectedExecutionHandler = new AbortPolicyWithReport(tpeName);
+            }
+            tpe = new ThreadPoolExecutor(core, max, keepAliveSec, TimeUnit.SECONDS, workQueue,
+                    factory, rejectedExecutionHandler);//.DiscardOldestPolicy()
             // then shotdown old tpe
             if (old != null) {
                 old.shutdown();

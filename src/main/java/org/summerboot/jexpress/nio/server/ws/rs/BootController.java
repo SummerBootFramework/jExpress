@@ -389,9 +389,12 @@ abstract public class BootController extends PingController {
         return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
     }
 
-    public static Caller login(Authenticator auth, String userId, String password, ServiceContext context) throws NamingException {
+    public Caller login(Authenticator auth, String userId, String password, ServiceContext context) throws NamingException {
         if (auth == null) {
             context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            return null;
+        }
+        if (!preLogin(userId, password, context)) {
             return null;
         }
         String jwt = auth.signJWT(userId, password, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
@@ -400,7 +403,15 @@ abstract public class BootController extends PingController {
         } else {
             context.responseHeader(Config.X_AUTH_TOKEN, jwt).status(HttpResponseStatus.CREATED);
         }
+        postLogin(context);
         return context.caller();
+    }
+
+    protected boolean preLogin(String userId, String password, ServiceContext context) {
+        return true;
+    }
+
+    protected void postLogin(ServiceContext context) {
     }
 
     @Operation(

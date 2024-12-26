@@ -7,19 +7,17 @@ public class NamedDefaultThreadFactory implements ThreadFactory {
 
     protected static final AtomicInteger poolNumber = new AtomicInteger(1);
     protected final ThreadGroup group;
-    protected final AtomicInteger threadNumber = new AtomicInteger(1);
+    protected final AtomicInteger threadCounter = new AtomicInteger(1);
     protected final String namePrefix;
 
-    public NamedDefaultThreadFactory(String name) {
+    private NamedDefaultThreadFactory(String tpeName) {
         group = Thread.currentThread().getThreadGroup();
-        namePrefix = name + "-"
-                + poolNumber.getAndIncrement()
-                + "-thread-";
+        namePrefix = tpeName;
     }
 
     @Override
     public Thread newThread(Runnable r) {
-        Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+        Thread t = new Thread(group, r, namePrefix + threadCounter.getAndIncrement(), 0);
         if (t.isDaemon()) {
             t.setDaemon(false);
         }
@@ -27,5 +25,12 @@ public class NamedDefaultThreadFactory implements ThreadFactory {
             t.setPriority(Thread.NORM_PRIORITY);
         }
         return t;
+    }
+
+    public static ThreadFactory build(String tpeName, boolean useVirtualThread) {
+        String namePrefix = tpeName + "-"
+                + poolNumber.getAndIncrement()
+                + (useVirtualThread ? "-vt-" : "-pt-");
+        return new NamedDefaultThreadFactory(namePrefix);
     }
 }

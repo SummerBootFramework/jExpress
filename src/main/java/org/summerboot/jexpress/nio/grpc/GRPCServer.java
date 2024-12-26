@@ -66,7 +66,7 @@ public class GRPCServer {
         return serviceCounter;
     }
 
-    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, ThreadPoolExecutor tpe, NIOStatusListener nioListener) {
+    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener) {
         this.bindingAddr = bindingAddr;
         this.port = port;
         serverCredentials = initTLS(kmf, tmf);
@@ -79,7 +79,7 @@ public class GRPCServer {
             serverBuilder.intercept(serverInterceptor);
         }
         serverBuilder.executor(tpe);
-        initThreadPool(tpe, nioListener, bindingAddr, port);
+        initThreadPool(tpe, useVirtualThread, nioListener, bindingAddr, port);
     }
 
     protected ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
@@ -99,14 +99,14 @@ public class GRPCServer {
      * @param nioListener
      * @return
      */
-    protected GRPCServiceCounter initThreadPool(ThreadPoolExecutor tpe, NIOStatusListener nioListener, String bindingAddr, int port) {
+    protected GRPCServiceCounter initThreadPool(ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener, String bindingAddr, int port) {
         int interval = 1;
         final AtomicReference<Long> lastBizHitRef = new AtomicReference<>();
         lastBizHitRef.set(-1L);
         long totalChannel = -1;//NioServerContext.COUNTER_TOTAL_CHANNEL.get();
         long activeChannel = -1;//NioServerContext.COUNTER_ACTIVE_CHANNEL.get();
         ScheduledExecutorService old2 = statusReporter;
-        statusReporter = Executors.newSingleThreadScheduledExecutor(new NamedDefaultThreadFactory("gRPC.QPS_SERVICE@" + bindingAddr + ":" + port));
+        statusReporter = Executors.newSingleThreadScheduledExecutor(NamedDefaultThreadFactory.build("Netty-gRPC.QPS_SERVICE@" + bindingAddr + ":" + port, useVirtualThread));
         final AtomicLong lastChecksum = new AtomicLong(0);
         String appInfo = "gRPC@" + BootConstant.VERSION + " " + BootConstant.PID;
         statusReporter.scheduleAtFixedRate(() -> {

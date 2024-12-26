@@ -41,6 +41,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 
@@ -135,11 +136,12 @@ public class NioServer {
 
         // Configure the server.
         //boss and work groups
+
         int bossSize = nioCfg.getNioEventLoopGroupAcceptorSize();
         int workerSize = nioCfg.getNioEventLoopGroupWorkerSize();
         Class<? extends ServerChannel> serverChannelClass;
-        ThreadFactory threadFactoryBoss = new NamedDefaultThreadFactory("NIO.Boss");
-        ThreadFactory threadFactoryWorker = new NamedDefaultThreadFactory("NIO.Worker");
+        ThreadFactory threadFactoryBoss = NamedDefaultThreadFactory.build("Netty-HTTP.Boss", nioCfg.isNioEventLoopGroupAcceptorUseVirtualThread());
+        ThreadFactory threadFactoryWorker = NamedDefaultThreadFactory.build("Netty-HTTP.Worker", nioCfg.isNioEventLoopGroupWorkerUseVirtualThread());
         if (Epoll.isAvailable() && (IoMultiplexer.AVAILABLE.equals(multiplexer) || IoMultiplexer.EPOLL.equals(multiplexer))) {
             bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize, threadFactoryBoss);
             workerGroup = workerSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(workerSize, threadFactoryWorker);
@@ -220,7 +222,8 @@ public class NioServer {
         if (nioListener != null || log.isDebugEnabled()) {
             final AtomicLong lastChecksum = new AtomicLong(0);
             int interval = 1;
-            QPS_SERVICE = Executors.newSingleThreadScheduledExecutor(new NamedDefaultThreadFactory("NIO.QPS_SERVICE"));
+            boolean useVirtualThread = nioCfg.getTpeThreadingMode().equals(BootConfig.ThreadingMode.VirtualThread);
+            QPS_SERVICE = Executors.newSingleThreadScheduledExecutor(NamedDefaultThreadFactory.build("NIO.QPS_SERVICE", useVirtualThread));
             QPS_SERVICE.scheduleAtFixedRate(() -> {
                 long hps = NioCounter.COUNTER_HIT.getAndSet(0);
                 long tps = NioCounter.COUNTER_SENT.getAndSet(0);

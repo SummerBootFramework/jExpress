@@ -176,20 +176,23 @@ public class NioConfig extends BootConfig {
     protected volatile int httpServerCodec_MaxChunkSize = 8192;
 
     @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Exector Pool")
+    @Config(key = "nio.server.EventLoopGroup.Acceptor.useVirtualThread", defaultValue = "false")
+    protected volatile boolean nioEventLoopGroupAcceptorUseVirtualThread = false;
     @Config(key = "nio.server.EventLoopGroup.AcceptorSize", defaultValue = "0",
             desc = "AcceptorSize 0 = number of bindings")
     protected volatile int nioEventLoopGroupAcceptorSize = 0;
 
+    @Config(key = "nio.server.EventLoopGroup.Worker.useVirtualThread", defaultValue = "false")
+    protected volatile boolean nioEventLoopGroupWorkerUseVirtualThread = false;
     @Config(key = "nio.server.EventLoopGroup.WorkerSize", predefinedValue = "0",
             desc = "WorkerSize 0 = current computer/VM's available processors x 2 + 1")
     protected volatile int nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
-    //protected volatile int nioEventLoopGroupExecutorSize;
 
-    @Config(key = "nio.server.BizExecutor.mode", defaultValue = "Mixed",
-            desc = "valid value = CPU, IO and Mixed (default) \nuse CPU core + 1 when application is CPU bound\n"
+    @Config(key = "nio.server.BizExecutor.mode", defaultValue = "VirtualThread",
+            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \n use CPU core + 1 when application is CPU bound\n"
                     + "use CPU core x 2 + 1 when application is I/O bound\n"
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
-    protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
+    protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
 
     @Config(key = "nio.server.BizExecutor.CoreSize", predefinedValue = "0",
             desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
@@ -415,8 +418,8 @@ public class NioConfig extends BootConfig {
             nioEventLoopGroupWorkerSize = CPU_CORE * 2 + 1;
         }
 
-        tpe = buildThreadPoolExecutor(tpe, "NIO.Biz", tpeThreadingMode,
-                tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, new AbortPolicyWithReport("NIOBizThreadPoolExecutor"),
+        tpe = buildThreadPoolExecutor(tpe, "Netty-HTTP.Biz", tpeThreadingMode,
+                tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
         BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull);
 
@@ -579,8 +582,16 @@ public class NioConfig extends BootConfig {
         return nioEventLoopGroupAcceptorSize;
     }
 
+    public boolean isNioEventLoopGroupAcceptorUseVirtualThread() {
+        return nioEventLoopGroupAcceptorUseVirtualThread;
+    }
+
     public int getNioEventLoopGroupWorkerSize() {
         return nioEventLoopGroupWorkerSize;
+    }
+
+    public boolean isNioEventLoopGroupWorkerUseVirtualThread() {
+        return nioEventLoopGroupWorkerUseVirtualThread;
     }
 
     public ThreadingMode getTpeThreadingMode() {
@@ -597,6 +608,18 @@ public class NioConfig extends BootConfig {
 
     public int getTpeQueue() {
         return tpeQueue;
+    }
+
+    public int getTpeKeepAliveSeconds() {
+        return tpeKeepAliveSeconds;
+    }
+
+    public boolean isPrestartAllCoreThreads() {
+        return prestartAllCoreThreads;
+    }
+
+    public boolean isAllowCoreThreadTimeOut() {
+        return allowCoreThreadTimeOut;
     }
 
     public long getBizTimeoutWarnThresholdMs() {

@@ -19,11 +19,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
+import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.integration.cache.domain.FlashSale;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -36,7 +35,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -86,7 +84,9 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
 
     protected static final Logger log = LogManager.getLogger(BootCache_RedisImple.class.getName());
 
-    protected static final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), new NamedDefaultThreadFactory("Redis"), new AbortPolicyWithReport("Cahce.BackofficeExecutor"));
+    protected static final ThreadPoolExecutor tpe = BootConfig.buildThreadPoolExecutor(null, "Redis", BootConfig.ThreadingMode.VirtualThread,
+            1, 1, 1, 60, null,
+            false, false, false);
 
     protected static final RuntimeException REDIS_MASTER_NULL_EX = new RuntimeException("Redis master is null");
 

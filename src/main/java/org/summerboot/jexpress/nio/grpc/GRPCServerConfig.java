@@ -22,7 +22,6 @@ import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -62,9 +61,11 @@ public class GRPCServerConfig extends BootConfig {
     @Config(key = ID + ".autostart", defaultValue = "true")
     protected volatile boolean autoStart;
 
-    @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "Mixed",
-            desc = "valid value = CPU (default), IO, Mixed")
-    protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.Mixed;
+    @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "VirtualThread",
+            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \n use CPU core + 1 when application is CPU bound\n"
+                    + "use CPU core x 2 + 1 when application is I/O bound\n"
+                    + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
+    protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
 
     @Config(key = ID + ".pool.coreSize", predefinedValue = "0",
             desc = "coreSize 0 = current computer/VM's available processors x 2 + 1")
@@ -133,8 +134,8 @@ public class GRPCServerConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        tpe = buildThreadPoolExecutor(tpe, "gRPC.Biz", tpeThreadingMode,
-                tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, new AbortPolicyWithReport("gRPCThreadPoolExecutor"),
+        tpe = buildThreadPoolExecutor(tpe, "Netty-gRPC.Biz", tpeThreadingMode,
+                tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, true);
     }
 

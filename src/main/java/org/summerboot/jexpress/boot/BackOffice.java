@@ -58,7 +58,7 @@ public class BackOffice extends BootConfig {
             tpeMax = CPU_CORE + 1;
         }
 
-        tpe = buildThreadPoolExecutor(tpe, "BackOffice", ThreadingMode.Mixed,
+        tpe = buildThreadPoolExecutor(tpe, "BackOffice", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, new ThreadPoolExecutor.DiscardPolicy(),
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
 
@@ -190,6 +190,12 @@ public class BackOffice extends BootConfig {
             + "    netstat -anpe | grep \"80\" | grep \"LISTEN\" \n";
     @Config(key = "portinuse.alert.message", defaultValue = ALERT_MSG_PORT_IN_USE)
     private String portInUseAlertMessage = ALERT_MSG_PORT_IN_USE;
+
+    @Config(key = "backoffice.executor.mode", defaultValue = "VirtualThread",
+            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \n use CPU core + 1 when application is CPU bound\n"
+                    + "use CPU core x 2 + 1 when application is I/O bound\n"
+                    + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
+    protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
 
     @Config(key = "backoffice.executor.core", defaultValue = "3",
             desc = "0 = current computer/VM's available processors + 1")
