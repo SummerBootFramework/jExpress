@@ -102,7 +102,7 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
                 clients.remove(ctx.channel());
                 ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
                 ctx.close();
-                log.info("Binary auth failed " + ctx.channel().remoteAddress());
+                log.warn("Binary auth failed " + ctx.channel().remoteAddress());
                 return;
             }
             String responseText = onMessage(ctx, caller, data);
@@ -123,7 +123,7 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
                     clients.remove(ctx.channel());
                     ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
                     ctx.close();
-                    log.info("Text auth failed " + ctx.channel().remoteAddress() + ": " + txt);
+                    log.warn("Text auth failed " + ctx.channel().remoteAddress() + ": " + txt);
                     return;
                 }
                 ctx.channel().attr(KEY_CALLER).set(caller);
@@ -192,18 +192,18 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         clients.add(ctx.channel());
-        log.debug(() -> "handlerAdded: " + ctx.channel().remoteAddress());
+        log.trace(() -> "handlerAdded: " + ctx.channel().remoteAddress());
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        log.debug(() -> "channelActive: " + ctx.channel().remoteAddress());
+        log.trace(() -> "channelActive: " + ctx.channel().remoteAddress());
     }
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
         clients.remove(ctx.channel());
-        log.debug(() -> "handlerRemoved: " + ctx.channel().remoteAddress());
+        log.trace(() -> "handlerRemoved: " + ctx.channel().remoteAddress());
     }
 
     @Override

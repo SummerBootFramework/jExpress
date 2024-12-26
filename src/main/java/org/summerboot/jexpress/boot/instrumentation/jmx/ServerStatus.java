@@ -45,7 +45,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
 
     protected static final DateTimeFormatter DTF = DateTimeFormatter.ISO_LOCAL_DATE_TIME;//DateTimeFormatter.ofPattern("yyyy-MM-dd E HH:mm:ss");
 
-    protected static final ExecutorService QPS_SERVICE = Executors.newSingleThreadExecutor(new NamedDefaultThreadFactory("ServerStatus"));
+    protected static final ExecutorService QPS_SERVICE = Executors.newSingleThreadExecutor(NamedDefaultThreadFactory.build("ServerStatus", true));
 
     protected final LinkedList<BootIOStatusData> events;
 

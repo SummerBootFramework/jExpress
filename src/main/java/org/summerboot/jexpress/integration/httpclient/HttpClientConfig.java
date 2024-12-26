@@ -24,7 +24,6 @@ import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
-import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
 import org.summerboot.jexpress.security.SSLUtil;
 
 import javax.net.ssl.KeyManager;
@@ -167,6 +166,12 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.timeout.ms", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
     protected volatile long httpClientTimeoutMs = 5000;
 
+    @Config(key = "httpclient.executor.mode", defaultValue = "VirtualThread",
+            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \n use CPU core + 1 when application is CPU bound\n"
+                    + "use CPU core x 2 + 1 when application is I/O bound\n"
+                    + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
+    protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
+
     @Config(key = "httpclient.executor.CoreSize", predefinedValue = "0",
             desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
     protected volatile int httpClientCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
@@ -252,15 +257,7 @@ abstract public class HttpClientConfig extends BootConfig {
         }
 
         // 3.3 HTTP Client Executor
-        if (httpClientCoreSize <= 0) {
-            httpClientCoreSize = BootConstant.CPU_CORE * 2 + 1;
-        }
-        if (httpClientMaxSize <= 0) {
-            httpClientMaxSize = BootConstant.CPU_CORE * 2 + 1;
-        }
-        if (httpClientMaxSize < httpClientCoreSize) {
-            helper.addError("MaxSize should not less than CoreSize");
-        }
+
         // -Djdk.httpclient.keepalive.timeout=99999
         //System.setProperty("jdk.httpclient.keepalive.timeout", "99999");
         //System.setProperty("jdk.httpclient.connectionPoolSize", "1");
@@ -277,8 +274,8 @@ abstract public class HttpClientConfig extends BootConfig {
 
         ThreadPoolExecutor old = tpe;
         int currentTpeHashCode = old == null ? -1 : old.hashCode();
-        tpe = buildThreadPoolExecutor(old, "HttpClient", ThreadingMode.Mixed,
-                httpClientCoreSize, httpClientMaxSize, httpClientQueueSize, tpeKeepAliveSeconds, new AbortPolicyWithReport("HttpClientExecutor"),
+        tpe = buildThreadPoolExecutor(old, "HttpClient", tpeThreadingMode,
+                httpClientCoreSize, httpClientMaxSize, httpClientQueueSize, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
         boolean isHttpClientSettingsChanged = tpe.hashCode() != currentTpeHashCode;
         // 1. save
@@ -323,7 +320,7 @@ abstract public class HttpClientConfig extends BootConfig {
         }
         httpClient = builder.build();
         // 3. register new
-        ses = Executors.newSingleThreadScheduledExecutor(new NamedDefaultThreadFactory("HttpClient.QPS_SERVICE"));
+        ses = Executors.newSingleThreadScheduledExecutor(NamedDefaultThreadFactory.build("HttpClient.QPS_SERVICE", tpeThreadingMode.equals(ThreadingMode.VirtualThread)));
         ses.scheduleAtFixedRate(() -> {
             int queue = tpe.getQueue().size();
             int active = tpe.getActiveCount();
