@@ -606,7 +606,21 @@ public abstract class BootConfig implements JExpressConfig {
                                                              boolean prestartAllCoreThreads, boolean allowCoreThreadTimeOut, boolean isSingleton) {
         boolean useVirtualThread = false;
         switch (threadingMode) {
-            case Mixed, VirtualThread -> {// manual config is required when it is mixed
+            case VirtualThread -> { // Java 21+ only
+                useVirtualThread = true;
+                if (core < 1) {
+                    core = Integer.MAX_VALUE;
+                    allowCoreThreadTimeOut = true;
+                }
+                if (max < 1) {
+                    max = Integer.MAX_VALUE;
+                }
+                if (max < core) {
+                    //helper.addError("BizExecutor.MaxSize should not less than BizExecutor.CoreSize");
+                    max = core;
+                }
+            }
+            case Mixed/*, VirtualThread*/ -> {// manual config is required when it is mixed
                 if (core < 1) {
                     core = CPU_CORE * 2 + 1;
                 }
