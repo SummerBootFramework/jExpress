@@ -153,6 +153,7 @@ public class NioHttpUtil {
 
         if (serviceContext.autoConvertBlank200To204() && HttpResponseStatus.OK.equals(status)) {
             status = HttpResponseStatus.NO_CONTENT;
+            serviceContext.status(status);
         }
         return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true, responseEncoder);
     }
