@@ -213,7 +213,9 @@ public class NioHttpUtil {
                 ctx.write(resp).addListener(ChannelFutureListener.CLOSE);
             }
         }
-        serviceHeaders.set(h);
+        if (serviceHeaders != null) {
+            serviceHeaders.set(h);
+        }
         return contentLength;
     }
 

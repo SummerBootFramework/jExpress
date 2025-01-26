@@ -201,19 +201,19 @@
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>
         <!-- Security -->
-        <bouncycastle.version>1.79</bouncycastle.version>
+        <bouncycastle.version>1.80</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.12.6</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.116.Final</netty.version>
+        <netty.version>4.1.117.Final</netty.version>
         <netty-tcnative.version>2.0.69.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.69.0</grpc.version>
+        <grpc.version>1.70.0</grpc.version>
         <guava.version>33.4.0-jre</guava.version>
         <protobuf.version>4.29.3</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.27</swagger.core.version>
+        <swagger.core.version>2.2.28</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -235,7 +235,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.6.4.Final</hibernate.version>
+        <hibernate.version>6.6.5.Final</hibernate.version>
         <hikari-cp.version>6.2.1</hikari-cp.version>
 
         <!-- Cache -->
@@ -259,7 +259,7 @@
 
         <!-- Testing  -->
         <testng.version>7.10.2</testng.version>
-        <jdbc.version>9.1.0</jdbc.version>
+        <jdbc.version>9.2.0</jdbc.version>
     </properties>
 
     <dependencies>
