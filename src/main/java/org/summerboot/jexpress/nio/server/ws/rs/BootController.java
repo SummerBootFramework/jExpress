@@ -35,6 +35,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.FormParam;
@@ -384,7 +385,7 @@ abstract public class BootController extends PingController {
     @Deamon
     //@CaptureTransaction("user.signJWT")
     @Log(requestBody = false, responseHeader = false)
-    public Caller longin_JSON(@Nonnull LoginVo loginVo,
+    public Caller longin_JSON(@Valid @Nonnull LoginVo loginVo,
                               @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
         return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
     }

@@ -1,7 +1,15 @@
 package org.summerboot.jexpress.nio.server.domain;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 public class LoginVo {
+    @NotNull
+    @NotEmpty
     protected String username;
+
+    @NotNull
+    @NotEmpty
     protected String password;
 
     public LoginVo() {

@@ -85,6 +85,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         Caller caller = authenticate(username, pwd, (E) metaData, authenticatorListener, context);
         context.poi(BootPOI.LDAP_END);
 
+        context.caller(caller);
         return signJWT(caller, validForMinutes, context);
     }
 
@@ -109,7 +110,6 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         if (authenticatorListener != null) {
             authenticatorListener.onLoginSuccess(caller.getUid(), token);
         }
-        context.caller(caller);
         return token;
     }
 

@@ -105,6 +105,7 @@ public class NioHttpUtil {
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
 
+
     public static long sendResponse(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings) {
         String headerKey_reference;
         String headerKey_serverTimestamp;
@@ -117,44 +118,40 @@ public class NioHttpUtil {
         }
         serviceContext.responseHeader(headerKey_reference, serviceContext.txId());
         serviceContext.responseHeader(headerKey_serverTimestamp, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
+        final HttpResponseStatus status = serviceContext.status();
 
         if (serviceContext.file() != null) {
             return sendFile(ctx, isKeepAlive, serviceContext);
-        }
-
-        HttpResponseStatus status = serviceContext.status();
-        ResponseEncoder responseEncoder = serviceContext.responseEncoder();
-        if (StringUtils.isBlank(serviceContext.txt()) && status.code() >= 400) {
-            if (serviceContext.error() == null) {
-                serviceContext.error(null);
-            }
-
-            String clientAcceptContentType = serviceContext.clientAcceptContentType();
-            String textResponse;
-            if (clientAcceptContentType != null && clientAcceptContentType.contains("xml")) {
-                textResponse = serviceContext.error().toXML();
-                serviceContext.contentType(MediaType.APPLICATION_XML);
-            } else {
-                textResponse = serviceContext.error().toJson();
-                serviceContext.contentType(MediaType.APPLICATION_JSON);
-            }
-            if (errorAuditor != null) {
-                textResponse = errorAuditor.beforeSendingError(textResponse);
-            }
-            serviceContext.txt(textResponse);
-        }
-        if (StringUtils.isNotBlank(serviceContext.txt())) {
-            return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true, responseEncoder);
         }
         if (serviceContext.redirect() != null) {
             sendRedirect(ctx, serviceContext.redirect(), status);
             return 0;
         }
 
-        if (serviceContext.autoConvertBlank200To204() && HttpResponseStatus.OK.equals(status)) {
-            status = HttpResponseStatus.NO_CONTENT;
+        boolean hasErrorContent = StringUtils.isEmpty(serviceContext.txt()) && status.code() >= 400;
+        if (hasErrorContent) {
+            if (serviceContext.error() == null) {
+                serviceContext.error(null);
+            }
+            String clientAcceptContentType = serviceContext.clientAcceptContentType();
+            String errorResponse;
+            if (clientAcceptContentType != null && clientAcceptContentType.contains("xml")) {
+                errorResponse = serviceContext.error().toXML();
+                serviceContext.contentType(MediaType.APPLICATION_XML);
+            } else {
+                errorResponse = serviceContext.error().toJson();
+                serviceContext.contentType(MediaType.APPLICATION_JSON);
+            }
+            if (errorAuditor != null) {
+                errorResponse = errorAuditor.beforeSendingError(errorResponse);
+            }
+            serviceContext.txt(errorResponse);
         }
-        return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), status, null, serviceContext.contentType(), serviceContext.charsetName(), true, responseEncoder);
+
+        if (HttpResponseStatus.OK.equals(status) && serviceContext.autoConvertBlank200To204() && StringUtils.isEmpty(serviceContext.txt())) {
+            serviceContext.status(HttpResponseStatus.NO_CONTENT);
+        }
+        return sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), serviceContext.status(), serviceContext.txt(), serviceContext.contentType(), serviceContext.charsetName(), true, serviceContext.responseEncoder());
     }
 
     protected static final String DEFAULT_CHARSET = "UTF-8";
@@ -195,13 +192,8 @@ public class NioHttpUtil {
         if (contentType != null) {
             h.set(HttpHeaderNames.CONTENT_TYPE, contentType + ";charset=" + charsetName);
         }
-        long contentLength = resp.content().readableBytes();
-
-        if (contentLength > Integer.MAX_VALUE) {
-            h.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(contentLength));
-        } else {
-            h.setInt(HttpHeaderNames.CONTENT_LENGTH, (int) contentLength);
-        }
+        int contentLength = resp.content().readableBytes();
+        h.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(contentLength));
 
         // send
         if (isKeepAlive) {//HttpUtil.isKeepAlive(req);
@@ -221,6 +213,9 @@ public class NioHttpUtil {
                 ctx.write(resp).addListener(ChannelFutureListener.CLOSE);
             }
         }
+        if (serviceHeaders != null) {
+            serviceHeaders.set(h);
+        }
         return contentLength;
     }
 
@@ -231,6 +226,7 @@ public class NioHttpUtil {
         long fileLength = -1;
         final RandomAccessFile randomAccessFile;
         File file = serviceContext.file();
+        serviceContext.memo("sendFile", file.getAbsolutePath());
         String filePath = file.getName();
         try {
             randomAccessFile = new RandomAccessFile(file, "r");

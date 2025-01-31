@@ -31,6 +31,8 @@ public class NamedDefaultThreadFactory implements ThreadFactory {
         String namePrefix = tpeName + "-"
                 + poolNumber.getAndIncrement()
                 + (useVirtualThread ? "-vt-" : "-pt-");
-        return new NamedDefaultThreadFactory(namePrefix);
+        return useVirtualThread
+                ? Thread.ofVirtual().name(namePrefix, 0).factory() // Java 21+ only
+                : new NamedDefaultThreadFactory(namePrefix);
     }
 }
