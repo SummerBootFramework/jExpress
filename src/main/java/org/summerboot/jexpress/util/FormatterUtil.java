@@ -19,6 +19,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.security.SecurityUtil;
 
 import javax.imageio.ImageIO;
@@ -291,7 +292,18 @@ public class FormatterUtil {
         return toString(buffer, true, true, 8, "    ");
     }
 
-    public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int showNumberOfBytesPerLine, String delimiter) {
+    public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int numberOfBytesPerLine) {
+        return toString(buffer, showStatus, showHeaderfooter, numberOfBytesPerLine, "    ");
+    }
+
+    public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int numberOfBytesPerLine, String delimiter) {
+        return toString(buffer, showStatus, showHeaderfooter, numberOfBytesPerLine, delimiter, BootConstant.BR, "ByteBuffer Contents starts", "ByteBuffer Contents ends");
+    }
+
+    public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int numberOfBytesPerLine, String delimiter, String br, String header, String footer) {
+        if (br == null) {
+            br = BootConstant.BR;
+        }
         StringBuilder sb = new StringBuilder();
         if (showStatus) {
             sb.append("ByteBuffer status:")
@@ -299,26 +311,65 @@ public class FormatterUtil {
                     .append(" Position=").append(buffer.position())
                     .append(" Limit=").append(buffer.limit())
                     .append(" Capacity=").append(buffer.capacity())
-                    .append(" Remaining=").append(buffer.remaining());
+                    .append(" Remaining=").append(buffer.remaining())
+                    .append(br);
         }
         if (showHeaderfooter) {
-            sb.append("\n************** ByteBuffer Contents starts **************\n");
+            buuldHeaderfooter(header, numberOfBytesPerLine, delimiter, sb, br);
         }
         boolean eol = false;
-        if (showNumberOfBytesPerLine > 0) {
+        if (numberOfBytesPerLine > 0) {
             byte[] array = buffer.array();
             for (int i = 0; i < buffer.limit(); i++) {
-                eol = (i + 1) % showNumberOfBytesPerLine == 0;
-                sb.append(String.format("0x%02X", array[i])).append(eol ? "\n" : delimiter);
+                eol = (i + 1) % numberOfBytesPerLine == 0;
+                //String hexChars = String.format("0x%02X", array[i]);
+                // replaced String.format("0x%02X", i) with better performance api, 100 times faster via byte operations: 10k loads performace: 317ms vs 2ms
+                char[] hexChars = toString(array[i], true);
+                sb.append(hexChars).append(eol ? br : delimiter);
             }
         }
         if (showHeaderfooter) {
             if (!eol) {
                 sb.append("\n");
             }
-            sb.append("************** ByteBuffer Contents ends **************\n");
+            buuldHeaderfooter(footer, numberOfBytesPerLine, delimiter, sb, br);
         }
         return sb.toString();
+    }
+
+    public static final short HEX_STRING_SIZE = 4;
+    public static final char[] HexArrayIndexTable = "0123456789ABCDEF".toCharArray();
+
+    private static void buuldHeaderfooter(String title, int numberOfBytesPerLine, String delimiter, StringBuilder sb, String br) {
+        int delimiterSize = delimiter.length();
+        int lineSize = HEX_STRING_SIZE * numberOfBytesPerLine + delimiterSize * (numberOfBytesPerLine - 1);
+        int titleSize = title.length() + 2;
+        int asteriskSize = Math.max(2, (lineSize - titleSize) / 2);
+        String asteriskLine = StringUtils.repeat("*", asteriskSize);
+        sb.append(asteriskLine).append(" ").append(title).append(" ").append(asteriskLine).append(br);
+    }
+
+    /**
+     * replaced String.format("0x%02X", i) with better performance api, 100 times faster via byte operations: 10k loads performace: 317ms vs 2ms
+     *
+     * @param v
+     * @return
+     */
+    public static char[] toString(byte v, boolean append0x) {
+        int b = v & 0xFF;
+        char[] hexChars;
+        if (append0x) {
+            hexChars = new char[4];
+            hexChars[0] = '0';
+            hexChars[1] = 'x';
+            hexChars[2] = HexArrayIndexTable[b >>> 4];
+            hexChars[3] = HexArrayIndexTable[b & 0x0F];
+        } else {
+            hexChars = new char[2];
+            hexChars[0] = HexArrayIndexTable[b >>> 4];
+            hexChars[1] = HexArrayIndexTable[b & 0x0F];
+        }
+        return hexChars;
     }
 
     /**
