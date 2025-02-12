@@ -344,10 +344,11 @@ public class FormatterUtil {
     public static final char[] HexArrayIndexTable = "0123456789ABCDEF".toCharArray();
 
     private static void buuldHeaderfooter(String title, int numberOfBytesPerLine, String delimiter, StringBuilder sb, String br) {
-        int delimiterSize = delimiter.length();
+        int delimiterSize = delimiter.equals("\t") ? 4 : delimiter.length();
         int lineSize = HEX_STRING_SIZE * numberOfBytesPerLine + delimiterSize * (numberOfBytesPerLine - 1);
         int titleSize = title.length() + 2;
-        int asteriskSize = Math.max(2, (lineSize - titleSize) / 2);
+        int totalAsteriskSize = lineSize - titleSize;
+        int asteriskSize = Math.max(2, totalAsteriskSize / 2 + totalAsteriskSize % 2);
         String asteriskLine = StringUtils.repeat("*", asteriskSize);
         sb.append(asteriskLine).append(" ").append(title).append(" ").append(asteriskLine).append(br);
     }
