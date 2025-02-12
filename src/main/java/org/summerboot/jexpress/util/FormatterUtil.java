@@ -289,7 +289,7 @@ public class FormatterUtil {
     }
 
     public static String toString(ByteBuffer buffer) {
-        return toString(buffer, true, true, 5, "\t");
+        return toString(buffer, true, true, 10, "\t");
     }
 
     public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int numberOfBytesPerLine) {
