@@ -289,11 +289,11 @@ public class FormatterUtil {
     }
 
     public static String toString(ByteBuffer buffer) {
-        return toString(buffer, true, true, 8, "    ");
+        return toString(buffer, true, true, 5, "\t");
     }
 
     public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int numberOfBytesPerLine) {
-        return toString(buffer, showStatus, showHeaderfooter, numberOfBytesPerLine, "    ");
+        return toString(buffer, showStatus, showHeaderfooter, numberOfBytesPerLine, "\t");
     }
 
     public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int numberOfBytesPerLine, String delimiter) {
@@ -301,6 +301,9 @@ public class FormatterUtil {
     }
 
     public static String toString(ByteBuffer buffer, boolean showStatus, boolean showHeaderfooter, int numberOfBytesPerLine, String delimiter, String br, String header, String footer) {
+        if (buffer == null) {
+            return "";
+        }
         if (br == null) {
             br = BootConstant.BR;
         }
