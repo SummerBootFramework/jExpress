@@ -220,7 +220,7 @@ public class ReflectionUtil {
     public static Object toJavaType(Class targetClass, Type genericType, String value, final boolean trim, final boolean autoDecrypt,
                                     final boolean isEmailRecipients, EnumConvert.To enumConvert, String collectionDelimiter) throws IllegalAccessException {
         if (StringUtils.isBlank(value)) {
-            Object nullValue = ReflectionUtil.toStandardJavaType(null, targetClass, autoDecrypt, false, enumConvert);
+            Object nullValue = ReflectionUtil.toStandardJavaType(null, trim, targetClass, autoDecrypt, false, enumConvert);
             return nullValue;
         }
 
@@ -258,7 +258,7 @@ public class ReflectionUtil {
             Class classT = targetClass.getComponentType();
             Object array = Array.newInstance(classT, valuesStr.length);
             for (int i = 0; i < valuesStr.length; i++) {
-                Array.set(array, i, toStandardJavaType(valuesStr[i], classT, autoDecrypt, isEmailRecipients, enumConvert));
+                Array.set(array, i, toStandardJavaType(valuesStr[i], trim, classT, autoDecrypt, isEmailRecipients, enumConvert));
             }
             return array;
         } else if (targetClass.equals(Set.class)) {
@@ -269,7 +269,7 @@ public class ReflectionUtil {
             Class classT = upperBoundClasses[0];//(Class) argTypes[0];
             Object array = Array.newInstance(classT, valuesStr.length);
             for (int i = 0; i < valuesStr.length; i++) {
-                Array.set(array, i, toStandardJavaType(valuesStr[i], classT, autoDecrypt, isEmailRecipients, enumConvert));
+                Array.set(array, i, toStandardJavaType(valuesStr[i], trim, classT, autoDecrypt, isEmailRecipients, enumConvert));
             }
             return Set.of((Object[]) array);
         } else if (targetClass.equals(SortedSet.class)) {
@@ -280,7 +280,7 @@ public class ReflectionUtil {
             Class classT = upperBoundClasses[0];//(Class) argTypes[0];
             Object array = Array.newInstance(classT, valuesStr.length);
             for (int i = 0; i < valuesStr.length; i++) {
-                Array.set(array, i, toStandardJavaType(valuesStr[i], classT, autoDecrypt, isEmailRecipients, enumConvert));
+                Array.set(array, i, toStandardJavaType(valuesStr[i], trim, classT, autoDecrypt, isEmailRecipients, enumConvert));
             }
             return ImmutableSortedSet.copyOf(List.of((Object[]) array));
         } else if (targetClass.equals(List.class)) {
@@ -291,7 +291,7 @@ public class ReflectionUtil {
             Class classT = upperBoundClasses[0];//(Class) argTypes[0];
             Object array = Array.newInstance(classT, valuesStr.length);
             for (int i = 0; i < valuesStr.length; i++) {
-                Array.set(array, i, toStandardJavaType(valuesStr[i], classT, autoDecrypt, isEmailRecipients, enumConvert));
+                Array.set(array, i, toStandardJavaType(valuesStr[i], trim, classT, autoDecrypt, isEmailRecipients, enumConvert));
             }
             return List.of((Object[]) array);
         } else if (targetClass.equals(Map.class)) {
@@ -304,8 +304,8 @@ public class ReflectionUtil {
             Map ret = new HashMap();
             for (var k : stringMap.keySet()) {
                 String v = stringMap.get(k);
-                Object keyT = toStandardJavaType(k, classT1, autoDecrypt, isEmailRecipients, enumConvert);
-                Object valueT = toStandardJavaType(v, classT2, autoDecrypt, isEmailRecipients, enumConvert);
+                Object keyT = toStandardJavaType(k, trim, classT1, autoDecrypt, isEmailRecipients, enumConvert);
+                Object valueT = toStandardJavaType(v, trim, classT2, autoDecrypt, isEmailRecipients, enumConvert);
                 ret.put(keyT, valueT);
             }
             return Map.copyOf(ret);
@@ -326,7 +326,7 @@ public class ReflectionUtil {
                 throw new IllegalArgumentException("invalid json data: " + value, ex);
             }
         } else {
-            Object v = toStandardJavaType(value, targetClass, autoDecrypt, isEmailRecipients, enumConvert);
+            Object v = toStandardJavaType(value, trim, targetClass, autoDecrypt, isEmailRecipients, enumConvert);
             return v;
         }
     }
@@ -342,7 +342,7 @@ public class ReflectionUtil {
      * @param isEmailRecipients
      * @return
      */
-    public static Object toStandardJavaType(String value, final Class targetClass, final boolean autoDecrypt,
+    public static Object toStandardJavaType(String value, final boolean trim, final Class targetClass, final boolean autoDecrypt,
                                             final boolean isEmailRecipients, EnumConvert.To enumConvert) {
         if (StringUtils.isBlank(value)) {
             if (targetClass.equals(boolean.class)) {
@@ -362,7 +362,9 @@ public class ReflectionUtil {
                 return null;
             }
         }
-        value = value.trim();
+        if (trim) {
+            value = value.trim();
+        }
         if (autoDecrypt && value.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
             try {
                 value = SecurityUtil.decrypt(value, true);
