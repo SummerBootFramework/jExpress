@@ -314,7 +314,7 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.cli.psv", defaultValue = "psv")
     private String cliName_psv = "psv";
 
-    @Config(key = "naming.memo.delimiter", defaultValue = ": ")
+    @Config(key = "naming.memo.delimiter", defaultValue = ": ", trim = false)
     private String memoDelimiter = ": ";
 
     public Set<String> getRootPackageNames() {

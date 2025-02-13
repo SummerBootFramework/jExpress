@@ -380,7 +380,7 @@ class JaxRsRequestParameter {
             return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
         }
         try {
-            return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, false, false, enumConvert, collectionDelimiter);
+            return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, true, false, false, enumConvert, collectionDelimiter);
         } catch (Throwable ex) {
             Err e = new Err(BootErrorCode.BAD_REQUEST_DATA, null, null, ex, "Failed to parse data type: invalid " + type + "{" + key + "}=" + value);
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);

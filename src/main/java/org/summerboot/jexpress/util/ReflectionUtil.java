@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableSortedSet;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
+import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
 import org.summerboot.jexpress.security.SecurityUtil;
 
@@ -209,19 +210,23 @@ public class ReflectionUtil {
         Class targetClass = field.getType();
         Type genericType = field.getGenericType();
         field.setAccessible(true);
-        field.set(instance, toJavaType(targetClass, genericType, value, autoDecrypt, isEmailRecipients, null, collectionDelimiter));
+        Config cfgSettings = field.getAnnotation(Config.class);
+        boolean trim = cfgSettings == null ? false : cfgSettings.trim();
+        field.set(instance, toJavaType(targetClass, genericType, value, trim, autoDecrypt, isEmailRecipients, null, collectionDelimiter));
     }
 
     protected static final Type[] DEFAULT_ARG_TYPES = {String.class, String.class};
 
-    public static Object toJavaType(Class targetClass, Type genericType, String value, final boolean autoDecrypt,
+    public static Object toJavaType(Class targetClass, Type genericType, String value, final boolean trim, final boolean autoDecrypt,
                                     final boolean isEmailRecipients, EnumConvert.To enumConvert, String collectionDelimiter) throws IllegalAccessException {
         if (StringUtils.isBlank(value)) {
             Object nullValue = ReflectionUtil.toStandardJavaType(null, targetClass, autoDecrypt, false, enumConvert);
             return nullValue;
         }
 
-        value = value.trim();
+        if (trim) {
+            value = value.trim();
+        }
 //        Class targetClass = field.getType();
 //        Type genericType = field.getGenericType();
         Type[] argTypes = DEFAULT_ARG_TYPES;
