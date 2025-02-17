@@ -206,8 +206,8 @@
         <jwt.version>0.12.6</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.117.Final</netty.version>
-        <netty-tcnative.version>2.0.69.Final</netty-tcnative.version>
+        <netty.version>4.1.118.Final</netty.version>
+        <netty-tcnative.version>2.0.70.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.70.0</grpc.version>
         <guava.version>33.4.0-jre</guava.version>
@@ -228,14 +228,14 @@
         <jackson.version>2.18.2</jackson.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.2</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.4</tomcat-embed-el.version>
         <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.6.6.Final</hibernate.version>
+        <hibernate.version>6.6.8.Final</hibernate.version>
         <hikari-cp.version>6.2.1</hikari-cp.version>
 
         <!-- Cache -->
@@ -254,11 +254,11 @@
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.18</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext7-core.version>9.0.0</itext7-core.version>
-        <itext7-html2pdf.version>6.0.0</itext7-html2pdf.version>
+        <itext7-core.version>9.1.0</itext7-core.version>
+        <itext7-html2pdf.version>6.1.0</itext7-html2pdf.version>
 
         <!-- Testing  -->
-        <testng.version>7.10.2</testng.version>
+        <testng.version>7.11.0</testng.version>
         <jdbc.version>9.2.0</jdbc.version>
     </properties>
 
