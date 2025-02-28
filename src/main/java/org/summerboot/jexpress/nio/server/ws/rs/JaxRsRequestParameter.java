@@ -370,21 +370,21 @@ class JaxRsRequestParameter {
                     Err e = new Err(BootErrorCode.BAD_REQUEST_MISSING_REQUIRED_FILED, null, null, null, "Missing Required Filed: " + type + "{" + key + "}=" + value);
                     context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                 }
-                return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
+                return ReflectionUtil.toStandardJavaType(null, false, targetClass, false, false, null);//primitive types devault value or null
             }
         }
         String regex = pattern == null ? null : pattern.regexp();
         if (regex != null && !value.matches(regex)) {
             Err e = new Err(BootErrorCode.BAD_REQUEST_DATA, null, null, null, "Failed to parse data type: invalid " + type + "{" + key + "}=" + value + " by regex=" + regex);
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);
-            return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
+            return ReflectionUtil.toStandardJavaType(null, false, targetClass, false, false, null);//primitive types devault value or null
         }
         try {
-            return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, false, false, enumConvert, collectionDelimiter);
+            return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, true, false, false, enumConvert, collectionDelimiter);
         } catch (Throwable ex) {
             Err e = new Err(BootErrorCode.BAD_REQUEST_DATA, null, null, ex, "Failed to parse data type: invalid " + type + "{" + key + "}=" + value);
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);
-            return ReflectionUtil.toStandardJavaType(null, targetClass, false, false, null);//primitive types devault value or null
+            return ReflectionUtil.toStandardJavaType(null, false, targetClass, false, false, null);//primitive types devault value or null
         }
     }
 }

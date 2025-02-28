@@ -274,7 +274,7 @@ public abstract class BootConfig implements JExpressConfig {
             }
             boolean isSpecifiedInCfgFile = props.containsKey(annotationKey);
             if (isSpecifiedInCfgFile) {// 2. empty cfg value as null 
-                Object nullValue = ReflectionUtil.toStandardJavaType(null, field.getType(), false, false, null);
+                Object nullValue = ReflectionUtil.toStandardJavaType(null, false, field.getType(), false, false, null);
                 field.set(this, nullValue);
                 return;
             } else {

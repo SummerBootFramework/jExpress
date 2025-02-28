@@ -62,4 +62,6 @@ public @interface Config {
 
     String collectionDelimiter() default ",";
 
+    boolean trim() default true;
+
 }

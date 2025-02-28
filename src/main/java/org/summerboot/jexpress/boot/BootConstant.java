@@ -17,17 +17,18 @@ package org.summerboot.jexpress.boot;
 
 import org.apache.logging.log4j.Level;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface BootConstant {
 
-    String APP_ID = String.format("%06d", new Random().nextInt(999999));
+    int APP_ID_VALUE = new SecureRandom().nextInt(999999);
+    String APP_ID = String.format("%06d", APP_ID_VALUE);
 
     //version
-    String VERSION = "jExpress 2.5.0";
+    String VERSION = "jExpress 2.5.1";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
     String DEFAULT_ADMIN_MM = "changeit";
