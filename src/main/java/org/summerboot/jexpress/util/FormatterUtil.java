@@ -60,6 +60,7 @@ public class FormatterUtil {
 
     public static final String[] EMPTY_STR_ARRAY = {};
     public static final String REGEX_CSV = "\\s*,\\s*";
+    public static final String REGEX_PSV = "[\\|\\s]+";
     public static final String REGEX_URL = "\\s*/\\s*";
     public static final String REGEX_BINDING_MAP = "\\s*:\\s*";
     public static final String REGEX_EMAIL = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
@@ -75,6 +76,10 @@ public class FormatterUtil {
             return parseCsv(csv);
         }
         return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split("\\s*" + delimiter + "\\s*");
+    }
+
+    public static String[] parsePsv(String csv) {
+        return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split(REGEX_PSV);
     }
 
     public static String[] parseCsv(String csv) {

@@ -205,6 +205,9 @@ public class NioServer {
                 System.out.println("Server " + appInfo + " (" + listenerInfo + ") is stopped");
             });
             List<String> loadBalancingPingEndpoints = BackOffice.agent.getLoadBalancingPingEndpoints();
+            if (loadBalancingPingEndpoints.isEmpty()) {
+                loadBalancingPingEndpoints.add("");
+            }
             for (String loadBalancingPingEndpoint : loadBalancingPingEndpoints) {
                 String info = "Netty HTTP server [" + appInfo + "] (" + listenerInfo + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint);
                 memo.append(BootConstant.BR).append(info);

@@ -137,15 +137,15 @@ public class HttpNioChannelInitializer extends NioChannelInitializer {
             channelPipeline.addLast("Ping", defaultHttpPingHandler);
         }
 
-        // 7*. Tell the pipeline to run My Business Logic Handler's event handler methods in a different thread than an I/O thread, so that the I/O thread is not blocked by a time-consuming task. If the business logic is fully asynchronous or finished very quickly, no need to specify a group.
+        // 7*. Tell the pipeline to run My Business Logic Handler's event handler methods in a different thread than an I/O thread, so that the I/O thread is not blocked by a time-consuming task.
+        // If the business logic is fully asynchronous or finished very quickly, no need to specify a group.
         if (namedBusiness != null) {
             for (String named : namedBusiness) {
                 ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(named)));
                 channelPipeline.addLast("Biz_" + named, ch);
             }
-        } else {
-            channelPipeline.addLast("Biz", defaultHttpRequestHandler);
         }
+        channelPipeline.addLast("Biz_jExpress", defaultHttpRequestHandler);
     }
 
 }
