@@ -21,8 +21,10 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.SocketAddress;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.Set;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -107,16 +109,75 @@ public class GeoIpUtil {
 
     public static void showAddress(String host, int port) {
         InetSocketAddress address = new InetSocketAddress(host, port);
-        System.out.println("\n" + host);
-        showAddress(address);
+        String info = showAddress(address);
+        System.out.println(info);
     }
 
-    public static void showAddress(InetSocketAddress address) {
-        System.out.println("\t getHostName: " + address.getHostName());
-        System.out.println("\t getHostString: " + address.getHostString());
-        System.out.println("\t getCanonicalHostName: " + address.getAddress().getCanonicalHostName());
-        System.out.println("\t getHostAddress: " + address.getAddress().getHostAddress());
-        System.out.println("\t getHostName: " + address.getAddress().getHostName());
-        System.out.println("\n");
+    public static String showAddress(InetSocketAddress address) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n isUnresolved=").append(address.isUnresolved());
+        sb.append("\n port=").append(address.getPort());
+        sb.append("\n toString=").append(address.toString());
+        sb.append("\n getHostString=").append(address.getHostString());
+        sb.append("\n getHostName=").append(address.getHostName());
+        sb.append("\n getAddress=").append(address.getAddress());
+        sb.append("\n getHostAddress=").append(address.getAddress().getHostAddress());
+        sb.append("\n getHostName=").append(address.getAddress().getHostName());
+        sb.append("\n getCanonicalHostName=").append(address.getAddress().getCanonicalHostName());
+        return sb.toString();
+    }
+
+    public static enum CallerAddressFilterResult {
+        OK, UnresolvedAddress, NotInWhiteList, InBlackList
+    }
+
+    public static enum CallerAddressFilterOption {
+        String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName
+    }
+
+    /**
+     * Simple filter for caller address
+     *
+     * @param callerAddr
+     * @param whiteList
+     * @param blackList
+     * @param option
+     * @return
+     */
+    public static CallerAddressFilterResult callerAddressFilter(SocketAddress callerAddr, Set<String> whiteList, Set<String> blackList, CallerAddressFilterOption option) {
+        if (callerAddr == null) {
+            return CallerAddressFilterResult.UnresolvedAddress;
+        }
+        String host;
+        if (callerAddr instanceof InetSocketAddress) {
+            InetSocketAddress address = (InetSocketAddress) callerAddr;
+            if (address.isUnresolved()) {
+                return CallerAddressFilterResult.UnresolvedAddress;
+            }
+            switch (option) {
+                case String -> host = address.toString();
+                case HostString -> host = address.getHostString();
+                case HostName -> host = address.getHostName();
+                case AddressStirng -> host = address.getAddress().toString();
+                case HostAddress -> host = address.getAddress().getHostAddress();
+                case AddrHostName -> host = address.getAddress().getHostName();
+                case CanonicalHostName -> host = address.getAddress().getCanonicalHostName();
+                default -> host = address.getHostName();
+            }
+        } else {
+            host = callerAddr.toString();
+        }
+
+        if (whiteList != null && !whiteList.isEmpty()) {
+            if (!whiteList.contains(host)) {
+                return CallerAddressFilterResult.NotInWhiteList;
+            }
+        }
+        if (blackList != null && !blackList.isEmpty()) {
+            if (blackList.contains(host)) {
+                return CallerAddressFilterResult.InBlackList;
+            }
+        }
+        return CallerAddressFilterResult.OK;
     }
 }

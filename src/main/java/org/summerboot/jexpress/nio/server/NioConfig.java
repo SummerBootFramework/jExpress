@@ -26,6 +26,7 @@ import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.GeoIpUtil;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -74,6 +75,13 @@ public class NioConfig extends BootConfig {
     protected volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = "nio.server.autostart", defaultValue = "true")
     protected volatile boolean autoStart = true;
+
+    @Config(key = "CallerAddressFilter.option", defaultValue = "HostName", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
+    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.HostName;
+    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format")
+    protected volatile Set<String> CallerAddressFilterWhitelist;
+    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format")
+    protected volatile Set<String> CallerAddressFilterBlacklist;
 
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")
@@ -496,6 +504,18 @@ public class NioConfig extends BootConfig {
 
     public boolean isAutoStart() {
         return autoStart;
+    }
+
+    public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
+        return CallerAddressFilterOption;
+    }
+
+    public Set<String> getCallerAddressFilterWhitelist() {
+        return CallerAddressFilterWhitelist;
+    }
+
+    public Set<String> getCallerAddressFilterBlacklist() {
+        return CallerAddressFilterBlacklist;
     }
 
     public KeyManagerFactory getKmf() {

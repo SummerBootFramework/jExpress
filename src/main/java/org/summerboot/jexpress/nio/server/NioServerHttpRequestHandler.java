@@ -41,6 +41,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.util.GeoIpUtil;
 import org.summerboot.jexpress.util.TimeUtil;
 
 import java.net.URLDecoder;
@@ -152,8 +153,18 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             ProcessorSettings processorSettings = null;
             try {
                 if (isDecoderSuccess) {
-                    processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
-                    processTime = System.currentTimeMillis() - start;
+                    GeoIpUtil.CallerAddressFilterResult filterResult = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
+                    switch (filterResult) {
+                        case OK -> {
+                            processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
+                            processTime = System.currentTimeMillis() - start;
+                        }
+                        default -> {
+                            Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + filterResult);
+                            context.error(err).status(HttpResponseStatus.NOT_ACCEPTABLE);
+                        }
+                    }
+
                 } else {
                     Throwable cause = req.decoderResult().cause();
                     Err err = new Err(BootErrorCode.NIO_REQUEST_BAD_ENCODING, null, cause == null ? "" : cause.getMessage(), null, cause.toString());

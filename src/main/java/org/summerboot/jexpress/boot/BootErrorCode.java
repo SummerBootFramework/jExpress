@@ -81,6 +81,7 @@ public interface BootErrorCode {
     int AUTH_LOGIN_FAILED = getErrorCode(AUTH_BASE + 5);
     int AUTH_NO_PERMISSION = getErrorCode(AUTH_BASE + 6);
     int AUTH_INVALID_USER = getErrorCode(AUTH_BASE + 7);
+    int AUTH_INVALID_IP = getErrorCode(AUTH_BASE + 8);
 
     //Integration
     int ACCESS_BASE = getErrorCode(50);
