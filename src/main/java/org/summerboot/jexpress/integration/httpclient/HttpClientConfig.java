@@ -70,6 +70,13 @@ abstract public class HttpClientConfig extends BootConfig {
     }
 
     @Override
+    protected void reset() {
+        jsonParserTimeZone = TimeZone.getDefault();
+        httpClientCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        httpClientMaxSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+    }
+
+    @Override
     public void shutdown() {
         String tn = Thread.currentThread().getName();
         if (tpe != null && !tpe.isShutdown()) {
@@ -86,7 +93,7 @@ abstract public class HttpClientConfig extends BootConfig {
 
     //3.1 HTTP Client Security
     @ConfigHeader(title = "1. HTTP Client Security")
-    @Config(key = "httpclient.ssl.protocol")
+    @Config(key = "httpclient.ssl.protocol", defaultValue = "TLSv1.3")
     protected volatile String protocol = "TLSv1.3";
 
     protected static final String KEY_kmf_key = "httpclient.ssl.KeyStore";
@@ -127,7 +134,7 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.proxy.host")
     protected volatile String proxyHost;
 
-    @Config(key = "httpclient.proxy.port")
+    @Config(key = "httpclient.proxy.port", defaultValue = "8080")
     protected volatile int proxyPort = 8080;
 
     @Config(key = "httpclient.proxy.userName")
@@ -142,12 +149,12 @@ abstract public class HttpClientConfig extends BootConfig {
 
     //    @Config(key = "httpclient.proxy.useAuthenticator")
 //    protected volatile boolean useAuthenticator = false;
-    @Config(key = "httpclient.redirectOption")
+    @Config(key = "httpclient.redirectOption", defaultValue = "NEVER")
     protected volatile HttpClient.Redirect redirectOption = HttpClient.Redirect.NEVER;
 
-    @Config(key = "httpclient.fromJson.CaseInsensitive")
+    @Config(key = "httpclient.fromJson.CaseInsensitive", defaultValue = "false")
     protected volatile boolean fromJsonCaseInsensitive = false;
-    @Config(key = "httpclient.fromJson.failOnUnknownProperties")
+    @Config(key = "httpclient.fromJson.failOnUnknownProperties", defaultValue = "true")
     protected volatile boolean fromJsonFailOnUnknownProperties = true;
     @Config(key = "httpclient.fromJson.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
@@ -160,10 +167,10 @@ abstract public class HttpClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile HttpClient.Builder builder;
 
-    @Config(key = "httpclient.timeout.connect.ms", desc = "The maximum time to wait for only the connection to be established, should be less than httpclient.timeout.ms")
+    @Config(key = "httpclient.timeout.connect.ms", defaultValue = "3000", desc = "The maximum time to wait for only the connection to be established, should be less than httpclient.timeout.ms")
     protected volatile long httpConnectTimeoutMs = 3000;
 
-    @Config(key = "httpclient.timeout.ms", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
+    @Config(key = "httpclient.timeout.ms", defaultValue = "5000", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
     protected volatile long httpClientTimeoutMs = 5000;
 
     @Config(key = "httpclient.executor.mode", defaultValue = "VirtualThread",

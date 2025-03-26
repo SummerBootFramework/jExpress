@@ -59,6 +59,12 @@ public class AuthConfig extends BootConfig {
     public static final AuthConfig cfg = new AuthConfig();
 
     protected AuthConfig() {
+        reset();
+    }
+
+    @Override
+    protected void reset() {
+        ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
     }
 
     @Override
@@ -75,10 +81,10 @@ public class AuthConfig extends BootConfig {
 
     //1.1 LDAP settings
     @ConfigHeader(title = "1.1 LDAP connection settings")
-    @Config(key = "ldap.type.AD",
+    @Config(key = "ldap.type.AD", defaultValue = "false",
             desc = "set it true only when LDAP is implemented by Microsoft Active Directory (AD)\n"
                     + "false when use others like Open LDAP, IBM Tivoli, Apache")
-    protected volatile boolean typeAD = false;
+    protected volatile boolean typeAD;
 
     @Config(key = "ldap.host",
             desc = "LDAP will be disabled when host is not provided")
@@ -99,7 +105,7 @@ public class AuthConfig extends BootConfig {
     protected volatile String bindingPassword;
 
     @Config(key = "ldap.PasswordAlgorithm", defaultValue = "SHA3-256")
-    protected volatile String passwordAlgorithm = "SHA3-256";
+    protected volatile String passwordAlgorithm;
 
     @Config(key = "ldap.schema.TenantGroup.ou")
     protected volatile String ldapScheamTenantGroupOU;
@@ -112,11 +118,11 @@ public class AuthConfig extends BootConfig {
             desc = DESC_KMF)
     protected volatile KeyManagerFactory kmf;
 
-    @Config(key = "ldap.ssl.protocol")
-    protected volatile String ldapTLSProtocol = "TLSv1.3";
+    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3")
+    protected volatile String ldapTLSProtocol;
 
     @Config(key = "ldap.SSLConnectionFactoryClass")
-    protected volatile String ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+    protected volatile String ldapSSLConnectionFactoryClassName;
 
     //1.3 LDAP Client truststore
     @ConfigHeader(title = "1.3 LDAP Client truststore")
@@ -182,8 +188,8 @@ public class AuthConfig extends BootConfig {
     @JsonIgnore
     protected volatile JwtParser jwtParser;
 
-    @Config(key = "jwt.ttl.minutes")
-    protected volatile int jwtTTLMinutes = 1440;
+    @Config(key = "jwt.ttl.minutes", defaultValue = "1440")
+    protected volatile int jwtTTLMinutes;
 
     @Config(key = "jwt.issuer")
     protected volatile String jwtIssuer;

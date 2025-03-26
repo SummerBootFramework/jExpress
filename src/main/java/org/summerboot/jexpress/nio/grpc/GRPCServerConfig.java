@@ -52,6 +52,12 @@ public class GRPCServerConfig extends BootConfig {
     protected GRPCServerConfig() {
     }
 
+    @Override
+    protected void reset() {
+        tpeCore = BootConstant.CPU_CORE * 2 + 1;
+        tpeMax = BootConstant.CPU_CORE * 2 + 1;
+    }
+
     //1. gRPC server config
     @ConfigHeader(title = "1. " + ID + " Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",

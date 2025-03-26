@@ -180,6 +180,29 @@ public abstract class BootConfig implements JExpressConfig {
         ApplicationUtil.createIfNotExist(location, classLoader, srcFileName, destFileName);
     }
 
+    protected void resetToDefault() throws Exception {
+        resetToNull();
+        reset();
+    }
+
+    protected void resetToNull() throws IllegalAccessException {
+        Class c = this.getClass();
+        List<Field> fields = ReflectionUtil.getDeclaredAndSuperClassesFields(c);
+        for (Field field : fields) {
+            Config cfgAnnotation = field.getAnnotation(Config.class);
+            if (cfgAnnotation == null) {
+                continue;
+            }
+            field.setAccessible(true);
+            //field.set(this, null);
+            Object nullValue = ReflectionUtil.toStandardJavaType(null, false, field.getType(), false, false, null);
+            field.set(this, nullValue);
+        }
+    }
+
+    protected void reset() throws Exception {
+    }
+
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
     }
 
@@ -215,6 +238,7 @@ public abstract class BootConfig implements JExpressConfig {
         }
         ConfigUtil helper = new ConfigUtil(this.cfgFile.getAbsolutePath());
         try {
+            resetToDefault();
             preLoad(cfgFile, isReal, helper, props);
         } catch (Throwable ex) {
             ex.printStackTrace();

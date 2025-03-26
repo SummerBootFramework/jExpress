@@ -59,6 +59,14 @@ public class NioConfig extends BootConfig {
     }
 
     @Override
+    protected void reset() {
+        nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
+        tpeCore = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        tpeMax = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        jsonParserTimeZone = TimeZone.getDefault();
+    }
+
+    @Override
     public void shutdown() {
         String tn = Thread.currentThread().getName();
         if (tpe != null && !tpe.isShutdown()) {
