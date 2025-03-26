@@ -375,7 +375,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * show config on demand
          */
-        if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO) && !cli.hasOption(BootConstant.CLI_CONFIG_DIR) && !cli.hasOption(BootConstant.CLI_CONFIG_DOMAIN)) {
+        if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO) && !cli.hasOption(BootConstant.CLI_CONFIG_DIR)) {
             String cfgName = cli.getOptionValue(BootConstant.CLI_CONFIG_DEMO);
             if (cfgName == null) {
                 String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
