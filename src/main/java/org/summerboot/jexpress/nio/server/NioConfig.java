@@ -79,9 +79,9 @@ public class NioConfig extends BootConfig {
     @Config(key = "CallerAddressFilter.option", defaultValue = "HostName", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
     protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.HostName;
     @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format")
-    protected volatile Set<String> CallerAddressFilterWhitelist;
+    protected volatile Set<String> callerAddressFilterWhitelist;
     @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format")
-    protected volatile Set<String> CallerAddressFilterBlacklist;
+    protected volatile Set<String> callerAddressFilterBlacklist;
 
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")
@@ -387,6 +387,8 @@ public class NioConfig extends BootConfig {
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
         createIfNotExist(FILENAME_KEYSTORE, FILENAME_KEYSTORE);
         //createIfNotExist(FILENAME_TRUSTSTORE_4SERVER);
+        callerAddressFilterWhitelist = null;
+        callerAddressFilterBlacklist = null;
     }
 
     @Override
@@ -511,11 +513,11 @@ public class NioConfig extends BootConfig {
     }
 
     public Set<String> getCallerAddressFilterWhitelist() {
-        return CallerAddressFilterWhitelist;
+        return callerAddressFilterWhitelist;
     }
 
     public Set<String> getCallerAddressFilterBlacklist() {
-        return CallerAddressFilterBlacklist;
+        return callerAddressFilterBlacklist;
     }
 
     public KeyManagerFactory getKmf() {

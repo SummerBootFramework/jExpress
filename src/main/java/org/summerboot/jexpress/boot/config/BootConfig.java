@@ -283,6 +283,8 @@ public abstract class BootConfig implements JExpressConfig {
                 if (hasDefaultValue) {// 3. no cfg item, use annotationDefaultValue
                     valueInCfgFile = annotationDefaultValue;
                 } else {// 4. no cfg item, no annotationDefaultValue, use class field default value
+//                    Object nullValue = ReflectionUtil.toStandardJavaType(null, false, field.getType(), false, false, null);
+//                    field.set(this, nullValue);
                     return;
                 }
             }

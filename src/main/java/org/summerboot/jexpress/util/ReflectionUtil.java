@@ -212,7 +212,8 @@ public class ReflectionUtil {
         field.setAccessible(true);
         Config cfgSettings = field.getAnnotation(Config.class);
         boolean trim = cfgSettings == null ? false : cfgSettings.trim();
-        field.set(instance, toJavaType(targetClass, genericType, value, trim, autoDecrypt, isEmailRecipients, null, collectionDelimiter));
+        Object v = toJavaType(targetClass, genericType, value, trim, autoDecrypt, isEmailRecipients, null, collectionDelimiter);
+        field.set(instance, v);
     }
 
     protected static final Type[] DEFAULT_ARG_TYPES = {String.class, String.class};
