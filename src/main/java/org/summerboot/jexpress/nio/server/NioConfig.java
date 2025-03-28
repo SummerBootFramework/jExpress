@@ -88,9 +88,9 @@ public class NioConfig extends BootConfig {
     protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.HostName;
     @Config(key = "CallerAddressFilter.Regex.Prefix", desc = "A non-blank prefix to mark a string as Regex in both Whitelist and Blacklist, blank means all strings are not Regex")
     protected volatile String callerAddressFilterRegexPrefix;
-    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example (when Regex.Prefix = RG): 127.0.0.1, RG^192\\.168\\.1\\.")
+    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example (when Regex.Prefix = RG): 127.0.0.1, RG^192\\\\.168\\\\.1\\\\.")
     protected volatile Set<String> callerAddressFilterWhitelist;
-    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\.168\\.2\\.")
+    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\\\.168\\\\.2\\\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
     //2. NIO Security
@@ -397,14 +397,30 @@ public class NioConfig extends BootConfig {
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
         createIfNotExist(FILENAME_KEYSTORE, FILENAME_KEYSTORE);
         //createIfNotExist(FILENAME_TRUSTSTORE_4SERVER);
-        callerAddressFilterWhitelist = null;
-        callerAddressFilterBlacklist = null;
     }
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
         if (StringUtils.isBlank(callerAddressFilterRegexPrefix)) {
             callerAddressFilterRegexPrefix = null;
+        } else {
+            if (callerAddressFilterWhitelist != null) {
+                for (String regex : callerAddressFilterWhitelist) {
+                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
+//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
+                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
+                    }
+                }
+            }
+            if (callerAddressFilterBlacklist != null) {
+                for (String regex : callerAddressFilterBlacklist) {
+                    GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
+                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
+//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
+                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
+                    }
+                }
+            }
         }
         // 7. Web Server Mode       
         rootFolder = cfgFile.getParentFile().getParentFile();
