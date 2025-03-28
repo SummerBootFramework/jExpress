@@ -24,7 +24,11 @@ import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -127,10 +131,6 @@ public class GeoIpUtil {
         return sb.toString();
     }
 
-    public static enum CallerAddressFilterResult {
-        OK, UnresolvedAddress, NotInWhiteList, InBlackList
-    }
-
     public static enum CallerAddressFilterOption {
         String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName
     }
@@ -142,17 +142,17 @@ public class GeoIpUtil {
      * @param whiteList
      * @param blackList
      * @param option
-     * @return
+     * @return null if OK, otherwise return the reason
      */
-    public static CallerAddressFilterResult callerAddressFilter(SocketAddress callerAddr, Set<String> whiteList, Set<String> blackList, CallerAddressFilterOption option) {
+    public static String callerAddressFilter(SocketAddress callerAddr, Set<String> whiteList, Set<String> blackList, String regexPrefix, CallerAddressFilterOption option) {
         if (callerAddr == null) {
-            return CallerAddressFilterResult.UnresolvedAddress;
+            return "caller address is null";
         }
         String host;
         if (callerAddr instanceof InetSocketAddress) {
             InetSocketAddress address = (InetSocketAddress) callerAddr;
             if (address.isUnresolved()) {
-                return CallerAddressFilterResult.UnresolvedAddress;
+                return "caller address (" + address + ") is unresolved";
             }
             switch (option) {
                 case String -> host = address.toString();
@@ -167,17 +167,66 @@ public class GeoIpUtil {
         } else {
             host = callerAddr.toString();
         }
+        return callerAddressFilter(host, whiteList, blackList, regexPrefix);
+    }
 
+    /**
+     * Simple filter for caller address
+     *
+     * @param host
+     * @param whiteList
+     * @param blackList
+     * @return null if OK, otherwise return the reason
+     */
+    public static String callerAddressFilter(String host, Set<String> whiteList, Set<String> blackList, String regexPrefix) {
         if (whiteList != null && !whiteList.isEmpty()) {
             if (!whiteList.contains(host)) {
-                return CallerAddressFilterResult.NotInWhiteList;
+                // check regex
+                if (regexPrefix != null) {
+                    for (String whiteRegex : whiteList) {
+                        if (whiteRegex.startsWith(regexPrefix)) {
+                            if (matches(host, whiteRegex, regexPrefix)) {
+                                return null;
+                            }
+                        }
+                    }
+                }
+                return "caller address (" + host + ") is not in white list";
             }
         }
         if (blackList != null && !blackList.isEmpty()) {
             if (blackList.contains(host)) {
-                return CallerAddressFilterResult.InBlackList;
+                return "caller address (" + host + ") is in black list";
+            } else if (regexPrefix != null) {
+                for (String blackRegex : blackList) {// check regex
+                    if (blackRegex.startsWith(regexPrefix)) {
+                        if (matches(host, blackRegex, regexPrefix)) {
+                            return "caller address (" + host + ") matches black list: " + blackRegex;
+                        }
+                    }
+                }
             }
         }
-        return CallerAddressFilterResult.OK;
+        return null;
+    }
+
+    public static Map<String, Pattern> REGEX_CACHE = new HashMap<>();
+
+    public static boolean matches(String input, String regex, String regexPrefix) {
+        if (regex == null || regex.isEmpty()) {
+            return true;
+        }
+        Pattern p = REGEX_CACHE.get(regex);
+        if (p == null) {
+            if (regexPrefix != null && regex.startsWith(regexPrefix)) {
+                p = Pattern.compile(regex.substring(regexPrefix.length()));
+            } else {
+                p = Pattern.compile(regex);
+            }
+            REGEX_CACHE.put(regex, p);
+        }
+        Matcher m = p.matcher(input);
+        //return m.matches();  This is a Java's misnamed method, it tries and matches ALL the input.
+        return m.find();// If you want to see if the regex matches an input text, use the .find() method of the matcher
     }
 }

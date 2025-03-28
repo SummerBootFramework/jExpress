@@ -153,23 +153,19 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             ProcessorSettings processorSettings = null;
             try {
                 if (isDecoderSuccess) {
-                    GeoIpUtil.CallerAddressFilterResult filterResult = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
-                    switch (filterResult) {
-                        case OK -> {
-                            processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
-                            processTime = System.currentTimeMillis() - start;
-                        }
-                        default -> {
-                            Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + filterResult);
-                            context.error(err).status(HttpResponseStatus.NOT_ACCEPTABLE);
-                        }
+                    String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterRegexPrefix(), nioCfg.getCallerAddressFilterOption());
+                    if (error == null) {
+                        processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
+                    } else {
+                        Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + error);
+                        context.error(err).status(HttpResponseStatus.NOT_ACCEPTABLE);
                     }
-
                 } else {
                     Throwable cause = req.decoderResult().cause();
                     Err err = new Err(BootErrorCode.NIO_REQUEST_BAD_ENCODING, null, cause == null ? "" : cause.getMessage(), null, cause.toString());
                     context.error(err).status(HttpResponseStatus.BAD_REQUEST);
                 }
+                processTime = System.currentTimeMillis() - start;
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
                 context.poi(BootPOI.SERVICE_END);
             } catch (Throwable ex) {

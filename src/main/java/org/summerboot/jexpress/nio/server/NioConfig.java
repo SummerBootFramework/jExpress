@@ -86,9 +86,11 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "CallerAddressFilter.option", defaultValue = "HostName", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
     protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.HostName;
-    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format")
+    @Config(key = "CallerAddressFilter.Regex.Prefix", desc = "A non-blank prefix to mark a string as Regex in both Whitelist and Blacklist, blank means all strings are not Regex")
+    protected volatile String callerAddressFilterRegexPrefix;
+    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example (when Regex.Prefix = RG): 127.0.0.1, RG^192\\.168\\.1\\.")
     protected volatile Set<String> callerAddressFilterWhitelist;
-    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format")
+    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\.168\\.2\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
     //2. NIO Security
@@ -401,6 +403,9 @@ public class NioConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
+        if (StringUtils.isBlank(callerAddressFilterRegexPrefix)) {
+            callerAddressFilterRegexPrefix = null;
+        }
         // 7. Web Server Mode       
         rootFolder = cfgFile.getParentFile().getParentFile();
         docrootDir = null;
@@ -518,6 +523,10 @@ public class NioConfig extends BootConfig {
 
     public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
         return CallerAddressFilterOption;
+    }
+
+    public String getCallerAddressFilterRegexPrefix() {
+        return callerAddressFilterRegexPrefix;
     }
 
     public Set<String> getCallerAddressFilterWhitelist() {
