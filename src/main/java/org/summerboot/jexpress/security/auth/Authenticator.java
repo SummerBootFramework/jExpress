@@ -23,12 +23,18 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 import javax.naming.NamingException;
+import java.net.SocketAddress;
 
 /**
  * @param <T>
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface Authenticator<T> {
+
+    /**
+     * caller remote address
+     */
+    Context.Key<SocketAddress> GrpcCallerAddr = Context.key("addr");
 
     /**
      * gRPC JWT verification result

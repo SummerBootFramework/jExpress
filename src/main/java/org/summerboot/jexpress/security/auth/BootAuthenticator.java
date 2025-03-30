@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.grpc.Context;
 import io.grpc.Contexts;
+import io.grpc.Grpc;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
@@ -39,13 +40,16 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.grpc.BearerAuthCredential;
+import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.util.GeoIpUtil;
 
 import javax.naming.NamingException;
+import java.net.SocketAddress;
 import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
@@ -409,35 +413,44 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
         Status status;
-        String headerValueAuthorization = metadata.get(BearerAuthCredential.AUTHORIZATION_METADATA_KEY);
-        if (headerValueAuthorization == null) {
-            //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");            
-            return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
-        } else if (!headerValueAuthorization.startsWith(BearerAuthCredential.BEARER_TYPE)) {
-            status = Status.INVALID_ARGUMENT.withDescription(ERROR + "Unknown authorization type, non bearer token provided");
-        } else {
-            try {
-                String jwt = headerValueAuthorization.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
-                ServiceContext context = ServiceContext.build(0);
-                Caller caller = verifyToken(jwt, authTokenCache, null, context);
-                if (caller == null) {
-                    String desc = context.error().getErrors().get(0).getErrorDesc();
-                    if (StringUtils.isBlank(desc)) {
-                        desc = context.status() + "";
-                    }
-                    status = Status.INVALID_ARGUMENT.withDescription(ERROR + desc);
-                    //throw new StatusRuntimeException(status);
+        try {
+            SocketAddress addr = serverCall.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+            GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
+            String error = GeoIpUtil.callerAddressFilter(addr, gRPCCfg.getCallerAddressFilterWhitelist(), gRPCCfg.getCallerAddressFilterBlacklist(), gRPCCfg.getCallerAddressFilterRegexPrefix(), gRPCCfg.getCallerAddressFilterOption());
+            if (error != null) {
+                //Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + error);
+                status = Status.UNAUTHENTICATED.withDescription(ERROR + "Invalid IP address: " + error);
+            } else {
+                Context ctx = Context.current().withValue(GrpcCallerAddr, addr);
+                String headerValueAuthorization = metadata.get(BearerAuthCredential.AUTHORIZATION_METADATA_KEY);
+                if (headerValueAuthorization == null) {
+                    //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");
+                    return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
+                } else if (!headerValueAuthorization.startsWith(BearerAuthCredential.BEARER_TYPE)) {
+                    status = Status.UNAUTHENTICATED.withDescription(ERROR + "Unknown authorization type, non " + BearerAuthCredential.BEARER_TYPE + " token provided");
                 } else {
-                    Context ctx = Context.current().withValue(GrpcCaller, caller);
-                    String jti = context.callerId();
-                    if (jti != null) {
-                        ctx = ctx.withValue(GrpcCallerId, jti);
+                    String jwt = headerValueAuthorization.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
+                    ServiceContext context = ServiceContext.build(0);
+                    Caller caller = verifyToken(jwt, authTokenCache, null, context);
+                    if (caller == null) {
+                        String desc = context.error().getErrors().get(0).getErrorDesc();
+                        if (StringUtils.isBlank(desc)) {
+                            desc = context.status() + "";
+                        }
+                        status = Status.UNAUTHENTICATED.withDescription(ERROR + desc);
+                        //throw new StatusRuntimeException(status);
+                    } else {
+                        ctx = ctx.withValue(GrpcCaller, caller);
+                        String jti = context.callerId();
+                        if (jti != null) {
+                            ctx = ctx.withValue(GrpcCallerId, jti);
+                        }
+                        return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
                     }
-                    return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
                 }
-            } catch (Throwable ex) {
-                status = Status.INVALID_ARGUMENT.withDescription(ERROR + ex.getMessage()).withCause(ex);
             }
+        } catch (Throwable ex) {
+            status = Status.UNAUTHENTICATED.withDescription(ERROR + ex.getMessage()).withCause(ex);
         }
 
         serverCall.close(status, metadata);

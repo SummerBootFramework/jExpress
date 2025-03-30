@@ -66,7 +66,7 @@ public class GRPCServer {
         return serviceCounter;
     }
 
-    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener) {
+    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener, ServerInterceptor... serverInterceptors) {
         this.bindingAddr = bindingAddr;
         this.port = port;
         serverCredentials = initTLS(kmf, tmf);
@@ -75,8 +75,10 @@ public class GRPCServer {
         } else {
             serverBuilder = Grpc.newServerBuilderForPort(port, serverCredentials);
         }
-        if (serverInterceptor != null) {
-            serverBuilder.intercept(serverInterceptor);
+        if (serverInterceptors != null) {
+            for (ServerInterceptor serverInterceptor : serverInterceptors) {
+                serverBuilder.intercept(serverInterceptor);
+            }
         }
         serverBuilder.executor(tpe);
         initThreadPool(tpe, useVirtualThread, nioListener, bindingAddr, port);
