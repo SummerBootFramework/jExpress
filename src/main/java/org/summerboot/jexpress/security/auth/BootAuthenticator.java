@@ -18,7 +18,6 @@ package org.summerboot.jexpress.security.auth;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.grpc.Context;
-import io.grpc.Contexts;
 import io.grpc.Grpc;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
@@ -40,6 +39,8 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.grpc.BearerAuthCredential;
+import org.summerboot.jexpress.nio.grpc.ContextualizedServerCallListenerEx;
+import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.Err;
@@ -412,26 +413,32 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      */
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
-        Status status;
+        Status status = null;
+        Context ctx = Context.current();
+        GRPCServer.getServiceCounter().incrementHit();
+        long start = System.currentTimeMillis();
+        Caller caller = null;
+        String jti = null;
         try {
-            SocketAddress addr = serverCall.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
             GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
-            String error = GeoIpUtil.callerAddressFilter(addr, gRPCCfg.getCallerAddressFilterWhitelist(), gRPCCfg.getCallerAddressFilterBlacklist(), gRPCCfg.getCallerAddressFilterRegexPrefix(), gRPCCfg.getCallerAddressFilterOption());
+            SocketAddress remoteAddr = serverCall.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+            String error = GeoIpUtil.callerAddressFilter(remoteAddr, gRPCCfg.getCallerAddressFilterWhitelist(), gRPCCfg.getCallerAddressFilterBlacklist(), gRPCCfg.getCallerAddressFilterRegexPrefix(), gRPCCfg.getCallerAddressFilterOption());
             if (error != null) {
                 //Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + error);
                 status = Status.UNAUTHENTICATED.withDescription(ERROR + "Invalid IP address: " + error);
             } else {
-                Context ctx = Context.current().withValue(GrpcCallerAddr, addr);
+                ctx = ctx.withValue(GrpcCallerAddr, remoteAddr);
                 String headerValueAuthorization = metadata.get(BearerAuthCredential.AUTHORIZATION_METADATA_KEY);
                 if (headerValueAuthorization == null) {
                     //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");
-                    return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
+                    //return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
+                    status = null;
                 } else if (!headerValueAuthorization.startsWith(BearerAuthCredential.BEARER_TYPE)) {
                     status = Status.UNAUTHENTICATED.withDescription(ERROR + "Unknown authorization type, non " + BearerAuthCredential.BEARER_TYPE + " token provided");
                 } else {
                     String jwt = headerValueAuthorization.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
                     ServiceContext context = ServiceContext.build(0);
-                    Caller caller = verifyToken(jwt, authTokenCache, null, context);
+                    caller = verifyToken(jwt, authTokenCache, null, context);
                     if (caller == null) {
                         String desc = context.error().getErrors().get(0).getErrorDesc();
                         if (StringUtils.isBlank(desc)) {
@@ -441,11 +448,12 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                         //throw new StatusRuntimeException(status);
                     } else {
                         ctx = ctx.withValue(GrpcCaller, caller);
-                        String jti = context.callerId();
+                        jti = context.callerId();
                         if (jti != null) {
                             ctx = ctx.withValue(GrpcCallerId, jti);
                         }
-                        return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
+                        //return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
+                        status = null;
                     }
                 }
             }
@@ -453,8 +461,17 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
             status = Status.UNAUTHENTICATED.withDescription(ERROR + ex.getMessage()).withCause(ex);
         }
 
+        if (status == null) {
+            // success process
+            //return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
+            return ContextualizedServerCallListenerEx.interceptCall(start, caller, jti, ctx, serverCall, metadata, serverCallHandler);
+        }
+        // error process
         serverCall.close(status, metadata);
         return new ServerCall.Listener<ReqT>() {
         };
     }
+
+
 }
+

@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.nio.grpc;
 
+import io.grpc.Context;
 import io.grpc.Grpc;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -27,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
+import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -46,6 +48,10 @@ public class GRPCServer {
 
     protected static final Logger log = LogManager.getLogger(GRPCServer.class.getName());
 
+    protected static final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
+
+    public static Context.Key<ServiceContext> ServiceContext = Context.key("ServiceContext");
+
     protected final String bindingAddr;
     protected final int port;
     protected final ServerCredentials serverCredentials;
@@ -56,13 +62,13 @@ public class GRPCServer {
 
     protected ScheduledExecutorService statusReporter = null;
     //protected boolean servicePaused = false;
-    protected final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
+
 
     public ServerBuilder getServerBuilder() {
         return serverBuilder;
     }
 
-    public GRPCServiceCounter getServiceCounter() {
+    public static GRPCServiceCounter getServiceCounter() {
         return serviceCounter;
     }
 
@@ -116,6 +122,7 @@ public class GRPCServer {
                 return;
             }
             long bizHit = serviceCounter.getBiz();
+            long cancelled = serviceCounter.getCancelled();
 //            if (lastBizHitRef.get() == bizHit && !servicePaused) {
 //                return;
 //            }
@@ -142,7 +149,7 @@ public class GRPCServer {
             if (lastChecksum.get() != checksum) {
                 lastChecksum.set(checksum);
                 //log.debug(() -> "hps=" + hps + ", tps=" + tps + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
-                log.debug(() -> "hps=" + hps + ", tps=" + tps + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
+                log.debug(() -> "hps=" + hps + ", tps=" + tps + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + " + cancelled" + cancelled + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
                 if (nioListener != null) {
                     nioListener.onNIOAccessReportUpdate(appInfo, hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
                     //listener.onUpdate(data);//bad performance

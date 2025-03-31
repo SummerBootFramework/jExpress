@@ -39,7 +39,6 @@ import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
-import org.summerboot.jexpress.nio.grpc.StatusReporter;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
@@ -316,9 +315,6 @@ abstract public class SummerApplication extends SummerBigBang {
                         for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
                             BindableService impl = guiceInjector.getInstance(c);
                             serverBuilder.addService(impl);
-                            if (impl instanceof StatusReporter) {
-                                ((StatusReporter) impl).setCounter(gRPCServer.getServiceCounter());
-                            }
                         }
                         for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
                             ServerServiceDefinition impl = guiceInjector.getInstance(c);

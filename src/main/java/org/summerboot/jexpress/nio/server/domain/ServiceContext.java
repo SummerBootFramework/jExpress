@@ -148,6 +148,20 @@ public class ServiceContext {
         poi.add(new POI(BootPOI.SERVICE_BEGIN));
     }
 
+    public ServiceContext(SocketAddress localIP, SocketAddress remoteIP, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+        this.localIP = localIP;
+        this.remoteIP = remoteIP;
+        this.txId = txId;
+        this.hit = hit;
+        this.startTs = startTs;
+        this.startDateTime = OffsetDateTime.ofInstant(java.time.Instant.ofEpochMilli(startTs), java.time.ZoneId.systemDefault());
+        this.requestHeaders = requestHeaders;
+        this.requesMethod = requesMethod;
+        this.requesURI = requesURI;
+        this.requestBody = requestBody;
+        poi.add(new POI(BootPOI.SERVICE_BEGIN));
+    }
+
 //    public void clear() {
 //        if (poi != null) {
 //            poi.clear();

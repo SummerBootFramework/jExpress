@@ -26,6 +26,7 @@ public class GRPCServiceCounter {
     protected final AtomicLong biz = new AtomicLong(0);
     protected final AtomicLong hit = new AtomicLong(0);
     protected final AtomicLong processed = new AtomicLong(0);
+    protected final AtomicLong cancelled = new AtomicLong(0);
 
     public long getPing() {
         return ping.get();
@@ -65,6 +66,14 @@ public class GRPCServiceCounter {
 
     public long getProcessedAndReset() {
         return processed.getAndSet(0);
+    }
+
+    public long getCancelled() {
+        return cancelled.get();
+    }
+
+    public long incrementCancelled() {
+        return cancelled.incrementAndGet();
     }
 
 }
