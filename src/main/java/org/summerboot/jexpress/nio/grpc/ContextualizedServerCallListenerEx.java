@@ -57,9 +57,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 }
                 serviceContext = new ServiceContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, null, methodName, null);
                 serviceContext.caller(caller).callerId(jti);
-                if (caller != null) {
-                    context = context.withValue(GRPCServer.ServiceContext, serviceContext);
-                }
+                context = context.withValue(GRPCServer.ServiceContext, serviceContext);
                 serverCall = new ForwardingServerCall.SimpleForwardingServerCall<>(call) {
                     @Override
                     public void sendHeaders(Metadata responseHeaders) {

@@ -235,7 +235,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.6.11.Final</hibernate.version>
+        <hibernate.version>6.6.12.Final</hibernate.version>
         <hikari-cp.version>6.3.0</hikari-cp.version>
 
         <!-- Cache -->
