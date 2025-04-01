@@ -44,19 +44,21 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         try {
             String methodName = call.getMethodDescriptor().getFullMethodName();
             if (isPing(methodName)) {
-                serviceContext = null;
                 GRPCServer.getServiceCounter().incrementPing();
+                serviceContext = null;
             } else {
-                SocketAddress remoteAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
-                SocketAddress localAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_LOCAL_ADDR);
                 final long hitIndex = GRPCServer.getServiceCounter().incrementBiz();
                 final String txId = BootConstant.APP_ID + "-" + hitIndex;
                 HttpHeaders httpHeaders = new DefaultHttpHeaders();
                 for (String key : headers.keys()) {
                     httpHeaders.add(key, headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER)));
                 }
+
+                String methodType = call.getMethodDescriptor().getType().name();
+                SocketAddress remoteAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+                SocketAddress localAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_LOCAL_ADDR);
                 serviceContext = new ServiceContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, null, methodName, null);
-                serviceContext.caller(caller).callerId(jti);
+                serviceContext.caller(caller).callerId(jti).sessionAttribute("MethodType", methodType);
                 context = context.withValue(GRPCServer.ServiceContext, serviceContext);
                 serverCall = new ForwardingServerCall.SimpleForwardingServerCall<>(call) {
                     @Override
@@ -183,6 +185,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         report();
     }
 
+
     protected void report() {
         if (serviceContext == null) {
             return;
@@ -211,9 +214,15 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         StringBuilder sb = new StringBuilder();
         //line1
         String txId = serviceContext.txId();
+        String methodType = serviceContext.sessionAttribute("MethodType");
         sb.append("request_").append(txId).append(".caller=").append(caller == null ? serviceContext.callerId() : caller);
         //line2,3
-        sb.append("\n\t").append("remoteAddr=").append(serviceContext.remoteIP()).append(", localAddr=").append(serviceContext.localIP()).append("\n\tresponse_").append(txId).append("=")//.append(status)
+        sb.append("\n\t")
+                .append("gRPC")
+                .append("_request_").append(serviceContext.hit())
+                .append("=").append(methodType).append(" ").append(serviceContext.uri())
+                //.append(", dataSize=").append(dataSize)
+                .append(", remoteAddr=").append(serviceContext.remoteIP()).append(", localAddr=").append(serviceContext.localIP()).append("\n\tresponse_").append(txId).append("=").append(serviceContext.status())
                 .append(", error=").append(errorCount)
                 .append(", FullHttpRequest.t0=").append(TimeUtil.toOffsetDateTime(serviceContext.startTimestamp(), zoneId))
                 .append(", response=").append(responseTime).append("ms");
