@@ -326,11 +326,12 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         return sb.toString();
     }
 
-    protected void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb, boolean isTraceAll) {
+    public static void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb, boolean isTraceAll) {
         boolean isInFilter = false;
         // 3a. caller filter
         Caller caller = context.caller();
-        switch (cfg.getFilterUserType()) {
+        NioConfig.VerboseTargetUserType verboseTargetUserType = cfg == null ? NioConfig.VerboseTargetUserType.ignore : cfg.getFilterUserType();
+        switch (verboseTargetUserType) {
             case ignore:
                 isInFilter = true;
                 break;
@@ -366,8 +367,9 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         }
         // 3b. code filter
         isInFilter = false;
-        Set<Long> s = cfg.getFilterCodeSet();
-        switch (cfg.getFilterCodeType()) {
+        NioConfig.VerboseTargetCodeType verboseTargetCodeType = cfg == null ? NioConfig.VerboseTargetCodeType.all : cfg.getFilterCodeType();
+        Set<Long> s = cfg == null ? null : cfg.getFilterCodeSet();
+        switch (verboseTargetCodeType) {
             case all:
                 isInFilter = true;
                 break;
@@ -416,13 +418,17 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
         // 3c. verbose aspect
         // 3.1 request responseHeader
-        sb.append("\n\t1.client_req.headers=").append((isTraceAll || context.logRequestHeader() && cfg.isVerboseReqHeader()) ? httpHeaders : "***");
+        boolean isVerbose = cfg == null ? true : cfg.isVerboseReqHeader();
+        sb.append("\n\t1.client_req.headers=").append((isTraceAll || context.logRequestHeader() && isVerbose) ? httpHeaders : "***");
         // 3.2 request body
-        sb.append("\n\t2.client_req.body=").append((isTraceAll || context.logRequestBody() && cfg.isVerboseReqContent()) ? httpPostRequestBody : "***");
+        isVerbose = cfg == null ? true : cfg.isVerboseReqContent();
+        sb.append("\n\t2.client_req.body=").append((isTraceAll || context.logRequestBody() && isVerbose) ? httpPostRequestBody : "***");
         // 3.3 context responseHeader
-        sb.append("\n\t3.server_resp.headers=").append((isTraceAll || context.logResponseHeader() && cfg.isVerboseRespHeader()) ? context.responseHeaders() : "***");
+        isVerbose = cfg == null ? true : cfg.isVerboseRespHeader();
+        sb.append("\n\t3.server_resp.headers=").append((isTraceAll || context.logResponseHeader() && isVerbose) ? context.responseHeaders() : "***");
         // 3.4 context body
-        sb.append("\n\t4.server_resp.body=").append((isTraceAll || context.logResponseBody() && cfg.isVerboseRespContent()) ? context.txt() : "***");
+        isVerbose = cfg == null ? true : cfg.isVerboseRespContent();
+        sb.append("\n\t4.server_resp.body=").append((isTraceAll || context.logResponseBody() && isVerbose) ? context.txt() : "***");
     }
 
     abstract protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);

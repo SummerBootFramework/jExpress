@@ -14,12 +14,14 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.nio.server.NioServerHttpRequestHandler;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.TimeUtil;
 
 import java.net.SocketAddress;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 
 public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
@@ -59,7 +61,23 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                     public void sendHeaders(Metadata responseHeaders) {
                         String headerKey_reference = BootConstant.RESPONSE_HEADER_KEY_REF;
                         responseHeaders.put(Metadata.Key.of(headerKey_reference, Metadata.ASCII_STRING_MARSHALLER), txId);
+                        String headerKey_serverTimestamp = BootConstant.RESPONSE_HEADER_KEY_TS;
+                        responseHeaders.put(Metadata.Key.of(headerKey_serverTimestamp, Metadata.ASCII_STRING_MARSHALLER), OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
+
+                        HttpHeaders httpHeaders = new DefaultHttpHeaders();
+                        for (String key : responseHeaders.keys()) {
+                            httpHeaders.add(key, responseHeaders.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER)));
+                        }
+                        serviceContext.responseHeaders(httpHeaders);
                         super.sendHeaders(responseHeaders);
+                    }
+
+                    @Override
+                    public void sendMessage(RespT message) {
+                        if (message != null) {
+                            serviceContext.txt(message.toString());
+                        }
+                        super.sendMessage(message);
                     }
                 };
             }
@@ -84,6 +102,8 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     private final ServiceContext serviceContext;
 
+    private String httpPostRequestBody;
+
     public ContextualizedServerCallListenerEx(ServerCall.Listener<ReqT> delegate, Context context, ServiceContext serviceContext) {
         super(delegate);
         this.context = context;
@@ -102,6 +122,9 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     public void onMessage(ReqT message) {
         Context previous = this.context.attach();
+        if (message != null) {
+            httpPostRequestBody = message.toString();
+        }
 
         try {
             super.onMessage(message);
@@ -181,7 +204,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 .append(", response=").append(responseTime).append("ms");
         //line4
         serviceContext.reportPOI(null, sb);
-        //verboseClientServerCommunication(nioCfg, requestHeaders, httpPostRequestBody, serviceContext, sb, isTraceAll);
+        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, httpPostRequestBody, serviceContext, sb, isTraceAll);
         serviceContext.reportMemo(sb);
         serviceContext.reportError(sb);
         sb.append(BootConstant.BR);
