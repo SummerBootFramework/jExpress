@@ -304,13 +304,15 @@ abstract public class SummerApplication extends SummerBigBang {
                 GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
                 List<InetSocketAddress> bindingAddresses = gRPCCfg.getBindingAddresses();
                 NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
+                boolean doReport = true;
                 for (InetSocketAddress bindingAddress : bindingAddresses) {
                     String host = bindingAddress.getAddress().getHostAddress();
                     int port = bindingAddress.getPort();
                     log.trace("5a. binding gRPC on {}:{}", host, port);
                     try (var a = Timeout.watch("starting gRPCServer at " + host + ":" + port, timeoutMs).withDesc(timeoutDesc)) {
                         boolean useVirtualThread = gRPCCfg.getTpeThreadingMode().equals(GRPCServerConfig.ThreadingMode.VirtualThread);
-                        GRPCServer gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf(), gRPCCfg.getTpe(), useVirtualThread, nioListener, serverInterceptor);
+                        GRPCServer gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf(), gRPCCfg.getTpe(), useVirtualThread, doReport, nioListener, serverInterceptor);
+                        doReport = false;
                         ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
                         for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
                             BindableService impl = guiceInjector.getInstance(c);

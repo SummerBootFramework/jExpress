@@ -72,7 +72,7 @@ public class GRPCServer {
         return serviceCounter;
     }
 
-    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener, ServerInterceptor... serverInterceptors) {
+    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ThreadPoolExecutor tpe, boolean useVirtualThread, boolean generateReport, NIOStatusListener nioListener, ServerInterceptor... serverInterceptors) {
         this.bindingAddr = bindingAddr;
         this.port = port;
         serverCredentials = initTLS(kmf, tmf);
@@ -87,7 +87,9 @@ public class GRPCServer {
             }
         }
         serverBuilder.executor(tpe);
-        initThreadPool(tpe, useVirtualThread, nioListener, bindingAddr, port);
+        if (generateReport) {
+            report(tpe, useVirtualThread, nioListener, bindingAddr, port);
+        }
     }
 
     protected ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
@@ -107,7 +109,7 @@ public class GRPCServer {
      * @param nioListener
      * @return
      */
-    protected GRPCServiceCounter initThreadPool(ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener, String bindingAddr, int port) {
+    protected void report(ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener, String bindingAddr, int port) {
         int interval = 1;
         final AtomicReference<Long> lastBizHitRef = new AtomicReference<>();
         lastBizHitRef.set(-1L);
@@ -160,7 +162,6 @@ public class GRPCServer {
         if (old2 != null) {
             old2.shutdownNow();
         }
-        return serviceCounter;
     }
 
     public void start(StringBuilder memo) throws IOException {
