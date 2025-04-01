@@ -15,14 +15,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.nio.server.NioServerHttpRequestHandler;
+import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.TimeUtil;
 
 import java.net.SocketAddress;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.List;
 
 public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
 
@@ -33,6 +36,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
 
     public static <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(long startTs, Caller caller, String jti, Context context, ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
+        GRPCServer.getServiceCounter().incrementHit();
         Context previous;
         ContextualizedServerCallListenerEx listener;
         final ServiceContext serviceContext;
@@ -59,9 +63,18 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 serverCall = new ForwardingServerCall.SimpleForwardingServerCall<>(call) {
                     @Override
                     public void sendHeaders(Metadata responseHeaders) {
-                        String headerKey_reference = BootConstant.RESPONSE_HEADER_KEY_REF;
+                        String headerKey_reference;
+                        String headerKey_serverTimestamp;
+                        ProcessorSettings processorSettings = serviceContext.processorSettings();
+                        if (processorSettings == null) {
+                            headerKey_reference = BootConstant.RESPONSE_HEADER_KEY_REF;
+                            headerKey_serverTimestamp = BootConstant.RESPONSE_HEADER_KEY_TS;
+                        } else {
+                            headerKey_reference = processorSettings.getHttpServiceResponseHeaderName_Reference();
+                            headerKey_serverTimestamp = processorSettings.getHttpServiceResponseHeaderName_ServerTimestamp();
+                        }
+
                         responseHeaders.put(Metadata.Key.of(headerKey_reference, Metadata.ASCII_STRING_MARSHALLER), txId);
-                        String headerKey_serverTimestamp = BootConstant.RESPONSE_HEADER_KEY_TS;
                         responseHeaders.put(Metadata.Key.of(headerKey_serverTimestamp, Metadata.ASCII_STRING_MARSHALLER), OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
 
                         HttpHeaders httpHeaders = new DefaultHttpHeaders();
@@ -93,6 +106,8 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
         return listener;
     }
+
+    protected static String protectedContectReplaceWith = "***";
 
     public static boolean isPing(String methodName) {
         return methodName.endsWith("/ping");
@@ -142,7 +157,6 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         } finally {
             this.context.detach(previous);
         }
-        long responseTime = System.currentTimeMillis() - serviceContext.startTimestamp();
     }
 
     public void onCancel() {
@@ -172,6 +186,9 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     }
 
     protected void report() {
+        if (serviceContext == null) {
+            return;
+        }
         Level level = serviceContext.level();
         if (!log.isEnabled(level)) {
             return;
@@ -209,6 +226,31 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         serviceContext.reportError(sb);
         sb.append(BootConstant.BR);
         String report = sb.toString();
+        ProcessorSettings processorSettings = serviceContext.processorSettings();
+        if (!isTraceAll && processorSettings != null) {
+            //isSendRequestParsingErrorToClient
+            ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
+            if (logSettings != null) {
+                List<String> protectedJsonNumberFields = logSettings.getProtectedJsonNumberFields();
+                if (protectedJsonNumberFields != null) {
+                    for (String protectedJsonNumberField : protectedJsonNumberFields) {
+                        report = FormatterUtil.protectJsonNumber(report, protectedJsonNumberField, protectedContectReplaceWith);
+                    }
+                }
+                List<String> protectedJsonStringFields = logSettings.getProtectedJsonStringFields();
+                if (protectedJsonStringFields != null) {
+                    for (String protectedJsonStringField : protectedJsonStringFields) {
+                        report = FormatterUtil.protectJsonString(report, protectedJsonStringField, protectedContectReplaceWith);
+                    }
+                }
+                List<String> protectedJsonArrayFields = logSettings.getProtectedJsonArrayFields();
+                if (protectedJsonArrayFields != null) {
+                    for (String protectedJsonArrayField : protectedJsonArrayFields) {
+                        report = FormatterUtil.protectJsonArray(report, protectedJsonArrayField, protectedContectReplaceWith);
+                    }
+                }
+            }
+        }
         log.log(level, report);
     }
 }

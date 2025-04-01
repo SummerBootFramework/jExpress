@@ -98,6 +98,8 @@ public class ServiceContext {
     // Session attributes
     protected Map<Object, Object> sessionAttributes;
 
+    protected ProcessorSettings processorSettings;
+
     // 2.1 error
 //    protected int errorCode;
 //    protected String errorTag;
@@ -889,6 +891,15 @@ public class ServiceContext {
 
     public boolean logResponseBody() {
         return logResponseBody;
+    }
+
+    public ProcessorSettings processorSettings() {
+        return processorSettings;
+    }
+
+    public ServiceContext processorSettings(ProcessorSettings processorSettings) {
+        this.processorSettings = processorSettings;
+        return this;
     }
 
     public ServiceContext poi(String marker) {

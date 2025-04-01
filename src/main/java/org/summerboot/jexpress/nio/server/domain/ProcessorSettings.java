@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.nio.server.domain;
 
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,9 +26,9 @@ import java.util.stream.Collectors;
  */
 public class ProcessorSettings {
 
-    protected String httpServiceResponseHeaderName_ServerTimestamp = "X-ServerTs";
+    protected String httpServiceResponseHeaderName_ServerTimestamp = BootConstant.RESPONSE_HEADER_KEY_TS;
 
-    protected String httpServiceResponseHeaderName_Reference = "X-Reference";
+    protected String httpServiceResponseHeaderName_Reference = BootConstant.RESPONSE_HEADER_KEY_REF;
 
     public String getHttpServiceResponseHeaderName_ServerTimestamp() {
         return httpServiceResponseHeaderName_ServerTimestamp;
@@ -48,6 +49,13 @@ public class ProcessorSettings {
     protected LogSettings logSettings;
 
     public LogSettings getLogSettings() {
+        return getLogSettings(false);
+    }
+
+    public LogSettings getLogSettings(boolean createIfNull) {
+        if (logSettings == null && createIfNull) {
+            logSettings = new LogSettings();
+        }
         return logSettings;
     }
 

@@ -40,7 +40,6 @@ import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.grpc.BearerAuthCredential;
 import org.summerboot.jexpress.nio.grpc.ContextualizedServerCallListenerEx;
-import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.domain.Err;
@@ -415,7 +414,6 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
         Status status = null;
         Context ctx = Context.current();
-        GRPCServer.getServiceCounter().incrementHit();
         long start = System.currentTimeMillis();
         Caller caller = null;
         String jti = null;

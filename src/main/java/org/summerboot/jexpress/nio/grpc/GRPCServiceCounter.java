@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class GRPCServiceCounter {
+class GRPCServiceCounter {
 
     protected final AtomicLong ping = new AtomicLong(0);
     protected final AtomicLong biz = new AtomicLong(0);

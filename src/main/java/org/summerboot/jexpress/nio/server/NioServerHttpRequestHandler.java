@@ -63,7 +63,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     protected ZoneId zoneId = ZoneId.systemDefault();
 
     protected static NioConfig nioCfg = NioConfig.cfg;
-    protected String protectedContectReplaceWith = "***";
+    protected static String protectedContectReplaceWith = "***";
 
     public NioServerHttpRequestHandler() {
         super(FullHttpRequest.class, false);//set AutoRelease to false to enable keepalive

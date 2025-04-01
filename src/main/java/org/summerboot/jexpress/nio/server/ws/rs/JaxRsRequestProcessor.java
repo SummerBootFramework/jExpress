@@ -296,11 +296,11 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (log == null) {
             return;
         }
-        ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
-        if (logSettings == null) {
-            logSettings = processorSettings.new LogSettings();
-            processorSettings.setLogSettings(logSettings);
-        }
+        ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings(true);
+//        if (logSettings == null) {
+//            logSettings = processorSettings.new LogSettings();
+//            processorSettings.setLogSettings(logSettings);
+//        }
         logSettings.setLogRequestHeader(log.requestHeader());
         logSettings.setLogRequestBody(log.requestBody());
         logSettings.setLogResponseHeader(log.responseHeader());

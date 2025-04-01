@@ -68,7 +68,7 @@ public class GRPCServer {
         return serverBuilder;
     }
 
-    public static GRPCServiceCounter getServiceCounter() {
+    static GRPCServiceCounter getServiceCounter() {
         return serviceCounter;
     }
 
