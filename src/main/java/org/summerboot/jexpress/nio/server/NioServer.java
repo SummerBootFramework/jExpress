@@ -21,14 +21,15 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.ServerChannel;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollChannelOption;
-import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollIoHandler;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.kqueue.KQueue;
 import io.netty.channel.kqueue.KQueueServerSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http2.Http2SecurityUtil;
 import io.netty.handler.ssl.ClientAuth;
@@ -137,24 +138,32 @@ public class NioServer {
         // Configure the server.
         //boss and work groups
 
-        int bossSize = nioCfg.getNioEventLoopGroupAcceptorSize();
-        int workerSize = nioCfg.getNioEventLoopGroupWorkerSize();
+        int bossSize = Math.max(0, nioCfg.getNioEventLoopGroupAcceptorSize());
+        int workerSize = Math.max(0, nioCfg.getNioEventLoopGroupWorkerSize());
+
         Class<? extends ServerChannel> serverChannelClass;
         ThreadFactory threadFactoryBoss = NamedDefaultThreadFactory.build("Netty-HTTP.Boss", nioCfg.isNioEventLoopGroupAcceptorUseVirtualThread());
         ThreadFactory threadFactoryWorker = NamedDefaultThreadFactory.build("Netty-HTTP.Worker", nioCfg.isNioEventLoopGroupWorkerUseVirtualThread());
+
         if (Epoll.isAvailable() && (IoMultiplexer.AVAILABLE.equals(multiplexer) || IoMultiplexer.EPOLL.equals(multiplexer))) {
-            bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize, threadFactoryBoss);
-            workerGroup = workerSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(workerSize, threadFactoryWorker);
+            //bossGroup = new EpollEventLoopGroup(bossSize, threadFactoryBoss);
+            //workerGroup = new EpollEventLoopGroup(workerSize, threadFactoryWorker);
+            bossGroup = new MultiThreadIoEventLoopGroup(bossSize, threadFactoryBoss, EpollIoHandler.newFactory());
+            workerGroup = new MultiThreadIoEventLoopGroup(workerSize, threadFactoryWorker, EpollIoHandler.newFactory());
             serverChannelClass = EpollServerSocketChannel.class;
             multiplexer = IoMultiplexer.EPOLL;
         } else if (KQueue.isAvailable() && (IoMultiplexer.AVAILABLE.equals(multiplexer) || IoMultiplexer.KQUEUE.equals(multiplexer))) {
-            bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize, threadFactoryBoss);
-            workerGroup = workerSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(workerSize, threadFactoryWorker);
+            //bossGroup = new EpollEventLoopGroup(bossSize, threadFactoryBoss);
+            //workerGroup = new EpollEventLoopGroup(workerSize, threadFactoryWorker);
+            bossGroup = new MultiThreadIoEventLoopGroup(bossSize, threadFactoryBoss, EpollIoHandler.newFactory());
+            workerGroup = new MultiThreadIoEventLoopGroup(workerSize, threadFactoryWorker, EpollIoHandler.newFactory());
             serverChannelClass = KQueueServerSocketChannel.class;
             multiplexer = IoMultiplexer.KQUEUE;
         } else {
-            bossGroup = bossSize < 1 ? new NioEventLoopGroup() : new NioEventLoopGroup(bossSize, threadFactoryBoss);
-            workerGroup = workerSize < 1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerSize, threadFactoryWorker);
+            //bossGroup = new NioEventLoopGroup(bossSize, threadFactoryBoss);
+            //workerGroup = new NioEventLoopGroup(workerSize, threadFactoryWorker);
+            bossGroup = new MultiThreadIoEventLoopGroup(bossSize, threadFactoryBoss, NioIoHandler.newFactory());
+            workerGroup = new MultiThreadIoEventLoopGroup(workerSize, threadFactoryWorker, NioIoHandler.newFactory());
             serverChannelClass = NioServerSocketChannel.class;
             multiplexer = IoMultiplexer.JDK;
         }
