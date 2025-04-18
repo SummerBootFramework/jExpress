@@ -82,9 +82,7 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
         return ret;
     }
 
-    /**
-     * @param <V>
-     */
+
     public static class CacheEntity<V> {
 
         protected final V value;

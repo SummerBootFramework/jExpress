@@ -109,6 +109,8 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected String[] sslProtocols;
     @Config(key = ID + ".ssl.ciphers")
     protected List ciphers;
+    @Config(key = ID + ".ssl.Provider", defaultValue = "OPENSSL", desc = "ssl provider: OPENSSL (default), OPENSSL_REFCNT,  JDK")
+    protected SslProvider sslProvider = SslProvider.OPENSSL;
 
     //2. TRC (The Remote Caller) keystore    
     protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
@@ -203,7 +205,7 @@ abstract public class GRPCClientConfig extends BootConfig {
             nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
             nameResolverRegistry.register(nameResolverProvider);
         }
-        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProtocols);
+        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, sslProtocols);
         configNettyChannelBuilder(channelBuilder);
         for (GRPCClient listener : listeners) {
             listener.updateChannelBuilder(channelBuilder);
@@ -295,6 +297,11 @@ abstract public class GRPCClientConfig extends BootConfig {
      */
     public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
                                                               @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
+        return initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, SslProvider.OPENSSL, tlsVersionProtocols);
+    }
+
+    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+                                                              @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable SslProvider sslProvider, @Nullable String... tlsVersionProtocols) throws SSLException {
         final NettyChannelBuilder channelBuilder;
         if (nameResolverProvider != null) {// use client side load balancing
             // register
@@ -335,7 +342,7 @@ abstract public class GRPCClientConfig extends BootConfig {
                     channelBuilder.overrideAuthority(overrideAuthority);
                 }
             }
-            GrpcSslContexts.configure(sslBuilder, SslProvider.OPENSSL);
+            GrpcSslContexts.configure(sslBuilder, sslProvider);
             if (tlsVersionProtocols != null) {
                 sslBuilder.protocols(tlsVersionProtocols);
             }
@@ -370,6 +377,10 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     public List getCiphers() {
         return ciphers;
+    }
+
+    public SslProvider getSslProvider() {
+        return sslProvider;
     }
 
     public KeyManagerFactory getKmf() {

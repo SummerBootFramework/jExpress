@@ -91,7 +91,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!--Java doc -->
+                    <!--Java doc
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
@@ -104,7 +104,7 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>
+                    </plugin> -->
 
                     <!--Deploy-->
                     <plugin>
@@ -192,7 +192,7 @@
         <!-- Commons -->
         <commons-lang3.version>3.17.0</commons-lang3.version>
         <commons-cli.version>1.9.0</commons-cli.version>
-        <commons-io.version>2.18.0</commons-io.version>
+        <commons-io.version>2.19.0</commons-io.version>
         <!--        <commons-text.version>1.11.0</commons-text.version>-->
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
@@ -209,11 +209,11 @@
         <netty.version>4.2.0.Final</netty.version>
         <netty-tcnative.version>2.0.70.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.71.0</grpc.version>
-        <guava.version>33.4.6-jre</guava.version>
+        <grpc.version>1.72.0</grpc.version>
+        <guava.version>33.4.8-jre</guava.version>
         <protobuf.version>4.30.2</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.29</swagger.core.version>
+        <swagger.core.version>2.2.30</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -228,14 +228,14 @@
         <jackson.version>2.18.3</jackson.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.5</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.6</tomcat-embed-el.version>
         <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.6.12.Final</hibernate.version>
+        <hibernate.version>6.6.13.Final</hibernate.version>
         <hikari-cp.version>6.3.0</hikari-cp.version>
 
         <!-- Cache -->
