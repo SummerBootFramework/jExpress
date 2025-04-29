@@ -25,6 +25,30 @@ import java.util.Collection;
 public interface PostOffice extends HealthInspector<String> {
 
     /**
+     * send email
+     *
+     * @param to
+     * @param title
+     * @param content
+     * @param isHTMLFormat
+     * @param async
+     * @return
+     */
+    boolean sendEmail(Collection<String> to, String title, String content, boolean isHTMLFormat, boolean async);
+
+    /**
+     * send alert email
+     *
+     * @param to
+     * @param title
+     * @param content
+     * @param cause
+     * @param debouncing
+     * @param async
+     */
+    void sendAlert(Collection<String> to, final String title, final String content, final Throwable cause, boolean debouncing, boolean async);
+
+    /**
      * send alert email in async mode
      *
      * @param to
