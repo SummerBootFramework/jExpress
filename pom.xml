@@ -207,7 +207,7 @@
 
         <!-- NIO Netty -->
         <netty.version>4.2.0.Final</netty.version>
-        <netty-tcnative.version>2.0.70.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.71.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.72.0</grpc.version>
         <guava.version>33.4.8-jre</guava.version>
@@ -239,7 +239,7 @@
         <hikari-cp.version>6.3.0</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>5.2.0</jedis.version>
+        <jedis.version>6.0.0</jedis.version>
 
         <quartz.version>2.5.0</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
@@ -254,12 +254,14 @@
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.18</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext7-core.version>9.1.0</itext7-core.version>
-        <itext7-html2pdf.version>6.1.0</itext7-html2pdf.version>
+        <itext-core.version>9.1.0</itext-core.version>
+        <itext-html2pdf.version>6.1.0</itext-html2pdf.version>
+
+        <veracode.version>1.2.1</veracode.version>
 
         <!-- Testing  -->
         <testng.version>7.11.0</testng.version>
-        <jdbc.version>9.2.0</jdbc.version>
+        <jdbc.version>9.3.0</jdbc.version>
     </properties>
 
     <dependencies>
@@ -671,7 +673,7 @@
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>itext-core</artifactId>
-            <version>${itext7-core.version}</version>
+            <version>${itext-core.version}</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -679,7 +681,7 @@
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>html2pdf</artifactId>
-            <version>${itext7-html2pdf.version}</version>
+            <version>${itext-html2pdf.version}</version>
             <scope>provided</scope>
         </dependency>
         <!-- PDF - PDFBox -->
@@ -759,6 +761,13 @@
         </dependency>
         -->
 
+        <!-- https://mvnrepository.com/artifact/com.veracode.annotation/VeracodeAnnotations -->
+        <dependency>
+            <groupId>com.veracode.annotation</groupId>
+            <artifactId>VeracodeAnnotations</artifactId>
+            <version>${veracode.version}</version>
+        </dependency>
+
         <!-- Testing -->
         <!-- https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
         <dependency>
@@ -830,6 +839,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler.version}</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                    <compilerArgs>--enable-preview</compilerArgs>
+                </configuration>
             </plugin>
             <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->
             <plugin>

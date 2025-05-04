@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.security;
 
 import jakarta.annotation.Nullable;
+import org.apache.tika.utils.StringUtils;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -27,6 +28,7 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.util.FormatterUtil;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -36,7 +38,9 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -50,6 +54,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -94,6 +99,8 @@ public class EncryptorUtil {
     public static final int TAG_LENGTH_BIT = 128;
     public static final int IV_LENGTH_BYTE = 12;
     public static final int AES_KEY_BIT = 256;
+    public static final int SALT_LEN = 16;
+    public static final int ITERATIONS = 310_000;
     public static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     static {
@@ -104,6 +111,20 @@ public class EncryptorUtil {
             ex.printStackTrace(System.err);
             System.exit(-1);
         }
+    }
+
+    public static String base64Decode(String base64Text) {
+        // Decode base64 to get bytes
+        //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
+        //byte[] dec = Base64.decode(base64Text);
+        byte[] dec = Base64.getDecoder().decode(base64Text);
+        // Decode using utf-8
+        return new String(dec, StandardCharsets.UTF_8);
+    }
+
+    public static String base64Encode(String plain) {
+        //return Base64.encode(plain.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(plain.getBytes(StandardCharsets.UTF_8));
     }
 
     public static String keyToString(Key signingKey) {
@@ -140,10 +161,38 @@ public class EncryptorUtil {
         return ret;
     }
 
-    static Key SCERET_KEY = new SecretKeySpec(buildSecretKey(BootConstant.DEFAULT_ADMIN_MM), "AES");
+//    static byte[] SCERET_KEY_SALT = randomBytes(SALT_LEN);
+//    static Key SCERET_KEY = buildSecretKey(BootConstant.DEFAULT_ADMIN_MM, SCERET_KEY_SALT);
+
+    private static String ROOT_PWD = BootConstant.DEFAULT_ADMIN_MM;
 
     public static void init(String applicationPwd) {
-        SCERET_KEY = new SecretKeySpec(buildSecretKey(applicationPwd), "AES");
+        if (StringUtils.isBlank(applicationPwd)) {
+            ROOT_PWD = BootConstant.DEFAULT_ADMIN_MM;
+        } else {
+            ROOT_PWD = applicationPwd;
+        }
+    }
+
+    private static String getRootPassword() {
+        return ROOT_PWD;
+    }
+
+    public static byte[] randomBytes(int len) {
+        byte[] b = new byte[len];
+        RANDOM.nextBytes(b);
+        return b;
+    }
+
+    public static SecretKey buildSecretKey(String password, byte[] salt) {
+        try {
+            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, AES_KEY_BIT);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] keyBytes = factory.generateSecret(spec).getEncoded();
+            return new SecretKeySpec(keyBytes, "AES");
+        } catch (Throwable ex) {
+            throw new RuntimeException("Failed to build secret key", ex);
+        }
     }
 
     /**
@@ -228,10 +277,24 @@ public class EncryptorUtil {
         return sb.toString();
     }
 
+    protected static SecureRandom RANDOM = new SecureRandom();
+
     public static SecretKey generateAESKey() throws NoSuchAlgorithmException {
         KeyGenerator keyGen = KeyGenerator.getInstance(AES_KEY_ALGO);
         keyGen.init(AES_KEY_BIT, SecureRandom.getInstanceStrong());
         return keyGen.generateKey();
+    }
+
+    public static byte[] encrypt(SecretKey symmetricKey, byte[] iv, byte[] plainData) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
+        byte[] encryptedData = cipher.doFinal(plainData);
+        return encryptedData;
+    }
+
+    public static byte[] decrypt(SecretKey symmetricKey, byte[] iv, byte[] encryptedData) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
+        byte[] plainData = cipher.doFinal(encryptedData);
+        return plainData;
     }
 
     public static SecretKey loadSymmetricKey(String symmetricKeyFile, String symmetricKeyAlgorithm) throws IOException {
@@ -249,12 +312,6 @@ public class EncryptorUtil {
         return symmetricKey;
     }
 
-    public static byte[] generateInitializationVector(int ivBytes) {
-        byte[] nonce = new byte[ivBytes];
-        new SecureRandom().nextBytes(nonce);
-        return nonce;
-    }
-
     public static Cipher buildCypher_GCM(boolean encrypt, SecretKey symmetricKey, byte[] iv) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
         Cipher cipher = Cipher.getInstance(ENCRYPT_ALGO);
         if (encrypt) {
@@ -265,21 +322,93 @@ public class EncryptorUtil {
         return cipher;
     }
 
-    public static byte[] encrypt(SecretKey symmetricKey, byte[] iv, byte[] plainData) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-        Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
-        byte[] encryptedData = cipher.doFinal(plainData);
-        return encryptedData;
+    /**
+     * @param plainData
+     * @param warped    true if the encrypted value is in a warper like
+     *                  password=DEC(encrypted password)
+     * @return
+     * @throws GeneralSecurityException
+     */
+    public static String encrypt(String plainData, boolean warped) throws GeneralSecurityException {
+        if (warped) {
+            plainData = FormatterUtil.getInsideParenthesesValue(plainData);
+        }
+        String password = getRootPassword();
+        byte[] utf8 = plainData.getBytes(StandardCharsets.UTF_8);
+        byte[] encryptedDataPackage = encrypt(password, utf8);
+        return Base64.getEncoder().encodeToString(encryptedDataPackage);
     }
 
-    public static byte[] decrypt(SecretKey symmetricKey, byte[] iv, byte[] encryptedData) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-        Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
-        byte[] plainData = cipher.doFinal(encryptedData);
-        return plainData;
+    public static byte[] encrypt(String password, byte[] plainData) throws GeneralSecurityException {
+        // build cipher
+        byte[] salt = randomBytes(SALT_LEN);
+        SecretKey key = buildSecretKey(password, salt);
+        byte[] iv = randomBytes(IV_LENGTH_BYTE);
+        Cipher cipher = buildCypher_GCM(true, key, iv);
+
+        // encrypt
+        //byte[] plainData = plainDataString.getBytes(StandardCharsets.UTF_8);
+        byte[] encryptedData = cipher.doFinal(plainData);
+
+        // 🔒 Store: salt + iv + ciphertext
+        ByteBuffer buffer = ByteBuffer.allocate(salt.length + iv.length + encryptedData.length);
+        buffer.put(salt).put(iv).put(encryptedData);
+        byte[] encryptedDataPackage = buffer.array();
+        //String encodedData = Base64.getEncoder().encodeToString(buffer.array());
+
+        // clear sensitive data
+        for (int i = 0; i < plainData.length; i++) {
+            plainData[i] = 0;
+        }
+        for (int i = 0; i < encryptedData.length; i++) {
+            encryptedData[i] = 0;
+        }
+        return encryptedDataPackage;
+    }
+
+    /**
+     * decrypt encrypted value with prefix to plain text
+     *
+     * @param encodedData
+     * @param warped      true if the encrypted value is in a warper like
+     *                    password=ENC(encrypted password)
+     * @return
+     * @throws GeneralSecurityException
+     */
+    public static String decrypt(String encodedData, boolean warped) throws GeneralSecurityException {
+        if (warped) {
+            encodedData = FormatterUtil.getInsideParenthesesValue(encodedData);
+        }
+        String password = getRootPassword();
+        byte[] encryptedDataPackage = Base64.getDecoder().decode(encodedData);
+        byte[] decryptedData = decrypt(password, encryptedDataPackage);
+        return new String(decryptedData, StandardCharsets.UTF_8);
+    }
+
+    public static byte[] decrypt(String password, byte[] encryptedDataPackage) throws GeneralSecurityException {
+        // 🔒 Retrieve: salt + iv + ciphertext
+        //byte[] encryptedDataPackage = Base64.getDecoder().decode(String encodedData);
+        byte[] salt = new byte[SALT_LEN];
+        byte[] iv = new byte[IV_LENGTH_BYTE];
+        byte[] encryptedData = new byte[encryptedDataPackage.length - SALT_LEN - IV_LENGTH_BYTE];
+        ByteBuffer buffer = ByteBuffer.wrap(encryptedDataPackage);
+        buffer.get(salt);
+        buffer.get(iv);
+        buffer.get(encryptedData);
+
+        // build cipher
+        SecretKey key = buildSecretKey(password, salt);
+        Cipher cipher = buildCypher_GCM(false, key, iv);
+        //byte[] decodedData = Base64.getDecoder().decode(encryptedData);
+        //byte[] plaintext = cipher.doFinal(decodedData);
+        byte[] decryptedData = cipher.doFinal(encryptedData);
+        return decryptedData;
+        //return new String(decryptedData, StandardCharsets.UTF_8);
     }
 
     public static void encrypt(SecretKey symmetricKey, String plainDataFileName, String encryptedFileName) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         //1. create cipher wtiht this key
-        byte[] iv = generateInitializationVector(IV_LENGTH_BYTE);
+        byte[] iv = randomBytes(IV_LENGTH_BYTE);
         Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
 
         //3. streaming
@@ -673,7 +802,7 @@ public class EncryptorUtil {
         if (randomSymmetricKey) {
             symmetricKey = generateAESKey();
         }
-        byte[] iv = generateInitializationVector(IV_LENGTH_BYTE);
+        byte[] iv = randomBytes(IV_LENGTH_BYTE);
         Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
 
         //2. asymmetric encrypt file header
@@ -769,7 +898,7 @@ public class EncryptorUtil {
         if (randomSymmetricKey) {
             symmetricKey = generateAESKey();
         }
-        byte[] iv = generateInitializationVector(IV_LENGTH_BYTE);
+        byte[] iv = randomBytes(IV_LENGTH_BYTE);
         Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
 
         //2. asymmetric encrypt file header

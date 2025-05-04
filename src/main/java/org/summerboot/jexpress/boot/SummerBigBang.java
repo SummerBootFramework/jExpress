@@ -43,7 +43,6 @@ import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.JwtUtil;
-import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.PropertiesFile;
 import org.summerboot.jexpress.util.ReflectionUtil;
@@ -357,11 +356,13 @@ abstract public class SummerBigBang extends SummerSingularity {
                 throw new RuntimeException("failed to load " + adminPwdFile, ex);
             }
             String adminPwd = props.getProperty("APP_ROOT_PASSWORD");
-            adminPwd = SecurityUtil.base64Decode(adminPwd);
+            adminPwd = EncryptorUtil.base64Decode(adminPwd);
             EncryptorUtil.init(adminPwd);
         } else if (cli.hasOption(BootConstant.CLI_ADMIN_PWD)) {// "else" = only one option, cannot both
             String adminPwd = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD);
             EncryptorUtil.init(adminPwd);
+        } else {
+            EncryptorUtil.init(BootConstant.DEFAULT_ADMIN_MM);
         }
 
         /*

@@ -25,8 +25,8 @@ import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.boot.instrumentation.Timeout;
 import org.summerboot.jexpress.i18n.I18n;
+import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.SSLUtil;
-import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -444,7 +444,7 @@ public class ConfigUtil {
         try {
             String value = v.trim();
             if (value.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
-                pwd = SecurityUtil.decrypt(value, true);
+                pwd = EncryptorUtil.decrypt(value, true);
             } else {
                 addError("invalid format, expected:  \"" + key + "\"=ENC(encrypted value)");
             }

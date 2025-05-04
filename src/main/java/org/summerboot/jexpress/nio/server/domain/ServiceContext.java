@@ -27,27 +27,19 @@ import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
-import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.nio.server.ResponseEncoder;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.auth.Caller;
-import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
 import java.net.URLEncoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -485,124 +477,6 @@ public class ServiceContext {
         return this;
     }
 
-    public boolean precheckFolder(File folder) {
-        this.file = null;
-        String filePath = folder.getAbsolutePath();
-        String realPath;
-        try {
-            realPath = file.getAbsoluteFile().toPath().normalize().toString();
-        } catch (Throwable ex) {
-            Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, null, ex, "Invalid file path: " + filePath);
-            this.status(HttpResponseStatus.BAD_REQUEST).error(e);
-            return false;
-        }
-        memo("folder.view", filePath);
-
-        if (!folder.exists()) {
-            //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, null, null, "File not exists: " + filePath);
-            this.status(HttpResponseStatus.NOT_FOUND).error(e);
-            return false;
-        }
-
-        if (!NioHttpUtil.sanitizePath(filePath) || !filePath.equals(realPath)
-                || !folder.isDirectory() || folder.isFile()
-                || folder.isHidden() || !folder.canRead()) {
-            //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Malicious file reqeust: " + filePath);
-            // 2. build JSON response with same app error code, and keep the default INFO log level.
-            this.status(HttpResponseStatus.FORBIDDEN).error(e);
-            return false;
-        }
-        return true;
-    }
-
-    public boolean precheckFile(File file, boolean isDownloadMode) {
-        this.file = null;
-        String filePath = file.getAbsolutePath();
-        memo("file." + (isDownloadMode ? "download" : "view"), filePath);
-        String realPath;
-        try {
-            realPath = file.getAbsoluteFile().toPath().normalize().toString();
-        } catch (Throwable ex) {
-            Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, null, ex, "Invalid file path: " + filePath);
-            this.status(HttpResponseStatus.BAD_REQUEST).error(e);
-            return false;
-        }
-
-        if (!file.exists()) {
-            //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, null, null, "File not exists: " + filePath);
-            this.status(HttpResponseStatus.NOT_FOUND).error(e);
-            return false;
-        }
-
-        if (!NioHttpUtil.sanitizePath(filePath) || !filePath.equals(realPath)
-                || file.isDirectory() || !file.isFile()
-                || file.isHidden() || !file.canRead()) {
-            //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Malicious file reqeust: " + filePath);
-            // 2. build JSON response with same app error code, and keep the default INFO log level.
-            this.status(HttpResponseStatus.FORBIDDEN).error(e);
-            return false;
-        }
-
-        return true;
-    }
-
-    //    protected static final List<Integer> ERRPR_PAGES = new ArrayList();
-//
-//    static {
-//        ERRPR_PAGES.add(HttpResponseStatus.UNAUTHORIZED.code());
-//        ERRPR_PAGES.add(HttpResponseStatus.FORBIDDEN.code());
-//        ERRPR_PAGES.add(HttpResponseStatus.NOT_FOUND.code());
-//    }
-//
-//    public ServiceContext visualizeError() {
-//        if (ERRPR_PAGES.contains(status.code())) {
-//            String errorFileName = status.code() + ".html";
-//            File errorFile = new File(HttpClientConfig.CFG.getDocroot() + File.separator + HttpClientConfig.CFG.getWebResources()
-//                     + File.separator + errorFileName).getAbsoluteFile();
-//            file(errorFile, false);
-//        }
-//        return this;
-//    }
-    protected File buildErrorFile(HttpResponseStatus status, boolean isDownloadMode) {
-        int errorCode = status.code();
-        String errorFileName = errorCode + (isDownloadMode ? ".txt" : ".html");
-        final NioConfig nioCfg = NioConfig.cfg;
-        String errorPageFolderName = nioCfg.getErrorPageFolderName();
-        File errorFile;
-        if (StringUtils.isBlank(errorPageFolderName)) {
-            errorFile = new File(nioCfg.getDocrootDir() + File.separator + errorFileName).getAbsoluteFile();
-        } else {
-            errorFile = new File(nioCfg.getDocrootDir() + File.separator + errorPageFolderName + File.separator + errorFileName).getAbsoluteFile();
-        }
-        if (!errorFile.exists()) {
-            errorFile.getParentFile().mkdirs();
-            String title = BackOffice.agent.getVersionShort();
-            String errorDesc = status.reasonPhrase();
-            StringBuilder sb = new StringBuilder();
-            Path errorFilePath = errorFile.getAbsoluteFile().toPath();
-            try (InputStream ioStream = this.getClass()
-                    .getClassLoader()
-                    .getResourceAsStream(ApplicationUtil.RESOURCE_PATH + "HttpErrorTemplate" + (isDownloadMode ? ".txt" : ".html")); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line).append(BootConstant.BR);
-                }
-                String errorFileContent = sb.toString().replace("${title}", title).replace("${code}", "" + errorCode).replace("${desc}", errorDesc);
-                //errorFileContent = errorFileContent..replace("${title}", title);
-                Files.writeString(errorFilePath, errorFileContent);
-            } catch (IOException ex) {
-                String message = title + ": errCode=" + errorCode + ", desc=" + errorDesc;
-                Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, null, ex, "Failed to generate error page:" + errorFile.getName() + ", " + message);
-                this.error(e);
-            }
-        }
-        return errorFile;
-    }
-
     public ServiceContext file(String fileName, boolean isDownloadMode) {
         String targetFileName = NioConfig.cfg.getDocrootDir() + File.separator + fileName;
         targetFileName = targetFileName.replace('/', File.separatorChar);
@@ -612,8 +486,10 @@ public class ServiceContext {
 
     public ServiceContext file(File file, boolean isDownloadMode) {
         this.downloadMode = isDownloadMode;
-        if (!precheckFile(file, downloadMode)) {
-            file = buildErrorFile(status, downloadMode);
+        this.file = null;
+        memo("file." + (isDownloadMode ? "download" : "view"), file.getAbsolutePath());
+        if (!SecurityUtil.precheckFile(file, this)) {
+            file = NioHttpUtil.buildErrorFile(this);
         }
         this.txt = null;
         this.redirect = null;

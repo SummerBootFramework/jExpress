@@ -28,7 +28,7 @@ import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
-import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
@@ -320,7 +320,7 @@ public abstract class BootConfig implements JExpressConfig {
         if (isEncrypted) {
             if (valueInCfgFile.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && valueInCfgFile.endsWith(")")) {
                 try {
-                    valueInCfgFile = SecurityUtil.decrypt(valueInCfgFile, true);
+                    valueInCfgFile = EncryptorUtil.decrypt(valueInCfgFile, true);
                 } catch (GeneralSecurityException ex) {
                     throw new IllegalArgumentException("Failed to decrypt", ex);
                 }

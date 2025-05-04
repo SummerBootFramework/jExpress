@@ -42,6 +42,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.Tika;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.integration.cache.SimpleLocalCache;
@@ -50,15 +51,21 @@ import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
+import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.TimeUtil;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.regex.Pattern;
@@ -121,7 +128,7 @@ public class NioHttpUtil {
         final HttpResponseStatus status = serviceContext.status();
 
         if (serviceContext.file() != null) {
-            return sendFile(ctx, isKeepAlive, serviceContext);
+            return sendFile(ctx, isKeepAlive, serviceContext, errorAuditor, processorSettings);
         }
         if (serviceContext.redirect() != null) {
             sendRedirect(ctx, serviceContext.redirect(), status);
@@ -175,7 +182,10 @@ public class NioHttpUtil {
 //                String error = "Unsupported Header (Accept-Charset: " + charsetName + "): " + ex.getMessage();
 //                contentBytes = error.getBytes(StandardCharsets.UTF_8);
 //                status = HttpResponseStatus.NOT_ACCEPTABLE;
-                log.warn("Unsupported Header (Accept-Charset: " + charsetName + "): " + ex.getMessage());
+                if (log.isWarnEnabled()) {
+                    String error = SecurityUtil.sanitizeCRLF("Unsupported Header (Accept-Charset: " + charsetName + "): " + ex.getMessage());
+                    log.warn(error);
+                }
                 contentBytes = content.getBytes(StandardCharsets.UTF_8);
                 charsetName = DEFAULT_CHARSET;
             }
@@ -219,17 +229,24 @@ public class NioHttpUtil {
         return contentLength;
     }
 
-    private static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext) {
+    private static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final ServiceContext serviceContext, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings) {
         HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, serviceContext.status());
         HttpHeaders h = response.headers();
         h.set(serviceContext.responseHeaders());
         long fileLength = -1;
-        final RandomAccessFile randomAccessFile;
+        RandomAccessFile randomAccessFile = null;
         File file = serviceContext.file();
+        if (!SecurityUtil.precheckFile(file, serviceContext)) {
+            file = buildErrorFile(serviceContext);
+            serviceContext.file(file, false);
+            return sendResponse(ctx, isKeepAlive, serviceContext, errorAuditor, processorSettings);
+        }
+
         serviceContext.memo("sendFile", file.getAbsolutePath());
         String filePath = file.getName();
         try {
             randomAccessFile = new RandomAccessFile(file, "r");
+            RandomAccessFile raf = randomAccessFile;
             fileLength = randomAccessFile.length();
 
             if (isKeepAlive) {
@@ -253,7 +270,7 @@ public class NioHttpUtil {
                 @Override
                 public void operationComplete(ChannelProgressiveFuture future) throws Exception {
                     log.debug(() -> filePath + " -> Transfer complete.");
-                    randomAccessFile.close();
+                    raf.close();
                 }
             });
             ChannelFuture lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
@@ -261,11 +278,58 @@ public class NioHttpUtil {
                 lastContentFuture.addListener(ChannelFutureListener.CLOSE);
             }
         } catch (IOException ex) {
-            Err err = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to download", ex);
-            serviceContext.error(err).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-            sendText(ctx, isKeepAlive, serviceContext.responseHeaders(), serviceContext.status(), serviceContext.error().toJson(), serviceContext.contentType(), serviceContext.charsetName(), true, serviceContext.responseEncoder());
+            if (randomAccessFile != null) {
+                try {
+                    randomAccessFile.close();
+                } catch (IOException e) {
+                    String error = SecurityUtil.sanitizeCRLF("Failed to close file: " + file.getAbsolutePath());
+                    log.error(error, e);
+                }
+            }
+            Err err = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, null, ex, "Failed to send file: " + file.getAbsolutePath());
+            file = null;
+            serviceContext.file(file, false).error(err).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            return sendResponse(ctx, isKeepAlive, serviceContext, errorAuditor, processorSettings);
         }
         return fileLength;
+    }
+
+    public static File buildErrorFile(final ServiceContext serviceContext) {
+        HttpResponseStatus status = serviceContext.status();
+        int errorCode = status.code();
+        boolean isDownloadMode = serviceContext.isDownloadMode();
+        String errorFileName = errorCode + (isDownloadMode ? ".txt" : ".html");
+        final NioConfig nioCfg = NioConfig.cfg;
+        String errorPageFolderName = nioCfg.getErrorPageFolderName();
+        File errorFile;
+        if (StringUtils.isBlank(errorPageFolderName)) {
+            errorFile = new File(nioCfg.getDocrootDir() + File.separator + errorFileName).getAbsoluteFile();
+        } else {
+            errorFile = new File(nioCfg.getDocrootDir() + File.separator + errorPageFolderName + File.separator + errorFileName).getAbsoluteFile();
+        }
+        if (!errorFile.exists()) {
+            errorFile.getParentFile().mkdirs();
+            String title = BackOffice.agent.getVersionShort();
+            String errorDesc = status.reasonPhrase();
+            StringBuilder sb = new StringBuilder();
+            Path errorFilePath = errorFile.getAbsoluteFile().toPath();
+            try (InputStream ioStream = serviceContext.getClass()
+                    .getClassLoader()
+                    .getResourceAsStream(ApplicationUtil.RESOURCE_PATH + "HttpErrorTemplate" + (isDownloadMode ? ".txt" : ".html")); InputStreamReader isr = new InputStreamReader(ioStream); BufferedReader br = new BufferedReader(isr);) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line).append(BootConstant.BR);
+                }
+                String errorFileContent = sb.toString().replace("${title}", title).replace("${code}", "" + errorCode).replace("${desc}", errorDesc);
+                //errorFileContent = errorFileContent..replace("${title}", title);
+                Files.writeString(errorFilePath, errorFileContent);
+            } catch (IOException ex) {
+                String message = title + ": errCode=" + errorCode + ", desc=" + errorDesc;
+                Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, null, ex, "Failed to generate error page:" + errorFile.getName() + ", " + message);
+                serviceContext.error(e);
+            }
+        }
+        return errorFile;
     }
 
     public static final SimpleLocalCache<String, File> WebResourceCache = new SimpleLocalCacheImpl();
@@ -306,7 +370,10 @@ public class NioHttpUtil {
         } catch (IOException ex) {
             MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
             mimeType = mimeTypesMap.getContentType(file.getPath());
-            log.warn(() -> "Magic cannot get MIME from " + file.getAbsolutePath());
+            if (log.isWarnEnabled()) {
+                String error = SecurityUtil.sanitizeCRLF("Failed to get MIME type from " + file.getAbsolutePath() + ": " + ex.getMessage());
+                log.warn(error);
+            }
         }
         return mimeType;
     }
@@ -329,61 +396,7 @@ public class NioHttpUtil {
         }
     }
 
-    protected static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
-
-    public static boolean sanitizeUri(String uri) {
-        try {
-            uri = URLDecoder.decode(uri, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            try {
-                uri = URLDecoder.decode(uri, "ISO-8859-1");
-            } catch (UnsupportedEncodingException e1) {
-                return false;
-            }
-        }
-        uri = uri.replace('/', File.separatorChar);
-        // Simplistic dumb security check.
-        // You will have to do something serious in the production environment.
-        return !(uri.contains(File.separator + '.')
-                || uri.contains('.' + File.separator)
-                || uri.charAt(0) == '.'
-                || uri.charAt(uri.length() - 1) == '.'
-                || INSECURE_URI.matcher(uri).matches());
-    }
-
-    public static boolean sanitizePath(String path) {
-        return !path.contains(File.separator + '.')
-                && !path.contains('.' + File.separator);
-    }
-
-    @Deprecated
-    public static String sanitizeDocRootUri(String uri, String docroot) {
-        try {
-            uri = URLDecoder.decode(uri, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            try {
-                uri = URLDecoder.decode(uri, "ISO-8859-1");
-            } catch (UnsupportedEncodingException e1) {
-                throw new Error(e);
-            }
-        }
-        uri = uri.replace('/', File.separatorChar);
-        // Simplistic dumb security check.
-        // You will have to do something serious in the production environment.
-        if (uri.contains(File.separator + '.')
-                || uri.contains('.' + File.separator)
-                || uri.charAt(0) == '.'
-                || uri.charAt(uri.length() - 1) == '.'
-                || INSECURE_URI.matcher(uri).matches()) {
-            return null;
-        }
-        if (!uri.startsWith(docroot)) {
-            return null;
-        }
-        return System.getProperty("user.dir") + uri;
-    }
 }
-
 //        List<Integer> failed = rdlList.keySet()
 //                .stream()
 //                .filter(k -> rdlList.get(k) == null)

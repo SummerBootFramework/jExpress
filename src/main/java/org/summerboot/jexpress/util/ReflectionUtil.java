@@ -22,7 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
-import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
@@ -368,7 +368,7 @@ public class ReflectionUtil {
         }
         if (autoDecrypt && value.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
             try {
-                value = SecurityUtil.decrypt(value, true);
+                value = EncryptorUtil.decrypt(value, true);
             } catch (GeneralSecurityException ex) {
                 throw new IllegalArgumentException("Failed to decrypt", ex);
             }

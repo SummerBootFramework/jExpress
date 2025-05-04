@@ -20,7 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -200,10 +200,10 @@ public class FormatterUtil {
             String match = matcher.group();
             String converted;
             if (encrypt) {
-                converted = SecurityUtil.encrypt(match, true);
+                converted = EncryptorUtil.encrypt(match, true);
                 return line.replace(match, ENCRYPTED_WARPER_PREFIX + "(" + converted + ")");
             } else {
-                converted = SecurityUtil.decrypt(match, true);
+                converted = EncryptorUtil.decrypt(match, true);
                 return line.replace(match, DECRYPTED_WARPER_PREFIX + "(" + converted + ")");
             }
         }
@@ -220,10 +220,10 @@ public class FormatterUtil {
         String key = line.substring(0, eq).trim();
         String value = line.substring(++eq).trim();
         if (encrypt && value.startsWith(DECRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
-            String encrypted = SecurityUtil.encrypt(value, true);
+            String encrypted = EncryptorUtil.encrypt(value, true);
             ret = key + "=" + ENCRYPTED_WARPER_PREFIX + "(" + encrypted + ")";
         } else if (!encrypt && value.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
-            String decrypted = SecurityUtil.decrypt(value, true);
+            String decrypted = EncryptorUtil.decrypt(value, true);
             ret = key + "=" + DECRYPTED_WARPER_PREFIX + "(" + decrypted + ")";
         }
         return ret;

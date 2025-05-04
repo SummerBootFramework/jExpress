@@ -18,6 +18,7 @@ package org.summerboot.jexpress.integration.ldap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.auth.AuthConfig;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.AuthenticatorListener;
@@ -223,9 +224,11 @@ public class LdapAgent implements Closeable {
         return roles;
     }
 
-    public List<Attributes> query(final String sFilter) throws NamingException {
-        String filter = escapeQuery(sFilter);
-        log.debug(() -> "base=" + baseDN + "\n\t filter1=" + sFilter + "\n\t filter2=" + filter);
+    public List<Attributes> query(final String filter) throws NamingException {
+        if (log.isDebugEnabled()) {
+            String logTxt = SecurityUtil.sanitizeCRLF("base=" + baseDN + "\n\t filter=" + filter);
+            log.debug(logTxt);
+        }
         List<Attributes> ret = new ArrayList();
         SearchControls ctrls = new SearchControls();
         ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
