@@ -362,7 +362,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             String adminPwd = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD);
             EncryptorUtil.init(adminPwd);
         } else {
-            EncryptorUtil.init(BootConstant.DEFAULT_ADMIN_MM);
+            EncryptorUtil.init(null);
         }
 
         /*

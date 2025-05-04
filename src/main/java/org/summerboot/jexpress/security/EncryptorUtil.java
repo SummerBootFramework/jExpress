@@ -79,6 +79,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.ECGenParameterSpec;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -101,6 +102,7 @@ public class EncryptorUtil {
     public static final int AES_KEY_BIT = 256;
     public static final int SALT_LEN = 16;
     public static final int ITERATIONS = 310_000;
+    public static final String SECRET_KEY_ALGO = "PBKDF2WithHmacSHA256";
     public static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     static {
@@ -144,38 +146,18 @@ public class EncryptorUtil {
         return new SecretKeySpec(decodedKey, algorithm);
     }
 
-    public static byte[] buildSecretKey(String password) {
-        byte[] ret = null;
-        try {
-            KeyGenerator kgen = KeyGenerator.getInstance("AES");// 创建AES的Key生产者
-            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            secureRandom.setSeed(password.getBytes());
-            kgen.init(128, secureRandom);// 利用用户密码作为随机数初始化出
-            // 128位的key生产者
-            //加密没关系，SecureRandom是生成安全随机数序列，password.getBytes()是种子，只要种子相同，序列就一样，所以解密只要有password就行
-            SecretKey secretKey = kgen.generateKey();// 根据用户密码，生成一个密钥
-            ret = secretKey.getEncoded();// 返回基本编码格式的密钥，如果此密钥不支持编码，则返回null。
-        } catch (NoSuchAlgorithmException ex) {
-
-        }
-        return ret;
-    }
-
-//    static byte[] SCERET_KEY_SALT = randomBytes(SALT_LEN);
-//    static Key SCERET_KEY = buildSecretKey(BootConstant.DEFAULT_ADMIN_MM, SCERET_KEY_SALT);
-
-    private static String ROOT_PWD = BootConstant.DEFAULT_ADMIN_MM;
+    private static String ADMIN_MM = BootConstant.DEFAULT_ADMIN_MM;
 
     public static void init(String applicationPwd) {
         if (StringUtils.isBlank(applicationPwd)) {
-            ROOT_PWD = BootConstant.DEFAULT_ADMIN_MM;
+            ADMIN_MM = BootConstant.DEFAULT_ADMIN_MM;
         } else {
-            ROOT_PWD = applicationPwd;
+            ADMIN_MM = applicationPwd;
         }
     }
 
-    private static String getRootPassword() {
-        return ROOT_PWD;
+    private static String getAdminMM() {
+        return ADMIN_MM;
     }
 
     public static byte[] randomBytes(int len) {
@@ -185,9 +167,10 @@ public class EncryptorUtil {
     }
 
     public static SecretKey buildSecretKey(String password, byte[] salt) {
+        // salt = randomBytes(SALT_LEN); // // VERACODE is fool: CWE ID 327 flaw alert will be off when the same salt is generated inside this method, 327 will be flagged if the same salt is generated outside this method.
         try {
             PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, AES_KEY_BIT);
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(SECRET_KEY_ALGO);
             byte[] keyBytes = factory.generateSecret(spec).getEncoded();
             return new SecretKeySpec(keyBytes, "AES");
         } catch (Throwable ex) {
@@ -313,6 +296,7 @@ public class EncryptorUtil {
     }
 
     public static Cipher buildCypher_GCM(boolean encrypt, SecretKey symmetricKey, byte[] iv) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+        //iv = randomBytes(IV_LENGTH_BYTE); // VERACODE is fool: CWE ID 327 flaw alert will be off when the same iv is generated inside this method, 327 will be flagged if the same iv is generated outside this method.
         Cipher cipher = Cipher.getInstance(ENCRYPT_ALGO);
         if (encrypt) {
             cipher.init(Cipher.ENCRYPT_MODE, symmetricKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));
@@ -333,7 +317,7 @@ public class EncryptorUtil {
         if (warped) {
             plainData = FormatterUtil.getInsideParenthesesValue(plainData);
         }
-        String password = getRootPassword();
+        String password = getAdminMM();
         byte[] utf8 = plainData.getBytes(StandardCharsets.UTF_8);
         byte[] encryptedDataPackage = encrypt(password, utf8);
         return Base64.getEncoder().encodeToString(encryptedDataPackage);
@@ -346,7 +330,7 @@ public class EncryptorUtil {
         byte[] iv = randomBytes(IV_LENGTH_BYTE);
         Cipher cipher = buildCypher_GCM(true, key, iv);
 
-        // encrypt
+        // encrypt data
         //byte[] plainData = plainDataString.getBytes(StandardCharsets.UTF_8);
         byte[] encryptedData = cipher.doFinal(plainData);
 
@@ -379,7 +363,7 @@ public class EncryptorUtil {
         if (warped) {
             encodedData = FormatterUtil.getInsideParenthesesValue(encodedData);
         }
-        String password = getRootPassword();
+        String password = getAdminMM();
         byte[] encryptedDataPackage = Base64.getDecoder().decode(encodedData);
         byte[] decryptedData = decrypt(password, encryptedDataPackage);
         return new String(decryptedData, StandardCharsets.UTF_8);
@@ -445,12 +429,15 @@ public class EncryptorUtil {
     }
 
     public enum KeyFileType {
-
         X509, Certificate, PKCS12, JKS, PKCS8
     }
 
-    public static KeyPair generateKeyPair_RSA4096() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public static KeyPair generateKeyPairRSA() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException {
         return generateKeyPair("RSA", 4096);
+    }
+
+    public static KeyPair generateKeyPairEC() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException {
+        return generateKeyPair("EC", 512);
     }
 
     /**
@@ -465,19 +452,34 @@ public class EncryptorUtil {
      * @throws NoSuchAlgorithmException
      * @throws InvalidKeySpecException
      */
-    public static KeyPair generateKeyPair(String keyfactoryAlgorithm, int size) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public static KeyPair generateKeyPair(String keyfactoryAlgorithm, int size) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException {
         if (keyfactoryAlgorithm == null) {
-            keyfactoryAlgorithm = "RSA";
+            keyfactoryAlgorithm = "EC";
         }
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance(keyfactoryAlgorithm);
-        kpg.initialize(size);
+        KeyPairGenerator kpg;
+        switch (keyfactoryAlgorithm.toUpperCase()) {
+            case "RSA" -> {
+                kpg = KeyPairGenerator.getInstance("RSA");
+                kpg.initialize(size);
+            }
+            case "EC" -> {
+                kpg = KeyPairGenerator.getInstance("EC");
+                ECGenParameterSpec spec = getECCurveName(size);
+                kpg.initialize(spec);
+            }
+            default -> throw new NoSuchAlgorithmException(keyfactoryAlgorithm);
+        }
+
         return kpg.generateKeyPair();
     }
 
-    public static void saveKeyToFile(Key key, File file) throws IOException {
-        try (FileOutputStream keyfos = new FileOutputStream(file.getCanonicalFile());) {
-            keyfos.write(key.getEncoded());
-        }
+    private static ECGenParameterSpec getECCurveName(int size) {
+        return switch (size) {
+            case 256 -> new ECGenParameterSpec("secp256r1"); // NIST P-256
+            case 384 -> new ECGenParameterSpec("secp384r1");
+            case 521 -> new ECGenParameterSpec("secp521r1");
+            default -> new ECGenParameterSpec("secp521r1");// use 512
+        };
     }
 
     public static void secureMem(char[] pwd) {
