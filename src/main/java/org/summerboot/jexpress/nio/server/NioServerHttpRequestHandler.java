@@ -250,7 +250,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                             }
                         }
                         report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
-                        log.log(level, report);// CWE-117 False Positive
+                        log.log(level, "\n{}", report);// CWE-117 False Positive
                     }
                 } catch (Throwable ex) {
                     log.fatal("logging failed \n{}", report, ex);// CWE-117 False Positive
