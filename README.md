@@ -274,13 +274,13 @@ secretList")**
 
 
 
-**1.4 Sample Code: -use \<implTag\>**
+**1.4 Sample Code: -use \<AlternativeName\>**
 
-Use @Controller.**implTag** field as below, this controller class will only be available with -**use RoleBased**
+Use @Controller.**AlternativeName** field as below, this controller class will only be available with -**use RoleBased**
 parameter to launch the application, see *<u>section#9</u>*
 
 ```
-@Controller(implTag="RoleBased")
+@Controller(AlternativeName="RoleBased")
 ```
 
 **1.5 Sample Code: PING** see *section#5*
@@ -876,10 +876,10 @@ configuration change event, TPS, etc.), below is a sample:
 
 **9.3 Sample Code**
 
-Use @Service annotation with implTag attribute
+Use @Service annotation with AlternativeName attribute
 
 ```
-@Service(implTag="myTag")
+@Service(AlternativeName="myImpl")
 ```
 
 Full version:
@@ -890,12 +890,12 @@ public class MyServiceImpl implements MyServcie {
 	...
 }
 
-@Service(implTag="impl1")
+@Service(AlternativeName="impl1")
 public class MyServiceImpl_1 implements MyServcie {
 	...
 }
 
-@Service(implTag="impl2")
+@Service(AlternativeName="impl2")
 public class MyServiceImpl_2 implements MyServcie {
 	...
 }
@@ -991,20 +991,31 @@ java -jar my-service.jar -unique POI
 
 ## 11. Plugin - run with external jar files in plugin foler
 
-**10.1 Intent**
+**11.1 Intent**
 
 - Once the application is on production, need a way to add new features or override existing logic without changing the
   exiting code
 
-**10.2 Motivation**
+**11.2 Motivation**
 
 - Make the application focus on interface, and its implements could be developed as external jar files
 - Make the visitor pattern available at the application level
 - You can even put all your logic in one or multiple external jar files developed by different teams as plugins
 
-**10.3 Supported types**
+**11.3 Supported types**
 
 - Web Controllers @Controller
 - Service implementations with @service
 - JExpressConfig configurations implementations with @ImportResource
 - Classes with @Unique
+
+## 12. White/Black list protected HTTP and gRPC server
+
+**12.1 Intent**
+
+- Have the ability to not to open the dorr to everyone from outside to your service
+
+**12.2 Motivation**
+
+- Some testing processes require the service only availbe to limited caller and tell others not to send request to this service to make it easy for trouble shooting
+- In production, it may requires to mmake service (HTTP or gRPC) availb to caller from centain IP range
