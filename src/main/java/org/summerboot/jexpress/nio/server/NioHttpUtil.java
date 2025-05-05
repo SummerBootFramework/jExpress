@@ -334,12 +334,12 @@ public class NioHttpUtil {
 
     public static final SimpleLocalCache<String, File> WebResourceCache = new SimpleLocalCacheImpl();
 
-    public static void sendWebResource(final ServiceRequest request, final ServiceContext response) {
+    public static void sendWebResource(final ServiceRequest request, final ServiceContext response) throws IOException {
         String httpRequestPath = request.getHttpRequestPath();
         sendWebResource(httpRequestPath, response);
     }
 
-    public static void sendWebResource(final String httpRequestPath, final ServiceContext context) {
+    public static void sendWebResource(final String httpRequestPath, final ServiceContext context) throws IOException {
         HttpHeaders headers = context.requestHeaders();
         if (headers != null) {
             String accept = headers.get(HttpHeaderNames.ACCEPT);
@@ -354,9 +354,14 @@ public class NioHttpUtil {
         }
         File webResourceFile = WebResourceCache.get(httpRequestPath);
         if (webResourceFile == null) {
-            String filePath = NioConfig.cfg.getDocrootDir() + httpRequestPath;
-            filePath = filePath.replace('/', File.separatorChar);
-            webResourceFile = new File(filePath).getAbsoluteFile();
+            webResourceFile = new File(NioConfig.cfg.getDocrootDir(), httpRequestPath);
+            String requestedPath = webResourceFile.getCanonicalPath();
+            if (!requestedPath.startsWith(NioConfig.cfg.getDocrootDir())) {
+                Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Invalid request path: " + httpRequestPath);
+                context.status(HttpResponseStatus.FORBIDDEN).error(e);
+                return;
+            }
+
             WebResourceCache.put(httpRequestPath, webResourceFile, BootConstant.WEB_RESOURCE_TTL_MS);
         }
         context.file(webResourceFile, false).level(Level.TRACE);

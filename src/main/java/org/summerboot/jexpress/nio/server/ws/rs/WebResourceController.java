@@ -21,6 +21,8 @@ import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 
+import java.io.IOException;
+
 /**
  * 404 error will be responsed as html when extends WebResourceController
  *
@@ -36,7 +38,7 @@ abstract public class WebResourceController {
      */
     @GET
     @Path("/{path: .*}")
-    public void requestWebResource(final ServiceRequest request, final ServiceContext response) {
+    public void requestWebResource(final ServiceRequest request, final ServiceContext response) throws IOException {
         NioHttpUtil.sendWebResource(request, response);
     }
 
