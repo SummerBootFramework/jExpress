@@ -313,7 +313,7 @@ public class ReflectionUtil {
         } else if (targetClass.equals(Class.class)) {
             // CWE-470 warning: use with caution, validate the class name against a combination of white and black lists to ensure that only expeted classes are loaded
             try {
-                Class ret = Class.forName(value);
+                Class ret = Class.forName(value);// CWE-470 False Positive - Util Feature: caller should define a white/black list
                 if (upperBoundClasses[0] != null && !upperBoundClasses[0].isAssignableFrom(ret)) {
                     throw new IllegalArgumentException("invalid Class name: " + value + ", expected a type of " + upperBoundClasses[0].getName());
                 }
@@ -413,11 +413,11 @@ public class ReflectionUtil {
             } catch (MalformedURLException ex) {
                 throw new IllegalArgumentException("invalid URL format", ex);
             }
-        } else if (targetClass.equals(Path.class)) { // CWE-73 warning: use with caution, validate the class name against a combination of white and black lists to ensure that only expeted classes are loaded
-            File f = new File(value);
+        } else if (targetClass.equals(Path.class)) {
+            File f = new File(value);// CWE-73 False Positive - Util Feature: caller should validate the use against a combination of white and black lists to ensure that only expeted classes are loaded
             return f.getAbsoluteFile().toPath().normalize();
-        } else if (targetClass.equals(File.class)) { // CWE-73 warning: use with caution, validate the class name against a combination of white and black lists to ensure that only expeted classes are loaded
-            File f = new File(value);
+        } else if (targetClass.equals(File.class)) {
+            File f = new File(value);// CWE-73 False Positive - Util Feature: caller should validate the use against a combination of white and black lists to ensure that only expeted classes are loaded
             Path path = f.getAbsoluteFile().toPath().normalize();
             return path.toFile();
         } else if (targetClass.isEnum()) {

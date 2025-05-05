@@ -39,6 +39,7 @@ import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.GeoIpUtil;
@@ -218,7 +219,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
                         //line4
                         context.reportPOI(nioCfg, sb);
-                        verboseClientServerCommunication(nioCfg, requestHeaders, httpPostRequestBody, context, sb, isTraceAll);
+                        String userInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+                        verboseClientServerCommunication(nioCfg, requestHeaders, userInput, context, sb, isTraceAll);
                         context.reportMemo(sb);
                         context.reportError(sb);
                         sb.append(BootConstant.BR);
@@ -248,12 +250,10 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                             }
                         }
                         report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
-                        //report = StringEscapeUtils.escapeJava(report);
-                        //log.log(level, report, context.cause());
-                        log.log(level, report);
+                        log.log(level, report);// CWE-117 False Positive
                     }
                 } catch (Throwable ex) {
-                    log.fatal("logging failed \n{}", report, ex);
+                    log.fatal("logging failed \n{}", report, ex);// CWE-117 False Positive
                 }
                 try {
                     afterLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);

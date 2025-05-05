@@ -18,6 +18,7 @@ import org.summerboot.jexpress.nio.server.NioServerHttpRequestHandler;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.TimeUtil;
@@ -228,7 +229,8 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 .append(", response=").append(responseTime).append("ms");
         //line4
         serviceContext.reportPOI(null, sb);
-        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, httpPostRequestBody, serviceContext, sb, isTraceAll);
+        String userInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, userInput, serviceContext, sb, isTraceAll);
         serviceContext.reportMemo(sb);
         serviceContext.reportError(sb);
         sb.append(BootConstant.BR);
@@ -258,6 +260,6 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 }
             }
         }
-        log.log(level, report);
+        log.log(level, report);// CWE-117 False Positive
     }
 }

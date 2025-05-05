@@ -242,7 +242,7 @@ public class Email {
     public void send(Session emailSession) throws MessagingException {
         MimeMessage msg = buildMimeMessage(emailSession);
         if (msg != null) {
-            Transport.send(msg);
+            Transport.send(msg);// CWE-201 CWE-209 False Positive - Util Feature: caller should protected sensitive (by caller's own defination) data.
         }
     }
 

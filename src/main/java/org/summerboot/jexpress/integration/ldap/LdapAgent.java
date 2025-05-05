@@ -209,15 +209,15 @@ public class LdapAgent implements Closeable {
     public List<Attributes> queryPerson(String key, String value) throws NamingException {
         //String sFilter = "(&(objectClass=inetOrgPerson)&(" + key + "=" + value + "))";
         //String sFilter = "(&(objectClass=organizationalPerson)&(" + key + "=" + value + "))";
-        key = escapeQuery(key);
-        value = escapeQuery(value);
+        key = escapeQuery(key);// CWE-90 False Positive prove
+        value = escapeQuery(value);// CWE-90 False Positive prove
         String objectClass = isAD ? "organizationalPerson" : "inetOrgPerson";
         String sFilter = "(&(objectClass=" + objectClass + ")&(" + key + "=" + value + "))";
         return query(sFilter);
     }
 
     public List<Attributes> getUserRoleGroups(String userDN) throws NamingException {
-        userDN = escapeQuery(userDN);
+        userDN = escapeQuery(userDN);// CWE-90 False Positive prove
         String sFilter = isAD
                 ? "(&(objectClass=group)(member=" + userDN + "))"
                 : "(&(objectClass=groupOfUniqueNames)(uniqueMember=" + userDN + "))";
@@ -241,7 +241,7 @@ public class LdapAgent implements Closeable {
         List<Attributes> ret = new ArrayList();
         SearchControls ctrls = new SearchControls();
         ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        NamingEnumeration<SearchResult> results = m_ctx.search(baseDN, filter, ctrls);
+        NamingEnumeration<SearchResult> results = m_ctx.search(baseDN, filter, ctrls);// CWE-90 False Positive - Util Feature: use with escapeQuery()
         while (results.hasMore()) {
             SearchResult sr = results.next();
             //String dn = sr.getName() + "," + sBase;
@@ -417,7 +417,7 @@ public class LdapAgent implements Closeable {
     }
 
     public static String n2q(String s) {
-        return StringUtils.isBlank(s) ? "?" : escapeQuery(s);
+        return StringUtils.isBlank(s) ? "?" : escapeQuery(s);// CWE-90 False Positive prove
     }
 
     public String createUser(String uid, String pwd, String algorithm, String company, String org, Map<String, String> profile) throws NamingException, NoSuchAlgorithmException {
@@ -426,9 +426,9 @@ public class LdapAgent implements Closeable {
             throw new NamingException(uid + " exists");
         }
 
-        uid = escapeQuery(uid);
-        org = escapeQuery(org);
-        company = escapeQuery(company);
+        uid = escapeQuery(uid);// CWE-90 False Positive prove
+        org = escapeQuery(org);// CWE-90 False Positive prove
+        company = escapeQuery(company);// CWE-90 False Positive prove
         userDN =
                 new StringBuilder().append("uid=").append(uid)
                         .append(",ou=").append(org)
@@ -454,8 +454,8 @@ public class LdapAgent implements Closeable {
 //        entry.put(new BasicAttribute("mail", email));
         if (profile != null) {
             profile.forEach((key, value) -> {
-                key = escapeQuery(key);
-                value = escapeQuery(n2q(value));
+                key = escapeQuery(key);// CWE-90 False Positive prove
+                value = escapeQuery(n2q(value));// CWE-90 False Positive prove
                 entry.put(new BasicAttribute(key, value));
             });
         }
@@ -478,8 +478,8 @@ public class LdapAgent implements Closeable {
         });
         //profile attributes
         attributes.forEach((key, value) -> {
-            key = escapeQuery(key);
-            value = escapeQuery(n2q(value));
+            key = escapeQuery(key);// CWE-90 False Positive prove
+            value = escapeQuery(n2q(value));// CWE-90 False Positive prove
             entry.put(new BasicAttribute(key, value));
         });
 
@@ -506,8 +506,8 @@ public class LdapAgent implements Closeable {
         }
         List<ModificationItem> modList = new ArrayList();
         attributes.forEach((key, value) -> {
-            key = escapeQuery(key);
-            value = escapeQuery(value);
+            key = escapeQuery(key);// CWE-90 False Positive prove
+            value = escapeQuery(value);// CWE-90 False Positive prove
             if (StringUtils.isBlank(value)) {
                 modList.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, new BasicAttribute(key, value)));
             } else {
@@ -537,8 +537,8 @@ public class LdapAgent implements Closeable {
         }
         List<ModificationItem> modList = new ArrayList();
         attributes.forEach((key, value) -> {
-            key = escapeQuery(key);
-            value = escapeQuery(value);
+            key = escapeQuery(key);// CWE-90 False Positive prove
+            value = escapeQuery(value);// CWE-90 False Positive prove
             if (StringUtils.isBlank(value)) {
                 modList.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, new BasicAttribute(key, value)));
             } else {
@@ -612,7 +612,7 @@ public class LdapAgent implements Closeable {
         if (StringUtils.isBlank(o)) {
             sFilter = "(&(objectClass=organization)&(ou:dn:=" + tenantGroupName + "))";
         } else {
-            String value = escapeQuery(o);
+            String value = escapeQuery(o);// CWE-90 False Positive prove
             sFilter = "(&(objectClass=organization)&(ou:dn:=" + tenantGroupName + ")&(o:dn:=" + value + "))";
         }
         return query(sFilter);
@@ -620,8 +620,8 @@ public class LdapAgent implements Closeable {
 
     public List<Attributes> queryOrganizationUnit(String o, String ou) throws NamingException {
         //String sFilter = "(&(objectClass=organization)&(" + key + "=" + value + "))";
-        o = escapeQuery(o);
-        ou = escapeQuery(ou);
+        o = escapeQuery(o);// CWE-90 False Positive prove
+        ou = escapeQuery(ou);// CWE-90 False Positive prove
         String sFilter;
         if (StringUtils.isBlank(ou)) {
             sFilter = "(&(objectClass=organizationalUnit)&(ou:dn:=" + tenantGroupName + ")&(o:dn:=" + o + "))";
@@ -632,8 +632,8 @@ public class LdapAgent implements Closeable {
     }
 
     public List<Attributes> queryOrganizationUnitUsers(String o, String ou) throws NamingException {
-        o = escapeQuery(o);
-        ou = escapeQuery(ou);
+        o = escapeQuery(o);// CWE-90 False Positive prove
+        ou = escapeQuery(ou);// CWE-90 False Positive prove
         String sFilter;
         //sFilter = "(&(objectClass=inetOrgPerson)&(ou:dn:=" + tenantGroupName + ")&(o:dn:=" + dn + "))";
         if (StringUtils.isBlank(ou)) {
@@ -645,7 +645,7 @@ public class LdapAgent implements Closeable {
     }
 
     public List<String> queryGroupUsers(String cn) throws NamingException {
-        cn = escapeQuery(cn);
+        cn = escapeQuery(cn);// CWE-90 False Positive prove
         List<String> uids = new ArrayList();
         String sFilter = "(&(objectClass=groupOfUniqueNames)&(ou:dn:=groups)(cn=" + cn + "))";
         List<Attributes> groupAttrs = query(sFilter);

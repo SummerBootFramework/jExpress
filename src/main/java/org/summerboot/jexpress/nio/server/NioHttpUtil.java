@@ -245,7 +245,7 @@ public class NioHttpUtil {
         serviceContext.memo("sendFile", file.getAbsolutePath());
         String filePath = file.getName();
         try {
-            randomAccessFile = new RandomAccessFile(file, "r");
+            randomAccessFile = new RandomAccessFile(file, "r");// CWE-404 False Positive: try with resource will close the IO while the async thread is still using it.
             RandomAccessFile raf = randomAccessFile;
             fileLength = randomAccessFile.length();
 
@@ -257,7 +257,7 @@ public class NioHttpUtil {
             ctx.write(response);
             // the sending progress
             ChannelFuture sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
-            sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
+            sendFileFuture.addListener(new ChannelProgressiveFutureListener() { // CWE-404 False Positive prove
                 @Override
                 public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
                     if (total < 0) { // total unknown
@@ -354,8 +354,9 @@ public class NioHttpUtil {
         }
         File webResourceFile = WebResourceCache.get(httpRequestPath);
         if (webResourceFile == null) {
-            webResourceFile = new File(NioConfig.cfg.getDocrootDir(), httpRequestPath);
+            webResourceFile = new File(NioConfig.cfg.getDocrootDir(), httpRequestPath);// CWE-73 False Positive
             String requestedPath = webResourceFile.getCanonicalPath();
+            // CWE-73 False Positive prove
             if (!requestedPath.startsWith(NioConfig.cfg.getDocrootDir())) {
                 Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Invalid request path: " + httpRequestPath);
                 context.status(HttpResponseStatus.FORBIDDEN).error(e);

@@ -180,7 +180,7 @@ public class ApplicationUtil {
         Set<String> classNames = getClassNamesFromJarFile(jarFile);
         for (String className : classNames) {
             try {
-                Class loadedClass = urlClassLoader.loadClass(className);
+                Class loadedClass = urlClassLoader.loadClass(className);// CWE-470 False Positive - Util Feature: caller should define a white/black list
                 classes.add(loadedClass);
             } catch (ClassNotFoundException | NoClassDefFoundError ex) {
                 onError = true;

@@ -167,9 +167,9 @@ public class EncryptorUtil {
     }
 
     public static SecretKey buildSecretKey(String password, byte[] salt) {
-        // salt = randomBytes(SALT_LEN); // // VERACODE is fool: CWE ID 327 flaw alert will be off when the same salt is generated inside this method, 327 will be flagged if the same salt is generated outside this method.
+        // salt = randomBytes(SALT_LEN); // CWE-327 False Positive prove: flaw alert will be off when the same salt is generated inside this method, 327 will be flagged if the same salt is generated outside this method.
         try {
-            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, AES_KEY_BIT);
+            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, AES_KEY_BIT);// CWE-327 False Positive due to salt is passed in as parameter
             SecretKeyFactory factory = SecretKeyFactory.getInstance(SECRET_KEY_ALGO);
             byte[] keyBytes = factory.generateSecret(spec).getEncoded();
             return new SecretKeySpec(keyBytes, "AES");
@@ -296,12 +296,12 @@ public class EncryptorUtil {
     }
 
     public static Cipher buildCypher_GCM(boolean encrypt, SecretKey symmetricKey, byte[] iv) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
-        //iv = randomBytes(IV_LENGTH_BYTE); // VERACODE is fool: CWE ID 327 flaw alert will be off when the same iv is generated inside this method, 327 will be flagged if the same iv is generated outside this method.
+        //iv = randomBytes(IV_LENGTH_BYTE); // CWE-327 False Positive prove: flaw alert will be off when the same iv is generated inside this method, 327 will be flagged if the same iv is generated outside this method.
         Cipher cipher = Cipher.getInstance(ENCRYPT_ALGO);
         if (encrypt) {
-            cipher.init(Cipher.ENCRYPT_MODE, symmetricKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));
+            cipher.init(Cipher.ENCRYPT_MODE, symmetricKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));// CWE-327 False Positive due to iv is passed in as parameter
         } else {
-            cipher.init(Cipher.DECRYPT_MODE, symmetricKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));
+            cipher.init(Cipher.DECRYPT_MODE, symmetricKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));// CWE-327 False Positive due to iv is passed in as parameter
         }
         return cipher;
     }
@@ -474,12 +474,12 @@ public class EncryptorUtil {
     }
 
     private static ECGenParameterSpec getECCurveName(int size) {
-        return switch (size) {
-            case 256 -> new ECGenParameterSpec("secp256r1"); // NIST P-256
-            case 384 -> new ECGenParameterSpec("secp384r1");
-            case 521 -> new ECGenParameterSpec("secp521r1");
-            default -> new ECGenParameterSpec("secp521r1");// use 512
-        };
+        return new ECGenParameterSpec(switch (size) {
+            case 256 -> "secp256r1"; // NIST P-256
+            case 384 -> "secp384r1";
+            case 521 -> "secp521r1";
+            default -> "secp521r1";// use 512
+        });
     }
 
     public static void secureMem(char[] pwd) {
