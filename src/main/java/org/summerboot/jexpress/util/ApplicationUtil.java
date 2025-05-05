@@ -161,6 +161,14 @@ public class ApplicationUtil {
         return classNames;
     }
 
+    /**
+     * CWE-470 warning: use with caution, validate the class name against a combination of white and black lists to ensure that only expeted classes are loaded
+     *
+     * @param jarFile
+     * @param failOnUndefinedClasses
+     * @return
+     * @throws IOException
+     */
     public static Set<Class<?>> loadClassFromJarFile(File jarFile, boolean failOnUndefinedClasses) throws IOException {
         URL url = jarFile.getAbsoluteFile().toURI().toURL();
         URL[] urls = {url};

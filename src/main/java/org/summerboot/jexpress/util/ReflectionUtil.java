@@ -311,6 +311,7 @@ public class ReflectionUtil {
             }
             return Map.copyOf(ret);
         } else if (targetClass.equals(Class.class)) {
+            // CWE-470 warning: use with caution, validate the class name against a combination of white and black lists to ensure that only expeted classes are loaded
             try {
                 Class ret = Class.forName(value);
                 if (upperBoundClasses[0] != null && !upperBoundClasses[0].isAssignableFrom(ret)) {
@@ -412,10 +413,10 @@ public class ReflectionUtil {
             } catch (MalformedURLException ex) {
                 throw new IllegalArgumentException("invalid URL format", ex);
             }
-        } else if (targetClass.equals(Path.class)) {
+        } else if (targetClass.equals(Path.class)) { // CWE-73 warning: use with caution, validate the class name against a combination of white and black lists to ensure that only expeted classes are loaded
             File f = new File(value);
             return f.getAbsoluteFile().toPath().normalize();
-        } else if (targetClass.equals(File.class)) {
+        } else if (targetClass.equals(File.class)) { // CWE-73 warning: use with caution, validate the class name against a combination of white and black lists to ensure that only expeted classes are loaded
             File f = new File(value);
             Path path = f.getAbsoluteFile().toPath().normalize();
             return path.toFile();
