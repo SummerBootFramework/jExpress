@@ -16,7 +16,6 @@
 package org.summerboot.jexpress.security;
 
 import jakarta.annotation.Nullable;
-import org.apache.tika.utils.StringUtils;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -27,7 +26,6 @@ import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
-import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
@@ -147,18 +145,14 @@ public class EncryptorUtil {
         return new SecretKeySpec(decodedKey, algorithm);
     }
 
-    private static String ADMIN_MM = BootConstant.DEFAULT_ADMIN_MM;
+    private static String MASTER_PASSWORD = "";
 
-    public static void init(String applicationPwd) {
-        if (StringUtils.isBlank(applicationPwd)) {
-            ADMIN_MM = BootConstant.DEFAULT_ADMIN_MM;
-        } else {
-            ADMIN_MM = applicationPwd;
-        }
+    public static void setMasterPassword(String masterPassword) {
+        MASTER_PASSWORD = masterPassword;
     }
 
-    private static String getAdminMM() {
-        return ADMIN_MM;
+    private static String getMasterPassword() {
+        return MASTER_PASSWORD;
     }
 
     public static byte[] randomBytes(int len) {
@@ -318,7 +312,7 @@ public class EncryptorUtil {
         if (warped) {
             plainData = FormatterUtil.getInsideParenthesesValue(plainData);
         }
-        String password = getAdminMM();
+        String password = getMasterPassword();
         byte[] utf8 = plainData.getBytes(StandardCharsets.UTF_8);
         byte[] encryptedDataPackage = encrypt(password, utf8);
         return Base64.getEncoder().encodeToString(encryptedDataPackage);
@@ -364,7 +358,7 @@ public class EncryptorUtil {
         if (warped) {
             encodedData = FormatterUtil.getInsideParenthesesValue(encodedData);
         }
-        String password = getAdminMM();
+        String password = getMasterPassword();
         byte[] encryptedDataPackage = Base64.getDecoder().decode(encodedData);
         byte[] decryptedData = decrypt(password, encryptedDataPackage);
         return new String(decryptedData, StandardCharsets.UTF_8);

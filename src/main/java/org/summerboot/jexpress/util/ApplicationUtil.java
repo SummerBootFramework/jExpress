@@ -113,18 +113,18 @@ public class ApplicationUtil {
 
     public static Map<Object, Set<String>> checkDuplicateFields(Class errorCodeClass, Class fieldClass) throws IllegalArgumentException, IllegalAccessException {
         Map<Object, Set<String>> duplicates = new HashMap();
-        Map<String, Object> errorCodes = new HashMap();
-        ReflectionUtil.loadFields(errorCodeClass, fieldClass, errorCodes, true);
+        Map<String, Object> valueMap = new HashMap();
+        ReflectionUtil.loadFields(errorCodeClass, fieldClass, valueMap, true, true);
 
         Map<Object, String> temp = new HashMap();
-        errorCodes.keySet().forEach((varName) -> {
-            Object errorCode = errorCodes.get(varName);
-            String duplicated = temp.put(errorCode, varName);
+        valueMap.keySet().forEach((varName) -> {
+            Object value = valueMap.get(varName);
+            String duplicated = temp.put(value, varName);
             if (duplicated != null) {
-                Set<String> names = duplicates.get(errorCode);
+                Set<String> names = duplicates.get(value);
                 if (names == null) {
                     names = new HashSet();
-                    duplicates.put(errorCode, names);
+                    duplicates.put(value, names);
                 }
                 names.add(varName);
                 names.add(duplicated);
@@ -223,7 +223,7 @@ public class ApplicationUtil {
      */
     public static void RTO(int code, String msg, Throwable ex) {
         if (msg != null) {
-            if (code == BootErrorCode.OK) {
+            if (code == BootErrorCode.RTO_CLS_EXIT) {
                 System.out.println(msg);
             } else {
                 System.err.println(msg);

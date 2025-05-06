@@ -218,6 +218,9 @@ public class BackOffice extends BootConfig {
     private boolean allowCoreThreadTimeOut = false;
 
     @ConfigHeader(title = "4.1 Default Path/File Naming")
+    @Config(key = "naming.file.defaultMasterPasswordFile", defaultValue = "master.password")
+    private String defaultMasterPasswordFile = "master.password";
+
     @Config(key = "naming.folder.domainPrefix", defaultValue = "standalone")
     private String domainFolderPrefix = "standalone";
 
@@ -355,6 +358,10 @@ public class BackOffice extends BootConfig {
 
     public String getPortInUseAlertMessage() {
         return portInUseAlertMessage;
+    }
+
+    public String getDefaultMasterPasswordFile() {
+        return defaultMasterPasswordFile;
     }
 
     public String getDomainFolderPrefix() {

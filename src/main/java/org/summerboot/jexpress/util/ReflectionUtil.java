@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableSortedSet;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
+import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
 import org.summerboot.jexpress.security.EncryptorUtil;
@@ -502,14 +503,18 @@ public class ReflectionUtil {
     }
 
     public static void loadFields(Class targetClass, Class fieldClass, Map results, boolean includeClassName) throws IllegalArgumentException, IllegalAccessException {
+        loadFields(targetClass, fieldClass, results, includeClassName, false);
+    }
+
+    public static void loadFields(Class targetClass, Class fieldClass, Map results, boolean includeClassName, boolean checkUniqueIgnore) throws IllegalArgumentException, IllegalAccessException {
         Class parent = targetClass.getSuperclass();
         if (parent != null) {
-            loadFields(parent, fieldClass, results, includeClassName);
+            loadFields(parent, fieldClass, results, includeClassName, checkUniqueIgnore);
         }
         Class[] intfs = targetClass.getInterfaces();
         if (intfs != null) {
             for (Class i : intfs) {
-                loadFields(i, fieldClass, results, includeClassName);
+                loadFields(i, fieldClass, results, includeClassName, checkUniqueIgnore);
             }
         }
         Field[] fields = targetClass.getDeclaredFields();
@@ -518,6 +523,12 @@ public class ReflectionUtil {
             Class type = field.getType();
             if (!fieldClass.equals(type)) {
                 continue;
+            }
+            if (checkUniqueIgnore) {
+                UniqueIgnore aUI = field.getAnnotation(UniqueIgnore.class);
+                if (aUI != null) {
+                    continue;
+                }
             }
             String varName = includeClassName ? targetClass.getName() + "." + field.getName() : field.getName();
             Object varValue = field.get(null);

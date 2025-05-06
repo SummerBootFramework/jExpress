@@ -342,28 +342,33 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void bigBang_AndThereWasCLI() {
         log.trace("");
         if (!runCLI_Utils()) {
-            ApplicationUtil.RTO(BootErrorCode.OK, null, null);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, null, null);
         }
         /*
          * [Config File] Security - init app config password
          */
+        String adminPwd = "";
+        final String adminPwdFile;
         if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
-            String adminPwdFile = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD_FILE);
+            adminPwdFile = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD_FILE);
+        } else if (cli.hasOption(BootConstant.CLI_ADMIN_PWD)) {// "else" = only one option, cannot both
+            adminPwdFile = null;
+            adminPwd = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD);
+        } else {
+            adminPwdFile = BootConstant.DEFAULT_MASTER_PASSWORD_FILE;
+        }
+        if (adminPwdFile != null) {
             Properties props = new Properties();
-            try (InputStream is = new FileInputStream(adminPwdFile)) {
+            try (InputStream is = new FileInputStream(new File(adminPwdFile).getCanonicalFile())) {
                 props.load(is);
             } catch (Throwable ex) {
                 throw new RuntimeException("failed to load " + adminPwdFile, ex);
             }
-            String adminPwd = props.getProperty("APP_ROOT_PASSWORD");
-            adminPwd = EncryptorUtil.base64Decode(adminPwd);
-            EncryptorUtil.init(adminPwd);
-        } else if (cli.hasOption(BootConstant.CLI_ADMIN_PWD)) {// "else" = only one option, cannot both
-            String adminPwd = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD);
-            EncryptorUtil.init(adminPwd);
-        } else {
-            EncryptorUtil.init(null);
+            String base64EncodedAdminPwd = props.getProperty("APP_ROOT_PASSWORD");
+            adminPwd = EncryptorUtil.base64Decode(base64EncodedAdminPwd);
         }
+        EncryptorUtil.setMasterPassword(adminPwd);
+
 
         /*
          * [Config File] Monitoring - set configuration Change Monitor Interval
@@ -390,7 +395,7 @@ abstract public class SummerBigBang extends SummerSingularity {
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ARG_ERROR, msg, null);
             }
             String t = BootConfig.generateTemplate(c);
-            ApplicationUtil.RTO(BootErrorCode.OK, t, null);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, t, null);
         }
 
         log.trace(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorIntervalSec + ", StartCommand>" + jvmStartCommand);
@@ -401,7 +406,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         if (cli.hasOption(BootConstant.CLI_ENCRYPT)) {
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_encrypt);
             String msg = BootConstant.BR + "\t " + updated + " config items have been encrypted in " + userSpecifiedConfigDir.getAbsolutePath();
-            ApplicationUtil.RTO(BootErrorCode.OK, msg, null);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
         } else if (cli.hasOption(BootConstant.CLI_DECRYPT)) {
             if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
                 String msg = BootConstant.BR + "\t error: -" + BootConstant.CLI_ADMIN_PWD_FILE + " is not allowed for decryption, please private password with -" + BootConstant.CLI_ADMIN_PWD + " option when decrypt data";
@@ -409,7 +414,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             }
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
             String msg = BootConstant.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath();
-            ApplicationUtil.RTO(BootErrorCode.OK, msg, null);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
         }
 
         /*
@@ -443,7 +448,7 @@ abstract public class SummerBigBang extends SummerSingularity {
                     sb.append(ExceptionUtils.getRootCauseMessage(ex)).append(BootConstant.BR);
                 }
             }
-            ApplicationUtil.RTO(BootErrorCode.OK, "\n\n" + sb, null);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, "\n\n" + sb, null);
         }
 
         /*
@@ -482,7 +487,7 @@ abstract public class SummerBigBang extends SummerSingularity {
                 i++;
             }
             String msg = "Total generated " + i + " configuration files in " + userSpecifiedConfigDir.getAbsolutePath();
-            ApplicationUtil.RTO(BootErrorCode.OK, msg, null);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
         }
 
         /*

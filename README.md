@@ -592,10 +592,10 @@ my.key.name=DEC(plain password)
 
       Your application launched as system service controlled by root admin, and runs with
 
-      > “-cfgdir <path to config folder> -authfile <path to root password file>”
+      > “-authfile <path to root password file>”
 
       ```
-      java -jar my-service.jar -cfgdir dev/configuration -authfile /etc/security/my-service.root_pwd
+      java -jar jExpressApp.jar -authfile /etc/security/my-service-name.root_pwd
       ```
 
       Your root password is stored in file /etc/security/my-service.root_pwd, and has the following format:

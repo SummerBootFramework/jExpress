@@ -75,23 +75,35 @@ abstract public class SummerSingularity {
     public static final String HOST = jExpressInit();
 
     protected static String jExpressInit() {
-        String FILE_CFG_SYSTEM = "boot.conf";
-        File currentDir = new File("etc").getAbsoluteFile();
-        if (!currentDir.exists()) {
-            currentDir.mkdirs();
+        final String FILE_CFG_SYSTEM = "boot.conf";
+        final File etcDir = new File("etc").getAbsoluteFile();
+        if (!etcDir.exists()) {
+            etcDir.mkdirs();
         }
-        File systemConfigFile = Paths.get(currentDir.getAbsolutePath(), FILE_CFG_SYSTEM).toFile();
+        final File systemConfigFile = Paths.get(etcDir.getAbsolutePath(), FILE_CFG_SYSTEM).toFile();
         try {
             if (!systemConfigFile.exists()) {
-                ConfigUtil.createConfigFile(BackOffice.class, currentDir, FILE_CFG_SYSTEM, false);
+                ConfigUtil.createConfigFile(BackOffice.class, etcDir, FILE_CFG_SYSTEM, false);
             }
             BackOffice.agent.load(systemConfigFile, false);// isReal:false = do not init logging
         } catch (IOException ex) {
             String msg = "Failed to init " + systemConfigFile + ", caused by " + ex;
             ApplicationUtil.RTO(BootErrorCode.RTO_CFG_BOOT_ERROR, msg, ex);
         }
+
+        String defaultAdminPwdFileName = BackOffice.agent.getDefaultMasterPasswordFile();
+        try {
+            File defaultAdminPwdFile = new File(etcDir, defaultAdminPwdFileName).getCanonicalFile();
+            if (!defaultAdminPwdFile.exists()) {
+                ConfigUtil.createConfigFile(MasterPassword.class, etcDir, defaultAdminPwdFileName, false);
+            }
+        } catch (IOException ex) {
+            String msg = "Failed to init " + new File(defaultAdminPwdFileName).getAbsolutePath() + ", caused by " + ex;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CFG_BOOT_ERROR, msg, ex);
+        }
         return ApplicationUtil.getServerName(true);
     }
+
 
     protected static Logger log;
     protected static final File DEFAULT_CFG_DIR = new File(BootConstant.DIR_CONFIGURATION).getAbsoluteFile();

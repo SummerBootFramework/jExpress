@@ -17,6 +17,7 @@ package org.summerboot.jexpress.boot;
 
 import org.apache.logging.log4j.Level;
 
+import java.io.File;
 import java.security.SecureRandom;
 
 /**
@@ -53,6 +54,7 @@ public interface BootConstant {
     int CFG_CHANGE_MONITOR_INTERVAL_SEC = BackOffice.agent.getCfgChangeMonitorIntervalSec();
     int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
     long WEB_RESOURCE_TTL_MS = BackOffice.agent.getWebResourceCacheTtlSec() * 1000;
+    String DEFAULT_MASTER_PASSWORD_FILE = "etc" + File.separator + BackOffice.agent.getDefaultMasterPasswordFile();
     String DIR_STANDALONE = BackOffice.agent.getDomainFolderPrefix();
     String DIR_CONFIGURATION = BackOffice.agent.getConfigFolderName();
     String DIR_PLUGIN = BackOffice.agent.getPluginFolderName();

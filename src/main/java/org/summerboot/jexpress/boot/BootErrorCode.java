@@ -17,6 +17,7 @@ package org.summerboot.jexpress.boot;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.summerboot.jexpress.boot.annotation.Unique;
+import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
 
 import java.util.Map;
 
@@ -106,6 +107,8 @@ public interface BootErrorCode {
     int BAD_REQUEST_MISSING_REQUIRED_FILED = BR_BASE + 9;
 
     int RTO_BASE = 70;
+    @UniqueIgnore
+    int RTO_CLS_EXIT = 0;
     int RTO_CLI_PARSER_ERROR = RTO_BASE + 1;
     int RTO_CLI_MISSING_ARG_ERROR = RTO_BASE + 2;
     int RTO_CLI_INVALID_ARG_ERROR = RTO_BASE + 3;
