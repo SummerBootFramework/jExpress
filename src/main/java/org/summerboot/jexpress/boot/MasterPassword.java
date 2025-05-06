@@ -22,11 +22,11 @@ class MasterPassword extends BootConfig {
     public void shutdown() {
     }
 
-    @ConfigHeader(title = "To protect configuration via base64 encoded Master Password in a file",
+    @ConfigHeader(title = "To protect configuration via Bse64 encoded Master Password in a file:",
             desc = """ 
                     
-                      1. Copy this file to a secure location and change the password, e.g. /etc/security/master.password,
-                      2. Make it only accessible by OS admin but not application admin nor other users.
+                      1. Copy this file to a secure location and change the password, e.g. /etc/security/master.password
+                      2. Make it only accessible by OS admin but not application admin nor other users
                       3. To start the app: java -jar <app>.jar -authfile <path to this file> [-dmain <domain>]
                     
                     """,
