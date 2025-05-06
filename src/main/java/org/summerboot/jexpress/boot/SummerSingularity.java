@@ -87,8 +87,8 @@ abstract public class SummerSingularity {
             }
             BackOffice.agent.load(systemConfigFile, false);// isReal:false = do not init logging
         } catch (IOException ex) {
-            System.err.println("Failed to init " + systemConfigFile + ", caused by " + ex);
-            System.exit(1);
+            String msg = "Failed to init " + systemConfigFile + ", caused by " + ex;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CFG_BOOT_ERROR, msg, ex);
         }
         return ApplicationUtil.getServerName(true);
     }
@@ -228,15 +228,13 @@ abstract public class SummerSingularity {
         try {
             scanPluginJars(pluginDir, true);// depends -domain or -cfgdir
         } catch (IOException ex) {
-            System.out.println(ex + BootConstant.BR + "\tFailed to load plugin jar files from " + pluginDir);
-            ex.printStackTrace();
-            System.exit(1);
+            String msg = ex + BootConstant.BR + "\tFailed to load plugin jar files from " + pluginDir;
+            ApplicationUtil.RTO(BootErrorCode.RTO_PLUGIN_ERROR, msg, ex);
         }
 
         String error = scanAnnotation_Unique(callerRootPackageNames, memo);
         if (error != null) {
-            System.out.println(error);
-            System.exit(1);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CODE_ERROR_UNIQUE, error, null);
         }
         String[] packages = FormatterUtil.arrayAdd(callerRootPackageNames, BootConstant.JEXPRESS_PACKAGE_NAME);
         scanImplementation_gRPC(callerRootPackageNames);
@@ -321,8 +319,8 @@ abstract public class SummerSingularity {
 //            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
 //        } else {
         if (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead()) {
-            System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
-            System.exit(1);
+            String msg = "Could access configuration path as a folder: " + userSpecifiedConfigDir;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CFG_DIR_ACCESS_ERROR, msg, null);
         }
         //set log folder outside user specified config folder
         // this will convert any number sequence into 6 character.
@@ -577,8 +575,8 @@ abstract public class SummerSingularity {
         //Java 17if (!sb.isEmpty()) {
         String error = sb.toString();
         if (!error.isBlank()) {
-            System.out.println("IOC Code error:" + sb);
-            System.exit(1);
+            String msg = "@Service IOC Code error:" + sb;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CODING_ERROR_SERVICE_IOC, msg, null);
         }
         List<String> serviceImplTags = tags.stream()
                 .distinct()

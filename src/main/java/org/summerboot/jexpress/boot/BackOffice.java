@@ -288,7 +288,7 @@ public class BackOffice extends BootConfig {
     private String cliName_i18n = "i18n";
 
     @Config(key = "naming.cli.use", defaultValue = "use")
-    private String cliName_use = "use";//To specify which implementation will be used via @Component.checkImplTagUsed
+    private String cliName_useAlternative = "use";//To specify which implementation will be used via @Component.checkImplTagUsed
 
     @Config(key = "naming.cli.cfgdemo", defaultValue = "cfgdemo")
     private String cliName_cfgdemo = "cfgdemo";
@@ -441,8 +441,8 @@ public class BackOffice extends BootConfig {
         return cliName_i18n;
     }
 
-    public String getCliName_use() {
-        return cliName_use;
+    public String getCliName_useAlternative() {
+        return cliName_useAlternative;
     }
 
     public String getCliName_cfgdemo() {

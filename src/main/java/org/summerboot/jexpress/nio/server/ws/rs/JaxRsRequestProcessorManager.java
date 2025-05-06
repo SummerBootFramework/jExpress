@@ -26,9 +26,11 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Ping;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
 import java.lang.reflect.InvocationHandler;
@@ -251,8 +253,8 @@ public class JaxRsRequestProcessorManager {
         //Java 17 if (!errors.isEmpty()) {
         String error = errors.toString();
         if (!error.isBlank()) {
-            System.err.println("Invalid Java methods: \n" + errors);
-            System.exit(1);
+            String msg = "Invalid Java methods: \n" + errors;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CODING_ERROR_PROCESSOR, msg, null);
         }
 //        final AuthConfig authCfg = AuthConfig.cfg;
 //        authCfg.addDeclareRoles(declareRoles);

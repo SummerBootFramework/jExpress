@@ -350,7 +350,7 @@ abstract public class SummerApplication extends SummerBigBang {
             }
         } catch (java.net.BindException ex) {// from NioServer
             log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
-            System.exit(1);
+            ApplicationUtil.RTO(BootErrorCode.RTO_BINDING_ERROR, null, null);
         } catch (Throwable ex) {
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause instanceof java.net.BindException) {// from gRPC server
@@ -358,7 +358,7 @@ abstract public class SummerApplication extends SummerBigBang {
             } else {
                 log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             }
-            System.exit(1);
+            ApplicationUtil.RTO(BootErrorCode.RTO_UNKNOWN_ERROR, null, null);
         } finally {
             // show prompt only with default log4j2.xml in case user is not familiar with log4j2.xml (only one ConsoleAppender with maxLevel is NOT "ALL"), no prompt if user modify the default log4j2.xml due to user knows what he/she is doing
             String prompt = null;

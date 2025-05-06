@@ -26,6 +26,7 @@ import java.util.Map;
 @Unique(name = "SystemErrorCode", type = int.class)
 public interface BootErrorCode {
 
+
     interface CustomHttpStatus {
 
         HttpResponseStatus UNAVAILABLE_FOR_LEGAL_REASONS = HttpResponseStatus.valueOf(451, "Unavailable For Legal Reasons");
@@ -40,6 +41,7 @@ public interface BootErrorCode {
         Integer ret = errorCodeMapping.get(code);
         return ret == null ? code : ret;
     }
+
 
     int OK = getErrorCode(0);
 
@@ -102,4 +104,23 @@ public interface BootErrorCode {
     int BAD_REQUEST_INVALID_XML_REQUEST_BODY = BR_BASE + 7;
     int BAD_REQUEST_INVALID_REQUEST_BODY = BR_BASE + 8;
     int BAD_REQUEST_MISSING_REQUIRED_FILED = BR_BASE + 9;
+
+    int RTO_BASE = 70;
+    int RTO_CLI_PARSER_ERROR = RTO_BASE + 1;
+    int RTO_CLI_MISSING_ARG_ERROR = RTO_BASE + 2;
+    int RTO_CLI_INVALID_ARG_ERROR = RTO_BASE + 3;
+    int RTO_CLI_INVALID_ALTERNATIVE_NAME_ERROR = RTO_BASE + 4;
+    int RTO_CFG_BOOT_ERROR = RTO_BASE + 5;
+    int RTO_CFG_LOADING_ERROR = RTO_BASE + 6;
+    int RTO_CFG_DIR_ACCESS_ERROR = RTO_BASE + 7;
+    int RTO_CFG_GENERATE_ERROR = RTO_BASE + 8;
+    int RTO_CREATE_IF_NOT_EXIST_ERROR = RTO_BASE + 9;
+    int RTO_PLUGIN_ERROR = RTO_BASE + 10;
+    int RTO_CODE_ERROR_HM = RTO_BASE + 11;
+    int RTO_CODE_ERROR_UNIQUE = RTO_BASE + 12;
+    int RTO_CODING_ERROR_SERVICE_IOC = RTO_BASE + 13;
+    int RTO_CODING_ERROR_PROCESSOR = RTO_BASE + 14;
+    int RTO_UNKNOWN_HOST_ERROR = RTO_BASE + 15;
+    int RTO_BINDING_ERROR = RTO_BASE + 16;
+    int RTO_UNKNOWN_ERROR = RTO_BASE + 17;
 }

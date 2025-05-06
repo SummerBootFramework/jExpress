@@ -17,6 +17,7 @@ package org.summerboot.jexpress.util;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootErrorCode;
 
 import java.io.File;
 import java.io.IOException;
@@ -138,9 +139,10 @@ public class ApplicationUtil {
             return InetAddress.getLocalHost().getHostName();
             //System.setProperty(key, InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException ex) {
-            ex.printStackTrace(System.err);
             if (exitWhenFail) {
-                System.exit(-1);
+                ApplicationUtil.RTO(BootErrorCode.RTO_UNKNOWN_HOST_ERROR, null, ex);
+            } else {
+                ex.printStackTrace(System.err);
             }
         }
         return null;
@@ -206,10 +208,28 @@ public class ApplicationUtil {
             final byte[] bytes = IOUtils.toByteArray(ioStream);
             Files.write(targetFile, bytes);
         } catch (Throwable ex) {
-            System.out.println(ex + "\n\tCould generate from " + srcFileName + " to " + targetFile);
-            ex.printStackTrace();
-            System.exit(1);
+            String msg = ex + "\n\tCould generate from " + srcFileName + " to " + targetFile;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CREATE_IF_NOT_EXIST_ERROR, msg, ex);
         }
         return targetFile;
+    }
+
+    /**
+     * Rejected Takeoff
+     *
+     * @param code
+     */
+    public static void RTO(int code, String msg, Throwable ex) {
+        if (msg != null) {
+            if (code == BootErrorCode.OK) {
+                System.out.println(msg);
+            } else {
+                System.err.println(msg);
+            }
+        }
+        if (ex != null) {
+            ex.printStackTrace(System.err);
+        }
+        System.exit(code);
     }
 }

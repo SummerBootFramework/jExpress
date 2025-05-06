@@ -20,12 +20,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.annotation.Inspector;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
+import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 
 import java.util.HashSet;
@@ -93,7 +95,7 @@ public class HealthMonitor {
         }
         if (error) {
             log.fatal(BootConstant.BR + sb + BootConstant.BR);
-            System.exit(2);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CODE_ERROR_HM, null, null);
         }
     }
 
@@ -240,7 +242,7 @@ public class HealthMonitor {
                 }
                 if (!usedByTag) {
                     hasUnregistered = true;
-                    memo.append(BootConstant.BR).append("\t- @Inspector unused due to CLI argument -" + BootConstant.CLI_USE_IMPL + " <implTag>: ").append(c.getName());
+                    memo.append(BootConstant.BR).append("\t- @Inspector unused due to CLI argument -" + BootConstant.CLI_USE_ALTERNATIVE + " <implTag>: ").append(c.getName());
                     iterator.remove();
                 }
             }

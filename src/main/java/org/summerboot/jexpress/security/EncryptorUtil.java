@@ -28,6 +28,8 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 
 import javax.crypto.BadPaddingException;
@@ -110,8 +112,7 @@ public class EncryptorUtil {
             Security.addProvider(PROVIDER);
             System.setProperty("hostName", InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException ex) {
-            ex.printStackTrace(System.err);
-            System.exit(-1);
+            ApplicationUtil.RTO(BootErrorCode.RTO_UNKNOWN_HOST_ERROR, null, ex);
         }
     }
 

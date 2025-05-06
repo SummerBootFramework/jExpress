@@ -79,7 +79,7 @@ public interface BootConstant {
     String CLI_CONFIG_DIR = BackOffice.agent.getCliName_cfgdir();
     String CLI_CONFIG_MONITOR_INTERVAL = BackOffice.agent.getCliName_monitorInterval();
     String CLI_I8N = BackOffice.agent.getCliName_i18n();
-    String CLI_USE_IMPL = BackOffice.agent.getCliName_use();//To specify which implementation will be used via @Component.checkImplTagUsed
+    String CLI_USE_ALTERNATIVE = BackOffice.agent.getCliName_useAlternative();//To specify which implementation will be used via @Component.checkImplTagUsed
     String CLI_CONFIG_DEMO = BackOffice.agent.getCliName_cfgdemo();
     String CLI_LIST_UNIQUE = BackOffice.agent.getCliName_list();
     String CLI_ADMIN_PWD_FILE = BackOffice.agent.getCliName_authfile();
