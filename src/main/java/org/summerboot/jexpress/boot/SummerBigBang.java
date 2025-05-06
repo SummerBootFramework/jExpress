@@ -49,9 +49,7 @@ import org.summerboot.jexpress.util.PropertiesFile;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
@@ -63,7 +61,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -347,27 +344,26 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * [Config File] Security - init app config password
          */
-        String adminPwd = "";
-        final String adminPwdFile;
+        String masterPassword = "";
+        final String masterPasswordFileName;
         if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
-            adminPwdFile = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD_FILE);
+            masterPasswordFileName = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD_FILE);
         } else if (cli.hasOption(BootConstant.CLI_ADMIN_PWD)) {// "else" = only one option, cannot both
-            adminPwdFile = null;
-            adminPwd = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD);
+            masterPasswordFileName = null;
+            masterPassword = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD);
         } else {
-            adminPwdFile = BootConstant.DEFAULT_MASTER_PASSWORD_FILE;
+            masterPasswordFileName = BootConstant.DEFAULT_MASTER_PASSWORD_FILE;
         }
-        if (adminPwdFile != null) {
-            Properties props = new Properties();
-            try (InputStream is = new FileInputStream(new File(adminPwdFile).getCanonicalFile())) {
-                props.load(is);
-            } catch (Throwable ex) {
-                throw new RuntimeException("failed to load " + adminPwdFile, ex);
+        try {
+            if (masterPasswordFileName != null) {
+                File masterPasswordFile = new File(masterPasswordFileName).getCanonicalFile();
+                MasterPassword.cfg.load(masterPasswordFile, true);
+                masterPassword = MasterPassword.cfg.getMasterPassword();
             }
-            String base64EncodedAdminPwd = props.getProperty("APP_ROOT_PASSWORD");
-            adminPwd = EncryptorUtil.base64Decode(base64EncodedAdminPwd);
+            EncryptorUtil.setMasterPassword(masterPassword);
+        } catch (Throwable ex) {
+            ApplicationUtil.RTO(BootErrorCode.RTO_CFG_LOADING_ERROR, "Failed to load master password: " + ex.toString(), null);
         }
-        EncryptorUtil.setMasterPassword(adminPwd);
 
 
         /*

@@ -1,9 +1,11 @@
 package org.summerboot.jexpress.boot;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.security.EncryptorUtil;
 
 import java.io.File;
 import java.util.Properties;
@@ -14,8 +16,14 @@ class MasterPassword extends BootConfig {
         System.out.println(t);
     }
 
+    public static final MasterPassword cfg = new MasterPassword();
+
+    protected MasterPassword() {
+    }
+
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
+        masterPassword = EncryptorUtil.base64Decode(base64EncodedAdminPwd);
     }
 
     @Override
@@ -33,5 +41,13 @@ class MasterPassword extends BootConfig {
             format = "Base64 Encoded",
             example = "java -jar jExpressApp.jar -authfile /etc/security/master.password")
     @Config(key = "APP_ROOT_PASSWORD", predefinedValue = "Y2hhbmdlaXQ=", required = true)
+    @JsonIgnore
+    private volatile String base64EncodedAdminPwd;
+
+    @JsonIgnore
     private volatile String masterPassword;
+
+    public String getMasterPassword() {
+        return masterPassword;
+    }
 }
