@@ -17,6 +17,7 @@ package org.summerboot.jexpress.util;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 
 import java.io.File;
@@ -224,9 +225,9 @@ public class ApplicationUtil {
     public static void RTO(int code, String msg, Throwable ex) {
         if (msg != null) {
             if (code == BootErrorCode.RTO_CLS_EXIT) {
-                System.out.println(msg);
+                System.out.println(BootConstant.BR + BootConstant.BR + msg);
             } else {
-                System.err.println(msg);
+                System.err.println(BootConstant.BR + BootConstant.BR + "\t Error#" + code + ": " + msg);
             }
         }
         if (ex != null) {
