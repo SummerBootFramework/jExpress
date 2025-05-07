@@ -32,8 +32,6 @@ public interface BootConstant {
     String VERSION = "jExpress 2.5.2";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
-    String DEFAULT_ADMIN_MM = "changeit";
-
     /*
      * Runtime info
      */

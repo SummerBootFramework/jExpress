@@ -109,9 +109,9 @@ public class NioConfig extends BootConfig {
 
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
-        sb.append(KEY_kmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE);
         sb.append(KEY_kmf_AliasKey + "=server1_2048.jexpress.org\n");
-        sb.append(KEY_kmf_AliasPwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE);
         generateTemplate = true;
     }
 
@@ -124,7 +124,7 @@ public class NioConfig extends BootConfig {
 
     //    protected void generateTemplate_truststore(StringBuilder sb) {
 //        sb.append(KEY_tmf_key + "="+FILENAME_TRUSTSTORE_4SERVER+"\n");
-//        sb.append(KEY_tmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+//        sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE);
 //        generateTemplate = true;
 //    }
     @Config(key = "nio.server.ssl.VerifyCertificateHost", defaultValue = "false")

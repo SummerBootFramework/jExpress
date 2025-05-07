@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
@@ -164,7 +163,7 @@ public class AuthConfig extends BootConfig {
     protected volatile String privateKeyPwd;
 
     protected void generateTemplate_privateKeyPwd(StringBuilder sb) {
-        sb.append(KEY_privateKeyPwd + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_privateKeyPwd + DEFAULT_DEC_VALUE);
     }
 
     @Config(key = KEY_publicKeyFile,

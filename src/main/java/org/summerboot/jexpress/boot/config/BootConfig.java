@@ -75,6 +75,7 @@ public abstract class BootConfig implements JExpressConfig {
     protected static final Map<Class, JExpressConfig> cache = new HashMap();
 
     protected static String BR = System.lineSeparator();
+    protected static final String DEFAULT_DEC_VALUE = "=DEC(changeit)" + BR;
 
     protected static final String DESC_KMF = "Path to key store file. Use SSL/TLS when keystore is provided, otherwise use plain socket";
     protected static final String DESC_TMF = "Path to trust store file. Auth the remote peer certificate when a truststore is provided, otherwise blindly trust all remote peer certificate";

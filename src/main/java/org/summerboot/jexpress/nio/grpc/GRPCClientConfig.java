@@ -29,7 +29,6 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import jakarta.annotation.Nullable;
-import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
@@ -127,9 +126,9 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
-        sb.append(KEY_kmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE);
         sb.append(KEY_kmf_AliasKey + "=server3_4096.jexpress.org\n");
-        sb.append(KEY_kmf_AliasPwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE);
         generateTemplate = true;
     }
 
@@ -144,7 +143,7 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     protected void generateTemplate_truststore(StringBuilder sb) {
         sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
-        sb.append(KEY_tmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE);
         generateTemplate = true;
     }
 
