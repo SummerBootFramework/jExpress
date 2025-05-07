@@ -145,13 +145,13 @@ public class EncryptorUtil {
         return new SecretKeySpec(decodedKey, algorithm);
     }
 
-    private static String MASTER_PASSWORD = "";
+    private static char[] MASTER_PASSWORD = "".toCharArray();
 
     public static void setMasterPassword(String masterPassword) {
-        MASTER_PASSWORD = masterPassword;
+        MASTER_PASSWORD = masterPassword.toCharArray();
     }
 
-    private static String getMasterPassword() {
+    private static char[] getMasterPassword() {
         return MASTER_PASSWORD;
     }
 
@@ -162,9 +162,13 @@ public class EncryptorUtil {
     }
 
     public static SecretKey buildSecretKey(String password, byte[] salt) {
+        return buildSecretKey(password.toCharArray(), salt);
+    }
+
+    public static SecretKey buildSecretKey(char[] password, byte[] salt) {
         // salt = randomBytes(SALT_LEN); // CWE-327 False Positive prove: flaw alert will be off when the same salt is generated inside this method, 327 will be flagged if the same salt is generated outside this method.
         try {
-            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, AES_KEY_BIT);// CWE-327 False Positive due to salt is passed in as parameter
+            PBEKeySpec spec = new PBEKeySpec(password, salt, ITERATIONS, AES_KEY_BIT);// CWE-327 False Positive due to salt is passed in as parameter
             SecretKeyFactory factory = SecretKeyFactory.getInstance(SECRET_KEY_ALGO);
             byte[] keyBytes = factory.generateSecret(spec).getEncoded();
             return new SecretKeySpec(keyBytes, "AES");
@@ -312,13 +316,17 @@ public class EncryptorUtil {
         if (warped) {
             plainData = FormatterUtil.getInsideParenthesesValue(plainData);
         }
-        String password = getMasterPassword();
+        char[] password = getMasterPassword();
         byte[] utf8 = plainData.getBytes(StandardCharsets.UTF_8);
         byte[] encryptedDataPackage = encrypt(password, utf8);
         return Base64.getEncoder().encodeToString(encryptedDataPackage);
     }
 
     public static byte[] encrypt(String password, byte[] plainData) throws GeneralSecurityException {
+        return encrypt(password.toCharArray(), plainData);
+    }
+
+    public static byte[] encrypt(char[] password, byte[] plainData) throws GeneralSecurityException {
         // build cipher
         byte[] salt = randomBytes(SALT_LEN);
         SecretKey key = buildSecretKey(password, salt);
@@ -358,13 +366,17 @@ public class EncryptorUtil {
         if (warped) {
             encodedData = FormatterUtil.getInsideParenthesesValue(encodedData);
         }
-        String password = getMasterPassword();
+        char[] password = getMasterPassword();
         byte[] encryptedDataPackage = Base64.getDecoder().decode(encodedData);
         byte[] decryptedData = decrypt(password, encryptedDataPackage);
         return new String(decryptedData, StandardCharsets.UTF_8);
     }
 
     public static byte[] decrypt(String password, byte[] encryptedDataPackage) throws GeneralSecurityException {
+        return decrypt(password.toCharArray(), encryptedDataPackage);
+    }
+
+    public static byte[] decrypt(char[] password, byte[] encryptedDataPackage) throws GeneralSecurityException {
         // 🔒 Retrieve: salt + iv + ciphertext
         //byte[] encryptedDataPackage = Base64.getDecoder().decode(String encodedData);
         byte[] salt = new byte[SALT_LEN];

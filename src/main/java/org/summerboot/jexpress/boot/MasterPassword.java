@@ -47,7 +47,7 @@ class MasterPassword extends BootConfig {
     @JsonIgnore
     private volatile String masterPassword;
 
-    public String getMasterPassword() {
+    String getMasterPassword() {
         return masterPassword;
     }
 }
