@@ -384,7 +384,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     isInFilter = s.contains(target);
                 }
                 break;
-            case AppErrorCode:
+            case ApplicationErrorCode:
                 ServiceError e = context.error();
                 if (e == null) {
                     break;

@@ -118,13 +118,13 @@ public class BackOffice extends BootConfig {
         try {
             Map<String, Integer> results = new HashMap();
             ReflectionUtil.loadFields(BootErrorCode.class, int.class, results, false);
-            Map<Object, String> sorted = results
+            Map<String, Object> sorted = results
                     .entrySet()
                     .stream()
                     .sorted(Map.Entry.comparingByValue())
-                    .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
             StringBuilder sb = new StringBuilder().append("## Default Error Codes:").append(BR);
-            sorted.forEach((key, value) -> sb.append("## ").append(key).append(": ").append(value).append(BR));
+            sorted.forEach((value, key) -> sb.append("## ").append(key).append(": ").append(value).append(BR));
             ret = sb.toString();
         } catch (Throwable ex) {
             ex.printStackTrace();
@@ -136,11 +136,11 @@ public class BackOffice extends BootConfig {
     @ConfigHeader(title = "1. Override default error codes with application defined ones", desc = "To verify: java -jar <app>.jar -list SystemErrorCode [-dmain <domain>]",
             format = "CSV of <default error code>:<new error code>",
             example = "1:1001, 20:1020, 40:1040, 50:1050",
-            callbackMethodName4Dump = "generateTemplate_keystore")
+            callbackMethodName4Dump = "generateTemplate_ErrorCodeList")
     @Config(key = "errorcode.override")
     private volatile Map<Integer, Integer> bootErrorCodeMapping;
 
-    protected void generateTemplate_keystore(StringBuilder sb) {
+    protected void generateTemplate_ErrorCodeList(StringBuilder sb) {
         sb.append(listBootErrorCode()).append(System.lineSeparator());
     }
 

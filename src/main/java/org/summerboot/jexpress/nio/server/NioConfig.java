@@ -305,11 +305,11 @@ public class NioConfig extends BootConfig {
 
     //5.2 error code filter
     public enum VerboseTargetCodeType {
-        HttpStatusCode, AppErrorCode, all, ignore
+        HttpStatusCode, ApplicationErrorCode, all, ignore
     }
 
     @Config(key = "nio.verbose.filter.codetype", defaultValue = "all",
-            desc = "valid value = HttpStatusCode, AppErrorCode, all, ignore")
+            desc = "valid value = HttpStatusCode, ApplicationErrorCode, all, ignore")
     protected volatile VerboseTargetCodeType filterCodeType = VerboseTargetCodeType.all;
     protected static final String KEY_FILTER_CODETYPE_RANGE = "nio.verbose.filter.codetype.range";
     @Config(key = KEY_FILTER_CODETYPE_RANGE,
@@ -485,7 +485,7 @@ public class NioConfig extends BootConfig {
         //5.2 error code filter
         switch (filterCodeType) {
             case HttpStatusCode:
-            case AppErrorCode:
+            case ApplicationErrorCode:
                 filterCodeSet = new HashSet();
                 Long[] a = helper.getAsRangeLong(props, KEY_FILTER_CODETYPE_RANGE, filterCodeSet);
                 if (a != null) {

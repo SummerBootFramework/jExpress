@@ -506,15 +506,15 @@ public class ReflectionUtil {
         loadFields(targetClass, fieldClass, results, includeClassName, false);
     }
 
-    public static void loadFields(Class targetClass, Class fieldClass, Map results, boolean includeClassName, boolean checkUniqueIgnore) throws IllegalArgumentException, IllegalAccessException {
+    public static void loadFields(Class targetClass, Class fieldClass, Map results, boolean includeClassName, boolean useUniqueIgnore) throws IllegalArgumentException, IllegalAccessException {
         Class parent = targetClass.getSuperclass();
         if (parent != null) {
-            loadFields(parent, fieldClass, results, includeClassName, checkUniqueIgnore);
+            loadFields(parent, fieldClass, results, includeClassName, useUniqueIgnore);
         }
         Class[] intfs = targetClass.getInterfaces();
         if (intfs != null) {
             for (Class i : intfs) {
-                loadFields(i, fieldClass, results, includeClassName, checkUniqueIgnore);
+                loadFields(i, fieldClass, results, includeClassName, useUniqueIgnore);
             }
         }
         Field[] fields = targetClass.getDeclaredFields();
@@ -524,7 +524,7 @@ public class ReflectionUtil {
             if (!fieldClass.equals(type)) {
                 continue;
             }
-            if (checkUniqueIgnore) {
+            if (useUniqueIgnore) {
                 UniqueIgnore aUI = field.getAnnotation(UniqueIgnore.class);
                 if (aUI != null) {
                     continue;

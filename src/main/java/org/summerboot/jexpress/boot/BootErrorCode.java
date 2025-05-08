@@ -17,7 +17,6 @@ package org.summerboot.jexpress.boot;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.summerboot.jexpress.boot.annotation.Unique;
-import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
 
 import java.util.Map;
 
@@ -106,24 +105,24 @@ public interface BootErrorCode {
     int BAD_REQUEST_INVALID_REQUEST_BODY = getErrorCode(BR_BASE + 8);
     int BAD_REQUEST_MISSING_REQUIRED_FILED = getErrorCode(BR_BASE + 9);
 
-    @UniqueIgnore
-    int RTO_CLS_EXIT = getErrorCode(0);
-    int RTO_BASE = getErrorCode(80);
-    int RTO_CLI_PARSER_ERROR = getErrorCode(RTO_BASE + 1);
-    int RTO_CLI_MISSING_ARG_ERROR = getErrorCode(RTO_BASE + 2);
-    int RTO_CLI_INVALID_ARG_ERROR = getErrorCode(RTO_BASE + 3);
-    int RTO_CLI_INVALID_ALTERNATIVE_NAME_ERROR = getErrorCode(RTO_BASE + 4);
-    int RTO_CFG_BOOT_ERROR = getErrorCode(RTO_BASE + 5);
-    int RTO_CFG_LOADING_ERROR = getErrorCode(RTO_BASE + 6);
-    int RTO_CFG_DIR_ACCESS_ERROR = getErrorCode(RTO_BASE + 7);
-    int RTO_CFG_GENERATE_ERROR = getErrorCode(RTO_BASE + 8);
-    int RTO_CREATE_IF_NOT_EXIST_ERROR = getErrorCode(RTO_BASE + 9);
-    int RTO_PLUGIN_ERROR = getErrorCode(RTO_BASE + 10);
-    int RTO_CODE_ERROR_HM = getErrorCode(RTO_BASE + 11);
-    int RTO_CODE_ERROR_UNIQUE = getErrorCode(RTO_BASE + 12);
-    int RTO_CODING_ERROR_SERVICE_IOC = getErrorCode(RTO_BASE + 13);
-    int RTO_CODING_ERROR_PROCESSOR = getErrorCode(RTO_BASE + 14);
-    int RTO_UNKNOWN_HOST_ERROR = getErrorCode(RTO_BASE + 15);
-    int RTO_BINDING_ERROR = getErrorCode(RTO_BASE + 16);
-    int RTO_UNKNOWN_ERROR = getErrorCode(RTO_BASE + 17);
+    //@UniqueIgnore
+    //int RTO_CLS_EXIT = getErrorCode(0);
+    int RTO_CLS_EXIT = getErrorCode(80);
+    int RTO_CLI_PARSER_ERROR = getErrorCode(RTO_CLS_EXIT + 1);
+    int RTO_CLI_MISSING_ARG_ERROR = getErrorCode(RTO_CLS_EXIT + 2);
+    int RTO_CLI_INVALID_ARG_ERROR = getErrorCode(RTO_CLS_EXIT + 3);
+    int RTO_CLI_INVALID_ALTERNATIVE_NAME_ERROR = getErrorCode(RTO_CLS_EXIT + 4);
+    int RTO_CFG_BOOT_ERROR = getErrorCode(RTO_CLS_EXIT + 5);
+    int RTO_CFG_LOADING_ERROR = getErrorCode(RTO_CLS_EXIT + 6);
+    int RTO_CFG_DIR_ACCESS_ERROR = getErrorCode(RTO_CLS_EXIT + 7);
+    int RTO_CFG_GENERATE_ERROR = getErrorCode(RTO_CLS_EXIT + 8);
+    int RTO_CREATE_IF_NOT_EXIST_ERROR = getErrorCode(RTO_CLS_EXIT + 9);
+    int RTO_PLUGIN_ERROR = getErrorCode(RTO_CLS_EXIT + 10);
+    int RTO_CODE_ERROR_HM = getErrorCode(RTO_CLS_EXIT + 11);
+    int RTO_CODE_ERROR_UNIQUE = getErrorCode(RTO_CLS_EXIT + 12);
+    int RTO_CODING_ERROR_SERVICE_IOC = getErrorCode(RTO_CLS_EXIT + 13);
+    int RTO_CODING_ERROR_PROCESSOR = getErrorCode(RTO_CLS_EXIT + 14);
+    int RTO_UNKNOWN_HOST_ERROR = getErrorCode(RTO_CLS_EXIT + 15);
+    int RTO_BINDING_ERROR = getErrorCode(RTO_CLS_EXIT + 16);
+    int RTO_UNKNOWN_ERROR = getErrorCode(RTO_CLS_EXIT + 17);
 }
