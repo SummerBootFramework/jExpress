@@ -312,7 +312,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             List<String> list = logSettings.getProtectedJsonFields();
             if (list == null) {
                 list = new ArrayList();
-                logSettings.setProtectedJsonNumberFields(list);
+                logSettings.setProtectedJsonFields(list);
             }
             list.addAll(Arrays.asList(protectedJsonFields));
         }
