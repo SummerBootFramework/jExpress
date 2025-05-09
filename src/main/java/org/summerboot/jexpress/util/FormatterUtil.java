@@ -442,9 +442,32 @@ public class FormatterUtil {
         return plain.replaceAll(regex, replacement);
     }
 
+    public static String protectJsonField(String json, String key, String replaceWith) {
+        String ret = protectJsonString(json, key, replaceWith);
+        ret = protectJsonNumber(ret, key, replaceWith);
+        ret = protectJsonArray(ret, key, replaceWith);
+        return ret;
+    }
+
     public static String protectJsonString(String json, String key, String replaceWith) {
         final String regex = "(\"" + key + "\"\\s*:\\s*\")[^\"]*(\")";//("key"\s*:\s*")[^"]*(")
-        return json.replaceAll(regex, "$1" + replaceWith + "$2");
+        // for result after StringEscapeUtils.escapeJava
+        final String regex2 = "(\"" + key + "\\\\\"\\s*:\\s*\\\\\")[^\"]*(\\\\\")";//("key"\s*:\s*")[^"]*(")
+        return json.replaceAll(regex, "$1" + replaceWith + "$2").replaceAll(regex2, "$1" + replaceWith + "$2");
+    }
+
+    public static String protectJsonNumber(String json, String key, String replaceWith) {
+        final String regex = "(\"" + key + "\"\\s*:\\s*)(\\d+)";
+        // for result after StringEscapeUtils.escapeJava
+        final String regex2 = "(\"" + key + "\\\\\"\\s*:\\s*)(\\d+)";
+        return json.replaceAll(regex, "$1" + replaceWith).replaceAll(regex2, "$1" + replaceWith);
+    }
+
+    public static String protectJsonArray(String json, String key, String replaceWith) {
+        final String regex = "(\"" + key + "\"\\s*:\\s*\\[)[^\\[]*(\\])";
+        // for result after StringEscapeUtils.escapeJava
+        final String regex2 = "(\"" + key + "\\\\\"\\s*:\\s*\\[)[^\\[]*(\\])";
+        return json.replaceAll(regex, "$1" + replaceWith + "$2").replaceAll(regex2, "$1" + replaceWith + "$2");
     }
 
     public static String protectJsonString_InString(String json, String key, String replaceWith) {
@@ -452,19 +475,10 @@ public class FormatterUtil {
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
 
-    public static String protectJsonNumber(String json, String key, String replaceWith) {
-        String regex = "(\"" + key + "\"\\s*:\\s*)(\\d+)";
-        return json.replaceAll(regex, "$1" + replaceWith);
-    }
 
     public static String protectJsonNumber_InString(String json, String key, String replaceWith) {
         String regex = "(\"" + key + "\\\\\"\\s*:\\s*)(\\d+)";
         return json.replaceAll(regex, "$1" + replaceWith);
-    }
-
-    public static String protectJsonArray(String json, String key, String replaceWith) {
-        final String regex = "(\"" + key + "\"\\s*:\\s*\\[)[^\\[]*(\\])";
-        return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
 
     public static String protectFormParam(String formRequest, String key, String replaceWith) {

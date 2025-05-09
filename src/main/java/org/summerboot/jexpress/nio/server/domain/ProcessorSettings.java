@@ -73,6 +73,8 @@ public class ProcessorSettings {
 
         protected boolean logResponseBody;
 
+        protected List<String> protectedJsonFields;
+
         protected List<String> protectedJsonStringFields;
 
         protected List<String> protectedJsonNumberFields;
@@ -80,6 +82,9 @@ public class ProcessorSettings {
         protected List<String> protectedJsonArrayFields;
 
         public void removeDuplicates() {
+            if (protectedJsonFields != null) {
+                protectedJsonFields = protectedJsonFields.stream().distinct().collect(Collectors.toList());
+            }
             if (protectedJsonStringFields != null) {
                 protectedJsonStringFields = protectedJsonStringFields.stream().distinct().collect(Collectors.toList());
             }
@@ -121,6 +126,14 @@ public class ProcessorSettings {
 
         public void setLogResponseBody(boolean logResponseBody) {
             this.logResponseBody = logResponseBody;
+        }
+
+        public List<String> getProtectedJsonFields() {
+            return protectedJsonFields;
+        }
+
+        public void setProtectedJsonFields(List<String> protectedJsonFields) {
+            this.protectedJsonFields = protectedJsonFields;
         }
 
         public List<String> getProtectedJsonStringFields() {

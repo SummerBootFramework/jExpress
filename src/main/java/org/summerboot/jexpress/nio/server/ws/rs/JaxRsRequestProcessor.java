@@ -305,14 +305,26 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         logSettings.setLogRequestBody(log.requestBody());
         logSettings.setLogResponseHeader(log.responseHeader());
         logSettings.setLogResponseBody(log.responseBody());
-        String[] protectedJsonFields = log.hideJsonNumberFields();
+
+
+        String[] protectedJsonFields = log.hideJsonFields();
         if (protectedJsonFields != null && protectedJsonFields.length > 0) {
-            List<String> list = logSettings.getProtectedJsonNumberFields();
+            List<String> list = logSettings.getProtectedJsonFields();
             if (list == null) {
                 list = new ArrayList();
                 logSettings.setProtectedJsonNumberFields(list);
             }
             list.addAll(Arrays.asList(protectedJsonFields));
+        }
+
+        String[] protectedJsonNumberFields = log.hideJsonNumberFields();
+        if (protectedJsonNumberFields != null && protectedJsonNumberFields.length > 0) {
+            List<String> list = logSettings.getProtectedJsonNumberFields();
+            if (list == null) {
+                list = new ArrayList();
+                logSettings.setProtectedJsonNumberFields(list);
+            }
+            list.addAll(Arrays.asList(protectedJsonNumberFields));
         }
         String[] protectedJsonStringFields = log.hideJsonStringFields();
         if (protectedJsonStringFields != null && protectedJsonStringFields.length > 0) {

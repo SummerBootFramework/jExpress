@@ -103,11 +103,11 @@ public class SecurityUtil {
     }
 
     @CRLFCleanser
-    public static String sanitizeCRLF(String plainText) {
-        if (StringUtils.isEmpty(plainText)) {
-            return plainText;
+    public static String sanitizeCRLF(String userInput) {
+        if (StringUtils.isEmpty(userInput)) {
+            return userInput;
         }
-        return StringEscapeUtils.escapeJava(plainText);
+        return StringEscapeUtils.escapeJava(userInput);
     }
 
     @FilePathCleanser

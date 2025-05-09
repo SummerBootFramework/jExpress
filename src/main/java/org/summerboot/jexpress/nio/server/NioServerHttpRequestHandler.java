@@ -219,8 +219,8 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
                         //line4
                         context.reportPOI(nioCfg, sb);
-                        String userInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
-                        verboseClientServerCommunication(nioCfg, requestHeaders, userInput, context, sb, isTraceAll);
+                        String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+                        verboseClientServerCommunication(nioCfg, requestHeaders, sanitizedUserInput, context, sb, isTraceAll);
                         context.reportMemo(sb);
                         context.reportError(sb);
                         sb.append(BootConstant.BR);
@@ -247,9 +247,16 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                                         report = FormatterUtil.protectJsonArray(report, protectedJsonArrayField, protectedContectReplaceWith);
                                     }
                                 }
+                                List<String> protectedJsonFields = logSettings.getProtectedJsonFields();
+                                if (protectedJsonFields != null) {
+                                    for (String protectedJsonField : protectedJsonFields) {
+                                        report = FormatterUtil.protectJsonField(report, protectedJsonField, protectedContectReplaceWith);
+                                    }
+                                }
                             }
                         }
                         report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
+                        // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
                         log.log(level, "\n{}", report);// CWE-117 False Positive
                     }
                 } catch (Throwable ex) {

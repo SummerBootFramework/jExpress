@@ -229,8 +229,8 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 .append(", response=").append(responseTime).append("ms");
         //line4
         serviceContext.reportPOI(null, sb);
-        String userInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
-        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, userInput, serviceContext, sb, isTraceAll);
+        String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, sanitizedUserInput, serviceContext, sb, isTraceAll);
         serviceContext.reportMemo(sb);
         serviceContext.reportError(sb);
         sb.append(BootConstant.BR);
@@ -260,6 +260,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 }
             }
         }
+        // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
         log.log(level, report);// CWE-117 False Positive
     }
 }
