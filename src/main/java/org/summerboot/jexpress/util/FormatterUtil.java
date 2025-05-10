@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -442,48 +443,116 @@ public class FormatterUtil {
         return plain.replaceAll(regex, replacement);
     }
 
-    public static String protectJsonField(String json, String key, String replaceWith) {
-        String ret = protectJsonString(json, key, replaceWith);
-        ret = protectJsonNumber(ret, key, replaceWith);
-        ret = protectJsonArray(ret, key, replaceWith);
+    private static final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
+
+    public enum RegexType {
+        jsonNumber, jsonString, jsonArray,
+        jsonNumberSanitized, jsonStringSanitized, jsonArraySanitized,
+        xml, FormParam,
+    }
+
+    public static Pattern getPattern(String dataFieldName, RegexType type) {
+        // Cache and retrieve Pattern
+        String key = type + "." + dataFieldName;
+        Pattern pattern = patternCache.computeIfAbsent(key, k -> {
+            String regex = switch (type) {
+                case jsonNumber -> "(\"" + dataFieldName + "\"\\s*:\\s*)(\\d+)";
+                case jsonNumberSanitized -> "(\"" + dataFieldName + "\\\\\"\\s*:\\s*)(\\d+)";
+                case jsonString -> "(\"" + dataFieldName + "\"\\s*:\\s*\")[^\"]*(\")";//("key"\s*:\s*")[^"]*(")
+                case jsonStringSanitized -> "(\"" + dataFieldName + "\\\\\"\\s*:\\s*\\\\\")[^\"]*(\\\\\")";//("key"\s*:\s*")[^"]*(")
+                case jsonArray -> "(\"" + dataFieldName + "\"\\s*:\\s*\\[)[^\\[]*(\\])";
+                case jsonArraySanitized -> "(\"" + dataFieldName + "\\\\\"\\s*:\\s*\\[)[^\\[]*(\\])";
+                case xml -> String.format("(<%1$s>)(.*?)(</%1$s>)", Pattern.quote(dataFieldName));
+                case FormParam -> "(?i)" + dataFieldName + "=[^&]*";
+            };
+            return Pattern.compile(regex, Pattern.DOTALL);
+        });
+        return pattern;
+    }
+
+    public static String replaceDataField(RegexType type, String txt, String key, String newValue) {
+        if (StringUtils.isBlank(txt) || StringUtils.isBlank(key)) {
+            return txt;
+        }
+        if (newValue == null) {
+            newValue = "";
+        }
+
+        // Cache and retrieve Pattern
+        Pattern pattern = getPattern(key, type);
+
+        Matcher matcher = pattern.matcher(txt);
+        if (matcher.find()) {
+            switch (type) {
+                case jsonNumber, jsonNumberSanitized -> {
+                    return matcher.replaceAll("$1" + Matcher.quoteReplacement(newValue));
+                }
+                case xml -> {
+                    return matcher.replaceAll("$1" + Matcher.quoteReplacement(newValue) + "$3");
+                }
+                case FormParam -> {
+                    return matcher.replaceAll(key + "=" + newValue);
+                }
+                default -> {
+                    return matcher.replaceAll("$1" + Matcher.quoteReplacement(newValue) + "$2");
+                }
+            }
+        }
+
+        return txt;
+    }
+
+    public static String replaceDataField(String json, String key, String newValue) {
+        String ret = json;
+        ret = replaceDataField(RegexType.jsonString, ret, key, newValue);
+        ret = replaceDataField(RegexType.jsonStringSanitized, ret, key, newValue);
+        ret = replaceDataField(RegexType.jsonNumber, ret, key, newValue);
+        ret = replaceDataField(RegexType.jsonNumberSanitized, ret, key, newValue);
+        ret = replaceDataField(RegexType.jsonArray, ret, key, newValue);
+        ret = replaceDataField(RegexType.jsonArraySanitized, ret, key, newValue);
+        ret = replaceDataField(RegexType.xml, ret, key, newValue);
+        ret = replaceDataField(RegexType.FormParam, ret, key, newValue);
         return ret;
     }
 
-    public static String protectJsonString(String json, String key, String replaceWith) {
-        final String regex = "(\"" + key + "\"\\s*:\\s*\")[^\"]*(\")";//("key"\s*:\s*")[^"]*(")
-        // for result after StringEscapeUtils.escapeJava
-        final String regex2 = "(\"" + key + "\\\\\"\\s*:\\s*\\\\\")[^\"]*(\\\\\")";//("key"\s*:\s*")[^"]*(")
-        return json.replaceAll(regex, "$1" + replaceWith + "$2").replaceAll(regex2, "$1" + replaceWith + "$2");
+    public static String replaceJsonString(String json, String key, String newValue) {
+        String ret = json;
+        ret = replaceDataField(RegexType.jsonString, ret, key, newValue);
+        ret = replaceDataField(RegexType.jsonStringSanitized, ret, key, newValue);
+        return ret;
     }
 
-    public static String protectJsonNumber(String json, String key, String replaceWith) {
-        final String regex = "(\"" + key + "\"\\s*:\\s*)(\\d+)";
-        // for result after StringEscapeUtils.escapeJava
-        final String regex2 = "(\"" + key + "\\\\\"\\s*:\\s*)(\\d+)";
-        return json.replaceAll(regex, "$1" + replaceWith).replaceAll(regex2, "$1" + replaceWith);
+    public static String replaceJsonNumber(String json, String key, String newValue) {
+        String ret = json;
+        ret = replaceDataField(RegexType.jsonNumber, ret, key, newValue);
+        ret = replaceDataField(RegexType.jsonNumberSanitized, ret, key, newValue);
+        return ret;
     }
 
-    public static String protectJsonArray(String json, String key, String replaceWith) {
-        final String regex = "(\"" + key + "\"\\s*:\\s*\\[)[^\\[]*(\\])";
-        // for result after StringEscapeUtils.escapeJava
-        final String regex2 = "(\"" + key + "\\\\\"\\s*:\\s*\\[)[^\\[]*(\\])";
-        return json.replaceAll(regex, "$1" + replaceWith + "$2").replaceAll(regex2, "$1" + replaceWith + "$2");
+    public static String replaceJsonArray(String json, String key, String newValue) {
+        String ret = json;
+        ret = replaceDataField(RegexType.jsonArray, ret, key, newValue);
+        ret = replaceDataField(RegexType.jsonArraySanitized, ret, key, newValue);
+        return ret;
     }
 
-    public static String protectJsonString_InString(String json, String key, String replaceWith) {
+    public static String replaceXMLValue(String xml, String key, String newValue) {
+        return replaceDataField(RegexType.xml, xml, key, newValue);
+    }
+
+    public static String preplaceFormParam(String formRequest, String key, String newValue) {
+        return replaceDataField(RegexType.FormParam, formRequest, key, newValue);
+    }
+
+    public static String replaceJsonString_InString(String json, String key, String replaceWith) {
         final String regex = "(\"" + key + "\\\\\"\\s*:\\s*\\\\\")[^\"]*(\")";
         return json.replaceAll(regex, "$1" + replaceWith + "$2");
     }
 
 
-    public static String protectJsonNumber_InString(String json, String key, String replaceWith) {
+    public static String replaceJsonNumber_InString(String json, String key, String replaceWith) {
         String regex = "(\"" + key + "\\\\\"\\s*:\\s*)(\\d+)";
         return json.replaceAll(regex, "$1" + replaceWith);
-    }
-
-    public static String protectFormParam(String formRequest, String key, String replaceWith) {
-        final String regex = "(?i)" + key + "=[^&]*";
-        return formRequest.replaceAll(regex, key + "=" + replaceWith);
     }
 
     public static String[] splitByLength(String plain, int chunckSize) {

@@ -24,9 +24,9 @@ import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -210,7 +210,7 @@ public class GeoIpUtil {
         return null;
     }
 
-    public static Map<String, Pattern> REGEX_CACHE = new HashMap<>();
+    public static Map<String, Pattern> REGEX_CACHE = new ConcurrentHashMap<>();
 
     public static boolean matches(String input, String regex, String regexPrefix) {
         if (regex == null || regex.isEmpty()) {

@@ -229,28 +229,10 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                             //isSendRequestParsingErrorToClient
                             ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
                             if (logSettings != null) {
-                                List<String> protectedJsonNumberFields = logSettings.getProtectedJsonNumberFields();
-                                if (protectedJsonNumberFields != null) {
-                                    for (String protectedJsonNumberField : protectedJsonNumberFields) {
-                                        report = FormatterUtil.protectJsonNumber(report, protectedJsonNumberField, protectedContectReplaceWith);
-                                    }
-                                }
-                                List<String> protectedJsonStringFields = logSettings.getProtectedJsonStringFields();
-                                if (protectedJsonStringFields != null) {
-                                    for (String protectedJsonStringField : protectedJsonStringFields) {
-                                        report = FormatterUtil.protectJsonString(report, protectedJsonStringField, protectedContectReplaceWith);
-                                    }
-                                }
-                                List<String> protectedJsonArrayFields = logSettings.getProtectedJsonArrayFields();
-                                if (protectedJsonArrayFields != null) {
-                                    for (String protectedJsonArrayField : protectedJsonArrayFields) {
-                                        report = FormatterUtil.protectJsonArray(report, protectedJsonArrayField, protectedContectReplaceWith);
-                                    }
-                                }
-                                List<String> protectedJsonFields = logSettings.getProtectedJsonFields();
-                                if (protectedJsonFields != null) {
-                                    for (String protectedJsonField : protectedJsonFields) {
-                                        report = FormatterUtil.protectJsonField(report, protectedJsonField, protectedContectReplaceWith);
+                                List<String> protectedDataFields = logSettings.getProtectDataFieldsFromLogging();
+                                if (protectedDataFields != null) {
+                                    for (String protectedDataField : protectedDataFields) {
+                                        report = FormatterUtil.replaceDataField(report, protectedDataField, protectedContectReplaceWith);
                                     }
                                 }
                             }

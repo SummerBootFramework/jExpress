@@ -307,43 +307,14 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         logSettings.setLogResponseBody(log.responseBody());
 
 
-        String[] protectedJsonFields = log.hideJsonFields();
-        if (protectedJsonFields != null && protectedJsonFields.length > 0) {
-            List<String> list = logSettings.getProtectedJsonFields();
+        String[] protectDataFieldsFromLogging = log.protectDataFieldsFromLogging();
+        if (protectDataFieldsFromLogging != null && protectDataFieldsFromLogging.length > 0) {
+            List<String> list = logSettings.getProtectDataFieldsFromLogging();
             if (list == null) {
                 list = new ArrayList();
-                logSettings.setProtectedJsonFields(list);
+                logSettings.setProtectDataFieldsFromLogging(list);
             }
-            list.addAll(Arrays.asList(protectedJsonFields));
-        }
-
-        String[] protectedJsonNumberFields = log.hideJsonNumberFields();
-        if (protectedJsonNumberFields != null && protectedJsonNumberFields.length > 0) {
-            List<String> list = logSettings.getProtectedJsonNumberFields();
-            if (list == null) {
-                list = new ArrayList();
-                logSettings.setProtectedJsonNumberFields(list);
-            }
-            list.addAll(Arrays.asList(protectedJsonNumberFields));
-        }
-        String[] protectedJsonStringFields = log.hideJsonStringFields();
-        if (protectedJsonStringFields != null && protectedJsonStringFields.length > 0) {
-            List<String> list = logSettings.getProtectedJsonStringFields();
-            if (list == null) {
-                list = new ArrayList();
-                logSettings.setProtectedJsonStringFields(list);
-            }
-            list.addAll(Arrays.asList(protectedJsonStringFields));
-        }
-
-        String[] protectedJsonArrayFields = log.hideJsonArrayFields();
-        if (protectedJsonArrayFields != null && protectedJsonArrayFields.length > 0) {
-            List<String> list = logSettings.getProtectedJsonArrayFields();
-            if (list == null) {
-                list = new ArrayList();
-                logSettings.setProtectedJsonArrayFields(list);
-            }
-            list.addAll(Arrays.asList(protectedJsonArrayFields));
+            list.addAll(Arrays.asList(protectDataFieldsFromLogging));
         }
     }
 

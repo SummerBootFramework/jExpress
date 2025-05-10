@@ -73,26 +73,12 @@ public class ProcessorSettings {
 
         protected boolean logResponseBody;
 
-        protected List<String> protectedJsonFields;
+        protected List<String> protectDataFieldsFromLogging;
 
-        protected List<String> protectedJsonStringFields;
-
-        protected List<String> protectedJsonNumberFields;
-
-        protected List<String> protectedJsonArrayFields;
 
         public void removeDuplicates() {
-            if (protectedJsonFields != null) {
-                protectedJsonFields = protectedJsonFields.stream().distinct().collect(Collectors.toList());
-            }
-            if (protectedJsonStringFields != null) {
-                protectedJsonStringFields = protectedJsonStringFields.stream().distinct().collect(Collectors.toList());
-            }
-            if (protectedJsonNumberFields != null) {
-                protectedJsonNumberFields = protectedJsonNumberFields.stream().distinct().collect(Collectors.toList());
-            }
-            if (protectedJsonArrayFields != null) {
-                protectedJsonArrayFields = protectedJsonArrayFields.stream().distinct().collect(Collectors.toList());
+            if (protectDataFieldsFromLogging != null) {
+                protectDataFieldsFromLogging = protectDataFieldsFromLogging.stream().distinct().collect(Collectors.toList());
             }
         }
 
@@ -128,36 +114,12 @@ public class ProcessorSettings {
             this.logResponseBody = logResponseBody;
         }
 
-        public List<String> getProtectedJsonFields() {
-            return protectedJsonFields;
+        public List<String> getProtectDataFieldsFromLogging() {
+            return protectDataFieldsFromLogging;
         }
 
-        public void setProtectedJsonFields(List<String> protectedJsonFields) {
-            this.protectedJsonFields = protectedJsonFields;
-        }
-
-        public List<String> getProtectedJsonStringFields() {
-            return protectedJsonStringFields;
-        }
-
-        public void setProtectedJsonStringFields(List<String> protectedJsonStringFields) {
-            this.protectedJsonStringFields = protectedJsonStringFields;
-        }
-
-        public List<String> getProtectedJsonNumberFields() {
-            return protectedJsonNumberFields;
-        }
-
-        public void setProtectedJsonNumberFields(List<String> protectedJsonNumberFields) {
-            this.protectedJsonNumberFields = protectedJsonNumberFields;
-        }
-
-        public List<String> getProtectedJsonArrayFields() {
-            return protectedJsonArrayFields;
-        }
-
-        public void setProtectedJsonArrayFields(List<String> protectedJsonArrayFields) {
-            this.protectedJsonArrayFields = protectedJsonArrayFields;
+        public void setProtectDataFieldsFromLogging(List<String> protectDataFieldsFromLogging) {
+            this.protectDataFieldsFromLogging = protectDataFieldsFromLogging;
         }
     }
 
