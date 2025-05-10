@@ -470,9 +470,9 @@ public class FormatterUtil {
         return pattern;
     }
 
-    public static String replaceDataField(RegexType type, String txt, String key, String newValue) {
-        if (StringUtils.isBlank(txt) || StringUtils.isBlank(key)) {
-            return txt;
+    public static String replaceDataField(RegexType type, String data, String key, String newValue) {
+        if (StringUtils.isBlank(data) || StringUtils.isBlank(key)) {
+            return data;
         }
         if (newValue == null) {
             newValue = "";
@@ -481,7 +481,7 @@ public class FormatterUtil {
         // Cache and retrieve Pattern
         Pattern pattern = getPattern(key, type);
 
-        Matcher matcher = pattern.matcher(txt);
+        Matcher matcher = pattern.matcher(data);
         if (matcher.find()) {
             switch (type) {
                 case jsonNumber, jsonNumberSanitized -> {
@@ -499,11 +499,11 @@ public class FormatterUtil {
             }
         }
 
-        return txt;
+        return data;
     }
 
-    public static String replaceDataField(String json, String key, String newValue) {
-        String ret = json;
+    public static String replaceDataField(String data, String key, String newValue) {
+        String ret = data;
         ret = replaceDataField(RegexType.jsonString, ret, key, newValue);
         ret = replaceDataField(RegexType.jsonStringSanitized, ret, key, newValue);
         ret = replaceDataField(RegexType.jsonNumber, ret, key, newValue);
