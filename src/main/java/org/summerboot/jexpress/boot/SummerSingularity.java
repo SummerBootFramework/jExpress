@@ -509,9 +509,6 @@ abstract public class SummerSingularity {
                 continue;
             }
             String implTag = a.AlternativeName();
-            if (StringUtils.isBlank(implTag)) {
-                implTag = a.implTag();
-            }
             tags.add(implTag);
         }
         List<String> serviceImplTags = tags.stream()
@@ -545,9 +542,6 @@ abstract public class SummerSingularity {
             }
             String named = serviceAnnotation.named().trim();
             String implTag = serviceAnnotation.AlternativeName().trim();
-            if (StringUtils.isBlank(implTag)) {
-                implTag = serviceAnnotation.implTag().trim();
-            }
             tags.add(implTag);
             String uniqueKey = "named=" + named + ", implTag=" + implTag;
             Class[] bindingClasses = serviceAnnotation.binding();

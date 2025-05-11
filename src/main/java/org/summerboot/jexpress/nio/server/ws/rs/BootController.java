@@ -54,9 +54,9 @@ import org.summerboot.jexpress.boot.annotation.Deamon;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.LoginVo;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.security.auth.AuthConfig;
@@ -167,7 +167,7 @@ abstract public class BootController extends PingController {
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
     //@CaptureTransaction("admin.version")
-    public void version(@Parameter(hidden = true) final ServiceContext context) {
+    public void version(@Parameter(hidden = true) final SessionContext context) {
         context.txt(getVersion()).status(HttpResponseStatus.OK);
     }
 
@@ -227,7 +227,7 @@ abstract public class BootController extends PingController {
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
     //@CaptureTransaction("admin.inspect")
-    public void inspect(@Parameter(hidden = true) final ServiceContext context) {
+    public void inspect(@Parameter(hidden = true) final SessionContext context) {
         HealthMonitor.inspect();
     }
 
@@ -276,7 +276,7 @@ abstract public class BootController extends PingController {
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
     //@CaptureTransaction("admin.changeStatus")
-    public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final ServiceContext context) throws IOException {
+    public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final SessionContext context) throws IOException {
         HealthMonitor.pauseService(pause, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
         context.status(HttpResponseStatus.NO_CONTENT);
     }
@@ -332,7 +332,7 @@ abstract public class BootController extends PingController {
     @Log(requestBody = false, responseHeader = false)
     public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
                                         @FormParam("j_password") String password,
-                                        @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
+                                        @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
         return login(auth, userId, password, context);
     }
 
@@ -386,11 +386,11 @@ abstract public class BootController extends PingController {
     //@CaptureTransaction("user.signJWT")
     @Log(requestBody = false, responseHeader = false)
     public Caller longin_JSON(@Valid @Nonnull LoginVo loginVo,
-                              @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
+                              @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
         return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
     }
 
-    public Caller login(Authenticator auth, String userId, String password, ServiceContext context) throws NamingException {
+    public Caller login(Authenticator auth, String userId, String password, SessionContext context) throws NamingException {
         if (auth == null) {
             context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
@@ -408,11 +408,11 @@ abstract public class BootController extends PingController {
         return context.caller();
     }
 
-    protected boolean preLogin(String userId, String password, ServiceContext context) {
+    protected boolean preLogin(String userId, String password, SessionContext context) {
         return true;
     }
 
-    protected void postLogin(ServiceContext context) {
+    protected void postLogin(SessionContext context) {
     }
 
     @Operation(
@@ -460,7 +460,7 @@ abstract public class BootController extends PingController {
     @Deamon
     //@PermitAll
     //@CaptureTransaction("user.logoutToken")
-    public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final ServiceContext context) {
+    public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final SessionContext context) {
         //Authenticator auth = getAuthenticator();
         if (auth == null) {
             context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
@@ -476,7 +476,7 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
-    public void loadTestBenchmarkPost1(final ServiceRequest request, final ServiceContext context, @QueryParam("delayMilsec") long wait) {
+    public void loadTestBenchmarkPost1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(wait);
@@ -491,7 +491,7 @@ abstract public class BootController extends PingController {
     @POST
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
     @Deamon
-    public void loadTestBenchmarkPost2(final ServiceRequest request, final ServiceContext context, @PathParam("delayMilsec") long wait) {
+    public void loadTestBenchmarkPost2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(wait);
@@ -507,7 +507,7 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
-    public void loadTestBenchmarkGet1(final ServiceRequest request, final ServiceContext context, @QueryParam("delayMilsec") long wait) {
+    public void loadTestBenchmarkGet1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(wait);
@@ -522,7 +522,7 @@ abstract public class BootController extends PingController {
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
     @Deamon
-    public void loadTestBenchmarkGet2(final ServiceRequest request, final ServiceContext context, @PathParam("delayMilsec") long wait) {
+    public void loadTestBenchmarkGet2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(wait);

@@ -410,8 +410,8 @@ public class ReflectionUtil {
             }
         } else if (targetClass.equals(URL.class)) {
             try {
-                return new URL(value);
-            } catch (MalformedURLException ex) {
+                return new URI(value).toURL();
+            } catch (URISyntaxException | MalformedURLException ex) {
                 throw new IllegalArgumentException("invalid URL format", ex);
             }
         } else if (targetClass.equals(Path.class)) {

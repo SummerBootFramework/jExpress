@@ -193,7 +193,7 @@
         <commons-lang3.version>3.17.0</commons-lang3.version>
         <commons-cli.version>1.9.0</commons-cli.version>
         <commons-io.version>2.19.0</commons-io.version>
-        <!--        <commons-text.version>1.11.0</commons-text.version>-->
+        <commons-text.version>1.13.1</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.24.3</log4j-api.version>
@@ -286,11 +286,11 @@
             <version>${commons-lang3.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
-        <!--        <dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
             <version>${commons-text.version}</version>
-        </dependency>-->
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
         <!--        <dependency>
@@ -840,9 +840,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler.version}</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                    <compilerArgs>--enable-preview</compilerArgs>
+                    <showDeprecation>true</showDeprecation>
                 </configuration>
             </plugin>
             <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->

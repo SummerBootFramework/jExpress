@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -50,7 +50,7 @@ public class GRPCServer {
 
     protected static final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
 
-    public static Context.Key<ServiceContext> ServiceContext = Context.key("ServiceContext");
+    public static Context.Key<SessionContext> SessionContext = Context.key("SessionContext");
 
     protected final String bindingAddr;
     protected final int port;

@@ -37,9 +37,6 @@ public @interface Service {
 
     Class[] binding() default {};
 
-    @Deprecated
-    String implTag() default NOT_TAGGED;
-
     String AlternativeName() default NOT_TAGGED;
 
     String named() default NOT_NAMED;

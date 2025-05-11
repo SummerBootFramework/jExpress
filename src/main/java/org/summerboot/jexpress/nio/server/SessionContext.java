@@ -13,7 +13,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.nio.server.domain;
+package org.summerboot.jexpress.nio.server;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,9 +29,9 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootPOI;
-import org.summerboot.jexpress.nio.server.NioConfig;
-import org.summerboot.jexpress.nio.server.NioHttpUtil;
-import org.summerboot.jexpress.nio.server.ResponseEncoder;
+import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
+import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -52,13 +52,13 @@ import java.util.Set;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class ServiceContext {
+public class SessionContext {
 
-    static final ScopedValue<ServiceContext> SESSION_CONTEXT = ScopedValue.newInstance();
+    //protected static final ScopedValue<SessionContext> SESSION_CONTEXT = ScopedValue.newInstance();
 
-    public static ServiceContext get() {
-        return SESSION_CONTEXT.get();
-    }
+//    public static SessionContext get() {
+//        return SESSION_CONTEXT.get();
+//    }
 
 
     //protected ChannelHandlerContext ctx;
@@ -112,25 +112,25 @@ public class ServiceContext {
     protected boolean logRequestBody = true;
     protected boolean logResponseBody = true;
 
-    public static ServiceContext build(long hit) {
+    public static SessionContext build(long hit) {
         return build(BootConstant.APP_ID + "-" + hit, hit);
     }
 
-    public static ServiceContext build(String txId, long hit) {
-        return new ServiceContext(null, txId, hit, System.currentTimeMillis(), null, null, null, null);
+    public static SessionContext build(String txId, long hit) {
+        return new SessionContext(null, txId, hit, System.currentTimeMillis(), null, null, null, null);
     }
 
-    public static ServiceContext build(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
-        return new ServiceContext(ctx, txId, hit, startTs, requestHeaders, requesMethod, requesURI, requestBody);
+    public static SessionContext build(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+        return new SessionContext(ctx, txId, hit, startTs, requestHeaders, requesMethod, requesURI, requestBody);
     }
 
     @Override
     public String toString() {
-        //return "ServiceContext{" + "status=" + status + ", responseHeader=" + responseHeader + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errorCode=" + errorCode + ", errorTag=" + errorTag + ", cause=" + cause + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
-        return "ServiceContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
+        //return "SessionContext{" + "status=" + status + ", responseHeader=" + responseHeader + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errorCode=" + errorCode + ", errorTag=" + errorTag + ", cause=" + cause + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
+        return "SessionContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
     }
 
-    protected ServiceContext(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+    protected SessionContext(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
         if (ctx != null && ctx.channel() != null) {
             this.localIP = ctx.channel().localAddress();
             this.remoteIP = ctx.channel().remoteAddress();
@@ -149,7 +149,7 @@ public class ServiceContext {
         poi.add(new POI(BootPOI.SERVICE_BEGIN));
     }
 
-    public ServiceContext(SocketAddress localIP, SocketAddress remoteIP, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+    public SessionContext(SocketAddress localIP, SocketAddress remoteIP, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
         this.localIP = localIP;
         this.remoteIP = remoteIP;
         this.txId = txId;
@@ -212,9 +212,9 @@ public class ServiceContext {
      *
      * @param key
      * @param value remove key-value if value is null, otherwise add key-value
-     * @return current ServiceContext instance
+     * @return current SessionContext instance
      */
-    public ServiceContext sessionAttribute(Object key, Object value) {
+    public SessionContext sessionAttribute(Object key, Object value) {
         if (sessionAttributes == null) {
             sessionAttributes = new HashMap();
         }
@@ -248,7 +248,7 @@ public class ServiceContext {
         return startDateTime;
     }
 
-    public ServiceContext resetResponseData() {
+    public SessionContext resetResponseData() {
         // 1. data
         txt = "";
         file = null;
@@ -289,11 +289,11 @@ public class ServiceContext {
         return status;
     }
 
-    public ServiceContext status(HttpResponseStatus status) {
+    public SessionContext status(HttpResponseStatus status) {
         return status(status, null);
     }
 
-    public ServiceContext status(HttpResponseStatus status, Boolean autoConvertBlank200To204) {
+    public SessionContext status(HttpResponseStatus status, Boolean autoConvertBlank200To204) {
         this.status = status;
         if (autoConvertBlank200To204 != null) {
             this.autoConvertBlank200To204 = autoConvertBlank200To204;
@@ -310,7 +310,7 @@ public class ServiceContext {
         return responseHeaders;
     }
 
-    public ServiceContext responseHeaders(HttpHeaders headers) {
+    public SessionContext responseHeaders(HttpHeaders headers) {
         if (headers == null || headers.isEmpty()) {
             return this;
         }
@@ -331,7 +331,7 @@ public class ServiceContext {
 //            responseHeader.add(key, value);
 //            return this;
 //        }
-    public ServiceContext responseHeader(String key, Object value) {
+    public SessionContext responseHeader(String key, Object value) {
         if (StringUtils.isBlank(key)) {
             return this;
         }
@@ -356,7 +356,7 @@ public class ServiceContext {
 //            responseHeader.add(key, values);
 //            return this;
 //        }
-    public ServiceContext responseHeader(String key, Iterable<?> values) {
+    public SessionContext responseHeader(String key, Iterable<?> values) {
         if (StringUtils.isBlank(key)) {
             return this;
         }
@@ -371,7 +371,7 @@ public class ServiceContext {
         return this;
     }
 
-    public ServiceContext responseHeaders(Map<String, Iterable<?>> hs) {
+    public SessionContext responseHeaders(Map<String, Iterable<?>> hs) {
         if (hs == null) {
             return this;
         }
@@ -393,7 +393,7 @@ public class ServiceContext {
         return responseEncoder;
     }
 
-    public ServiceContext responseEncoder(ResponseEncoder responseEncoder) {
+    public SessionContext responseEncoder(ResponseEncoder responseEncoder) {
         this.responseEncoder = responseEncoder;
         return this;
     }
@@ -403,7 +403,7 @@ public class ServiceContext {
         return contentType;
     }
 
-    public ServiceContext contentType(String contentType) {
+    public SessionContext contentType(String contentType) {
         this.contentType = contentType;
         return this;
     }
@@ -412,12 +412,12 @@ public class ServiceContext {
         return clientAcceptContentType;
     }
 
-    public ServiceContext clientAcceptContentType(String clientAcceptContentType) {
+    public SessionContext clientAcceptContentType(String clientAcceptContentType) {
         this.clientAcceptContentType = clientAcceptContentType;
         return this;
     }
 
-    //    public ServiceContext contentTypeTry(String contentType) {
+    //    public SessionContext contentTypeTry(String contentType) {
 //        if (contentType != null) {
 //            this.contentType = contentType;
 //        }
@@ -427,7 +427,7 @@ public class ServiceContext {
         return charsetName;
     }
 
-    public ServiceContext charsetName(String charsetName) {
+    public SessionContext charsetName(String charsetName) {
         this.charsetName = charsetName;
         return this;
     }
@@ -437,11 +437,11 @@ public class ServiceContext {
         return this.redirect;
     }
 
-    public ServiceContext redirect(String redirect) {
+    public SessionContext redirect(String redirect) {
         return redirect(redirect, HttpResponseStatus.TEMPORARY_REDIRECT);//MOVED_PERMANENTLY 301, FOUND 302, TEMPORARY_REDIRECT 307, PERMANENT_REDIRECT 308
     }
 
-    public ServiceContext redirect(String redirect, HttpResponseStatus status) {
+    public SessionContext redirect(String redirect, HttpResponseStatus status) {
         this.redirect = redirect;
         this.txt = null;
         this.file = null;
@@ -455,7 +455,7 @@ public class ServiceContext {
         return txt;
     }
 
-    public ServiceContext txt(String txt) {
+    public SessionContext txt(String txt) {
         this.txt = txt;
         return this;
     }
@@ -465,7 +465,7 @@ public class ServiceContext {
         return data;
     }
 
-    public ServiceContext data(byte[] data) {
+    public SessionContext data(byte[] data) {
         this.data = data;
         return this;
     }
@@ -479,19 +479,19 @@ public class ServiceContext {
         return downloadMode;
     }
 
-    public ServiceContext downloadMode(boolean downloadMode) {
+    public SessionContext downloadMode(boolean downloadMode) {
         this.downloadMode = downloadMode;
         return this;
     }
 
-    public ServiceContext file(String fileName, boolean isDownloadMode) {
+    public SessionContext file(String fileName, boolean isDownloadMode) {
         String targetFileName = NioConfig.cfg.getDocrootDir() + File.separator + fileName;
         targetFileName = targetFileName.replace('/', File.separatorChar);
         File targetFile = new File(targetFileName).getAbsoluteFile();
         return this.file(targetFile, isDownloadMode);
     }
 
-    public ServiceContext file(File file, boolean isDownloadMode) {
+    public SessionContext file(File file, boolean isDownloadMode) {
         this.downloadMode = isDownloadMode;
         this.file = null;
         memo("file." + (isDownloadMode ? "download" : "view"), file.getAbsolutePath());
@@ -527,7 +527,7 @@ public class ServiceContext {
         return this;
     }
 
-    public ServiceContext content(Object ret) throws JsonProcessingException {
+    public SessionContext content(Object ret) throws JsonProcessingException {
         if (ret == null) {
             return this;
         }
@@ -580,7 +580,7 @@ public class ServiceContext {
         return (T) caller;
     }
 
-    public <T extends Caller> ServiceContext caller(T caller) {
+    public <T extends Caller> SessionContext caller(T caller) {
         this.caller = caller;
         return this;
     }
@@ -590,7 +590,7 @@ public class ServiceContext {
         return callerId;
     }
 
-    public ServiceContext callerId(String callerId) {
+    public SessionContext callerId(String callerId) {
         this.callerId = callerId;
         return this;
     }
@@ -599,7 +599,7 @@ public class ServiceContext {
 //        return errorCode;
 //    }
 //
-//    public ServiceContext errorCode(int errorCode) {
+//    public SessionContext errorCode(int errorCode) {
 //        this.errorCode = errorCode;
 //        return this;
 //    }
@@ -608,7 +608,7 @@ public class ServiceContext {
 //        return errorTag;
 //    }
 //
-//    public ServiceContext errorTag(String errorTag) {
+//    public SessionContext errorTag(String errorTag) {
 //        this.errorTag = errorTag;
 //        return this;
 //    }
@@ -617,7 +617,7 @@ public class ServiceContext {
 //        return cause;
 //    }
 //
-//    public ServiceContext cause(Throwable ex) {
+//    public SessionContext cause(Throwable ex) {
 //        this.cause = ex;
 //        if (ex == null) {
 //            level = Level.INFO;
@@ -649,7 +649,7 @@ public class ServiceContext {
      * @param error
      * @return
      */
-    public ServiceContext error(Err error) {
+    public SessionContext error(Err error) {
         if (serviceError == null) {
             serviceError = new ServiceError(txId);
         }
@@ -674,7 +674,7 @@ public class ServiceContext {
      * @param es
      * @return
      */
-    public ServiceContext errors(Collection<Err> es) {
+    public SessionContext errors(Collection<Err> es) {
         if (es == null || es.isEmpty()) {
             if (serviceError != null && serviceError.getErrors() != null) {
                 serviceError.getErrors().clear();
@@ -699,7 +699,7 @@ public class ServiceContext {
         return this;
     }
 
-    public ServiceContext cause(Throwable cause) {
+    public SessionContext cause(Throwable cause) {
         this.cause = cause;
         if (cause != null) {
             Throwable root = ExceptionUtils.getRootCause(cause);
@@ -735,12 +735,12 @@ public class ServiceContext {
         return level;
     }
 
-    public ServiceContext level(Level level) {
+    public SessionContext level(Level level) {
         this.level = level;
         return this;
     }
 
-    public ServiceContext logRequestHeader(boolean enabled) {
+    public SessionContext logRequestHeader(boolean enabled) {
         this.logRequestHeader = enabled;
         return this;
     }
@@ -749,7 +749,7 @@ public class ServiceContext {
         return logRequestHeader;
     }
 
-    public ServiceContext logRequestBody(boolean enabled) {
+    public SessionContext logRequestBody(boolean enabled) {
         this.logRequestBody = enabled;
         return this;
     }
@@ -758,7 +758,7 @@ public class ServiceContext {
         return logRequestBody;
     }
 
-    public ServiceContext logResponseHeader(boolean enabled) {
+    public SessionContext logResponseHeader(boolean enabled) {
         this.logResponseHeader = enabled;
         return this;
     }
@@ -767,7 +767,7 @@ public class ServiceContext {
         return logResponseHeader;
     }
 
-    public ServiceContext logResponseBody(boolean enabled) {
+    public SessionContext logResponseBody(boolean enabled) {
         this.logResponseBody = enabled;
         return this;
     }
@@ -780,12 +780,12 @@ public class ServiceContext {
         return processorSettings;
     }
 
-    public ServiceContext processorSettings(ProcessorSettings processorSettings) {
+    public SessionContext processorSettings(ProcessorSettings processorSettings) {
         this.processorSettings = processorSettings;
         return this;
     }
 
-    public ServiceContext poi(String marker) {
+    public SessionContext poi(String marker) {
 //        if (poi == null) {
 //            //poi = new LinkedHashMap();
 //            poi = new ArrayList();
@@ -800,11 +800,11 @@ public class ServiceContext {
         return poi;
     }
 
-    public ServiceContext memo(String desc) {
+    public SessionContext memo(String desc) {
         return this.memo(null, desc);
     }
 
-    public ServiceContext memo(String id, String desc) {
+    public SessionContext memo(String id, String desc) {
         if (memo == null) {
             memo = new ArrayList();
         }
@@ -851,14 +851,14 @@ public class ServiceContext {
         return sb;
     }
 
-    public ServiceContext report(StringBuilder sb) {
+    public SessionContext report(StringBuilder sb) {
         reportPOI(sb);
         reportMemo(sb);
         reportError(sb);
         return this;
     }
 
-    public ServiceContext reportError(StringBuilder sb) {
+    public SessionContext reportError(StringBuilder sb) {
         if (serviceError == null /*|| file == null*/) {// log error only for file request
             return this;
         }
@@ -887,7 +887,7 @@ public class ServiceContext {
         return this;
     }
 
-    public ServiceContext reportMemo(StringBuilder sb) {
+    public SessionContext reportMemo(StringBuilder sb) {
         if (memo == null || memo.isEmpty()) {
             //sb.append("\n\tMemo: n/a");
             return this;
@@ -903,11 +903,11 @@ public class ServiceContext {
         return this;
     }
 
-    public ServiceContext reportPOI(StringBuilder sb) {
+    public SessionContext reportPOI(StringBuilder sb) {
         return reportPOI(null, sb);
     }
 
-    public ServiceContext reportPOI(NioConfig cfg, StringBuilder sb) {
+    public SessionContext reportPOI(NioConfig cfg, StringBuilder sb) {
         if (poi == null || poi.isEmpty()) {
             sb.append("\n\tPOI: n/a");
             return this;

@@ -34,9 +34,9 @@ import org.summerboot.jexpress.boot.annotation.Deamon;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -348,7 +348,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public boolean authorizationCheck(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int badRequestErrorCode) throws Throwable {
+    public boolean authorizationCheck(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context, int badRequestErrorCode) throws Throwable {
         //1. authentication is done, now we do authorizationCheck
         if (roleBased) {
             boolean isAuthorized = false;
@@ -376,7 +376,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public Object process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) throws Throwable {
+    public Object process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context) throws Throwable {
         //2. invoke
         Object ret;
         Object[] paramValues = new Object[parameterSize];

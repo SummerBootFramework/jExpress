@@ -20,7 +20,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ public interface HttpLifecycleListener {
      * @return true if good to process request, otherwise false
      * @throws Exception
      */
-    boolean beforeProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
+    boolean beforeProcess(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, SessionContext context) throws Exception;
 
     /**
      * step1 - after process is done, before sending response to client
@@ -62,7 +62,7 @@ public interface HttpLifecycleListener {
      * @param context
      */
     void afterProcess(boolean preProcessResult, Object processResult, Throwable processException, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath,
-                      Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context);
+                      Map<String, List<String>> queryParams, String httpPostRequestBody, SessionContext context);
 
 
     /**
@@ -75,7 +75,7 @@ public interface HttpLifecycleListener {
      * @param httpPostRequestBody
      * @param context
      */
-    void afterService(HttpHeaders httpHeaders, HttpMethod httpMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context);
+    void afterService(HttpHeaders httpHeaders, HttpMethod httpMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, SessionContext context);
 
     /**
      * step3
@@ -102,7 +102,7 @@ public interface HttpLifecycleListener {
      * @return
      */
     String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-                         final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx);
+                         final SessionContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx);
 
     /**
      * step5
@@ -121,5 +121,5 @@ public interface HttpLifecycleListener {
      * @throws Exception
      */
     void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-                      final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
+                      final SessionContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
 }

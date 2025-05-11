@@ -162,7 +162,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Log;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 
 @Singleton
 @Controller
@@ -375,7 +375,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import javax.naming.NamingException;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.AuthenticatorListener;
 import org.summerboot.jexpress.security.auth.BootAuthenticator;

@@ -18,7 +18,6 @@ package org.summerboot.jexpress.nio.server;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -39,8 +38,8 @@ public interface RequestProcessor {
 
     boolean matches(String httpRequestPath);
 
-    boolean authorizationCheck(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int badRequestErrorCode) throws Throwable;
+    boolean authorizationCheck(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context, int badRequestErrorCode) throws Throwable;
 
-    Object process(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) throws Throwable;
+    Object process(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, SessionContext context) throws Throwable;
 
 }

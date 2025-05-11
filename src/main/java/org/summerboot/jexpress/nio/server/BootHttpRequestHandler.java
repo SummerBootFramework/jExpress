@@ -30,7 +30,6 @@ import org.summerboot.jexpress.boot.event.HttpExceptionListener;
 import org.summerboot.jexpress.boot.event.HttpLifecycleListener;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.security.auth.Authenticator;
 
 import javax.naming.NamingException;
@@ -65,7 +64,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     @Override
     protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
-                                        final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) {
+                                        final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context) {
         ProcessorSettings processorSettings = null;
         RequestProcessor processor = null;
         boolean preProcessResult = false;
@@ -158,7 +157,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
     }
 
     @Override
-    protected void afterService(HttpHeaders httpHeaders, HttpMethod httpMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
+    protected void afterService(HttpHeaders httpHeaders, HttpMethod httpMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, SessionContext context) {
         httpLifecycleListener.afterService(httpHeaders, httpMethod, httpRequestPath, queryParams, httpPostRequestBody, context);
     }
 
@@ -174,7 +173,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
      * verified), otherwise false
      * @throws Exception
      */
-    protected boolean authenticationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+    protected boolean authenticationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, SessionContext context) throws Exception {
         if (authenticator == null) {
             return true;//ignore token when authenticator is not implemented
         }
@@ -184,13 +183,13 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
 
     @Override
     protected String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-                                   final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
+                                   final SessionContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) {
         return httpLifecycleListener.beforeLogging(originallLogContent, httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
     }
 
     @Override
     protected void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-                                final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception {
+                                final SessionContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception {
         httpLifecycleListener.afterLogging(logContent, httpHeaders, httpMethod, httpRequestUri, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
     }
 

@@ -86,7 +86,7 @@ public class Err<T> {
         return toStringEx(true);
     }
 
-    protected String toStringEx(boolean isForInternalDebug) {
+    public String toStringEx(boolean isForInternalDebug) {
         if (!isForInternalDebug) {
             return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + "\"}";
         }

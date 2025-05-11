@@ -34,8 +34,8 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
@@ -117,7 +117,7 @@ class JaxRsRequestParameter {
         if (targetClass.equals(ServiceRequest.class)) {
             type = ParamType.Request;
             key = null;
-        } else if (targetClass.equals(ServiceContext.class)) {
+        } else if (targetClass.equals(SessionContext.class)) {
             type = ParamType.Response;
             key = null;
         } else {
@@ -204,7 +204,7 @@ class JaxRsRequestParameter {
         return key;
     }
 
-    public Object value(ServiceRequest request, ServiceContext context) /*throws JAXBException*/ {
+    public Object value(ServiceRequest request, SessionContext context) /*throws JAXBException*/ {
         ParamType currentType = type;
         if (currentType.equals(ParamType.Body_OnDemond_BylClientRquestType)) {
             String ct = request.getHttpHeaders().get(HttpHeaderNames.CONTENT_TYPE);
@@ -361,7 +361,7 @@ class JaxRsRequestParameter {
         return null;
     }
 
-    protected Object parse(String value, String defaultValue, ServiceContext context) {
+    protected Object parse(String value, String defaultValue, SessionContext context) {
         if (StringUtils.isBlank(value)) {
             if (defaultValue != null) {
                 value = defaultValue;

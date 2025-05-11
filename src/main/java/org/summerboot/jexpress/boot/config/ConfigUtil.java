@@ -464,7 +464,7 @@ public class ConfigUtil {
         StringBuilder sb = new StringBuilder();
         LineIterator iterator = FileUtils.lineIterator(configFile, "UTf-8");
         while (iterator.hasNext()) {
-            String line = iterator.nextLine().trim();
+            String line = iterator.next().trim();
             if (!line.startsWith("#")) {
                 String updatedLine = FormatterUtil.updateProtectedLine(line, encrypt);
                 if (updatedLine != null) {
@@ -474,6 +474,7 @@ public class ConfigUtil {
             }
             sb.append(line).append(BootConstant.BR);
         }
+
         if (updated > 0) {
             if (destFile == null) {
                 destFile = configFile;

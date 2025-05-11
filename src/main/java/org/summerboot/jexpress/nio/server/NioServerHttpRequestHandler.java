@@ -36,7 +36,6 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.SecurityUtil;
@@ -133,7 +132,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
 //        if (dataSize > _5MB) {
 //            ServiceError e = new ServiceError(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "Upload file cannot over 5MB", null);
-//            ServiceContext context = ServiceContext.build(hitIndex).txt(e.toJson()).status(HttpResponseStatus.INSUFFICIENT_STORAGE).errorCode(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT).level(Level.DEBUG);
+//            SessionContext context = SessionContext.build(hitIndex).txt(e.toJson()).status(HttpResponseStatus.INSUFFICIENT_STORAGE).errorCode(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT).level(Level.DEBUG);
 //            NioHttpUtil.sendText(ctx, true, null, context.status(), context.txt(), context.contentType(), true);
 //            return;
 //        }
@@ -143,155 +142,155 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         log.debug(() -> requestMetaInfo);
 
 
-        final ServiceContext context = ServiceContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
-        ScopedValue.where(ServiceContext.SESSION_CONTEXT, context).run(() -> {
-            Runnable asyncTask = () -> {
-                long queuingTime = System.currentTimeMillis() - start;
-                String acceptCharset = requestHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
-                if (StringUtils.isNotBlank(acceptCharset)) {
-                    context.charsetName(acceptCharset);//.contentType(ServiceContext.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
-                }
-                long responseContentLength = -1;
-                Throwable ioEx = null;
-                long processTime = -1;
-                ProcessorSettings processorSettings = null;
-                try {
-                    if (isDecoderSuccess) {
-                        String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterRegexPrefix(), nioCfg.getCallerAddressFilterOption());
-                        if (error == null) {
-                            processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
-                        } else {
-                            Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + error);
-                            context.error(err).status(HttpResponseStatus.NOT_ACCEPTABLE);
-                        }
+        final SessionContext context = SessionContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+        //ScopedValue.where(SessionContext.SESSION_CONTEXT, context).run(() -> {
+        Runnable asyncTask = () -> {
+            long queuingTime = System.currentTimeMillis() - start;
+            String acceptCharset = requestHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
+            if (StringUtils.isNotBlank(acceptCharset)) {
+                context.charsetName(acceptCharset);//.contentType(SessionContext.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
+            }
+            long responseContentLength = -1;
+            Throwable ioEx = null;
+            long processTime = -1;
+            ProcessorSettings processorSettings = null;
+            try {
+                if (isDecoderSuccess) {
+                    String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterRegexPrefix(), nioCfg.getCallerAddressFilterOption());
+                    if (error == null) {
+                        processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
                     } else {
-                        Throwable cause = req.decoderResult().cause();
-                        Err err = new Err(BootErrorCode.NIO_REQUEST_BAD_ENCODING, null, cause == null ? "" : cause.getMessage(), null, cause.toString());
-                        context.error(err).status(HttpResponseStatus.BAD_REQUEST);
+                        Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + error);
+                        context.error(err).status(HttpResponseStatus.NOT_ACCEPTABLE);
                     }
-                    processTime = System.currentTimeMillis() - start;
-                    responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
-                    context.poi(BootPOI.SERVICE_END);
-                } catch (Throwable ex) {
-                    ioEx = ex;
-                    Err e = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, null, ex, "Failed to send context to client");
-                    context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
-                    responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
-                } finally {
-                    NioCounter.COUNTER_SENT.incrementAndGet();
-                    long responseTime = System.currentTimeMillis() - start;
-                    this.afterService(requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
-                    String report = null;
-                    try {
-                        boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThresholdMs();
-                        HttpResponseStatus status = context.status();
-                        Level level = context.level();
-                        if ((overtime || status.code() >= 400) && level.isLessSpecificThan(Level.WARN)) {
-                            level = Level.WARN;
+                } else {
+                    Throwable cause = req.decoderResult().cause();
+                    Err err = new Err(BootErrorCode.NIO_REQUEST_BAD_ENCODING, null, cause == null ? "" : cause.getMessage(), null, cause.toString());
+                    context.error(err).status(HttpResponseStatus.BAD_REQUEST);
+                }
+                processTime = System.currentTimeMillis() - start;
+                responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
+                context.poi(BootPOI.SERVICE_END);
+            } catch (Throwable ex) {
+                ioEx = ex;
+                Err e = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, null, ex, "Failed to send context to client");
+                context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
+                responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
+            } finally {
+                NioCounter.COUNTER_SENT.incrementAndGet();
+                long responseTime = System.currentTimeMillis() - start;
+                this.afterService(requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
+                String report = null;
+                try {
+                    boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThresholdMs();
+                    HttpResponseStatus status = context.status();
+                    Level level = context.level();
+                    if ((overtime || status.code() >= 400) && level.isLessSpecificThan(Level.WARN)) {
+                        level = Level.WARN;
+                    }
+                    if (log.isEnabled(level)) {
+                        boolean isTraceAll = log.isTraceEnabled();
+                        if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
+                            requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
                         }
-                        if (log.isEnabled(level)) {
-                            boolean isTraceAll = log.isTraceEnabled();
-                            if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
-                                requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
-                            }
-                            Caller caller = context.caller();
-                            ServiceError error = context.error();
-                            int errorCount = 0;
-                            if (error != null) {
-                                if (error.getErrors() == null) {
-                                    errorCount = 1;
-                                } else {
-                                    errorCount = Math.max(1, error.getErrors().size());
-                                }
-                            }
-
-                            //response#1=200 OK, error=0, r2q=7ms, r2r=60ms, caller=aaa#bbb, received#1=GET /a
-                            StringBuilder sb = new StringBuilder();
-                            //line1
-                            sb.append("request_").append(txId).append(".caller=").append(caller == null ? context.callerId() : caller);
-                            //line2,3
-                            sb.append("\n\t").append(requestMetaInfo).append("\n\tresponse_").append(txId).append("=").append(status)
-                                    .append(", error=").append(errorCount)
-                                    .append(", FullHttpRequest.t0=").append(TimeUtil.toOffsetDateTime(start, zoneId))
-                                    .append(", queuing=").append(queuingTime).append("ms, process=").append(processTime);
-                            if (overtime) {
-                                sb.append("ms, response.ot=");
+                        Caller caller = context.caller();
+                        ServiceError error = context.error();
+                        int errorCount = 0;
+                        if (error != null) {
+                            if (error.getErrors() == null) {
+                                errorCount = 1;
                             } else {
-                                sb.append("ms, response=");
+                                errorCount = Math.max(1, error.getErrors().size());
                             }
-                            sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
-                            //line4
-                            context.reportPOI(nioCfg, sb);
-                            String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
-                            verboseClientServerCommunication(nioCfg, requestHeaders, sanitizedUserInput, context, sb, isTraceAll);
-                            context.reportMemo(sb);
-                            context.reportError(sb);
-                            sb.append(BootConstant.BR);
-                            report = sb.toString();
-                            if (!isTraceAll && processorSettings != null) {
-                                //isSendRequestParsingErrorToClient
-                                ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
-                                if (logSettings != null) {
-                                    List<String> protectedDataFields = logSettings.getProtectDataFieldsFromLogging();
-                                    if (protectedDataFields != null) {
-                                        for (String protectedDataField : protectedDataFields) {
-                                            report = FormatterUtil.replaceDataField(report, protectedDataField, protectedContectReplaceWith);
-                                        }
+                        }
+
+                        //response#1=200 OK, error=0, r2q=7ms, r2r=60ms, caller=aaa#bbb, received#1=GET /a
+                        StringBuilder sb = new StringBuilder();
+                        //line1
+                        sb.append("request_").append(txId).append(".caller=").append(caller == null ? context.callerId() : caller);
+                        //line2,3
+                        sb.append("\n\t").append(requestMetaInfo).append("\n\tresponse_").append(txId).append("=").append(status)
+                                .append(", error=").append(errorCount)
+                                .append(", FullHttpRequest.t0=").append(TimeUtil.toOffsetDateTime(start, zoneId))
+                                .append(", queuing=").append(queuingTime).append("ms, process=").append(processTime);
+                        if (overtime) {
+                            sb.append("ms, response.ot=");
+                        } else {
+                            sb.append("ms, response=");
+                        }
+                        sb.append(responseTime).append("ms, cont.len=").append(responseContentLength).append("bytes");
+                        //line4
+                        context.reportPOI(nioCfg, sb);
+                        String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+                        verboseClientServerCommunication(nioCfg, requestHeaders, sanitizedUserInput, context, sb, isTraceAll);
+                        context.reportMemo(sb);
+                        context.reportError(sb);
+                        sb.append(BootConstant.BR);
+                        report = sb.toString();
+                        if (!isTraceAll && processorSettings != null) {
+                            //isSendRequestParsingErrorToClient
+                            ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
+                            if (logSettings != null) {
+                                List<String> protectedDataFields = logSettings.getProtectDataFieldsFromLogging();
+                                if (protectedDataFields != null) {
+                                    for (String protectedDataField : protectedDataFields) {
+                                        report = FormatterUtil.replaceDataField(report, protectedDataField, protectedContectReplaceWith);
                                     }
                                 }
                             }
-                            report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
-                            // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
-                            log.log(level, "\n{}", report);// CWE-117 False Positive
                         }
-                    } catch (Throwable ex) {
-                        log.fatal("logging failed \n{}", report, ex);// CWE-117 False Positive
+                        report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
+                        // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
+                        log.log(level, "\n{}", report);// CWE-117 False Positive
                     }
-                    try {
-                        afterLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
-                    } catch (Throwable ex) {
-                        log.error("afterLogging failed", ex);
-                    }
-                    //context.clear();
+                } catch (Throwable ex) {
+                    log.fatal("logging failed \n{}", report, ex);// CWE-117 False Positive
                 }
-            };
-            try {
-                nioCfg.getBizExecutor().execute(asyncTask);
-            } catch (RejectedExecutionException ex) {
-                long queuingTime = System.currentTimeMillis() - start;
-                //ServiceContext context = ServiceContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
-                Err e = new Err(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, null, ex, "Too many request, try again later");
-                context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
-                long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
-
-                StringBuilder sb = new StringBuilder();
-                sb.append("request_").append(txId).append("=").append(ex.toString())
-                        .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(txId)
-                        .append("=").append(context.status())
-                        .append(", errorCode=").append(e.getErrorCode())
-                        .append(", queuing=").append(queuingTime)
-                        .append("ms, cont.len=").append(responseContentLength)
-                        .append("\n\t1req.headers=").append(requestHeaders)
-                        .append("\n\t4resp.body=").append(context.txt());
-                log.fatal(sb.toString());
-            } catch (Throwable ex) {
-                long queuingTime = System.currentTimeMillis() - start;
-                //ServiceContext context = ServiceContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
-                Err e = new Err(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, null, ex, "NIO unexpected executor failure");
-                context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
-                long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
-                StringBuilder sb = new StringBuilder();
-                sb.append("request_").append(txId).append("=").append(ex.toString())
-                        .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(txId)
-                        .append("=").append(context.status())
-                        .append(", errorCode=").append(e.getErrorCode())
-                        .append(", queuing=").append(queuingTime)
-                        .append("ms, cont.len=").append(responseContentLength)
-                        .append("\n\t1req.headers=").append(requestHeaders)
-                        .append("\n\t4resp.body=").append(context.txt());
-                log.fatal(sb.toString());
+                try {
+                    afterLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseContentLength, ioEx);
+                } catch (Throwable ex) {
+                    log.error("afterLogging failed", ex);
+                }
+                //context.clear();
             }
-        });
+        };
+        try {
+            nioCfg.getBizExecutor().execute(asyncTask);
+        } catch (RejectedExecutionException ex) {
+            long queuingTime = System.currentTimeMillis() - start;
+            //SessionContext context = SessionContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            Err e = new Err(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, null, ex, "Too many request, try again later");
+            context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
+            long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("request_").append(txId).append("=").append(ex.toString())
+                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(txId)
+                    .append("=").append(context.status())
+                    .append(", errorCode=").append(e.getErrorCode())
+                    .append(", queuing=").append(queuingTime)
+                    .append("ms, cont.len=").append(responseContentLength)
+                    .append("\n\t1req.headers=").append(requestHeaders)
+                    .append("\n\t4resp.body=").append(context.txt());
+            log.fatal(sb.toString());
+        } catch (Throwable ex) {
+            long queuingTime = System.currentTimeMillis() - start;
+            //SessionContext context = SessionContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
+            Err e = new Err(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, null, ex, "NIO unexpected executor failure");
+            context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
+            long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
+            StringBuilder sb = new StringBuilder();
+            sb.append("request_").append(txId).append("=").append(ex.toString())
+                    .append("ms\n\t").append(requestMetaInfo).append("\n\tresponse#").append(txId)
+                    .append("=").append(context.status())
+                    .append(", errorCode=").append(e.getErrorCode())
+                    .append(", queuing=").append(queuingTime)
+                    .append("ms, cont.len=").append(responseContentLength)
+                    .append("\n\t1req.headers=").append(requestHeaders)
+                    .append("\n\t4resp.body=").append(context.txt());
+            log.fatal(sb.toString());
+        }
+        //});
     }
 
     protected final String me = ", hdl=" + this.toString();
@@ -319,7 +318,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         return sb.toString();
     }
 
-    public static void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, ServiceContext context, StringBuilder sb, boolean isTraceAll) {
+    public static void verboseClientServerCommunication(NioConfig cfg, HttpHeaders httpHeaders, String httpPostRequestBody, SessionContext context, StringBuilder sb, boolean isTraceAll) {
         boolean isInFilter = false;
         // 3a. caller filter
         Caller caller = context.caller();
@@ -424,15 +423,15 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         sb.append("\n\t4.server_resp.body=").append((isTraceAll || context.logResponseBody() && isVerbose) ? context.txt() : "***");
     }
 
-    abstract protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
+    abstract protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context);
 
-    abstract protected void afterService(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
+    abstract protected void afterService(final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context);
 
     abstract protected String beforeLogging(final String originallLogContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-                                            final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
+                                            final SessionContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
 
     abstract protected void afterLogging(final String logContent, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestUri, final String httpPostRequestBody,
-                                         final ServiceContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
+                                         final SessionContext context, long queuingTime, long processTime, long responseTime, long responseContentLength, Throwable ioEx) throws Exception;
 
     protected RequestProcessor getRequestProcessor(final HttpMethod httptMethod, final String httpRequestPath) {
         return JaxRsRequestProcessorManager.getRequestProcessor(httptMethod, httpRequestPath);

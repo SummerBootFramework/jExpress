@@ -19,8 +19,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,6 +48,7 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -63,6 +62,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 
@@ -375,19 +375,19 @@ public abstract class BootConfig implements JExpressConfig {
             return;
         }
         StringBuilder sb = new StringBuilder();
-        LineIterator iterator = FileUtils.lineIterator(new File(cfgFile.getAbsolutePath()), "UTf-8");
-        while (iterator.hasNext()) {
-            String line = iterator.nextLine().trim();
-            if (!line.startsWith("#")) {
-                int i = line.indexOf("=");
-                if (i > 0) {
-                    String key = line.substring(0, i).trim();
-                    if (updatedCfgs.containsKey(key)) {
-                        line = key + "=" + updatedCfgs.get(key);
+        try (Stream<String> lines = Files.lines(cfgFile.toPath())) {
+            lines.forEach(line -> {
+                if (!line.startsWith("#")) {
+                    int i = line.indexOf("=");
+                    if (i > 0) {
+                        String key = line.substring(0, i).trim();
+                        if (updatedCfgs.containsKey(key)) {
+                            line = key + "=" + updatedCfgs.get(key);
+                        }
                     }
                 }
-            }
-            sb.append(line).append(BR);
+                sb.append(line).append(BR);
+            });
         }
 
         try (FileOutputStream output = new FileOutputStream(cfgFile); FileChannel foc = output.getChannel();) {

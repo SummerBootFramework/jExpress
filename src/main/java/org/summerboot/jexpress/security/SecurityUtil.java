@@ -18,11 +18,12 @@ package org.summerboot.jexpress.security;
 import com.veracode.annotation.CRLFCleanser;
 import com.veracode.annotation.FilePathCleanser;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -115,7 +116,7 @@ public class SecurityUtil {
         if (StringUtils.isEmpty(plainText)) {
             return plainText;
         }
-        String str = StringUtils.replaceAll(plainText, "\\.\\./", "/");
+        String str = RegExUtils.replaceAll(plainText, "\\.\\./", "/");
         return (String) str.chars().mapToObj((i) -> (char) i).map((c) -> Character.isWhitespace(c) ? '_' : c).filter((c) -> Character.isLetterOrDigit(c) || c == '-' || c == '_' || c == ':' || c == '/' || c == '\\' || c == '@' || c == '.').map(String::valueOf).collect(Collectors.joining());
     }
 
@@ -131,7 +132,7 @@ public class SecurityUtil {
     }
 
     @FilePathCleanser
-    public static boolean precheckFile(File file, ServiceContext context) {
+    public static boolean precheckFile(File file, SessionContext context) {
         String filePath = file.getAbsolutePath();
         String realPath;
         try {

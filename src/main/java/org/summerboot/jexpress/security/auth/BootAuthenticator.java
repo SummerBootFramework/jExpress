@@ -42,8 +42,8 @@ import org.summerboot.jexpress.nio.grpc.BearerAuthCredential;
 import org.summerboot.jexpress.nio.grpc.ContextualizedServerCallListenerEx;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.GeoIpUtil;
@@ -80,7 +80,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @throws NamingException
      */
     @Override
-    public String signJWT(String username, String pwd, E metaData, int validForMinutes, final ServiceContext context) throws NamingException {
+    public String signJWT(String username, String pwd, E metaData, int validForMinutes, final SessionContext context) throws NamingException {
         //1. protect request body from being logged
         //context.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
 
@@ -94,7 +94,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     @Override
-    public String signJWT(Caller caller, int validForMinutes, final ServiceContext context) {
+    public String signJWT(Caller caller, int validForMinutes, final SessionContext context) {
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
             return null;
@@ -126,7 +126,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @return
      * @throws NamingException
      */
-    abstract protected Caller authenticate(String usename, String password, E metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
+    abstract protected Caller authenticate(String usename, String password, E metaData, AuthenticatorListener listener, final SessionContext context) throws NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -302,7 +302,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @return
      */
     @Override
-    public Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
+    public Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, SessionContext context) {
         String authToken = getBearerToken(httpRequestHeaders);
         return verifyToken(authToken, cache, errorCode, context);
     }
@@ -315,7 +315,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @return
      */
     @Override
-    public Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
+    public Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, SessionContext context) {
         errorCode = errorCode == null ? overrideVerifyTokenErrorCode() : errorCode;
         Caller caller = null;
         if (authToken == null) {
@@ -348,7 +348,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     @Override
-    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, SessionContext context) throws Exception {
         return true;
     }
 
@@ -362,7 +362,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param context
      */
     @Override
-    public void logoutToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, ServiceContext context) {
+    public void logoutToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, SessionContext context) {
         String authToken = getBearerToken(httpRequestHeaders);
         logoutToken(authToken, cache, context);
     }
@@ -373,7 +373,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param context
      */
     @Override
-    public void logoutToken(String authToken, AuthTokenCache cache, ServiceContext context) {
+    public void logoutToken(String authToken, AuthTokenCache cache, SessionContext context) {
         try {
             Claims claims = parseJWT(authToken);
             String jti = claims.getId();
@@ -435,7 +435,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                     status = Status.UNAUTHENTICATED.withDescription(ERROR + "Unknown authorization type, non " + BearerAuthCredential.BEARER_TYPE + " token provided");
                 } else {
                     String jwt = headerValueAuthorization.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
-                    ServiceContext context = ServiceContext.build(0);
+                    SessionContext context = SessionContext.build(0);
                     caller = verifyToken(jwt, authTokenCache, null, context);
                     if (caller == null) {
                         String desc = context.error().getErrors().get(0).getErrorDesc();

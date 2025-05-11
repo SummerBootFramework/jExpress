@@ -25,8 +25,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 
 import java.net.http.HttpRequest;
@@ -121,19 +121,19 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         return successResponse;
     }
 
-    public RPCResult<T, E> update(Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+    public RPCResult<T, E> update(Class<T> successResponseClass, Class<E> errorResponseClass, final SessionContext context) {
         return update(DefaultJacksonMapper, null, successResponseClass, errorResponseClass, context);
     }
 
-    public RPCResult<T, E> update(JavaType successResponseType, Class<E> errorResponseClass, final ServiceContext context) {
+    public RPCResult<T, E> update(JavaType successResponseType, Class<E> errorResponseClass, final SessionContext context) {
         return update(DefaultJacksonMapper, successResponseType, null, errorResponseClass, context);
     }
 
-    public RPCResult<T, E> update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+    public RPCResult<T, E> update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final SessionContext context) {
         return update(DefaultJacksonMapper, successResponseType, successResponseClass, errorResponseClass, context);
     }
 
-    public RPCResult<T, E> update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+    public RPCResult<T, E> update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final SessionContext context) {
         if (remoteSuccess) {
             successResponse = fromJson(jacksonMapper, successResponseType, successResponseClass, context);
         } else {
@@ -151,7 +151,7 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         return this;
     }
 
-    protected <R extends Object> R fromJson(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, final ServiceContext context) {
+    protected <R extends Object> R fromJson(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, final SessionContext context) {
         if (responseClass == null && responseType == null || StringUtils.isBlank(rpcResponseBody)) {
             return null;
         }

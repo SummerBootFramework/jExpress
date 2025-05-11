@@ -15,8 +15,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.nio.server.NioServerHttpRequestHandler;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.auth.Caller;
@@ -40,13 +40,13 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         GRPCServer.getServiceCounter().incrementHit();
         Context previous;
         ContextualizedServerCallListenerEx listener;
-        final ServiceContext serviceContext;
+        final SessionContext sessionContext;
         var serverCall = call;
         try {
             String methodName = call.getMethodDescriptor().getFullMethodName();
             if (isPing(methodName)) {
                 GRPCServer.getServiceCounter().incrementPing();
-                serviceContext = null;
+                sessionContext = null;
             } else {
                 final long hitIndex = GRPCServer.getServiceCounter().incrementBiz();
                 final String txId = BootConstant.APP_ID + "-" + hitIndex;
@@ -58,15 +58,15 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 String methodType = call.getMethodDescriptor().getType().name();
                 SocketAddress remoteAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
                 SocketAddress localAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_LOCAL_ADDR);
-                serviceContext = new ServiceContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, null, methodName, null);
-                serviceContext.caller(caller).callerId(jti).sessionAttribute("MethodType", methodType);
-                context = context.withValue(GRPCServer.ServiceContext, serviceContext);
+                sessionContext = new SessionContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, null, methodName, null);
+                sessionContext.caller(caller).callerId(jti).sessionAttribute("MethodType", methodType);
+                context = context.withValue(GRPCServer.SessionContext, sessionContext);
                 serverCall = new ForwardingServerCall.SimpleForwardingServerCall<>(call) {
                     @Override
                     public void sendHeaders(Metadata responseHeaders) {
                         String headerKey_reference;
                         String headerKey_serverTimestamp;
-                        ProcessorSettings processorSettings = serviceContext.processorSettings();
+                        ProcessorSettings processorSettings = sessionContext.processorSettings();
                         if (processorSettings == null) {
                             headerKey_reference = BootConstant.RESPONSE_HEADER_KEY_REF;
                             headerKey_serverTimestamp = BootConstant.RESPONSE_HEADER_KEY_TS;
@@ -82,14 +82,14 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                         for (String key : responseHeaders.keys()) {
                             httpHeaders.add(key, responseHeaders.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER)));
                         }
-                        serviceContext.responseHeaders(httpHeaders);
+                        sessionContext.responseHeaders(httpHeaders);
                         super.sendHeaders(responseHeaders);
                     }
 
                     @Override
                     public void sendMessage(RespT message) {
                         if (message != null) {
-                            serviceContext.txt(message.toString());
+                            sessionContext.txt(message.toString());
                         }
                         super.sendMessage(message);
                     }
@@ -100,7 +100,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         }
 
         try {
-            listener = new ContextualizedServerCallListenerEx(next.startCall(serverCall, headers), context, serviceContext);
+            listener = new ContextualizedServerCallListenerEx(next.startCall(serverCall, headers), context, sessionContext);
         } finally {
             context.detach(previous);
         }
@@ -116,14 +116,14 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     private final Context context;
 
-    private final ServiceContext serviceContext;
+    private final SessionContext sessionContext;
 
     private String httpPostRequestBody;
 
-    public ContextualizedServerCallListenerEx(ServerCall.Listener<ReqT> delegate, Context context, ServiceContext serviceContext) {
+    public ContextualizedServerCallListenerEx(ServerCall.Listener<ReqT> delegate, Context context, SessionContext sessionContext) {
         super(delegate);
         this.context = context;
-        this.serviceContext = serviceContext;
+        this.sessionContext = sessionContext;
     }
 
     public void onReady() {
@@ -188,21 +188,21 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
 
     protected void report() {
-        if (serviceContext == null) {
+        if (sessionContext == null) {
             return;
         }
-        Level level = serviceContext.level();
+        Level level = sessionContext.level();
         if (!log.isEnabled(level)) {
             return;
         }
-        long responseTime = System.currentTimeMillis() - serviceContext.startTimestamp();
+        long responseTime = System.currentTimeMillis() - sessionContext.startTimestamp();
         boolean isTraceAll = log.isTraceEnabled();
-        HttpHeaders requestHeaders = serviceContext.requestHeaders();
+        HttpHeaders requestHeaders = sessionContext.requestHeaders();
         if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
             requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
         }
-        Caller caller = serviceContext.caller();
-        ServiceError error = serviceContext.error();
+        Caller caller = sessionContext.caller();
+        ServiceError error = sessionContext.error();
         int errorCount = 0;
         if (error != null) {
             if (error.getErrors() == null) {
@@ -214,28 +214,28 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         //response#1=200 OK, error=0, r2q=7ms, r2r=60ms, caller=aaa#bbb, received#1=GET /a
         StringBuilder sb = new StringBuilder();
         //line1
-        String txId = serviceContext.txId();
-        String methodType = serviceContext.sessionAttribute("MethodType");
-        sb.append("request_").append(txId).append(".caller=").append(caller == null ? serviceContext.callerId() : caller);
+        String txId = sessionContext.txId();
+        String methodType = sessionContext.sessionAttribute("MethodType");
+        sb.append("request_").append(txId).append(".caller=").append(caller == null ? sessionContext.callerId() : caller);
         //line2,3
         sb.append("\n\t")
                 .append("gRPC")
-                .append("_request_").append(serviceContext.hit())
-                .append("=").append(methodType).append(" ").append(serviceContext.uri())
+                .append("_request_").append(sessionContext.hit())
+                .append("=").append(methodType).append(" ").append(sessionContext.uri())
                 //.append(", dataSize=").append(dataSize)
-                .append(", remoteAddr=").append(serviceContext.remoteIP()).append(", localAddr=").append(serviceContext.localIP()).append("\n\tresponse_").append(txId).append("=").append(serviceContext.status())
+                .append(", remoteAddr=").append(sessionContext.remoteIP()).append(", localAddr=").append(sessionContext.localIP()).append("\n\tresponse_").append(txId).append("=").append(sessionContext.status())
                 .append(", error=").append(errorCount)
-                .append(", FullHttpRequest.t0=").append(TimeUtil.toOffsetDateTime(serviceContext.startTimestamp(), zoneId))
+                .append(", FullHttpRequest.t0=").append(TimeUtil.toOffsetDateTime(sessionContext.startTimestamp(), zoneId))
                 .append(", response=").append(responseTime).append("ms");
         //line4
-        serviceContext.reportPOI(null, sb);
+        sessionContext.reportPOI(null, sb);
         String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
-        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, sanitizedUserInput, serviceContext, sb, isTraceAll);
-        serviceContext.reportMemo(sb);
-        serviceContext.reportError(sb);
+        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, sanitizedUserInput, sessionContext, sb, isTraceAll);
+        sessionContext.reportMemo(sb);
+        sessionContext.reportError(sb);
         sb.append(BootConstant.BR);
         String report = sb.toString();
-        ProcessorSettings processorSettings = serviceContext.processorSettings();
+        ProcessorSettings processorSettings = sessionContext.processorSettings();
         if (!isTraceAll && processorSettings != null) {
             //isSendRequestParsingErrorToClient
             ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();

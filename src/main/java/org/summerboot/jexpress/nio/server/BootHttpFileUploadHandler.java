@@ -42,7 +42,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.multipart.MultipartUtil;
 import org.summerboot.jexpress.security.auth.Caller;
 
@@ -92,7 +91,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
     protected boolean isMultipart;
     protected HttpPostRequestDecoder httpDecoder;
     protected final long hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
-    protected final ServiceContext context = ServiceContext.build(hitIndex);
+    protected final SessionContext context = SessionContext.build(hitIndex);
     protected HttpData partialContent;
     protected long fileSizeQuota;
     protected Caller caller;
@@ -152,7 +151,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
                     if (isOverSized) {
                         reset();
                         Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, String.valueOf(fileSizeQuota), null);
-                        ServiceContext context = ServiceContext.build(hitIndex);
+                        SessionContext context = SessionContext.build(hitIndex);
                         context.error(err).status(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
                         NioHttpUtil.sendResponse(ctx, true, context, null, null);
                     } else if (chunk instanceof LastHttpContent) {
@@ -315,12 +314,12 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
         return maxAllowedSize;
     }
 
-    protected abstract boolean isValidRequestPath(HttpMethod method, String httpRequestPath, ServiceContext context);
+    protected abstract boolean isValidRequestPath(HttpMethod method, String httpRequestPath, SessionContext context);
 
-    protected abstract Caller authenticate(final HttpHeaders httpHeaders, ServiceContext context);
+    protected abstract Caller authenticate(final HttpHeaders httpHeaders, SessionContext context);
 
-    protected abstract long getCallerFileUploadSizeLimit_Bytes(Caller caller, ServiceContext context);
+    protected abstract long getCallerFileUploadSizeLimit_Bytes(Caller caller, SessionContext context);
 
-    protected abstract T onFileUploaded(ChannelHandlerContext ctx, String fileName, File file, Map<String, String> params, Caller caller, ServiceContext context);
+    protected abstract T onFileUploaded(ChannelHandlerContext ctx, String fileName, File file, Map<String, String> params, Caller caller, SessionContext context);
 
 }

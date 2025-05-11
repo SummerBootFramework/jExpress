@@ -35,9 +35,6 @@ public @interface Controller {
 
     String NOT_TAGGED = "";
 
-    @Deprecated
-    String implTag() default NOT_TAGGED;
-
     String AlternativeName() default NOT_TAGGED;
 
     String responseHeader_ServerTs() default BootConstant.RESPONSE_HEADER_KEY_TS;

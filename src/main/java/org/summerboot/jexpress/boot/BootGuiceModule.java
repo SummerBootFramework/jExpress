@@ -176,16 +176,10 @@ public class BootGuiceModule extends AbstractModule {
             if (a instanceof Controller) {
                 Controller ca = (Controller) a;
                 implTag = ca.AlternativeName();
-                if (StringUtils.isBlank(implTag)) {
-                    implTag = ca.implTag();
-                }
             } else if (a instanceof Inspector) {
                 Service sa = (Service) c.getAnnotation(Service.class);
                 if (sa != null) {
                     implTag = sa.AlternativeName();
-                    if (StringUtils.isBlank(implTag)) {
-                        implTag = sa.implTag();
-                    }
                 }
             }
             // no tag = always use this controller, with tag = only use this controller when -use <tag> specified

@@ -29,8 +29,8 @@ import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 
 import javax.naming.AuthenticationException;
 import javax.naming.NamingException;
@@ -53,13 +53,13 @@ public class HttpExceptionHandler implements HttpExceptionListener {
     protected PostOffice po;
 
     @Override
-    public void onActionNotFound(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
+    public void onActionNotFound(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, SessionContext context) {
         Err e = new Err(BootErrorCode.AUTH_INVALID_URL, null, null, null, "Action not found: " + httptMethod + " " + httpRequestPath);
         context.error(e).status(HttpResponseStatus.NOT_FOUND).logRequestHeader(false).logRequestBody(false);
     }
 
     @Override
-    public void onNamingException(NamingException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    public void onNamingException(NamingException ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         if (ex instanceof AuthenticationException) {
             Err e = new Err(BootErrorCode.AUTH_LOGIN_FAILED, null, null, null, "Authentication failed");
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
@@ -77,13 +77,13 @@ public class HttpExceptionHandler implements HttpExceptionListener {
         }
     }
 
-    protected void onNamingException(NamingException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    protected void onNamingException(NamingException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, null, ex, cause.toString());
         context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
-    public void onPersistenceException(PersistenceException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    public void onPersistenceException(PersistenceException ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         Throwable cause = ExceptionUtils.getRootCause(ex);
         if (cause == null) {
             cause = ex;
@@ -96,13 +96,13 @@ public class HttpExceptionHandler implements HttpExceptionListener {
         }
     }
 
-    protected void onPersistenceException(PersistenceException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    protected void onPersistenceException(PersistenceException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause.toString());
         context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
-    public void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    public void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         HealthMonitor.inspect();
         context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
                 .level(Level.WARN)
@@ -110,39 +110,39 @@ public class HttpExceptionHandler implements HttpExceptionListener {
     }
 
     @Override
-    public void onHttpTimeoutException(HttpTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    public void onHttpTimeoutException(HttpTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
                 .level(Level.WARN)
                 .error(new Err(BootErrorCode.HTTP_REQUEST_TIMEOUT, null, null, ex, "Http Request Timeout: " + ex.getMessage()));
     }
 
     @Override
-    public void onRejectedExecutionException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    public void onRejectedExecutionException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
                 .level(Level.WARN)
                 .error(new Err(BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, null, null, ex, "Too many request, try again later: " + ex.getMessage()));
     }
 
     @Override
-    public void onConnectException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    public void onConnectException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         HealthMonitor.inspect();
         nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.IO_BASE, "Failed to connect: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     @Override
-    public void onIOException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    public void onIOException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         HealthMonitor.inspect();
         nakFatal(context, HttpResponseStatus.BAD_GATEWAY, BootErrorCode.IO_BASE, "IO issue: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToAppSupport(), httptMethod + " " + httpRequestPath);
     }
 
     @Override
-    public void onInterruptedException(InterruptedException ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context) {
+    public void onInterruptedException(InterruptedException ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         Thread.currentThread().interrupt();
         nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.APP_INTERRUPTED, "Service Interrupted", ex, SMTPClientConfig.cfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
     @Override
-    public void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, ServiceContext context) {
+    public void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, SessionContext context) {
         nakFatal(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, BootErrorCode.NIO_UNEXPECTED_PROCESSOR_FAILURE, "Unexpected Failure: " + ex.getClass().getSimpleName(), ex, SMTPClientConfig.cfg.getEmailToDevelopment(), httptMethod + " " + httpRequestPath);
     }
 
@@ -159,7 +159,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
      * @param emailTo
      * @param content
      */
-    protected void nakFatal(ServiceContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex, Collection<String> emailTo, String content) {
+    protected void nakFatal(SessionContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex, Collection<String> emailTo, String content) {
         // 1. build JSON context with same app error code and exception
         Err e = new Err(appErrorCode, null, null, ex, errorMessage);
         context.status(httpResponseStatus).level(Level.FATAL).error(e);

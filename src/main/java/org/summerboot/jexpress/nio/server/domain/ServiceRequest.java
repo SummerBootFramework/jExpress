@@ -19,6 +19,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.util.FormatterUtil;
 
 import java.util.HashMap;
@@ -106,7 +107,7 @@ public class ServiceRequest {
         return getParam(queryParams, key, null, 0);
     }
 
-    public String getQueryParam(String key, final ServiceContext context, int errorCode) {
+    public String getQueryParam(String key, final SessionContext context, int errorCode) {
         return getParam(queryParams, key, context, errorCode);
     }
 
@@ -121,7 +122,7 @@ public class ServiceRequest {
         return formParams.get(key);
     }
 
-    protected String getParam(Map<String, List<String>> pms, String key, final ServiceContext context, int errorCode) {
+    protected String getParam(Map<String, List<String>> pms, String key, final SessionContext context, int errorCode) {
         String value = null;
         if (pms != null && !pms.isEmpty()) {
             List<String> vs = pms.get(key);

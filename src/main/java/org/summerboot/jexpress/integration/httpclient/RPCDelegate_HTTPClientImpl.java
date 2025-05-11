@@ -18,8 +18,8 @@ package org.summerboot.jexpress.integration.httpclient;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 
 import java.io.IOException;
@@ -57,27 +57,27 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
     }
 
     @Override
-    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext serviceContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException {
+    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException {
         configure(reqBuilder);
         HttpRequest req = reqBuilder.build();
         String reqbody = RPCDelegate.getHttpRequestBody(req);
-        return this.rpcEx(serviceContext, req, reqbody, successStatusList);
+        return this.rpcEx(sessionContext, req, reqbody, successStatusList);
     }
 
     /**
      * @param <T>
      * @param <E>
-     * @param serviceContext
+     * @param sessionContext
      * @param req
      * @param successStatusList
      * @return
      * @throws IOException
      */
     @Override
-    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext serviceContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException {
+    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(SessionContext sessionContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException {
         Optional<HttpRequest.BodyPublisher> pub = req.bodyPublisher();
         String reqbody = RPCDelegate.getHttpRequestBody(req);
-        return this.rpcEx(serviceContext, req, reqbody, successStatusList);
+        return this.rpcEx(sessionContext, req, reqbody, successStatusList);
     }
 
     /**
@@ -94,7 +94,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
      * @throws IOException
      */
     @Override
-    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException {
+    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException {
         //1. log memo
         context.memo(RPCMemo.MEMO_RPC_REQUEST, originRequest.toString() + " caller=" + context.caller());
         if (originRequestBody != null) {
@@ -150,7 +150,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
      * @throws IOException
      */
     @Override
-    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext context, RPCResult<T, E> request, HttpResponseStatus... successStatusList) throws IOException {
+    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(SessionContext context, RPCResult<T, E> request, HttpResponseStatus... successStatusList) throws IOException {
         return this.rpcEx(context, request.getOriginRequest(), request.getOriginRequestBody(), successStatusList);
     }
 

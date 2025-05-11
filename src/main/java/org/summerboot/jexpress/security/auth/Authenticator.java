@@ -20,7 +20,7 @@ import io.jsonwebtoken.JwtBuilder;
 import io.netty.handler.codec.http.HttpHeaders;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 
 import javax.naming.NamingException;
 import java.net.SocketAddress;
@@ -57,7 +57,7 @@ public interface Authenticator<T> {
      * @return JWT
      * @throws javax.naming.NamingException
      */
-    String signJWT(String username, String pwd, T metaData, int validForMinutes, final ServiceContext context) throws NamingException;
+    String signJWT(String username, String pwd, T metaData, int validForMinutes, final SessionContext context) throws NamingException;
 
 
     /**
@@ -68,7 +68,7 @@ public interface Authenticator<T> {
      * @param context
      * @return
      */
-    String signJWT(Caller caller, int validForMinutes, final ServiceContext context);
+    String signJWT(Caller caller, int validForMinutes, final SessionContext context);
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -89,7 +89,7 @@ public interface Authenticator<T> {
      * @param context
      * @return Caller
      */
-    Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
+    Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, final SessionContext context);
 
     /**
      * @param authToken
@@ -98,7 +98,7 @@ public interface Authenticator<T> {
      * @param context
      * @return Caller
      */
-    Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, final ServiceContext context);
+    Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, final SessionContext context);
 
     /**
      * Extra authorization checks before processing
@@ -110,7 +110,7 @@ public interface Authenticator<T> {
      * @return true if good to process request, otherwise false
      * @throws Exception
      */
-    boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception;
+    boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, SessionContext context) throws Exception;
 
     /**
      * Success HTTP Status: 204 No Content
@@ -119,7 +119,7 @@ public interface Authenticator<T> {
      * @param cache
      * @param context
      */
-    void logoutToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, final ServiceContext context);
+    void logoutToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, final SessionContext context);
 
     /**
      * Success HTTP Status: 204 No Content
@@ -128,5 +128,5 @@ public interface Authenticator<T> {
      * @param cache
      * @param context
      */
-    void logoutToken(String authToken, AuthTokenCache cache, final ServiceContext context);
+    void logoutToken(String authToken, AuthTokenCache cache, final SessionContext context);
 }
