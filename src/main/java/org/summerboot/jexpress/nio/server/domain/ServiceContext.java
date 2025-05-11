@@ -54,6 +54,13 @@ import java.util.Set;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ServiceContext {
 
+    static final ScopedValue<ServiceContext> SESSION_CONTEXT = ScopedValue.newInstance();
+
+    public static ServiceContext get() {
+        return SESSION_CONTEXT.get();
+    }
+
+
     //protected ChannelHandlerContext ctx;
     protected final SocketAddress localIP;
     protected final SocketAddress remoteIP;

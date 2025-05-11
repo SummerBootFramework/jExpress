@@ -307,7 +307,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         logSettings.setLogResponseBody(log.responseBody());
 
 
-        String[] protectDataFieldsFromLogging = log.protectDataFieldsFromLogging();
+        String[] protectDataFieldsFromLogging = log.maskDataFields();
         if (protectDataFieldsFromLogging != null && protectDataFieldsFromLogging.length > 0) {
             List<String> list = logSettings.getProtectDataFieldsFromLogging();
             if (list == null) {

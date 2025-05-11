@@ -40,5 +40,5 @@ public @interface Log {
 
     boolean responseBody() default true;
 
-    String[] protectDataFieldsFromLogging() default {};
+    String[] maskDataFields() default {};
 }
