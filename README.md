@@ -188,7 +188,7 @@ public class MyController {
      * Three features:
      * <p> 1. auto validate JSON request by @Valid and @NotNull annotation
      * <p> 2. protected user credit card and privacy information from being logged by @Log annotation
-     * <p> 3. mark performance POI (point of interest) by using ServiceContext.poi(key), see section#8.3
+     * <p> 3. mark performance POI (point of interest) by using SessionContext.poi(key), see section#8.3
      *
      * @param myName
      * @param request
@@ -199,8 +199,8 @@ public class MyController {
     @Path("/hello/{name}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Content-Type: application/json or Content-Type: application/xml
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Accept: application/json or Accept: application/xml
-    @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"}, hideJsonArrayFields = "secretList")
-    public ResponseDto hello_auto_validation_protected_logging_markWithPOI(@NotNull @PathParam("name") String myName, @NotNull @Valid RequestDto request, final ServiceContext context) {
+    @Log(maskDataFields = {"creditCardNumber", "clientPrivacy", "secretList"})
+    public ResponseDto hello_auto_validation_protected_logging_markWithPOI(@NotNull @PathParam("name") String myName, @NotNull @Valid RequestDto request, final SessionContext context) {
         context.poi("DB begin");// about POI, see section8.3
         // DB access and it takes time ...
         context.poi("DB end");
@@ -251,8 +251,7 @@ public class MyController {
 **}
 > Memo: n/a
 
-**Below is the log of with @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"}, hideJsonArrayFields = "
-secretList")**
+**Below is the log of with @Log(maskDataFields = {"creditCardNumber", "clientPrivacy", "secretList"})**
 
 > 2023-04-20T19:53:47,167 INFO org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [pool-4-thread-2]
 > request_2.caller=null
@@ -387,7 +386,7 @@ import org.summerboot.jexpress.security.auth.User;
 public class MyAuthenticator extends BootAuthenticator<Long> {
 
     @Override
-    protected Caller authenticate(String usename, String password, Long metaData, AuthenticatorListener listener, ServiceContext context) throws NamingException {
+    protected Caller authenticate(String usename, String password, Long metaData, AuthenticatorListener listener, SessionContext context) throws NamingException {
         // verify username and password against LDAP
         if ("wrongpwd".equals(password)) {
             return null;
@@ -403,7 +402,7 @@ public class MyAuthenticator extends BootAuthenticator<Long> {
     }
 
     @Override
-    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, SessionContext context) throws Exception {
         return true;
     }
 
