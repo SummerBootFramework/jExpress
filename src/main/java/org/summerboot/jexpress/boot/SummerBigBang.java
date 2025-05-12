@@ -148,7 +148,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_CONFIG_MONITOR_INTERVAL)
-                .desc("configuration monitoring interval in second (default " + userSpecifiedCfgMonitorIntervalSec + " seconds)")
+                .desc("configuration monitoring interval in second (default " + userSpecifiedCfgMonitorThrottleMillis + " seconds)")
                 .hasArg().argName("second")
                 .build();
         cliOptions.addOption(arg);
@@ -371,7 +371,7 @@ abstract public class SummerBigBang extends SummerSingularity {
          */
         if (cli.hasOption(BootConstant.CLI_CONFIG_MONITOR_INTERVAL)) {
             String cmi = cli.getOptionValue(BootConstant.CLI_CONFIG_MONITOR_INTERVAL);
-            userSpecifiedCfgMonitorIntervalSec = Integer.parseInt(cmi);
+            userSpecifiedCfgMonitorThrottleMillis = Integer.parseInt(cmi);
         }
 
         /*
@@ -394,7 +394,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, t, null);
         }
 
-        log.trace(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorIntervalSec + ", StartCommand>" + jvmStartCommand);
+        log.trace(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorThrottleMillis + ", StartCommand>" + jvmStartCommand);
 
         /*
          * [Config File] - encrypt/decrypt
@@ -545,7 +545,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             }
 
             //2. load configurations
-            updated = ConfigUtil.loadConfigs(mode, log, userSpecifiedResourceBundle, userSpecifiedConfigDir.toPath(), configs, userSpecifiedCfgMonitorIntervalSec, userSpecifiedConfigDir);
+            updated = ConfigUtil.loadConfigs(mode, log, userSpecifiedResourceBundle, userSpecifiedConfigDir.toPath(), configs, userSpecifiedCfgMonitorThrottleMillis, userSpecifiedConfigDir);
         } catch (Throwable ex) {
             log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             ApplicationUtil.RTO(BootErrorCode.RTO_CFG_LOADING_ERROR, null, null);

@@ -126,7 +126,7 @@ abstract public class SummerSingularity {
      * CLI results
      */
     protected Locale userSpecifiedResourceBundle;
-    protected int userSpecifiedCfgMonitorIntervalSec;
+    protected long userSpecifiedCfgMonitorThrottleMillis;
     protected final Set<String> userSpecifiedalternativeNames = new HashSet<>();
 
     /*
@@ -182,7 +182,7 @@ abstract public class SummerSingularity {
 
         // CLI        
         userSpecifiedResourceBundle = null;
-        userSpecifiedCfgMonitorIntervalSec = BootConstant.CFG_CHANGE_MONITOR_INTERVAL_SEC;
+        userSpecifiedCfgMonitorThrottleMillis = BootConstant.CFG_CHANGE_MONITOR_THROTTLE_MS;
         userSpecifiedalternativeNames.clear();
 
         // reset Scan Results

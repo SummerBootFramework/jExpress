@@ -96,7 +96,7 @@ public class ConfigUtil {
         }
     }
 
-    public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, int CfgMonitorInterval, File cfgConfigDir) throws Exception {
+    public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, long userSpecifiedCfgMonitorThrottleMillis, File cfgConfigDir) throws Exception {
         // 1. load configs
         int updated = 0;
         Map<File, Runnable> cfgUpdateTasks = new HashMap();
@@ -109,8 +109,8 @@ public class ConfigUtil {
             }
         }
         // 2. monitor the change of config files
-        if (!mode.isCliMode() && CfgMonitorInterval > 0) {
-            ConfigurationMonitor.cfgMonitor.start(configFolder.toFile(), CfgMonitorInterval, cfgUpdateTasks);
+        if (!mode.isCliMode()) {
+            ConfigurationMonitor.cfgMonitor.start(configFolder, userSpecifiedCfgMonitorThrottleMillis, cfgUpdateTasks);
         }
         return updated;
     }

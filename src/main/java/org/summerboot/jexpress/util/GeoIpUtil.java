@@ -22,6 +22,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Map;
@@ -37,12 +39,12 @@ public class GeoIpUtil {
 
     public static final String CHECKIP_URL_AWS = "http://checkip.amazonaws.com";
 
-    public static String getExternalIp() throws IOException {
+    public static String getExternalIp() throws IOException, URISyntaxException {
         return getExternalIp(CHECKIP_URL_AWS);
     }
 
-    public static String getExternalIp(String url) throws IOException {
-        URL whatismyip = new URL(url);
+    public static String getExternalIp(String url) throws IOException, URISyntaxException {
+        URL whatismyip = new URI(url).toURL();
         try (BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));) {
             return in.readLine();
         }

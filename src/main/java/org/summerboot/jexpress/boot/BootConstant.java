@@ -49,7 +49,7 @@ public interface BootConstant {
      */
     boolean CFG_ERROR_CODE_AS_INT = BackOffice.agent.isErrorCodeAsInt();
     boolean CFG_JWT_AUD_AS_CSV = BackOffice.agent.isJwtAudAsCSV();
-    int CFG_CHANGE_MONITOR_INTERVAL_SEC = BackOffice.agent.getCfgChangeMonitorIntervalSec();
+    long CFG_CHANGE_MONITOR_THROTTLE_MS = BackOffice.agent.getCfgChangeMonitorThrottleMillis();
     int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
     long WEB_RESOURCE_TTL_MS = BackOffice.agent.getWebResourceCacheTtlSec() * 1000;
     String DEFAULT_MASTER_PASSWORD_FILE = "etc" + File.separator + BackOffice.agent.getDefaultMasterPasswordFile();

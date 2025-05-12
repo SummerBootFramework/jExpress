@@ -164,8 +164,8 @@ public class BackOffice extends BootConfig {
     @Config(key = "type.JWTAudAsCSV", defaultValue = "true", desc = "Parse JWT Audience value as CSV for JWT backward compatibility")
     private boolean jwtAudAsCSV = true;
 
-    @Config(key = "default.interval.ConfigChangeMonitor", defaultValue = "30")
-    private int CfgChangeMonitorIntervalSec = 30;
+    @Config(key = "default.ConfigChangeMonitor.Throttle.Milliseconds", defaultValue = "100")
+    private long CfgChangeMonitorThrottleMillis = 100;
 
     @Config(key = "default.web.resource.ttl.sec", defaultValue = "3600")
     private long webResourceCacheTtlSec = 3600;
@@ -197,13 +197,13 @@ public class BackOffice extends BootConfig {
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
 
-    @Config(key = "backoffice.executor.core", defaultValue = "3",
+    @Config(key = "backoffice.executor.core", defaultValue = "32",
             desc = "0 = current computer/VM's available processors + 1")
-    private int tpeCore = 3;
+    private int tpeCore = 32;
 
-    @Config(key = "backoffice.executor.max", defaultValue = "3",
+    @Config(key = "backoffice.executor.max", defaultValue = "32",
             desc = "0 = current computer/VM's available processors + 1")
-    private int tpeMax = 3;
+    private int tpeMax = 32;
 
     @Config(key = "backoffice.executor.queue", defaultValue = "" + Integer.MAX_VALUE)
     private int tpeQueue = Integer.MAX_VALUE;
@@ -336,8 +336,8 @@ public class BackOffice extends BootConfig {
         return jwtAudAsCSV;
     }
 
-    public int getCfgChangeMonitorIntervalSec() {
-        return CfgChangeMonitorIntervalSec;
+    public long getCfgChangeMonitorThrottleMillis() {
+        return CfgChangeMonitorThrottleMillis;
     }
 
     public long getWebResourceCacheTtlSec() {
