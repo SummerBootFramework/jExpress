@@ -456,8 +456,8 @@ abstract public class SummerSingularity {
             ImportResource ir = (ImportResource) jExpressConfigClass.getAnnotation(ImportResource.class);
             if (ir != null) {
                 configFileName = ir.value();
-                checkImplTagUsed = ir.checkImplTagUsed();
-                loadWhenImplTagUsed = ir.loadWhenImplTagUsed();
+                checkImplTagUsed = ir.whenUseAlternative();
+                loadWhenImplTagUsed = ir.thenLoadConfig();
             } else if (/*hasAuthImpl && */jExpressConfigClass.equals(AuthConfig.class)) {
                 configFileName = BootConstant.FILE_CFG_AUTH;
             } else if (hasControllers && jExpressConfigClass.equals(NioConfig.class)) {
@@ -670,20 +670,20 @@ abstract public class SummerSingularity {
         final Class cfgClass;
         final String configFileName;
         final JExpressConfig instance;
-        final String checkImplTagUsed;
-        final boolean loadWhenImplTagUsed;
+        final String whenUseAlternative;
+        final boolean thenLoadConfig;
 
-        ConfigMetadata(String configFileName, Class cfgClass, JExpressConfig instance, String checkImplTagUsed, boolean loadWhenImplTagUsed) {
+        ConfigMetadata(String configFileName, Class cfgClass, JExpressConfig instance, String whenUseAlternative, boolean thenLoadConfig) {
             this.configFileName = configFileName;
             this.cfgClass = cfgClass;
             this.instance = instance;
-            this.checkImplTagUsed = checkImplTagUsed;
-            this.loadWhenImplTagUsed = loadWhenImplTagUsed;
+            this.whenUseAlternative = whenUseAlternative;
+            this.thenLoadConfig = thenLoadConfig;
         }
 
         @Override
         public String toString() {
-            return "ConfigMetadata{" + "cfgClass=" + cfgClass.getName() + ", configFileName=" + configFileName + ", instance=" + instance + ", checkImplTagUsed=" + checkImplTagUsed + ", loadWhenImplTagUsed=" + loadWhenImplTagUsed + '}';
+            return "ConfigMetadata{" + "cfgClass=" + cfgClass.getName() + ", configFileName=" + configFileName + ", instance=" + instance + ", whenUseAlternative=" + whenUseAlternative + ", thenLoadConfig=" + thenLoadConfig + '}';
         }
     }
 

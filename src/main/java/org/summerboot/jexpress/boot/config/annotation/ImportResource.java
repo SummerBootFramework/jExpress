@@ -34,9 +34,9 @@ public @interface ImportResource {
 
     String value();// default "";
 
-    String checkImplTagUsed() default "";
+    String whenUseAlternative() default "";
 
-    boolean loadWhenImplTagUsed() default false;
+    boolean thenLoadConfig() default false;
 
     String namespace() default "";
 }

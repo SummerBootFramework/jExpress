@@ -530,7 +530,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         try {
             //1. get main configurations
             for (ConfigMetadata registeredAppConfig : scanedJExpressConfigs.values()) {
-                if (isUserSpecifiedImplTags(registeredAppConfig.checkImplTagUsed) ^ registeredAppConfig.loadWhenImplTagUsed) {
+                if (isUserSpecifiedImplTags(registeredAppConfig.whenUseAlternative) ^ registeredAppConfig.thenLoadConfig) {
                     continue;
                 }
                 JExpressConfig instance = registeredAppConfig.instance;
