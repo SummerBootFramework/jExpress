@@ -127,7 +127,7 @@ abstract public class SummerSingularity {
      */
     protected Locale userSpecifiedResourceBundle;
     protected int userSpecifiedCfgMonitorIntervalSec;
-    protected final Set<String> userSpecifiedImplTags = new HashSet<>();
+    protected final Set<String> userSpecifiedalternativeNames = new HashSet<>();
 
     /*
      * Scan Results
@@ -183,7 +183,7 @@ abstract public class SummerSingularity {
         // CLI        
         userSpecifiedResourceBundle = null;
         userSpecifiedCfgMonitorIntervalSec = BootConstant.CFG_CHANGE_MONITOR_INTERVAL_SEC;
-        userSpecifiedImplTags.clear();
+        userSpecifiedalternativeNames.clear();
 
         // reset Scan Results
         jvmStartCommand = null;
@@ -450,7 +450,7 @@ abstract public class SummerSingularity {
                 continue;
             }
             String configFileName = null;
-            String checkImplTagUsed = "";
+            String[] checkImplTagUsed = {};
             boolean loadWhenImplTagUsed = false;
 
             ImportResource ir = (ImportResource) jExpressConfigClass.getAnnotation(ImportResource.class);
@@ -670,10 +670,10 @@ abstract public class SummerSingularity {
         final Class cfgClass;
         final String configFileName;
         final JExpressConfig instance;
-        final String whenUseAlternative;
+        final String[] whenUseAlternative;
         final boolean thenLoadConfig;
 
-        ConfigMetadata(String configFileName, Class cfgClass, JExpressConfig instance, String whenUseAlternative, boolean thenLoadConfig) {
+        ConfigMetadata(String configFileName, Class cfgClass, JExpressConfig instance, String[] whenUseAlternative, boolean thenLoadConfig) {
             this.configFileName = configFileName;
             this.cfgClass = cfgClass;
             this.instance = instance;
@@ -683,7 +683,7 @@ abstract public class SummerSingularity {
 
         @Override
         public String toString() {
-            return "ConfigMetadata{" + "cfgClass=" + cfgClass.getName() + ", configFileName=" + configFileName + ", instance=" + instance + ", whenUseAlternative=" + whenUseAlternative + ", thenLoadConfig=" + thenLoadConfig + '}';
+            return "ConfigMetadata{" + "cfgClass=" + cfgClass.getName() + ", configFileName=" + configFileName + ", instance=" + instance + ", whenUseAlternative=" + Arrays.toString(whenUseAlternative) + ", thenLoadConfig=" + thenLoadConfig + '}';
         }
     }
 

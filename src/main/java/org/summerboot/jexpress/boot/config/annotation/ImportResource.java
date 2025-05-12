@@ -34,7 +34,7 @@ public @interface ImportResource {
 
     String value();// default "";
 
-    String whenUseAlternative() default "";
+    String[] whenUseAlternative() default {};
 
     boolean thenLoadConfig() default false;
 

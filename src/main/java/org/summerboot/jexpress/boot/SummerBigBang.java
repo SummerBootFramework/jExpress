@@ -121,7 +121,7 @@ abstract public class SummerBigBang extends SummerSingularity {
          * 4. should be invoked after log4j was initialized to avoid caller invokes LogManager.static{}
          * on User Specified ImplTags Ready
          */
-        genesis(primaryClass, userSpecifiedImplTags);//trigger subclass to init IoC container
+        genesis(primaryClass, userSpecifiedalternativeNames);//trigger subclass to init IoC container
 
         /*
          * 5. let caller to init app
@@ -452,13 +452,13 @@ abstract public class SummerBigBang extends SummerSingularity {
          * should be invoked before genesis was initialezed to avoid caller invoks LogManager.static{}
          */
         if (cli.hasOption(BootConstant.CLI_USE_ALTERNATIVE)) {
-            userSpecifiedImplTags.clear();
+            userSpecifiedalternativeNames.clear();
             String[] mockItemList = cli.getOptionValues(BootConstant.CLI_USE_ALTERNATIVE);
 
             Set<String> mockInputValues = new HashSet(Arrays.asList(mockItemList));
             mockInputValues.remove("");
             if (availableImplTagOptions.containsAll(mockInputValues)) {
-                userSpecifiedImplTags.addAll(mockInputValues);
+                userSpecifiedalternativeNames.addAll(mockInputValues);
             } else {
                 Set<String> invalidOptions = new HashSet(mockInputValues);
                 invalidOptions.removeAll(availableImplTagOptions);
@@ -530,7 +530,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         try {
             //1. get main configurations
             for (ConfigMetadata registeredAppConfig : scanedJExpressConfigs.values()) {
-                if (isUserSpecifiedImplTags(registeredAppConfig.whenUseAlternative) ^ registeredAppConfig.thenLoadConfig) {
+                if (isUserSpecifieduserSpecifiedalternativeNames(registeredAppConfig.whenUseAlternative) ^ registeredAppConfig.thenLoadConfig) {
                     continue;
                 }
                 JExpressConfig instance = registeredAppConfig.instance;
@@ -554,8 +554,13 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     //abstract protected void runCLI(CommandLine bigBang, File cfgConfigDir);
-    protected boolean isUserSpecifiedImplTags(String mockItemName) {
-        return userSpecifiedImplTags.contains(mockItemName);
+    private static final String[] NA = {};
+
+    protected boolean isUserSpecifieduserSpecifiedalternativeNames(String... alternativeNames) {
+        if (alternativeNames == null) {
+            alternativeNames = NA;
+        }
+        return Arrays.stream(alternativeNames).anyMatch(userSpecifiedalternativeNames::contains);
     }
 
     /**
@@ -565,12 +570,12 @@ abstract public class SummerBigBang extends SummerSingularity {
      * ready
      *
      * @param primaryClass
-     * @param userSpecifiedImplTags
+     * @param userSpecifiedalternativeNames
      */
-    protected void genesis(Class primaryClass, Set<String> userSpecifiedImplTags) {
+    protected void genesis(Class primaryClass, Set<String> userSpecifiedalternativeNames) {
         log.trace("");
-        BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedImplTags, memo);
-        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedImplTags, channelHandlerNames, memo);
+        BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedalternativeNames, memo);
+        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedalternativeNames, channelHandlerNames, memo);
         Module bootModule = Modules.override(defaultModule).with(scanedModule);
         Module applicationModule = userOverrideModule == null
                 ? bootModule
