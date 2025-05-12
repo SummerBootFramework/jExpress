@@ -267,6 +267,9 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.WebSocket.Compress", defaultValue = "true")
     protected volatile boolean webSocketCompress = true;
 
+    @Config(key = "nio.WebSocket.Compress.maxAllocation", defaultValue = "0", desc = "Indicates the maximum number of bytes allowed to be allocated when a single WebSocket data frame is compressed (or decompressed). It is used to limit the maximum memory allocation during the compression process.")
+    protected volatile int maxCompressAllocation = 0;
+
     @Config(key = "nio.WebSocket.AllowExtensions", defaultValue = "true")
     protected volatile boolean webSocketAllowExtensions = true;
 
@@ -503,6 +506,10 @@ public class NioConfig extends BootConfig {
 
     public boolean isWebSocketCompress() {
         return webSocketCompress;
+    }
+
+    public int getMaxCompressAllocation() {
+        return maxCompressAllocation;
     }
 
     public boolean isWebSocketAllowExtensions() {

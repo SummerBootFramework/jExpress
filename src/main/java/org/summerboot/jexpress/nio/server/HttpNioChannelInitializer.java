@@ -103,7 +103,7 @@ public class HttpNioChannelInitializer extends NioChannelInitializer {
         if (namedWebsocket != null) {
             boolean isWebSocketCompress = nioCfg.isWebSocketCompress();
             if (isWebSocketCompress) {
-                channelPipeline.addLast(new WebSocketServerCompressionHandler());
+                channelPipeline.addLast(new WebSocketServerCompressionHandler(nioCfg.getMaxCompressAllocation()));
             }
 
             boolean allowExtensions = nioCfg.isWebSocketAllowExtensions();
