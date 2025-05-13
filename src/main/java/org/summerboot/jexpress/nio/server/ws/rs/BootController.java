@@ -329,7 +329,7 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_NF_JSECURITYCHECK)
     @Deamon
     //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, responseHeader = false)
+    @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
     public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
                                         @FormParam("j_password") String password,
                                         @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
@@ -384,7 +384,7 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
     @Deamon
     //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, responseHeader = false)
+    @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
     public Caller longin_JSON(@Valid @Nonnull LoginVo loginVo,
                               @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
         return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
