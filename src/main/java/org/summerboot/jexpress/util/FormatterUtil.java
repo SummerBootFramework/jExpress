@@ -448,7 +448,7 @@ public class FormatterUtil {
     public enum RegexType {
         jsonNumber, jsonString, jsonArray,
         jsonNumberSanitized, jsonStringSanitized, jsonArraySanitized,
-        xml, FormParam,
+        xml, FormParam, Header
     }
 
     public static Pattern getPattern(String dataFieldName, RegexType type) {
@@ -464,6 +464,7 @@ public class FormatterUtil {
                 case jsonArraySanitized -> "(\"" + dataFieldName + "\\\\\"\\s*:\\s*\\[)[^\\[]*(\\])";
                 case xml -> String.format("(<%1$s>)(.*?)(</%1$s>)", Pattern.quote(dataFieldName));
                 case FormParam -> "(?i)" + dataFieldName + "=[^&]*";
+                case Header -> "(" + Pattern.quote(dataFieldName) + "\\s*:\\s*)([^,\\]]+)";
             };
             return Pattern.compile(regex, Pattern.DOTALL);
         });
@@ -484,7 +485,7 @@ public class FormatterUtil {
         Matcher matcher = pattern.matcher(data);
         if (matcher.find()) {
             switch (type) {
-                case jsonNumber, jsonNumberSanitized -> {
+                case jsonNumber, jsonNumberSanitized, Header -> {
                     return matcher.replaceAll("$1" + Matcher.quoteReplacement(newValue));
                 }
                 case xml -> {
@@ -512,6 +513,7 @@ public class FormatterUtil {
         ret = replaceDataField(RegexType.jsonArraySanitized, ret, key, newValue);
         ret = replaceDataField(RegexType.xml, ret, key, newValue);
         ret = replaceDataField(RegexType.FormParam, ret, key, newValue);
+        ret = replaceDataField(RegexType.Header, ret, key, newValue);
         return ret;
     }
 
