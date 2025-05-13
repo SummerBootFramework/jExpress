@@ -46,7 +46,7 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
      */
     @Override
     public void put(K key, V value, Long ttlMilliseconds) {
-        debouncingData.put(key, new CacheEntity(value, ttlMilliseconds));
+        debouncingData.put(key, new CacheEntity<>(value, ttlMilliseconds));
     }
 
     /**

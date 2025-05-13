@@ -192,7 +192,7 @@ public class SessionContext {
      */
     public Map<Object, Object> session(boolean create) {
         if (sessionAttributes == null && create) {
-            sessionAttributes = new HashMap();
+            sessionAttributes = new HashMap<>();
         }
         return sessionAttributes;
     }
@@ -216,7 +216,7 @@ public class SessionContext {
      */
     public SessionContext sessionAttribute(Object key, Object value) {
         if (sessionAttributes == null) {
-            sessionAttributes = new HashMap();
+            sessionAttributes = new HashMap<>();
         }
         if (key == null && value == null) {
             sessionAttributes.clear();
@@ -806,7 +806,7 @@ public class SessionContext {
 
     public SessionContext memo(String id, String desc) {
         if (memo == null) {
-            memo = new ArrayList();
+            memo = new ArrayList<>();
         }
         memo.add(new Memo(id, desc));
         return this;

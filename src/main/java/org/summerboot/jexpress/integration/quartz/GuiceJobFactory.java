@@ -39,7 +39,7 @@ public class GuiceJobFactory extends SimpleJobFactory implements JobFactory {
         this.injector = injector;
     }
 
-    protected final Map<Class, Job> singletonJobs = new HashMap();
+    protected final Map<Class, Job> singletonJobs = new HashMap<>();
 
     @Override
     public Job newJob(TriggerFiredBundle triggerFiredBundle, Scheduler scheduler) throws SchedulerException {

@@ -202,7 +202,7 @@ public class AuthConfig extends BootConfig {
                     + "roles.AppAdmin.groups=AppAdmin_Group\n"
                     + "roles.AppAdmin.users=johndoe, janejoe",
             callbackMethodName4Dump = "generateTemplate_DumpRoleMapping")
-    protected Map<String, RoleMapping> roles = new HashMap();
+    protected Map<String, RoleMapping> roles = new HashMap<>();
 
     /**
      * called by @ConfigHeader.callbackMethodName4Dump value
@@ -267,7 +267,7 @@ public class AuthConfig extends BootConfig {
         //userTTL = TimeUnit.MINUTES.toMillis(userTTL);
         // 4. Role mapping
         Set<Object> keys = props.keySet();
-        Map<String, RoleMapping> rolesTemp = new HashMap();
+        Map<String, RoleMapping> rolesTemp = new HashMap<>();
         keys.forEach((key) -> {
             String name = key.toString();
             if (name.startsWith("roles.")) {
@@ -403,7 +403,7 @@ public class AuthConfig extends BootConfig {
 //    public Set<String> getRoleNames() {
 //        return Set.copyOf(roles.keySet());
 //    }
-    protected final Set<String> declareRoles = new TreeSet();
+    protected final Set<String> declareRoles = new TreeSet<>();
 
     public void addDeclareRoles(Set<String> scanedDeclareRoles) {
         this.declareRoles.addAll(Set.copyOf(scanedDeclareRoles));

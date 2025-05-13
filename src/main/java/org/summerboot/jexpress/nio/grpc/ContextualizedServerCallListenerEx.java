@@ -39,7 +39,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     public static <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(long startTs, Caller caller, String jti, Context context, ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
         GRPCServer.getServiceCounter().incrementHit();
         Context previous;
-        ContextualizedServerCallListenerEx listener;
+        ContextualizedServerCallListenerEx<ReqT> listener;
         final SessionContext sessionContext;
         var serverCall = call;
         try {
@@ -100,7 +100,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         }
 
         try {
-            listener = new ContextualizedServerCallListenerEx(next.startCall(serverCall, headers), context, sessionContext);
+            listener = new ContextualizedServerCallListenerEx<>(next.startCall(serverCall, headers), context, sessionContext);
         } finally {
             context.detach(previous);
         }

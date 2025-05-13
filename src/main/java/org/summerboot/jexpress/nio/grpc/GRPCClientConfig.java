@@ -107,7 +107,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")// "TLSv1.2, TLSv1.3"
     protected String[] sslProtocols;
     @Config(key = ID + ".ssl.ciphers")
-    protected List ciphers;
+    protected List<String> ciphers;
     @Config(key = ID + ".ssl.Provider", defaultValue = "OPENSSL", desc = "ssl provider: OPENSSL (default), OPENSSL_REFCNT,  JDK")
     protected SslProvider sslProvider = SslProvider.OPENSSL;
 

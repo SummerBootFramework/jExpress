@@ -99,12 +99,12 @@ public class RedisConfig implements JExpressConfig {
             props.load(is);
         }
         if (jedisPools == null) {
-            jedisPools = new ArrayList();
+            jedisPools = new ArrayList<>();
         } else {
             jedisPools.clear();
         }
         if (nodes == null) {
-            nodes = new ArrayList();
+            nodes = new ArrayList<>();
         } else {
             nodes.clear();
         }

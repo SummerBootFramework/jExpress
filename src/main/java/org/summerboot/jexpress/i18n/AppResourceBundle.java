@@ -40,7 +40,7 @@ public class AppResourceBundle extends ResourceBundle {
     /**
      * key - @see Locale.toLanguageTag
      */
-    protected static final ConcurrentHashMap<String, AppResourceBundle> POOL = new ConcurrentHashMap();
+    protected static final ConcurrentHashMap<String, AppResourceBundle> POOL = new ConcurrentHashMap<>();
     protected static AppResourceBundle defaultRB;
 
     public static synchronized void clear() {
@@ -49,11 +49,11 @@ public class AppResourceBundle extends ResourceBundle {
 
     public static synchronized void addLabels(List<AppResourceCfg> cfgs, Class i18nClass) {
         // init each RB
-        Map<Locale, AppResourceBundle> tempRbs = new HashMap();
+        Map<Locale, AppResourceBundle> tempRbs = new HashMap<>();
         cfgs.stream().forEach((AppResourceCfg cfg1) -> {
             String key = cfg1.getLanguageTag();
             // load hardcoded in I18n class
-            Map<String, String> translationsMap1 = new HashMap();
+            Map<String, String> translationsMap1 = new HashMap<>();
             I18nLabel.buildTranslationsMap(null, i18nClass, cfg1.getI18nLabelIndex(), translationsMap1);
             AppResourceBundle arb = POOL.get(key);
             if (arb == null) {
@@ -78,7 +78,7 @@ public class AppResourceBundle extends ResourceBundle {
     }
 
     public static void dumpToFile(String folder, String filename) {
-        List<String> sorted = new ArrayList();
+        List<String> sorted = new ArrayList<>();
         Enumeration<String> enumKeys = defaultRB.getKeys();
         while (enumKeys.hasMoreElements()) {
             sorted.add(enumKeys.nextElement());
@@ -141,7 +141,7 @@ public class AppResourceBundle extends ResourceBundle {
 
     @Override
     public Enumeration<String> getKeys() {
-        return new IteratorEnumeration(translationsMap.keySet().iterator());
+        return new IteratorEnumeration<>(translationsMap.keySet().iterator());
     }
 
     @Override

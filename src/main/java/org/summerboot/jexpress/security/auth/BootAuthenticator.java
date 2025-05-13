@@ -319,7 +319,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         errorCode = errorCode == null ? overrideVerifyTokenErrorCode() : errorCode;
         Caller caller = null;
         if (authToken == null) {
-            Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_REQUIRE_TOKEN, null, null, null, "Missing AuthToken");
+            Err e = new Err<>(errorCode != null ? errorCode : BootErrorCode.AUTH_REQUIRE_TOKEN, null, null, null, "Missing AuthToken");
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
@@ -330,16 +330,16 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                     cache = authTokenCache;
                 }
                 if (cache != null && cache.isBlacklist(jti)) {// because jti is used as blacklist key in logoutToken
-                    Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, null, null, "AuthToken has been logout");
+                    Err e = new Err<>(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, null, null, "AuthToken has been logout");
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
                     caller = fromJwt(claims);
                 }
             } catch (ExpiredJwtException ex) {
-                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, null, null, "Expired AuthToken: " + ex);
+                Err e = new Err<>(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, null, null, "Expired AuthToken: " + ex);
                 context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             } catch (JwtException ex) {
-                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, null, null, null, "Invalid AuthToken: " + ex);
+                Err e = new Err<>(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, null, null, null, "Invalid AuthToken: " + ex);
                 context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             }
         }

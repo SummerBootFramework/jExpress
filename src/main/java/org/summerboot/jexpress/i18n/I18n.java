@@ -29,7 +29,7 @@ public interface I18n {
     Locale fr_CA = Locale.CANADA_FRENCH;
     Locale zh_CN = Locale.SIMPLIFIED_CHINESE;
 
-    List<AppResourceCfg> cfgs = new ArrayList();
+    List<AppResourceCfg> cfgs = new ArrayList<>();
 
     static void init(Class additionalI18nClass) {
         cfgs.add(new AppResourceCfg(0, null, en, "English"));

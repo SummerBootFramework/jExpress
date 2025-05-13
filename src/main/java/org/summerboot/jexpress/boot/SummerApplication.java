@@ -60,7 +60,7 @@ abstract public class SummerApplication extends SummerBigBang {
     @Inject
     protected InstrumentationMgr instrumentationMgr;
     protected NioServer httpServer;
-    protected List<GRPCServer> gRPCServerList = new ArrayList();
+    protected List<GRPCServer> gRPCServerList = new ArrayList<>();
     @Inject
     protected PostOffice postOffice;
     @Inject

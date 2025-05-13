@@ -468,7 +468,7 @@ public class NioConfig extends BootConfig {
         //5.1 caller filter
         switch (filterUserType) {
             case id:
-                filterCallerIdSet = new HashSet();
+                filterCallerIdSet = new HashSet<>();
                 Long[] a = helper.getAsRangeLong(props, KEY_FILTER_USERTYPE_RANGE, filterCallerIdSet);
                 if (a != null) {
                     filterCallerIdFrom = a[0];
@@ -480,7 +480,7 @@ public class NioConfig extends BootConfig {
             case group:
             case role:
                 String[] na = helper.getAsCSV(props, KEY_FILTER_USERTYPE_RANGE, null);
-                filterCallerNameSet = new HashSet();
+                filterCallerNameSet = new HashSet<>();
                 filterCallerNameSet.addAll(Arrays.asList(na));
                 break;
         }
@@ -489,7 +489,7 @@ public class NioConfig extends BootConfig {
         switch (filterCodeType) {
             case HttpStatusCode:
             case ApplicationErrorCode:
-                filterCodeSet = new HashSet();
+                filterCodeSet = new HashSet<>();
                 Long[] a = helper.getAsRangeLong(props, KEY_FILTER_CODETYPE_RANGE, filterCodeSet);
                 if (a != null) {
                     filterCodeRangeFrom = a[0];

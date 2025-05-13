@@ -112,7 +112,7 @@ public class ServiceError {
 
     public ServiceError addErrors(Err... error) {
         if (errors == null) {
-            errors = new ArrayList();
+            errors = new ArrayList<>();
         }
         this.errors.addAll(Arrays.asList(error));
         return this;
@@ -123,7 +123,7 @@ public class ServiceError {
             return this;
         }
         if (errors == null) {
-            errors = new ArrayList();
+            errors = new ArrayList<>();
         }
         this.errors.addAll(es);
         return this;
@@ -135,7 +135,7 @@ public class ServiceError {
             return this;
         }
         if (errors == null) {
-            errors = new ArrayList();
+            errors = new ArrayList<>();
         }
         this.errors.add(error);
         return this;
@@ -147,9 +147,9 @@ public class ServiceError {
 
     public ServiceError addError(int errorCode, String errorTag, String errorDesc, Throwable ex, String internalInfo) {
         if (errors == null) {
-            errors = new ArrayList();
+            errors = new ArrayList<>();
         }
-        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex, internalInfo));
+        this.errors.add(new Err<>(errorCode, errorTag, errorDesc, ex, internalInfo));
         return this;
     }
 

@@ -36,15 +36,15 @@ public interface AuthTokenCache extends HealthInspector {
             blacklist(key, "uid123", 1000);
             boolean isOnBlacklist = isBlacklist(key);
             if (!isOnBlacklist) {
-                e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Data Error - failed to read", null, null);
+                e = new Err<>(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Data Error - failed to read", null, null);
             }
             TimeUnit.MILLISECONDS.sleep(1500);
             isOnBlacklist = isBlacklist(key);
             if (isOnBlacklist) {
-                e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Access Error - failed to expire", null, null);
+                e = new Err<>(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Access Error - failed to expire", null, null);
             }
         } catch (Throwable ex) {
-            e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Access Error - " + ex.toString(), ex, null);
+            e = new Err<>(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Access Error - " + ex.toString(), ex, null);
         }
         List<Err> errors = null;
         if (e != null) {

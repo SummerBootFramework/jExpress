@@ -238,7 +238,7 @@ public class LdapAgent implements Closeable {
             String logTxt = SecurityUtil.sanitizeCRLF("base=" + baseDN + "\n\t filter=" + filter);
             log.debug(logTxt);
         }
-        List<Attributes> ret = new ArrayList();
+        List<Attributes> ret = new ArrayList<>();
         SearchControls ctrls = new SearchControls();
         ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         NamingEnumeration<SearchResult> results = m_ctx.search(baseDN, filter, ctrls);// CWE-90 False Positive - Util Feature: use with escapeQuery()
@@ -266,9 +266,13 @@ public class LdapAgent implements Closeable {
     }
 
     protected List<String>[] parseAddedAndRemoved(List<Attributes> currentGroup, String[] newGroup) throws NamingException {
-        List<String> addedList = newGroup == null ? new ArrayList() : new ArrayList(Arrays.asList(newGroup));
-        List<String> removedList = new ArrayList();
-        List[] ret = {addedList, removedList};
+        List<String> addedList = newGroup == null ? new ArrayList<>() : new ArrayList<>(Arrays.asList(newGroup));
+        List<String> removedList = new ArrayList<>();
+        //List[] ret = {addedList, removedList};
+        @SuppressWarnings("unchecked")
+        List<String>[] ret = (List<String>[]) new List[2];
+        ret[0] = addedList;
+        ret[1] = removedList;
 
         for (Attributes attrs : currentGroup) {
             String currentGroupDN = getAttr(attrs, DN);
@@ -504,7 +508,7 @@ public class LdapAgent implements Closeable {
             });
             log.debug(sb);
         }
-        List<ModificationItem> modList = new ArrayList();
+        List<ModificationItem> modList = new ArrayList<>();
         attributes.forEach((key, value) -> {
             key = escapeQuery(key);// CWE-90 False Positive prove
             value = escapeQuery(value);// CWE-90 False Positive prove
@@ -535,7 +539,7 @@ public class LdapAgent implements Closeable {
             });
             log.debug(sb);
         }
-        List<ModificationItem> modList = new ArrayList();
+        List<ModificationItem> modList = new ArrayList<>();
         attributes.forEach((key, value) -> {
             key = escapeQuery(key);// CWE-90 False Positive prove
             value = escapeQuery(value);// CWE-90 False Positive prove
@@ -646,7 +650,7 @@ public class LdapAgent implements Closeable {
 
     public List<String> queryGroupUsers(String cn) throws NamingException {
         cn = escapeQuery(cn);// CWE-90 False Positive prove
-        List<String> uids = new ArrayList();
+        List<String> uids = new ArrayList<>();
         String sFilter = "(&(objectClass=groupOfUniqueNames)&(ou:dn:=groups)(cn=" + cn + "))";
         List<Attributes> groupAttrs = query(sFilter);
         for (Attributes groupAttr : groupAttrs) {

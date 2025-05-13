@@ -311,7 +311,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (protectDataFieldsFromLogging != null && protectDataFieldsFromLogging.length > 0) {
             List<String> list = logSettings.getProtectDataFieldsFromLogging();
             if (list == null) {
-                list = new ArrayList();
+                list = new ArrayList<>();
                 logSettings.setProtectDataFieldsFromLogging(list);
             }
             list.addAll(Arrays.asList(protectDataFieldsFromLogging));
@@ -355,7 +355,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             Caller caller = context.caller();
             if (caller == null) {
                 context.status(HttpResponseStatus.UNAUTHORIZED)
-                        .error(new Err(BootErrorCode.AUTH_INVALID_USER, null, null, null, "Authentication Required - Unkown caller"));
+                        .error(new Err<>(BootErrorCode.AUTH_INVALID_USER, null, null, null, "Authentication Required - Unkown caller"));
                 return false;
             }
 
@@ -368,7 +368,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 
             if (!isAuthorized) {
                 context.status(HttpResponseStatus.FORBIDDEN)
-                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, null, null, "Authorization Failed - Caller is not in role: " + rolesAllowed));
+                        .error(new Err<>(BootErrorCode.AUTH_NO_PERMISSION, null, null, null, "Authorization Failed - Caller is not in role: " + rolesAllowed));
                 return false;
             }
         }
@@ -393,12 +393,12 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             context.poi(BootPOI.BIZ_BEGIN);
             if (rejectWhenHealthCheckFailed && !HealthMonitor.isHealthCheckSuccess()) {
                 context.status(HttpResponseStatus.BAD_GATEWAY)
-                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getStatusReasonHealthCheck()));
+                        .error(new Err<>(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getStatusReasonHealthCheck()));
                 return null;
             }
             if (rejectWhenPaused && HealthMonitor.isServicePaused()) {
                 context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
-                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, null, null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
+                        .error(new Err<>(BootErrorCode.SERVICE_PAUSED, null, null, null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
                 return null;
             }
 

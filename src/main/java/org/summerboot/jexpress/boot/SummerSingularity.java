@@ -410,7 +410,7 @@ abstract public class SummerSingularity {
                     String report = BeanUtil.toJson(duplicated, true, false);
                     return "Duplicated " + uniqueType.getSimpleName() + " values in " + classWithUniqueValues.getSimpleName() + " " + report;
                 } else if (tags.contains(tag)) {
-                    Map<String, Integer> results = new HashMap();
+                    Map<String, Integer> results = new HashMap<>();
                     ReflectionUtil.loadFields(classWithUniqueValues, uniqueType, results, false);
                     Map<Object, String> sorted = results
                             .entrySet()
@@ -502,7 +502,7 @@ abstract public class SummerSingularity {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, false, rootPackageNames);
         //classesAll.addAll(classes);
         //}
-        List<String> tags = new ArrayList();
+        List<String> tags = new ArrayList<>();
         for (Class c : classes) {
             Controller a = (Controller) c.getAnnotation(Controller.class);
             if (a == null) {
@@ -533,7 +533,7 @@ abstract public class SummerSingularity {
 
     protected List<String> scanAnnotation_Service(Set<Class<?>> classesAll) {
         log.trace("");
-        List<String> tags = new ArrayList();
+        List<String> tags = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         for (Class serviceImplClass : classesAll) {
             Service serviceAnnotation = (Service) serviceImplClass.getAnnotation(Service.class);
@@ -599,12 +599,12 @@ abstract public class SummerSingularity {
         memo.append(BootConstant.BR).append("\t- scan.taggedservice.add to guiceModule.bind(").append(bindingClass.getName()).append(").to(").append(service).append("), uniqueKey=").append(uniqueKey);
         Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(bindingClass);
         if (taggeServicedMap == null) {
-            taggeServicedMap = new HashMap();
+            taggeServicedMap = new HashMap<>();
             scanedServiceBindingMap.put(bindingClass, taggeServicedMap);
         }
         List<ServiceMetadata> serviceImplList = taggeServicedMap.get(uniqueKey);
         if (serviceImplList == null) {
-            serviceImplList = new ArrayList();
+            serviceImplList = new ArrayList<>();
             taggeServicedMap.put(uniqueKey, serviceImplList);
         }
         if (bindingClass.equals(ChannelHandler.class)) {
@@ -632,7 +632,7 @@ abstract public class SummerSingularity {
 
     protected void scanAnnotation_DeclareRoles(String... rootPackageNames) {
         log.trace("");
-        Set<String> declareRoles = new TreeSet();
+        Set<String> declareRoles = new TreeSet<>();
         //Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         //for (String rootPackageName : rootPackageNames) {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, false, rootPackageNames);

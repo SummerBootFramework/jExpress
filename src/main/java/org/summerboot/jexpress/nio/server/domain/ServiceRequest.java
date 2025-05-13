@@ -116,7 +116,7 @@ public class ServiceRequest {
 
     public String getFormParam(String key) {
         if (formParams == null) {
-            formParams = new LinkedHashMap();
+            formParams = new LinkedHashMap<>();
             FormatterUtil.parseFormParam(httpPostRequestBody, formParams);
         }
         return formParams.get(key);
@@ -132,7 +132,7 @@ public class ServiceRequest {
             }
         }
         if (value == null && context != null) {
-            Err e = new Err(errorCode, null, null, null, key + " is required");
+            Err e = new Err<>(errorCode, null, null, null, key + " is required");
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);
         }
         return value;

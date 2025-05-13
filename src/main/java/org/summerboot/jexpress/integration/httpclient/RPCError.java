@@ -34,7 +34,7 @@ public class RPCError implements ServiceErrorConvertible {
 
     @Override
     public Err toServiceError(HttpResponseStatus status) {
-        return new Err(BootErrorCode.ACCESS_ERROR_RPC, null, null, null, "Default RPC error");
+        return new Err<>(BootErrorCode.ACCESS_ERROR_RPC, null, null, null, "Default RPC error");
     }
 
     @Override

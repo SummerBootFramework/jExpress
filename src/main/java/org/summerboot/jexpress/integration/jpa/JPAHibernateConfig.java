@@ -42,11 +42,11 @@ abstract public class JPAHibernateConfig extends JPAConfig {
     protected final String dummyfield4annotion1 = null;
 
     protected void generateTemplate_JPAConnection(StringBuilder sb) {
-        sb.append(Environment.URL + "=\n");
-        sb.append(Environment.USER + "=\n");
-        sb.append(Environment.PASS + "=DEC(" + DESC_PLAINPWD + ")\n");
-        sb.append(Environment.DIALECT + "=\n");
-        sb.append(Environment.DRIVER + "=\n");
+        sb.append(Environment.JAKARTA_JDBC_URL + "=\n");
+        sb.append(Environment.JAKARTA_JDBC_USER + "=\n");
+        sb.append(Environment.JAKARTA_JDBC_PASSWORD + "=DEC(" + DESC_PLAINPWD + ")\n");
+        sb.append(Environment.JAKARTA_JDBC_DRIVER + "=\n");
+        sb.append("#" + Environment.DIALECT + "=\n");
         sb.append(Environment.SHOW_SQL + "=false\n");
         sb.append(Environment.HBM2DDL_AUTO + "=validate\n");
         sb.append("#hibernate.proc.param_null_passing=true\n");
@@ -100,6 +100,9 @@ abstract public class JPAHibernateConfig extends JPAConfig {
                 }
             }
         } finally {
+            if (settings.get(Environment.JAKARTA_JDBC_PASSWORD) != null) {
+                settings.put(Environment.JAKARTA_JDBC_PASSWORD, "****");// protect password from being logged
+            }
             if (settings.get(Environment.PASS) != null) {
                 settings.put(Environment.PASS, "****");// protect password from being logged
             }

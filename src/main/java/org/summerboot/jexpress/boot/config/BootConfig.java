@@ -72,7 +72,7 @@ import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PR
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
 public abstract class BootConfig implements JExpressConfig {
 
-    protected static final Map<Class, JExpressConfig> cache = new HashMap();
+    protected static final Map<Class, JExpressConfig> cache = new HashMap<>();
 
     protected static String BR = System.lineSeparator();
     protected static final String DEFAULT_DEC_VALUE = "=DEC(changeit)" + BR;
@@ -86,7 +86,8 @@ public abstract class BootConfig implements JExpressConfig {
     public static <T extends JExpressConfig> T instance(Class<T> implclass) {
         JExpressConfig instance = cache.get(implclass);
         if (instance != null) {
-            return (T) instance;
+            //return (T) instance;
+            return implclass.cast(instance);
         }
         try {
             Constructor<T> cons = implclass.getDeclaredConstructor();
@@ -94,7 +95,8 @@ public abstract class BootConfig implements JExpressConfig {
             T ret = (T) cons.newInstance();
             //cache.put(subclass, ret); - done by ret.Constructor --> registerSingleton()
             //return ret;// - discard the new instance, return the cached singleton
-            return (T) cache.get(implclass);
+            //return (T) cache.get(implclass);
+            return implclass.cast(cache.get(implclass));
         } catch (Throwable ex) {
             throw new RuntimeException("Failed to instance " + implclass, ex);
         }
@@ -482,7 +484,7 @@ public abstract class BootConfig implements JExpressConfig {
                 boolean isEncrypted = cfg.validate().equals(Config.Validate.Encrypted);
                 String cm = cfg.desc();
                 if (StringUtils.isNotBlank(cm)) {
-                    List<String> memoList = new ArrayList();
+                    List<String> memoList = new ArrayList<>();
                     lineBreak(cm, null, memoList);
                     for (String s : memoList) {
                         hasConfig = true;

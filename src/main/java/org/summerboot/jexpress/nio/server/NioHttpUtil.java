@@ -285,7 +285,7 @@ public class NioHttpUtil {
                     log.error(error, e);
                 }
             }
-            Err err = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, null, ex, "Failed to send file: " + file.getAbsolutePath());
+            Err err = new Err<>(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, null, ex, "Failed to send file: " + file.getAbsolutePath());
             file = null;
             sessionContext.file(file, false).error(err).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
             return sendResponse(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings);
@@ -324,14 +324,14 @@ public class NioHttpUtil {
                 Files.writeString(errorFilePath, errorFileContent);
             } catch (IOException ex) {
                 String message = title + ": errCode=" + errorCode + ", desc=" + errorDesc;
-                Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, null, ex, "Failed to generate error page:" + errorFile.getName() + ", " + message);
+                Err e = new Err<>(BootErrorCode.FILE_NOT_FOUND, null, null, ex, "Failed to generate error page:" + errorFile.getName() + ", " + message);
                 sessionContext.error(e);
             }
         }
         return errorFile;
     }
 
-    public static final SimpleLocalCache<String, File> WebResourceCache = new SimpleLocalCacheImpl();
+    public static final SimpleLocalCache<String, File> WebResourceCache = new SimpleLocalCacheImpl<>();
 
     public static void sendWebResource(final ServiceRequest request, final SessionContext response) throws IOException {
         String httpRequestPath = request.getHttpRequestPath();
@@ -345,7 +345,7 @@ public class NioHttpUtil {
             if (accept != null) {
                 accept = accept.toLowerCase();
                 if (!accept.contains("html") && !accept.contains("web") && !accept.contains("image") && (accept.contains("json") || accept.contains("xml"))) {
-                    var error = new Err(BootErrorCode.NIO_REQUEST_BAD_HEADER, null, null, null, "Client expect " + accept + ", but request a web resource");
+                    var error = new Err<>(BootErrorCode.NIO_REQUEST_BAD_HEADER, null, null, null, "Client expect " + accept + ", but request a web resource");
                     context.error(error).status(HttpResponseStatus.NOT_FOUND);
                     return;
                 }
@@ -357,7 +357,7 @@ public class NioHttpUtil {
             String requestedPath = webResourceFile.getCanonicalPath();
             // CWE-73 False Positive prove
             if (!requestedPath.startsWith(NioConfig.cfg.getDocrootDir())) {
-                Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Invalid request path: " + httpRequestPath);
+                Err e = new Err<>(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Invalid request path: " + httpRequestPath);
                 context.status(HttpResponseStatus.FORBIDDEN).error(e);
                 return;
             }

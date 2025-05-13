@@ -77,12 +77,12 @@ public class JaxRsRequestProcessorManager {
 
     }
 
-    protected static final Map<String, List<ProcessorMeta>> registeredProcessors = new HashMap();
+    protected static final Map<String, List<ProcessorMeta>> registeredProcessors = new HashMap<>();
 
     protected static void registerProcessor(String key, String path, Method method, Object instance) {
         List<ProcessorMeta> processors = registeredProcessors.get(key);
         if (processors == null) {
-            processors = new ArrayList();
+            processors = new ArrayList<>();
             registeredProcessors.put(key, processors);
         }
         processors.add(new ProcessorMeta(key, path, method, instance));
@@ -146,7 +146,7 @@ public class JaxRsRequestProcessorManager {
             return;
         }
         registeredProcessors.clear();
-        final Set<String> declareRoles = new HashSet();
+        final Set<String> declareRoles = new HashSet<>();
         Map<HttpMethod, Map<String, RequestProcessor>> stringMap = new HashMap<>();
         Map<HttpMethod, Map<String, RequestProcessor>> regexMap = new HashMap<>();
         StringBuilder errors = new StringBuilder();
@@ -236,7 +236,7 @@ public class JaxRsRequestProcessorManager {
                     if (processorMapPerHttpMethod == null) {
                         processorMapPerHttpMethod = isRegexMap
                                 ? new TreeMap<>(Comparator.comparingInt(String::length).reversed().thenComparing(Function.identity()))
-                                : new HashMap();
+                                : new HashMap<>();
                         httpMethodMapRef.put(httpMethod, processorMapPerHttpMethod);
                     }
                     String key = processor.getDeclaredPath();

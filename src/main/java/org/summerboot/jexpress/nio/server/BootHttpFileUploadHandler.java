@@ -197,7 +197,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
                             try {
                                 value = attribute.getValue();
                                 if (params == null) {
-                                    params = new HashMap();
+                                    params = new HashMap<>();
                                 }
                                 params.put(attribute.getName(), value);
                             } catch (IOException e1) {

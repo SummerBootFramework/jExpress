@@ -73,8 +73,8 @@ abstract public class SummerBigBang extends SummerSingularity {
 
     protected final Module userOverrideModule;
     protected Injector guiceInjector;
-    protected List<SummerInitializer> summerInitializers = new ArrayList();
-    protected List<SummerRunner> summerRunners = new ArrayList();
+    protected List<SummerInitializer> summerInitializers = new ArrayList<>();
+    protected List<SummerRunner> summerRunners = new ArrayList<>();
     protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
     protected int schedulerTriggers = 0;
 
@@ -252,11 +252,11 @@ abstract public class SummerBigBang extends SummerSingularity {
 
     protected List<SummerInitializer> scanImplementation_SummerInitializer() {
         log.trace("");
-        List<SummerInitializer> summerCLIs = new ArrayList();
+        List<SummerInitializer> summerCLIs = new ArrayList<>();
         Set<Class<? extends SummerInitializer>> summerCLI_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerInitializer.class, callerRootPackageNames);
         //prepare ordering
-        Set<Integer> orderSet = new TreeSet();
-        Map<Integer, List<SummerInitializer>> orderMapping = new HashMap();
+        Set<Integer> orderSet = new TreeSet<>();
+        Map<Integer, List<SummerInitializer>> orderMapping = new HashMap<>();
         //process scan result
         for (Class<? extends SummerInitializer> c : summerCLI_ImplClasses) {
             //get order
@@ -280,7 +280,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             orderSet.add(order);
             List<SummerInitializer> sameOoderCLIs = orderMapping.get(order);
             if (sameOoderCLIs == null) {
-                sameOoderCLIs = new ArrayList();
+                sameOoderCLIs = new ArrayList<>();
                 orderMapping.put(order, sameOoderCLIs);
             }
             sameOoderCLIs.add(instance);
@@ -455,12 +455,12 @@ abstract public class SummerBigBang extends SummerSingularity {
             userSpecifiedalternativeNames.clear();
             String[] mockItemList = cli.getOptionValues(BootConstant.CLI_USE_ALTERNATIVE);
 
-            Set<String> mockInputValues = new HashSet(Arrays.asList(mockItemList));
+            Set<String> mockInputValues = new HashSet<>(Arrays.asList(mockItemList));
             mockInputValues.remove("");
             if (availableImplTagOptions.containsAll(mockInputValues)) {
                 userSpecifiedalternativeNames.addAll(mockInputValues);
             } else {
-                Set<String> invalidOptions = new HashSet(mockInputValues);
+                Set<String> invalidOptions = new HashSet<>(mockInputValues);
                 invalidOptions.removeAll(availableImplTagOptions);
                 String msg = "invalid -" + BootConstant.CLI_USE_ALTERNATIVE + " value: " + FormatterUtil.toCSV(invalidOptions) + ", valid -" + BootConstant.CLI_USE_ALTERNATIVE + " values: " + FormatterUtil.toCSV(availableImplTagOptions);
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ALTERNATIVE_NAME_ERROR, msg, null);
@@ -630,8 +630,8 @@ abstract public class SummerBigBang extends SummerSingularity {
         log.trace("");
         Set<Class<? extends SummerRunner>> summerRunner_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerRunner.class, callerRootPackageNames);
         //prepare ordering
-        Set<Integer> orderSet = new TreeSet();
-        Map<Integer, List<SummerRunner>> orderMapping = new HashMap();
+        Set<Integer> orderSet = new TreeSet<>();
+        Map<Integer, List<SummerRunner>> orderMapping = new HashMap<>();
         //process scan result
         for (Class<? extends SummerRunner> c : summerRunner_ImplClasses) {
             //get order
@@ -647,7 +647,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             orderSet.add(order);
             List<SummerRunner> sameOoderRunners = orderMapping.get(order);
             if (sameOoderRunners == null) {
-                sameOoderRunners = new ArrayList();
+                sameOoderRunners = new ArrayList<>();
                 orderMapping.put(order, sameOoderRunners);
             }
             sameOoderRunners.add(instance);

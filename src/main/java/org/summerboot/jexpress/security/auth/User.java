@@ -203,7 +203,7 @@ public class User implements Serializable, Caller, Comparable<User> {
             return;
         }
         if (groups == null) {
-            groups = new HashSet();
+            groups = new HashSet<>();
         }
         groups.add(group);
     }
@@ -257,7 +257,7 @@ public class User implements Serializable, Caller, Comparable<User> {
             return;
         }
         if (customizedFields == null) {
-            customizedFields = new HashMap();
+            customizedFields = new HashMap<>();
         }
         customizedFields.put(key, value);
     }

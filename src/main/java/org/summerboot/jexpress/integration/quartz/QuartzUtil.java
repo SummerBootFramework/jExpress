@@ -66,7 +66,7 @@ public class QuartzUtil {
         }
 
         String[] cronExpressions;
-        ReflectionMetadata<String[]> stringArrayFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.cronField());
+        ReflectionMetadata<String[]> stringArrayFieldValue = new ReflectionMetadata<>(jobClass, scheduledAnnotation.cronField());
         try {
             String[] cronExpressionsConfig = stringArrayFieldValue.value();
             String[] cronExpressionsHardcoded = scheduledAnnotation.cron();
@@ -76,7 +76,7 @@ public class QuartzUtil {
         }
 
         int[] daysOfMonth;
-        ReflectionMetadata<int[]> intArrayFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.daysOfMonthField());
+        ReflectionMetadata<int[]> intArrayFieldValue = new ReflectionMetadata<>(jobClass, scheduledAnnotation.daysOfMonthField());
         try {
             int[] daysOfMonthConfig = intArrayFieldValue.value();
             int[] daysOfMonthHardcoded = scheduledAnnotation.daysOfMonth();
@@ -86,7 +86,7 @@ public class QuartzUtil {
         }
 
         int[] daysOfWeek;
-        intArrayFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.daysOfWeekField());
+        intArrayFieldValue = new ReflectionMetadata<>(jobClass, scheduledAnnotation.daysOfWeekField());
         try {
             int[] daysOfWeekhConfig = intArrayFieldValue.value();
             int[] daysOfWeekHardcoded = scheduledAnnotation.daysOfWeek();
@@ -96,7 +96,7 @@ public class QuartzUtil {
         }
 
         int hour = scheduledAnnotation.hour();// hardcoded
-        ReflectionMetadata<Integer> intFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.hourField());
+        ReflectionMetadata<Integer> intFieldValue = new ReflectionMetadata<>(jobClass, scheduledAnnotation.hourField());
         try {
             Integer hourConfig = intFieldValue.value();
             if (hourConfig != null) {
@@ -107,7 +107,7 @@ public class QuartzUtil {
         }
 
         int minute = scheduledAnnotation.minute();// hardcoded
-        intFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.minuteField());
+        intFieldValue = new ReflectionMetadata<>(jobClass, scheduledAnnotation.minuteField());
         try {
             Integer minuteConfig = intFieldValue.value();
             if (minuteConfig != null) {
@@ -118,7 +118,7 @@ public class QuartzUtil {
         }
 
         int second = scheduledAnnotation.second();// hardcoded
-        intFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.secondField());
+        intFieldValue = new ReflectionMetadata<>(jobClass, scheduledAnnotation.secondField());
         try {
             Integer secondConfig = intFieldValue.value();
             if (secondConfig != null) {
@@ -129,7 +129,7 @@ public class QuartzUtil {
         }
 
         long fixedRateMs = scheduledAnnotation.fixedRateMs();// hardcoded
-        ReflectionMetadata<Long> longFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.fixedRateMsField());
+        ReflectionMetadata<Long> longFieldValue = new ReflectionMetadata<>(jobClass, scheduledAnnotation.fixedRateMsField());
         try {
             Long fixedRateMsConfig = longFieldValue.value();
             if (fixedRateMsConfig != null) {
@@ -140,7 +140,7 @@ public class QuartzUtil {
         }
 
         long fixedDelayMs = scheduledAnnotation.fixedDelayMs();// hardcoded
-        longFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.fixedDelayMsField());
+        longFieldValue = new ReflectionMetadata<>(jobClass, scheduledAnnotation.fixedDelayMsField());
         try {
             Long fixedDelayMsConfig = longFieldValue.value();
             if (fixedDelayMsConfig != null) {
@@ -151,7 +151,7 @@ public class QuartzUtil {
         }
 
         long initialDelayMs = scheduledAnnotation.initialDelayMs();// hardcoded
-        longFieldValue = new ReflectionMetadata(jobClass, scheduledAnnotation.initialDelayMsField());
+        longFieldValue = new ReflectionMetadata<>(jobClass, scheduledAnnotation.initialDelayMsField());
         try {
             Long initialDelayMsConfig = longFieldValue.value();
             if (initialDelayMsConfig != null) {
@@ -381,7 +381,7 @@ public class QuartzUtil {
     }
 
     public static List<Date> getNextFireTimes(Scheduler scheduler, StringBuilder sb) throws SchedulerException {
-        List<Date> ret = new ArrayList();
+        List<Date> ret = new ArrayList<>();
         Set<TriggerKey> tks = scheduler.getTriggerKeys(null);
         if (tks == null) {
             return ret;

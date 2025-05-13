@@ -228,7 +228,7 @@ public class Email {
 
     public Email attachment(Attachment att) {
         if (attachments == null) {
-            attachments = new ArrayList();
+            attachments = new ArrayList<>();
         }
         attachments.add(att);
         return this;

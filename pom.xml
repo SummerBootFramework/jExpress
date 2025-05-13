@@ -6,7 +6,7 @@
     <artifactId>jexpress</artifactId>
     <version>2.5.2-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Summer Boot jExpress ${version}</name>
+    <name>Summer Boot jExpress ${project.version}</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
         some of which Spring Boot has (may) not yet provided
     </description>
@@ -841,7 +841,11 @@
                 <version>${maven-compiler.version}</version>
                 <configuration>
                     <showDeprecation>true</showDeprecation>
+                    <!--                    <compilerArgs>-->
+                    <!--                        <arg>-Xlint:unchecked</arg>-->
+                    <!--                    </compilerArgs>-->
                 </configuration>
+
             </plugin>
             <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->
             <plugin>

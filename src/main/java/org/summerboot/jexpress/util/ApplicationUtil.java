@@ -113,18 +113,18 @@ public class ApplicationUtil {
     }
 
     public static Map<Object, Set<String>> checkDuplicateFields(Class errorCodeClass, Class fieldClass) throws IllegalArgumentException, IllegalAccessException {
-        Map<Object, Set<String>> duplicates = new HashMap();
-        Map<String, Object> valueMap = new HashMap();
+        Map<Object, Set<String>> duplicates = new HashMap<>();
+        Map<String, Object> valueMap = new HashMap<>();
         ReflectionUtil.loadFields(errorCodeClass, fieldClass, valueMap, true, true);
 
-        Map<Object, String> temp = new HashMap();
+        Map<Object, String> temp = new HashMap<>();
         valueMap.keySet().forEach((varName) -> {
             Object value = valueMap.get(varName);
             String duplicated = temp.put(value, varName);
             if (duplicated != null) {
                 Set<String> names = duplicates.get(value);
                 if (names == null) {
-                    names = new HashSet();
+                    names = new HashSet<>();
                     duplicates.put(value, names);
                 }
                 names.add(varName);
