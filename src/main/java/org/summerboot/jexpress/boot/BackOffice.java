@@ -245,6 +245,10 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.file.gRPCConfig", defaultValue = "cfg_grpc.properties")
     private String gRPCConfigFileName = "cfg_grpc.properties";
 
+    @Config(key = "naming.file.pause", defaultValue = "pause")
+    private String pauseFileName = "pause";
+
+
     @Config(key = "HealthMonitor.PauseLockCode.viaFile", defaultValue = "PauseLockCode.file")
     private String pauseLockCodeViaFile = "PauseLockCode.file";
 
@@ -394,6 +398,10 @@ public class BackOffice extends BootConfig {
 
     public String getgRPCConfigFileName() {
         return gRPCConfigFileName;
+    }
+
+    public String getPauseFileName() {
+        return pauseFileName;
     }
 
     public String getPauseLockCodeViaFile() {

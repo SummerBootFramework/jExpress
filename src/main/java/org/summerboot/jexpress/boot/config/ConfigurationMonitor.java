@@ -50,8 +50,6 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     public static final ConfigurationMonitor cfgMonitor = new ConfigurationMonitor();
 
-    public static final String APUSE_FILE_NAME = "pause";
-
     protected volatile boolean running;
     protected Map<File, Runnable> cfgUpdateTasks;
     protected FileAlterationMonitor monitor;
@@ -150,7 +148,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     protected void initPauseStatus(Path folderPath) {
         File folder = folderPath.toFile();
-        File pauseFile = Paths.get(folder.getAbsolutePath(), APUSE_FILE_NAME).toFile();
+        File pauseFile = Paths.get(folder.getAbsolutePath(), BootConstant.FILE_PAUSE).toFile();
         boolean pause = pauseFile.exists();
         String cause;
         if (pause) {
@@ -162,7 +160,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
     }
 
     private boolean isPauseFile(File file) {
-        return APUSE_FILE_NAME.equals(file.getName());
+        return BootConstant.FILE_PAUSE.equals(file.getName());
     }
 
 

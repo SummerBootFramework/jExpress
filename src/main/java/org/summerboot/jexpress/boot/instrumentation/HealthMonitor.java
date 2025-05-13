@@ -65,6 +65,7 @@ public class HealthMonitor {
     protected static volatile boolean isServicePaused = false;
     protected static volatile String statusReasonHealthCheck;
     protected static volatile String statusReasonPaused;
+    protected static volatile String statusReasonPausedForExternalCaller;
     protected static volatile String statusReasonLastKnown;
     protected static final Set<String> pauseReleaseCodes = new HashSet<>();
 
@@ -314,6 +315,12 @@ public class HealthMonitor {
         }
         //serviceStatusChanged = isServicePaused ^ pauseService;
         isServicePaused = pauseService;
+        if (isServicePaused) {
+            ServiceError se = new ServiceError(HealthMonitor.class.getSimpleName());
+            Err error = new Err<>(BootErrorCode.SERVICE_PAUSED, null, lockCode, null);
+            se.addError(error);
+            statusReasonPausedForExternalCaller = se.toJson();
+        }
         statusReasonPaused = reason;
         updateServiceStatus(serviceStatusChanged, reason);
     }
@@ -348,6 +355,10 @@ public class HealthMonitor {
 
     public static String getStatusReasonPaused() {
         return statusReasonPaused;
+    }
+
+    public static String getStatusReasonPausedForExternalCaller() {
+        return statusReasonPausedForExternalCaller;
     }
 
     public static boolean isHealthCheckSuccess() {

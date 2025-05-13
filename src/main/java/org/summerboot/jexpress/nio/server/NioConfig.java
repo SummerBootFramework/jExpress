@@ -93,6 +93,13 @@ public class NioConfig extends BootConfig {
     @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\\\.168\\\\.2\\\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
+    @Config(key = "ping.sync.HealthStatus", defaultValue = "true", desc = "Ping response status is synced with Health Monitor status")
+    protected volatile boolean pingSyncHealthStatus;
+    @Config(key = "ping.sync.PauseStatus", defaultValue = "true", desc = "Ping response status is synced with PAUSE status")
+    protected volatile boolean pingSyncPauseStatus;
+    @Config(key = "ping.sync.showRootCause", defaultValue = "false", desc = "Ping response with root cause, this may expose internal info to external caller")
+    protected volatile boolean pingSyncShowRootCause;
+
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")
 
@@ -558,6 +565,18 @@ public class NioConfig extends BootConfig {
 
     public Set<String> getCallerAddressFilterBlacklist() {
         return callerAddressFilterBlacklist;
+    }
+
+    public boolean isPingSyncHealthStatus() {
+        return pingSyncHealthStatus;
+    }
+
+    public boolean isPingSyncPauseStatus() {
+        return pingSyncPauseStatus;
+    }
+
+    public boolean isPingSyncShowRootCause() {
+        return pingSyncShowRootCause;
     }
 
     public KeyManagerFactory getKmf() {
