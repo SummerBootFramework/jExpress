@@ -1,0 +1,36 @@
+# sudo nano /etc/systemd/system/myapp-service.service
+[Unit]
+Description=myapp-name: (Java 21 + Netty 4.2.x + ZGC + OpenSSL on Linux)
+#After=network.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/java \
+ -Djava.awt.headless=true \
+ -Xms2G -Xmx2G \
+ -XX:+UseZGC -XX:ZUncommitDelay=300 -XX:+ZGenerational -XX:+AlwaysPreTouch \
+ -XX:+UseLargePages -XX:+PerfDisableSharedMem \
+ -XX:+ZUncommit \
+ -XX:+DisableExplicitGC \
+ -XX:MaxDirectMemorySize=1g \
+ -XX:+HeapDumpOnOutOfMemoryError \
+ -XX:HeapDumpPath=/var/log/myapp/heapdump.hprof \
+ -XX:+ExitOnOutOfMemoryError \
+ -Xlog:gc*:file=/var/log/myapp/gc.log:time,level,tags:filecount=5,filesize=10M \
+ -Dfile.encoding=UTF-8 \
+ -Duser.timezone=UTC \
+ -Djava.security.egd=file:/dev/./urandom \
+ -Dio.netty.handler.ssl.openssl.engine.enable=true \
+ -Dio.netty.leakDetectionLevel=SIMPLE \
+ -Dio.netty.native.workdir=/var/log/myapp/temp \
+ -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
+ -jar /apps/myapp/myap.jar
+
+WorkingDirectory=/apps/myapp
+User=myapp-user
+Group=myapp-group
+LimitNOFILE=65535
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
