@@ -24,7 +24,7 @@ ExecStart=/usr/bin/java \
  -Dio.netty.leakDetectionLevel=SIMPLE \
  -Dio.netty.native.workdir=/var/log/myapp/temp \
  -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
- -jar /apps/myapp/myap.jar
+ -jar /apps/myapp/myap.jar -authfile /etc/security/myapp-master.password
 
 WorkingDirectory=/apps/myapp
 User=myapp-user
