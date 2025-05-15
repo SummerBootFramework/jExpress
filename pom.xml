@@ -254,8 +254,8 @@
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext-core.version>9.1.0</itext-core.version>
-        <itext-html2pdf.version>6.1.0</itext-html2pdf.version>
+        <itext-core.version>9.2.0</itext-core.version>
+        <itext-html2pdf.version>6.2.0</itext-html2pdf.version>
 
         <veracode.version>1.2.1</veracode.version>
 

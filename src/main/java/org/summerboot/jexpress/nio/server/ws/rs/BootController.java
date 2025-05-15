@@ -99,13 +99,15 @@ abstract public class BootController extends PingController {
     public static final String TAG_APP_ADMIN = "App Admin";
     public static final String TAG_USER_AUTH = "App Authentication";
 
-
-    public static final String DESC_400 = "All other 4xx code. The client cannot continue and should not re-try again with the request without modification.";
+    public static final String DESC_4xx = "This class of status code is intended for situations in which the error seems to have been caused by the client. Client normally should not retransmit the same request again.";
+    public static final String DESC_400 = "Bad Request. Client should not retransmit the same request again";
     public static final String DESC_401 = "Unauthorized. The client should sign-on again, but not retransmit the same request again";
     public static final String DESC_403 = "Client has  no permission. Client should not retransmit the same request again.";
     public static final String DESC_404 = "Not Found. The client should not retransmit the same request again.";
-    public static final String DESC_429 = "Too Many Requests";
-    public static final String DESC_500 = "All other 5xx code. Server errors due to unexpected failures. The client can continue and try again with the request without modification.";
+    public static final String DESC_409 = "Conflict. Client may try again later.";
+    public static final String DESC_429 = "Too Many Requests. Client may try again later";
+    public static final String DESC_5xx = "This class of status code is intended for situations in which the server is aware that it has encountered an error or is otherwise incapable of performing the request. The client can continue and try again with the request without modification.";
+    public static final String DESC_500 = "Internal Server Error. The client can continue and try again with the request without modification.";
     public static final String DESC_501 = "Not Implemented. The client can continue and try again with the request without modification.";
     public static final String DESC_503 = "Service Unavailable. The client can continue and try again with the request without modification.";
     public static final String DESC_504 = "Gateway Timeout. The client can continue and try again with the request without modification.";
@@ -127,34 +129,10 @@ abstract public class BootController extends PingController {
             //                            @Parameter(name = "", in = ParameterIn.HEADER, required = true, description = "")},
             responses = {
                     @ApiResponse(responseCode = "200", description = "running application version"),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
@@ -187,34 +165,10 @@ abstract public class BootController extends PingController {
             description = "get running application health information",
             responses = {
                     @ApiResponse(responseCode = "200", description = "inspection success with current version"),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
@@ -237,34 +191,10 @@ abstract public class BootController extends PingController {
             description = "pause service if pause param is true, otherwise resume service",
             responses = {
                     @ApiResponse(responseCode = "204", description = "success"),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
@@ -292,34 +222,10 @@ abstract public class BootController extends PingController {
                             },
                             content = @Content(schema = @Schema(implementation = Caller.class))
                     ),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             }
@@ -347,34 +253,10 @@ abstract public class BootController extends PingController {
                             },
                             content = @Content(schema = @Schema(implementation = Caller.class))
                     ),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             }
@@ -421,34 +303,10 @@ abstract public class BootController extends PingController {
             description = "User logout",
             responses = {
                     @ApiResponse(responseCode = "204", description = "success"),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
