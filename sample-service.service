@@ -14,15 +14,15 @@ ExecStart=/usr/bin/java \
  -XX:+DisableExplicitGC \
  -XX:MaxDirectMemorySize=1g \
  -XX:+HeapDumpOnOutOfMemoryError \
- -XX:HeapDumpPath=/var/log/myapp/heapdump.hprof \
+ -XX:HeapDumpPath=/apps/myapp/log/heapdump.hprof \
  -XX:+ExitOnOutOfMemoryError \
- -Xlog:gc*:file=/var/log/myapp/gc.log:time,level,tags:filecount=5,filesize=10M \
+ -Xlog:gc*:file=/apps/myapp/log/gc.log:time,level,tags:filecount=5,filesize=10M \
  -Dfile.encoding=UTF-8 \
  -Duser.timezone=UTC \
- -Djava.security.egd=file:/dev/./urandom \
+ -Djava.security.egd=file:/dev/urandom \
  -Dio.netty.handler.ssl.openssl.engine.enable=true \
  -Dio.netty.leakDetectionLevel=SIMPLE \
- -Dio.netty.native.workdir=/var/log/myapp/temp \
+ -Dio.netty.native.workdir=/apps/myapp/lib \
  -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
  -jar /apps/myapp/myap.jar -authfile /etc/security/myapp-master.password
 
