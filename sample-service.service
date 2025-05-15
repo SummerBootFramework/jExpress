@@ -19,7 +19,7 @@ ExecStart=/usr/bin/java \
  -Xlog:gc*:file=/apps/myapp/log/gc.log:time,level,tags:filecount=5,filesize=10M \
  -Dfile.encoding=UTF-8 \
  -Duser.timezone=UTC \
- -Djava.security.egd=file:/dev/urandom \
+ -Djava.security.egd=file:/dev/./urandom \
  -Dio.netty.handler.ssl.openssl.engine.enable=true \
  -Dio.netty.leakDetectionLevel=SIMPLE \
  -Dio.netty.native.workdir=/apps/myapp/lib \
