@@ -172,18 +172,18 @@ public class BootGuiceModule extends AbstractModule {
             if (Modifier.isAbstract(mod) || Modifier.isInterface(mod)) {
                 continue;
             }
-            String implTag = null;
+            String alternativeName = null;
             if (a instanceof Controller) {
                 Controller ca = (Controller) a;
-                implTag = ca.AlternativeName();
+                alternativeName = ca.AlternativeName();
             } else if (a instanceof Inspector) {
                 Service sa = (Service) c.getAnnotation(Service.class);
                 if (sa != null) {
-                    implTag = sa.AlternativeName();
+                    alternativeName = sa.AlternativeName();
                 }
             }
-            // no tag = always use this controller, with tag = only use this controller when -use <tag> specified
-            if (StringUtils.isNotBlank(implTag) && !isTagSpecifiedViaCLI(implTag)) {
+            // no alternativeName = always use this controller, with alternativeName = only use this controller when -use <alternativeName> specified
+            if (StringUtils.isNotBlank(alternativeName) && !isTagSpecifiedViaCLI(alternativeName)) {
                 continue;
             }
             classesAll.add(c);

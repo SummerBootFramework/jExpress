@@ -20,4 +20,6 @@ public @interface Deamon {
     boolean ignorePause() default true;
 
     boolean ignoreHealthCheck() default true;
+
+    String[] requiredHealthChecks() default {};
 }

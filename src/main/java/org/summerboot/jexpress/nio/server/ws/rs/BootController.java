@@ -23,6 +23,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.info.Contact;
@@ -89,12 +90,27 @@ import java.util.concurrent.TimeUnit;
                 @Server(url = "https://localhost:8211", description = "Local Development server")
         }
 )
-@SecurityScheme(name = "BearerAuth", scheme = "bearer", type = SecuritySchemeType.HTTP, bearerFormat = "Authorization: Bearer <token>")
-//@SecurityScheme(name = "BasicAuth", scheme = "basic", type = SecuritySchemeType.HTTP)
-//@SecurityScheme(name = "ApiKeyAuth", type = SecuritySchemeType.APIKEY, in = SecuritySchemeIn.HEADER)
-//@SecurityScheme(name = "OpenID", type = SecuritySchemeType.OPENIDCONNECT, openIdConnectUrl = "https://example.com/.well-known/openid-configuration")
-//@SecurityScheme(name = "OAuth2", type = SecuritySchemeType.OAUTH2, flows = @OAuthFlows())
+@SecurityScheme(name = "BearerAuth", scheme = "bearer", type = SecuritySchemeType.HTTP, bearerFormat = "Authorization: Bearer <JWT token>")
+@SecurityScheme(name = "BasicAuth", scheme = "basic", type = SecuritySchemeType.HTTP)
+@SecurityScheme(name = "ApiKeyAuth", paramName = "X-API-KEY", type = SecuritySchemeType.APIKEY, in = SecuritySchemeIn.HEADER)
+/*@SecurityScheme(name = "OpenID", type = SecuritySchemeType.OPENIDCONNECT, openIdConnectUrl = "https://jExpress.org/.well-known/openid-configuration")
+@SecurityScheme(name = "OAuth2", type = SecuritySchemeType.OAUTH2, flows = @OAuthFlows(
+        authorizationCode = @OAuthFlow(
+                authorizationUrl = "https://jexpress.org/oauth/authorize",
+                tokenUrl = "https://jexpress.org/oauth/token",
+                scopes = {
+                        @OAuthScope(name = "read", description = "Read access"),
+                        @OAuthScope(name = "write", description = "Write access")
+                }
+        )))*/
 abstract public class BootController extends PingController {
+
+    public static final String SecuritySchemeName_BearerAuth = "BearerAuth";
+    public static final String SecuritySchemeName_BasicAuth = "BasicAuth";
+    public static final String SecuritySchemeName_ApiKeyAuth = "ApiKeyAuth";
+    public static final String SecuritySchemeName_OpenID = "OpenID";
+    public static final String SecuritySchemeName_OAuth2 = "OAuth2";
+
 
     public static final String TAG_APP_ADMIN = "App Admin";
     public static final String TAG_USER_AUTH = "App Authentication";
@@ -137,7 +153,7 @@ abstract public class BootController extends PingController {
                     )
             },
             security = {
-                    @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
@@ -173,7 +189,7 @@ abstract public class BootController extends PingController {
                     )
             },
             security = {
-                    @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
@@ -199,7 +215,7 @@ abstract public class BootController extends PingController {
                     )
             },
             security = {
-                    @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @PUT
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
@@ -311,7 +327,7 @@ abstract public class BootController extends PingController {
                     )
             },
             security = {
-                    @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @DELETE
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)

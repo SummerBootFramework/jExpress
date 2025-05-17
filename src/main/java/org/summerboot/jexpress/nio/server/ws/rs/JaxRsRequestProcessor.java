@@ -50,6 +50,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,6 +75,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     protected final Log classLevelLogAnnotation;
     protected final boolean rejectWhenPaused;
     protected final boolean rejectWhenHealthCheckFailed;
+    protected final String[] requiredHealthChecks;
 
     //param info    
     protected final List<JaxRsRequestParameter> parameterList;
@@ -108,12 +110,15 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (methodLevelDeamon != null) {
             rejectWhenPaused = !methodLevelDeamon.ignorePause();
             rejectWhenHealthCheckFailed = !methodLevelDeamon.ignoreHealthCheck();
+            requiredHealthChecks = methodLevelDeamon.requiredHealthChecks();
         } else if (classLevelDeamon != null) {
             rejectWhenPaused = !classLevelDeamon.ignorePause();
             rejectWhenHealthCheckFailed = !classLevelDeamon.ignoreHealthCheck();
+            requiredHealthChecks = classLevelDeamon.requiredHealthChecks();
         } else {
             rejectWhenPaused = true;
             rejectWhenHealthCheckFailed = true;
+            requiredHealthChecks = null;
         }
 
         //2. Parse @RolesAllowed, @PermitAll and @DenyAll - Method level preprocess - Authoritarian - Role based 
@@ -391,9 +396,12 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         try {
             context.poi(BootPOI.BIZ_BEGIN);
-            if (rejectWhenHealthCheckFailed && !HealthMonitor.isHealthCheckSuccess()) {
+            Set<String> failedHealthChecks = new HashSet<>();
+            if (!HealthMonitor.isHealthCheckSuccess() && (rejectWhenHealthCheckFailed || HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, failedHealthChecks))) {
+                final String internalError = failedHealthChecks.toString();
                 context.status(HttpResponseStatus.BAD_GATEWAY)
-                        .error(new Err<>(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getStatusReasonHealthCheck()));
+                        .error(new Err<>(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null,
+                                "Service health check failed: " + internalError));
                 return null;
             }
             if (rejectWhenPaused && HealthMonitor.isServicePaused()) {

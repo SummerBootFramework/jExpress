@@ -32,5 +32,5 @@ import java.lang.annotation.Target;
 @BindingAnnotation
 public @interface Inspector {
 
-    String[] poi() default {};
+    String name() default "";
 }

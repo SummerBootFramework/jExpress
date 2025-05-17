@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.boot.instrumentation;
 
 import com.google.inject.Injector;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
@@ -68,6 +69,7 @@ public class HealthMonitor {
     protected static volatile String statusReasonPausedForExternalCaller;
     protected static volatile String statusReasonLastKnown;
     protected static final Set<String> pauseReleaseCodes = new HashSet<>();
+    protected static final Set<String> healthCheckFailedList = new HashSet<>();
 
     public static void setAppLifecycleListener(AppLifecycleListener listener) {
         appLifecycleListener = listener;
@@ -142,6 +144,14 @@ public class HealthMonitor {
                 // inspect
                 for (HealthInspector healthInspector : batchInspectors) {
                     String name = healthInspector.getClass().getName();
+                    Inspector inspectorAnnotation = healthInspector.getClass().getAnnotation(Inspector.class);
+                    final String inspectorName;
+                    if (inspectorAnnotation != null && StringUtils.isNoneBlank(inspectorAnnotation.name())) {
+                        inspectorName = inspectorAnnotation.name();
+                    } else {
+                        inspectorName = name;
+                    }
+
                     try (var a = Timeout.watch(name + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
                         HealthInspector.InspectionType inspectionType = healthInspector.inspectionType();
                         List<Err> errs = healthInspector.ping();
@@ -172,9 +182,11 @@ public class HealthMonitor {
                                     } else {
                                         healthCheckAllPassed &= true;
                                     }
+                                    healthCheckFailedList.remove(inspectorName);
                                 } else {
                                     healthCheckAllPassed = false;
                                     healthCheckFailedReport.addErrors(errs);
+                                    healthCheckFailedList.add(inspectorName);
                                         /*Level level = healthInspector.logLevel();
                                         if (level != null && log.isEnabled(level)) {
                                             healthCheckFailedReport.addErrors(errs);
@@ -243,7 +255,7 @@ public class HealthMonitor {
                 }
                 if (!usedByTag) {
                     hasUnregistered = true;
-                    memo.append(BootConstant.BR).append("\t- @Inspector unused due to CLI argument -" + BootConstant.CLI_USE_ALTERNATIVE + " <implTag>: ").append(c.getName());
+                    memo.append(BootConstant.BR).append("\t- @Inspector unused due to CLI argument -" + BootConstant.CLI_USE_ALTERNATIVE + " <alternativeNames>: ").append(c.getName());
                     iterator.remove();
                 }
             }
@@ -340,7 +352,7 @@ public class HealthMonitor {
     public static String buildMessage() {
         StringBuilder sb = new StringBuilder();
         sb.append(BootConstant.BR)
-                .append("Self Inspection Result: ").append(isHealthCheckSuccess ? "passed" : "failed").append(BootConstant.BR);
+                .append("Self Inspection Result: ").append(isHealthCheckSuccess ? "passed" : "failed: ").append(healthCheckFailedList).append(BootConstant.BR);
         if (!isHealthCheckSuccess) {
             sb.append("\t cause: ").append(statusReasonHealthCheck).append(BootConstant.BR);
         }
@@ -375,5 +387,45 @@ public class HealthMonitor {
 
     public static String getServiceStatusReason() {
         return statusReasonLastKnown;
+    }
+
+    public static boolean isRequiredHealthChecksFailed(String[] criticalHealthChecks) {
+        return isRequiredHealthChecksFailed(criticalHealthChecks, null);
+    }
+
+    public static Set<String> getFailedRequiredHealthChecks(String[] criticalHealthChecks) {
+        Set<String> ret = new HashSet<>();
+        isRequiredHealthChecksFailed(criticalHealthChecks, ret);
+        return ret;
+    }
+
+    public static boolean isRequiredHealthChecksFailed(String[] criticalHealthChecks, final Set<String> failedHealthChecks) {
+        if (failedHealthChecks != null) {
+            failedHealthChecks.clear();
+        }
+        if (criticalHealthChecks == null || criticalHealthChecks.length == 0) {
+            // if criticalHealthChecks is empty (default), that means critical on ALL HealthChecks, so return true if healthCheckFailedList is NOT empty
+            if (failedHealthChecks == null) {
+                return !healthCheckFailedList.isEmpty();
+            } else {
+                failedHealthChecks.addAll(healthCheckFailedList);
+            }
+        } else {
+            // if criticalHealthChecks is NOT empty (user specified), that means critical on only given HealthChecks, so return true if healthCheckFailedList contains any of the criticalHealthChecks
+            for (String criticalHealthCheck : criticalHealthChecks) {
+                if (healthCheckFailedList.contains(criticalHealthCheck)) {
+                    if (failedHealthChecks == null) {
+                        return true;
+                    } else {
+                        failedHealthChecks.add(criticalHealthCheck);
+                    }
+                }
+            }
+        }
+        if (failedHealthChecks == null) {
+            return false;
+        } else {
+            return !failedHealthChecks.isEmpty();
+        }
     }
 }
