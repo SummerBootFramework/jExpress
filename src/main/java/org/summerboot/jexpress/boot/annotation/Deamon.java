@@ -17,9 +17,12 @@ import java.lang.annotation.Target;
 @Documented
 @BindingAnnotation
 public @interface Deamon {
+
     boolean ignorePause() default true;
 
-    boolean ignoreHealthCheck() default true;
-
+    /**
+     * @return
+     * @Inspector.names, empty/null means ignore all HealthChecks
+     */
     String[] requiredHealthChecks() default {};
 }

@@ -67,7 +67,9 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                 try {
                     HttpResponseStatus status = HttpResponseStatus.OK;
                     String internalReason = null;// Do NOT expose it to external caller!
-                    if (NioConfig.cfg.isPingSyncHealthStatus() && !HealthMonitor.isHealthCheckSuccess()) {
+                    //if (NioConfig.cfg.isPingSyncHealthStatus() && !HealthMonitor.isHealthCheckSuccess()) {
+                    //Set<String> failedHealthChecks = new HashSet<>();
+                    if (!HealthMonitor.isHealthCheckSuccess() && HealthMonitor.isRequiredHealthChecksFailed(NioConfig.cfg.getPingSyncHealthStatus_requiredHealthChecks(), HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL, null)) {
                         status = HttpResponseStatus.BAD_GATEWAY;
                         internalReason = HealthMonitor.getStatusReasonHealthCheck();
                     }

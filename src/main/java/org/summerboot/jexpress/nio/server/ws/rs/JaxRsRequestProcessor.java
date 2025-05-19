@@ -74,7 +74,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     protected final String produce_DefaultType;
     protected final Log classLevelLogAnnotation;
     protected final boolean rejectWhenPaused;
-    protected final boolean rejectWhenHealthCheckFailed;
+    //protected final boolean rejectWhenHealthCheckFailed;
     protected final String[] requiredHealthChecks;
 
     //param info    
@@ -109,15 +109,15 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         Deamon methodLevelDeamon = javaMethod.getAnnotation(Deamon.class);
         if (methodLevelDeamon != null) {
             rejectWhenPaused = !methodLevelDeamon.ignorePause();
-            rejectWhenHealthCheckFailed = !methodLevelDeamon.ignoreHealthCheck();
+            //rejectWhenHealthCheckFailed = !methodLevelDeamon.ignoreHealthCheck();
             requiredHealthChecks = methodLevelDeamon.requiredHealthChecks();
         } else if (classLevelDeamon != null) {
             rejectWhenPaused = !classLevelDeamon.ignorePause();
-            rejectWhenHealthCheckFailed = !classLevelDeamon.ignoreHealthCheck();
+            //rejectWhenHealthCheckFailed = !classLevelDeamon.ignoreHealthCheck();
             requiredHealthChecks = classLevelDeamon.requiredHealthChecks();
         } else {
             rejectWhenPaused = true;
-            rejectWhenHealthCheckFailed = true;
+            //rejectWhenHealthCheckFailed = true;
             requiredHealthChecks = null;
         }
 
@@ -397,7 +397,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         try {
             context.poi(BootPOI.BIZ_BEGIN);
             Set<String> failedHealthChecks = new HashSet<>();
-            if (!HealthMonitor.isHealthCheckSuccess() && (rejectWhenHealthCheckFailed || HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, failedHealthChecks))) {
+            //if (!HealthMonitor.isHealthCheckSuccess() && (rejectWhenHealthCheckFailed || HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, failedHealthChecks))) {
+            if (!HealthMonitor.isHealthCheckSuccess() && HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE, failedHealthChecks)) {
                 final String internalError = failedHealthChecks.toString();
                 context.status(HttpResponseStatus.BAD_GATEWAY)
                         .error(new Err<>(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null,

@@ -31,6 +31,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -143,16 +144,16 @@ public class HealthMonitor {
                 } while (!healthInspectorQueue.isEmpty());
                 // inspect
                 for (HealthInspector healthInspector : batchInspectors) {
-                    String name = healthInspector.getClass().getName();
+                    String inspectorClassName = healthInspector.getClass().getName();
                     Inspector inspectorAnnotation = healthInspector.getClass().getAnnotation(Inspector.class);
                     final String inspectorName;
                     if (inspectorAnnotation != null && StringUtils.isNoneBlank(inspectorAnnotation.name())) {
                         inspectorName = inspectorAnnotation.name();
                     } else {
-                        inspectorName = name;
+                        inspectorName = inspectorClassName;
                     }
 
-                    try (var a = Timeout.watch(name + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
+                    try (var a = Timeout.watch(inspectorName + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
                         HealthInspector.InspectionType inspectionType = healthInspector.inspectionType();
                         List<Err> errs = healthInspector.ping();
                         boolean currentInspectionPassed = errs == null || errs.isEmpty();
@@ -164,13 +165,13 @@ public class HealthMonitor {
                                 String lockCode = healthInspector.pauseLockCode();
                                 String reason;
                                 if (currentInspectionPassed) {
-                                    reason = name + " success";
+                                    reason = inspectorName + " success";
                                     pauseService(false, lockCode, reason);
                                 } else {
                                     try {
                                         reason = BeanUtil.toJson(errs, true, true);
                                     } catch (Throwable ex) {
-                                        reason = name + " failed " + ex;
+                                        reason = inspectorName + " failed " + ex;
                                     }
                                     pauseService(true, lockCode, reason);
                                 }
@@ -196,7 +197,7 @@ public class HealthMonitor {
                         }
                     } catch (Throwable ex) {
                         healthInspectorQueue.offer(healthInspector);
-                        log.error("HealthInspector error: " + name, ex);
+                        log.error("HealthInspector error: " + inspectorName, ex);
                     }
                 }
                 if (healthCheckAllPassed != null) {
@@ -389,30 +390,49 @@ public class HealthMonitor {
         return statusReasonLastKnown;
     }
 
-    public static boolean isRequiredHealthChecksFailed(String[] criticalHealthChecks) {
-        return isRequiredHealthChecksFailed(criticalHealthChecks, null);
+    public static boolean isRequiredHealthChecksFailed(String[] requiredHealthChecks, EmptyHealthCheckPolicy mode) {
+        return isRequiredHealthChecksFailed(requiredHealthChecks, mode, null);
     }
 
-    public static Set<String> getFailedRequiredHealthChecks(String[] criticalHealthChecks) {
+    public static Set<String> getFailedRequiredHealthChecks(String[] requiredHealthChecks, EmptyHealthCheckPolicy mode) {
         Set<String> ret = new HashSet<>();
-        isRequiredHealthChecksFailed(criticalHealthChecks, ret);
+        isRequiredHealthChecksFailed(requiredHealthChecks, mode, ret);
         return ret;
     }
 
-    public static boolean isRequiredHealthChecksFailed(String[] criticalHealthChecks, final Set<String> failedHealthChecks) {
+    public enum EmptyHealthCheckPolicy {
+        REQUIRE_ALL, REQUIRE_NONE
+    }
+
+
+    public static boolean isRequiredHealthChecksFailed(String[] requiredHealthChecks, EmptyHealthCheckPolicy mode, final Set<String> failedHealthChecks) {
+        Set<String> set = new HashSet<>(Math.max((int) (requiredHealthChecks.length / 0.75f) + 1, 16));
+        Collections.addAll(set, requiredHealthChecks);
+        return isRequiredHealthChecksFailed(set, mode, failedHealthChecks);
+    }
+
+    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy mode, final Set<String> failedHealthChecks) {
         if (failedHealthChecks != null) {
             failedHealthChecks.clear();
         }
-        if (criticalHealthChecks == null || criticalHealthChecks.length == 0) {
-            // if criticalHealthChecks is empty (default), that means critical on ALL HealthChecks, so return true if healthCheckFailedList is NOT empty
-            if (failedHealthChecks == null) {
-                return !healthCheckFailedList.isEmpty();
-            } else {
-                failedHealthChecks.addAll(healthCheckFailedList);
+        if (requiredHealthChecks == null || requiredHealthChecks.isEmpty()) {
+            switch (mode) {
+                case REQUIRE_ALL -> {
+                    // if criticalHealthChecks is empty (default), that means requrie ALL HealthChecks, so return true if healthCheckFailedList is NOT empty
+                    if (failedHealthChecks == null) {
+                        return !healthCheckFailedList.isEmpty();
+                    } else {
+                        failedHealthChecks.addAll(healthCheckFailedList);
+                    }
+                }
+                case REQUIRE_NONE -> {
+                    // if criticalHealthChecks is empty (default), that means no requried HealthChecks, so return false
+                    return false;
+                }
             }
         } else {
             // if criticalHealthChecks is NOT empty (user specified), that means critical on only given HealthChecks, so return true if healthCheckFailedList contains any of the criticalHealthChecks
-            for (String criticalHealthCheck : criticalHealthChecks) {
+            for (String criticalHealthCheck : requiredHealthChecks) {
                 if (healthCheckFailedList.contains(criticalHealthCheck)) {
                     if (failedHealthChecks == null) {
                         return true;

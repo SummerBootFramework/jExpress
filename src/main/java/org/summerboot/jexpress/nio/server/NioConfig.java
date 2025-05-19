@@ -93,8 +93,8 @@ public class NioConfig extends BootConfig {
     @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\\\.168\\\\.2\\\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
-    @Config(key = "ping.sync.HealthStatus", defaultValue = "true", desc = "Ping response status is synced with Health Monitor status")
-    protected volatile boolean pingSyncHealthStatus;
+    @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", desc = "@Inspector.names in CSV format, empty/null means require ALL HealthChecks")
+    protected volatile Set<String> pingSyncHealthStatus_requiredHealthChecks;
     @Config(key = "ping.sync.PauseStatus", defaultValue = "true", desc = "Ping response status is synced with PAUSE status")
     protected volatile boolean pingSyncPauseStatus;
     @Config(key = "ping.sync.showRootCause", defaultValue = "false", desc = "Ping response with root cause, this may expose internal info to external caller")
@@ -567,8 +567,8 @@ public class NioConfig extends BootConfig {
         return callerAddressFilterBlacklist;
     }
 
-    public boolean isPingSyncHealthStatus() {
-        return pingSyncHealthStatus;
+    public Set<String> getPingSyncHealthStatus_requiredHealthChecks() {
+        return pingSyncHealthStatus_requiredHealthChecks;
     }
 
     public boolean isPingSyncPauseStatus() {
