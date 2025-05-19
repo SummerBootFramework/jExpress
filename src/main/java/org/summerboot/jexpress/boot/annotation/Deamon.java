@@ -21,8 +21,9 @@ public @interface Deamon {
     boolean ignorePause() default true;
 
     /**
+     * Array of @Inspector.names, empty/null means ignore all HealthChecks
+     *
      * @return
-     * @Inspector.names, empty/null means ignore all HealthChecks
      */
     String[] requiredHealthChecks() default {};
 }
