@@ -270,6 +270,7 @@ abstract public class SummerSingularity {
             logFileName = version.logFileName();
             if (StringUtils.isBlank(logFileName)) {
                 logFileName = version.value()[0];
+                logFileName = logFileName.replaceAll(" ", "_");
             }
             appVersion = version.value()[0];
             BackOffice.agent.setVersionShort(appVersion);

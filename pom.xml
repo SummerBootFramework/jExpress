@@ -211,7 +211,7 @@
         <!-- gRPC and protobuf -->
         <grpc.version>1.72.0</grpc.version>
         <guava.version>33.4.8-jre</guava.version>
-        <protobuf.version>4.30.2</protobuf.version>
+        <protobuf.version>4.31.0</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>2.2.30</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
@@ -229,13 +229,13 @@
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
         <tomcat-embed-el.version>11.0.7</tomcat-embed-el.version>
-        <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
+        <hibernate-validator.version>9.0.0.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.6.15.Final</hibernate.version>
+        <hibernate.version>7.0.0.Final</hibernate.version>
         <hikari-cp.version>6.3.0</hikari-cp.version>
 
         <!-- Cache -->
