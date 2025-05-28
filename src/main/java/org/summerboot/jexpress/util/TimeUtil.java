@@ -517,4 +517,24 @@ public class TimeUtil {
 
         return dayOfWeekOption;
     }
+
+    /**
+     * Get system default zone offset in format of "+HH:MM" or "Z" for UTC
+     *
+     * @return
+     */
+    public static String getSystemDefaultZoneOffset() {
+        ZoneId zoneId = ZoneId.systemDefault();
+        return getSystemDefaultZoneOffset(zoneId);
+    }
+
+    /**
+     * Get given zone offset in format of "+HH:MM" or "Z" for UTC
+     *
+     * @param zoneId
+     * @return
+     */
+    public static String getSystemDefaultZoneOffset(ZoneId zoneId) {
+        return zoneId.getRules().getOffset(Instant.now()).getId();
+    }
 }

@@ -122,11 +122,11 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         final String httpRequestUriRawDecoded = URLDecoder.decode(httpRequestUriRaw, StandardCharsets.UTF_8);
         final boolean isKeepAlive = HttpUtil.isKeepAlive(req);
         final HttpHeaders requestHeaders = req.headers();
-        final String httpPostRequestBody;
-        if (HttpMethod.POST.equals(httpMethod) || HttpMethod.PUT.equals(httpMethod) || HttpMethod.PATCH.equals(httpMethod) || HttpMethod.DELETE.equals(httpMethod)) {
-            httpPostRequestBody = NioHttpUtil.getHttpPostBodyString(req);
-        } else {
+        final String httpPostRequestBody;// = NioHttpUtil.getHttpPostBodyString(req);
+        if (HttpMethod.GET.equals(httpMethod) || HttpMethod.HEAD.equals(httpMethod)) {
             httpPostRequestBody = null;
+        } else {
+            httpPostRequestBody = NioHttpUtil.getHttpPostBodyString(req);
         }
         ReferenceCountUtil.release(req);
 
