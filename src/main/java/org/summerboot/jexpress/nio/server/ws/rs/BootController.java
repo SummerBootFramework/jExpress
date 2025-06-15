@@ -125,6 +125,7 @@ abstract public class BootController extends PingController {
     public static final String DESC_5xx = "This class of status code is intended for situations in which the server is aware that it has encountered an error or is otherwise incapable of performing the request. The client can continue and try again with the request without modification.";
     public static final String DESC_500 = "Internal Server Error. The client can continue and try again with the request without modification.";
     public static final String DESC_501 = "Not Implemented. The client can continue and try again with the request without modification.";
+    public static final String DESC_502 = "Bad Gateway. The client can continue and try again with the request without modification.";
     public static final String DESC_503 = "Service Unavailable. The client can continue and try again with the request without modification.";
     public static final String DESC_504 = "Gateway Timeout. The client can continue and try again with the request without modification.";
     public static final String DESC_507 = "Insufficient Storage. The client should contact the system administrator. Do not try the request again.";
@@ -162,7 +163,7 @@ abstract public class BootController extends PingController {
     @Deamon
     //@CaptureTransaction("admin.version")
     public void version(@Parameter(hidden = true) final SessionContext context) {
-        context.txt(getVersion()).status(HttpResponseStatus.OK);
+        context.response(getVersion()).status(HttpResponseStatus.OK);
     }
 
     protected String version;
@@ -358,7 +359,7 @@ abstract public class BootController extends PingController {
                 Thread.currentThread().interrupt();
             }
         }
-        context.status(HttpResponseStatus.OK).txt(request.getHttpRequestPath() + "?delayMilsec=" + wait + request.getHttpPostRequestBody());
+        context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath() + "?delayMilsec=" + wait + request.getHttpPostRequestBody());
     }
 
     @Operation(hidden = true)
@@ -373,7 +374,7 @@ abstract public class BootController extends PingController {
                 Thread.currentThread().interrupt();
             }
         }
-        context.status(HttpResponseStatus.OK).txt(request.getHttpRequestPath() + request.getHttpPostRequestBody());
+        context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath() + request.getHttpPostRequestBody());
     }
 
     @Operation(hidden = true)
@@ -389,7 +390,7 @@ abstract public class BootController extends PingController {
                 Thread.currentThread().interrupt();
             }
         }
-        context.status(HttpResponseStatus.OK).txt(request.getHttpRequestPath() + "?delayMilsec=" + wait);
+        context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath() + "?delayMilsec=" + wait);
     }
 
     @Operation(hidden = true)
@@ -404,7 +405,7 @@ abstract public class BootController extends PingController {
                 Thread.currentThread().interrupt();
             }
         }
-        context.status(HttpResponseStatus.OK).txt(request.getHttpRequestPath());
+        context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath());
     }
 
     public interface Config {

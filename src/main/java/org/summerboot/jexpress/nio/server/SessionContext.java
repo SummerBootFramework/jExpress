@@ -455,7 +455,8 @@ public class SessionContext {
         return txt;
     }
 
-    public SessionContext txt(String txt) {
+
+    public SessionContext response(String txt) {
         this.txt = txt;
         return this;
     }
@@ -484,14 +485,14 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext file(String fileName, boolean isDownloadMode) {
+    public SessionContext response(String fileName, boolean isDownloadMode) {
         String targetFileName = NioConfig.cfg.getDocrootDir() + File.separator + fileName;
         targetFileName = targetFileName.replace('/', File.separatorChar);
         File targetFile = new File(targetFileName).getAbsoluteFile();
-        return this.file(targetFile, isDownloadMode);
+        return this.response(targetFile, isDownloadMode);
     }
 
-    public SessionContext file(File file, boolean isDownloadMode) {
+    public SessionContext response(File file, boolean isDownloadMode) {
         this.downloadMode = isDownloadMode;
         this.file = null;
         memo("file." + (isDownloadMode ? "download" : "view"), file.getAbsolutePath());
@@ -527,12 +528,12 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext content(Object ret) throws JsonProcessingException {
+    public SessionContext response(Object ret) throws JsonProcessingException {
         if (ret == null) {
             return this;
         }
         if (ret instanceof File) {
-            this.file((File) ret, true);
+            this.response((File) ret, true);
         } else {
             String responseContentType;
             //1. calculate responseContentType
@@ -550,19 +551,19 @@ public class SessionContext {
 
             //2. set content and contentType
             if (ret instanceof String) {
-                this.txt((String) ret);
+                this.response((String) ret);
             } else {
                 switch (responseContentType) {
                     case MediaType.APPLICATION_JSON:
-                        this.txt(BeanUtil.toJson(ret));
+                        this.response(BeanUtil.toJson(ret));
                         break;
                     case MediaType.APPLICATION_XML:
                     case MediaType.TEXT_XML:
-                        this.txt(BeanUtil.toXML(ret));
+                        this.response(BeanUtil.toXML(ret));
                         break;
                     case MediaType.TEXT_HTML:
                     case MediaType.TEXT_PLAIN:
-                        this.txt(ret.toString());
+                        this.response(ret.toString());
                         break;
                 }
             }

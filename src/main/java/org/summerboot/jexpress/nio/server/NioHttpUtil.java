@@ -151,7 +151,7 @@ public class NioHttpUtil {
             if (errorAuditor != null) {
                 errorResponse = errorAuditor.beforeSendingError(errorResponse);
             }
-            sessionContext.txt(errorResponse);
+            sessionContext.response(errorResponse);
         }
 
         if (HttpResponseStatus.OK.equals(status) && sessionContext.autoConvertBlank200To204() && StringUtils.isEmpty(sessionContext.txt())) {
@@ -237,7 +237,7 @@ public class NioHttpUtil {
         File file = sessionContext.file();
         if (!SecurityUtil.precheckFile(file, sessionContext)) {
             file = buildErrorFile(sessionContext);
-            sessionContext.file(file, false);
+            sessionContext.response(file, false);
             return sendResponse(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings);
         }
 
@@ -287,7 +287,7 @@ public class NioHttpUtil {
             }
             Err err = new Err<>(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, null, ex, "Failed to send file: " + file.getAbsolutePath());
             file = null;
-            sessionContext.file(file, false).error(err).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            sessionContext.response(file, false).error(err).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
             return sendResponse(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings);
         }
         return fileLength;
@@ -364,7 +364,7 @@ public class NioHttpUtil {
 
             WebResourceCache.put(httpRequestPath, webResourceFile, BootConstant.WEB_RESOURCE_TTL_MS);
         }
-        context.file(webResourceFile, false).level(Level.TRACE);
+        context.response(webResourceFile, false).level(Level.TRACE);
     }
 
     public static String getFileContentType(File file) {

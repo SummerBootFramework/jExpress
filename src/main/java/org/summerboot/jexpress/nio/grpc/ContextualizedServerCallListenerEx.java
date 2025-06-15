@@ -89,7 +89,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                     @Override
                     public void sendMessage(RespT message) {
                         if (message != null) {
-                            sessionContext.txt(message.toString());
+                            sessionContext.response(message.toString());
                         }
                         super.sendMessage(message);
                     }

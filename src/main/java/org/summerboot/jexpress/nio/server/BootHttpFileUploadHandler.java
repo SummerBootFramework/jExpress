@@ -209,7 +209,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
                             if (fileUpload.isCompleted()) {
                                 log.debug("file completed " + fileUpload.length());
                                 T ret = onFileUploaded(ctx, fileUpload.getFilename(), fileUpload.getFile(), params, caller, context);
-                                context.content(ret);
+                                context.response(ret);
                                 NioHttpUtil.sendResponse(ctx, true, context, null, null);
                             }
                             break;

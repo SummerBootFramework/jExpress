@@ -421,7 +421,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         //3. process return object
         if (ret != null) {
             if (ret instanceof File) {
-                context.file((File) ret, true);
+                context.response((File) ret, true);
             } else {
                 //1. calculate responseContentType
                 String responseContentType = produce_ExplicitType;
@@ -459,19 +459,19 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 }
                 //2. set content and contentType
                 if (ret instanceof String) {
-                    context.txt((String) ret);
+                    context.response((String) ret);
                 } else {
                     switch (responseContentType) {
                         case MediaType.APPLICATION_JSON:
-                            context.txt(BeanUtil.toJson(ret));
+                            context.response(BeanUtil.toJson(ret));
                             break;
                         case MediaType.APPLICATION_XML:
                         case MediaType.TEXT_XML:
-                            context.txt(BeanUtil.toXML(ret));
+                            context.response(BeanUtil.toXML(ret));
                             break;
                         case MediaType.TEXT_HTML:
                         case MediaType.TEXT_PLAIN:
-                            context.txt(ret.toString());
+                            context.response(ret.toString());
                             break;
                     }
                 }
