@@ -406,8 +406,11 @@ public class HealthMonitor {
 
 
     public static boolean isRequiredHealthChecksFailed(String[] requiredHealthChecks, EmptyHealthCheckPolicy mode, final Set<String> failedHealthChecks) {
-        Set<String> set = new HashSet<>(Math.max((int) (requiredHealthChecks.length / 0.75f) + 1, 16));
-        Collections.addAll(set, requiredHealthChecks);
+        Set<String> set = null;
+        if (requiredHealthChecks != null && requiredHealthChecks.length > 0) {
+            set = new HashSet<>(Math.max((int) (requiredHealthChecks.length / 0.75f) + 1, 16));
+            Collections.addAll(set, requiredHealthChecks);
+        }
         return isRequiredHealthChecksFailed(set, mode, failedHealthChecks);
     }
 

@@ -189,7 +189,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         level = Level.WARN;
                     }
                     if (log.isEnabled(level)) {
-                        boolean isTraceAll = log.isTraceEnabled();
+                        boolean isTraceAll = BootConstant.isDebugMode();
                         if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
                             requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
                         }

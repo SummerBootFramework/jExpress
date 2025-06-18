@@ -196,7 +196,7 @@
         <commons-text.version>1.13.1</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
-        <log4j-api.version>2.24.3</log4j-api.version>
+        <log4j-api.version>2.25.0</log4j-api.version>
         <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.1</jakarta-mail.version>

@@ -196,7 +196,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             return;
         }
         long responseTime = System.currentTimeMillis() - sessionContext.startTimestamp();
-        boolean isTraceAll = log.isTraceEnabled();
+        boolean isTraceAll = BootConstant.isDebugMode();
         HttpHeaders requestHeaders = sessionContext.requestHeaders();
         if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
             requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged

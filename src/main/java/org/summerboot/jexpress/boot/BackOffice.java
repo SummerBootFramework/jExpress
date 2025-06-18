@@ -45,6 +45,8 @@ public class BackOffice extends BootConfig {
 
     public static final BackOffice agent = new BackOffice();
 
+    boolean isDebugMode = false;
+
     protected BackOffice() {
         loadBalancingPingEndpoints = new ArrayList<>();
     }
@@ -321,6 +323,9 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.cli.psv", defaultValue = "psv")
     private String cliName_psv = "psv";
 
+    @Config(key = "naming.cli.debug", defaultValue = "debug")
+    private String cliName_debugMode = "debug";
+
     @Config(key = "naming.memo.delimiter", defaultValue = ": ", trim = false)
     private String memoDelimiter = ": ";
 
@@ -490,6 +495,10 @@ public class BackOffice extends BootConfig {
 
     public String getCliName_psv() {
         return cliName_psv;
+    }
+
+    public String getCliName_debugMode() {
+        return cliName_debugMode;
     }
 
     public String getMemoDelimiter() {

@@ -230,6 +230,12 @@ abstract public class SummerBigBang extends SummerSingularity {
                 .build();
         cliOptions.addOption(arg);
 
+        arg = Option.builder(BootConstant.CLI_DEBUGMODE)
+                .hasArg(false)
+                .desc("this will ignore @Log settings and not mask any sensitive data in logs")
+                .build();
+        cliOptions.addOption(arg);
+
         arg = Option.builder(BootConstant.CLI_DECRYPT)
                 .desc("Decrypt config file content with all \"ENC(encrypted text)\" using password:"
                         + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_DECRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
@@ -414,7 +420,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         }
 
         /*
-         * [generate configurations list in PSV format]
+         * [generate configuration list in PSV format]
          */
         if (cli.hasOption(BootConstant.CLI_PSV)) {
             String envId = cli.getOptionValue(BootConstant.CLI_PSV);
@@ -445,6 +451,10 @@ abstract public class SummerBigBang extends SummerSingularity {
                 }
             }
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, "\n\n" + sb, null);
+        }
+
+        if (cli.hasOption(BootConstant.CLI_DEBUGMODE)) {
+            BackOffice.agent.isDebugMode = true;
         }
 
         /*

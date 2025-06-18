@@ -24,6 +24,9 @@ import java.security.SecureRandom;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface BootConstant {
+    static boolean isDebugMode() {
+        return BackOffice.agent.isDebugMode;
+    }
 
     int APP_ID_VALUE = new SecureRandom().nextInt(999999);
     String APP_ID = String.format("%06d", APP_ID_VALUE);
@@ -89,6 +92,7 @@ public interface BootConstant {
     String CLI_ENCRYPT = BackOffice.agent.getCliName_encrypt();
     String CLI_DECRYPT = BackOffice.agent.getCliName_decrypt();
     String CLI_PSV = BackOffice.agent.getCliName_psv();
+    String CLI_DEBUGMODE = BackOffice.agent.getCliName_debugMode();
     String MEMO_DELIMITER = BackOffice.agent.getMemoDelimiter();
 
     /*
