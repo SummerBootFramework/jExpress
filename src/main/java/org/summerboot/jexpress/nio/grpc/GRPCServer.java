@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
+import org.summerboot.jexpress.nio.LooseRequestTracker;
 import org.summerboot.jexpress.nio.server.SessionContext;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -63,6 +64,7 @@ public class GRPCServer {
     protected ScheduledExecutorService statusReporter = null;
     //protected boolean servicePaused = false;
 
+    public static final LooseRequestTracker RequestTracker = new LooseRequestTracker();
 
     public ServerBuilder getServerBuilder() {
         return serverBuilder;

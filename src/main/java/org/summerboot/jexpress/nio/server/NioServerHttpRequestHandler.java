@@ -146,6 +146,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         //ScopedValue.where(SessionContext.SESSION_CONTEXT, context).run(() -> {
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
+            NioServer.RequestTracker.update(txId);
             String acceptCharset = requestHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
             if (StringUtils.isNotBlank(acceptCharset)) {
                 context.charsetName(acceptCharset);//.contentType(SessionContext.CONTENT_TYPE_JSON_ + acceptCharset); do not build content type with charset now, don't know charset valid or not
