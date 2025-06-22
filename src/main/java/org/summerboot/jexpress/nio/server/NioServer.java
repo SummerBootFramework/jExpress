@@ -42,10 +42,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.BootRequestTracker;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
-import org.summerboot.jexpress.nio.LooseRequestTracker;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -77,7 +77,7 @@ public class NioServer {
     protected final NioChannelInitializer channelInitializer;
     protected final NIOStatusListener nioListener;
 
-    public static final LooseRequestTracker RequestTracker = new LooseRequestTracker();
+    public static final BootRequestTracker RequestTracker = new BootRequestTracker(NioServer.class.getSimpleName());
 
     public NioServer(NioChannelInitializer channelInitializer, NIOStatusListener nioListener) {
         this.channelInitializer = channelInitializer;
