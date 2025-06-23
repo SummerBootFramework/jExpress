@@ -81,16 +81,17 @@ public class BootRequestTracker {
         }
         Thread vThread = Thread.startVirtualThread(() -> {
             log.info("BootRequestTracker.start: " + requestTracker.getName());
+            idleEventListener.onIdle(requestTracker);
             do {
                 try {
-                    log.info("BootRequestTracker.onIdle: " + requestTracker.getName() + ", lastTxId=" + requestTracker.getLastTransactionId() + ", lastTS=" + TimeUtil.toOffsetDateTime(requestTracker.getLastTimestamp(), null));
-                    idleEventListener.onIdle(requestTracker);
-                    requestTracker.update(requestTracker.getName());
                     long ttlMillis = requestTracker.getTTLMillis(threshold, timeUnit);
                     if (ttlMillis >= 0) {
                         Thread.sleep(ttlMillis);
                         continue;
                     }
+                    log.info("BootRequestTracker.onIdle: " + requestTracker.getName() + ", lastTxId=" + requestTracker.getLastTransactionId() + ", lastTS=" + TimeUtil.toOffsetDateTime(requestTracker.getLastTimestamp(), null));
+                    idleEventListener.onIdle(requestTracker);
+                    requestTracker.update(requestTracker.getName());
                 } catch (InterruptedException ex) {
                     log.error("BootRequestTracker.interrupted: " + requestTracker.getName(), ex);
                 } catch (Throwable ex) {
