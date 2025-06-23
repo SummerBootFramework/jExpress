@@ -72,16 +72,16 @@ public class BootRequestTracker {
     private static final Map<BootRequestTracker, Boolean> statusMap = new ConcurrentHashMap<>();
 
     public static interface IdleEventListener {
-        void onIdle(BootRequestTracker requestTracker);
+        void onIdle(BootRequestTracker requestTracker) throws Exception;
     }
 
-    public static void start(final BootRequestTracker requestTracker, final IdleEventListener idleEventListener, long threshold, TimeUnit timeUnit) {
+    public static void start(final BootRequestTracker requestTracker, final IdleEventListener idleEventListener, long threshold, TimeUnit timeUnit) throws Exception {
         if (requestTracker == null) {
             throw new IllegalArgumentException("Request tracker cannot be null");
         }
+        idleEventListener.onIdle(requestTracker);
         Thread vThread = Thread.startVirtualThread(() -> {
             log.info("BootRequestTracker.start: " + requestTracker.getName());
-            idleEventListener.onIdle(requestTracker);
             do {
                 try {
                     long ttlMillis = requestTracker.getTTLMillis(threshold, timeUnit);
