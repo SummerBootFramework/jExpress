@@ -150,7 +150,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
                     boolean isOverSized = onPartialChunk(ctx, fileSizeQuota);
                     if (isOverSized) {
                         reset();
-                        Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, String.valueOf(fileSizeQuota), null);
+                        Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "File size over max allowed size " + fileSizeQuota, null);
                         SessionContext context = SessionContext.build(hitIndex);
                         context.error(err).status(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
                         NioHttpUtil.sendResponse(ctx, true, context, null, null);
@@ -303,7 +303,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
         }
         long maxAllowedSize = getCallerFileUploadSizeLimit_Bytes(caller, context);
         if (contentLength > maxAllowedSize) {
-            Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, String.valueOf(maxAllowedSize), null);
+            Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "File size over max allowed size " + maxAllowedSize, null);
             context.error(err).status(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
             NioHttpUtil.sendResponse(ctx, true, context, null, null);
             return 0;

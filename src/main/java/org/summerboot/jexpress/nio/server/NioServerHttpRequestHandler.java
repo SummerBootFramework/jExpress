@@ -161,7 +161,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     if (error == null) {
                         processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
                     } else {
-                        Err err = new Err<>(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + error);
+                        Err err = new Err<>(BootErrorCode.AUTH_INVALID_IP, null, "Invalid caller IP", null, "Invalid IP address: " + error);
                         context.error(err).status(HttpResponseStatus.NOT_ACCEPTABLE);
                     }
                 } else {
@@ -174,7 +174,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 context.poi(BootPOI.SERVICE_END);
             } catch (Throwable ex) {
                 ioEx = ex;
-                Err e = new Err<>(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, null, ex, "Failed to send context to client");
+                Err e = new Err<>(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send context to client", ex);
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
                 responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
             } finally {
@@ -260,7 +260,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         } catch (RejectedExecutionException ex) {
             long queuingTime = System.currentTimeMillis() - start;
             //SessionContext context = SessionContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
-            Err e = new Err<>(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, null, ex, "Too many request, try again later");
+            Err e = new Err<>(BootErrorCode.NIO_TOO_MANY_REQUESTS, null, "Too many request, try again later", ex);
             context.error(e).status(HttpResponseStatus.TOO_MANY_REQUESTS).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
 
@@ -277,7 +277,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         } catch (Throwable ex) {
             long queuingTime = System.currentTimeMillis() - start;
             //SessionContext context = SessionContext.build(ctx, txId, hitIndex, start, requestHeaders, httpMethod, httpRequestUri, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
-            Err e = new Err<>(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, null, ex, "NIO unexpected executor failure");
+            Err e = new Err<>(BootErrorCode.NIO_UNEXPECTED_EXECUTOR_FAILURE, null, "NIO unexpected executor failure", ex);
             context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
             long responseContentLength = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, null);
             StringBuilder sb = new StringBuilder();

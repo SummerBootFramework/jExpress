@@ -108,7 +108,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
             httpResponse = httpCfg.getHttpClient().send(originRequest, HttpResponse.BodyHandlers.ofString());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            Err e = new Err<>(BootErrorCode.APP_INTERRUPTED, null, null, ex, "RPC Interrupted");
+            Err e = new Err<>(BootErrorCode.APP_INTERRUPTED, null, "Http Client Interrupted", ex);
             context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
             return new RPCResult<>(originRequest, originRequestBody, null, false);
         } finally {

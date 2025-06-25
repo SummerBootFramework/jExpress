@@ -285,7 +285,7 @@ public class NioHttpUtil {
                     log.error(error, e);
                 }
             }
-            Err err = new Err<>(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, null, ex, "Failed to send file: " + file.getAbsolutePath());
+            Err err = new Err<>(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send file: " + file.getName(), ex, "Failed to send file: " + file.getAbsolutePath());
             file = null;
             sessionContext.response(file, false).error(err).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
             return sendResponse(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings);
@@ -345,7 +345,7 @@ public class NioHttpUtil {
             if (accept != null) {
                 accept = accept.toLowerCase();
                 if (!accept.contains("html") && !accept.contains("web") && !accept.contains("image") && (accept.contains("json") || accept.contains("xml"))) {
-                    var error = new Err<>(BootErrorCode.NIO_REQUEST_BAD_HEADER, null, null, null, "Client expect " + accept + ", but request a web resource");
+                    var error = new Err<>(BootErrorCode.NIO_REQUEST_BAD_HEADER, null, "Client expect " + accept + ", but request a web resource", null);
                     context.error(error).status(HttpResponseStatus.NOT_FOUND);
                     return;
                 }

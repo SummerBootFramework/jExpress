@@ -138,14 +138,14 @@ public class SecurityUtil {
         try {
             realPath = file.getAbsoluteFile().toPath().normalize().toString();
         } catch (Throwable ex) {
-            Err e = new Err<>(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, null, ex, "Invalid file path: " + filePath);
+            Err e = new Err<>(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, "Invalid file path", ex, "Invalid file path: " + filePath);
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return false;
         }
 
         if (!file.exists()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err<>(BootErrorCode.FILE_NOT_FOUND, null, null, null, "File not exists: " + filePath);
+            Err e = new Err<>(BootErrorCode.FILE_NOT_FOUND, null, "Invalid file path", null, "File not exists: " + filePath);
             context.status(HttpResponseStatus.NOT_FOUND).error(e);
             return false;
         }
@@ -154,7 +154,7 @@ public class SecurityUtil {
                 || file.isDirectory() || !file.isFile()
                 || file.isHidden() || !file.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err<>(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Malicious file request: " + filePath);
+            Err e = new Err<>(BootErrorCode.FILE_NOT_ACCESSABLE, null, "Invalid file path", null, "Malicious file request: " + filePath);
             context.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
         }
