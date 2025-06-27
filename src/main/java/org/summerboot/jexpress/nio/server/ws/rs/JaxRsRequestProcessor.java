@@ -364,7 +364,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             Caller caller = context.caller();
             if (caller == null) {
                 context.status(HttpResponseStatus.UNAUTHORIZED)
-                        .error(new Err<>(BootErrorCode.AUTH_INVALID_USER, null, "Authentication Required - Unknown caller", null));
+                        .error(new Err<>(BootErrorCode.AUTH_NO_PERMISSION, null, "Authentication Required - Unknown caller", null));
                 return false;
             }
 
