@@ -5,6 +5,7 @@ import jakarta.validation.Payload;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -19,20 +20,26 @@ import java.lang.annotation.Target;
  * <p><strong>Usage Example:</strong></p>
  * <pre>{@code
  * @LimitNonNull(
- *     fields = { "email", "phone", "wechatId" },
- *     exactly = 1,
- *     message = "Exactly one contact method must be provided"
+ *     fields = { "field1", "field2" },
+ *     limit = 1,
+ *     message = "Only one of filed1 or field2 must be provided"
  * )
- * public class ContactRequest {
- *     private String email;
- *     private String phone;
- *     private String wechatId;
+ * @LimitNonNull(
+ *     fields = { "field3", "field4" },
+ *     limit = 2,
+ *     message = "Both filed3 and filed3 must be provided"
+ * )
+ * public class MyObject {
+ *     private String field1;
+ *     private String field2;
+ *     private String field3;
+ *     private String field4;
  * }
  * }</pre>
  *
  * <p><strong>Validation Rule:</strong></p>
  * <ul>
- *   <li>Passes if exactly {@code N} of the specified fields are non-null</li>
+ *   <li>Passes if limit {@code N} of the specified fields are non-null</li>
  *   <li>Fails if fewer or more than {@code N} are non-null</li>
  * </ul>
  *
@@ -41,6 +48,7 @@ import java.lang.annotation.Target;
  *
  * @author ChatGPT
  */
+@Repeatable(LimitNonNullGroup.List.class)  // ← 添加这一行
 @Documented
 @Constraint(validatedBy = LimitNonNullGroupValidator.class)
 @Target({ElementType.TYPE})
@@ -55,4 +63,14 @@ public @interface LimitNonNullGroup {
     String[] fields();
 
     int limit() default 1; // Optional limit to specify how many non-null fields are allowed, default is 1
+
+    /**
+     * Container annotation for repeatable use of {@link LimitNonNull}.
+     */
+    @Target(ElementType.TYPE)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Documented
+    @interface List {
+        LimitNonNullGroup[] value();
+    }
 }

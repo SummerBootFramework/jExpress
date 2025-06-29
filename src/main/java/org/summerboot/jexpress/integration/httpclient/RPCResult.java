@@ -28,6 +28,7 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
+import org.summerboot.jexpress.util.BeanUtil;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -122,22 +123,22 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
     }
 
     public RPCResult<T, E> update(Class<T> successResponseClass, Class<E> errorResponseClass, final SessionContext context) {
-        return update(DefaultJacksonMapper, null, successResponseClass, errorResponseClass, context);
+        return update(DefaultJacksonMapper, null, successResponseClass, errorResponseClass, true, context);
     }
 
     public RPCResult<T, E> update(JavaType successResponseType, Class<E> errorResponseClass, final SessionContext context) {
-        return update(DefaultJacksonMapper, successResponseType, null, errorResponseClass, context);
+        return update(DefaultJacksonMapper, successResponseType, null, errorResponseClass, true, context);
     }
 
     public RPCResult<T, E> update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final SessionContext context) {
-        return update(DefaultJacksonMapper, successResponseType, successResponseClass, errorResponseClass, context);
+        return update(DefaultJacksonMapper, successResponseType, successResponseClass, errorResponseClass, true, context);
     }
 
-    public RPCResult<T, E> update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final SessionContext context) {
+    public RPCResult<T, E> update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, boolean doValidation, final SessionContext context) {
         if (remoteSuccess) {
-            successResponse = fromJson(jacksonMapper, successResponseType, successResponseClass, context);
+            successResponse = fromJson(jacksonMapper, successResponseType, successResponseClass, doValidation, context);
         } else {
-            errorResponse = fromJson(jacksonMapper, null, errorResponseClass, context);
+            errorResponse = fromJson(jacksonMapper, null, errorResponseClass, doValidation, context);
             if (errorResponse != null & context != null) {
                 if (errorResponse.isSingleError()) {
                     Err e = errorResponse.toServiceError(httpStatus);
@@ -151,7 +152,7 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         return this;
     }
 
-    protected <R extends Object> R fromJson(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, final SessionContext context) {
+    protected <R extends Object> R fromJson(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, boolean doValidation, final SessionContext context) {
         if (responseClass == null && responseType == null || StringUtils.isBlank(rpcResponseBody)) {
             return null;
         }
@@ -160,7 +161,16 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
             ret = responseClass == null
                     ? jacksonMapper.readValue(rpcResponseBody, responseType)
                     : jacksonMapper.readValue(rpcResponseBody, responseClass);
-
+            if (doValidation) {
+                String error = BeanUtil.getBeanValidationResult(ret);
+                if (error != null) {
+                    if (context != null) {
+                        Err e = new Err<>(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Failed to validate HTTP client JSON response", null, error);
+                        context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
+                    }
+                    ret = null;
+                }
+            }
         } catch (Throwable ex) {
             if (context != null) {
                 Err e = new Err<>(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, "Failed to parse HTTP client JSON response", ex, "Failed to parse RPC JSON response: " + rpcResponseBody);
