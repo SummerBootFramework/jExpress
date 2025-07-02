@@ -64,8 +64,9 @@ public class SessionContext {
     //protected ChannelHandlerContext ctx;
     protected final SocketAddress localIP;
     protected final SocketAddress remoteIP;
-    protected final HttpMethod requesMethod;
-    protected final String requesURI;
+    protected final String protocol;
+    protected final HttpMethod requestMethod;
+    protected final String requestURI;
     protected final HttpHeaders requestHeaders;
     protected final String requestBody;
     protected final String txId;
@@ -117,11 +118,11 @@ public class SessionContext {
     }
 
     public static SessionContext build(String txId, long hit) {
-        return new SessionContext(null, txId, hit, System.currentTimeMillis(), null, null, null, null);
+        return new SessionContext(null, txId, hit, System.currentTimeMillis(), null, null, null, null, null);
     }
 
-    public static SessionContext build(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
-        return new SessionContext(ctx, txId, hit, startTs, requestHeaders, requesMethod, requesURI, requestBody);
+    public static SessionContext build(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, String protocol, HttpMethod requestMethod, String requestURI, String requestBody) {
+        return new SessionContext(ctx, txId, hit, startTs, requestHeaders, protocol, requestMethod, requestURI, requestBody);
     }
 
     @Override
@@ -130,7 +131,7 @@ public class SessionContext {
         return "SessionContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
     }
 
-    protected SessionContext(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+    protected SessionContext(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, String protocol, HttpMethod requestMethod, String requestURI, String requestBody) {
         if (ctx != null && ctx.channel() != null) {
             this.localIP = ctx.channel().localAddress();
             this.remoteIP = ctx.channel().remoteAddress();
@@ -143,13 +144,14 @@ public class SessionContext {
         this.startTs = startTs;
         this.startDateTime = OffsetDateTime.ofInstant(java.time.Instant.ofEpochMilli(startTs), java.time.ZoneId.systemDefault());
         this.requestHeaders = requestHeaders;
-        this.requesMethod = requesMethod;
-        this.requesURI = requesURI;
+        this.protocol = protocol;
+        this.requestMethod = requestMethod;
+        this.requestURI = requestURI;
         this.requestBody = requestBody;
         poi.add(new POI(BootPOI.SERVICE_BEGIN));
     }
 
-    public SessionContext(SocketAddress localIP, SocketAddress remoteIP, String txId, long hit, long startTs, HttpHeaders requestHeaders, HttpMethod requesMethod, String requesURI, String requestBody) {
+    public SessionContext(SocketAddress localIP, SocketAddress remoteIP, String txId, long hit, long startTs, HttpHeaders requestHeaders, String protocol, HttpMethod requestMethod, String requestURI, String requestBody) {
         this.localIP = localIP;
         this.remoteIP = remoteIP;
         this.txId = txId;
@@ -157,8 +159,9 @@ public class SessionContext {
         this.startTs = startTs;
         this.startDateTime = OffsetDateTime.ofInstant(java.time.Instant.ofEpochMilli(startTs), java.time.ZoneId.systemDefault());
         this.requestHeaders = requestHeaders;
-        this.requesMethod = requesMethod;
-        this.requesURI = requesURI;
+        this.protocol = protocol;
+        this.requestMethod = requestMethod;
+        this.requestURI = requestURI;
         this.requestBody = requestBody;
         poi.add(new POI(BootPOI.SERVICE_BEGIN));
     }
@@ -273,11 +276,11 @@ public class SessionContext {
     }
 
     public HttpMethod method() {
-        return requesMethod;
+        return requestMethod;
     }
 
     public String uri() {
-        return requesURI;
+        return requestURI;
     }
 
     public String requestBody() {
@@ -846,9 +849,7 @@ public class SessionContext {
 
     public StringBuilder report() {
         StringBuilder sb = new StringBuilder();
-        reportPOI(sb);
-        reportMemo(sb);
-        reportError(sb);
+        report(sb);
         return sb;
     }
 
@@ -856,6 +857,72 @@ public class SessionContext {
         reportPOI(sb);
         reportMemo(sb);
         reportError(sb);
+        return this;
+    }
+
+    //protected static final ZoneId zoneId = ZoneId.systemDefault();
+
+    public SessionContext reportOverall(long queuingTime, long processTime, long responseTime, StringBuilder sb) {
+        final int errorCount;
+        if (serviceError != null) {
+            if (serviceError.getErrors() == null) {
+                errorCount = 1;
+            } else {
+                errorCount = Math.max(1, serviceError.getErrors().size());
+            }
+        } else {
+            errorCount = 0;
+        }
+        //sb.append(TimeUtil.toOffsetDateTime(startTs, zoneId));
+        sb.append("[").append(txId).append(" ").append(localIP).append("] [")
+                .append(status).append(", error=").append(errorCount).append(", queuing=").append(queuingTime).append("ms, process=").append(processTime).append("ms, response=").append(responseTime).append("] ")
+                .append(protocol).append(" ").append(requestMethod).append(" ").append(requestURI).append(", ")
+                .append(remoteIP).append("=").append(caller == null ? callerId : caller);
+        return this;
+    }
+
+    public SessionContext reportPOI(StringBuilder sb) {
+        return reportPOI(null, sb);
+    }
+
+    public SessionContext reportPOI(NioConfig cfg, StringBuilder sb) {
+        if (poi == null || poi.isEmpty()) {
+            sb.append(BootConstant.BR + "\tPOI: n/a");
+            return this;
+        }
+        NioConfig.VerboseTargetPOIType filterType = cfg == null ? NioConfig.VerboseTargetPOIType.all : cfg.getFilterPOIType();
+        sb.append(BootConstant.BR + "\tPOI.t0=").append(startDateTime).append(" ");
+        switch (filterType) {
+            case all:
+                poi.forEach((p) -> {
+                    sb.append(p.name).append("=").append(p.ts - startTs).append("ms, ");
+                });
+                break;
+            case filter:
+                Set<String> poiSet = cfg.getFilterPOISet();
+                poi.stream().filter((p) -> (poiSet.contains(p.name))).forEachOrdered((p) -> {
+                    sb.append(p.name).append("=").append(p.ts - startTs).append("ms, ");
+                });
+                break;
+            case ignore:
+                sb.append("off");
+                break;
+        }
+        return this;
+    }
+
+    public SessionContext reportMemo(StringBuilder sb) {
+        if (memo == null || memo.isEmpty()) {
+            return this;
+        }
+        sb.append(BootConstant.BR + BootConstant.BR + "\tMemo: ");
+        memo.forEach((m) -> {
+            if (m.id == null || m.id.isEmpty()) {
+                sb.append(BootConstant.BR + "\t\t").append(m.desc);
+            } else {
+                sb.append(BootConstant.BR + "\t\t").append(m.id).append(BootConstant.MEMO_DELIMITER).append(m.desc);
+            }
+        });
         return this;
     }
 
@@ -879,58 +946,12 @@ public class SessionContext {
 //        }
         List<Err> errors = serviceError.getErrors();
         if (errors != null && !errors.isEmpty()) {
-            sb.append("\n\n\tErrors: ");
+            sb.append(BootConstant.BR + BootConstant.BR + "\tErrors: ");
             for (var error : errors) {
-                sb.append("\n\t ").append(error.toStringEx(true));
+                sb.append(BootConstant.BR + "\t ").append(error.toStringEx(true));
             }
         }
 
-        return this;
-    }
-
-    public SessionContext reportMemo(StringBuilder sb) {
-        if (memo == null || memo.isEmpty()) {
-            //sb.append("\n\tMemo: n/a");
-            return this;
-        }
-        sb.append("\n\n\tMemo: ");
-        memo.forEach((m) -> {
-            if (m.id == null || m.id.isEmpty()) {
-                sb.append("\n\t\t").append(m.desc);
-            } else {
-                sb.append("\n\t\t").append(m.id).append(BootConstant.MEMO_DELIMITER).append(m.desc);
-            }
-        });
-        return this;
-    }
-
-    public SessionContext reportPOI(StringBuilder sb) {
-        return reportPOI(null, sb);
-    }
-
-    public SessionContext reportPOI(NioConfig cfg, StringBuilder sb) {
-        if (poi == null || poi.isEmpty()) {
-            sb.append("\n\tPOI: n/a");
-            return this;
-        }
-        NioConfig.VerboseTargetPOIType filterType = cfg == null ? NioConfig.VerboseTargetPOIType.all : cfg.getFilterPOIType();
-        sb.append("\n\tPOI.t0=").append(startDateTime).append(" ");
-        switch (filterType) {
-            case all:
-                poi.forEach((p) -> {
-                    sb.append(p.name).append("=").append(p.ts - startTs).append("ms, ");
-                });
-                break;
-            case filter:
-                Set<String> poiSet = cfg.getFilterPOISet();
-                poi.stream().filter((p) -> (poiSet.contains(p.name))).forEachOrdered((p) -> {
-                    sb.append(p.name).append("=").append(p.ts - startTs).append("ms, ");
-                });
-                break;
-            case ignore:
-                sb.append("off");
-                break;
-        }
         return this;
     }
 }

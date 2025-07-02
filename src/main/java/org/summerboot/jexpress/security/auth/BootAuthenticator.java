@@ -220,7 +220,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         }
         String tenantName = claims.get(KEY_TENANTNAME, String.class);
 
-        User caller = new User(tenantId, tenantName, userId, userName);
+        User caller = new User(jti, tenantId, tenantName, userId, userName);
 
         if (audience != null) {
             for (String group : audience) {

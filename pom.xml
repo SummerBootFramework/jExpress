@@ -235,7 +235,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.0.2.Final</hibernate.version>
+        <hibernate.version>7.0.4.Final</hibernate.version>
         <hikari-cp.version>6.3.0</hikari-cp.version>
 
         <!-- Cache -->
@@ -781,7 +781,7 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
-            <scope>test</scope>
+            <!--            <scope>test</scope>-->
         </dependency>
     </dependencies>
 

@@ -201,8 +201,8 @@ public class NioHttpUtil {
         if (contentType != null) {
             h.set(HttpHeaderNames.CONTENT_TYPE, contentType + ";charset=" + charsetName);
         }
-        int contentLength = resp.content().readableBytes();
-        h.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(contentLength));
+        int responseDataBytes = resp.content().readableBytes();
+        h.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(responseDataBytes));
 
         // send
         if (isKeepAlive) {//HttpUtil.isKeepAlive(req);
@@ -225,7 +225,7 @@ public class NioHttpUtil {
         if (serviceHeaders != null) {
             serviceHeaders.set(h);
         }
-        return contentLength;
+        return responseDataBytes;
     }
 
     private static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final SessionContext sessionContext, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings) {

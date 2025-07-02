@@ -90,8 +90,8 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
     protected HttpRequest request;
     protected boolean isMultipart;
     protected HttpPostRequestDecoder httpDecoder;
-    protected final long hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
-    protected final SessionContext context = SessionContext.build(hitIndex);
+    protected long hitIndex;// = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
+    protected SessionContext context;// = SessionContext.build(hitIndex);
     protected HttpData partialContent;
     protected long fileSizeQuota;
     protected Caller caller;
@@ -125,6 +125,8 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
             isMultipart = MultipartUtil.isMultipart(request);
             if (isMultipart) {
                 NioCounter.COUNTER_HIT.incrementAndGet();
+                hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
+                context = SessionContext.build(hitIndex);
                 fileSizeQuota = precheck(ctx, request);
                 if (fileSizeQuota < 1) {
                     ReferenceCountUtil.release(httpObject);
@@ -151,7 +153,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
                     if (isOverSized) {
                         reset();
                         Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "File size over max allowed size " + fileSizeQuota, null);
-                        SessionContext context = SessionContext.build(hitIndex);
+                        //SessionContext context = SessionContext.build(hitIndex);
                         context.error(err).status(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
                         NioHttpUtil.sendResponse(ctx, true, context, null, null);
                     } else if (chunk instanceof LastHttpContent) {

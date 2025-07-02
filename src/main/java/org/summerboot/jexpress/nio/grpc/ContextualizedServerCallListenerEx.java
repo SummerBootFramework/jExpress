@@ -10,6 +10,7 @@ import io.grpc.ServerCallHandler;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,7 +60,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 String methodType = call.getMethodDescriptor().getType().name();
                 SocketAddress remoteAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
                 SocketAddress localAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_LOCAL_ADDR);
-                sessionContext = new SessionContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, null, methodName, null);
+                sessionContext = new SessionContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, "gRPC HTTP/2", HttpMethod.POST, methodName, null);
                 sessionContext.caller(caller).callerId(jti).sessionAttribute("MethodType", methodType);
                 context = context.withValue(GRPCServer.SessionContext, sessionContext);
                 serverCall = new ForwardingServerCall.SimpleForwardingServerCall<>(call) {
@@ -231,7 +232,9 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         //line4
         sessionContext.reportPOI(null, sb);
         String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
-        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, sanitizedUserInput, sessionContext, sb, isTraceAll);
+        long requestDataBytes = 0;
+        long responseDataBytes = 0;
+        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, sessionContext, sb, isTraceAll);
         sessionContext.reportMemo(sb);
         sessionContext.reportError(sb);
         sb.append(BootConstant.BR);
