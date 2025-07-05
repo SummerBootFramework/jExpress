@@ -77,15 +77,11 @@ abstract public class HttpClientConfig extends BootConfig {
         /**
          * Sets Proxy-Authorization only in the request header
          */
-        HEADER_ONLY,
+        HEADER,
         /**
          * Sets Authenticator only at the HttpClient level
          */
-        AUTHENTICATOR_ONLY,
-        /**
-         * Sets Proxy-Authorization in the request header AND Authenticator at the HttpClient level
-         */
-        BOTH
+        AUTHENTICATOR
     }
 
     protected HttpClientConfig() {
@@ -167,8 +163,8 @@ abstract public class HttpClientConfig extends BootConfig {
     protected volatile String proxyUserPwd;
 
     @Config(key = "httpclient.proxy.authStrategy", defaultValue = "HEADER_ONLY",
-            desc = "valid values: HEADER_ONLY (Sets Proxy-Authorization only in the request header), AUTHENTICATOR_ONLY (Sets Authenticator only at the HttpClient level), BOTH")
-    protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.HEADER_ONLY;
+            desc = "valid values: HEADER (Sets Proxy-Authorization only in the request header), AUTHENTICATOR (Sets Authenticator only at the HttpClient level)")
+    protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.HEADER;
 
     @JsonIgnore
     protected volatile String proxyAuthorizationBasicValue;
@@ -340,25 +336,26 @@ abstract public class HttpClientConfig extends BootConfig {
                 proxyUserPwd = "";
             }
             if (StringUtils.isNotBlank(proxyUserName)) {
-                if (proxyAuthStrategy == ProxyAuthStrategy.AUTHENTICATOR_ONLY || proxyAuthStrategy == ProxyAuthStrategy.BOTH) {
-                    //2a. set proxy authenticator at the builder level:
-                    final char[] proxyUserPwdChars = proxyUserPwd.toCharArray();
-                    builder.authenticator(new Authenticator() {
-                        @Override
-                        protected PasswordAuthentication getPasswordAuthentication() {
-                            if (getRequestorType() == Authenticator.RequestorType.PROXY) {
-                                return new PasswordAuthentication(proxyUserName, proxyUserPwdChars);
+                switch (proxyAuthStrategy) {
+                    case HEADER -> {
+                        // set proxy authenticator at the request header level: reqBuilder.setHeader("Proxy-Authorization", proxyAuthorizationBasicValue);
+                        String plain = proxyUserName + ":" + proxyUserPwd;
+                        String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
+                        proxyAuthorizationBasicValue = "Basic " + encoded;
+                    }
+                    case AUTHENTICATOR -> {
+                        // set proxy authenticator at the builder level:
+                        final char[] proxyUserPwdChars = proxyUserPwd.toCharArray();
+                        builder.authenticator(new Authenticator() {
+                            @Override
+                            protected PasswordAuthentication getPasswordAuthentication() {
+                                if (getRequestorType() == Authenticator.RequestorType.PROXY) {
+                                    return new PasswordAuthentication(proxyUserName, proxyUserPwdChars);
+                                }
+                                return null; // for other types of authentication, return null
                             }
-                            return null; // for other types of authentication, return null
-                        }
-                    });
-                }
-                if (proxyAuthStrategy == ProxyAuthStrategy.HEADER_ONLY || proxyAuthStrategy == ProxyAuthStrategy.BOTH) {
-                    String plain = proxyUserName + ":" + proxyUserPwd;
-                    String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
-                    proxyAuthorizationBasicValue = "Basic " + encoded;
-                } else {
-                    proxyAuthorizationBasicValue = null; // no Proxy-Authorization header
+                        });
+                    }
                 }
             }
         } else {
