@@ -162,7 +162,7 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.proxy.userPwd", validate = Config.Validate.Encrypted)
     protected volatile String proxyUserPwd;
 
-    @Config(key = "httpclient.proxy.authStrategy", defaultValue = "HEADER_ONLY",
+    @Config(key = "httpclient.proxy.authStrategy", defaultValue = "HEADER",
             desc = "valid values: HEADER (Sets Proxy-Authorization only in the request header), AUTHENTICATOR (Sets Authenticator only at the HttpClient level)")
     protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.HEADER;
 
@@ -324,8 +324,8 @@ abstract public class HttpClientConfig extends BootConfig {
         if (StringUtils.isNotBlank(proxyHost)) {
             builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
         }
-        System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
 
+        System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
         if (StringUtils.isNotBlank(proxyHost)) {
             //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
             builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
