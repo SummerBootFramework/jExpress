@@ -162,9 +162,9 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.proxy.userPwd", validate = Config.Validate.Encrypted)
     protected volatile String proxyUserPwd;
 
-    @Config(key = "httpclient.proxy.authStrategy", defaultValue = "HEADER",
-            desc = "valid values: HEADER (Sets Proxy-Authorization only in the request header), AUTHENTICATOR (Sets Authenticator only at the HttpClient level)")
-    protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.HEADER;
+    @Config(key = "httpclient.proxy.authStrategy", defaultValue = "AUTHENTICATOR",
+            desc = "valid values: AUTHENTICATOR (default, sets Authenticator only at the HttpClient level), HEADER (Sets Proxy-Authorization only in the request header)")
+    protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.AUTHENTICATOR;
 
     @JsonIgnore
     protected volatile String proxyAuthorizationBasicValue;

@@ -213,7 +213,7 @@
         <guava.version>33.4.8-jre</guava.version>
         <protobuf.version>4.31.1</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.31</swagger.core.version>
+        <swagger.core.version>2.2.34</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
