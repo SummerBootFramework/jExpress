@@ -90,7 +90,7 @@ public class AuthConfig extends BootConfig {
     protected volatile String ldapHost;
 
     @Config(key = "ldap.port",
-            desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global voer SSL 3269")
+            desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global over SSL 3269")
     protected volatile int ldapPort;
 
     @Config(key = "ldap.baseDN")

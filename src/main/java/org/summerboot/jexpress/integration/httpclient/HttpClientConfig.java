@@ -32,7 +32,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.net.Authenticator;
 import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -65,6 +68,25 @@ abstract public class HttpClientConfig extends BootConfig {
 
     protected static final String FILENAME_KEYSTORE = "keystore.p12";
     protected static final String FILENAME_TRUSTSTORE_4CLIENT = "truststore_httpclient.p12";
+
+    protected enum ProxyAuthenticationType {
+        NONE, BASIC, DIGEST, NTLM, KERBEROS
+    }
+
+    protected enum ProxyAuthStrategy {
+        /**
+         * Sets Proxy-Authorization only in the request header
+         */
+        HEADER_ONLY,
+        /**
+         * Sets Authenticator only at the HttpClient level
+         */
+        AUTHENTICATOR_ONLY,
+        /**
+         * Sets Proxy-Authorization in the request header AND Authenticator at the HttpClient level
+         */
+        BOTH
+    }
 
     protected HttpClientConfig() {
     }
@@ -143,6 +165,10 @@ abstract public class HttpClientConfig extends BootConfig {
     @JsonIgnore
     @Config(key = "httpclient.proxy.userPwd", validate = Config.Validate.Encrypted)
     protected volatile String proxyUserPwd;
+
+    @Config(key = "httpclient.proxy.authStrategy", defaultValue = "HEADER_ONLY",
+            desc = "valid values: HEADER_ONLY (Sets Proxy-Authorization only in the request header), AUTHENTICATOR_ONLY (Sets Authenticator only at the HttpClient level), BOTH")
+    protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.HEADER_ONLY;
 
     @JsonIgnore
     protected volatile String proxyAuthorizationBasicValue;
@@ -302,28 +328,41 @@ abstract public class HttpClientConfig extends BootConfig {
         if (StringUtils.isNotBlank(proxyHost)) {
             builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
         }
-        if (StringUtils.isNotBlank(proxyUserName)) {
+        System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
+
+        if (StringUtils.isNotBlank(proxyHost)) {
+            //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
+            builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
+            if (proxyUserName == null) {
+                proxyUserName = "";
+            }
             if (proxyUserPwd == null) {
                 proxyUserPwd = "";
             }
-            //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
-            System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
-            //2a. set proxy authenticator at the request header level: 
-            String plain = proxyUserName + ":" + proxyUserPwd;
-            String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
-            proxyAuthorizationBasicValue = "Basic " + encoded;
-            //HttpRequest.newBuilder().setHeader("Proxy-Authorization", ProxyAuthorizationValue);
-
-//                    if (useAuthenticator) {
-//                        //2b. set proxy authenticator at the HttpClient level: not flexible to deal with different remote server settings
-//                        Authenticator authenticator = new Authenticator() {
-//                            @Override
-//                            protected PasswordAuthentication getPasswordAuthentication() {
-//                                return new PasswordAuthentication(proxyUserName, proxyUserPwd.toCharArray());
-//                            }
-//                        };
-//                        builder.authenticator(authenticator);
-//                    }
+            if (StringUtils.isNotBlank(proxyUserName)) {
+                if (proxyAuthStrategy == ProxyAuthStrategy.AUTHENTICATOR_ONLY || proxyAuthStrategy == ProxyAuthStrategy.BOTH) {
+                    //2a. set proxy authenticator at the builder level:
+                    final char[] proxyUserPwdChars = proxyUserPwd.toCharArray();
+                    builder.authenticator(new Authenticator() {
+                        @Override
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            if (getRequestorType() == Authenticator.RequestorType.PROXY) {
+                                return new PasswordAuthentication(proxyUserName, proxyUserPwdChars);
+                            }
+                            return null; // for other types of authentication, return null
+                        }
+                    });
+                }
+                if (proxyAuthStrategy == ProxyAuthStrategy.HEADER_ONLY || proxyAuthStrategy == ProxyAuthStrategy.BOTH) {
+                    String plain = proxyUserName + ":" + proxyUserPwd;
+                    String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
+                    proxyAuthorizationBasicValue = "Basic " + encoded;
+                } else {
+                    proxyAuthorizationBasicValue = null; // no Proxy-Authorization header
+                }
+            }
+        } else {
+            builder.proxy(ProxySelector.of((InetSocketAddress) Proxy.NO_PROXY.address()));
         }
         httpClient = builder.build();
         // 3. register new
@@ -396,6 +435,10 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public String getProxyUserPwd() {
         return proxyUserPwd;
+    }
+
+    public ProxyAuthStrategy getProxyAuthStrategy() {
+        return proxyAuthStrategy;
     }
 
     public String getProxyAuthorizationBasicValue() {
