@@ -92,6 +92,7 @@ abstract public class HttpClientConfig extends BootConfig {
         jsonParserTimeZone = TimeZone.getDefault();
         httpClientCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
         httpClientMaxSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        proxyAuthStrategy = ProxyAuthStrategy.AUTHENTICATOR;
     }
 
     @Override
@@ -342,6 +343,7 @@ abstract public class HttpClientConfig extends BootConfig {
                         String plain = proxyUserName + ":" + proxyUserPwd;
                         String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
                         proxyAuthorizationBasicValue = "Basic " + encoded;
+                        httpClientDefaultRequestHeaders.put("Proxy-Authorization", proxyAuthorizationBasicValue);
                     }
                     case AUTHENTICATOR -> {
                         // set proxy authenticator at the builder level:

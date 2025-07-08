@@ -49,10 +49,6 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
             String value = httpClientDefaultRequestHeaders.get(key);
             reqBuilder.setHeader(key, value);
         });
-        String proxyAuth = httpCfg.getProxyAuthorizationBasicValue();
-        if (proxyAuth != null) {
-            reqBuilder.setHeader("Proxy-Authorization", proxyAuth);
-        }
         reqBuilder.timeout(Duration.ofMillis(httpCfg.getHttpClientTimeoutMs()));
     }
 

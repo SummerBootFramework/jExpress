@@ -374,7 +374,7 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext responseHeaders(Map<String, Iterable<?>> hs) {
+    public SessionContext responseHeaders(Map<String, ? extends Iterable<?>> hs) {
         if (hs == null) {
             return this;
         }
