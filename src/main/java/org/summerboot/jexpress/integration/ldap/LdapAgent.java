@@ -231,7 +231,7 @@ public class LdapAgent implements Closeable {
      * This method expects a pre-validated LDAP filter string.
      *
      * @param filter LDAP filter string, already properly escaped or constructed safely.
-     * @veracode.suppress CWE-90 Justification: Filter is pre-escaped before method call.
+     *               veracode.suppress CWE-90 Justification: Filter is pre-escaped before method call.
      */
     public List<Attributes> query(final String filter) throws NamingException {
         if (log.isDebugEnabled()) {

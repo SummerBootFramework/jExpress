@@ -68,8 +68,8 @@ public interface BootErrorCode {
     int HTTP_REQUEST_TIMEOUT = getErrorCode(IO_BASE + 2);// a context is not received within a specified time period.
     int HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT = getErrorCode(IO_BASE + 3);
     int HTTP_CONNECTION_TIMEOUT = getErrorCode(IO_BASE + 4);// a connection, over which an HttpRequest is intended to be sent, is not successfully established within a specified time period.
-    int HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT = getErrorCode(IO_BASE + 5);
-    int HTTPCLIENT_RPC_FAILED = getErrorCode(IO_BASE + 6);
+    int HTTPCLIENT_UNKNOWN_RESPONSE_FORMAT = getErrorCode(IO_BASE + 5);
+    int HTTPCLIENT_INVALID_RESPONSE_FORMAT = getErrorCode(IO_BASE + 6);
     int NETWORK_ERROR = getErrorCode(IO_BASE + 7);
     int FILE_NOT_ACCESSABLE = getErrorCode(IO_BASE + 8);
     int FILE_NOT_FOUND = getErrorCode(IO_BASE + 9);

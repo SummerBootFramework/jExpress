@@ -20,7 +20,6 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 
 import java.io.IOException;
 import java.net.http.HttpRequest;
@@ -53,7 +52,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
     }
 
     @Override
-    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException {
+    public <T> RPCResult<T> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException {
         configure(reqBuilder);
         HttpRequest req = reqBuilder.build();
         String reqbody = RPCDelegate.getHttpRequestBody(req);
@@ -62,7 +61,6 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
 
     /**
      * @param <T>
-     * @param <E>
      * @param sessionContext
      * @param req
      * @param successStatusList
@@ -70,7 +68,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
      * @throws IOException
      */
     @Override
-    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(SessionContext sessionContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException {
+    public <T> RPCResult<T> rpcEx(SessionContext sessionContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException {
         Optional<HttpRequest.BodyPublisher> pub = req.bodyPublisher();
         String reqbody = RPCDelegate.getHttpRequestBody(req);
         return this.rpcEx(sessionContext, req, reqbody, successStatusList);
@@ -81,7 +79,6 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
      * result
      *
      * @param <T>
-     * @param <E>
      * @param context
      * @param originRequest
      * @param originRequestBody
@@ -90,7 +87,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
      * @throws IOException
      */
     @Override
-    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException {
+    public <T> RPCResult<T> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException {
         //1. log memo
         context.memo(RPCMemo.MEMO_RPC_REQUEST, originRequest.toString() + " caller=" + context.caller());
         if (originRequestBody != null) {
@@ -126,7 +123,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
         }
 
         //3b. update status   
-        RPCResult<T, E> rpcResult = new RPCResult<>(originRequest, originRequestBody, httpResponse, isRemoteSuccess);
+        RPCResult<T> rpcResult = new RPCResult<>(originRequest, originRequestBody, httpResponse, isRemoteSuccess);
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
         context.memo(RPCMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + httpResponse.headers());
         context.memo(RPCMemo.MEMO_RPC_RESPONSE_DATA, rpcResponseJsonBody);
@@ -141,12 +138,11 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
      * @param request
      * @param successStatusList
      * @param <T>
-     * @param <E>
      * @return
      * @throws IOException
      */
     @Override
-    public <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(SessionContext context, RPCResult<T, E> request, HttpResponseStatus... successStatusList) throws IOException {
+    public <T> RPCResult<T> rpcEx(SessionContext context, RPCResult<T> request, HttpResponseStatus... successStatusList) throws IOException {
         return this.rpcEx(context, request.getOriginRequest(), request.getOriginRequestBody(), successStatusList);
     }
 

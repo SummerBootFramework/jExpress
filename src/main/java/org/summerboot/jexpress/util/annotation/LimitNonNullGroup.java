@@ -19,12 +19,12 @@ import java.lang.annotation.Target;
  *
  * <p><strong>Usage Example:</strong></p>
  * <pre>{@code
- * @LimitNonNull(
+ * @LimitNonNullGroup(
  *     fields = { "field1", "field2" },
  *     limit = 1,
  *     message = "Only one of filed1 or field2 must be provided"
  * )
- * @LimitNonNull(
+ * @LimitNonNullGroup(
  *     fields = { "field3", "field4" },
  *     limit = 2,
  *     message = "Both filed3 and filed3 must be provided"
@@ -65,7 +65,7 @@ public @interface LimitNonNullGroup {
     int limit() default 1; // Optional limit to specify how many non-null fields are allowed, default is 1
 
     /**
-     * Container annotation for repeatable use of {@link LimitNonNull}.
+     * Container annotation for repeatable use of {@link LimitNonNullGroup}.
      */
     @Target(ElementType.TYPE)
     @Retention(RetentionPolicy.RUNTIME)

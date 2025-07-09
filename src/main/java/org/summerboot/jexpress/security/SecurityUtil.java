@@ -213,7 +213,11 @@ public class SecurityUtil {
 
 
     /**
-     * Distinguished Name Escaping - The exhaustive list is the following: \ # + < > , ; " = and leading or trailing spaces.
+     * This method demonstrates how to include special characters in Javadoc.
+     * The exhaustive list of characters requiring escaping in Distinguished Name (DN) is the following:
+     * {@literal \ # + < > , ; " = and leading or trailing spaces.}
+     * <p>
+     * This tag ensures the literal text is rendered correctly without Javadoc parsing errors.
      *
      * @param dnName
      * @return

@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.5.2-SNAPSHOT</version>
+    <version>2.6.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress ${project.version}</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
         some of which Spring Boot has (may) not yet provided
     </description>
     <url>https://github.com/SummerBootFramework</url>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>The jExpress licenses this framework to you under the Apache License, version 2.0 (the "License");
+                you may not use this framework except in compliance with the License and you have no policy prohibiting
+                employee contributions back to this framework (unless the contributor to this framework is your current
+                or retired employee).
+            </comments>
+        </license>
+    </licenses>
     <organization>
         <name>Summer Boot Org</name>
         <url>https://summerboot.org</url>
@@ -31,22 +44,10 @@
             <url>https://www.linkedin.com/in/changski-zhang-97787b4/</url>
         </developer>
     </developers>
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>The jExpress licenses this framework to you under the Apache License, version 2.0 (the "License");
-                you may not use this framework except in compliance with the License and you have no policy prohibiting
-                employee contributions back to this framework (unless the contributor to this framework is your current
-                or retired employee).
-            </comments>
-        </license>
-    </licenses>
     <scm>
-        <url>https://github.com/SummerBootFramework/jExpress.git</url>
-        <connection>scm:git:git@github.com:SummerBootFramework/jExpress.git</connection>
-        <developerConnection>scm:git:git@github.com:SummerBootFramework/jExpress.git</developerConnection>
+        <connection>sscm:git:git://github.com/SummerBootFramework/jExpress.git</connection>
+        <developerConnection>scm:git:ssh://github.com:SummerBootFramework/jExpress.git</developerConnection>
+        <url>https://github.com/SummerBootFramework/jExpress/tree/main</url>
     </scm>
 
     <profiles>
@@ -91,7 +92,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!--Java doc
+                    <!--Java doc  -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
@@ -104,7 +105,7 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin> -->
+                    </plugin>
 
                     <!--Deploy-->
                     <plugin>
@@ -137,18 +138,27 @@
                         </executions>
                     </plugin>
                     <!--Deploy to OSSRH, and publish to Central Repository-->
-                    <!-- https://mvnrepository.com/artifact/org.sonatype.plugins/nexus-staging-maven-plugin -->
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>${nexus-staging-maven-plugin.version}</version>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.5.0</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <autoPublish>true</autoPublish>
                         </configuration>
                     </plugin>
+                    <!-- https://mvnrepository.com/artifact/org.sonatype.plugins/nexus-staging-maven-plugin -->
+                    <!--                    <plugin>-->
+                    <!--                        <groupId>org.sonatype.plugins</groupId>-->
+                    <!--                        <artifactId>nexus-staging-maven-plugin</artifactId>-->
+                    <!--                        <version>${nexus-staging-maven-plugin.version}</version>-->
+                    <!--                        <extensions>true</extensions>-->
+                    <!--                        <configuration>-->
+                    <!--                            <serverId>ossrh</serverId>-->
+                    <!--                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>-->
+                    <!--                            <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
+                    <!--                        </configuration>-->
+                    <!--                    </plugin>-->
 
                     <!--            <plugin>-->
                     <!--                <groupId>org.sonatype.central</groupId>-->
@@ -164,13 +174,20 @@
             <!-- Central Repository info -->
             <distributionManagement>
                 <snapshotRepository>
-                    <id>ossrh</id>
-                    <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+                    <name>Central Portal Snapshots</name>
+                    <id>central-snapshots</id>
+                    <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
                 </snapshotRepository>
                 <repository>
-                    <id>ossrh</id>
-                    <name>Central Repository OSSRH</name>
-                    <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                    <name>Central Portal</name>
+                    <id>central</id>
+                    <url>https://central.sonatype.com/api/v1/publisher</url>
                 </repository>
             </distributionManagement>
         </profile>
@@ -228,14 +245,14 @@
         <jackson.version>2.19.1</jackson.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.8</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.9</tomcat-embed-el.version>
         <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.0.4.Final</hibernate.version>
+        <hibernate.version>7.0.5.Final</hibernate.version>
         <hikari-cp.version>6.3.0</hikari-cp.version>
 
         <!-- Cache -->
@@ -781,7 +798,7 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
-            <scope>test</scope>
+            <!--            <scope>test</scope>-->
         </dependency>
     </dependencies>
 
