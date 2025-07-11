@@ -330,7 +330,7 @@ public class HealthMonitor {
         isServicePaused = pauseService;
         if (isServicePaused) {
             ServiceError se = new ServiceError(HealthMonitor.class.getSimpleName());
-            Err error = new Err<>(BootErrorCode.SERVICE_PAUSED, null, "Service is paused: " + lockCode, null);
+            Err error = new Err(BootErrorCode.SERVICE_PAUSED, null, "Service is paused: " + lockCode, null);
             se.addError(error);
             statusReasonPausedForExternalCaller = se.toJson();
         }

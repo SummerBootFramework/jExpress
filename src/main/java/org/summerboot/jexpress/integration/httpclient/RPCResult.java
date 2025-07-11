@@ -159,7 +159,7 @@ public class RPCResult<T> {
                 String error = BeanUtil.getBeanValidationResult(ret);
                 if (error != null) {
                     if (context != null) {
-                        Err e = new Err<>(BootErrorCode.HTTPCLIENT_INVALID_RESPONSE_FORMAT, null, "Invalid HTTP client JSON response", null, error);
+                        Err e = new Err(BootErrorCode.HTTPCLIENT_INVALID_RESPONSE_FORMAT, null, "Invalid HTTP client JSON response", null, error);
                         context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
                     }
                     return null;
@@ -177,7 +177,7 @@ public class RPCResult<T> {
             }
         } catch (Throwable ex) {
             if (context != null) {
-                Err e = new Err<>(BootErrorCode.HTTPCLIENT_UNKNOWN_RESPONSE_FORMAT, null, "Unknown HTTP client JSON response", ex, ex.toString());
+                Err e = new Err(BootErrorCode.HTTPCLIENT_UNKNOWN_RESPONSE_FORMAT, null, "Unknown HTTP client JSON response", ex, ex.toString());
                 context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
             }
             return null;

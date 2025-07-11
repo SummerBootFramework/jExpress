@@ -291,7 +291,7 @@ abstract public class BootController extends PingController {
 
     public Caller login(Authenticator auth, String userId, String password, SessionContext context) throws NamingException {
         if (auth == null) {
-            context.error(new Err<>(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
         }
         if (!preLogin(userId, password, context)) {
@@ -338,7 +338,7 @@ abstract public class BootController extends PingController {
     public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final SessionContext context) {
         //Authenticator auth = getAuthenticator();
         if (auth == null) {
-            context.error(new Err<>(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return;
         }
         //AuthTokenCache authTokenCache = getAuthTokenCache();

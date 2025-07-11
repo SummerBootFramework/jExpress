@@ -54,14 +54,14 @@ public class HttpExceptionHandler implements HttpExceptionListener {
 
     @Override
     public void onActionNotFound(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, SessionContext context) {
-        Err e = new Err<>(BootErrorCode.AUTH_INVALID_URL, null, null, null, "Action not found: " + httptMethod + " " + httpRequestPath);
+        Err e = new Err(BootErrorCode.AUTH_INVALID_URL, null, null, null, "Action not found: " + httptMethod + " " + httpRequestPath);
         context.error(e).status(HttpResponseStatus.NOT_FOUND).logRequestHeader(false).logRequestBody(false);
     }
 
     @Override
     public void onNamingException(NamingException ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         if (ex instanceof AuthenticationException) {
-            Err e = new Err<>(BootErrorCode.AUTH_LOGIN_FAILED, null, "Authentication failed", null, "Authentication failed: " + httptMethod + " " + httpRequestPath);
+            Err e = new Err(BootErrorCode.AUTH_LOGIN_FAILED, null, "Authentication failed", null, "Authentication failed: " + httptMethod + " " + httpRequestPath);
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             Throwable cause = ExceptionUtils.getRootCause(ex);
@@ -78,7 +78,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
     }
 
     protected void onNamingException(NamingException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
-        Err e = new Err<>(BootErrorCode.ACCESS_ERROR_LDAP, null, null, ex, cause.toString());
+        Err e = new Err(BootErrorCode.ACCESS_ERROR_LDAP, null, null, ex, cause.toString());
         context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -97,7 +97,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
     }
 
     protected void onPersistenceException(PersistenceException ex, Throwable cause, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
-        Err e = new Err<>(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause.toString());
+        Err e = new Err(BootErrorCode.ACCESS_ERROR_DATABASE, null, null, ex, cause.toString());
         context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -106,21 +106,21 @@ public class HttpExceptionHandler implements HttpExceptionListener {
         HealthMonitor.inspect();
         context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
                 .level(Level.WARN)
-                .error(new Err<>(BootErrorCode.HTTP_CONNECTION_TIMEOUT, null, "Http Connection Timeout", ex, "Http Connect Timeout: " + ex.getMessage()));
+                .error(new Err(BootErrorCode.HTTP_CONNECTION_TIMEOUT, null, "Http Connection Timeout", ex, "Http Connect Timeout: " + ex.getMessage()));
     }
 
     @Override
     public void onHttpTimeoutException(HttpTimeoutException ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         context.status(HttpResponseStatus.GATEWAY_TIMEOUT)
                 .level(Level.WARN)
-                .error(new Err<>(BootErrorCode.HTTP_REQUEST_TIMEOUT, null, "Http Request Timeout", ex, "Http Request Timeout: " + ex.getMessage()));
+                .error(new Err(BootErrorCode.HTTP_REQUEST_TIMEOUT, null, "Http Request Timeout", ex, "Http Request Timeout: " + ex.getMessage()));
     }
 
     @Override
     public void onRejectedExecutionException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context) {
         context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
                 .level(Level.WARN)
-                .error(new Err<>(BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, null, "Too many Http client requests, try again later: ", ex, "Too many request, try again later: " + ex.getMessage()));
+                .error(new Err(BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, null, "Too many Http client requests, try again later: ", ex, "Too many request, try again later: " + ex.getMessage()));
     }
 
     @Override
@@ -161,7 +161,7 @@ public class HttpExceptionHandler implements HttpExceptionListener {
      */
     protected void nakFatal(SessionContext context, HttpResponseStatus httpResponseStatus, int appErrorCode, String errorMessage, Throwable ex, Collection<String> emailTo, String content) {
         // 1. build JSON context with same app error code and exception
-        Err e = new Err<>(appErrorCode, null, null, ex, errorMessage);
+        Err e = new Err(appErrorCode, null, null, ex, errorMessage);
         context.status(httpResponseStatus).level(Level.FATAL).error(e);
         // 2. send sendAlertAsync
         if (po != null) {

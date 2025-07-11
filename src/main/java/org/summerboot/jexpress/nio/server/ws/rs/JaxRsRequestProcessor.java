@@ -364,7 +364,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             Caller caller = context.caller();
             if (caller == null) {
                 context.status(HttpResponseStatus.UNAUTHORIZED)
-                        .error(new Err<>(BootErrorCode.AUTH_NO_PERMISSION, null, "Authentication Required - Unknown caller", null));
+                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Authentication Required - Unknown caller", null));
                 return false;
             }
 
@@ -377,7 +377,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 
             if (!isAuthorized) {
                 context.status(HttpResponseStatus.FORBIDDEN)
-                        .error(new Err<>(BootErrorCode.AUTH_NO_PERMISSION, null, "Authorization Failed - Caller is not in role", null, "Authorization Failed - Caller is not in role: " + rolesAllowed));
+                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Authorization Failed - Caller is not in role", null, "Authorization Failed - Caller is not in role: " + rolesAllowed));
                 return false;
             }
         }
@@ -405,13 +405,13 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             if (!HealthMonitor.isHealthCheckSuccess() && HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicy, failedHealthChecks)) {
                 final String internalError = failedHealthChecks.toString();
                 context.status(HttpResponseStatus.BAD_GATEWAY)
-                        .error(new Err<>(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, "Service health check failed", null,
+                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, "Service health check failed", null,
                                 "Service health check failed: " + internalError));
                 return null;
             }
             if (rejectWhenPaused && HealthMonitor.isServicePaused()) {
                 context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
-                        .error(new Err<>(BootErrorCode.SERVICE_PAUSED, null, "Service is paused", null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
+                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, "Service is paused", null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
                 return null;
             }
 

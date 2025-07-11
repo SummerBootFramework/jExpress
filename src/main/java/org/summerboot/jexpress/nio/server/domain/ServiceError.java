@@ -149,7 +149,7 @@ public class ServiceError {
         if (errors == null) {
             errors = new ArrayList<>();
         }
-        this.errors.add(new Err<>(errorCode, errorTag, errorDesc, ex, internalInfo));
+        this.errors.add(new Err(errorCode, errorTag, errorDesc, ex, internalInfo));
         return this;
     }
 
