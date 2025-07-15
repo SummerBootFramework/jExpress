@@ -15,9 +15,11 @@
  */
 package org.summerboot.jexpress.nio.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.util.BeanUtil;
 
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ import java.util.List;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
+@JsonFilter(BootConstant.JSONFILTER_NAME_SERVICEERROR)
 public class ServiceError {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The index of requests received by current server since start")

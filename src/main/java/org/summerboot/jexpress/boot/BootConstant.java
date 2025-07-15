@@ -35,6 +35,8 @@ public interface BootConstant {
     String VERSION = "jExpress 2.6.0";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
+    String JSONFILTER_NAME_SERVICEERROR = "ServiceErrorFilter";
+
     /*
      * Runtime info
      */

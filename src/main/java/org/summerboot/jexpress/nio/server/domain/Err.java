@@ -32,13 +32,13 @@ public class Err {
     protected String errorCode;
     protected String errorTag;
     protected String errorDesc;
-    protected String[] args;
+    protected Object[] args;
 
     @JsonIgnore
     protected Throwable cause;
 
     @JsonIgnore
-    protected String internalInfo;
+    protected Object internalInfo;
 
     public Err(int errorCode, String errorTag, String errorDesc, Throwable ex) {
         //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
@@ -50,12 +50,12 @@ public class Err {
         this(errorCode, errorTag, errorDesc, ex, null);
     }
 
-    public Err(int errorCode, String errorTag, String errorDesc, Throwable ex, String internalInfo) {
+    public Err(int errorCode, String errorTag, String errorDesc, Throwable ex, Object internalInfo) {
         //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
         this("" + errorCode, errorTag, errorDesc, ex, internalInfo);
     }
 
-    public Err(String errorCode, String errorTag, String errorDesc, Throwable ex, String internalInfo) {
+    public Err(String errorCode, String errorTag, String errorDesc, Throwable ex, Object internalInfo) {
         this.errorCode = errorCode;
         this.errorTag = errorTag;
         this.errorDesc = errorDesc;
@@ -144,19 +144,19 @@ public class Err {
         this.cause = cause;
     }
 
-    public String getInternalInfo() {
+    public Object getInternalInfo() {
         return internalInfo;
     }
 
-    public void setInternalInfo(String internalInfo) {
+    public void setInternalInfo(Object internalInfo) {
         this.internalInfo = internalInfo;
     }
 
-    public String[] getArgs() {
+    public Object[] getArgs() {
         return args;
     }
 
-    public void setArgs(String... args) {
+    public void setArgs(Object... args) {
         this.args = args;
     }
 }

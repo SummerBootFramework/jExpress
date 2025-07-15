@@ -267,6 +267,8 @@ public class NioConfig extends BootConfig {
     protected volatile boolean toJsonIgnoreNull = true;
     @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
     protected volatile boolean toJsonPretty = false;
+    @Config(key = "nio.JAX-RS.toJson.showRefInServiceError", defaultValue = "false")
+    protected volatile boolean showRefInServiceError = false;
 
     @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
@@ -470,7 +472,7 @@ public class NioConfig extends BootConfig {
         tpe = buildThreadPoolExecutor(tpe, "Netty-HTTP.Biz", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
-        BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull);
+        BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull, showRefInServiceError);
 
         //5.1 caller filter
         switch (filterUserType) {
@@ -737,6 +739,10 @@ public class NioConfig extends BootConfig {
 
     public boolean isToJsonPretty() {
         return toJsonPretty;
+    }
+
+    public boolean isShowRefInServiceError() {
+        return showRefInServiceError;
     }
 
     public VerboseTargetUserType getFilterUserType() {
