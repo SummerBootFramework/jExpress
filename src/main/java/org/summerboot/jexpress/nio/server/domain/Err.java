@@ -40,6 +40,9 @@ public class Err {
     @JsonIgnore
     protected Object internalInfo;
 
+    public Err() {
+    }
+
     public Err(int errorCode, String errorTag, String errorDesc, Throwable ex) {
         //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
         this("" + errorCode, errorTag, errorDesc, ex, null);
@@ -108,9 +111,9 @@ public class Err {
         return Integer.parseInt(errorCode);
     }
 
-    public void setErrorCode(int errorCode) {
-        this.errorCode = "" + errorCode;
-    }
+//    public void setErrorCode(int errorCode) {
+//        this.errorCode = "" + errorCode;
+//    }
 
     public String getErrorCode() {
         return errorCode;

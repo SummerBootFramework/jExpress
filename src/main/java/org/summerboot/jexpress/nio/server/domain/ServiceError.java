@@ -42,6 +42,10 @@ public class ServiceError {
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "The optional error list")
     protected List<Err> errors;
 
+    public ServiceError() {
+        this.ref = null;
+    }
+
     public ServiceError(String ref) {
         this.ref = ref;
     }
