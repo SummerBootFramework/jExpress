@@ -1,4 +1,4 @@
-package org.summerboot.jexpress.boot;
+package org.summerboot.jexpress.nio;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,17 +12,17 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
- * RequestTracker is a utility class to track the last request timestamp and loose transaction ID.
+ * IdleEventMonitor is a utility class to track the last request timestamp and loose transaction ID.
  * It can be used to monitor idle states and trigger events when a request has not been received within a specified threshold.
  * This class is thread-safe and can be used in a multi-threaded environment.
  */
-public class BootRequestTracker {
+public class IdleEventMonitor {
 
     private final AtomicLong lastTimestamp = new AtomicLong(0);
     private final AtomicReference<String> lastTransactionId = new AtomicReference<>();
     private final String name;
 
-    public BootRequestTracker(String name) {
+    public IdleEventMonitor(String name) {
         this.name = name;
     }
 
@@ -67,50 +67,50 @@ public class BootRequestTracker {
     }
 
 
-    protected static final Logger log = LogManager.getLogger(BootRequestTracker.class.getName());
+    protected static final Logger log = LogManager.getLogger(IdleEventMonitor.class.getName());
 
-    private static final Map<BootRequestTracker, Boolean> statusMap = new ConcurrentHashMap<>();
+    private static final Map<IdleEventMonitor, Boolean> statusMap = new ConcurrentHashMap<>();
 
     public static interface IdleEventListener {
-        void onIdle(BootRequestTracker requestTracker) throws Exception;
+        void onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
     }
 
-    public static void start(final BootRequestTracker requestTracker, final IdleEventListener idleEventListener, long threshold, TimeUnit timeUnit) throws Exception {
-        if (requestTracker == null) {
+    public static void start(final IdleEventMonitor idleEventMonitor, final IdleEventListener idleEventListener, long threshold, TimeUnit timeUnit) throws Exception {
+        if (idleEventMonitor == null) {
             throw new IllegalArgumentException("Request tracker cannot be null");
         }
-        idleEventListener.onIdle(requestTracker);
+        idleEventListener.onIdle(idleEventMonitor);
         Thread vThread = Thread.startVirtualThread(() -> {
-            log.info("BootRequestTracker.start: " + requestTracker.getName());
+            log.info("IdleEventMonitor.start: " + idleEventMonitor.getName());
             do {
                 try {
-                    long ttlMillis = requestTracker.getTTLMillis(threshold, timeUnit);
+                    long ttlMillis = idleEventMonitor.getTTLMillis(threshold, timeUnit);
                     if (ttlMillis >= 0) {
                         Thread.sleep(ttlMillis);
                         continue;
                     }
-                    log.info("BootRequestTracker.onIdle: " + requestTracker.getName() + ", lastTxId=" + requestTracker.getLastTransactionId() + ", lastTS=" + TimeUtil.toOffsetDateTime(requestTracker.getLastTimestamp(), null));
-                    idleEventListener.onIdle(requestTracker);
-                    requestTracker.update(requestTracker.getName());
+                    log.info("IdleEventMonitor.onIdle: " + idleEventMonitor.getName() + ", lastTxId=" + idleEventMonitor.getLastTransactionId() + ", lastTS=" + TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null));
+                    idleEventListener.onIdle(idleEventMonitor);
+                    idleEventMonitor.update(idleEventMonitor.getName());
                 } catch (InterruptedException ex) {
-                    log.error("BootRequestTracker.interrupted: " + requestTracker.getName(), ex);
+                    log.error("IdleEventMonitor.interrupted: " + idleEventMonitor.getName(), ex);
                 } catch (Throwable ex) {
-                    log.error("BootRequestTracker.exception: " + requestTracker.getName(), ex);
+                    log.error("IdleEventMonitor.exception: " + idleEventMonitor.getName(), ex);
                 }
-            } while (statusMap.getOrDefault(requestTracker, true));
-            log.info("BootRequestTracker.shutdown: " + requestTracker.getName());
+            } while (statusMap.getOrDefault(idleEventMonitor, true));
+            log.info("IdleEventMonitor.shutdown: " + idleEventMonitor.getName());
         });
     }
 
-    public static void stop(BootRequestTracker requestTracker) {
-        if (requestTracker == null) {
+    public static void stop(IdleEventMonitor idleEventMonitor) {
+        if (idleEventMonitor == null) {
             return;
         }
-        statusMap.put(requestTracker, false);
+        statusMap.put(idleEventMonitor, false);
     }
 
     public static void stop() {
-        for (BootRequestTracker tracker : statusMap.keySet()) {
+        for (IdleEventMonitor tracker : statusMap.keySet()) {
             stop(tracker);
         }
         statusMap.clear();
