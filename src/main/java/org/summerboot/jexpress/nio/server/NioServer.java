@@ -77,7 +77,7 @@ public class NioServer {
     protected final NioChannelInitializer channelInitializer;
     protected final NIOStatusListener nioListener;
 
-    public static final IdleEventMonitor RequestTracker = new IdleEventMonitor(NioServer.class.getSimpleName());
+    public static final IdleEventMonitor IDLE_EVENT_MONITOR = new IdleEventMonitor(NioServer.class.getSimpleName());
 
     public NioServer(NioChannelInitializer channelInitializer, NIOStatusListener nioListener) {
         this.channelInitializer = channelInitializer;

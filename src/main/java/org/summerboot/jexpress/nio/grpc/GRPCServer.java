@@ -64,7 +64,7 @@ public class GRPCServer {
     protected ScheduledExecutorService statusReporter = null;
     //protected boolean servicePaused = false;
 
-    public static final IdleEventMonitor RequestTracker = new IdleEventMonitor(GRPCServer.class.getSimpleName());
+    public static final IdleEventMonitor IDLE_EVENT_MONITOR = new IdleEventMonitor(GRPCServer.class.getSimpleName());
 
     public ServerBuilder getServerBuilder() {
         return serverBuilder;

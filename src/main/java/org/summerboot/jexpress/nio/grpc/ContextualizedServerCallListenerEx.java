@@ -51,7 +51,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             } else {
                 final long hitIndex = GRPCServer.getServiceCounter().incrementBiz();
                 final String txId = BootConstant.APP_ID + "-" + hitIndex;
-                GRPCServer.RequestTracker.update(txId);
+                GRPCServer.IDLE_EVENT_MONITOR.update(txId);
                 HttpHeaders httpHeaders = new DefaultHttpHeaders();
                 for (String key : headers.keys()) {
                     httpHeaders.add(key, headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER)));
