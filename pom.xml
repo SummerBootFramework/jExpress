@@ -154,7 +154,7 @@
         <!-- Commons -->
         <commons-lang3.version>3.18.0</commons-lang3.version>
         <commons-cli.version>1.9.0</commons-cli.version>
-        <commons-io.version>2.19.0</commons-io.version>
+        <commons-io.version>2.20.0</commons-io.version>
         <commons-text.version>1.13.1</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
@@ -168,7 +168,7 @@
         <jwt.version>0.12.6</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.2.2.Final</netty.version>
+        <netty.version>4.2.3.Final</netty.version>
         <netty-tcnative.version>2.0.72.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.73.0</grpc.version>
@@ -187,7 +187,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.19.1</jackson.version>
+        <jackson.version>2.19.2</jackson.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
         <tomcat-embed-el.version>11.0.9</tomcat-embed-el.version>
