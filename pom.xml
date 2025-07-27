@@ -156,7 +156,7 @@
         <commons-lang3.version>3.18.0</commons-lang3.version>
         <commons-cli.version>1.9.0</commons-cli.version>
         <commons-io.version>2.20.0</commons-io.version>
-        <commons-text.version>1.13.1</commons-text.version>
+        <commons-text.version>1.14.0</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.25.1</log4j-api.version>
@@ -199,7 +199,7 @@
 
         <!-- JPA -->
         <hibernate.version>7.0.7.Final</hibernate.version>
-        <hikari-cp.version>6.3.0</hikari-cp.version>
+        <hikari-cp.version>6.3.2</hikari-cp.version>
 
         <!-- Cache -->
         <jedis.version>6.0.0</jedis.version>
