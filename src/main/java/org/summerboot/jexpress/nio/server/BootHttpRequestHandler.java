@@ -31,6 +31,7 @@ import org.summerboot.jexpress.boot.event.HttpLifecycleListener;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.security.auth.Authenticator;
+import org.summerboot.jexpress.security.auth.BootAuthenticator;
 
 import javax.naming.NamingException;
 import java.io.IOException;
@@ -90,7 +91,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             }
 
             // step2. caller authentication
-            if (processor.isRoleBased()) {
+            if (processor.isRoleBased() || BootAuthenticator.hasBearerToken(httpRequestHeaders)) {
                 context.poi(BootPOI.AUTH_BEGIN);
                 if (!authenticationCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
                     context.status(HttpResponseStatus.UNAUTHORIZED);

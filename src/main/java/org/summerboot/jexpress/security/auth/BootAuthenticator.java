@@ -266,9 +266,13 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param httpRequestHeaders
      * @return
      */
-    protected String getBearerToken(HttpHeaders httpRequestHeaders) {
+    public static String getBearerToken(HttpHeaders httpRequestHeaders) {
         String authHeaderValue = httpRequestHeaders.get(HttpHeaderNames.AUTHORIZATION);
         return getBearerToken(authHeaderValue);
+    }
+
+    public static boolean hasBearerToken(HttpHeaders httpRequestHeaders) {
+        return StringUtils.isNotBlank(getBearerToken(httpRequestHeaders));
     }
 
     /**
@@ -278,7 +282,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param authHeaderValue "Bearer jwt"
      * @return
      */
-    protected String getBearerToken(String authHeaderValue) {
+    public static String getBearerToken(String authHeaderValue) {
         // return authHeaderValue.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
         if (StringUtils.isBlank(authHeaderValue) || !authHeaderValue.startsWith("Bearer ")) {
             return null;
