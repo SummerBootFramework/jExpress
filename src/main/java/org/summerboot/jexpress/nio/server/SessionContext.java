@@ -599,6 +599,13 @@ public class SessionContext {
         return this;
     }
 
+    public boolean isCallerInRole(String role) {
+        if (caller == null || StringUtils.isBlank(role)) {
+            return false;
+        }
+        return caller.isInRole(role);
+    }
+
 //    public int errorCode() {
 //        return errorCode;
 //    }

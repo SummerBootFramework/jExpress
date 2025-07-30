@@ -199,7 +199,7 @@
 
         <!-- JPA -->
         <hibernate.version>7.0.8.Final</hibernate.version>
-        <hikari-cp.version>6.3.2</hikari-cp.version>
+        <hikari-cp.version>7.0.0</hikari-cp.version>
 
         <!-- Cache -->
         <jedis.version>6.0.0</jedis.version>
