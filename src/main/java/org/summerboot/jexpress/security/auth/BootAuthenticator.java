@@ -34,6 +34,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
@@ -63,7 +64,7 @@ import java.util.Set;
 @Singleton
 public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerInterceptor {
 
-    protected static final String ERROR_NO_CFG = "JWT is not configured at " + AuthConfig.cfg.getCfgFile().getAbsolutePath();
+    protected static final String ERROR_NO_CFG = "JWT is not configured at " + BackOffice.agent.getAuthConfigFileName();
 
     @Inject(optional = true)
     protected AuthenticatorListener authenticatorListener;

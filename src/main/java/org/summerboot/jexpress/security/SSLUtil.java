@@ -110,7 +110,7 @@ public class SSLUtil {
         }
         KeyManagerFactory kmf = null;
         try (InputStream keystoreIn = new FileInputStream(keyStorePath.trim());) {
-            KeyStore ks = KeyStore.getInstance("JKS");
+            KeyStore ks = KeyStore.getInstance("PKCS12");
             ks.load(keystoreIn, keyStorePwd);
             if (StringUtils.isNotBlank(keyAlias)) {
                 Certificate cert = ks.getCertificate(keyAlias.trim());
@@ -156,7 +156,7 @@ public class SSLUtil {
         }
         TrustManagerFactory tf = null;
         try (InputStream truststoreIn = new FileInputStream(trustStorePath);) {
-            KeyStore tks = KeyStore.getInstance("JKS");
+            KeyStore tks = KeyStore.getInstance("PKCS12");
             tks.load(truststoreIn, trustStorePwd);
             tf = TrustManagerFactory.getInstance("SunX509");
             tf.init(tks);

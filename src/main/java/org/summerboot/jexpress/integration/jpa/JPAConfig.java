@@ -89,8 +89,7 @@ public abstract class JPAConfig extends BootConfig {
 
         if (props.get(Environment.JAKARTA_JDBC_PASSWORD) != null) {
             settings.put(Environment.JAKARTA_JDBC_PASSWORD, helper.getAsPassword(props, Environment.JAKARTA_JDBC_PASSWORD));
-        }
-        if (props.get(Environment.PASS) != null) {
+        } else if (props.get(Environment.PASS) != null) {
             settings.put(Environment.PASS, helper.getAsPassword(props, Environment.PASS));
         }
 
