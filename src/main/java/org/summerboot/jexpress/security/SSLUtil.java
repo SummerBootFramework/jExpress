@@ -29,8 +29,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
-import java.security.Key;
 import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -110,21 +110,40 @@ public class SSLUtil {
         }
         KeyManagerFactory kmf = null;
         try (InputStream keystoreIn = new FileInputStream(keyStorePath.trim());) {
-            KeyStore ks = KeyStore.getInstance("PKCS12");
-            ks.load(keystoreIn, keyStorePwd);
+            KeyStore originalKeyStore = EncryptorUtil.getKeystoreInstance();
+            originalKeyStore.load(keystoreIn, keyStorePwd);
+            // If keyAlias is not specified, use the first alias in the keystore
             if (StringUtils.isNotBlank(keyAlias)) {
-                Certificate cert = ks.getCertificate(keyAlias.trim());
-                Key key = ks.getKey(keyAlias, keyPwd);
-                if (cert != null && key != null) {
-                    ks.load(null);
-                    ks.setCertificateEntry(keyAlias, cert);
-                    ks.setKeyEntry(keyAlias, key, keyStorePwd, new Certificate[]{cert});
-                } else {
-                    throw new GeneralSecurityException("Alias (" + keyAlias + ") not found in " + keyStorePath);
+                // Check if the specified key alias exists in the keystore if keyAlias is specified
+                if (!originalKeyStore.containsAlias(keyAlias)) {
+                    throw new IllegalArgumentException("Key alias '" + keyAlias + "' not found in keystore: " + keyStorePath);
                 }
+                // check if the alias is a private key entry
+                PrivateKey targetPrivateKey = null;
+                Certificate[] targetCertChain = null;
+                if (originalKeyStore.isKeyEntry(keyAlias)) {
+                    targetPrivateKey = (PrivateKey) originalKeyStore.getKey(keyAlias, keyPwd);
+                    targetCertChain = originalKeyStore.getCertificateChain(keyAlias);
+                    if (targetPrivateKey == null || targetCertChain == null || targetCertChain.length == 0) {
+                        throw new IllegalStateException("Failed to retrieve private key or certificate chain for alias: " + keyAlias + "' in keystore: " + keyStorePath);
+                    }
+                } else {
+                    throw new IllegalArgumentException("Alias '" + keyAlias + "' is not a key entry in keystore: " + keyStorePath);
+                }
+                // Create a new KeyStore instance to hold the single entry
+                KeyStore singleEntryKeyStore = EncryptorUtil.getKeystoreInstance();
+                singleEntryKeyStore.load(null, null); // init a new empty keystore with no password
+                // Set the target private key and certificate chain into the new keystore
+                singleEntryKeyStore.setKeyEntry(
+                        keyAlias, // Keep the original alias
+                        targetPrivateKey,
+                        keyPwd, // eep the original key password
+                        targetCertChain
+                );
+                originalKeyStore = singleEntryKeyStore; // Use the new keystore with only the specified key entry
             }
             kmf = KeyManagerFactory.getInstance("SunX509");
-            kmf.init(ks, keyStorePwd);
+            kmf.init(originalKeyStore, keyStorePwd);
         } finally {
             // earse password from RAM
             if (keyStorePwd != null) {
@@ -156,7 +175,7 @@ public class SSLUtil {
         }
         TrustManagerFactory tf = null;
         try (InputStream truststoreIn = new FileInputStream(trustStorePath);) {
-            KeyStore tks = KeyStore.getInstance("PKCS12");
+            KeyStore tks = EncryptorUtil.getKeystoreInstance();
             tks.load(truststoreIn, trustStorePwd);
             tf = TrustManagerFactory.getInstance("SunX509");
             tf.init(tks);

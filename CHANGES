@@ -12,7 +12,8 @@ mvn clean deploy -Dmaven.test.skip=true -P release
 - enhanced security 4: gRPC server supports caller address filter with regex precheck
 - enhanced security 5: added @Log.maskDataFields and refactoring FormatterUtil.replaceDataField to protect data not only in JSON format but also for sanitized JON, XML, sanitized XML and Form data.
 - enhanced security 6: fixed CWE-117, 331, 338, 327. 73, 90 flaws, also verified and marked false positive CWE flaws.
-- upgrade to Netty 4.2
+- enhanced security 7: replace JKS with PKCS12
+- upgrade to Netty 4.2.x
 - refactoring CLI exit code
 
 - API new: added @UniqueIgnore to mute @Unique check alert for expected duplicated values
@@ -28,6 +29,39 @@ mvn clean deploy -Dmaven.test.skip=true -P release
 - Config removed: etc/boot.ini/default.interval.ConfigChangeMonitor
 - Config new: etc/boot.ini
 	default.ConfigChangeMonitor.Throttle.Milliseconds
+	########################
+    # 5. Security Settings #
+    ########################
+    ## Default keystore type for SSL/TLS, valid values: PKCS12 (default), PKCS11, JCEKS , JKS, BCFKS
+    #default.keystore.type=PKCS12
+
+    ## Default keystore provider for SSL/TLS, valid values: null=JDK default, BC (BouncyCastle), SunJSSE, BCFIPS, etc.
+    ## Note: BC will not verify key password, so it is not recommended for production use.
+    ## Note: BCFIPS is a FIPS compliant provider, which is required by some government applications.
+    #default.keystore.provider=
+
+    ## SHA3-224, SHA3-256 (default), SHA3-384, SHA3-512, SHA-256, SHA-384, SHA-512, etc.
+    ## Note: MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+    #algorithm.Messagedigest=SHA3-256
+
+    ## Symmetric key factory generation algorithm, valid values: PBKDF2WithHmacSHA256 (default), PBKDF2WithHmacSHA512, PBKDF2WithHmacSHA1, etc.
+    #algorithm.SecretKeyFactory=PBKDF2WithHmacSHA256
+
+    ## Symmetric key algorithm, valid values: AES (default), DES, DESede, Blowfish, ARCFOUR, ChaCha20, HmacMD5, HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512, HmacSHA512/224, HmacSHA512/256, HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512, RC2, etc.
+    #algorithm.SymmetricKey=AES
+
+    ## Asymmetric key algorithm, valid values: RSA (default), DSA, EC, DiffieHellman, Ed25519, Ed448, etc.
+    #algorithm.AsymmetricKey=RSA
+
+    ## Symmetric cipher transformation, valid values: AES/GCM/NoPadding (default, for modern applications), AES/CBC/PKCS5Padding (more compatible with older systems), AES/CBC/NoPadding, AES/CTR/NoPadding, AES/CFB/NoPadding, DES/CBC/PKCS5Padding, DESede/CBC/PKCS5Padding, Blowfish/CBC/PKCS5Padding, etc.
+    ## Note: do not use AES/CBC, and AES/GCM/PKCS5Padding is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html
+    #cipher.transformation.Symmetric=AES/GCM/NoPadding
+
+    ## Asymmetric cipher transformation, valid values: RSA/None/OAEPWithSHA-256AndMGF1Padding (default), RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc.
+    ## Note: ryptographic algorithm ECB is weak and should not be used： RSA/ECB/PKCS1Padding
+    #cipher.transformation.Asymmetric=RSA/None/OAEPWithSHA-256AndMGF1Padding
+
+
 - Config new: cfg_nio.properties/
 	ping.sync.HealthStatus.requiredHealthChecks
 	ping.sync.PauseStatus
@@ -46,6 +80,13 @@ mvn clean deploy -Dmaven.test.skip=true -P release
 - enhancement: Err with args
 - enhancement: add nio.JAX-RS.toJson.showRefInServiceError in cfg_nio.properties, default false to not show ref field in JSON/XML response
 - enhancement: verify Bearer Token if provided in request header for regardless of a @Controller method is role-based or not
+- enhancement: added GrpcTestBase for gRPC test
+	2-way TLS (server and client verify each other certificate)
+	client verify server certificate, server trust all client certificate
+	server verify server certificate, client trust all client certificate
+	server and client trust all certificates
+	server does NOT trust client certificate, client trust server certificate, this will fail with StatusRuntimeException (UNAVAILABLE: ssl exception)
+	client does NOT trust server certificate, server trust server certificate, this will fail with StatusRuntimeException (UNAVAILABLE: io exception)
 
 Maven Central Repository:
 https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.0/

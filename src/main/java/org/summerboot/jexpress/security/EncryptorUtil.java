@@ -26,6 +26,7 @@ import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
@@ -70,6 +71,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.ProviderException;
 import java.security.PublicKey;
@@ -91,19 +93,26 @@ import java.util.Base64;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class EncryptorUtil {
+    public static final String KEYSTORE_TYPE = BackOffice.agent.getKeystoreType();
+    public static final String KEYSTORE_PROVIDER = BackOffice.agent.getKeystoreSecurityProvider();
 
-    public static final String AES_KEY_ALGO = "AES";
-    public static final String MESSAGEDIGEST_ALGORITHM = "SHA3-256";//MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
-    public static final String RSA_KEY_ALGO = "RSA";
-    public static final String ENCRYPT_ALGO = "AES/GCM/NoPadding";// do not use AES/CBC, and "AES/GCM/PKCS5Padding" is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html
-    public static final String RSA_CIPHER_ALGORITHM = "RSA/None/OAEPWithSHA-256AndMGF1Padding";//Cryptographic algorithm ECB is weak and should not be used： "RSA/ECB/PKCS1Padding"
+    public static final String ALGORITHM_MESSAGEDIGEST = BackOffice.agent.getAlgorithmMessagedigest();//"SHA3-256";
+    public static final String ALGORITHM_SECRET_KEY_FACTORY = BackOffice.agent.getAlgorithmSecretKeyFactory();//"PBKDF2WithHmacSHA256";
+    public static final String ALGORITHM_SYMMETRIC_KEY = BackOffice.agent.getAlgorithmSymmetricKey();//"AES";
+    public static final String ALGORITHM_ASYMMETRIC_KEY = BackOffice.agent.getAlgorithmAsymmetricKey();//"RSA";
+    public static final String CIPHERS_SYMMETRIC = BackOffice.agent.getCiphersTransformationSymmetric();//"AES/GCM/NoPadding";
+    public static final String CIPHERS_ASYMMETRIC = BackOffice.agent.getCiphersTransformationAsymmetric();//"RSA/None/OAEPWithSHA-256AndMGF1Padding";
+
     public static final int TAG_LENGTH_BIT = 128;
     public static final int IV_LENGTH_BYTE = 12;
     public static final int AES_KEY_BIT = 256;
     public static final int SALT_LEN = 16;
     public static final int ITERATIONS = 310_000;
-    public static final String SECRET_KEY_ALGO = "PBKDF2WithHmacSHA256";
     public static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
+
+    public enum KeyFileType {
+        X509, Certificate, PKCS12, JKS, PKCS8
+    }
 
     static {
         try {
@@ -112,6 +121,13 @@ public class EncryptorUtil {
         } catch (UnknownHostException ex) {
             ApplicationUtil.RTO(BootErrorCode.RTO_UNKNOWN_HOST_ERROR, null, ex);
         }
+    }
+
+    public static KeyStore getKeystoreInstance() throws KeyStoreException, NoSuchProviderException {
+        if (KEYSTORE_PROVIDER == null) {
+            return KeyStore.getInstance(KEYSTORE_TYPE);
+        }
+        return KeyStore.getInstance(KEYSTORE_TYPE, KEYSTORE_PROVIDER);
     }
 
     public static String base64Decode(String base64Text) {
@@ -169,7 +185,7 @@ public class EncryptorUtil {
         // salt = randomBytes(SALT_LEN); // CWE-327 False Positive prove: flaw alert will be off when the same salt is generated inside this method, 327 will be flagged if the same salt is generated outside this method.
         try {
             PBEKeySpec spec = new PBEKeySpec(password, salt, ITERATIONS, AES_KEY_BIT);// CWE-327 False Positive due to salt is passed in as parameter
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(SECRET_KEY_ALGO);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITHM_SECRET_KEY_FACTORY);
             byte[] keyBytes = factory.generateSecret(spec).getEncoded();
             return new SecretKeySpec(keyBytes, "AES");
         } catch (Throwable ex) {
@@ -184,7 +200,7 @@ public class EncryptorUtil {
      * @throws IOException
      */
     public static byte[] md5(File filename) throws NoSuchAlgorithmException, IOException {
-        return md5(filename, MESSAGEDIGEST_ALGORITHM);
+        return md5(filename, ALGORITHM_MESSAGEDIGEST);
     }
 
     /**
@@ -217,7 +233,7 @@ public class EncryptorUtil {
      * @throws NoSuchAlgorithmException
      */
     public static byte[] md5(String text) throws UnsupportedEncodingException, NoSuchAlgorithmException {
-        return md5(text.getBytes(StandardCharsets.UTF_8), MESSAGEDIGEST_ALGORITHM);
+        return md5(text.getBytes(StandardCharsets.UTF_8), ALGORITHM_MESSAGEDIGEST);
     }
 
     /**
@@ -226,7 +242,7 @@ public class EncryptorUtil {
      * @throws NoSuchAlgorithmException
      */
     public static byte[] md5(byte[] data) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance(MESSAGEDIGEST_ALGORITHM);
+        MessageDigest md = MessageDigest.getInstance(ALGORITHM_MESSAGEDIGEST);
         //md.reset();
         md.update(data);
         byte[] digest = md.digest();
@@ -261,10 +277,25 @@ public class EncryptorUtil {
 
     protected static SecureRandom RANDOM = new SecureRandom();
 
-    public static SecretKey generateAESKey() throws NoSuchAlgorithmException {
-        KeyGenerator keyGen = KeyGenerator.getInstance(AES_KEY_ALGO);
+    public static SecretKey generateSymmetricKey() throws NoSuchAlgorithmException {
+        KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITHM_SYMMETRIC_KEY);
         keyGen.init(AES_KEY_BIT, SecureRandom.getInstanceStrong());
         return keyGen.generateKey();
+    }
+
+    public static SecretKey loadSymmetricKey(String symmetricKeyFile, String symmetricKeyAlgorithm) throws IOException {
+        byte[] symmetricKeyBytes = Files.readAllBytes(Paths.get(symmetricKeyFile));
+        return loadSymmetricKey(symmetricKeyBytes, symmetricKeyAlgorithm);
+    }
+
+    public static SecretKey loadSymmetricKey(byte[] symmetricKeyBytes, String symmetricKeyAlgorithm) throws IOException {
+        //int keyBytes = symmetricKeyBytes.length;
+        //System.out.println("keySize=" + keySize);
+        if (symmetricKeyAlgorithm == null) {
+            symmetricKeyAlgorithm = ALGORITHM_SYMMETRIC_KEY;
+        }
+        SecretKey symmetricKey = new SecretKeySpec(symmetricKeyBytes, symmetricKeyAlgorithm);
+        return symmetricKey;
     }
 
     public static byte[] encrypt(SecretKey symmetricKey, byte[] iv, byte[] plainData) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
@@ -279,24 +310,9 @@ public class EncryptorUtil {
         return plainData;
     }
 
-    public static SecretKey loadSymmetricKey(String symmetricKeyFile, String symmetricKeyAlgorithm) throws IOException {
-        byte[] symmetricKeyBytes = Files.readAllBytes(Paths.get(symmetricKeyFile));
-        return loadSymmetricKey(symmetricKeyBytes, symmetricKeyAlgorithm);
-    }
-
-    public static SecretKey loadSymmetricKey(byte[] symmetricKeyBytes, String symmetricKeyAlgorithm) throws IOException {
-        //int keyBytes = symmetricKeyBytes.length;
-        //System.out.println("keySize=" + keySize);
-        if (symmetricKeyAlgorithm == null) {
-            symmetricKeyAlgorithm = AES_KEY_ALGO;
-        }
-        SecretKey symmetricKey = new SecretKeySpec(symmetricKeyBytes, symmetricKeyAlgorithm);
-        return symmetricKey;
-    }
-
     public static Cipher buildCypher_GCM(boolean encrypt, SecretKey symmetricKey, byte[] iv) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
         //iv = randomBytes(IV_LENGTH_BYTE); // CWE-327 False Positive prove: flaw alert will be off when the same iv is generated inside this method, 327 will be flagged if the same iv is generated outside this method.
-        Cipher cipher = Cipher.getInstance(ENCRYPT_ALGO);
+        Cipher cipher = Cipher.getInstance(CIPHERS_SYMMETRIC);
         if (encrypt) {
             cipher.init(Cipher.ENCRYPT_MODE, symmetricKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));// CWE-327 False Positive due to iv is passed in as parameter
         } else {
@@ -435,10 +451,6 @@ public class EncryptorUtil {
         }
     }
 
-    public enum KeyFileType {
-        X509, Certificate, PKCS12, JKS, PKCS8
-    }
-
     public static KeyPair generateKeyPairRSA() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException {
         return generateKeyPair("RSA", 4096);
     }
@@ -574,7 +586,7 @@ public class EncryptorUtil {
 //        return newKeyPair;
 //    }
     public static PublicKey loadPublicKey(KeyFileType fileType, File publicKeyFile) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, CertificateException {
-        return loadPublicKey(fileType, publicKeyFile, RSA_KEY_ALGO);
+        return loadPublicKey(fileType, publicKeyFile, ALGORITHM_ASYMMETRIC_KEY);
     }
 
     /**
@@ -637,7 +649,7 @@ public class EncryptorUtil {
     }
 
     public static PrivateKey loadPrivateKey(File pemFile) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        return loadPrivateKey(pemFile, RSA_KEY_ALGO);
+        return loadPrivateKey(pemFile, ALGORITHM_ASYMMETRIC_KEY);
     }
 
     public static PrivateKey loadPrivateKey(File pemFile, String algorithm) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
@@ -747,7 +759,7 @@ public class EncryptorUtil {
      * @throws BadPaddingException
      */
     protected static byte[] asymmetric(int cipherMode, Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
-        Cipher rsaCipher = Cipher.getInstance(RSA_CIPHER_ALGORITHM);
+        Cipher rsaCipher = Cipher.getInstance(CIPHERS_ASYMMETRIC);
         rsaCipher.init(cipherMode, asymmetricKey);
         // Encrypt the Rijndael key with the RSA cipher
         // and write it to the beginning of the file.
@@ -780,7 +792,7 @@ public class EncryptorUtil {
      * @throws BadPaddingException
      */
     public static void encrypt(Key asymmetricKey, SecretKey symmetricKey, String plainDataFileName, String encryptedFileName, Key digitalSignatureKey) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-        encrypt(asymmetricKey, symmetricKey, plainDataFileName, encryptedFileName, digitalSignatureKey, MESSAGEDIGEST_ALGORITHM);
+        encrypt(asymmetricKey, symmetricKey, plainDataFileName, encryptedFileName, digitalSignatureKey, ALGORITHM_MESSAGEDIGEST);
     }
 
     /**
@@ -809,7 +821,7 @@ public class EncryptorUtil {
         boolean randomSymmetricKey = symmetricKey == null;
         //1. create cipher wtiht this key
         if (randomSymmetricKey) {
-            symmetricKey = generateAESKey();
+            symmetricKey = generateSymmetricKey();
         }
         byte[] iv = randomBytes(IV_LENGTH_BYTE);
         Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
@@ -876,7 +888,7 @@ public class EncryptorUtil {
      * @throws BadPaddingException
      */
     public static byte[] encrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] plainData, Key digitalSignatureKey) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-        return encrypt(asymmetricKey, symmetricKey, plainData, digitalSignatureKey, MESSAGEDIGEST_ALGORITHM);
+        return encrypt(asymmetricKey, symmetricKey, plainData, digitalSignatureKey, ALGORITHM_MESSAGEDIGEST);
     }
 
     /**
@@ -905,7 +917,7 @@ public class EncryptorUtil {
         //1. create cipher wtiht this key
         boolean randomSymmetricKey = symmetricKey == null;
         if (randomSymmetricKey) {
-            symmetricKey = generateAESKey();
+            symmetricKey = generateSymmetricKey();
         }
         byte[] iv = randomBytes(IV_LENGTH_BYTE);
         Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
@@ -1000,7 +1012,7 @@ public class EncryptorUtil {
      * @throws javax.crypto.BadPaddingException
      */
     public static void decrypt(Key asymmetricKey, SecretKey symmetricKey, String encryptedFileName, String plainDataFileName, Key digitalSignatureKey, @Nullable EncryptionMeta meta) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-        decrypt(asymmetricKey, symmetricKey, encryptedFileName, plainDataFileName, digitalSignatureKey, meta, MESSAGEDIGEST_ALGORITHM);
+        decrypt(asymmetricKey, symmetricKey, encryptedFileName, plainDataFileName, digitalSignatureKey, meta, ALGORITHM_MESSAGEDIGEST);
     }
 
     /**
@@ -1115,7 +1127,7 @@ public class EncryptorUtil {
      * @throws javax.crypto.BadPaddingException
      */
     public static byte[] decrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] encryptedData, Key digitalSignatureKey, @Nullable EncryptionMeta meta) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-        return decrypt(asymmetricKey, symmetricKey, encryptedData, digitalSignatureKey, meta, MESSAGEDIGEST_ALGORITHM);
+        return decrypt(asymmetricKey, symmetricKey, encryptedData, digitalSignatureKey, meta, ALGORITHM_MESSAGEDIGEST);
     }
 
     /**
