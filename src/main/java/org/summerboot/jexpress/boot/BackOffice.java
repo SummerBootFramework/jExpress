@@ -330,43 +330,63 @@ public class BackOffice extends BootConfig {
     private String memoDelimiter = ": ";
 
 
-    @ConfigHeader(title = "5. Security Settings")
-    @Config(key = "default.keystore.type", defaultValue = "PKCS12",
-            desc = "Default keystore type for SSL/TLS, valid values: PKCS12 (default), PKCS11, JCEKS , JKS, BCFKS")
+    @ConfigHeader(title = "5.1 Security Settings: keystore type and provider")
+    @Config(key = "keystore.type", defaultValue = "PKCS12",
+            desc = "keystore type for SSL/TLS, valid values: PKCS12 (default), PKCS11, JCEKS , JKS, BCFKS")
     private String keystoreType = "PKCS12";
-
-    @Config(key = "default.keystore.provider",
-            desc = "Default keystore provider for SSL/TLS, valid values: null=JDK default, BC (BouncyCastle), SunJSSE, BCFIPS, etc."
-                    + "\n  Note: BC will not verify the key (alias) password, so it is not recommended for production use."
+    @Config(key = "keystore.provider",
+            desc = "keystore provider for SSL/TLS, valid values: null=JDK default, BC (BouncyCastle), SunJSSE, BCFIPS, etc."
+                    + "\n  Note: BC will not verify the key password, so it is not recommended for production use."
                     + "\n  Note: BCFIPS is a FIPS compliant provider, which is required by some government applications.")
     private String keystoreSecurityProvider = null;
-
+    
+    @ConfigHeader(title = "5.2 Security Settings: message digest")
     @Config(key = "algorithm.Messagedigest", defaultValue = "SHA3-256",
             desc = "SHA3-224, SHA3-256 (default), SHA3-384, SHA3-512, SHA-256, SHA-384, SHA-512, etc. "
                     + "\n  Note: MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)")
     private String algorithmMessagedigest = "SHA3-256";
 
-    @Config(key = "algorithm.SecretKeyFactory", defaultValue = "PBKDF2WithHmacSHA256",
-            desc = "Symmetric key factory generation algorithm, valid values: PBKDF2WithHmacSHA256 (default), PBKDF2WithHmacSHA512, PBKDF2WithHmacSHA1, etc.")
-    private String algorithmSecretKeyFactory = "PBKDF2WithHmacSHA256";
-
-    @Config(key = "algorithm.SymmetricKey", defaultValue = "AES",
-            desc = "Symmetric key algorithm, valid values: AES (default), DES, DESede, Blowfish, ARCFOUR, ChaCha20, HmacMD5, HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512, HmacSHA512/224, HmacSHA512/256, HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512, RC2, etc.")
-    private String algorithmSymmetricKey = "AES";
-
-    @Config(key = "algorithm.AsymmetricKey", defaultValue = "RSA",
+    @ConfigHeader(title = "5.3 Security Settings: asymmetric key (public/private key pair)")
+    @Config(key = "algorithm.Asymmetric", defaultValue = "RSA",
             desc = "Asymmetric key algorithm, valid values: RSA (default), DSA, EC, DiffieHellman, Ed25519, Ed448, etc.")
     private String algorithmAsymmetricKey = "RSA";
+    @Config(key = "transformation.Asymmetric", defaultValue = "RSA/None/OAEPWithSHA-256AndMGF1Padding",
+            desc = "Asymmetric cipher transformation, valid values: RSA/None/OAEPWithSHA-256AndMGF1Padding (default), RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc."
+                    + " \n  Note: ryptographic algorithm ECB is weak and should not be used： RSA/ECB/PKCS1Padding")
+    private String ciphersTransformationAsymmetric = "RSA/None/OAEPWithSHA-256AndMGF1Padding";
 
-    @Config(key = "cipher.transformation.Symmetric", defaultValue = "AES/GCM/NoPadding",
+    @ConfigHeader(title = "5.4 Security Settings: symmetric key (no password)")
+    @Config(key = "algorithm.Symmetric", defaultValue = "AES",
+            desc = "Symmetric key algorithm, valid values: AES (default), DES, DESede, Blowfish, ARCFOUR, ChaCha20, HmacMD5, HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512, HmacSHA512/224, HmacSHA512/256, HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512, RC2, etc.")
+    private String algorithmSymmetricKey = "AES";
+    @Config(key = "length.SymmetricKey.Bits", defaultValue = "256",
+            desc = "key size in bits for symmetric key generation, algorithms may have different key size requirements.")
+    private int algorithmSymmetricKeyBits = 256;
+    @Config(key = "transformation.Symmetric", defaultValue = "AES/GCM/NoPadding",
             desc = "Symmetric cipher transformation, valid values: AES/GCM/NoPadding (default, for modern applications), AES/CBC/PKCS5Padding (more compatible with older systems), AES/CBC/NoPadding, AES/CTR/NoPadding, AES/CFB/NoPadding, DES/CBC/PKCS5Padding, DESede/CBC/PKCS5Padding, Blowfish/CBC/PKCS5Padding, etc."
                     + " \n  Note: do not use AES/CBC, and AES/GCM/PKCS5Padding is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html")
     private String ciphersTransformationSymmetric = "AES/GCM/NoPadding";
 
-    @Config(key = "cipher.transformation.Asymmetric", defaultValue = "RSA/None/OAEPWithSHA-256AndMGF1Padding",
-            desc = "Asymmetric cipher transformation, valid values: RSA/None/OAEPWithSHA-256AndMGF1Padding (default), RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc."
-                    + " \n  Note: ryptographic algorithm ECB is weak and should not be used： RSA/ECB/PKCS1Padding")
-    private String ciphersTransformationAsymmetric = "RSA/None/OAEPWithSHA-256AndMGF1Padding";
+    @Config(key = "length.SymmetricKey.AuthenticationTag.Bits", defaultValue = "128",
+            desc = "AuthenticationTag size in bits for symmetric key generation, algorithms may have different AuthenticationTag size requirements.")
+    private int symmetricKeyAuthenticationTagBits = 128;
+    @Config(key = "length.symmetricKey.InitializationVector.Bytes", defaultValue = "12",
+            desc = "IV size in bits for symmetric key generation, algorithms may have different IV size requirements.")
+    private int symmetricKeyInitializationVectorBytes = 12;
+
+    @ConfigHeader(title = "5.5 Security Settings: secret key (with password)")
+    @Config(key = "algorithm.SecretKey", defaultValue = "PBKDF2WithHmacSHA256",
+            desc = "Symmetric key factory generation algorithm, valid values: PBKDF2WithHmacSHA256 (default), PBKDF2WithHmacSHA512, PBKDF2WithHmacSHA1, etc.")
+    private String algorithmSecretKey = "PBKDF2WithHmacSHA256";
+    @Config(key = "length.algorithm.SecretKey.Bits", defaultValue = "256",
+            desc = "key size in bits for symmetric key generation, algorithms may have different key size requirements.")
+    private int algorithmSecretKeyBits = 256;
+    @Config(key = "length.algorithm.SecretKey.Salt.Bits", defaultValue = "16",
+            desc = "salt size in bytes for symmetric key generation, algorithms may have different salt size requirements.")
+    private int algorithmSecretKeySaltBytes = 16;
+    @Config(key = "count.algorithm.SecretKey.iteration", defaultValue = "310000",
+            desc = "for symmetric key generation, algorithms may have different iteration requirements.")
+    private int algorithmSecretKeyIterationCount = 310_000;
 
 
     public Set<String> getRootPackageNames() {
@@ -549,7 +569,6 @@ public class BackOffice extends BootConfig {
         return jboListenerLogLevel;
     }
 
-
     public String getKeystoreType() {
         return keystoreType;
     }
@@ -562,23 +581,47 @@ public class BackOffice extends BootConfig {
         return algorithmMessagedigest;
     }
 
-    public String getAlgorithmSecretKeyFactory() {
-        return algorithmSecretKeyFactory;
+    public String getAlgorithmAsymmetricKey() {
+        return algorithmAsymmetricKey;
+    }
+
+    public String getCiphersTransformationAsymmetric() {
+        return ciphersTransformationAsymmetric;
     }
 
     public String getAlgorithmSymmetricKey() {
         return algorithmSymmetricKey;
     }
 
-    public String getAlgorithmAsymmetricKey() {
-        return algorithmAsymmetricKey;
+    public int getAlgorithmSymmetricKeyBits() {
+        return algorithmSymmetricKeyBits;
     }
 
     public String getCiphersTransformationSymmetric() {
         return ciphersTransformationSymmetric;
     }
 
-    public String getCiphersTransformationAsymmetric() {
-        return ciphersTransformationAsymmetric;
+    public int getSymmetricKeyAuthenticationTagBits() {
+        return symmetricKeyAuthenticationTagBits;
+    }
+
+    public int getSymmetricKeyInitializationVectorBytes() {
+        return symmetricKeyInitializationVectorBytes;
+    }
+
+    public String getAlgorithmSecretKey() {
+        return algorithmSecretKey;
+    }
+
+    public int getAlgorithmSecretKeyBits() {
+        return algorithmSecretKeyBits;
+    }
+
+    public int getAlgorithmSecretKeySaltBytes() {
+        return algorithmSecretKeySaltBytes;
+    }
+
+    public int getAlgorithmSecretKeyIterationCount() {
+        return algorithmSecretKeyIterationCount;
     }
 }

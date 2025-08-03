@@ -263,12 +263,16 @@ public class NioConfig extends BootConfig {
     protected volatile boolean fromJsonCaseInsensitive = false;
     @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
     protected volatile boolean fromJsonFailOnUnknownProperties = true;
+
+    @Config(key = "nio.JAX-RS.fromJson.autoBeanValidation", defaultValue = "true")
+    protected volatile boolean fromJsonAutoBeanValidation = true;
+
     @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
     protected volatile boolean toJsonIgnoreNull = true;
     @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
     protected volatile boolean toJsonPretty = false;
-    @Config(key = "nio.JAX-RS.toJson.showRefInServiceError", defaultValue = "false")
-    protected volatile boolean showRefInServiceError = false;
+    @Config(key = "nio.JAX-RS.toJson.showRefInServiceError", defaultValue = "true")
+    protected volatile boolean showRefInServiceError = true;
 
     @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
@@ -727,6 +731,10 @@ public class NioConfig extends BootConfig {
 
     public boolean isFromJsonFailOnUnknownProperties() {
         return fromJsonFailOnUnknownProperties;
+    }
+
+    public boolean isFromJsonAutoBeanValidation() {
+        return fromJsonAutoBeanValidation;
     }
 
     public TimeZone getJsonParserTimeZone() {

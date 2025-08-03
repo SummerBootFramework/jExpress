@@ -34,6 +34,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
@@ -158,8 +159,7 @@ class JaxRsRequestParameter {
                 if (targetClass.equals(String.class)) {
                     type = ParamType.Body_STRING;
                 } else {
-                    Valid v = param.getAnnotation(Valid.class);
-                    if (v != null) {
+                    if (NioConfig.cfg.isFromJsonAutoBeanValidation() || param.getAnnotation(Valid.class) != null) {
                         autoBeanValidation = true;
                     }
                     if (consumes == null) {//default

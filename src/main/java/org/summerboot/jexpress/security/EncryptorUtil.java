@@ -93,21 +93,32 @@ import java.util.Base64;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class EncryptorUtil {
-    public static final String KEYSTORE_TYPE = BackOffice.agent.getKeystoreType();
-    public static final String KEYSTORE_PROVIDER = BackOffice.agent.getKeystoreSecurityProvider();
+    // security keystore type and provider
+    public static final String KEYSTORE_TYPE = BackOffice.agent.getKeystoreType(); // PKCS12
+    public static final String KEYSTORE_PROVIDER = BackOffice.agent.getKeystoreSecurityProvider(); // null - default provider
 
-    public static final String ALGORITHM_MESSAGEDIGEST = BackOffice.agent.getAlgorithmMessagedigest();//"SHA3-256";
-    public static final String ALGORITHM_SECRET_KEY_FACTORY = BackOffice.agent.getAlgorithmSecretKeyFactory();//"PBKDF2WithHmacSHA256";
-    public static final String ALGORITHM_SYMMETRIC_KEY = BackOffice.agent.getAlgorithmSymmetricKey();//"AES";
-    public static final String ALGORITHM_ASYMMETRIC_KEY = BackOffice.agent.getAlgorithmAsymmetricKey();//"RSA";
-    public static final String CIPHERS_SYMMETRIC = BackOffice.agent.getCiphersTransformationSymmetric();//"AES/GCM/NoPadding";
-    public static final String CIPHERS_ASYMMETRIC = BackOffice.agent.getCiphersTransformationAsymmetric();//"RSA/None/OAEPWithSHA-256AndMGF1Padding";
+    // security - message digest
+    public static final String ALGORITHM_MESSAGEDIGEST = BackOffice.agent.getAlgorithmMessagedigest(); // "SHA3-256";
 
-    public static final int TAG_LENGTH_BIT = 128;
-    public static final int IV_LENGTH_BYTE = 12;
-    public static final int AES_KEY_BIT = 256;
-    public static final int SALT_LEN = 16;
-    public static final int ITERATIONS = 310_000;
+    // security - asymmetric key (public/private key pair)
+    public static final String ALGORITHM_ASYMMETRIC_KEY = BackOffice.agent.getAlgorithmAsymmetricKey(); // "RSA";
+    public static final String CIPHERS_TRANSFORMATION_ASYMMETRIC = BackOffice.agent.getCiphersTransformationAsymmetric(); // "RSA/None/OAEPWithSHA-256AndMGF1Padding";
+
+    // security - symmetric key (no password)
+    public static final String ALGORITHM_SYMMETRIC_KEY = BackOffice.agent.getAlgorithmSymmetricKey(); // "AES";
+    public static final int ALGORITHM_SYMMETRIC_KEY_BITS = BackOffice.agent.getAlgorithmSymmetricKeyBits(); // 256; the keysize. This is an algorithm-specific metric, specified in number of bits.
+    public static final String CIPHERS_TRANSFORMATION_SYMMETRIC = BackOffice.agent.getCiphersTransformationSymmetric(); // "AES/GCM/NoPadding";
+    public static final int SYMMETRIC_KEY_AUTHENTICATION_TAG_BITS = BackOffice.agent.getSymmetricKeyAuthenticationTagBits(); // 128 the authentication tag length (in bits)
+    public static final int SYMMETRIC_KEY_IV_BYTES = BackOffice.agent.getSymmetricKeyInitializationVectorBytes(); // 12;
+
+    // security - secret key (with password)
+    public static final String ALGORITHM_SECRET_KEY = BackOffice.agent.getAlgorithmSecretKey(); // "PBKDF2WithHmacSHA256";
+    public static final int ALGORITHM_SECRET_KEY_BITS = BackOffice.agent.getAlgorithmSecretKeyBits(); // 256;
+    public static final int ALGORITHM_SECRET_KEY_SALT_BYTES = BackOffice.agent.getAlgorithmSecretKeySaltBytes(); // 16;
+    public static final int ALGORITHM_SECRET_KEY_ITERATION_COUNT = BackOffice.agent.getAlgorithmSecretKeyIterationCount(); // 310_000;
+
+
+    // security provider
     public static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
 
     public enum KeyFileType {
@@ -184,8 +195,8 @@ public class EncryptorUtil {
     public static SecretKey buildSecretKey(char[] password, byte[] salt) {
         // salt = randomBytes(SALT_LEN); // CWE-327 False Positive prove: flaw alert will be off when the same salt is generated inside this method, 327 will be flagged if the same salt is generated outside this method.
         try {
-            PBEKeySpec spec = new PBEKeySpec(password, salt, ITERATIONS, AES_KEY_BIT);// CWE-327 False Positive due to salt is passed in as parameter
-            SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITHM_SECRET_KEY_FACTORY);
+            PBEKeySpec spec = new PBEKeySpec(password, salt, ALGORITHM_SECRET_KEY_ITERATION_COUNT, ALGORITHM_SECRET_KEY_BITS);// CWE-327 False Positive due to salt is passed in as parameter
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITHM_SECRET_KEY);
             byte[] keyBytes = factory.generateSecret(spec).getEncoded();
             return new SecretKeySpec(keyBytes, "AES");
         } catch (Throwable ex) {
@@ -279,7 +290,7 @@ public class EncryptorUtil {
 
     public static SecretKey generateSymmetricKey() throws NoSuchAlgorithmException {
         KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITHM_SYMMETRIC_KEY);
-        keyGen.init(AES_KEY_BIT, SecureRandom.getInstanceStrong());
+        keyGen.init(ALGORITHM_SYMMETRIC_KEY_BITS, SecureRandom.getInstanceStrong());
         return keyGen.generateKey();
     }
 
@@ -312,11 +323,11 @@ public class EncryptorUtil {
 
     public static Cipher buildCypher_GCM(boolean encrypt, SecretKey symmetricKey, byte[] iv) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
         //iv = randomBytes(IV_LENGTH_BYTE); // CWE-327 False Positive prove: flaw alert will be off when the same iv is generated inside this method, 327 will be flagged if the same iv is generated outside this method.
-        Cipher cipher = Cipher.getInstance(CIPHERS_SYMMETRIC);
+        Cipher cipher = Cipher.getInstance(CIPHERS_TRANSFORMATION_SYMMETRIC);
         if (encrypt) {
-            cipher.init(Cipher.ENCRYPT_MODE, symmetricKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));// CWE-327 False Positive due to iv is passed in as parameter
+            cipher.init(Cipher.ENCRYPT_MODE, symmetricKey, new GCMParameterSpec(SYMMETRIC_KEY_AUTHENTICATION_TAG_BITS, iv));// CWE-327 False Positive due to iv is passed in as parameter
         } else {
-            cipher.init(Cipher.DECRYPT_MODE, symmetricKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));// CWE-327 False Positive due to iv is passed in as parameter
+            cipher.init(Cipher.DECRYPT_MODE, symmetricKey, new GCMParameterSpec(SYMMETRIC_KEY_AUTHENTICATION_TAG_BITS, iv));// CWE-327 False Positive due to iv is passed in as parameter
         }
         return cipher;
     }
@@ -344,9 +355,9 @@ public class EncryptorUtil {
 
     public static byte[] encrypt(char[] password, byte[] plainData) throws GeneralSecurityException {
         // build cipher
-        byte[] salt = randomBytes(SALT_LEN);
+        byte[] salt = randomBytes(ALGORITHM_SECRET_KEY_SALT_BYTES);
         SecretKey key = buildSecretKey(password, salt);
-        byte[] iv = randomBytes(IV_LENGTH_BYTE);
+        byte[] iv = randomBytes(SYMMETRIC_KEY_IV_BYTES);
         Cipher cipher = buildCypher_GCM(true, key, iv);
 
         // encrypt data
@@ -395,9 +406,9 @@ public class EncryptorUtil {
     public static byte[] decrypt(char[] password, byte[] encryptedDataPackage) throws GeneralSecurityException {
         // 🔒 Retrieve: salt + iv + ciphertext
         //byte[] encryptedDataPackage = Base64.getDecoder().decode(String encodedData);
-        byte[] salt = new byte[SALT_LEN];
-        byte[] iv = new byte[IV_LENGTH_BYTE];
-        byte[] encryptedData = new byte[encryptedDataPackage.length - SALT_LEN - IV_LENGTH_BYTE];
+        byte[] salt = new byte[ALGORITHM_SECRET_KEY_SALT_BYTES];
+        byte[] iv = new byte[SYMMETRIC_KEY_IV_BYTES];
+        byte[] encryptedData = new byte[encryptedDataPackage.length - ALGORITHM_SECRET_KEY_SALT_BYTES - SYMMETRIC_KEY_IV_BYTES];
         ByteBuffer buffer = ByteBuffer.wrap(encryptedDataPackage);
         buffer.get(salt);
         buffer.get(iv);
@@ -415,7 +426,7 @@ public class EncryptorUtil {
 
     public static void encrypt(SecretKey symmetricKey, String plainDataFileName, String encryptedFileName) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         //1. create cipher wtiht this key
-        byte[] iv = randomBytes(IV_LENGTH_BYTE);
+        byte[] iv = randomBytes(SYMMETRIC_KEY_IV_BYTES);
         Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
 
         //3. streaming
@@ -434,7 +445,7 @@ public class EncryptorUtil {
     public static byte[] decrypt(SecretKey symmetricKey, byte[] encryptedLibraryBytes) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
         try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedLibraryBytes));) {
             //2. read iv
-            byte[] iv = new byte[IV_LENGTH_BYTE];
+            byte[] iv = new byte[SYMMETRIC_KEY_IV_BYTES];
             dis.readFully(iv);
             Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
             //4. decrypt streaming
@@ -759,7 +770,7 @@ public class EncryptorUtil {
      * @throws BadPaddingException
      */
     protected static byte[] asymmetric(int cipherMode, Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
-        Cipher rsaCipher = Cipher.getInstance(CIPHERS_ASYMMETRIC);
+        Cipher rsaCipher = Cipher.getInstance(CIPHERS_TRANSFORMATION_ASYMMETRIC);
         rsaCipher.init(cipherMode, asymmetricKey);
         // Encrypt the Rijndael key with the RSA cipher
         // and write it to the beginning of the file.
@@ -823,7 +834,7 @@ public class EncryptorUtil {
         if (randomSymmetricKey) {
             symmetricKey = generateSymmetricKey();
         }
-        byte[] iv = randomBytes(IV_LENGTH_BYTE);
+        byte[] iv = randomBytes(SYMMETRIC_KEY_IV_BYTES);
         Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
 
         //2. asymmetric encrypt file header
@@ -919,7 +930,7 @@ public class EncryptorUtil {
         if (randomSymmetricKey) {
             symmetricKey = generateSymmetricKey();
         }
-        byte[] iv = randomBytes(IV_LENGTH_BYTE);
+        byte[] iv = randomBytes(SYMMETRIC_KEY_IV_BYTES);
         Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
 
         //2. asymmetric encrypt file header

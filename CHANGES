@@ -28,38 +28,72 @@ mvn clean deploy -Dmaven.test.skip=true -P release
 - API renamed: @ImportResource.loadWhenImplTagUsed renamed to @ImportResource.thenLoadConfig
 - Config removed: etc/boot.ini/default.interval.ConfigChangeMonitor
 - Config new: etc/boot.ini
-	default.ConfigChangeMonitor.Throttle.Milliseconds
-	########################
-    # 5. Security Settings #
-    ########################
-    ## Default keystore type for SSL/TLS, valid values: PKCS12 (default), PKCS11, JCEKS , JKS, BCFKS
-    #default.keystore.type=PKCS12
+    #######################
+    # 3. Default Settings #
+    #######################
+	#default.ConfigChangeMonitor.Throttle.Milliseconds=100
 
-    ## Default keystore provider for SSL/TLS, valid values: null=JDK default, BC (BouncyCastle), SunJSSE, BCFIPS, etc.
-    ## Note: BC will not verify key password, so it is not recommended for production use.
+	#####################################################
+    # 5.1 Security Settings: keystore type and provider #
+    #####################################################
+    ## keystore type for SSL/TLS, valid values: PKCS12 (default), PKCS11, JCEKS , JKS, BCFKS
+    #keystore.type=PKCS12
+
+    ## keystore provider for SSL/TLS, valid values: null=JDK default, BC (BouncyCastle), SunJSSE, BCFIPS, etc.
+    ## Note: BC will not verify the key password, so it is not recommended for production use.
     ## Note: BCFIPS is a FIPS compliant provider, which is required by some government applications.
-    #default.keystore.provider=
+    #keystore.provider=
 
+    #########################################
+    # 5.2 Security Settings: message digest #
+    #########################################
     ## SHA3-224, SHA3-256 (default), SHA3-384, SHA3-512, SHA-256, SHA-384, SHA-512, etc.
     ## Note: MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
     #algorithm.Messagedigest=SHA3-256
 
-    ## Symmetric key factory generation algorithm, valid values: PBKDF2WithHmacSHA256 (default), PBKDF2WithHmacSHA512, PBKDF2WithHmacSHA1, etc.
-    #algorithm.SecretKeyFactory=PBKDF2WithHmacSHA256
-
-    ## Symmetric key algorithm, valid values: AES (default), DES, DESede, Blowfish, ARCFOUR, ChaCha20, HmacMD5, HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512, HmacSHA512/224, HmacSHA512/256, HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512, RC2, etc.
-    #algorithm.SymmetricKey=AES
-
+    ###################################################################
+    # 5.3 Security Settings: asymmetric key (public/private key pair) #
+    ###################################################################
     ## Asymmetric key algorithm, valid values: RSA (default), DSA, EC, DiffieHellman, Ed25519, Ed448, etc.
-    #algorithm.AsymmetricKey=RSA
-
-    ## Symmetric cipher transformation, valid values: AES/GCM/NoPadding (default, for modern applications), AES/CBC/PKCS5Padding (more compatible with older systems), AES/CBC/NoPadding, AES/CTR/NoPadding, AES/CFB/NoPadding, DES/CBC/PKCS5Padding, DESede/CBC/PKCS5Padding, Blowfish/CBC/PKCS5Padding, etc.
-    ## Note: do not use AES/CBC, and AES/GCM/PKCS5Padding is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html
-    #cipher.transformation.Symmetric=AES/GCM/NoPadding
+    #algorithm.Asymmetric=RSA
 
     ## Asymmetric cipher transformation, valid values: RSA/None/OAEPWithSHA-256AndMGF1Padding (default), RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc.
     ## Note: ryptographic algorithm ECB is weak and should not be used： RSA/ECB/PKCS1Padding
-    #cipher.transformation.Asymmetric=RSA/None/OAEPWithSHA-256AndMGF1Padding
+    #transformation.Asymmetric=RSA/None/OAEPWithSHA-256AndMGF1Padding
+
+    ######################################################
+    # 5.4 Security Settings: symmetric key (no password) #
+    ######################################################
+    ## Symmetric key algorithm, valid values: AES (default), DES, DESede, Blowfish, ARCFOUR, ChaCha20, HmacMD5, HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512, HmacSHA512/224, HmacSHA512/256, HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512, RC2, etc.
+    #algorithm.Symmetric=AES
+
+    ## key size in bits for symmetric key generation, algorithms may have different key size requirements.
+    #length.SymmetricKey.Bits=256
+
+    ## Symmetric cipher transformation, valid values: AES/GCM/NoPadding (default, for modern applications), AES/CBC/PKCS5Padding (more compatible with older systems), AES/CBC/NoPadding, AES/CTR/NoPadding, AES/CFB/NoPadding, DES/CBC/PKCS5Padding, DESede/CBC/PKCS5Padding, Blowfish/CBC/PKCS5Padding, etc.
+    ## Note: do not use AES/CBC, and AES/GCM/PKCS5Padding is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html
+    #transformation.Symmetric=AES/GCM/NoPadding
+
+    ## AuthenticationTag size in bits for symmetric key generation, algorithms may have different AuthenticationTag size requirements.
+    #length.SymmetricKey.AuthenticationTag.Bits=128
+
+    ## IV size in bits for symmetric key generation, algorithms may have different IV size requirements.
+    #length.symmetricKey.InitializationVector.Bytes=12
+
+    #####################################################
+    # 5.5 Security Settings: secret key (with password) #
+    #####################################################
+    ## Symmetric key factory generation algorithm, valid values: PBKDF2WithHmacSHA256 (default), PBKDF2WithHmacSHA512, PBKDF2WithHmacSHA1, etc.
+    #algorithm.SecretKey=PBKDF2WithHmacSHA256
+
+    ## key size in bits for symmetric key generation, algorithms may have different key size requirements.
+    #length.algorithm.SecretKey.Bits=256
+
+    ## salt size in bytes for symmetric key generation, algorithms may have different salt size requirements.
+    #length.algorithm.SecretKey.Salt.Bits=16
+
+    ## for symmetric key generation, algorithms may have different iteration requirements.
+    #count.algorithm.SecretKey.iteration=310000
 
 
 - Config new: cfg_nio.properties/
@@ -67,6 +101,8 @@ mvn clean deploy -Dmaven.test.skip=true -P release
 	ping.sync.PauseStatus
 	ping.sync.showRootCause
 	nio.WebSocket.Compress.maxAllocation
+	nio.JAX-RS.fromJson.autoBeanValidation (default true to enable Bean Validation by default for @Controller methods, no need to add @Valid)
+	nio.JAX-RS.toJson.showRefInServiceError
 - Config renamed: DB config use jakarta to replace hibernate
 	jakarta.persistence.jdbc.url=
 	jakarta.persistence.jdbc.user=
@@ -76,7 +112,10 @@ mvn clean deploy -Dmaven.test.skip=true -P release
 - added app CLI -debug for debug mode
 - enhancement: add IdleEventMonitor and IdleEventMonitor.IdleEventListener to enable app to handle gRPC/RESTFul idel event
 - enhancement: HttpClient proxy config
-- enhancement: refactoring RPCResult by supporting multiple error response types
+- enhancement: refactoring RPCResult
+    1. supporting multiple error response types
+    2. enable Bean Validation by default
+- enhancement: enable Bean Validation by default for @Controller methods, no need to add @Valid
 - enhancement: Err with args
 - enhancement: add nio.JAX-RS.toJson.showRefInServiceError in cfg_nio.properties, default false to not show ref field in JSON/XML response
 - enhancement: verify Bearer Token if provided in request header for regardless of a @Controller method is role-based or not
