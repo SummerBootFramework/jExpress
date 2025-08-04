@@ -31,7 +31,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 
 public abstract class GrpcTestBase {
-    static class TestConfig {
+    public static class TestConfig {
+        private final String testName;
+        private final int length;
         private String configDir = "src/test/resources/config/"; // "run/standalone_dev/configuration/";
         private String keyStore = new File(configDir + "keystore.p12").getAbsolutePath();
         private String serverTrustStore = new File(configDir + "truststore_grpc_server.p12").getAbsolutePath();
@@ -52,12 +54,17 @@ public abstract class GrpcTestBase {
         private int port = 8425;
         private String loadBalancingTargetScheme = "grpc";
 
-
         public TestConfig(int length, BindableService... serviceImpls) {
-            this(length, "src/test/resources/config/", serviceImpls);
+            this("gRPC with TLS " + length, length, "src/test/resources/config/", serviceImpls);
         }
 
-        public TestConfig(int length, String configDir, BindableService... serviceImpls) {
+        public TestConfig(String testName, int length, BindableService... serviceImpls) {
+            this(testName, length, "src/test/resources/config/", serviceImpls);
+        }
+
+        public TestConfig(String testName, int length, String configDir, BindableService... serviceImpls) {
+            this.testName = testName;
+            this.length = length;
             this.keyStore = new File(configDir + "keystore.p12").getAbsolutePath();
             this.serverTrustStore = new File(configDir + "truststore_grpc_server.p12").getAbsolutePath();
             this.clientTrustStore = new File(configDir + "truststore_grpc_client.p12").getAbsolutePath();
@@ -68,6 +75,17 @@ public abstract class GrpcTestBase {
             this.overrideAuthority = "server2." + length + ".jexpress.org";
 
             this.serviceImpls = serviceImpls;
+        }
+
+        @Override
+        public String toString() {
+            return "TestConfig{" +
+                    "name=" + testName +
+                    "length=" + length +
+                    ", configDir='" + configDir + '\'' +
+                    ", port=" + port +
+                    ", host='" + host + '\'' +
+                    '}';
         }
 
         public String getConfigDir() {
@@ -194,11 +212,22 @@ public abstract class GrpcTestBase {
     protected abstract BindableService[] getServerImpls();
 
     //@Test
-    public void test() throws GeneralSecurityException, IOException {
-        BindableService[] serviceImpls = getServerImpls();
-        test2WayAuth(new TestConfig(2048, serviceImpls));
-        test2WayAuth(new TestConfig(4096, serviceImpls));
+    public void runRtest() throws GeneralSecurityException, IOException {
+        TestConfig[] testConfigs = buildTestConfigs();
+        if (testConfigs == null || testConfigs.length == 0) {
+            BindableService[] serviceImpls = getServerImpls();
+            testConfigs = new TestConfig[]{
+                    new TestConfig(2048, serviceImpls),
+                    new TestConfig(4096, serviceImpls)
+            };
+        }
+        for (TestConfig config : testConfigs) {
+            System.out.println("Testing with config: " + config);
+            test2WayAuth(config);
+        }
     }
+
+    protected abstract TestConfig[] buildTestConfigs();
 
     protected void test2WayAuth(TestConfig config) throws GeneralSecurityException, IOException {
         String keyStore = config.getKeyStore();
