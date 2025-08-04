@@ -163,6 +163,7 @@
         <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.2</jakarta-mail.version>
+        <jakarta-activation.version>2.0.1</jakarta-activation.version>
         <!-- Security -->
         <bouncycastle.version>1.81</bouncycastle.version>
         <!-- JWT -->
@@ -309,7 +310,7 @@
         <dependency>
             <groupId>com.sun.activation</groupId>
             <artifactId>jakarta.activation</artifactId>
-            <version>${jakarta-mail.version}</version>
+            <version>${jakarta-activation.version}</version>
         </dependency>
 
 
