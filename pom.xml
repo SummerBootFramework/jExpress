@@ -162,7 +162,7 @@
         <log4j-api.version>2.25.1</log4j-api.version>
         <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
         <!-- Mail -->
-        <jakarta-mail.version>2.0.1</jakarta-mail.version>
+        <jakarta-mail.version>2.0.2</jakarta-mail.version>
         <!-- Security -->
         <bouncycastle.version>1.81</bouncycastle.version>
         <!-- JWT -->
@@ -176,7 +176,7 @@
         <guava.version>33.4.8-jre</guava.version>
         <protobuf.version>4.31.1</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.34</swagger.core.version>
+        <swagger.core.version>2.2.35</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -198,7 +198,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.0.8.Final</hibernate.version>
+        <hibernate.version>7.0.9.Final</hibernate.version>
         <hikari-cp.version>7.0.0</hikari-cp.version>
 
         <!-- Cache -->
