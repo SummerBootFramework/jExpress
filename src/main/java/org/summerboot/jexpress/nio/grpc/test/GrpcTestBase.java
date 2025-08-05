@@ -18,6 +18,7 @@ import org.summerboot.jexpress.nio.grpc.GRPCClientConfig;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.security.SSLUtil;
 import org.summerboot.jexpress.security.auth.LDAPAuthenticator;
+import org.summerboot.jexpress.util.ApplicationUtil;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
@@ -35,10 +36,10 @@ public abstract class GrpcTestBase {
         private final String testName;
         private final int length;
         private String configDir = "src/test/resources/config/"; // "run/standalone_dev/configuration/";
-        private String keyStore = new File(configDir + "keystore.p12").getAbsolutePath();
-        private String serverTrustStore = new File(configDir + "truststore_grpc_server.p12").getAbsolutePath();
-        private String clientTrustStore = new File(configDir + "truststore_grpc_client.p12").getAbsolutePath();
-        private String emptyTrustStore = new File(configDir + "truststore_empty.p12").getAbsolutePath();
+        private File keyStore = new File(configDir + "keystore.p12").getAbsoluteFile();
+        private File serverTrustStore = new File(configDir + "truststore_grpc_server.p12").getAbsoluteFile();
+        private File clientTrustStore = new File(configDir + "truststore_grpc_client.p12").getAbsoluteFile();
+        private File emptyTrustStore = new File(configDir + "truststore_empty.p12").getAbsoluteFile();
         private String serverKeyAlias;
         private String clientKeyAlias;
         private String overrideAuthority;
@@ -65,16 +66,30 @@ public abstract class GrpcTestBase {
         public TestConfig(String testName, int length, String configDir, BindableService... serviceImpls) {
             this.testName = testName;
             this.length = length;
-            this.keyStore = new File(configDir + "keystore.p12").getAbsolutePath();
-            this.serverTrustStore = new File(configDir + "truststore_grpc_server.p12").getAbsolutePath();
-            this.clientTrustStore = new File(configDir + "truststore_grpc_client.p12").getAbsolutePath();
-            this.emptyTrustStore = new File(configDir + "truststore_empty.p12").getAbsolutePath();
+            this.keyStore = new File(configDir + "keystore.p12").getAbsoluteFile();
+            createIfNotExist("keystore.p12", this.keyStore);
+
+            this.serverTrustStore = new File(configDir + "truststore_server.p12").getAbsoluteFile();
+            createIfNotExist("truststore.p12", this.serverTrustStore);
+
+            this.clientTrustStore = new File(configDir + "truststore_client.p12").getAbsoluteFile();
+            createIfNotExist("truststore.p12", this.clientTrustStore);
+
+            this.emptyTrustStore = new File(configDir + "truststore_empty.p12").getAbsoluteFile();
+            createIfNotExist("truststore_empty.p12", this.emptyTrustStore);
 
             this.serverKeyAlias = "server2_" + length + ".jexpress.org";
             this.clientKeyAlias = "server3_" + length + ".jexpress.org";
             this.overrideAuthority = "server2." + length + ".jexpress.org";
 
             this.serviceImpls = serviceImpls;
+        }
+
+        private void createIfNotExist(String srcFileName, File destFile) {
+            String location = destFile.getParent();
+            String destFileName = destFile.getName();
+            ClassLoader classLoader = this.getClass().getClassLoader();
+            ApplicationUtil.createIfNotExist(location, classLoader, srcFileName, destFileName);
         }
 
         @Override
@@ -96,35 +111,35 @@ public abstract class GrpcTestBase {
             this.configDir = configDir;
         }
 
-        public String getKeyStore() {
+        public File getKeyStore() {
             return keyStore;
         }
 
-        public void setKeyStore(String keyStore) {
+        public void setKeyStore(File keyStore) {
             this.keyStore = keyStore;
         }
 
-        public String getServerTrustStore() {
+        public File getServerTrustStore() {
             return serverTrustStore;
         }
 
-        public void setServerTrustStore(String serverTrustStore) {
+        public void setServerTrustStore(File serverTrustStore) {
             this.serverTrustStore = serverTrustStore;
         }
 
-        public String getClientTrustStore() {
+        public File getClientTrustStore() {
             return clientTrustStore;
         }
 
-        public void setClientTrustStore(String clientTrustStore) {
+        public void setClientTrustStore(File clientTrustStore) {
             this.clientTrustStore = clientTrustStore;
         }
 
-        public String getEmptyTrustStore() {
+        public File getEmptyTrustStore() {
             return emptyTrustStore;
         }
 
-        public void setEmptyTrustStore(String emptyTrustStore) {
+        public void setEmptyTrustStore(File emptyTrustStore) {
             this.emptyTrustStore = emptyTrustStore;
         }
 
@@ -212,28 +227,27 @@ public abstract class GrpcTestBase {
     protected abstract BindableService[] getServerImpls();
 
     //@Test
-    public void runRtest() throws GeneralSecurityException, IOException {
-        TestConfig[] testConfigs = buildTestConfigs();
-        if (testConfigs == null || testConfigs.length == 0) {
-            BindableService[] serviceImpls = getServerImpls();
-            testConfigs = new TestConfig[]{
-                    new TestConfig(2048, serviceImpls),
-                    new TestConfig(4096, serviceImpls)
-            };
-        }
+    public void runTest() throws GeneralSecurityException, IOException {
+        TestConfig[] testConfigs = buildDefaultTestConfigs();
         for (TestConfig config : testConfigs) {
             System.out.println("Testing with config: " + config);
             test2WayAuth(config);
         }
     }
 
-    protected abstract TestConfig[] buildTestConfigs();
+    protected TestConfig[] buildDefaultTestConfigs() {
+        BindableService[] serviceImpls = getServerImpls();
+        return new TestConfig[]{
+                new TestConfig(2048, serviceImpls),
+                new TestConfig(4096, serviceImpls)
+        };
+    }
 
     protected void test2WayAuth(TestConfig config) throws GeneralSecurityException, IOException {
-        String keyStore = config.getKeyStore();
-        String serverTrustStore = config.getServerTrustStore();
-        String clientTrustStore = config.getClientTrustStore();
-        String emptyTrustStore = config.getEmptyTrustStore();
+        String keyStore = config.getKeyStore().getAbsolutePath();
+        String serverTrustStore = config.getServerTrustStore().getAbsolutePath();
+        String clientTrustStore = config.getClientTrustStore().getAbsolutePath();
+        String emptyTrustStore = config.getEmptyTrustStore().getAbsolutePath();
         String serverKeyAlias = config.getServerKeyAlias();
         String clientKeyAlias = config.getClientKeyAlias();
         String overrideAuthority = config.getOverrideAuthority();
