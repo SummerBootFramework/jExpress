@@ -20,7 +20,6 @@ import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.render.Box;
 import com.openhtmltopdf.render.PageBox;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
@@ -32,6 +31,7 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.rendering.RenderDestination;
+import org.summerboot.jexpress.security.SecurityUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -149,7 +149,7 @@ public class PDFBox {
 
     public static StandardProtectionPolicy buildStandardProtectionPolicy(String userPwd, String ownerPwd, AccessPermission ap, int keyLenth) {
         if (StringUtils.isBlank(ownerPwd)) {
-            ownerPwd = RandomStringUtils.randomAlphanumeric(10);
+            ownerPwd = SecurityUtil.randomAlphanumeric(10);
         }
         StandardProtectionPolicy spp = new StandardProtectionPolicy(ownerPwd, userPwd, ap);
         spp.setEncryptionKeyLength(keyLenth);

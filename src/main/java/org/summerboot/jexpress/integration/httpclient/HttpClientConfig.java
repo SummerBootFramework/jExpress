@@ -32,7 +32,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.net.Authenticator;
 import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -66,7 +69,30 @@ abstract public class HttpClientConfig extends BootConfig {
     protected static final String FILENAME_KEYSTORE = "keystore.p12";
     protected static final String FILENAME_TRUSTSTORE_4CLIENT = "truststore_httpclient.p12";
 
+    protected enum ProxyAuthenticationType {
+        NONE, BASIC, DIGEST, NTLM, KERBEROS
+    }
+
+    protected enum ProxyAuthStrategy {
+        /**
+         * Sets Proxy-Authorization only in the request header
+         */
+        HEADER,
+        /**
+         * Sets Authenticator only at the HttpClient level
+         */
+        AUTHENTICATOR
+    }
+
     protected HttpClientConfig() {
+    }
+
+    @Override
+    protected void reset() {
+        jsonParserTimeZone = TimeZone.getDefault();
+        httpClientCoreSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        httpClientMaxSize = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        proxyAuthStrategy = ProxyAuthStrategy.AUTHENTICATOR;
     }
 
     @Override
@@ -86,7 +112,7 @@ abstract public class HttpClientConfig extends BootConfig {
 
     //3.1 HTTP Client Security
     @ConfigHeader(title = "1. HTTP Client Security")
-    @Config(key = "httpclient.ssl.protocol")
+    @Config(key = "httpclient.ssl.protocol", defaultValue = "TLSv1.3")
     protected volatile String protocol = "TLSv1.3";
 
     protected static final String KEY_kmf_key = "httpclient.ssl.KeyStore";
@@ -102,9 +128,9 @@ abstract public class HttpClientConfig extends BootConfig {
 
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
-        sb.append(KEY_kmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE);
         sb.append(KEY_kmf_AliasKey + "=server3_2048.jexpress.org\n");
-        sb.append(KEY_kmf_AliasPwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE);
         generateTemplate = true;
     }
 
@@ -117,7 +143,7 @@ abstract public class HttpClientConfig extends BootConfig {
 
     protected void generateTemplate_truststore(StringBuilder sb) {
         sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
-        sb.append(KEY_tmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE);
         generateTemplate = true;
     }
 
@@ -127,7 +153,7 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.proxy.host")
     protected volatile String proxyHost;
 
-    @Config(key = "httpclient.proxy.port")
+    @Config(key = "httpclient.proxy.port", defaultValue = "8080")
     protected volatile int proxyPort = 8080;
 
     @Config(key = "httpclient.proxy.userName")
@@ -137,17 +163,21 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.proxy.userPwd", validate = Config.Validate.Encrypted)
     protected volatile String proxyUserPwd;
 
+    @Config(key = "httpclient.proxy.authStrategy", defaultValue = "AUTHENTICATOR",
+            desc = "valid values: AUTHENTICATOR (default, sets Authenticator only at the HttpClient level), HEADER (Sets Proxy-Authorization only in the request header)")
+    protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.AUTHENTICATOR;
+
     @JsonIgnore
     protected volatile String proxyAuthorizationBasicValue;
 
     //    @Config(key = "httpclient.proxy.useAuthenticator")
 //    protected volatile boolean useAuthenticator = false;
-    @Config(key = "httpclient.redirectOption")
+    @Config(key = "httpclient.redirectOption", defaultValue = "NEVER")
     protected volatile HttpClient.Redirect redirectOption = HttpClient.Redirect.NEVER;
 
-    @Config(key = "httpclient.fromJson.CaseInsensitive")
+    @Config(key = "httpclient.fromJson.CaseInsensitive", defaultValue = "false")
     protected volatile boolean fromJsonCaseInsensitive = false;
-    @Config(key = "httpclient.fromJson.failOnUnknownProperties")
+    @Config(key = "httpclient.fromJson.failOnUnknownProperties", defaultValue = "true")
     protected volatile boolean fromJsonFailOnUnknownProperties = true;
     @Config(key = "httpclient.fromJson.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
@@ -160,10 +190,10 @@ abstract public class HttpClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile HttpClient.Builder builder;
 
-    @Config(key = "httpclient.timeout.connect.ms", desc = "The maximum time to wait for only the connection to be established, should be less than httpclient.timeout.ms")
+    @Config(key = "httpclient.timeout.connect.ms", defaultValue = "3000", desc = "The maximum time to wait for only the connection to be established, should be less than httpclient.timeout.ms")
     protected volatile long httpConnectTimeoutMs = 3000;
 
-    @Config(key = "httpclient.timeout.ms", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
+    @Config(key = "httpclient.timeout.ms", defaultValue = "5000", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
     protected volatile long httpClientTimeoutMs = 5000;
 
     @Config(key = "httpclient.executor.mode", defaultValue = "VirtualThread",
@@ -295,28 +325,43 @@ abstract public class HttpClientConfig extends BootConfig {
         if (StringUtils.isNotBlank(proxyHost)) {
             builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
         }
-        if (StringUtils.isNotBlank(proxyUserName)) {
+
+        System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
+        if (StringUtils.isNotBlank(proxyHost)) {
+            //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
+            builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
+            if (proxyUserName == null) {
+                proxyUserName = "";
+            }
             if (proxyUserPwd == null) {
                 proxyUserPwd = "";
             }
-            //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
-            System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
-            //2a. set proxy authenticator at the request header level: 
-            String plain = proxyUserName + ":" + proxyUserPwd;
-            String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
-            proxyAuthorizationBasicValue = "Basic " + encoded;
-            //HttpRequest.newBuilder().setHeader("Proxy-Authorization", ProxyAuthorizationValue);
-
-//                    if (useAuthenticator) {
-//                        //2b. set proxy authenticator at the HttpClient level: not flexible to deal with different remote server settings
-//                        Authenticator authenticator = new Authenticator() {
-//                            @Override
-//                            protected PasswordAuthentication getPasswordAuthentication() {
-//                                return new PasswordAuthentication(proxyUserName, proxyUserPwd.toCharArray());
-//                            }
-//                        };
-//                        builder.authenticator(authenticator);
-//                    }
+            if (StringUtils.isNotBlank(proxyUserName)) {
+                switch (proxyAuthStrategy) {
+                    case HEADER -> {
+                        // set proxy authenticator at the request header level: reqBuilder.setHeader("Proxy-Authorization", proxyAuthorizationBasicValue);
+                        String plain = proxyUserName + ":" + proxyUserPwd;
+                        String encoded = new String(java.util.Base64.getEncoder().encode(plain.getBytes()));
+                        proxyAuthorizationBasicValue = "Basic " + encoded;
+                        httpClientDefaultRequestHeaders.put("Proxy-Authorization", proxyAuthorizationBasicValue);
+                    }
+                    case AUTHENTICATOR -> {
+                        // set proxy authenticator at the builder level:
+                        final char[] proxyUserPwdChars = proxyUserPwd.toCharArray();
+                        builder.authenticator(new Authenticator() {
+                            @Override
+                            protected PasswordAuthentication getPasswordAuthentication() {
+                                if (getRequestorType() == Authenticator.RequestorType.PROXY) {
+                                    return new PasswordAuthentication(proxyUserName, proxyUserPwdChars);
+                                }
+                                return null; // for other types of authentication, return null
+                            }
+                        });
+                    }
+                }
+            }
+        } else {
+            builder.proxy(ProxySelector.of((InetSocketAddress) Proxy.NO_PROXY.address()));
         }
         httpClient = builder.build();
         // 3. register new
@@ -389,6 +434,10 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public String getProxyUserPwd() {
         return proxyUserPwd;
+    }
+
+    public ProxyAuthStrategy getProxyAuthStrategy() {
+        return proxyAuthStrategy;
     }
 
     public String getProxyAuthorizationBasicValue() {

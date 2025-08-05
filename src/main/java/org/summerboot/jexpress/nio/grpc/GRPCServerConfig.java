@@ -17,11 +17,13 @@ package org.summerboot.jexpress.nio.grpc;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.util.GeoIpUtil;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -30,6 +32,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -52,6 +55,12 @@ public class GRPCServerConfig extends BootConfig {
     protected GRPCServerConfig() {
     }
 
+    @Override
+    protected void reset() {
+        tpeCore = BootConstant.CPU_CORE * 2 + 1;
+        tpeMax = BootConstant.CPU_CORE * 2 + 1;
+    }
+
     //1. gRPC server config
     @ConfigHeader(title = "1. " + ID + " Network Listeners",
             format = "ip1:port1, ip2:port2, ..., ipN:portN",
@@ -60,6 +69,15 @@ public class GRPCServerConfig extends BootConfig {
     protected volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = ID + ".autostart", defaultValue = "true")
     protected volatile boolean autoStart;
+
+    @Config(key = ID + ".CallerAddressFilter.option", defaultValue = "HostName", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
+    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.HostName;
+    @Config(key = ID + ".CallerAddressFilter.Regex.Prefix", desc = "A non-blank prefix to mark a string as Regex in both Whitelist and Blacklist, blank means all strings are not Regex")
+    protected volatile String callerAddressFilterRegexPrefix;
+    @Config(key = ID + ".CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example (when Regex.Prefix = RG): 127.0.0.1, RG^192\\\\.168\\\\.1\\\\.")
+    protected volatile Set<String> callerAddressFilterWhitelist;
+    @Config(key = ID + ".CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\\\.168\\\\.2\\\\.")
+    protected volatile Set<String> callerAddressFilterBlacklist;
 
     @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "VirtualThread",
             desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \n use CPU core + 1 when application is CPU bound\n"
@@ -105,9 +123,9 @@ public class GRPCServerConfig extends BootConfig {
 
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
-        sb.append(KEY_kmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE);
         sb.append(KEY_kmf_AliasKey + "=server2_4096.jexpress.org\n");
-        sb.append(KEY_kmf_AliasPwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE);
         generateTemplate = true;
     }
 
@@ -122,7 +140,7 @@ public class GRPCServerConfig extends BootConfig {
 
     protected void generateTemplate_truststore(StringBuilder sb) {
         sb.append("#" + KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4SERVER + "\n");
-        sb.append("#" + KEY_tmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append("#" + KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE);
         generateTemplate = true;
     }
 
@@ -134,6 +152,27 @@ public class GRPCServerConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
+        if (StringUtils.isBlank(callerAddressFilterRegexPrefix)) {
+            callerAddressFilterRegexPrefix = null;
+        } else {
+            if (callerAddressFilterWhitelist != null) {
+                for (String regex : callerAddressFilterWhitelist) {
+                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
+//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
+                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
+                    }
+                }
+            }
+            if (callerAddressFilterBlacklist != null) {
+                for (String regex : callerAddressFilterBlacklist) {
+                    GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
+                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
+//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
+                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
+                    }
+                }
+            }
+        }
         tpe = buildThreadPoolExecutor(tpe, "Netty-gRPC.Biz", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, true);
@@ -152,6 +191,22 @@ public class GRPCServerConfig extends BootConfig {
 
     public boolean isAutoStart() {
         return autoStart;
+    }
+
+    public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
+        return CallerAddressFilterOption;
+    }
+
+    public String getCallerAddressFilterRegexPrefix() {
+        return callerAddressFilterRegexPrefix;
+    }
+
+    public Set<String> getCallerAddressFilterWhitelist() {
+        return callerAddressFilterWhitelist;
+    }
+
+    public Set<String> getCallerAddressFilterBlacklist() {
+        return callerAddressFilterBlacklist;
     }
 
     public ThreadingMode getTpeThreadingMode() {

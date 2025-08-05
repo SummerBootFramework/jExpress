@@ -24,12 +24,16 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ser.FilterProvider;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
 
 import java.lang.reflect.Array;
 import java.util.Iterator;
@@ -44,36 +48,47 @@ public class BeanUtil {
 
     protected static boolean isToJsonIgnoreNull = true;
     protected static boolean isToJsonPretty = false;
+    protected static FilterProvider ServiceErrorFilter = new SimpleFilterProvider()
+            .addFilter(BootConstant.JSONFILTER_NAME_SERVICEERROR, SimpleBeanPropertyFilter.serializeAllExcept("ref"));
+    protected static FilterProvider EmptyFilter = new SimpleFilterProvider()
+            .addFilter(BootConstant.JSONFILTER_NAME_SERVICEERROR, SimpleBeanPropertyFilter.serializeAll());
 
+    protected static boolean showRefInServiceError = false;
     public static ObjectMapper JacksonMapper = new ObjectMapper();//JsonMapper.builder().init(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
     public static ObjectMapper JacksonMapperIgnoreNull = new ObjectMapper()
             .setSerializationInclusion(Include.NON_NULL)
             .setSerializationInclusion(Include.NON_EMPTY);
     public static XmlMapper XMLMapper = new XmlMapper();
 
-    public static void update(ObjectMapper objectMapper, TimeZone timeZone, boolean isFromJsonFailOnUnknownProperties) {
+    public static void update(ObjectMapper objectMapper, TimeZone timeZone, boolean isFromJsonFailOnUnknownProperties, boolean showRefInServiceError) {
         objectMapper.registerModules(new JavaTimeModule());
         objectMapper.setTimeZone(timeZone);
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
+        if (showRefInServiceError) {
+            objectMapper.setFilterProvider(EmptyFilter);
+        } else {
+            objectMapper.setFilterProvider(ServiceErrorFilter);
+        }
     }
 
-    public static void init(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive, boolean toJsonPretty, boolean toJsonIgnoreNull) {
+    public static void init(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive, boolean toJsonPretty, boolean toJsonIgnoreNull, boolean showRefInServiceError) {
         isToJsonPretty = toJsonPretty;
         isToJsonIgnoreNull = toJsonIgnoreNull;
+        showRefInServiceError = showRefInServiceError;
         if (fromJsonCaseInsensitive) {
             JacksonMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
             XMLMapper = XmlMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
         }
-        update(JacksonMapper, timeZone, fromJsonFailOnUnknownProperties);
-        update(JacksonMapperIgnoreNull, timeZone, fromJsonFailOnUnknownProperties);
-        update(XMLMapper, timeZone, fromJsonFailOnUnknownProperties);
+        update(JacksonMapper, timeZone, fromJsonFailOnUnknownProperties, showRefInServiceError);
+        update(JacksonMapperIgnoreNull, timeZone, fromJsonFailOnUnknownProperties, showRefInServiceError);
+        update(XMLMapper, timeZone, fromJsonFailOnUnknownProperties, showRefInServiceError);
     }
 
     static {
-        init(TimeZone.getDefault(), true, false, false, true);
+        init(TimeZone.getDefault(), true, false, false, true, false);
     }
 
     /**

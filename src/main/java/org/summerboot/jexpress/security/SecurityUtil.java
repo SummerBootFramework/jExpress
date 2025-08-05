@@ -15,22 +15,29 @@
  */
 package org.summerboot.jexpress.security;
 
+import com.veracode.annotation.CRLFCleanser;
+import com.veracode.annotation.FilePathCleanser;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.summerboot.jexpress.util.FormatterUtil;
+import org.apache.commons.text.StringEscapeUtils;
+import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.SessionContext;
+import org.summerboot.jexpress.nio.server.domain.Err;
 
-import javax.crypto.Cipher;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.util.Base64;
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public final class SecurityUtil {
+public class SecurityUtil {
 
     public static final HostnameVerifier DO_NOT_VERIFY_REMOTE_IP = (String hostname, SSLSession session) -> true;
     public static final HostnameVerifier hostnameVerifier = (String hostname, SSLSession session) -> {
@@ -40,144 +47,9 @@ public final class SecurityUtil {
 
     public static final String[] CIPHER_SUITES = {"TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256", "TLS_DHE_DSS_WITH_AES_256_CBC_SHA", "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256", "TLS_DHE_DSS_WITH_AES_128_CBC_SHA", "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384", "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256", "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384", "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384", "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256", "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256", "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384", "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDH_anon_WITH_AES_256_CBC_SHA", "TLS_ECDH_anon_WITH_AES_128_CBC_SHA", "TLS_ECDH_ECDSA_WITH_NULL_SHA", "TLS_ECDH_RSA_WITH_NULL_SHA", "TLS_ECDH_anon_WITH_NULL_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_NULL_SHA,TLS_ECDHE_RSA_WITH_NULL_SHA"};
 
-    /**
-     * @param plainData
-     * @param warped    true if the encrypted value is in a warper like
-     *                  password=DEC(encrypted password)
-     * @return
-     * @throws GeneralSecurityException
-     */
-    public static String encrypt(String plainData, boolean warped) throws GeneralSecurityException {
-        if (warped) {
-            plainData = FormatterUtil.getInsideParenthesesValue(plainData);
-        }
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.ENCRYPT_MODE, EncryptorUtil.SCERET_KEY);
-        byte[] utf8 = plainData.getBytes(StandardCharsets.UTF_8);
-        byte[] encryptedData = cipher.doFinal(utf8);
-        //String result = Base64.encode(encryptedData);
-        String result = Base64.getEncoder().encodeToString(encryptedData);
-        for (int i = 0; i < utf8.length; i++) {
-            utf8[i] = 0;
-        }
-        for (int i = 0; i < encryptedData.length; i++) {
-            encryptedData[i] = 0;
-        }
-        return result;
-    }
-
-    /**
-     * decrypt encrypted value with prefix to plain text char array
-     *
-     * @param encrypted
-     * @param warped    true if the encrypted value is in a warper like
-     *                  password=ENC(encrypted password)
-     * @return
-     * @throws GeneralSecurityException
-     */
-    public static char[] decrypt2Char(String encrypted, boolean warped) throws GeneralSecurityException {
-        String decrypted = decrypt(encrypted, warped);
-        return decrypted == null ? null : decrypted.toCharArray();
-    }
-
-    /**
-     * decrypt encrypted value with prefix to plain text
-     *
-     * @param encrypted
-     * @param warped    true if the encrypted value is in a warper like
-     *                  password=ENC(encrypted password)
-     * @return
-     * @throws GeneralSecurityException
-     */
-    public static String decrypt(String encrypted, boolean warped) throws GeneralSecurityException {
-        if (warped) {
-            encrypted = FormatterUtil.getInsideParenthesesValue(encrypted);
-        }
-        byte[] utf8 = decryptEx(encrypted);
-        if (utf8 == null) {
-            return null;
-        }
-        String result = new String(utf8, StandardCharsets.UTF_8);
-        for (int i = 0; i < utf8.length; i++) {
-            utf8[i] = 0;
-        }
-        return result;
-    }
-
-    public static byte[] decryptEx(String encrypted) throws GeneralSecurityException {
-        if (encrypted == null) {
-            return null;
-        }
-        byte[] result;
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.DECRYPT_MODE, EncryptorUtil.SCERET_KEY);
-        //byte[] decodedData = Base64.decode(encrypted);
-        byte[] decodedData = Base64.getDecoder().decode(encrypted);
-        result = cipher.doFinal(decodedData);
-        for (int i = 0; i < decodedData.length; i++) {
-            decodedData[i] = 0;
-        }
-        return result;
-    }
-
-    //    public static String base64MimeDecode(String base64Text) throws UnsupportedEncodingException {
-//        // Decode base64 to get bytes
-//        //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
-//        byte[] dec = java.util.Base64.getDecoder().decode(base64Text);
-//        // Decode using utf-8
-//        return new String(dec, StandardCharsets.UTF_8);
-//    }
-    public static String base64Decode(String base64Text) {
-        // Decode base64 to get bytes
-        //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
-        //byte[] dec = Base64.decode(base64Text);
-        byte[] dec = Base64.getDecoder().decode(base64Text);
-        // Decode using utf-8
-        return new String(dec, StandardCharsets.UTF_8);
-    }
-
-    //    public static String base64MimeEncode(String plainText) throws UnsupportedEncodingException {
-//        // Decode base64 to get bytes
-//        //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
-//        byte[] dec = java.util.Base64.getEncoder().encode(plainText.getBytes(StandardCharsets.UTF_8));
-//        // Decode using utf-8
-//        return new String(dec, StandardCharsets.UTF_8);
-//    }
-    public static String base64Encode(String plain) {
-        //return Base64.encode(plain.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(plain.getBytes(StandardCharsets.UTF_8));
-    }
-
-    public static final Pattern hasUppercase = Pattern.compile("[A-Z]");
-    public static final Pattern hasLowercase = Pattern.compile("[a-z]");
-    public static final Pattern hasNumber = Pattern.compile("\\d");
-    public static final Pattern hasSpecialChar = Pattern.compile("[^a-zA-Z0-9 ]");
-
-    public static boolean validatePassword(String pwd, int length) {
-        if (StringUtils.isBlank(pwd)) {
-            return false;
-        }
-        if (pwd.length() < length) {
-            return false;
-        }
-        if (!hasUppercase.matcher(pwd).find()) {
-            return false;
-        }
-        if (!hasLowercase.matcher(pwd).find()) {
-            return false;
-        }
-        if (!hasNumber.matcher(pwd).find()) {
-            return false;
-        }
-        if (!hasSpecialChar.matcher(pwd).find()) {
-            return false;
-        }
-        return true;
-    }
-
-
     public static final Pattern PATTERN_UNPRINTABLE = Pattern.compile("\\p{C}");
     public static final Pattern PATTERN_UNPRINTABLE_CRLFTAB = Pattern.compile("\\p{C}&&[^\\r\\n\\t]");
+
 
     /**
      * Removes all unprintable characters from a string and replaces with
@@ -193,4 +65,215 @@ public final class SecurityUtil {
         }
         return PATTERN_UNPRINTABLE.matcher(input).replaceAll(substitute);//str.replaceAll("\\p{C}", " ");
     }
+
+    public static final Pattern Pattern_HasUppercase = Pattern.compile("[A-Z]");
+    public static final Pattern Pattern_HasLowercase = Pattern.compile("[a-z]");
+    public static final Pattern Pattern_HasNumber = Pattern.compile("\\d");
+    public static final Pattern Pattern_HasSpecialChar = Pattern.compile("[^a-zA-Z0-9 ]");
+
+    public static boolean validatePassword(String pwd, int length) {
+        if (StringUtils.isBlank(pwd)) {
+            return false;
+        }
+        if (pwd.length() < length) {
+            return false;
+        }
+        if (!Pattern_HasUppercase.matcher(pwd).find()) {
+            return false;
+        }
+        if (!Pattern_HasLowercase.matcher(pwd).find()) {
+            return false;
+        }
+        if (!Pattern_HasNumber.matcher(pwd).find()) {
+            return false;
+        }
+        if (!Pattern_HasSpecialChar.matcher(pwd).find()) {
+            return false;
+        }
+        return true;
+    }
+
+
+    public static String randomAlphanumeric(int count) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            int randomIndex = EncryptorUtil.RANDOM.nextInt(33, 126);
+            sb.append((char) (randomIndex));
+        }
+        return sb.toString();
+    }
+
+    @CRLFCleanser
+    public static String sanitizeCRLF(String userInput) {
+        if (StringUtils.isEmpty(userInput)) {
+            return userInput;
+        }
+        return StringEscapeUtils.escapeJava(userInput);
+    }
+
+    @FilePathCleanser
+    public static String sanitizeFilePath(String plainText) {
+        if (StringUtils.isEmpty(plainText)) {
+            return plainText;
+        }
+        String str = RegExUtils.replaceAll(plainText, "\\.\\./", "/");
+        return (String) str.chars().mapToObj((i) -> (char) i).map((c) -> Character.isWhitespace(c) ? '_' : c).filter((c) -> Character.isLetterOrDigit(c) || c == '-' || c == '_' || c == ':' || c == '/' || c == '\\' || c == '@' || c == '.').map(String::valueOf).collect(Collectors.joining());
+    }
+
+    @FilePathCleanser
+    public static String sanitizeFilePath(File file) {
+        return sanitizeFilePath(file.getAbsolutePath());
+    }
+
+    @FilePathCleanser
+    public static boolean sanitizePath(String path) {
+        return !path.contains(File.separator + '.')
+                && !path.contains('.' + File.separator);
+    }
+
+    @FilePathCleanser
+    public static boolean precheckFile(File file, SessionContext context) {
+        String filePath = file.getAbsolutePath();
+        String realPath;
+        try {
+            realPath = file.getAbsoluteFile().toPath().normalize().toString();
+        } catch (Throwable ex) {
+            Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, "Invalid file path", ex, "Invalid file path: " + filePath);
+            context.status(HttpResponseStatus.BAD_REQUEST).error(e);
+            return false;
+        }
+
+        if (!file.exists()) {
+            //var e = new ServiceError(appErrorCode, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_FOUND, null, "Invalid file path", null, "File not exists: " + filePath);
+            context.status(HttpResponseStatus.NOT_FOUND).error(e);
+            return false;
+        }
+
+        if (!sanitizePath(filePath) || !filePath.equals(realPath)
+                || file.isDirectory() || !file.isFile()
+                || file.isHidden() || !file.canRead()) {
+            //var e = new ServiceError(appErrorCode, null, "⚠", null);
+            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "Invalid file path", null, "Malicious file request: " + filePath);
+            context.status(HttpResponseStatus.FORBIDDEN).error(e);
+            return false;
+        }
+        return true;
+    }
+
+
+    public static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
+
+    public static boolean sanitizeUri(String uri) {
+        try {
+            uri = URLDecoder.decode(uri, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            try {
+                uri = URLDecoder.decode(uri, "ISO-8859-1");
+            } catch (UnsupportedEncodingException e1) {
+                return false;
+            }
+        }
+        uri = uri.replace('/', File.separatorChar);
+        // Simplistic dumb security check.
+        // You will have to do something serious in the production environment.
+        return !(uri.contains(File.separator + '.')
+                || uri.contains('.' + File.separator)
+                || uri.charAt(0) == '.'
+                || uri.charAt(uri.length() - 1) == '.'
+                || INSECURE_URI.matcher(uri).matches());
+    }
+
+    @Deprecated
+    public static String sanitizeDocRootUri(String uri, String docroot) {
+        try {
+            uri = URLDecoder.decode(uri, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            try {
+                uri = URLDecoder.decode(uri, "ISO-8859-1");
+            } catch (UnsupportedEncodingException e1) {
+                throw new Error(e);
+            }
+        }
+        uri = uri.replace('/', File.separatorChar);
+        // Simplistic dumb security check.
+        // You will have to do something serious in the production environment.
+        if (uri.contains(File.separator + '.')
+                || uri.contains('.' + File.separator)
+                || uri.charAt(0) == '.'
+                || uri.charAt(uri.length() - 1) == '.'
+                || INSECURE_URI.matcher(uri).matches()) {
+            return null;
+        }
+        if (!uri.startsWith(docroot)) {
+            return null;
+        }
+        return System.getProperty("user.dir") + uri;
+    }
+
+
+    /**
+     * This method demonstrates how to include special characters in Javadoc.
+     * The exhaustive list of characters requiring escaping in Distinguished Name (DN) is the following:
+     * {@literal \ # + < > , ; " = and leading or trailing spaces.}
+     * <p>
+     * This tag ensures the literal text is rendered correctly without Javadoc parsing errors.
+     *
+     * @param dnName
+     * @return
+     */
+    public static final String escapeDN(String dnName) {
+        if (dnName == null) {
+            return dnName;
+        }
+        StringBuilder sb = new StringBuilder();
+
+        if ((dnName.length() > 0) && ((dnName.charAt(0) == ' ') || (dnName.charAt(0) == '#'))) {
+            sb.append('\\'); // add the leading backslash if needed
+        }
+        for (int i = 0; i < dnName.length(); i++) {
+            char curChar = dnName.charAt(i);
+            switch (curChar) {
+                case '\\':// Backslash character
+                case '#':// Pound sign (hash sign)
+                case '+':// Plus sign
+                case '<':// Less than symbol
+                case '>':// Greater than symbol
+                case ',':// comma
+                case ';':// Semicolon
+                case '"':// Double quote (quotation mark)
+                case '=':// Equal sign
+                    break;
+                default:
+                    sb.append(curChar);
+            }
+        }
+        if ((dnName.length() > 1) && (dnName.charAt(dnName.length() - 1) == ' ')) {
+            sb.insert(sb.length() - 1, '\\'); // add the trailing backslash if needed
+        }
+
+        return sb.toString().trim();// Leading or trailing spaces
+    }
+
+    public static final String escapeLDAPSearchFilter(String filter) {
+        if (filter == null) {
+            return filter;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < filter.length(); i++) {
+            char curChar = filter.charAt(i);
+            switch (curChar) {
+                case '\\':
+                case '*':
+                case '(':
+                case ')':
+                case '\u0000':
+                    break;
+                default:
+                    sb.append(curChar);
+            }
+        }
+        return sb.toString().trim();
+    }
+
 }

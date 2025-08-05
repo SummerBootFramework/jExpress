@@ -113,7 +113,7 @@ abstract public class NioChannelInitializer extends ChannelInitializer<SocketCha
             SSLEngine sslEngine = sslHandler.engine();
             SSLParameters sslParameters = sslEngine.getSSLParameters();
             // only available since Java 7
-            sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+            sslParameters.setEndpointIdentificationAlgorithm("HTTPS");// default since Netty 4.2.0
             sslEngine.setSSLParameters(sslParameters);
         }
         pipeline.addLast("ssl", sslHandler);

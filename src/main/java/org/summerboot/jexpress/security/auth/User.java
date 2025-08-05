@@ -31,6 +31,7 @@ import java.util.Set;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class User implements Serializable, Caller, Comparable<User> {
+    protected String jti;
     protected Long tenantId;
     protected String tenantName;
     protected Long id;
@@ -51,7 +52,13 @@ public class User implements Serializable, Caller, Comparable<User> {
         this(null, null, id, uid);
     }
 
-    public User(@JsonProperty("tenantId") Long tenantId, @JsonProperty("tenantName") String tenantName, @JsonProperty("id") Long id, @JsonProperty("uid") String uid) {
+    //public User(@JsonProperty("tenantId") Long tenantId, @JsonProperty("tenantName") String tenantName, @JsonProperty("id") Long id, @JsonProperty("uid") String uid) {
+    public User(Long tenantId, String tenantName, Long id, String uid) {
+        this(null, tenantId, tenantName, id, uid);
+    }
+
+    public User(@JsonProperty("jti") String jti, @JsonProperty("tenantId") Long tenantId, @JsonProperty("tenantName") String tenantName, @JsonProperty("id") Long id, @JsonProperty("uid") String uid) {
+        this.jti = jti;
         this.tenantId = tenantId == null ? 0L : tenantId;
         this.tenantName = tenantName == null ? "0" : tenantName;
         this.id = id == null ? 0L : id;
@@ -134,6 +141,11 @@ public class User implements Serializable, Caller, Comparable<User> {
     }
 
     @Override
+    public String getJTI() {
+        return jti;
+    }
+
+    @Override
     public Long getTenantId() {
         return tenantId;
     }
@@ -203,7 +215,7 @@ public class User implements Serializable, Caller, Comparable<User> {
             return;
         }
         if (groups == null) {
-            groups = new HashSet();
+            groups = new HashSet<>();
         }
         groups.add(group);
     }
@@ -257,7 +269,7 @@ public class User implements Serializable, Caller, Comparable<User> {
             return;
         }
         if (customizedFields == null) {
-            customizedFields = new HashMap();
+            customizedFields = new HashMap<>();
         }
         customizedFields.put(key, value);
     }

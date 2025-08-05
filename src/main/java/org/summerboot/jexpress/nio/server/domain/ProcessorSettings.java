@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.nio.server.domain;
 
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,9 +26,9 @@ import java.util.stream.Collectors;
  */
 public class ProcessorSettings {
 
-    protected String httpServiceResponseHeaderName_ServerTimestamp = "X-ServerTs";
+    protected String httpServiceResponseHeaderName_ServerTimestamp = BootConstant.RESPONSE_HEADER_KEY_TS;
 
-    protected String httpServiceResponseHeaderName_Reference = "X-Reference";
+    protected String httpServiceResponseHeaderName_Reference = BootConstant.RESPONSE_HEADER_KEY_REF;
 
     public String getHttpServiceResponseHeaderName_ServerTimestamp() {
         return httpServiceResponseHeaderName_ServerTimestamp;
@@ -48,6 +49,13 @@ public class ProcessorSettings {
     protected LogSettings logSettings;
 
     public LogSettings getLogSettings() {
+        return getLogSettings(false);
+    }
+
+    public LogSettings getLogSettings(boolean createIfNull) {
+        if (logSettings == null && createIfNull) {
+            logSettings = new LogSettings();
+        }
         return logSettings;
     }
 
@@ -65,21 +73,12 @@ public class ProcessorSettings {
 
         protected boolean logResponseBody;
 
-        protected List<String> protectedJsonStringFields;
+        protected List<String> protectDataFieldsFromLogging;
 
-        protected List<String> protectedJsonNumberFields;
-
-        protected List<String> protectedJsonArrayFields;
 
         public void removeDuplicates() {
-            if (protectedJsonStringFields != null) {
-                protectedJsonStringFields = protectedJsonStringFields.stream().distinct().collect(Collectors.toList());
-            }
-            if (protectedJsonNumberFields != null) {
-                protectedJsonNumberFields = protectedJsonNumberFields.stream().distinct().collect(Collectors.toList());
-            }
-            if (protectedJsonArrayFields != null) {
-                protectedJsonArrayFields = protectedJsonArrayFields.stream().distinct().collect(Collectors.toList());
+            if (protectDataFieldsFromLogging != null) {
+                protectDataFieldsFromLogging = protectDataFieldsFromLogging.stream().distinct().collect(Collectors.toList());
             }
         }
 
@@ -115,28 +114,12 @@ public class ProcessorSettings {
             this.logResponseBody = logResponseBody;
         }
 
-        public List<String> getProtectedJsonStringFields() {
-            return protectedJsonStringFields;
+        public List<String> getProtectDataFieldsFromLogging() {
+            return protectDataFieldsFromLogging;
         }
 
-        public void setProtectedJsonStringFields(List<String> protectedJsonStringFields) {
-            this.protectedJsonStringFields = protectedJsonStringFields;
-        }
-
-        public List<String> getProtectedJsonNumberFields() {
-            return protectedJsonNumberFields;
-        }
-
-        public void setProtectedJsonNumberFields(List<String> protectedJsonNumberFields) {
-            this.protectedJsonNumberFields = protectedJsonNumberFields;
-        }
-
-        public List<String> getProtectedJsonArrayFields() {
-            return protectedJsonArrayFields;
-        }
-
-        public void setProtectedJsonArrayFields(List<String> protectedJsonArrayFields) {
-            this.protectedJsonArrayFields = protectedJsonArrayFields;
+        public void setProtectDataFieldsFromLogging(List<String> protectDataFieldsFromLogging) {
+            this.protectDataFieldsFromLogging = protectDataFieldsFromLogging;
         }
     }
 

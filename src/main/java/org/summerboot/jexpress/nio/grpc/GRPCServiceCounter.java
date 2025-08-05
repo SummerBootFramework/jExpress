@@ -20,12 +20,13 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class GRPCServiceCounter {
+class GRPCServiceCounter {
 
     protected final AtomicLong ping = new AtomicLong(0);
     protected final AtomicLong biz = new AtomicLong(0);
     protected final AtomicLong hit = new AtomicLong(0);
     protected final AtomicLong processed = new AtomicLong(0);
+    protected final AtomicLong cancelled = new AtomicLong(0);
 
     public long getPing() {
         return ping.get();
@@ -65,6 +66,14 @@ public class GRPCServiceCounter {
 
     public long getProcessedAndReset() {
         return processed.getAndSet(0);
+    }
+
+    public long getCancelled() {
+        return cancelled.get();
+    }
+
+    public long incrementCancelled() {
+        return cancelled.incrementAndGet();
     }
 
 }

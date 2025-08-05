@@ -23,6 +23,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.info.Contact;
@@ -54,9 +55,9 @@ import org.summerboot.jexpress.boot.annotation.Deamon;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.LoginVo;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.security.auth.AuthConfig;
@@ -89,24 +90,42 @@ import java.util.concurrent.TimeUnit;
                 @Server(url = "https://localhost:8211", description = "Local Development server")
         }
 )
-@SecurityScheme(name = "BearerAuth", scheme = "bearer", type = SecuritySchemeType.HTTP, bearerFormat = "Authorization: Bearer <token>")
-//@SecurityScheme(name = "BasicAuth", scheme = "basic", type = SecuritySchemeType.HTTP)
-//@SecurityScheme(name = "ApiKeyAuth", type = SecuritySchemeType.APIKEY, in = SecuritySchemeIn.HEADER)
-//@SecurityScheme(name = "OpenID", type = SecuritySchemeType.OPENIDCONNECT, openIdConnectUrl = "https://example.com/.well-known/openid-configuration")
-//@SecurityScheme(name = "OAuth2", type = SecuritySchemeType.OAUTH2, flows = @OAuthFlows())
+@SecurityScheme(name = "BearerAuth", scheme = "bearer", type = SecuritySchemeType.HTTP, bearerFormat = "Authorization: Bearer <JWT token>")
+@SecurityScheme(name = "BasicAuth", scheme = "basic", type = SecuritySchemeType.HTTP)
+@SecurityScheme(name = "ApiKeyAuth", paramName = "X-API-KEY", type = SecuritySchemeType.APIKEY, in = SecuritySchemeIn.HEADER)
+/*@SecurityScheme(name = "OpenID", type = SecuritySchemeType.OPENIDCONNECT, openIdConnectUrl = "https://jExpress.org/.well-known/openid-configuration")
+@SecurityScheme(name = "OAuth2", type = SecuritySchemeType.OAUTH2, flows = @OAuthFlows(
+        authorizationCode = @OAuthFlow(
+                authorizationUrl = "https://jexpress.org/oauth/authorize",
+                tokenUrl = "https://jexpress.org/oauth/token",
+                scopes = {
+                        @OAuthScope(name = "read", description = "Read access"),
+                        @OAuthScope(name = "write", description = "Write access")
+                }
+        )))*/
 abstract public class BootController extends PingController {
+
+    public static final String SecuritySchemeName_BearerAuth = "BearerAuth";
+    public static final String SecuritySchemeName_BasicAuth = "BasicAuth";
+    public static final String SecuritySchemeName_ApiKeyAuth = "ApiKeyAuth";
+    public static final String SecuritySchemeName_OpenID = "OpenID";
+    public static final String SecuritySchemeName_OAuth2 = "OAuth2";
+
 
     public static final String TAG_APP_ADMIN = "App Admin";
     public static final String TAG_USER_AUTH = "App Authentication";
 
-
-    public static final String DESC_400 = "All other 4xx code. The client cannot continue and should not re-try again with the request without modification.";
+    public static final String DESC_4xx = "This class of status code is intended for situations in which the error seems to have been caused by the client. Client normally should not retransmit the same request again.";
+    public static final String DESC_400 = "Bad Request. Client should not retransmit the same request again";
     public static final String DESC_401 = "Unauthorized. The client should sign-on again, but not retransmit the same request again";
     public static final String DESC_403 = "Client has  no permission. Client should not retransmit the same request again.";
     public static final String DESC_404 = "Not Found. The client should not retransmit the same request again.";
-    public static final String DESC_429 = "Too Many Requests";
-    public static final String DESC_500 = "All other 5xx code. Server errors due to unexpected failures. The client can continue and try again with the request without modification.";
+    public static final String DESC_409 = "Conflict. Client may try again later.";
+    public static final String DESC_429 = "Too Many Requests. Client may try again later";
+    public static final String DESC_5xx = "This class of status code is intended for situations in which the server is aware that it has encountered an error or is otherwise incapable of performing the request. The client can continue and try again with the request without modification.";
+    public static final String DESC_500 = "Internal Server Error. The client can continue and try again with the request without modification.";
     public static final String DESC_501 = "Not Implemented. The client can continue and try again with the request without modification.";
+    public static final String DESC_502 = "Bad Gateway. The client can continue and try again with the request without modification.";
     public static final String DESC_503 = "Service Unavailable. The client can continue and try again with the request without modification.";
     public static final String DESC_504 = "Gateway Timeout. The client can continue and try again with the request without modification.";
     public static final String DESC_507 = "Insufficient Storage. The client should contact the system administrator. Do not try the request again.";
@@ -127,39 +146,15 @@ abstract public class BootController extends PingController {
             //                            @Parameter(name = "", in = ParameterIn.HEADER, required = true, description = "")},
             responses = {
                     @ApiResponse(responseCode = "200", description = "running application version"),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
             security = {
-                    @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
@@ -167,8 +162,8 @@ abstract public class BootController extends PingController {
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
     //@CaptureTransaction("admin.version")
-    public void version(@Parameter(hidden = true) final ServiceContext context) {
-        context.txt(getVersion()).status(HttpResponseStatus.OK);
+    public void version(@Parameter(hidden = true) final SessionContext context) {
+        context.response(getVersion()).status(HttpResponseStatus.OK);
     }
 
     protected String version;
@@ -187,39 +182,15 @@ abstract public class BootController extends PingController {
             description = "get running application health information",
             responses = {
                     @ApiResponse(responseCode = "200", description = "inspection success with current version"),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
             security = {
-                    @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
@@ -227,7 +198,7 @@ abstract public class BootController extends PingController {
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
     //@CaptureTransaction("admin.inspect")
-    public void inspect(@Parameter(hidden = true) final ServiceContext context) {
+    public void inspect(@Parameter(hidden = true) final SessionContext context) {
         HealthMonitor.inspect();
     }
 
@@ -237,46 +208,22 @@ abstract public class BootController extends PingController {
             description = "pause service if pause param is true, otherwise resume service",
             responses = {
                     @ApiResponse(responseCode = "204", description = "success"),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
             security = {
-                    @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @PUT
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
     //@CaptureTransaction("admin.changeStatus")
-    public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final ServiceContext context) throws IOException {
+    public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final SessionContext context) throws IOException {
         HealthMonitor.pauseService(pause, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
         context.status(HttpResponseStatus.NO_CONTENT);
     }
@@ -292,34 +239,10 @@ abstract public class BootController extends PingController {
                             },
                             content = @Content(schema = @Schema(implementation = Caller.class))
                     ),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             }
@@ -329,10 +252,10 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_NF_JSECURITYCHECK)
     @Deamon
     //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, responseHeader = false)
+    @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
     public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
                                         @FormParam("j_password") String password,
-                                        @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
+                                        @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
         return login(auth, userId, password, context);
     }
 
@@ -347,34 +270,10 @@ abstract public class BootController extends PingController {
                             },
                             content = @Content(schema = @Schema(implementation = Caller.class))
                     ),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             }
@@ -384,13 +283,13 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
     @Deamon
     //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, responseHeader = false)
+    @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
     public Caller longin_JSON(@Valid @Nonnull LoginVo loginVo,
-                              @Parameter(hidden = true) final ServiceContext context) throws IOException, NamingException {
+                              @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
         return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
     }
 
-    public Caller login(Authenticator auth, String userId, String password, ServiceContext context) throws NamingException {
+    public Caller login(Authenticator auth, String userId, String password, SessionContext context) throws NamingException {
         if (auth == null) {
             context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
             return null;
@@ -408,11 +307,11 @@ abstract public class BootController extends PingController {
         return context.caller();
     }
 
-    protected boolean preLogin(String userId, String password, ServiceContext context) {
+    protected boolean preLogin(String userId, String password, SessionContext context) {
         return true;
     }
 
-    protected void postLogin(ServiceContext context) {
+    protected void postLogin(SessionContext context) {
     }
 
     @Operation(
@@ -421,46 +320,22 @@ abstract public class BootController extends PingController {
             description = "User logout",
             responses = {
                     @ApiResponse(responseCode = "204", description = "success"),
-                    @ApiResponse(responseCode = "400", description = DESC_400,
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     ),
-                    @ApiResponse(responseCode = "401", description = DESC_401,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "403", description = DESC_403,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "404", description = DESC_404,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "429", description = DESC_429,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "500", description = DESC_500,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "501", description = DESC_501,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "503", description = DESC_503,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "504", description = DESC_504,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "507", description = DESC_507,
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
                             content = @Content(schema = @Schema(implementation = ServiceError.class))
                     )
             },
             security = {
-                    @SecurityRequirement(name = "BearerAuth")}
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @DELETE
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
     @Deamon
     //@PermitAll
     //@CaptureTransaction("user.logoutToken")
-    public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final ServiceContext context) {
+    public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final SessionContext context) {
         //Authenticator auth = getAuthenticator();
         if (auth == null) {
             context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
@@ -476,7 +351,7 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
-    public void loadTestBenchmarkPost1(final ServiceRequest request, final ServiceContext context, @QueryParam("delayMilsec") long wait) {
+    public void loadTestBenchmarkPost1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(wait);
@@ -484,14 +359,14 @@ abstract public class BootController extends PingController {
                 Thread.currentThread().interrupt();
             }
         }
-        context.status(HttpResponseStatus.OK).txt(request.getHttpRequestPath() + "?delayMilsec=" + wait + request.getHttpPostRequestBody());
+        context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath() + "?delayMilsec=" + wait + request.getHttpPostRequestBody());
     }
 
     @Operation(hidden = true)
     @POST
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
     @Deamon
-    public void loadTestBenchmarkPost2(final ServiceRequest request, final ServiceContext context, @PathParam("delayMilsec") long wait) {
+    public void loadTestBenchmarkPost2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(wait);
@@ -499,7 +374,7 @@ abstract public class BootController extends PingController {
                 Thread.currentThread().interrupt();
             }
         }
-        context.status(HttpResponseStatus.OK).txt(request.getHttpRequestPath() + request.getHttpPostRequestBody());
+        context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath() + request.getHttpPostRequestBody());
     }
 
     @Operation(hidden = true)
@@ -507,7 +382,7 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({Config.ROLE_ADMIN})
     @Deamon
-    public void loadTestBenchmarkGet1(final ServiceRequest request, final ServiceContext context, @QueryParam("delayMilsec") long wait) {
+    public void loadTestBenchmarkGet1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(wait);
@@ -515,14 +390,14 @@ abstract public class BootController extends PingController {
                 Thread.currentThread().interrupt();
             }
         }
-        context.status(HttpResponseStatus.OK).txt(request.getHttpRequestPath() + "?delayMilsec=" + wait);
+        context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath() + "?delayMilsec=" + wait);
     }
 
     @Operation(hidden = true)
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
     @Deamon
-    public void loadTestBenchmarkGet2(final ServiceRequest request, final ServiceContext context, @PathParam("delayMilsec") long wait) {
+    public void loadTestBenchmarkGet2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
                 TimeUnit.MILLISECONDS.sleep(wait);
@@ -530,7 +405,7 @@ abstract public class BootController extends PingController {
                 Thread.currentThread().interrupt();
             }
         }
-        context.status(HttpResponseStatus.OK).txt(request.getHttpRequestPath());
+        context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath());
     }
 
     public interface Config {

@@ -22,7 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -99,12 +99,12 @@ public class RedisConfig implements JExpressConfig {
             props.load(is);
         }
         if (jedisPools == null) {
-            jedisPools = new ArrayList();
+            jedisPools = new ArrayList<>();
         } else {
             jedisPools.clear();
         }
         if (nodes == null) {
-            nodes = new ArrayList();
+            nodes = new ArrayList<>();
         } else {
             nodes.clear();
         }
@@ -128,7 +128,7 @@ public class RedisConfig implements JExpressConfig {
                 if (StringUtils.isNotBlank(encPwd)) {
                     try {
                         if (encPwd.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && encPwd.endsWith(")")) {
-                            pwd = SecurityUtil.decrypt(encPwd, true);
+                            pwd = EncryptorUtil.decrypt(encPwd, true);
                         }
                     } catch (GeneralSecurityException ex) {
 

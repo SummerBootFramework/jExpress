@@ -118,7 +118,7 @@ public class EmailBuilder {
 
     public void addAttachment(EmailAttachment att) {
         if (attachments == null) {
-            attachments = new ArrayList();
+            attachments = new ArrayList<>();
         }
         attachments.add(att);
     }

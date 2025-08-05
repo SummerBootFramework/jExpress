@@ -36,12 +36,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 public @interface OneOf {
 
-    String message() default "{value}";
+    String message() default "{One of the values is allowed, only valid options are accepted}";
 
     Class<?>[] groups() default {};
 
+    Class<? extends Payload>[] payload() default {};
+
     String[] value();
 
-    Class<? extends Payload>[] payload() default {};
 
 }

@@ -162,7 +162,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Log;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 
 @Singleton
 @Controller
@@ -188,7 +188,7 @@ public class MyController {
      * Three features:
      * <p> 1. auto validate JSON request by @Valid and @NotNull annotation
      * <p> 2. protected user credit card and privacy information from being logged by @Log annotation
-     * <p> 3. mark performance POI (point of interest) by using ServiceContext.poi(key), see section#8.3
+     * <p> 3. mark performance POI (point of interest) by using SessionContext.poi(key), see section#8.3
      *
      * @param myName
      * @param request
@@ -199,8 +199,8 @@ public class MyController {
     @Path("/hello/{name}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Content-Type: application/json or Content-Type: application/xml
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Accept: application/json or Accept: application/xml
-    @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"}, hideJsonArrayFields = "secretList")
-    public ResponseDto hello_auto_validation_protected_logging_markWithPOI(@NotNull @PathParam("name") String myName, @NotNull @Valid RequestDto request, final ServiceContext context) {
+    @Log(maskDataFields = {"creditCardNumber", "clientPrivacy", "secretList"})
+    public ResponseDto hello_auto_validation_protected_logging_markWithPOI(@NotNull @PathParam("name") String myName, @NotNull @Valid RequestDto request, final SessionContext context) {
         context.poi("DB begin");// about POI, see section8.3
         // DB access and it takes time ...
         context.poi("DB end");
@@ -251,8 +251,7 @@ public class MyController {
 **}
 > Memo: n/a
 
-**Below is the log of with @Log(hideJsonStringFields = {"creditCardNumber", "clientPrivacy"}, hideJsonArrayFields = "
-secretList")**
+**Below is the log of with @Log(maskDataFields = {"creditCardNumber", "clientPrivacy", "secretList"})**
 
 > 2023-04-20T19:53:47,167 INFO org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [pool-4-thread-2]
 > request_2.caller=null
@@ -274,13 +273,13 @@ secretList")**
 
 
 
-**1.4 Sample Code: -use \<implTag\>**
+**1.4 Sample Code: -use \<AlternativeName\>**
 
-Use @Controller.**implTag** field as below, this controller class will only be available with -**use RoleBased**
+Use @Controller.**AlternativeName** field as below, this controller class will only be available with -**use RoleBased**
 parameter to launch the application, see *<u>section#9</u>*
 
 ```
-@Controller(implTag="RoleBased")
+@Controller(AlternativeName="RoleBased")
 ```
 
 **1.5 Sample Code: PING** see *section#5*
@@ -375,7 +374,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import javax.naming.NamingException;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.AuthenticatorListener;
 import org.summerboot.jexpress.security.auth.BootAuthenticator;
@@ -387,7 +386,7 @@ import org.summerboot.jexpress.security.auth.User;
 public class MyAuthenticator extends BootAuthenticator<Long> {
 
     @Override
-    protected Caller authenticate(String usename, String password, Long metaData, AuthenticatorListener listener, ServiceContext context) throws NamingException {
+    protected Caller authenticate(String usename, String password, Long metaData, AuthenticatorListener listener, SessionContext context) throws NamingException {
         // verify username and password against LDAP
         if ("wrongpwd".equals(password)) {
             return null;
@@ -403,7 +402,7 @@ public class MyAuthenticator extends BootAuthenticator<Long> {
     }
 
     @Override
-    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, SessionContext context) throws Exception {
         return true;
     }
 
@@ -592,10 +591,10 @@ my.key.name=DEC(plain password)
 
       Your application launched as system service controlled by root admin, and runs with
 
-      > “-cfgdir <path to config folder> -authfile <path to root password file>”
+      > “-authfile <path to root password file>”
 
       ```
-      java -jar my-service.jar -cfgdir dev/configuration -authfile /etc/security/my-service.root_pwd
+      java -jar jExpressApp.jar -authfile /etc/security/my-service-name.root_pwd
       ```
 
       Your root password is stored in file /etc/security/my-service.root_pwd, and has the following format:
@@ -876,10 +875,10 @@ configuration change event, TPS, etc.), below is a sample:
 
 **9.3 Sample Code**
 
-Use @Service annotation with implTag attribute
+Use @Service annotation with AlternativeName attribute
 
 ```
-@Service(implTag="myTag")
+@Service(AlternativeName="myImpl")
 ```
 
 Full version:
@@ -890,12 +889,12 @@ public class MyServiceImpl implements MyServcie {
 	...
 }
 
-@Service(implTag="impl1")
+@Service(AlternativeName="impl1")
 public class MyServiceImpl_1 implements MyServcie {
 	...
 }
 
-@Service(implTag="impl2")
+@Service(AlternativeName="impl2")
 public class MyServiceImpl_2 implements MyServcie {
 	...
 }
@@ -991,20 +990,31 @@ java -jar my-service.jar -unique POI
 
 ## 11. Plugin - run with external jar files in plugin foler
 
-**10.1 Intent**
+**11.1 Intent**
 
 - Once the application is on production, need a way to add new features or override existing logic without changing the
   exiting code
 
-**10.2 Motivation**
+**11.2 Motivation**
 
 - Make the application focus on interface, and its implements could be developed as external jar files
 - Make the visitor pattern available at the application level
 - You can even put all your logic in one or multiple external jar files developed by different teams as plugins
 
-**10.3 Supported types**
+**11.3 Supported types**
 
 - Web Controllers @Controller
 - Service implementations with @service
 - JExpressConfig configurations implementations with @ImportResource
 - Classes with @Unique
+
+## 12. White/Black list protected HTTP and gRPC server
+
+**12.1 Intent**
+
+- Have the ability to not to open the dorr to everyone from outside to your service
+
+**12.2 Motivation**
+
+- Some testing processes require the service only availbe to limited caller and tell others not to send request to this service to make it easy for trouble shooting
+- In production, it may requires to mmake service (HTTP or gRPC) availb to caller from centain IP range

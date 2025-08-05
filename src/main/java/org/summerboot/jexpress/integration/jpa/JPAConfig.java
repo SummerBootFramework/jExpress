@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  */
 public abstract class JPAConfig extends BootConfig {
     protected final Map<String, Object> settings = new HashMap<>();
-    protected final List<Class<?>> entityClasses = new ArrayList();
+    protected final List<Class<?>> entityClasses = new ArrayList<>();
 
     public Map<String, Object> getSettings() {
         return settings;
@@ -87,13 +87,10 @@ public abstract class JPAConfig extends BootConfig {
             //}
         });
 
-        //Environment.PASS = "hibernate.connection.password"
-        if (props.get(Environment.PASS) != null) {
-            settings.put(Environment.PASS, helper.getAsPassword(props, Environment.PASS));
-        }
-        //settings.put(Environment.JPA_JDBC_PASSWORD, helper.getAsPassword(props, Environment.JPA_JDBC_PASSWORD));
         if (props.get(Environment.JAKARTA_JDBC_PASSWORD) != null) {
             settings.put(Environment.JAKARTA_JDBC_PASSWORD, helper.getAsPassword(props, Environment.JAKARTA_JDBC_PASSWORD));
+        } else if (props.get(Environment.PASS) != null) {
+            settings.put(Environment.PASS, helper.getAsPassword(props, Environment.PASS));
         }
 
         String error = helper.getError();
@@ -102,7 +99,7 @@ public abstract class JPAConfig extends BootConfig {
         }
         //scan @Entity
         //settings.put(Environment.LOADED_CLASSES, entityClasses);
-        Set<String> packageSet = new HashSet();
+        Set<String> packageSet = new HashSet<>();
         packageSet.addAll(Set.of(packages));
         Set<String> configuredPackageSet = BackOffice.agent.getRootPackageNames();
         if (configuredPackageSet != null && !configuredPackageSet.isEmpty()) {
@@ -117,7 +114,7 @@ public abstract class JPAConfig extends BootConfig {
     protected void scanAnnotation_Entity(String csvPackageNames, Set<String> packageSet) {
         logger.debug("_rootPackageNames={}", csvPackageNames);
         String[] rootPackageNames = FormatterUtil.parseCsv(csvPackageNames);
-        List<String> rootPackageNameList = new ArrayList();
+        List<String> rootPackageNameList = new ArrayList<>();
         rootPackageNameList.addAll(Arrays.asList(rootPackageNames));
         rootPackageNameList.addAll(List.copyOf(packageSet));
         rootPackageNameList = rootPackageNameList.stream()

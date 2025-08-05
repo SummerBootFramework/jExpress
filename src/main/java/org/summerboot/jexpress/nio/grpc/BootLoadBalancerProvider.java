@@ -19,6 +19,7 @@ import io.grpc.Attributes;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
 import io.grpc.NameResolverProvider;
+import io.grpc.StatusOr;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -90,7 +91,7 @@ public class BootLoadBalancerProvider extends NameResolverProvider {
 
             @Override
             public void start(Listener2 listener) {
-                listener.onResult(ResolutionResult.newBuilder().setAddresses(servers).setAttributes(Attributes.EMPTY).build());
+                listener.onResult(ResolutionResult.newBuilder().setAddressesOrError(StatusOr.fromValue(servers)).setAttributes(Attributes.EMPTY).build());
             }
 
             @Override

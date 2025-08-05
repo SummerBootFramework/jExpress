@@ -20,7 +20,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import jakarta.persistence.PersistenceException;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 
 import javax.naming.NamingException;
 import java.net.http.HttpConnectTimeoutException;
@@ -35,11 +35,11 @@ import java.util.Map;
 public interface HttpExceptionListener {
 
     void onActionNotFound(final ChannelHandlerContext ctx, final HttpHeaders httpRequestHeaders, final HttpMethod httptMethod,
-                          final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context);
+                          final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context);
 
-    void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
+    void onNamingException(NamingException ex, final HttpMethod httptMethod, final String httpRequestPath, final SessionContext context);
 
-    void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
+    void onPersistenceException(PersistenceException ex, final HttpMethod httptMethod, final String httpRequestPath, final SessionContext context);
 
     /**
      * Happens when a connection, over which an HttpRequest is intended to be
@@ -50,7 +50,7 @@ public interface HttpExceptionListener {
      * @param httpRequestPath
      * @param context
      */
-    void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
+    void onHttpConnectTimeoutException(HttpConnectTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final SessionContext context);
 
     /**
      * Happens when a context is not received within a specified time period.
@@ -60,17 +60,17 @@ public interface HttpExceptionListener {
      * @param httpRequestPath
      * @param context
      */
-    void onHttpTimeoutException(HttpTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
+    void onHttpTimeoutException(HttpTimeoutException ex, final HttpMethod httptMethod, final String httpRequestPath, final SessionContext context);
 
-    void onRejectedExecutionException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
+    void onRejectedExecutionException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final SessionContext context);
 
-    void onConnectException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, ServiceContext context);
+    void onConnectException(Throwable ex, HttpMethod httptMethod, String httpRequestPath, SessionContext context);
 
-    void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
+    void onIOException(Throwable ex, final HttpMethod httptMethod, final String httpRequestPath, final SessionContext context);
 
-    void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final ServiceContext context);
+    void onInterruptedException(InterruptedException ex, final HttpMethod httptMethod, final String httpRequestPath, final SessionContext context);
 
     void onUnexpectedException(Throwable ex, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httptMethod, String httpRequestPath, Map<String, List<String>> queryParams,
-                               String httpPostRequestBody, ServiceContext context);
+                               String httpPostRequestBody, SessionContext context);
 
 }

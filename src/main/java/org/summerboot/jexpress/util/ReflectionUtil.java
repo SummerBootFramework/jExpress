@@ -20,9 +20,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableSortedSet;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
+import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
-import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
@@ -212,7 +213,8 @@ public class ReflectionUtil {
         field.setAccessible(true);
         Config cfgSettings = field.getAnnotation(Config.class);
         boolean trim = cfgSettings == null ? false : cfgSettings.trim();
-        field.set(instance, toJavaType(targetClass, genericType, value, trim, autoDecrypt, isEmailRecipients, null, collectionDelimiter));
+        Object v = toJavaType(targetClass, genericType, value, trim, autoDecrypt, isEmailRecipients, null, collectionDelimiter);
+        field.set(instance, v);
     }
 
     protected static final Type[] DEFAULT_ARG_TYPES = {String.class, String.class};
@@ -310,8 +312,9 @@ public class ReflectionUtil {
             }
             return Map.copyOf(ret);
         } else if (targetClass.equals(Class.class)) {
+            // CWE-470 warning: use with caution, validate the class name against a combination of white and black lists to ensure that only expeted classes are loaded
             try {
-                Class ret = Class.forName(value);
+                Class ret = Class.forName(value);// CWE-470 False Positive - Util Feature: caller should define a white/black list
                 if (upperBoundClasses[0] != null && !upperBoundClasses[0].isAssignableFrom(ret)) {
                     throw new IllegalArgumentException("invalid Class name: " + value + ", expected a type of " + upperBoundClasses[0].getName());
                 }
@@ -367,7 +370,7 @@ public class ReflectionUtil {
         }
         if (autoDecrypt && value.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
             try {
-                value = SecurityUtil.decrypt(value, true);
+                value = EncryptorUtil.decrypt(value, true);
             } catch (GeneralSecurityException ex) {
                 throw new IllegalArgumentException("Failed to decrypt", ex);
             }
@@ -407,15 +410,15 @@ public class ReflectionUtil {
             }
         } else if (targetClass.equals(URL.class)) {
             try {
-                return new URL(value);
-            } catch (MalformedURLException ex) {
+                return new URI(value).toURL();
+            } catch (URISyntaxException | MalformedURLException ex) {
                 throw new IllegalArgumentException("invalid URL format", ex);
             }
         } else if (targetClass.equals(Path.class)) {
-            File f = new File(value);
+            File f = new File(value);// CWE-73 False Positive - Util Feature: caller should validate the use against a combination of white and black lists to ensure that only expeted classes are loaded
             return f.getAbsoluteFile().toPath().normalize();
         } else if (targetClass.equals(File.class)) {
-            File f = new File(value);
+            File f = new File(value);// CWE-73 False Positive - Util Feature: caller should validate the use against a combination of white and black lists to ensure that only expeted classes are loaded
             Path path = f.getAbsoluteFile().toPath().normalize();
             return path.toFile();
         } else if (targetClass.isEnum()) {
@@ -500,14 +503,18 @@ public class ReflectionUtil {
     }
 
     public static void loadFields(Class targetClass, Class fieldClass, Map results, boolean includeClassName) throws IllegalArgumentException, IllegalAccessException {
+        loadFields(targetClass, fieldClass, results, includeClassName, false);
+    }
+
+    public static void loadFields(Class targetClass, Class fieldClass, Map results, boolean includeClassName, boolean useUniqueIgnore) throws IllegalArgumentException, IllegalAccessException {
         Class parent = targetClass.getSuperclass();
         if (parent != null) {
-            loadFields(parent, fieldClass, results, includeClassName);
+            loadFields(parent, fieldClass, results, includeClassName, useUniqueIgnore);
         }
         Class[] intfs = targetClass.getInterfaces();
         if (intfs != null) {
             for (Class i : intfs) {
-                loadFields(i, fieldClass, results, includeClassName);
+                loadFields(i, fieldClass, results, includeClassName, useUniqueIgnore);
             }
         }
         Field[] fields = targetClass.getDeclaredFields();
@@ -516,6 +523,12 @@ public class ReflectionUtil {
             Class type = field.getType();
             if (!fieldClass.equals(type)) {
                 continue;
+            }
+            if (useUniqueIgnore) {
+                UniqueIgnore aUI = field.getAnnotation(UniqueIgnore.class);
+                if (aUI != null) {
+                    continue;
+                }
             }
             String varName = includeClassName ? targetClass.getName() + "." + field.getName() : field.getName();
             Object varValue = field.get(null);

@@ -75,23 +75,35 @@ abstract public class SummerSingularity {
     public static final String HOST = jExpressInit();
 
     protected static String jExpressInit() {
-        String FILE_CFG_SYSTEM = "boot.conf";
-        File currentDir = new File("etc").getAbsoluteFile();
-        if (!currentDir.exists()) {
-            currentDir.mkdirs();
+        final String FILE_CFG_SYSTEM = "boot.conf";
+        final File etcDir = new File("etc").getAbsoluteFile();
+        if (!etcDir.exists()) {
+            etcDir.mkdirs();
         }
-        File systemConfigFile = Paths.get(currentDir.getAbsolutePath(), FILE_CFG_SYSTEM).toFile();
+        final File systemConfigFile = Paths.get(etcDir.getAbsolutePath(), FILE_CFG_SYSTEM).toFile();
         try {
             if (!systemConfigFile.exists()) {
-                ConfigUtil.createConfigFile(BackOffice.class, currentDir, FILE_CFG_SYSTEM, false);
+                ConfigUtil.createConfigFile(BackOffice.class, etcDir, FILE_CFG_SYSTEM, false);
             }
             BackOffice.agent.load(systemConfigFile, false);// isReal:false = do not init logging
         } catch (IOException ex) {
-            System.err.println("Failed to init " + systemConfigFile + ", caused by " + ex);
-            System.exit(1);
+            String msg = "Failed to init " + systemConfigFile + ", caused by " + ex;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CFG_BOOT_ERROR, msg, ex);
+        }
+
+        String defaultAdminPwdFileName = BackOffice.agent.getDefaultMasterPasswordFile();
+        try {
+            File defaultAdminPwdFile = new File(etcDir, defaultAdminPwdFileName).getCanonicalFile();
+            if (!defaultAdminPwdFile.exists()) {
+                ConfigUtil.createConfigFile(MasterPassword.class, etcDir, defaultAdminPwdFileName, false);
+            }
+        } catch (IOException ex) {
+            String msg = "Failed to init " + new File(defaultAdminPwdFileName).getAbsolutePath() + ", caused by " + ex;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CFG_BOOT_ERROR, msg, ex);
         }
         return ApplicationUtil.getServerName(true);
     }
+
 
     protected static Logger log;
     protected static final File DEFAULT_CFG_DIR = new File(BootConstant.DIR_CONFIGURATION).getAbsoluteFile();
@@ -114,8 +126,8 @@ abstract public class SummerSingularity {
      * CLI results
      */
     protected Locale userSpecifiedResourceBundle;
-    protected int userSpecifiedCfgMonitorIntervalSec;
-    protected final Set<String> userSpecifiedImplTags = new HashSet<>();
+    protected long userSpecifiedCfgMonitorThrottleMillis;
+    protected final Set<String> userSpecifiedalternativeNames = new HashSet<>();
 
     /*
      * Scan Results
@@ -170,8 +182,8 @@ abstract public class SummerSingularity {
 
         // CLI        
         userSpecifiedResourceBundle = null;
-        userSpecifiedCfgMonitorIntervalSec = BootConstant.CFG_CHANGE_MONITOR_INTERVAL_SEC;
-        userSpecifiedImplTags.clear();
+        userSpecifiedCfgMonitorThrottleMillis = BootConstant.CFG_CHANGE_MONITOR_THROTTLE_MS;
+        userSpecifiedalternativeNames.clear();
 
         // reset Scan Results
         jvmStartCommand = null;
@@ -228,15 +240,13 @@ abstract public class SummerSingularity {
         try {
             scanPluginJars(pluginDir, true);// depends -domain or -cfgdir
         } catch (IOException ex) {
-            System.out.println(ex + BootConstant.BR + "\tFailed to load plugin jar files from " + pluginDir);
-            ex.printStackTrace();
-            System.exit(1);
+            String msg = ex + BootConstant.BR + "\tFailed to load plugin jar files from " + pluginDir;
+            ApplicationUtil.RTO(BootErrorCode.RTO_PLUGIN_ERROR, msg, ex);
         }
 
         String error = scanAnnotation_Unique(callerRootPackageNames, memo);
         if (error != null) {
-            System.out.println(error);
-            System.exit(1);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CODE_ERROR_UNIQUE, error, null);
         }
         String[] packages = FormatterUtil.arrayAdd(callerRootPackageNames, BootConstant.JEXPRESS_PACKAGE_NAME);
         scanImplementation_gRPC(callerRootPackageNames);
@@ -260,6 +270,7 @@ abstract public class SummerSingularity {
             logFileName = version.logFileName();
             if (StringUtils.isBlank(logFileName)) {
                 logFileName = version.value()[0];
+                logFileName = logFileName.replaceAll(" ", "_");
             }
             appVersion = version.value()[0];
             BackOffice.agent.setVersionShort(appVersion);
@@ -321,8 +332,8 @@ abstract public class SummerSingularity {
 //            pluginDir = new File(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
 //        } else {
         if (!userSpecifiedConfigDir.exists() || !userSpecifiedConfigDir.isDirectory() || !userSpecifiedConfigDir.canRead()) {
-            System.out.println("Could access configuration path as a folder: " + userSpecifiedConfigDir);
-            System.exit(1);
+            String msg = "Could access configuration path as a folder: " + userSpecifiedConfigDir;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CFG_DIR_ACCESS_ERROR, msg, null);
         }
         //set log folder outside user specified config folder
         // this will convert any number sequence into 6 character.
@@ -400,7 +411,7 @@ abstract public class SummerSingularity {
                     String report = BeanUtil.toJson(duplicated, true, false);
                     return "Duplicated " + uniqueType.getSimpleName() + " values in " + classWithUniqueValues.getSimpleName() + " " + report;
                 } else if (tags.contains(tag)) {
-                    Map<String, Integer> results = new HashMap();
+                    Map<String, Integer> results = new HashMap<>();
                     ReflectionUtil.loadFields(classWithUniqueValues, uniqueType, results, false);
                     Map<Object, String> sorted = results
                             .entrySet()
@@ -440,14 +451,14 @@ abstract public class SummerSingularity {
                 continue;
             }
             String configFileName = null;
-            String checkImplTagUsed = "";
+            String[] checkImplTagUsed = {};
             boolean loadWhenImplTagUsed = false;
 
             ImportResource ir = (ImportResource) jExpressConfigClass.getAnnotation(ImportResource.class);
             if (ir != null) {
                 configFileName = ir.value();
-                checkImplTagUsed = ir.checkImplTagUsed();
-                loadWhenImplTagUsed = ir.loadWhenImplTagUsed();
+                checkImplTagUsed = ir.whenUseAlternative();
+                loadWhenImplTagUsed = ir.thenLoadConfig();
             } else if (/*hasAuthImpl && */jExpressConfigClass.equals(AuthConfig.class)) {
                 configFileName = BootConstant.FILE_CFG_AUTH;
             } else if (hasControllers && jExpressConfigClass.equals(NioConfig.class)) {
@@ -492,13 +503,13 @@ abstract public class SummerSingularity {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, false, rootPackageNames);
         //classesAll.addAll(classes);
         //}
-        List<String> tags = new ArrayList();
+        List<String> tags = new ArrayList<>();
         for (Class c : classes) {
             Controller a = (Controller) c.getAnnotation(Controller.class);
             if (a == null) {
                 continue;
             }
-            String implTag = a.implTag();
+            String implTag = a.AlternativeName();
             tags.add(implTag);
         }
         List<String> serviceImplTags = tags.stream()
@@ -523,7 +534,7 @@ abstract public class SummerSingularity {
 
     protected List<String> scanAnnotation_Service(Set<Class<?>> classesAll) {
         log.trace("");
-        List<String> tags = new ArrayList();
+        List<String> tags = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         for (Class serviceImplClass : classesAll) {
             Service serviceAnnotation = (Service) serviceImplClass.getAnnotation(Service.class);
@@ -531,7 +542,7 @@ abstract public class SummerSingularity {
                 continue;
             }
             String named = serviceAnnotation.named().trim();
-            String implTag = serviceAnnotation.implTag().trim();
+            String implTag = serviceAnnotation.AlternativeName().trim();
             tags.add(implTag);
             String uniqueKey = "named=" + named + ", implTag=" + implTag;
             Class[] bindingClasses = serviceAnnotation.binding();
@@ -571,8 +582,8 @@ abstract public class SummerSingularity {
         //Java 17if (!sb.isEmpty()) {
         String error = sb.toString();
         if (!error.isBlank()) {
-            System.out.println("IOC Code error:" + sb);
-            System.exit(1);
+            String msg = "@Service IOC Code error:" + sb;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CODING_ERROR_SERVICE_IOC, msg, null);
         }
         List<String> serviceImplTags = tags.stream()
                 .distinct()
@@ -589,12 +600,12 @@ abstract public class SummerSingularity {
         memo.append(BootConstant.BR).append("\t- scan.taggedservice.add to guiceModule.bind(").append(bindingClass.getName()).append(").to(").append(service).append("), uniqueKey=").append(uniqueKey);
         Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(bindingClass);
         if (taggeServicedMap == null) {
-            taggeServicedMap = new HashMap();
+            taggeServicedMap = new HashMap<>();
             scanedServiceBindingMap.put(bindingClass, taggeServicedMap);
         }
         List<ServiceMetadata> serviceImplList = taggeServicedMap.get(uniqueKey);
         if (serviceImplList == null) {
-            serviceImplList = new ArrayList();
+            serviceImplList = new ArrayList<>();
             taggeServicedMap.put(uniqueKey, serviceImplList);
         }
         if (bindingClass.equals(ChannelHandler.class)) {
@@ -622,7 +633,7 @@ abstract public class SummerSingularity {
 
     protected void scanAnnotation_DeclareRoles(String... rootPackageNames) {
         log.trace("");
-        Set<String> declareRoles = new TreeSet();
+        Set<String> declareRoles = new TreeSet<>();
         //Set<Class<?>> classesAll = new HashSet();//to remove duplicated
         //for (String rootPackageName : rootPackageNames) {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, false, rootPackageNames);
@@ -660,20 +671,20 @@ abstract public class SummerSingularity {
         final Class cfgClass;
         final String configFileName;
         final JExpressConfig instance;
-        final String checkImplTagUsed;
-        final boolean loadWhenImplTagUsed;
+        final String[] whenUseAlternative;
+        final boolean thenLoadConfig;
 
-        ConfigMetadata(String configFileName, Class cfgClass, JExpressConfig instance, String checkImplTagUsed, boolean loadWhenImplTagUsed) {
+        ConfigMetadata(String configFileName, Class cfgClass, JExpressConfig instance, String[] whenUseAlternative, boolean thenLoadConfig) {
             this.configFileName = configFileName;
             this.cfgClass = cfgClass;
             this.instance = instance;
-            this.checkImplTagUsed = checkImplTagUsed;
-            this.loadWhenImplTagUsed = loadWhenImplTagUsed;
+            this.whenUseAlternative = whenUseAlternative;
+            this.thenLoadConfig = thenLoadConfig;
         }
 
         @Override
         public String toString() {
-            return "ConfigMetadata{" + "cfgClass=" + cfgClass.getName() + ", configFileName=" + configFileName + ", instance=" + instance + ", checkImplTagUsed=" + checkImplTagUsed + ", loadWhenImplTagUsed=" + loadWhenImplTagUsed + '}';
+            return "ConfigMetadata{" + "cfgClass=" + cfgClass.getName() + ", configFileName=" + configFileName + ", instance=" + instance + ", whenUseAlternative=" + Arrays.toString(whenUseAlternative) + ", thenLoadConfig=" + thenLoadConfig + '}';
         }
     }
 

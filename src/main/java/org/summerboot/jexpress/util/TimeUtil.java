@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -32,7 +33,6 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.zone.ZoneOffsetTransition;
 import java.time.zone.ZoneRules;
 import java.util.Calendar;
-import java.util.Random;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -165,7 +165,7 @@ public class TimeUtil {
         return ZonedDateTime.of(localDateTime, ZoneId.systemDefault());
     }
 
-    protected static Random RANDOM = new Random();
+    protected static SecureRandom RANDOM = new SecureRandom();
 
     public static int random(int low, int high) {
         int result = RANDOM.nextInt(high - low) + low;
@@ -194,7 +194,7 @@ public class TimeUtil {
         double min = max / 2;
         //System.out.print("retry." + retry + "(" + min + "~" + max + "): ");
         //4. generate randome value between expected backoff mean and expected backoff time
-        return (Math.random() * (max - min)) + min;
+        return (RANDOM.nextDouble() * (max - min)) + min;
     }
 
     public static class TimeDto {
@@ -516,5 +516,25 @@ public class TimeUtil {
 //        }
 
         return dayOfWeekOption;
+    }
+
+    /**
+     * Get system default zone offset in format of "+HH:MM" or "Z" for UTC
+     *
+     * @return
+     */
+    public static String getSystemDefaultZoneOffset() {
+        ZoneId zoneId = ZoneId.systemDefault();
+        return getSystemDefaultZoneOffset(zoneId);
+    }
+
+    /**
+     * Get given zone offset in format of "+HH:MM" or "Z" for UTC
+     *
+     * @param zoneId
+     * @return
+     */
+    public static String getSystemDefaultZoneOffset(ZoneId zoneId) {
+        return zoneId.getRules().getOffset(Instant.now()).getId();
     }
 }

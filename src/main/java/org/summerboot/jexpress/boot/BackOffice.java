@@ -45,6 +45,8 @@ public class BackOffice extends BootConfig {
 
     public static final BackOffice agent = new BackOffice();
 
+    boolean isDebugMode = false;
+
     protected BackOffice() {
         loadBalancingPingEndpoints = new ArrayList<>();
     }
@@ -118,13 +120,13 @@ public class BackOffice extends BootConfig {
         try {
             Map<String, Integer> results = new HashMap();
             ReflectionUtil.loadFields(BootErrorCode.class, int.class, results, false);
-            Map<Object, String> sorted = results
+            Map<String, Object> sorted = results
                     .entrySet()
                     .stream()
                     .sorted(Map.Entry.comparingByValue())
-                    .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
             StringBuilder sb = new StringBuilder().append("## Default Error Codes:").append(BR);
-            sorted.forEach((key, value) -> sb.append("## ").append(key).append(": ").append(value).append(BR));
+            sorted.forEach((value, key) -> sb.append("## ").append(key).append(": ").append(value).append(BR));
             ret = sb.toString();
         } catch (Throwable ex) {
             ex.printStackTrace();
@@ -136,11 +138,11 @@ public class BackOffice extends BootConfig {
     @ConfigHeader(title = "1. Override default error codes with application defined ones", desc = "To verify: java -jar <app>.jar -list SystemErrorCode [-dmain <domain>]",
             format = "CSV of <default error code>:<new error code>",
             example = "1:1001, 20:1020, 40:1040, 50:1050",
-            callbackMethodName4Dump = "generateTemplate_keystore")
+            callbackMethodName4Dump = "generateTemplate_ErrorCodeList")
     @Config(key = "errorcode.override")
     private volatile Map<Integer, Integer> bootErrorCodeMapping;
 
-    protected void generateTemplate_keystore(StringBuilder sb) {
+    protected void generateTemplate_ErrorCodeList(StringBuilder sb) {
         sb.append(listBootErrorCode()).append(System.lineSeparator());
     }
 
@@ -164,8 +166,8 @@ public class BackOffice extends BootConfig {
     @Config(key = "type.JWTAudAsCSV", defaultValue = "true", desc = "Parse JWT Audience value as CSV for JWT backward compatibility")
     private boolean jwtAudAsCSV = true;
 
-    @Config(key = "default.interval.ConfigChangeMonitor", defaultValue = "30")
-    private int CfgChangeMonitorIntervalSec = 30;
+    @Config(key = "default.ConfigChangeMonitor.Throttle.Milliseconds", defaultValue = "100")
+    private long CfgChangeMonitorThrottleMillis = 100;
 
     @Config(key = "default.web.resource.ttl.sec", defaultValue = "3600")
     private long webResourceCacheTtlSec = 3600;
@@ -197,13 +199,13 @@ public class BackOffice extends BootConfig {
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
 
-    @Config(key = "backoffice.executor.core", defaultValue = "3",
+    @Config(key = "backoffice.executor.core", defaultValue = "32",
             desc = "0 = current computer/VM's available processors + 1")
-    private int tpeCore = 3;
+    private int tpeCore = 32;
 
-    @Config(key = "backoffice.executor.max", defaultValue = "3",
+    @Config(key = "backoffice.executor.max", defaultValue = "32",
             desc = "0 = current computer/VM's available processors + 1")
-    private int tpeMax = 3;
+    private int tpeMax = 32;
 
     @Config(key = "backoffice.executor.queue", defaultValue = "" + Integer.MAX_VALUE)
     private int tpeQueue = Integer.MAX_VALUE;
@@ -218,6 +220,9 @@ public class BackOffice extends BootConfig {
     private boolean allowCoreThreadTimeOut = false;
 
     @ConfigHeader(title = "4.1 Default Path/File Naming")
+    @Config(key = "naming.file.defaultMasterPasswordFile", defaultValue = "master.password")
+    private String defaultMasterPasswordFile = "master.password";
+
     @Config(key = "naming.folder.domainPrefix", defaultValue = "standalone")
     private String domainFolderPrefix = "standalone";
 
@@ -241,6 +246,10 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "naming.file.gRPCConfig", defaultValue = "cfg_grpc.properties")
     private String gRPCConfigFileName = "cfg_grpc.properties";
+
+    @Config(key = "naming.file.pause", defaultValue = "pause")
+    private String pauseFileName = "pause";
+
 
     @Config(key = "HealthMonitor.PauseLockCode.viaFile", defaultValue = "PauseLockCode.file")
     private String pauseLockCodeViaFile = "PauseLockCode.file";
@@ -288,7 +297,7 @@ public class BackOffice extends BootConfig {
     private String cliName_i18n = "i18n";
 
     @Config(key = "naming.cli.use", defaultValue = "use")
-    private String cliName_use = "use";//To specify which implementation will be used via @Component.checkImplTagUsed
+    private String cliName_useAlternative = "use";//To specify which implementation will be used via @Component.checkImplTagUsed
 
     @Config(key = "naming.cli.cfgdemo", defaultValue = "cfgdemo")
     private String cliName_cfgdemo = "cfgdemo";
@@ -314,8 +323,71 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.cli.psv", defaultValue = "psv")
     private String cliName_psv = "psv";
 
+    @Config(key = "naming.cli.debug", defaultValue = "debug")
+    private String cliName_debugMode = "debug";
+
     @Config(key = "naming.memo.delimiter", defaultValue = ": ", trim = false)
     private String memoDelimiter = ": ";
+
+
+    @ConfigHeader(title = "5.1 Security Settings: keystore type and provider")
+    @Config(key = "keystore.type", defaultValue = "PKCS12",
+            desc = "keystore type for SSL/TLS, valid values: PKCS12 (default), PKCS11, JCEKS , JKS, BCFKS")
+    private String keystoreType = "PKCS12";
+    @Config(key = "keystore.provider",
+            desc = "keystore provider for SSL/TLS, valid values: null=JDK default, BC (BouncyCastle), SunJSSE, BCFIPS, etc."
+                    + "\n  Note: BC will not verify the key password, so it is not recommended for production use."
+                    + "\n  Note: BCFIPS is a FIPS compliant provider, which is required by some government applications.")
+    private String keystoreSecurityProvider = null;
+    
+    @ConfigHeader(title = "5.2 Security Settings: message digest")
+    @Config(key = "algorithm.Messagedigest", defaultValue = "SHA3-256",
+            desc = "SHA3-224, SHA3-256 (default), SHA3-384, SHA3-512, SHA-256, SHA-384, SHA-512, etc. "
+                    + "\n  Note: MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)")
+    private String algorithmMessagedigest = "SHA3-256";
+
+    @ConfigHeader(title = "5.3 Security Settings: asymmetric key (public/private key pair)")
+    @Config(key = "algorithm.Asymmetric", defaultValue = "RSA",
+            desc = "Asymmetric key algorithm, valid values: RSA (default), DSA, EC, DiffieHellman, Ed25519, Ed448, etc.")
+    private String algorithmAsymmetricKey = "RSA";
+    @Config(key = "transformation.Asymmetric", defaultValue = "RSA/None/OAEPWithSHA-256AndMGF1Padding",
+            desc = "Asymmetric cipher transformation, valid values: RSA/None/OAEPWithSHA-256AndMGF1Padding (default), RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc."
+                    + " \n  Note: ryptographic algorithm ECB is weak and should not be used： RSA/ECB/PKCS1Padding")
+    private String ciphersTransformationAsymmetric = "RSA/None/OAEPWithSHA-256AndMGF1Padding";
+
+    @ConfigHeader(title = "5.4 Security Settings: symmetric key (no password)")
+    @Config(key = "algorithm.Symmetric", defaultValue = "AES",
+            desc = "Symmetric key algorithm, valid values: AES (default), DES, DESede, Blowfish, ARCFOUR, ChaCha20, HmacMD5, HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512, HmacSHA512/224, HmacSHA512/256, HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512, RC2, etc.")
+    private String algorithmSymmetricKey = "AES";
+    @Config(key = "length.SymmetricKey.Bits", defaultValue = "256",
+            desc = "key size in bits for symmetric key generation, algorithms may have different key size requirements.")
+    private int algorithmSymmetricKeyBits = 256;
+    @Config(key = "transformation.Symmetric", defaultValue = "AES/GCM/NoPadding",
+            desc = "Symmetric cipher transformation, valid values: AES/GCM/NoPadding (default, for modern applications), AES/CBC/PKCS5Padding (more compatible with older systems), AES/CBC/NoPadding, AES/CTR/NoPadding, AES/CFB/NoPadding, DES/CBC/PKCS5Padding, DESede/CBC/PKCS5Padding, Blowfish/CBC/PKCS5Padding, etc."
+                    + " \n  Note: do not use AES/CBC, and AES/GCM/PKCS5Padding is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html")
+    private String ciphersTransformationSymmetric = "AES/GCM/NoPadding";
+
+    @Config(key = "length.SymmetricKey.AuthenticationTag.Bits", defaultValue = "128",
+            desc = "AuthenticationTag size in bits for symmetric key generation, algorithms may have different AuthenticationTag size requirements.")
+    private int symmetricKeyAuthenticationTagBits = 128;
+    @Config(key = "length.symmetricKey.InitializationVector.Bytes", defaultValue = "12",
+            desc = "IV size in bits for symmetric key generation, algorithms may have different IV size requirements.")
+    private int symmetricKeyInitializationVectorBytes = 12;
+
+    @ConfigHeader(title = "5.5 Security Settings: secret key (with password)")
+    @Config(key = "algorithm.SecretKey", defaultValue = "PBKDF2WithHmacSHA256",
+            desc = "Symmetric key factory generation algorithm, valid values: PBKDF2WithHmacSHA256 (default), PBKDF2WithHmacSHA512, PBKDF2WithHmacSHA1, etc.")
+    private String algorithmSecretKey = "PBKDF2WithHmacSHA256";
+    @Config(key = "length.algorithm.SecretKey.Bits", defaultValue = "256",
+            desc = "key size in bits for symmetric key generation, algorithms may have different key size requirements.")
+    private int algorithmSecretKeyBits = 256;
+    @Config(key = "length.algorithm.SecretKey.Salt.Bits", defaultValue = "16",
+            desc = "salt size in bytes for symmetric key generation, algorithms may have different salt size requirements.")
+    private int algorithmSecretKeySaltBytes = 16;
+    @Config(key = "count.algorithm.SecretKey.iteration", defaultValue = "310000",
+            desc = "for symmetric key generation, algorithms may have different iteration requirements.")
+    private int algorithmSecretKeyIterationCount = 310_000;
+
 
     public Set<String> getRootPackageNames() {
         return rootPackageNames;
@@ -333,8 +405,8 @@ public class BackOffice extends BootConfig {
         return jwtAudAsCSV;
     }
 
-    public int getCfgChangeMonitorIntervalSec() {
-        return CfgChangeMonitorIntervalSec;
+    public long getCfgChangeMonitorThrottleMillis() {
+        return CfgChangeMonitorThrottleMillis;
     }
 
     public long getWebResourceCacheTtlSec() {
@@ -355,6 +427,10 @@ public class BackOffice extends BootConfig {
 
     public String getPortInUseAlertMessage() {
         return portInUseAlertMessage;
+    }
+
+    public String getDefaultMasterPasswordFile() {
+        return defaultMasterPasswordFile;
     }
 
     public String getDomainFolderPrefix() {
@@ -387,6 +463,10 @@ public class BackOffice extends BootConfig {
 
     public String getgRPCConfigFileName() {
         return gRPCConfigFileName;
+    }
+
+    public String getPauseFileName() {
+        return pauseFileName;
     }
 
     public String getPauseLockCodeViaFile() {
@@ -441,8 +521,8 @@ public class BackOffice extends BootConfig {
         return cliName_i18n;
     }
 
-    public String getCliName_use() {
-        return cliName_use;
+    public String getCliName_useAlternative() {
+        return cliName_useAlternative;
     }
 
     public String getCliName_cfgdemo() {
@@ -477,11 +557,71 @@ public class BackOffice extends BootConfig {
         return cliName_psv;
     }
 
+    public String getCliName_debugMode() {
+        return cliName_debugMode;
+    }
+
     public String getMemoDelimiter() {
         return memoDelimiter;
     }
 
     public Level getJobListenerLogLevel() {
         return jboListenerLogLevel;
+    }
+
+    public String getKeystoreType() {
+        return keystoreType;
+    }
+
+    public String getKeystoreSecurityProvider() {
+        return keystoreSecurityProvider;
+    }
+
+    public String getAlgorithmMessagedigest() {
+        return algorithmMessagedigest;
+    }
+
+    public String getAlgorithmAsymmetricKey() {
+        return algorithmAsymmetricKey;
+    }
+
+    public String getCiphersTransformationAsymmetric() {
+        return ciphersTransformationAsymmetric;
+    }
+
+    public String getAlgorithmSymmetricKey() {
+        return algorithmSymmetricKey;
+    }
+
+    public int getAlgorithmSymmetricKeyBits() {
+        return algorithmSymmetricKeyBits;
+    }
+
+    public String getCiphersTransformationSymmetric() {
+        return ciphersTransformationSymmetric;
+    }
+
+    public int getSymmetricKeyAuthenticationTagBits() {
+        return symmetricKeyAuthenticationTagBits;
+    }
+
+    public int getSymmetricKeyInitializationVectorBytes() {
+        return symmetricKeyInitializationVectorBytes;
+    }
+
+    public String getAlgorithmSecretKey() {
+        return algorithmSecretKey;
+    }
+
+    public int getAlgorithmSecretKeyBits() {
+        return algorithmSecretKeyBits;
+    }
+
+    public int getAlgorithmSecretKeySaltBytes() {
+        return algorithmSecretKeySaltBytes;
+    }
+
+    public int getAlgorithmSecretKeyIterationCount() {
+        return algorithmSecretKeyIterationCount;
     }
 }

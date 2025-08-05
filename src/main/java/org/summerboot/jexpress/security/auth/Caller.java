@@ -24,6 +24,7 @@ import java.util.Set;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface Caller {
+    String getJTI();
 
     Number getTenantId();
 

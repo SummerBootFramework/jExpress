@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
@@ -59,6 +58,12 @@ public class AuthConfig extends BootConfig {
     public static final AuthConfig cfg = new AuthConfig();
 
     protected AuthConfig() {
+        reset();
+    }
+
+    @Override
+    protected void reset() {
+        ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
     }
 
     @Override
@@ -75,17 +80,17 @@ public class AuthConfig extends BootConfig {
 
     //1.1 LDAP settings
     @ConfigHeader(title = "1.1 LDAP connection settings")
-    @Config(key = "ldap.type.AD",
+    @Config(key = "ldap.type.AD", defaultValue = "false",
             desc = "set it true only when LDAP is implemented by Microsoft Active Directory (AD)\n"
                     + "false when use others like Open LDAP, IBM Tivoli, Apache")
-    protected volatile boolean typeAD = false;
+    protected volatile boolean typeAD;
 
     @Config(key = "ldap.host",
             desc = "LDAP will be disabled when host is not provided")
     protected volatile String ldapHost;
 
     @Config(key = "ldap.port",
-            desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global voer SSL 3269")
+            desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global over SSL 3269")
     protected volatile int ldapPort;
 
     @Config(key = "ldap.baseDN")
@@ -99,7 +104,7 @@ public class AuthConfig extends BootConfig {
     protected volatile String bindingPassword;
 
     @Config(key = "ldap.PasswordAlgorithm", defaultValue = "SHA3-256")
-    protected volatile String passwordAlgorithm = "SHA3-256";
+    protected volatile String passwordAlgorithm;
 
     @Config(key = "ldap.schema.TenantGroup.ou")
     protected volatile String ldapScheamTenantGroupOU;
@@ -112,11 +117,11 @@ public class AuthConfig extends BootConfig {
             desc = DESC_KMF)
     protected volatile KeyManagerFactory kmf;
 
-    @Config(key = "ldap.ssl.protocol")
-    protected volatile String ldapTLSProtocol = "TLSv1.3";
+    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3")
+    protected volatile String ldapTLSProtocol;
 
     @Config(key = "ldap.SSLConnectionFactoryClass")
-    protected volatile String ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+    protected volatile String ldapSSLConnectionFactoryClassName;
 
     //1.3 LDAP Client truststore
     @ConfigHeader(title = "1.3 LDAP Client truststore")
@@ -158,7 +163,7 @@ public class AuthConfig extends BootConfig {
     protected volatile String privateKeyPwd;
 
     protected void generateTemplate_privateKeyPwd(StringBuilder sb) {
-        sb.append(KEY_privateKeyPwd + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_privateKeyPwd + DEFAULT_DEC_VALUE);
     }
 
     @Config(key = KEY_publicKeyFile,
@@ -182,8 +187,8 @@ public class AuthConfig extends BootConfig {
     @JsonIgnore
     protected volatile JwtParser jwtParser;
 
-    @Config(key = "jwt.ttl.minutes")
-    protected volatile int jwtTTLMinutes = 1440;
+    @Config(key = "jwt.ttl.minutes", defaultValue = "1440")
+    protected volatile int jwtTTLMinutes;
 
     @Config(key = "jwt.issuer")
     protected volatile String jwtIssuer;
@@ -197,7 +202,7 @@ public class AuthConfig extends BootConfig {
                     + "roles.AppAdmin.groups=AppAdmin_Group\n"
                     + "roles.AppAdmin.users=johndoe, janejoe",
             callbackMethodName4Dump = "generateTemplate_DumpRoleMapping")
-    protected Map<String, RoleMapping> roles = new HashMap();
+    protected Map<String, RoleMapping> roles = new HashMap<>();
 
     /**
      * called by @ConfigHeader.callbackMethodName4Dump value
@@ -262,7 +267,7 @@ public class AuthConfig extends BootConfig {
         //userTTL = TimeUnit.MINUTES.toMillis(userTTL);
         // 4. Role mapping
         Set<Object> keys = props.keySet();
-        Map<String, RoleMapping> rolesTemp = new HashMap();
+        Map<String, RoleMapping> rolesTemp = new HashMap<>();
         keys.forEach((key) -> {
             String name = key.toString();
             if (name.startsWith("roles.")) {
@@ -398,7 +403,7 @@ public class AuthConfig extends BootConfig {
 //    public Set<String> getRoleNames() {
 //        return Set.copyOf(roles.keySet());
 //    }
-    protected final Set<String> declareRoles = new TreeSet();
+    protected final Set<String> declareRoles = new TreeSet<>();
 
     public void addDeclareRoles(Set<String> scanedDeclareRoles) {
         this.declareRoles.addAll(Set.copyOf(scanedDeclareRoles));

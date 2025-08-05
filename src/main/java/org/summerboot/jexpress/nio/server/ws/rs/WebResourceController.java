@@ -18,8 +18,10 @@ package org.summerboot.jexpress.nio.server.ws.rs;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import org.summerboot.jexpress.nio.server.NioHttpUtil;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
+
+import java.io.IOException;
 
 /**
  * 404 error will be responsed as html when extends WebResourceController
@@ -36,25 +38,25 @@ abstract public class WebResourceController {
      */
     @GET
     @Path("/{path: .*}")
-    public void requestWebResource(final ServiceRequest request, final ServiceContext response) {
+    public void requestWebResource(final ServiceRequest request, final SessionContext response) throws IOException {
         NioHttpUtil.sendWebResource(request, response);
     }
 
     /*@GET
     @Path("/css/{path: .*}")
-    public void requestCss(final ServiceRequest request, final ServiceContext response) {
+    public void requestCss(final ServiceRequest request, final SessionContext response) {
         NioHttpUtil.sendWebResource(request, response);
     }
 
     @GET
     @Path("/js/{path: .*}")
-    public void requestJavaScript(final ServiceRequest request, final ServiceContext response) {
+    public void requestJavaScript(final ServiceRequest request, final SessionContext response) {
         NioHttpUtil.sendWebResource(request, response);
     }
 
     @GET
     @Path("/images/{path: .*}")
-    public void requestImage(final ServiceRequest request, final ServiceContext response) {
+    public void requestImage(final ServiceRequest request, final SessionContext response) {
         NioHttpUtil.sendWebResource(request, response);
     }*/
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- version 2.4.11 -->
+<!-- version 2.5.2 -->
 <Configuration status="WARN" monitorInterval="30">
     <Properties>
         <Property name="logPattern" value="[${sys:logId}] %d{ISO8601} %p %c{}.%M() [%t] %m %ex%n"/>
@@ -56,7 +56,7 @@
             </Policies>
             <DefaultRolloverStrategy max="500"/>
         </RollingRandomAccessFile>
-		<RollingRandomAccessFile
+        <RollingRandomAccessFile
                 name="BackServiceLogFile"
                 fileName="${sys:logPath}/${sys:appName}_backservice_${sys:serverName}.log"
                 filePattern="${sys:logPath}/$${date:yyyy-MM-dd}/${sys:appName}_backservice_${sys:serverName}_%d{yyyy-MM-dd HHmm}.%i.log.gz"
@@ -92,6 +92,10 @@
         </Logger>
 
         <Logger level="info" name="org.summerboot.jexpress.nio.server.BootHttpRequestHandler" includeLocation="false" additivity="false">
+            <AppenderRef ref="RequestLogFile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger level="info" name="org.summerboot.jexpress.nio.grpc.ContextualizedServerCallListenerEx" includeLocation="false" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
             <AppenderRef ref="Console"/>
         </Logger>

@@ -26,6 +26,7 @@ import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.GeoIpUtil;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -58,6 +59,14 @@ public class NioConfig extends BootConfig {
     }
 
     @Override
+    protected void reset() {
+        nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
+        tpeCore = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        tpeMax = BootConstant.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        jsonParserTimeZone = TimeZone.getDefault();
+    }
+
+    @Override
     public void shutdown() {
         String tn = Thread.currentThread().getName();
         if (tpe != null && !tpe.isShutdown()) {
@@ -75,6 +84,22 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.autostart", defaultValue = "true")
     protected volatile boolean autoStart = true;
 
+    @Config(key = "CallerAddressFilter.option", defaultValue = "HostName", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
+    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.HostName;
+    @Config(key = "CallerAddressFilter.Regex.Prefix", desc = "A non-blank prefix to mark a string as Regex in both Whitelist and Blacklist, blank means all strings are not Regex")
+    protected volatile String callerAddressFilterRegexPrefix;
+    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example (when Regex.Prefix = RG): 127.0.0.1, RG^192\\\\.168\\\\.1\\\\.")
+    protected volatile Set<String> callerAddressFilterWhitelist;
+    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\\\.168\\\\.2\\\\.")
+    protected volatile Set<String> callerAddressFilterBlacklist;
+
+    @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", desc = "@Inspector.names in CSV format, empty/null means require ALL HealthChecks")
+    protected volatile Set<String> pingSyncHealthStatus_requiredHealthChecks;
+    @Config(key = "ping.sync.PauseStatus", defaultValue = "true", desc = "Ping response status is synced with PAUSE status")
+    protected volatile boolean pingSyncPauseStatus;
+    @Config(key = "ping.sync.showRootCause", defaultValue = "false", desc = "Ping response with root cause, this may expose internal info to external caller")
+    protected volatile boolean pingSyncShowRootCause;
+
     //2. NIO Security
     @ConfigHeader(title = "2. NIO Security")
 
@@ -91,9 +116,9 @@ public class NioConfig extends BootConfig {
 
     protected void generateTemplate_keystore(StringBuilder sb) {
         sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
-        sb.append(KEY_kmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE);
         sb.append(KEY_kmf_AliasKey + "=server1_2048.jexpress.org\n");
-        sb.append(KEY_kmf_AliasPwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE);
         generateTemplate = true;
     }
 
@@ -106,7 +131,7 @@ public class NioConfig extends BootConfig {
 
     //    protected void generateTemplate_truststore(StringBuilder sb) {
 //        sb.append(KEY_tmf_key + "="+FILENAME_TRUSTSTORE_4SERVER+"\n");
-//        sb.append(KEY_tmf_StorePwdKey + "=DEC(" + BootConstant.DEFAULT_ADMIN_MM + ")\n");
+//        sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE);
 //        generateTemplate = true;
 //    }
     @Config(key = "nio.server.ssl.VerifyCertificateHost", defaultValue = "false")
@@ -238,16 +263,25 @@ public class NioConfig extends BootConfig {
     protected volatile boolean fromJsonCaseInsensitive = false;
     @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
     protected volatile boolean fromJsonFailOnUnknownProperties = true;
+
+    @Config(key = "nio.JAX-RS.fromJson.autoBeanValidation", defaultValue = "true")
+    protected volatile boolean fromJsonAutoBeanValidation = true;
+
     @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
     protected volatile boolean toJsonIgnoreNull = true;
     @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
     protected volatile boolean toJsonPretty = false;
+    @Config(key = "nio.JAX-RS.toJson.showRefInServiceError", defaultValue = "true")
+    protected volatile boolean showRefInServiceError = true;
 
     @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
     @Config(key = "nio.WebSocket.Compress", defaultValue = "true")
     protected volatile boolean webSocketCompress = true;
+
+    @Config(key = "nio.WebSocket.Compress.maxAllocation", defaultValue = "0", desc = "Indicates the maximum number of bytes allowed to be allocated when a single WebSocket data frame is compressed (or decompressed). It is used to limit the maximum memory allocation during the compression process.")
+    protected volatile int maxCompressAllocation = 0;
 
     @Config(key = "nio.WebSocket.AllowExtensions", defaultValue = "true")
     protected volatile boolean webSocketAllowExtensions = true;
@@ -287,11 +321,11 @@ public class NioConfig extends BootConfig {
 
     //5.2 error code filter
     public enum VerboseTargetCodeType {
-        HttpStatusCode, AppErrorCode, all, ignore
+        HttpStatusCode, ApplicationErrorCode, all, ignore
     }
 
     @Config(key = "nio.verbose.filter.codetype", defaultValue = "all",
-            desc = "valid value = HttpStatusCode, AppErrorCode, all, ignore")
+            desc = "valid value = HttpStatusCode, ApplicationErrorCode, all, ignore")
     protected volatile VerboseTargetCodeType filterCodeType = VerboseTargetCodeType.all;
     protected static final String KEY_FILTER_CODETYPE_RANGE = "nio.verbose.filter.codetype.range";
     @Config(key = KEY_FILTER_CODETYPE_RANGE,
@@ -383,13 +417,34 @@ public class NioConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
+        if (StringUtils.isBlank(callerAddressFilterRegexPrefix)) {
+            callerAddressFilterRegexPrefix = null;
+        } else {
+            if (callerAddressFilterWhitelist != null) {
+                for (String regex : callerAddressFilterWhitelist) {
+                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
+//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
+                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
+                    }
+                }
+            }
+            if (callerAddressFilterBlacklist != null) {
+                for (String regex : callerAddressFilterBlacklist) {
+                    GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
+                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
+//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
+                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
+                    }
+                }
+            }
+        }
         // 7. Web Server Mode       
         rootFolder = cfgFile.getParentFile().getParentFile();
         docrootDir = null;
-        docrootDir = rootFolder.getAbsolutePath() + File.separator + docroot;
+        docrootDir = rootFolder.getCanonicalPath() + File.separator + docroot;
         downloadMode = StringUtils.isBlank(welcomePage);
         tempUoloadDir = null;
-        tempUoloadDir = rootFolder.getAbsolutePath() + File.separator + tempUoload;
+        tempUoloadDir = rootFolder.getCanonicalPath() + File.separator + tempUoload;
 
         //8. Default NIO Response HTTP Headers
         serverDefaultResponseHeaders = new DefaultHttpHeaders();
@@ -421,12 +476,12 @@ public class NioConfig extends BootConfig {
         tpe = buildThreadPoolExecutor(tpe, "Netty-HTTP.Biz", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
-        BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull);
+        BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull, showRefInServiceError);
 
         //5.1 caller filter
         switch (filterUserType) {
             case id:
-                filterCallerIdSet = new HashSet();
+                filterCallerIdSet = new HashSet<>();
                 Long[] a = helper.getAsRangeLong(props, KEY_FILTER_USERTYPE_RANGE, filterCallerIdSet);
                 if (a != null) {
                     filterCallerIdFrom = a[0];
@@ -438,7 +493,7 @@ public class NioConfig extends BootConfig {
             case group:
             case role:
                 String[] na = helper.getAsCSV(props, KEY_FILTER_USERTYPE_RANGE, null);
-                filterCallerNameSet = new HashSet();
+                filterCallerNameSet = new HashSet<>();
                 filterCallerNameSet.addAll(Arrays.asList(na));
                 break;
         }
@@ -446,8 +501,8 @@ public class NioConfig extends BootConfig {
         //5.2 error code filter
         switch (filterCodeType) {
             case HttpStatusCode:
-            case AppErrorCode:
-                filterCodeSet = new HashSet();
+            case ApplicationErrorCode:
+                filterCodeSet = new HashSet<>();
                 Long[] a = helper.getAsRangeLong(props, KEY_FILTER_CODETYPE_RANGE, filterCodeSet);
                 if (a != null) {
                     filterCodeRangeFrom = a[0];
@@ -464,6 +519,10 @@ public class NioConfig extends BootConfig {
 
     public boolean isWebSocketCompress() {
         return webSocketCompress;
+    }
+
+    public int getMaxCompressAllocation() {
+        return maxCompressAllocation;
     }
 
     public boolean isWebSocketAllowExtensions() {
@@ -496,6 +555,34 @@ public class NioConfig extends BootConfig {
 
     public boolean isAutoStart() {
         return autoStart;
+    }
+
+    public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
+        return CallerAddressFilterOption;
+    }
+
+    public String getCallerAddressFilterRegexPrefix() {
+        return callerAddressFilterRegexPrefix;
+    }
+
+    public Set<String> getCallerAddressFilterWhitelist() {
+        return callerAddressFilterWhitelist;
+    }
+
+    public Set<String> getCallerAddressFilterBlacklist() {
+        return callerAddressFilterBlacklist;
+    }
+
+    public Set<String> getPingSyncHealthStatus_requiredHealthChecks() {
+        return pingSyncHealthStatus_requiredHealthChecks;
+    }
+
+    public boolean isPingSyncPauseStatus() {
+        return pingSyncPauseStatus;
+    }
+
+    public boolean isPingSyncShowRootCause() {
+        return pingSyncShowRootCause;
     }
 
     public KeyManagerFactory getKmf() {
@@ -646,6 +733,10 @@ public class NioConfig extends BootConfig {
         return fromJsonFailOnUnknownProperties;
     }
 
+    public boolean isFromJsonAutoBeanValidation() {
+        return fromJsonAutoBeanValidation;
+    }
+
     public TimeZone getJsonParserTimeZone() {
         return jsonParserTimeZone;
     }
@@ -656,6 +747,10 @@ public class NioConfig extends BootConfig {
 
     public boolean isToJsonPretty() {
         return toJsonPretty;
+    }
+
+    public boolean isShowRefInServiceError() {
+        return showRefInServiceError;
     }
 
     public VerboseTargetUserType getFilterUserType() {

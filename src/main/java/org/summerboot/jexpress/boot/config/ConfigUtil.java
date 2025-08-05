@@ -25,8 +25,8 @@ import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.boot.instrumentation.Timeout;
 import org.summerboot.jexpress.i18n.I18n;
+import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.SSLUtil;
-import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -96,7 +96,7 @@ public class ConfigUtil {
         }
     }
 
-    public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, int CfgMonitorInterval, File cfgConfigDir) throws Exception {
+    public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, long userSpecifiedCfgMonitorThrottleMillis, File cfgConfigDir) throws Exception {
         // 1. load configs
         int updated = 0;
         Map<File, Runnable> cfgUpdateTasks = new HashMap();
@@ -109,8 +109,8 @@ public class ConfigUtil {
             }
         }
         // 2. monitor the change of config files
-        if (!mode.isCliMode() && CfgMonitorInterval > 0) {
-            ConfigurationMonitor.cfgMonitor.start(configFolder.toFile(), CfgMonitorInterval, cfgUpdateTasks);
+        if (!mode.isCliMode()) {
+            ConfigurationMonitor.cfgMonitor.start(configFolder, userSpecifiedCfgMonitorThrottleMillis, cfgUpdateTasks);
         }
         return updated;
     }
@@ -444,7 +444,7 @@ public class ConfigUtil {
         try {
             String value = v.trim();
             if (value.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
-                pwd = SecurityUtil.decrypt(value, true);
+                pwd = EncryptorUtil.decrypt(value, true);
             } else {
                 addError("invalid format, expected:  \"" + key + "\"=ENC(encrypted value)");
             }
@@ -464,7 +464,7 @@ public class ConfigUtil {
         StringBuilder sb = new StringBuilder();
         LineIterator iterator = FileUtils.lineIterator(configFile, "UTf-8");
         while (iterator.hasNext()) {
-            String line = iterator.nextLine().trim();
+            String line = iterator.next().trim();
             if (!line.startsWith("#")) {
                 String updatedLine = FormatterUtil.updateProtectedLine(line, encrypt);
                 if (updatedLine != null) {
@@ -474,6 +474,7 @@ public class ConfigUtil {
             }
             sb.append(line).append(BootConstant.BR);
         }
+
         if (updated > 0) {
             if (destFile == null) {
                 destFile = configFile;

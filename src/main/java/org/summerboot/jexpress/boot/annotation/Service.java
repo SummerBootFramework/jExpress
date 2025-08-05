@@ -37,7 +37,7 @@ public @interface Service {
 
     Class[] binding() default {};
 
-    String implTag() default NOT_TAGGED;
+    String AlternativeName() default NOT_TAGGED;
 
     String named() default NOT_NAMED;
 

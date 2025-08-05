@@ -1,8 +1,7 @@
 package org.summerboot.jexpress.integration.httpclient;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
-import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
+import org.summerboot.jexpress.nio.server.SessionContext;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -48,25 +47,23 @@ public interface RPCDelegate {
         return reqBody;
     }
 
-    <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext serviceContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException;
+    <T> RPCResult<T> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException;
 
     /**
      * @param <T>
-     * @param <E>
-     * @param serviceContext
+     * @param sessionContext
      * @param req
      * @param successStatusList
      * @return
      * @throws IOException
      */
-    <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext serviceContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException;
+    <T> RPCResult<T> rpcEx(SessionContext sessionContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException;
 
     /**
      * Need to call RPCResult.update(...) to deserialize JSON to success/error
      * result
      *
      * @param <T>
-     * @param <E>
      * @param context
      * @param originRequest
      * @param originRequestBody
@@ -74,7 +71,7 @@ public interface RPCDelegate {
      * @return a Non-Null RPCResult
      * @throws IOException
      */
-    <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException;
+    <T> RPCResult<T> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException;
 
     /**
      * Reset request
@@ -83,9 +80,8 @@ public interface RPCDelegate {
      * @param request
      * @param successStatusList
      * @param <T>
-     * @param <E>
      * @return
      * @throws IOException
      */
-    <T, E extends ServiceErrorConvertible> RPCResult<T, E> rpcEx(ServiceContext context, RPCResult<T, E> request, HttpResponseStatus... successStatusList) throws IOException;
+    <T> RPCResult<T> rpcEx(SessionContext context, RPCResult<T> request, HttpResponseStatus... successStatusList) throws IOException;
 }

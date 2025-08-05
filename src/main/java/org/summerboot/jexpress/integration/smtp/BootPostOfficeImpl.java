@@ -93,7 +93,8 @@ public class BootPostOfficeImpl implements PostOffice {
      * @param debouncing
      * @param async
      */
-    protected void sendAlert(Collection<String> to, final String title, final String content, final Throwable cause, boolean debouncing, boolean async) {
+    @Override
+    public void sendAlert(Collection<String> to, final String title, final String content, final Throwable cause, boolean debouncing, boolean async) {
         if (debouncing) {
             String key = title;
             Throwable rootCause = ExceptionUtils.getRootCause(cause);
@@ -120,7 +121,8 @@ public class BootPostOfficeImpl implements PostOffice {
         return this.sendEmail(to, title, content, isHTMLFormat, false);
     }
 
-    protected boolean sendEmail(Collection<String> to, String title, String content, boolean isHTMLFormat, boolean async) {
+    @Override
+    public boolean sendEmail(Collection<String> to, String title, String content, boolean isHTMLFormat, boolean async) {
         Email email = Email.compose(title, content, isHTMLFormat ? Email.Format.html : Email.Format.text).to(to);
         if (to == null || to.isEmpty()) {
             log.warn(() -> "unknown recipient: " + email);

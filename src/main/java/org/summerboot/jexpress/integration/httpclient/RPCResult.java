@@ -25,32 +25,36 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
+import org.summerboot.jexpress.util.BeanUtil;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.TimeZone;
 
+
 /**
- * @param <T> Success(JSON) result type
- * @param <E> Err(JSON) result type
+ * @param <T> Success (JSON) result type
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class RPCResult<T, E extends ServiceErrorConvertible> {
-
-
+public class RPCResult<T> {
+    /**
+     * Default Jackson ObjectMapper for RPCResult
+     * <p>
+     * This mapper is configured to:
+     * - Use the default time zone
+     * - Write dates as ISO-8601 strings (not timestamps)
+     * - Ignore empty beans during serialization
+     * - Ignore unknown properties during deserialization
+     * - Accept case-insensitive property names if configured
+     */
     public static ObjectMapper DefaultJacksonMapper = new ObjectMapper();
 
-    public static void update(ObjectMapper objectMapper, TimeZone timeZone, boolean isFromJsonFailOnUnknownProperties) {
-        objectMapper.registerModules(new JavaTimeModule());
-        objectMapper.setTimeZone(timeZone);
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
+    static {
+        init(TimeZone.getDefault(), true, false);
     }
 
     public static void init(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive) {
@@ -60,12 +64,16 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         update(DefaultJacksonMapper, timeZone, fromJsonFailOnUnknownProperties);
     }
 
-    static {
-        init(TimeZone.getDefault(), true, false);
+    protected static void update(ObjectMapper objectMapper, TimeZone timeZone, boolean isFromJsonFailOnUnknownProperties) {
+        objectMapper.registerModules(new JavaTimeModule());
+        objectMapper.setTimeZone(timeZone);
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
     }
 
     protected final HttpRequest originRequest;
-
     protected final String originRequestBody;
     protected final HttpResponse httpResponse;
     protected final String rpcResponseBody;
@@ -73,7 +81,6 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
     protected final HttpResponseStatus httpStatus;
     protected final boolean remoteSuccess;
     protected T successResponse;
-    protected E errorResponse;
 
     public RPCResult(HttpRequest originRequest, String originRequestBody, HttpResponse httpResponse, boolean remoteSuccess) {
         this.originRequest = originRequest;
@@ -113,45 +120,33 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
         return remoteSuccess;
     }
 
-    public E errorResponse() {
-        return errorResponse;
-    }
-
     public T successResponse() {
         return successResponse;
     }
 
-    public RPCResult<T, E> update(Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
-        return update(DefaultJacksonMapper, null, successResponseClass, errorResponseClass, context);
-    }
-
-    public RPCResult<T, E> update(JavaType successResponseType, Class<E> errorResponseClass, final ServiceContext context) {
-        return update(DefaultJacksonMapper, successResponseType, null, errorResponseClass, context);
-    }
-
-    public RPCResult<T, E> update(JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
-        return update(DefaultJacksonMapper, successResponseType, successResponseClass, errorResponseClass, context);
-    }
-
-    public RPCResult<T, E> update(ObjectMapper jacksonMapper, JavaType successResponseType, Class<T> successResponseClass, Class<E> errorResponseClass, final ServiceContext context) {
+    public RPCResult<T> update(Class<T> successResponseClass, final SessionContext context) {
         if (remoteSuccess) {
-            successResponse = fromJson(jacksonMapper, successResponseType, successResponseClass, context);
-        } else {
-            errorResponse = fromJson(jacksonMapper, null, errorResponseClass, context);
-            if (errorResponse != null & context != null) {
-                if (errorResponse.isSingleError()) {
-                    Err e = errorResponse.toServiceError(httpStatus);
-                    context.error(e);
-                } else {
-                    List<Err> errors = errorResponse.toServiceErrors(httpStatus);
-                    context.errors(errors);
-                }
-            }
+            successResponse = parseJsonResponse(successResponseClass, context);
         }
         return this;
     }
 
-    protected <R extends Object> R fromJson(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, final ServiceContext context) {
+    public RPCResult<T> update(JavaType successResponseType, final SessionContext context) {
+        if (remoteSuccess) {
+            successResponse = parseJsonResponse(successResponseType, context);
+        }
+        return this;
+    }
+
+    public <R> R parseJsonResponse(Class<R> responseClass, final SessionContext context) {
+        return parseJsonResponse(DefaultJacksonMapper, null, responseClass, true, context);
+    }
+
+    public <R> R parseJsonResponse(JavaType responseType, final SessionContext context) {
+        return parseJsonResponse(DefaultJacksonMapper, responseType, null, true, context);
+    }
+
+    public <R> R parseJsonResponse(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, boolean doValidation, final SessionContext context) {
         if (responseClass == null && responseType == null || StringUtils.isBlank(rpcResponseBody)) {
             return null;
         }
@@ -160,15 +155,33 @@ public class RPCResult<T, E extends ServiceErrorConvertible> {
             ret = responseClass == null
                     ? jacksonMapper.readValue(rpcResponseBody, responseType)
                     : jacksonMapper.readValue(rpcResponseBody, responseClass);
-
+            if (doValidation) {
+                String error = BeanUtil.getBeanValidationResult(ret);
+                if (error != null) {
+                    if (context != null) {
+                        Err e = new Err(BootErrorCode.HTTPCLIENT_INVALID_RESPONSE_FORMAT, null, "Invalid HTTP client JSON response", null, error);
+                        context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
+                    }
+                    return null;
+                }
+            }
+            if (!remoteSuccess && context != null && ret instanceof ServiceErrorConvertible) {
+                ServiceErrorConvertible errorResponse = (ServiceErrorConvertible) ret;
+                if (errorResponse.isSingleError()) {
+                    Err e = errorResponse.toServiceError(httpStatus);
+                    context.error(e);
+                } else {
+                    List<Err> errors = errorResponse.toServiceErrors(httpStatus);
+                    context.errors(errors);
+                }
+            }
         } catch (Throwable ex) {
             if (context != null) {
-                Err e = new Err(BootErrorCode.HTTPCLIENT_UNEXPECTED_RESPONSE_FORMAT, null, null, ex, "Failed to parse RPC JSON response: " + rpcResponseBody);
+                Err e = new Err(BootErrorCode.HTTPCLIENT_UNKNOWN_RESPONSE_FORMAT, null, "Unknown HTTP client JSON response", ex, ex.toString());
                 context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
             }
-            ret = null;
+            return null;
         }
-
         return ret;
     }
 }

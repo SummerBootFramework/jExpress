@@ -18,7 +18,7 @@ package org.summerboot.jexpress.security.auth;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.grpc.Context;
-import io.grpc.Contexts;
+import io.grpc.Grpc;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
@@ -34,18 +34,23 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.grpc.BearerAuthCredential;
+import org.summerboot.jexpress.nio.grpc.ContextualizedServerCallListenerEx;
+import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.util.GeoIpUtil;
 
 import javax.naming.NamingException;
+import java.net.SocketAddress;
 import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
@@ -59,7 +64,7 @@ import java.util.Set;
 @Singleton
 public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerInterceptor {
 
-    protected static final String ERROR_NO_CFG = "JWT is not configured at " + AuthConfig.cfg.getCfgFile().getAbsolutePath();
+    protected static final String ERROR_NO_CFG = "JWT is not configured at " + BackOffice.agent.getAuthConfigFileName();
 
     @Inject(optional = true)
     protected AuthenticatorListener authenticatorListener;
@@ -76,7 +81,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @throws NamingException
      */
     @Override
-    public String signJWT(String username, String pwd, E metaData, int validForMinutes, final ServiceContext context) throws NamingException {
+    public String signJWT(String username, String pwd, E metaData, int validForMinutes, final SessionContext context) throws NamingException {
         //1. protect request body from being logged
         //context.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
 
@@ -90,7 +95,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     @Override
-    public String signJWT(Caller caller, int validForMinutes, final ServiceContext context) {
+    public String signJWT(Caller caller, int validForMinutes, final SessionContext context) {
         if (caller == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
             return null;
@@ -122,7 +127,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @return
      * @throws NamingException
      */
-    abstract protected Caller authenticate(String usename, String password, E metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException;
+    abstract protected Caller authenticate(String usename, String password, E metaData, AuthenticatorListener listener, final SessionContext context) throws NamingException;
 
     /**
      * Convert Caller to auth token, override this method to implement
@@ -216,7 +221,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         }
         String tenantName = claims.get(KEY_TENANTNAME, String.class);
 
-        User caller = new User(tenantId, tenantName, userId, userName);
+        User caller = new User(jti, tenantId, tenantName, userId, userName);
 
         if (audience != null) {
             for (String group : audience) {
@@ -262,9 +267,13 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param httpRequestHeaders
      * @return
      */
-    protected String getBearerToken(HttpHeaders httpRequestHeaders) {
+    public static String getBearerToken(HttpHeaders httpRequestHeaders) {
         String authHeaderValue = httpRequestHeaders.get(HttpHeaderNames.AUTHORIZATION);
         return getBearerToken(authHeaderValue);
+    }
+
+    public static boolean hasBearerToken(HttpHeaders httpRequestHeaders) {
+        return StringUtils.isNotBlank(getBearerToken(httpRequestHeaders));
     }
 
     /**
@@ -274,7 +283,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param authHeaderValue "Bearer jwt"
      * @return
      */
-    protected String getBearerToken(String authHeaderValue) {
+    public static String getBearerToken(String authHeaderValue) {
         // return authHeaderValue.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
         if (StringUtils.isBlank(authHeaderValue) || !authHeaderValue.startsWith("Bearer ")) {
             return null;
@@ -298,7 +307,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @return
      */
     @Override
-    public Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
+    public Caller verifyToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, Integer errorCode, SessionContext context) {
         String authToken = getBearerToken(httpRequestHeaders);
         return verifyToken(authToken, cache, errorCode, context);
     }
@@ -311,11 +320,11 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @return
      */
     @Override
-    public Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, ServiceContext context) {
+    public Caller verifyToken(String authToken, AuthTokenCache cache, Integer errorCode, SessionContext context) {
         errorCode = errorCode == null ? overrideVerifyTokenErrorCode() : errorCode;
         Caller caller = null;
         if (authToken == null) {
-            Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_REQUIRE_TOKEN, null, null, null, "Missing AuthToken");
+            Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_REQUIRE_TOKEN, null, "AuthToken is required", null);
             context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
         } else {
             try {
@@ -326,16 +335,16 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                     cache = authTokenCache;
                 }
                 if (cache != null && cache.isBlacklist(jti)) {// because jti is used as blacklist key in logoutToken
-                    Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, null, null, "AuthToken has been logout");
+                    Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "AuthToken has been logout", null, "AuthToken has been logout: " + jti);
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
                     caller = fromJwt(claims);
                 }
             } catch (ExpiredJwtException ex) {
-                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, null, null, "Expired AuthToken: " + ex);
+                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Expired AuthToken", null, "Expired AuthToken: " + ex);
                 context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             } catch (JwtException ex) {
-                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, null, null, null, "Invalid AuthToken: " + ex);
+                Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_INVALID_TOKEN, null, "Invalid AuthToken", null, "Invalid AuthToken: " + ex);
                 context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
             }
         }
@@ -344,7 +353,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     @Override
-    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, ServiceContext context) throws Exception {
+    public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, SessionContext context) throws Exception {
         return true;
     }
 
@@ -358,7 +367,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param context
      */
     @Override
-    public void logoutToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, ServiceContext context) {
+    public void logoutToken(HttpHeaders httpRequestHeaders, AuthTokenCache cache, SessionContext context) {
         String authToken = getBearerToken(httpRequestHeaders);
         logoutToken(authToken, cache, context);
     }
@@ -369,7 +378,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param context
      */
     @Override
-    public void logoutToken(String authToken, AuthTokenCache cache, ServiceContext context) {
+    public void logoutToken(String authToken, AuthTokenCache cache, SessionContext context) {
         try {
             Claims claims = parseJWT(authToken);
             String jti = claims.getId();
@@ -408,40 +417,64 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      */
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
-        Status status;
-        String headerValueAuthorization = metadata.get(BearerAuthCredential.AUTHORIZATION_METADATA_KEY);
-        if (headerValueAuthorization == null) {
-            //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");            
-            return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
-        } else if (!headerValueAuthorization.startsWith(BearerAuthCredential.BEARER_TYPE)) {
-            status = Status.INVALID_ARGUMENT.withDescription(ERROR + "Unknown authorization type, non bearer token provided");
-        } else {
-            try {
-                String jwt = headerValueAuthorization.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
-                ServiceContext context = ServiceContext.build(0);
-                Caller caller = verifyToken(jwt, authTokenCache, null, context);
-                if (caller == null) {
-                    String desc = context.error().getErrors().get(0).getErrorDesc();
-                    if (StringUtils.isBlank(desc)) {
-                        desc = context.status() + "";
-                    }
-                    status = Status.INVALID_ARGUMENT.withDescription(ERROR + desc);
-                    //throw new StatusRuntimeException(status);
+        Status status = null;
+        Context ctx = Context.current();
+        long start = System.currentTimeMillis();
+        Caller caller = null;
+        String jti = null;
+        try {
+            GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
+            SocketAddress remoteAddr = serverCall.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+            String error = GeoIpUtil.callerAddressFilter(remoteAddr, gRPCCfg.getCallerAddressFilterWhitelist(), gRPCCfg.getCallerAddressFilterBlacklist(), gRPCCfg.getCallerAddressFilterRegexPrefix(), gRPCCfg.getCallerAddressFilterOption());
+            if (error != null) {
+                //Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + error);
+                status = Status.UNAUTHENTICATED.withDescription(ERROR + "Invalid IP address: " + error);
+            } else {
+                ctx = ctx.withValue(GrpcCallerAddr, remoteAddr);
+                String headerValueAuthorization = metadata.get(BearerAuthCredential.AUTHORIZATION_METADATA_KEY);
+                if (headerValueAuthorization == null) {
+                    //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");
+                    //return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
+                    status = null;
+                } else if (!headerValueAuthorization.startsWith(BearerAuthCredential.BEARER_TYPE)) {
+                    status = Status.UNAUTHENTICATED.withDescription(ERROR + "Unknown authorization type, non " + BearerAuthCredential.BEARER_TYPE + " token provided");
                 } else {
-                    Context ctx = Context.current().withValue(GrpcCaller, caller);
-                    String jti = context.callerId();
-                    if (jti != null) {
-                        ctx = ctx.withValue(GrpcCallerId, jti);
+                    String jwt = headerValueAuthorization.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
+                    SessionContext context = SessionContext.build(0);
+                    caller = verifyToken(jwt, authTokenCache, null, context);
+                    if (caller == null) {
+                        String desc = context.error().getErrors().get(0).getErrorDesc();
+                        if (StringUtils.isBlank(desc)) {
+                            desc = context.status() + "";
+                        }
+                        status = Status.UNAUTHENTICATED.withDescription(ERROR + desc);
+                        //throw new StatusRuntimeException(status);
+                    } else {
+                        ctx = ctx.withValue(GrpcCaller, caller);
+                        jti = context.callerId();
+                        if (jti != null) {
+                            ctx = ctx.withValue(GrpcCallerId, jti);
+                        }
+                        //return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
+                        status = null;
                     }
-                    return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
                 }
-            } catch (Throwable ex) {
-                status = Status.INVALID_ARGUMENT.withDescription(ERROR + ex.getMessage()).withCause(ex);
             }
+        } catch (Throwable ex) {
+            status = Status.UNAUTHENTICATED.withDescription(ERROR + ex.getMessage()).withCause(ex);
         }
 
+        if (status == null) {
+            // success process
+            //return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
+            return ContextualizedServerCallListenerEx.interceptCall(start, caller, jti, ctx, serverCall, metadata, serverCallHandler);
+        }
+        // error process
         serverCall.close(status, metadata);
         return new ServerCall.Listener<ReqT>() {
         };
     }
+
+
 }
+

@@ -17,21 +17,25 @@ package org.summerboot.jexpress.boot;
 
 import org.apache.logging.log4j.Level;
 
+import java.io.File;
 import java.security.SecureRandom;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface BootConstant {
+    static boolean isDebugMode() {
+        return BackOffice.agent.isDebugMode;
+    }
 
     int APP_ID_VALUE = new SecureRandom().nextInt(999999);
     String APP_ID = String.format("%06d", APP_ID_VALUE);
 
     //version
-    String VERSION = "jExpress 2.5.1";
+    String VERSION = "jExpress 2.6.0";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
-    String DEFAULT_ADMIN_MM = "changeit";
+    String JSONFILTER_NAME_SERVICEERROR = "ServiceErrorFilter";
 
     /*
      * Runtime info
@@ -50,9 +54,10 @@ public interface BootConstant {
      */
     boolean CFG_ERROR_CODE_AS_INT = BackOffice.agent.isErrorCodeAsInt();
     boolean CFG_JWT_AUD_AS_CSV = BackOffice.agent.isJwtAudAsCSV();
-    int CFG_CHANGE_MONITOR_INTERVAL_SEC = BackOffice.agent.getCfgChangeMonitorIntervalSec();
+    long CFG_CHANGE_MONITOR_THROTTLE_MS = BackOffice.agent.getCfgChangeMonitorThrottleMillis();
     int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
     long WEB_RESOURCE_TTL_MS = BackOffice.agent.getWebResourceCacheTtlSec() * 1000;
+    String DEFAULT_MASTER_PASSWORD_FILE = "etc" + File.separator + BackOffice.agent.getDefaultMasterPasswordFile();
     String DIR_STANDALONE = BackOffice.agent.getDomainFolderPrefix();
     String DIR_CONFIGURATION = BackOffice.agent.getConfigFolderName();
     String DIR_PLUGIN = BackOffice.agent.getPluginFolderName();
@@ -62,6 +67,7 @@ public interface BootConstant {
     String FILE_CFG_SMTP = BackOffice.agent.getSmtpConfigFileName();
     String FILE_CFG_NIO = BackOffice.agent.getNioConfigFileName();
     String FILE_CFG_GRPC = BackOffice.agent.getgRPCConfigFileName();
+    String FILE_PAUSE = BackOffice.agent.getPauseFileName();
 
     String RESPONSE_HEADER_KEY_REF = "X-Reference";
     String RESPONSE_HEADER_KEY_TS = "X-ServerTs";
@@ -79,7 +85,7 @@ public interface BootConstant {
     String CLI_CONFIG_DIR = BackOffice.agent.getCliName_cfgdir();
     String CLI_CONFIG_MONITOR_INTERVAL = BackOffice.agent.getCliName_monitorInterval();
     String CLI_I8N = BackOffice.agent.getCliName_i18n();
-    String CLI_USE_IMPL = BackOffice.agent.getCliName_use();//To specify which implementation will be used via @Component.checkImplTagUsed
+    String CLI_USE_ALTERNATIVE = BackOffice.agent.getCliName_useAlternative();//To specify which implementation will be used via @Component.checkImplTagUsed
     String CLI_CONFIG_DEMO = BackOffice.agent.getCliName_cfgdemo();
     String CLI_LIST_UNIQUE = BackOffice.agent.getCliName_list();
     String CLI_ADMIN_PWD_FILE = BackOffice.agent.getCliName_authfile();
@@ -88,6 +94,7 @@ public interface BootConstant {
     String CLI_ENCRYPT = BackOffice.agent.getCliName_encrypt();
     String CLI_DECRYPT = BackOffice.agent.getCliName_decrypt();
     String CLI_PSV = BackOffice.agent.getCliName_psv();
+    String CLI_DEBUGMODE = BackOffice.agent.getCliName_debugMode();
     String MEMO_DELIMITER = BackOffice.agent.getMemoDelimiter();
 
     /*

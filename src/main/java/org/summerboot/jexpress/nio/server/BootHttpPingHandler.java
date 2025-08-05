@@ -65,19 +65,23 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                 isPingRequest = true;
                 long hit = NioCounter.COUNTER_PING_HIT.incrementAndGet();
                 try {
-                    HttpResponseStatus status;
-                    final String internalReason = null;// Do NOT expose to external caller!
-                    if (!HealthMonitor.isHealthCheckSuccess()) {
+                    HttpResponseStatus status = HttpResponseStatus.OK;
+                    String internalReason = null;// Do NOT expose it to external caller!
+                    //if (NioConfig.cfg.isPingSyncHealthStatus() && !HealthMonitor.isHealthCheckSuccess()) {
+                    //Set<String> failedHealthChecks = new HashSet<>();
+                    if (!HealthMonitor.isHealthCheckSuccess() && HealthMonitor.isRequiredHealthChecksFailed(NioConfig.cfg.getPingSyncHealthStatus_requiredHealthChecks(), HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL, null)) {
                         status = HttpResponseStatus.BAD_GATEWAY;
-                        //internalReason = HealthMonitor.getStatusReasonHealthCheck();
-                    } else if (HealthMonitor.isServicePaused()) {
+                        internalReason = HealthMonitor.getStatusReasonHealthCheck();
+                    }
+                    if (NioConfig.cfg.isPingSyncPauseStatus() && HealthMonitor.isServicePaused()) {
                         status = HttpResponseStatus.SERVICE_UNAVAILABLE;
-                        //internalReason = HealthMonitor.getStatusReasonPaused();
-                    } else {
-                        status = HttpResponseStatus.OK;
+                        internalReason = HealthMonitor.getStatusReasonPausedForExternalCaller();
                     }
                     boolean isContinue = httpLifecycleListener.beforeProcessPingRequest(ctx, req.uri(), hit, status);
                     if (isContinue) {
+                        if (!NioConfig.cfg.isPingSyncShowRootCause()) {
+                            internalReason = null;
+                        }
                         NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, internalReason, null, null, true, null);
                         httpLifecycleListener.afterSendPingResponse(ctx, req.uri(), hit, status);
                     }
@@ -91,6 +95,5 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
             ctx.fireChannelRead(httpObject);
         }
     }
-
 
 }

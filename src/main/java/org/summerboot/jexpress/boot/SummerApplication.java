@@ -39,7 +39,6 @@ import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
-import org.summerboot.jexpress.nio.grpc.StatusReporter;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.NioServer;
@@ -61,7 +60,7 @@ abstract public class SummerApplication extends SummerBigBang {
     @Inject
     protected InstrumentationMgr instrumentationMgr;
     protected NioServer httpServer;
-    protected List<GRPCServer> gRPCServerList = new ArrayList();
+    protected List<GRPCServer> gRPCServerList = new ArrayList<>();
     @Inject
     protected PostOffice postOffice;
     @Inject
@@ -305,20 +304,19 @@ abstract public class SummerApplication extends SummerBigBang {
                 GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
                 List<InetSocketAddress> bindingAddresses = gRPCCfg.getBindingAddresses();
                 NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
+                boolean doReport = true;
                 for (InetSocketAddress bindingAddress : bindingAddresses) {
                     String host = bindingAddress.getAddress().getHostAddress();
                     int port = bindingAddress.getPort();
                     log.trace("5a. binding gRPC on {}:{}", host, port);
                     try (var a = Timeout.watch("starting gRPCServer at " + host + ":" + port, timeoutMs).withDesc(timeoutDesc)) {
                         boolean useVirtualThread = gRPCCfg.getTpeThreadingMode().equals(GRPCServerConfig.ThreadingMode.VirtualThread);
-                        GRPCServer gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf(), serverInterceptor, gRPCCfg.getTpe(), useVirtualThread, nioListener);
+                        GRPCServer gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf(), gRPCCfg.getTpe(), useVirtualThread, doReport, nioListener, serverInterceptor);
+                        doReport = false;
                         ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
                         for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
                             BindableService impl = guiceInjector.getInstance(c);
                             serverBuilder.addService(impl);
-                            if (impl instanceof StatusReporter) {
-                                ((StatusReporter) impl).setCounter(gRPCServer.getServiceCounter());
-                            }
                         }
                         for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
                             ServerServiceDefinition impl = guiceInjector.getInstance(c);
@@ -352,7 +350,7 @@ abstract public class SummerApplication extends SummerBigBang {
             }
         } catch (java.net.BindException ex) {// from NioServer
             log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
-            System.exit(1);
+            ApplicationUtil.RTO(BootErrorCode.RTO_BINDING_ERROR, null, null);
         } catch (Throwable ex) {
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause instanceof java.net.BindException) {// from gRPC server
@@ -360,7 +358,7 @@ abstract public class SummerApplication extends SummerBigBang {
             } else {
                 log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             }
-            System.exit(1);
+            ApplicationUtil.RTO(BootErrorCode.RTO_UNKNOWN_ERROR, null, null);
         } finally {
             // show prompt only with default log4j2.xml in case user is not familiar with log4j2.xml (only one ConsoleAppender with maxLevel is NOT "ALL"), no prompt if user modify the default log4j2.xml due to user knows what he/she is doing
             String prompt = null;

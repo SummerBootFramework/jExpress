@@ -19,8 +19,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +26,7 @@ import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
-import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
@@ -50,6 +48,7 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -63,6 +62,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
 
@@ -72,9 +72,10 @@ import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PR
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
 public abstract class BootConfig implements JExpressConfig {
 
-    protected static final Map<Class, JExpressConfig> cache = new HashMap();
+    protected static final Map<Class, JExpressConfig> cache = new HashMap<>();
 
     protected static String BR = System.lineSeparator();
+    protected static final String DEFAULT_DEC_VALUE = "=DEC(changeit)" + BR;
 
     protected static final String DESC_KMF = "Path to key store file. Use SSL/TLS when keystore is provided, otherwise use plain socket";
     protected static final String DESC_TMF = "Path to trust store file. Auth the remote peer certificate when a truststore is provided, otherwise blindly trust all remote peer certificate";
@@ -85,7 +86,8 @@ public abstract class BootConfig implements JExpressConfig {
     public static <T extends JExpressConfig> T instance(Class<T> implclass) {
         JExpressConfig instance = cache.get(implclass);
         if (instance != null) {
-            return (T) instance;
+            //return (T) instance;
+            return implclass.cast(instance);
         }
         try {
             Constructor<T> cons = implclass.getDeclaredConstructor();
@@ -93,7 +95,8 @@ public abstract class BootConfig implements JExpressConfig {
             T ret = (T) cons.newInstance();
             //cache.put(subclass, ret); - done by ret.Constructor --> registerSingleton()
             //return ret;// - discard the new instance, return the cached singleton
-            return (T) cache.get(implclass);
+            //return (T) cache.get(implclass);
+            return implclass.cast(cache.get(implclass));
         } catch (Throwable ex) {
             throw new RuntimeException("Failed to instance " + implclass, ex);
         }
@@ -180,6 +183,29 @@ public abstract class BootConfig implements JExpressConfig {
         ApplicationUtil.createIfNotExist(location, classLoader, srcFileName, destFileName);
     }
 
+    protected void resetToDefault() throws Exception {
+        resetToNull();
+        reset();
+    }
+
+    protected void resetToNull() throws IllegalAccessException {
+        Class c = this.getClass();
+        List<Field> fields = ReflectionUtil.getDeclaredAndSuperClassesFields(c);
+        for (Field field : fields) {
+            Config cfgAnnotation = field.getAnnotation(Config.class);
+            if (cfgAnnotation == null) {
+                continue;
+            }
+            field.setAccessible(true);
+            //field.set(this, null);
+            Object nullValue = ReflectionUtil.toStandardJavaType(null, false, field.getType(), false, false, null);
+            field.set(this, nullValue);
+        }
+    }
+
+    protected void reset() throws Exception {
+    }
+
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
     }
 
@@ -215,6 +241,7 @@ public abstract class BootConfig implements JExpressConfig {
         }
         ConfigUtil helper = new ConfigUtil(this.cfgFile.getAbsolutePath());
         try {
+            resetToDefault();
             preLoad(cfgFile, isReal, helper, props);
         } catch (Throwable ex) {
             ex.printStackTrace();
@@ -283,6 +310,8 @@ public abstract class BootConfig implements JExpressConfig {
                 if (hasDefaultValue) {// 3. no cfg item, use annotationDefaultValue
                     valueInCfgFile = annotationDefaultValue;
                 } else {// 4. no cfg item, no annotationDefaultValue, use class field default value
+//                    Object nullValue = ReflectionUtil.toStandardJavaType(null, false, field.getType(), false, false, null);
+//                    field.set(this, nullValue);
                     return;
                 }
             }
@@ -294,7 +323,7 @@ public abstract class BootConfig implements JExpressConfig {
         if (isEncrypted) {
             if (valueInCfgFile.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && valueInCfgFile.endsWith(")")) {
                 try {
-                    valueInCfgFile = SecurityUtil.decrypt(valueInCfgFile, true);
+                    valueInCfgFile = EncryptorUtil.decrypt(valueInCfgFile, true);
                 } catch (GeneralSecurityException ex) {
                     throw new IllegalArgumentException("Failed to decrypt", ex);
                 }
@@ -348,19 +377,19 @@ public abstract class BootConfig implements JExpressConfig {
             return;
         }
         StringBuilder sb = new StringBuilder();
-        LineIterator iterator = FileUtils.lineIterator(new File(cfgFile.getAbsolutePath()), "UTf-8");
-        while (iterator.hasNext()) {
-            String line = iterator.nextLine().trim();
-            if (!line.startsWith("#")) {
-                int i = line.indexOf("=");
-                if (i > 0) {
-                    String key = line.substring(0, i).trim();
-                    if (updatedCfgs.containsKey(key)) {
-                        line = key + "=" + updatedCfgs.get(key);
+        try (Stream<String> lines = Files.lines(cfgFile.toPath())) {
+            lines.forEach(line -> {
+                if (!line.startsWith("#")) {
+                    int i = line.indexOf("=");
+                    if (i > 0) {
+                        String key = line.substring(0, i).trim();
+                        if (updatedCfgs.containsKey(key)) {
+                            line = key + "=" + updatedCfgs.get(key);
+                        }
                     }
                 }
-            }
-            sb.append(line).append(BR);
+                sb.append(line).append(BR);
+            });
         }
 
         try (FileOutputStream output = new FileOutputStream(cfgFile); FileChannel foc = output.getChannel();) {
@@ -455,7 +484,7 @@ public abstract class BootConfig implements JExpressConfig {
                 boolean isEncrypted = cfg.validate().equals(Config.Validate.Encrypted);
                 String cm = cfg.desc();
                 if (StringUtils.isNotBlank(cm)) {
-                    List<String> memoList = new ArrayList();
+                    List<String> memoList = new ArrayList<>();
                     lineBreak(cm, null, memoList);
                     for (String s : memoList) {
                         hasConfig = true;

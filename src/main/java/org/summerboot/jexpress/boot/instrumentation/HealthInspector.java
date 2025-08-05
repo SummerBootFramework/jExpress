@@ -43,7 +43,7 @@ public interface HealthInspector<T extends Object> extends Comparable<Object> {
     }
 
     default String pauseLockCode() {
-        return this.getClass().getName();
+        return this.getClass().getSimpleName();
     }
 
     enum InspectionType {

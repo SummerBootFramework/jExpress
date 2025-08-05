@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.5.1</version>
+    <version>2.6.0</version>
     <packaging>jar</packaging>
-    <name>Summer Boot jExpress ${version}</name>
+    <name>Summer Boot jExpress ${project.version}</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
         some of which Spring Boot has (may) not yet provided
     </description>
     <url>https://github.com/SummerBootFramework</url>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>The jExpress licenses this framework to you under the Apache License, version 2.0 (the "License");
+                you may not use this framework except in compliance with the License and you have no policy prohibiting
+                employee contributions back to this framework (unless the contributor to this framework is your current
+                or retired employee).
+            </comments>
+        </license>
+    </licenses>
     <organization>
         <name>Summer Boot Org</name>
         <url>https://summerboot.org</url>
@@ -31,22 +44,10 @@
             <url>https://www.linkedin.com/in/changski-zhang-97787b4/</url>
         </developer>
     </developers>
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>The jExpress licenses this framework to you under the Apache License, version 2.0 (the "License");
-                you may not use this framework except in compliance with the License and you have no policy prohibiting
-                employee contributions back to this framework (unless the contributor to this framework is your current
-                or retired employee).
-            </comments>
-        </license>
-    </licenses>
     <scm>
-        <url>https://github.com/SummerBootFramework/jExpress.git</url>
-        <connection>scm:git:git@github.com:SummerBootFramework/jExpress.git</connection>
-        <developerConnection>scm:git:git@github.com:SummerBootFramework/jExpress.git</developerConnection>
+        <connection>sscm:git:git://github.com/SummerBootFramework/jExpress.git</connection>
+        <developerConnection>scm:git:ssh://github.com:SummerBootFramework/jExpress.git</developerConnection>
+        <url>https://github.com/SummerBootFramework/jExpress/tree/main</url>
     </scm>
 
     <profiles>
@@ -64,9 +65,10 @@
                 <maven-scm.version>2.1.0</maven-scm.version>
                 <maven-source.version>3.3.1</maven-source.version>
                 <maven-javadoc.version>3.11.2</maven-javadoc.version>
-                <maven-deploy.version>3.1.3</maven-deploy.version>
-                <maven-gpg.version>3.2.7</maven-gpg.version>
+                <maven-deploy.version>3.1.4</maven-deploy.version>
+                <maven-gpg.version>3.2.8</maven-gpg.version>
                 <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
+                <central-publishing.version>0.8.0</central-publishing.version>
             </properties>
             <build>
                 <plugins>
@@ -91,7 +93,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!--Java doc -->
+                    <!--Java doc  -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
@@ -101,23 +103,6 @@
                                 <phase>package</phase>
                                 <goals>
                                     <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!--Deploy-->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>
-                        <!-- <version>2.8.2</version> -->
-                        <version>${maven-deploy.version}</version>
-                        <executions>
-                            <execution>
-                                <id>default-deploy</id>
-                                <phase>deploy</phase>
-                                <goals>
-                                    <goal>deploy</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -136,43 +121,21 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!--Deploy to OSSRH, and publish to Central Repository-->
-                    <!-- https://mvnrepository.com/artifact/org.sonatype.plugins/nexus-staging-maven-plugin -->
+                    <!-- Deploy to https://central.sonatype.com/artifact/org.summerboot/jexpress/,
+                    and then publish to https://repo.maven.apache.org/maven2/org/summerboot/jexpress/ -->
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>${nexus-staging-maven-plugin.version}</version>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central-publishing.version}</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                            <waitUntil>validated</waitUntil>
                         </configuration>
                     </plugin>
-
-                    <!--            <plugin>-->
-                    <!--                <groupId>org.sonatype.central</groupId>-->
-                    <!--                <artifactId>central-publishing-maven-plugin</artifactId>-->
-                    <!--                <version>0.5.0</version>-->
-                    <!--                <extensions>true</extensions>-->
-                    <!--                <configuration>-->
-                    <!--                    <publishingServerId>central</publishingServerId>-->
-                    <!--                </configuration>-->
-                    <!--            </plugin>-->
                 </plugins>
             </build>
-            <!-- Central Repository info -->
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>ossrh</id>
-                    <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-                </snapshotRepository>
-                <repository>
-                    <id>ossrh</id>
-                    <name>Central Repository OSSRH</name>
-                    <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
-            </distributionManagement>
         </profile>
     </profiles>
 
@@ -183,63 +146,64 @@
         <!--        <maven.compiler.target>21</maven.compiler.target>-->
         <maven.compiler.release>21</maven.compiler.release>
         <maven-clean.version>3.4.1</maven-clean.version>
-        <maven-compiler.version>3.13.0</maven-compiler.version>
+        <maven-compiler.version>3.14.0</maven-compiler.version>
         <maven-dependency.version>3.8.1</maven-dependency.version>
         <maven-jar.version>3.4.2</maven-jar.version>
         <maven-resources.version>3.3.1</maven-resources.version>
-        <maven-surefire.version>3.5.2</maven-surefire.version>
-        <maven-install.version>3.1.3</maven-install.version>
+        <maven-surefire.version>3.5.3</maven-surefire.version>
+        <maven-install.version>3.1.4</maven-install.version>
         <!-- Commons -->
-        <commons-lang3.version>3.17.0</commons-lang3.version>
+        <commons-lang3.version>3.18.0</commons-lang3.version>
         <commons-cli.version>1.9.0</commons-cli.version>
-        <commons-io.version>2.18.0</commons-io.version>
-        <!--        <commons-text.version>1.11.0</commons-text.version>-->
+        <commons-io.version>2.20.0</commons-io.version>
+        <commons-text.version>1.14.0</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
-        <log4j-api.version>2.24.3</log4j-api.version>
+        <log4j-api.version>2.25.1</log4j-api.version>
         <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
         <!-- Mail -->
-        <jakarta-mail.version>2.0.1</jakarta-mail.version>
+        <jakarta-mail.version>2.0.2</jakarta-mail.version>
+        <jakarta-activation.version>2.0.1</jakarta-activation.version>
         <!-- Security -->
-        <bouncycastle.version>1.80</bouncycastle.version>
+        <bouncycastle.version>1.81</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.12.6</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.1.119.Final</netty.version>
-        <netty-tcnative.version>2.0.70.Final</netty-tcnative.version>
+        <netty.version>4.2.3.Final</netty.version>
+        <netty-tcnative.version>2.0.72.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.70.0</grpc.version>
-        <guava.version>33.4.0-jre</guava.version>
-        <protobuf.version>4.29.3</protobuf.version>
+        <grpc.version>1.74.0</grpc.version>
+        <guava.version>33.4.8-jre</guava.version>
+        <protobuf.version>4.31.1</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.28</swagger.core.version>
+        <swagger.core.version>2.2.35</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
         <!-- MIME-Type -->
-        <tika.version>3.1.0</tika.version>
+        <tika.version>3.2.1</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>4.0.0</rs-api.version>
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.18.2</jackson.version>
+        <jackson.version>2.19.2</jackson.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.4</tomcat-embed-el.version>
-        <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
+        <tomcat-embed-el.version>11.0.9</tomcat-embed-el.version>
+        <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>6.6.9.Final</hibernate.version>
-        <hikari-cp.version>6.2.1</hikari-cp.version>
+        <hibernate.version>7.0.9.Final</hibernate.version>
+        <hikari-cp.version>7.0.0</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>5.2.0</jedis.version>
+        <jedis.version>6.0.0</jedis.version>
 
         <quartz.version>2.5.0</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
@@ -252,14 +216,16 @@
         <pdfbox.version>2.0.25</pdfbox.version>-->
         <!-- PDF - com.openhtmltopdf -->
         <openhtml.version>1.0.10</openhtml.version>
-        <batik-transcoder.version>1.18</batik-transcoder.version>
+        <batik-transcoder.version>1.19</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext7-core.version>9.1.0</itext7-core.version>
-        <itext7-html2pdf.version>6.1.0</itext7-html2pdf.version>
+        <itext-core.version>9.2.0</itext-core.version>
+        <itext-html2pdf.version>6.2.0</itext-html2pdf.version>
+
+        <veracode.version>1.2.1</veracode.version>
 
         <!-- Testing  -->
         <testng.version>7.11.0</testng.version>
-        <jdbc.version>9.2.0</jdbc.version>
+        <jdbc.version>9.4.0</jdbc.version>
     </properties>
 
     <dependencies>
@@ -284,11 +250,11 @@
             <version>${commons-lang3.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
-        <!--        <dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
             <version>${commons-text.version}</version>
-        </dependency>-->
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
         <!--        <dependency>
@@ -344,7 +310,7 @@
         <dependency>
             <groupId>com.sun.activation</groupId>
             <artifactId>jakarta.activation</artifactId>
-            <version>${jakarta-mail.version}</version>
+            <version>${jakarta-activation.version}</version>
         </dependency>
 
 
@@ -671,7 +637,7 @@
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>itext-core</artifactId>
-            <version>${itext7-core.version}</version>
+            <version>${itext-core.version}</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -679,7 +645,7 @@
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>html2pdf</artifactId>
-            <version>${itext7-html2pdf.version}</version>
+            <version>${itext-html2pdf.version}</version>
             <scope>provided</scope>
         </dependency>
         <!-- PDF - PDFBox -->
@@ -759,6 +725,13 @@
         </dependency>
         -->
 
+        <!-- https://mvnrepository.com/artifact/com.veracode.annotation/VeracodeAnnotations -->
+        <dependency>
+            <groupId>com.veracode.annotation</groupId>
+            <artifactId>VeracodeAnnotations</artifactId>
+            <version>${veracode.version}</version>
+        </dependency>
+
         <!-- Testing -->
         <!-- https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
         <dependency>
@@ -772,7 +745,7 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
-            <!--            <scope>test</scope>-->
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -830,6 +803,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler.version}</version>
+                <configuration>
+                    <showDeprecation>true</showDeprecation>
+                    <!--                    <compilerArgs>-->
+                    <!--                        <arg>-Xlint:unchecked</arg>-->
+                    <!--                    </compilerArgs>-->
+                </configuration>
+
             </plugin>
             <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->
             <plugin>

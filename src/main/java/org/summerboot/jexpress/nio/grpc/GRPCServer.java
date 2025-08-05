@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.nio.grpc;
 
+import io.grpc.Context;
 import io.grpc.Grpc;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -27,6 +28,8 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
+import org.summerboot.jexpress.nio.IdleEventMonitor;
+import org.summerboot.jexpress.nio.server.SessionContext;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -46,6 +49,10 @@ public class GRPCServer {
 
     protected static final Logger log = LogManager.getLogger(GRPCServer.class.getName());
 
+    protected static final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
+
+    public static Context.Key<SessionContext> SessionContext = Context.key("SessionContext");
+
     protected final String bindingAddr;
     protected final int port;
     protected final ServerCredentials serverCredentials;
@@ -56,17 +63,18 @@ public class GRPCServer {
 
     protected ScheduledExecutorService statusReporter = null;
     //protected boolean servicePaused = false;
-    protected final GRPCServiceCounter serviceCounter = new GRPCServiceCounter();
+
+    public static final IdleEventMonitor IDLE_EVENT_MONITOR = new IdleEventMonitor(GRPCServer.class.getSimpleName());
 
     public ServerBuilder getServerBuilder() {
         return serverBuilder;
     }
 
-    public GRPCServiceCounter getServiceCounter() {
+    static GRPCServiceCounter getServiceCounter() {
         return serviceCounter;
     }
 
-    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ServerInterceptor serverInterceptor, ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener) {
+    public GRPCServer(String bindingAddr, int port, KeyManagerFactory kmf, TrustManagerFactory tmf, ThreadPoolExecutor tpe, boolean useVirtualThread, boolean generateReport, NIOStatusListener nioListener, ServerInterceptor... serverInterceptors) {
         this.bindingAddr = bindingAddr;
         this.port = port;
         serverCredentials = initTLS(kmf, tmf);
@@ -75,11 +83,15 @@ public class GRPCServer {
         } else {
             serverBuilder = Grpc.newServerBuilderForPort(port, serverCredentials);
         }
-        if (serverInterceptor != null) {
-            serverBuilder.intercept(serverInterceptor);
+        if (serverInterceptors != null) {
+            for (ServerInterceptor serverInterceptor : serverInterceptors) {
+                serverBuilder.intercept(serverInterceptor);
+            }
         }
         serverBuilder.executor(tpe);
-        initThreadPool(tpe, useVirtualThread, nioListener, bindingAddr, port);
+        if (generateReport) {
+            report(tpe, useVirtualThread, nioListener, bindingAddr, port);
+        }
     }
 
     protected ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
@@ -96,10 +108,12 @@ public class GRPCServer {
 
     /**
      * @param tpe
+     * @param useVirtualThread
      * @param nioListener
-     * @return
+     * @param bindingAddr
+     * @param port
      */
-    protected GRPCServiceCounter initThreadPool(ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener, String bindingAddr, int port) {
+    protected void report(ThreadPoolExecutor tpe, boolean useVirtualThread, NIOStatusListener nioListener, String bindingAddr, int port) {
         int interval = 1;
         final AtomicReference<Long> lastBizHitRef = new AtomicReference<>();
         lastBizHitRef.set(-1L);
@@ -114,6 +128,7 @@ public class GRPCServer {
                 return;
             }
             long bizHit = serviceCounter.getBiz();
+            long cancelled = serviceCounter.getCancelled();
 //            if (lastBizHitRef.get() == bizHit && !servicePaused) {
 //                return;
 //            }
@@ -140,7 +155,7 @@ public class GRPCServer {
             if (lastChecksum.get() != checksum) {
                 lastChecksum.set(checksum);
                 //log.debug(() -> "hps=" + hps + ", tps=" + tps + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
-                log.debug(() -> "hps=" + hps + ", tps=" + tps + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
+                log.debug(() -> "hps=" + hps + ", tps=" + tps + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + " + cancelled" + cancelled + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
                 if (nioListener != null) {
                     nioListener.onNIOAccessReportUpdate(appInfo, hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
                     //listener.onUpdate(data);//bad performance
@@ -151,7 +166,6 @@ public class GRPCServer {
         if (old2 != null) {
             old2.shutdownNow();
         }
-        return serviceCounter;
     }
 
     public void start(StringBuilder memo) throws IOException {

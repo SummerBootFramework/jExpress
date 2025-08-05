@@ -16,7 +16,7 @@
 package org.summerboot.jexpress.security.auth;
 
 import org.summerboot.jexpress.integration.ldap.LdapAgent;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
+import org.summerboot.jexpress.nio.server.SessionContext;
 
 import javax.naming.NamingException;
 
@@ -27,7 +27,7 @@ import javax.naming.NamingException;
 public class LDAPAuthenticator<M> extends BootAuthenticator<M> {
 
     @Override
-    protected Caller authenticate(String username, String password, M metaData, AuthenticatorListener listener, final ServiceContext context) throws NamingException {
+    protected Caller authenticate(String username, String password, M metaData, AuthenticatorListener listener, final SessionContext context) throws NamingException {
         try (LdapAgent ldap = LdapAgent.build()) {
             return ldap.authenticateUser(username, password, listener);
         }

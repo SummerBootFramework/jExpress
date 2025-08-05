@@ -15,9 +15,11 @@
  */
 package org.summerboot.jexpress.nio.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.util.BeanUtil;
 
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ import java.util.List;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
+@JsonFilter(BootConstant.JSONFILTER_NAME_SERVICEERROR)
 public class ServiceError {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The index of requests received by current server since start")
@@ -38,6 +41,10 @@ public class ServiceError {
 
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "The optional error list")
     protected List<Err> errors;
+
+    public ServiceError() {
+        this.ref = null;
+    }
 
     public ServiceError(String ref) {
         this.ref = ref;
@@ -112,7 +119,7 @@ public class ServiceError {
 
     public ServiceError addErrors(Err... error) {
         if (errors == null) {
-            errors = new ArrayList();
+            errors = new ArrayList<>();
         }
         this.errors.addAll(Arrays.asList(error));
         return this;
@@ -123,7 +130,7 @@ public class ServiceError {
             return this;
         }
         if (errors == null) {
-            errors = new ArrayList();
+            errors = new ArrayList<>();
         }
         this.errors.addAll(es);
         return this;
@@ -135,7 +142,7 @@ public class ServiceError {
             return this;
         }
         if (errors == null) {
-            errors = new ArrayList();
+            errors = new ArrayList<>();
         }
         this.errors.add(error);
         return this;
@@ -147,7 +154,7 @@ public class ServiceError {
 
     public ServiceError addError(int errorCode, String errorTag, String errorDesc, Throwable ex, String internalInfo) {
         if (errors == null) {
-            errors = new ArrayList();
+            errors = new ArrayList<>();
         }
         this.errors.add(new Err(errorCode, errorTag, errorDesc, ex, internalInfo));
         return this;

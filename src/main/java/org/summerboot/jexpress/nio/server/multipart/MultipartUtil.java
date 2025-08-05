@@ -19,7 +19,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
-import io.netty.util.internal.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author https://github.com/netty/netty/blob/4.1/codec-http/src/main/java/io/netty/handler/codec/http/multipart/HttpPostRequestDecoder.java
@@ -66,7 +66,7 @@ public class MultipartUtil {
             } else {
                 return null;
             }
-            String boundary = StringUtil.substringAfter(headerContentType[mrank], '=');
+            String boundary = StringUtils.substringAfter(headerContentType[mrank], '=');
             if (boundary == null) {
                 throw new HttpPostRequestDecoder.ErrorDataDecoderException("Needs a boundary value");
             }
@@ -79,7 +79,7 @@ public class MultipartUtil {
             }
             final String charsetHeader = HttpHeaderValues.CHARSET.toString();
             if (headerContentType[crank].regionMatches(true, 0, charsetHeader, 0, charsetHeader.length())) {
-                String charset = StringUtil.substringAfter(headerContentType[crank], '=');
+                String charset = StringUtils.substringAfter(headerContentType[crank], '=');
                 if (charset != null) {
                     return new String[]{"--" + boundary, charset};
                 }

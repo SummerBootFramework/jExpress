@@ -42,7 +42,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.multipart.MultipartUtil;
 import org.summerboot.jexpress.security.auth.Caller;
 
@@ -91,8 +90,8 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
     protected HttpRequest request;
     protected boolean isMultipart;
     protected HttpPostRequestDecoder httpDecoder;
-    protected final long hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
-    protected final ServiceContext context = ServiceContext.build(hitIndex);
+    protected long hitIndex;// = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
+    protected SessionContext context;// = SessionContext.build(hitIndex);
     protected HttpData partialContent;
     protected long fileSizeQuota;
     protected Caller caller;
@@ -126,6 +125,8 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
             isMultipart = MultipartUtil.isMultipart(request);
             if (isMultipart) {
                 NioCounter.COUNTER_HIT.incrementAndGet();
+                hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
+                context = SessionContext.build(hitIndex);
                 fileSizeQuota = precheck(ctx, request);
                 if (fileSizeQuota < 1) {
                     ReferenceCountUtil.release(httpObject);
@@ -151,8 +152,8 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
                     boolean isOverSized = onPartialChunk(ctx, fileSizeQuota);
                     if (isOverSized) {
                         reset();
-                        Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, String.valueOf(fileSizeQuota), null);
-                        ServiceContext context = ServiceContext.build(hitIndex);
+                        Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "File size over max allowed size " + fileSizeQuota, null);
+                        //SessionContext context = SessionContext.build(hitIndex);
                         context.error(err).status(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
                         NioHttpUtil.sendResponse(ctx, true, context, null, null);
                     } else if (chunk instanceof LastHttpContent) {
@@ -198,7 +199,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
                             try {
                                 value = attribute.getValue();
                                 if (params == null) {
-                                    params = new HashMap();
+                                    params = new HashMap<>();
                                 }
                                 params.put(attribute.getName(), value);
                             } catch (IOException e1) {
@@ -210,7 +211,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
                             if (fileUpload.isCompleted()) {
                                 log.debug("file completed " + fileUpload.length());
                                 T ret = onFileUploaded(ctx, fileUpload.getFilename(), fileUpload.getFile(), params, caller, context);
-                                context.content(ret);
+                                context.response(ret);
                                 NioHttpUtil.sendResponse(ctx, true, context, null, null);
                             }
                             break;
@@ -286,8 +287,8 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
 
         caller = authenticate(httpHeaders, context);
         if (caller == null) {
-            Err err = new Err(BootErrorCode.AUTH_INVALID_USER, null, "Unauthorized Caller", null);
-            context.error(err).status(HttpResponseStatus.FORBIDDEN);
+            Err err = new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Unauthorized Caller", null);
+            context.error(err).status(HttpResponseStatus.UNAUTHORIZED);
             NioHttpUtil.sendResponse(ctx, true, context, null, null);
             return 0;
         }
@@ -304,7 +305,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
         }
         long maxAllowedSize = getCallerFileUploadSizeLimit_Bytes(caller, context);
         if (contentLength > maxAllowedSize) {
-            Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, String.valueOf(maxAllowedSize), null);
+            Err err = new Err(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "File size over max allowed size " + maxAllowedSize, null);
             context.error(err).status(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
             NioHttpUtil.sendResponse(ctx, true, context, null, null);
             return 0;
@@ -315,12 +316,12 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
         return maxAllowedSize;
     }
 
-    protected abstract boolean isValidRequestPath(HttpMethod method, String httpRequestPath, ServiceContext context);
+    protected abstract boolean isValidRequestPath(HttpMethod method, String httpRequestPath, SessionContext context);
 
-    protected abstract Caller authenticate(final HttpHeaders httpHeaders, ServiceContext context);
+    protected abstract Caller authenticate(final HttpHeaders httpHeaders, SessionContext context);
 
-    protected abstract long getCallerFileUploadSizeLimit_Bytes(Caller caller, ServiceContext context);
+    protected abstract long getCallerFileUploadSizeLimit_Bytes(Caller caller, SessionContext context);
 
-    protected abstract T onFileUploaded(ChannelHandlerContext ctx, String fileName, File file, Map<String, String> params, Caller caller, ServiceContext context);
+    protected abstract T onFileUploaded(ChannelHandlerContext ctx, String fileName, File file, Map<String, String> params, Caller caller, SessionContext context);
 
 }

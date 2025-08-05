@@ -50,7 +50,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
     protected final LinkedList<BootIOStatusData> events;
 
     public ServerStatus() {
-        events = new LinkedList();// 1. onUpdate is called every 1 second. 2. EXEC_POOL is single thread pool
+        events = new LinkedList<>();// 1. onUpdate is called every 1 second. 2. EXEC_POOL is single thread pool
     }
 
     @Override

@@ -26,9 +26,11 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Ping;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
 import java.lang.reflect.InvocationHandler;
@@ -75,12 +77,12 @@ public class JaxRsRequestProcessorManager {
 
     }
 
-    protected static final Map<String, List<ProcessorMeta>> registeredProcessors = new HashMap();
+    protected static final Map<String, List<ProcessorMeta>> registeredProcessors = new HashMap<>();
 
     protected static void registerProcessor(String key, String path, Method method, Object instance) {
         List<ProcessorMeta> processors = registeredProcessors.get(key);
         if (processors == null) {
-            processors = new ArrayList();
+            processors = new ArrayList<>();
             registeredProcessors.put(key, processors);
         }
         processors.add(new ProcessorMeta(key, path, method, instance));
@@ -144,7 +146,7 @@ public class JaxRsRequestProcessorManager {
             return;
         }
         registeredProcessors.clear();
-        final Set<String> declareRoles = new HashSet();
+        final Set<String> declareRoles = new HashSet<>();
         Map<HttpMethod, Map<String, RequestProcessor>> stringMap = new HashMap<>();
         Map<HttpMethod, Map<String, RequestProcessor>> regexMap = new HashMap<>();
         StringBuilder errors = new StringBuilder();
@@ -234,7 +236,7 @@ public class JaxRsRequestProcessorManager {
                     if (processorMapPerHttpMethod == null) {
                         processorMapPerHttpMethod = isRegexMap
                                 ? new TreeMap<>(Comparator.comparingInt(String::length).reversed().thenComparing(Function.identity()))
-                                : new HashMap();
+                                : new HashMap<>();
                         httpMethodMapRef.put(httpMethod, processorMapPerHttpMethod);
                     }
                     String key = processor.getDeclaredPath();
@@ -251,8 +253,8 @@ public class JaxRsRequestProcessorManager {
         //Java 17 if (!errors.isEmpty()) {
         String error = errors.toString();
         if (!error.isBlank()) {
-            System.err.println("Invalid Java methods: \n" + errors);
-            System.exit(1);
+            String msg = "Invalid Java methods: \n" + errors;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CODING_ERROR_PROCESSOR, msg, null);
         }
 //        final AuthConfig authCfg = AuthConfig.cfg;
 //        authCfg.addDeclareRoles(declareRoles);

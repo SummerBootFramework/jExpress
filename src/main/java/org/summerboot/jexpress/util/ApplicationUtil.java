@@ -17,6 +17,8 @@ package org.summerboot.jexpress.util;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.BootErrorCode;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,19 +113,19 @@ public class ApplicationUtil {
     }
 
     public static Map<Object, Set<String>> checkDuplicateFields(Class errorCodeClass, Class fieldClass) throws IllegalArgumentException, IllegalAccessException {
-        Map<Object, Set<String>> duplicates = new HashMap();
-        Map<String, Object> errorCodes = new HashMap();
-        ReflectionUtil.loadFields(errorCodeClass, fieldClass, errorCodes, true);
+        Map<Object, Set<String>> duplicates = new HashMap<>();
+        Map<String, Object> valueMap = new HashMap<>();
+        ReflectionUtil.loadFields(errorCodeClass, fieldClass, valueMap, true, true);
 
-        Map<Object, String> temp = new HashMap();
-        errorCodes.keySet().forEach((varName) -> {
-            Object errorCode = errorCodes.get(varName);
-            String duplicated = temp.put(errorCode, varName);
+        Map<Object, String> temp = new HashMap<>();
+        valueMap.keySet().forEach((varName) -> {
+            Object value = valueMap.get(varName);
+            String duplicated = temp.put(value, varName);
             if (duplicated != null) {
-                Set<String> names = duplicates.get(errorCode);
+                Set<String> names = duplicates.get(value);
                 if (names == null) {
-                    names = new HashSet();
-                    duplicates.put(errorCode, names);
+                    names = new HashSet<>();
+                    duplicates.put(value, names);
                 }
                 names.add(varName);
                 names.add(duplicated);
@@ -138,9 +140,10 @@ public class ApplicationUtil {
             return InetAddress.getLocalHost().getHostName();
             //System.setProperty(key, InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException ex) {
-            ex.printStackTrace(System.err);
             if (exitWhenFail) {
-                System.exit(-1);
+                ApplicationUtil.RTO(BootErrorCode.RTO_UNKNOWN_HOST_ERROR, null, ex);
+            } else {
+                ex.printStackTrace(System.err);
             }
         }
         return null;
@@ -161,6 +164,14 @@ public class ApplicationUtil {
         return classNames;
     }
 
+    /**
+     * CWE-470 warning: use with caution, validate the class name against a combination of white and black lists to ensure that only expeted classes are loaded
+     *
+     * @param jarFile
+     * @param failOnUndefinedClasses
+     * @return
+     * @throws IOException
+     */
     public static Set<Class<?>> loadClassFromJarFile(File jarFile, boolean failOnUndefinedClasses) throws IOException {
         URL url = jarFile.getAbsoluteFile().toURI().toURL();
         URL[] urls = {url};
@@ -172,7 +183,7 @@ public class ApplicationUtil {
         Set<String> classNames = getClassNamesFromJarFile(jarFile);
         for (String className : classNames) {
             try {
-                Class loadedClass = urlClassLoader.loadClass(className);
+                Class loadedClass = urlClassLoader.loadClass(className);// CWE-470 False Positive - Util Feature: caller should define a white/black list
                 classes.add(loadedClass);
             } catch (ClassNotFoundException | NoClassDefFoundError ex) {
                 onError = true;
@@ -198,10 +209,30 @@ public class ApplicationUtil {
             final byte[] bytes = IOUtils.toByteArray(ioStream);
             Files.write(targetFile, bytes);
         } catch (Throwable ex) {
-            System.out.println(ex + "\n\tCould generate from " + srcFileName + " to " + targetFile);
-            ex.printStackTrace();
-            System.exit(1);
+            String msg = ex + "\n\tCould generate from " + srcFileName + " to " + targetFile;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CREATE_IF_NOT_EXIST_ERROR, msg, ex);
         }
         return targetFile;
+    }
+
+    /**
+     * Rejected Takeoff
+     *
+     * @param code
+     * @param msg
+     * @param ex
+     */
+    public static void RTO(int code, String msg, Throwable ex) {
+        if (msg != null) {
+            if (code == BootErrorCode.RTO_CLS_EXIT) {
+                System.out.println(BootConstant.BR + BootConstant.BR + msg);
+            } else {
+                System.err.println(BootConstant.BR + BootConstant.BR + "\t Error#" + code + ": " + msg);
+            }
+        }
+        if (ex != null) {
+            ex.printStackTrace(System.err);
+        }
+        System.exit(code);
     }
 }

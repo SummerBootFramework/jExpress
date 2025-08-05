@@ -34,9 +34,9 @@ import org.summerboot.jexpress.boot.annotation.Deamon;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
-import org.summerboot.jexpress.nio.server.domain.ServiceContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -50,6 +50,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +74,9 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     protected final String produce_DefaultType;
     protected final Log classLevelLogAnnotation;
     protected final boolean rejectWhenPaused;
-    protected final boolean rejectWhenHealthCheckFailed;
+    //protected final boolean rejectWhenHealthCheckFailed;
+    protected final String[] requiredHealthChecks;
+    protected final HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy;
 
     //param info    
     protected final List<JaxRsRequestParameter> parameterList;
@@ -107,13 +110,19 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         Deamon methodLevelDeamon = javaMethod.getAnnotation(Deamon.class);
         if (methodLevelDeamon != null) {
             rejectWhenPaused = !methodLevelDeamon.ignorePause();
-            rejectWhenHealthCheckFailed = !methodLevelDeamon.ignoreHealthCheck();
+            //rejectWhenHealthCheckFailed = !methodLevelDeamon.ignoreHealthCheck();
+            requiredHealthChecks = methodLevelDeamon.requiredHealthChecks();
+            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
         } else if (classLevelDeamon != null) {
             rejectWhenPaused = !classLevelDeamon.ignorePause();
-            rejectWhenHealthCheckFailed = !classLevelDeamon.ignoreHealthCheck();
+            //rejectWhenHealthCheckFailed = !classLevelDeamon.ignoreHealthCheck();
+            requiredHealthChecks = classLevelDeamon.requiredHealthChecks();
+            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
         } else {
             rejectWhenPaused = true;
-            rejectWhenHealthCheckFailed = true;
+            //rejectWhenHealthCheckFailed = true;
+            requiredHealthChecks = null;
+            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
         }
 
         //2. Parse @RolesAllowed, @PermitAll and @DenyAll - Method level preprocess - Authoritarian - Role based 
@@ -296,42 +305,25 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (log == null) {
             return;
         }
-        ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
-        if (logSettings == null) {
-            logSettings = processorSettings.new LogSettings();
-            processorSettings.setLogSettings(logSettings);
-        }
+        ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings(true);
+//        if (logSettings == null) {
+//            logSettings = processorSettings.new LogSettings();
+//            processorSettings.setLogSettings(logSettings);
+//        }
         logSettings.setLogRequestHeader(log.requestHeader());
         logSettings.setLogRequestBody(log.requestBody());
         logSettings.setLogResponseHeader(log.responseHeader());
         logSettings.setLogResponseBody(log.responseBody());
-        String[] protectedJsonFields = log.hideJsonNumberFields();
-        if (protectedJsonFields != null && protectedJsonFields.length > 0) {
-            List<String> list = logSettings.getProtectedJsonNumberFields();
-            if (list == null) {
-                list = new ArrayList();
-                logSettings.setProtectedJsonNumberFields(list);
-            }
-            list.addAll(Arrays.asList(protectedJsonFields));
-        }
-        String[] protectedJsonStringFields = log.hideJsonStringFields();
-        if (protectedJsonStringFields != null && protectedJsonStringFields.length > 0) {
-            List<String> list = logSettings.getProtectedJsonStringFields();
-            if (list == null) {
-                list = new ArrayList();
-                logSettings.setProtectedJsonStringFields(list);
-            }
-            list.addAll(Arrays.asList(protectedJsonStringFields));
-        }
 
-        String[] protectedJsonArrayFields = log.hideJsonArrayFields();
-        if (protectedJsonArrayFields != null && protectedJsonArrayFields.length > 0) {
-            List<String> list = logSettings.getProtectedJsonArrayFields();
+
+        String[] protectDataFieldsFromLogging = log.maskDataFields();
+        if (protectDataFieldsFromLogging != null && protectDataFieldsFromLogging.length > 0) {
+            List<String> list = logSettings.getProtectDataFieldsFromLogging();
             if (list == null) {
-                list = new ArrayList();
-                logSettings.setProtectedJsonArrayFields(list);
+                list = new ArrayList<>();
+                logSettings.setProtectDataFieldsFromLogging(list);
             }
-            list.addAll(Arrays.asList(protectedJsonArrayFields));
+            list.addAll(Arrays.asList(protectDataFieldsFromLogging));
         }
     }
 
@@ -365,14 +357,14 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public boolean authorizationCheck(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context, int badRequestErrorCode) throws Throwable {
+    public boolean authorizationCheck(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context, int badRequestErrorCode) throws Throwable {
         //1. authentication is done, now we do authorizationCheck
         if (roleBased) {
             boolean isAuthorized = false;
             Caller caller = context.caller();
             if (caller == null) {
                 context.status(HttpResponseStatus.UNAUTHORIZED)
-                        .error(new Err(BootErrorCode.AUTH_INVALID_USER, null, null, null, "Authentication Required - Unkown caller"));
+                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Authentication Required - Unknown caller", null));
                 return false;
             }
 
@@ -385,7 +377,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 
             if (!isAuthorized) {
                 context.status(HttpResponseStatus.FORBIDDEN)
-                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, null, null, "Authorization Failed - Caller is not in role: " + rolesAllowed));
+                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Authorization Failed - Caller is not in role", null, "Authorization Failed - Caller is not in role: " + rolesAllowed));
                 return false;
             }
         }
@@ -393,7 +385,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public Object process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final ServiceContext context) throws Throwable {
+    public Object process(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context) throws Throwable {
         //2. invoke
         Object ret;
         Object[] paramValues = new Object[parameterSize];
@@ -408,14 +400,18 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         try {
             context.poi(BootPOI.BIZ_BEGIN);
-            if (rejectWhenHealthCheckFailed && !HealthMonitor.isHealthCheckSuccess()) {
+            Set<String> failedHealthChecks = new HashSet<>();
+            //if (!HealthMonitor.isHealthCheckSuccess() && (rejectWhenHealthCheckFailed || HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, failedHealthChecks))) {
+            if (!HealthMonitor.isHealthCheckSuccess() && HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicy, failedHealthChecks)) {
+                final String internalError = failedHealthChecks.toString();
                 context.status(HttpResponseStatus.BAD_GATEWAY)
-                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, null, null, "Service health check failed: " + HealthMonitor.getStatusReasonHealthCheck()));
+                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, "Service health check failed", null,
+                                "Service health check failed: " + internalError));
                 return null;
             }
             if (rejectWhenPaused && HealthMonitor.isServicePaused()) {
                 context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
-                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, null, null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
+                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, "Service is paused", null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
                 return null;
             }
 
@@ -429,7 +425,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         //3. process return object
         if (ret != null) {
             if (ret instanceof File) {
-                context.file((File) ret, true);
+                context.response((File) ret, true);
             } else {
                 //1. calculate responseContentType
                 String responseContentType = produce_ExplicitType;
@@ -467,19 +463,19 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 }
                 //2. set content and contentType
                 if (ret instanceof String) {
-                    context.txt((String) ret);
+                    context.response((String) ret);
                 } else {
                     switch (responseContentType) {
                         case MediaType.APPLICATION_JSON:
-                            context.txt(BeanUtil.toJson(ret));
+                            context.response(BeanUtil.toJson(ret));
                             break;
                         case MediaType.APPLICATION_XML:
                         case MediaType.TEXT_XML:
-                            context.txt(BeanUtil.toXML(ret));
+                            context.response(BeanUtil.toXML(ret));
                             break;
                         case MediaType.TEXT_HTML:
                         case MediaType.TEXT_PLAIN:
-                            context.txt(ret.toString());
+                            context.response(ret.toString());
                             break;
                     }
                 }

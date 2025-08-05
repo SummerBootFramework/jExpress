@@ -40,9 +40,5 @@ public @interface Log {
 
     boolean responseBody() default true;
 
-    String[] hideJsonStringFields() default {};
-
-    String[] hideJsonNumberFields() default {};
-
-    String[] hideJsonArrayFields() default {};
+    String[] maskDataFields() default {};
 }

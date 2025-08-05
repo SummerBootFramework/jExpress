@@ -20,14 +20,26 @@ import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 
 import java.io.File;
-import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
+import java.nio.file.attribute.FileTime;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -38,8 +50,6 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     public static final ConfigurationMonitor cfgMonitor = new ConfigurationMonitor();
 
-    public static final String APUSE_FILE_NAME = "pause";
-
     protected volatile boolean running;
     protected Map<File, Runnable> cfgUpdateTasks;
     protected FileAlterationMonitor monitor;
@@ -48,38 +58,6 @@ public class ConfigurationMonitor implements FileAlterationListener {
     }
 
     private static final String PAUSE_LOCK_CODE = BootConstant.PAUSE_LOCK_CODE_VIAFILE;
-
-    public void start(File folder, int intervalSec, Map<File, Runnable> cfgUpdateTasks) throws Exception {
-        File pauseFile = Paths.get(folder.getAbsolutePath(), APUSE_FILE_NAME).toFile();
-        boolean pause = pauseFile.exists();
-        String cause;
-        if (pause) {
-            cause = "File detected: " + pauseFile.getAbsolutePath();
-        } else {
-            cause = "File not detected: " + pauseFile.getAbsolutePath();
-        }
-        HealthMonitor.pauseService(pause, PAUSE_LOCK_CODE, cause);
-        if (running) {
-            return;
-        }
-        running = true;
-        this.cfgUpdateTasks = cfgUpdateTasks;
-        monitor = new FileAlterationMonitor(TimeUnit.SECONDS.toMillis(intervalSec));
-        // config files
-        for (File listenFile : cfgUpdateTasks.keySet()) {
-            FileFilter filter = (File pathname) -> listenFile.getAbsolutePath().equals(pathname.getAbsolutePath());
-            FileAlterationObserver observer = new FileAlterationObserver(folder, filter);
-            observer.addListener(cfgMonitor);
-            monitor.addObserver(observer);
-        }
-        // pause trigger file
-        FileFilter filter = (File pathname) -> pauseFile.getAbsolutePath().equals(pathname.getAbsolutePath());
-        FileAlterationObserver observer = new FileAlterationObserver(folder, filter);
-        observer.addListener(cfgMonitor);
-        monitor.addObserver(observer);
-        // start
-        monitor.start();
-    }
 
     public void start() throws Exception {
         if (monitor != null) {
@@ -92,6 +70,99 @@ public class ConfigurationMonitor implements FileAlterationListener {
             monitor.stop();
         }
     }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        Path path = Paths.get("D:\\temp");
+        ConfigurationMonitor.cfgMonitor.start(path, 5000L, null);
+    }
+
+    private final Map<Path, FileTime> lastModifiedTimes = new HashMap<>();
+    private final Map<Path, Long> lastTriggeredTimes = new HashMap<>();
+
+    public void start(Path folderPath, long throttleMillis, Map<File, Runnable> cfgUpdateTasks) throws IOException, InterruptedException {
+        this.cfgUpdateTasks = cfgUpdateTasks;
+        initPauseStatus(folderPath);
+
+        WatchService watchService = FileSystems.getDefault().newWatchService();
+        folderPath.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+        Runnable configFolderWatcher = () -> {
+            while (true) {
+                WatchKey key = null;  // blocks until event occurs
+                try {
+                    key = watchService.take();
+                } catch (InterruptedException ex) {
+                    log.fatal("Failed to take configFolderWatcher@" + folderPath, ex);
+                    continue;
+                }
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    Path filePath = (Path) event.context();
+                    File file = new File(folderPath.toString(), filePath.toString()).getAbsoluteFile();
+                    Path fullPath = file.toPath();
+                    WatchEvent.Kind<?> kind = event.kind();
+
+                    if (kind == ENTRY_MODIFY) {
+                        if (!Files.isRegularFile(fullPath)) {
+                            continue;
+                        }
+                        try {
+                            FileTime currentModTime = Files.getLastModifiedTime(fullPath);
+                            FileTime lastTime = lastModifiedTimes.get(fullPath);
+                            long now = System.currentTimeMillis();
+                            Long lastTrigger = lastTriggeredTimes.getOrDefault(fullPath, 0L);
+
+                            boolean isModified = (lastTime == null || currentModTime.compareTo(lastTime) > 0);
+                            boolean isThrottled = (now - lastTrigger < throttleMillis);
+
+                            if (isModified && !isThrottled) {
+                                lastModifiedTimes.put(fullPath, currentModTime);
+                                lastTriggeredTimes.put(fullPath, now);
+                                onFileChange(file);
+                            }
+                        } catch (IOException ex) {
+                            log.error("Failed to check modified time for: " + fullPath, ex);
+                        }
+                    } else if (kind == ENTRY_CREATE) {
+                        if (Files.isRegularFile(fullPath)) {
+                            onFileCreate(file);
+                        } else if (Files.isDirectory(fullPath)) {
+                            onDirectoryCreate(file);
+                        }
+                    } else if (kind == ENTRY_DELETE) {
+                        if (Files.isDirectory(fullPath)) {
+                            onDirectoryDelete(file);
+                        } else {// Files.isRegularFile(fullPath) not working for deleted files
+                            onFileDelete(file);
+                        }
+                    }
+                }
+
+                boolean valid = key.reset();
+                if (!valid) {
+                    break;
+                }
+            }
+        };
+        BackOffice.execute(configFolderWatcher);
+    }
+
+
+    protected void initPauseStatus(Path folderPath) {
+        File folder = folderPath.toFile();
+        File pauseFile = Paths.get(folder.getAbsolutePath(), BootConstant.FILE_PAUSE).toFile();
+        boolean pause = pauseFile.exists();
+        String cause;
+        if (pause) {
+            cause = "File detected: " + pauseFile.getAbsolutePath();
+        } else {
+            cause = "File not detected: " + pauseFile.getAbsolutePath();
+        }
+        HealthMonitor.pauseService(pause, PAUSE_LOCK_CODE, cause);
+    }
+
+    private boolean isPauseFile(File file) {
+        return BootConstant.FILE_PAUSE.equals(file.getName());
+    }
+
 
     @Override
     public void onStart(FileAlterationObserver fao) {
@@ -110,7 +181,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     @Override
     public void onDirectoryChange(File file) {
-        log.info(() -> "dir.mod " + file.getAbsoluteFile());
+        //log.info(() -> "dir.mod " + file.getAbsoluteFile());
     }
 
     @Override
@@ -148,9 +219,5 @@ public class ConfigurationMonitor implements FileAlterationListener {
         if (task != null) {
             task.run();
         }
-    }
-
-    private boolean isPauseFile(File file) {
-        return APUSE_FILE_NAME.equals(file.getName());
     }
 }

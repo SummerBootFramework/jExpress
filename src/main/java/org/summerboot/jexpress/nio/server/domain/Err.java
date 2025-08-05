@@ -23,34 +23,42 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.summerboot.jexpress.util.BeanUtil;
 
 /**
- * @param <T>
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class Err<T> {
+public class Err {
 
     @JsonSerialize(using = ErrorCodeSerializer.class)
     @JsonDeserialize(using = ErrorCodeDeserializer.class)
     protected String errorCode;
     protected String errorTag;
     protected String errorDesc;
+    protected Object[] args;
 
     @JsonIgnore
     protected Throwable cause;
 
     @JsonIgnore
-    protected T internalInfo;
+    protected Object internalInfo;
+
+    public Err() {
+    }
 
     public Err(int errorCode, String errorTag, String errorDesc, Throwable ex) {
         //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
         this("" + errorCode, errorTag, errorDesc, ex, null);
     }
 
-    public Err(int errorCode, String errorTag, String errorDesc, Throwable ex, T internalInfo) {
+    public Err(String errorCode, String errorTag, String errorDesc, Throwable ex) {
+        //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
+        this(errorCode, errorTag, errorDesc, ex, null);
+    }
+
+    public Err(int errorCode, String errorTag, String errorDesc, Throwable ex, Object internalInfo) {
         //https://www.happycoders.eu/java/how-to-convert-int-to-string-fastest/
         this("" + errorCode, errorTag, errorDesc, ex, internalInfo);
     }
 
-    public Err(String errorCode, String errorTag, String errorDesc, Throwable ex, T internalInfo) {
+    public Err(String errorCode, String errorTag, String errorDesc, Throwable ex, Object internalInfo) {
         this.errorCode = errorCode;
         this.errorTag = errorTag;
         this.errorDesc = errorDesc;
@@ -86,7 +94,7 @@ public class Err<T> {
         return toStringEx(true);
     }
 
-    protected String toStringEx(boolean isForInternalDebug) {
+    public String toStringEx(boolean isForInternalDebug) {
         if (!isForInternalDebug) {
             return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + "\"}";
         }
@@ -103,9 +111,9 @@ public class Err<T> {
         return Integer.parseInt(errorCode);
     }
 
-    public void setErrorCode(int errorCode) {
-        this.errorCode = "" + errorCode;
-    }
+//    public void setErrorCode(int errorCode) {
+//        this.errorCode = "" + errorCode;
+//    }
 
     public String getErrorCode() {
         return errorCode;
@@ -139,12 +147,19 @@ public class Err<T> {
         this.cause = cause;
     }
 
-    public T getInternalInfo() {
+    public Object getInternalInfo() {
         return internalInfo;
     }
 
-    public void setInternalInfo(T internalInfo) {
+    public void setInternalInfo(Object internalInfo) {
         this.internalInfo = internalInfo;
     }
 
+    public Object[] getArgs() {
+        return args;
+    }
+
+    public void setArgs(Object... args) {
+        this.args = args;
+    }
 }

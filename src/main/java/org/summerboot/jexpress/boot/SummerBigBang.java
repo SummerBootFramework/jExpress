@@ -43,15 +43,13 @@ import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.JwtUtil;
-import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.PropertiesFile;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
@@ -63,7 +61,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -76,8 +73,8 @@ abstract public class SummerBigBang extends SummerSingularity {
 
     protected final Module userOverrideModule;
     protected Injector guiceInjector;
-    protected List<SummerInitializer> summerInitializers = new ArrayList();
-    protected List<SummerRunner> summerRunners = new ArrayList();
+    protected List<SummerInitializer> summerInitializers = new ArrayList<>();
+    protected List<SummerRunner> summerRunners = new ArrayList<>();
     protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
     protected int schedulerTriggers = 0;
 
@@ -124,7 +121,7 @@ abstract public class SummerBigBang extends SummerSingularity {
          * 4. should be invoked after log4j was initialized to avoid caller invokes LogManager.static{}
          * on User Specified ImplTags Ready
          */
-        genesis(primaryClass, userSpecifiedImplTags);//trigger subclass to init IoC container
+        genesis(primaryClass, userSpecifiedalternativeNames);//trigger subclass to init IoC container
 
         /*
          * 5. let caller to init app
@@ -151,7 +148,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_CONFIG_MONITOR_INTERVAL)
-                .desc("configuration monitoring interval in second (default " + userSpecifiedCfgMonitorIntervalSec + " seconds)")
+                .desc("configuration monitoring interval in second (default " + userSpecifiedCfgMonitorThrottleMillis + " seconds)")
                 .hasArg().argName("second")
                 .build();
         cliOptions.addOption(arg);
@@ -162,7 +159,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         if (availableImplTagOptions != null && !availableImplTagOptions.isEmpty()) {
             String validOptions = FormatterUtil.toCSV(availableImplTagOptions);
-            arg = Option.builder(BootConstant.CLI_USE_IMPL).desc("launch application with selected implementations, valid values <" + validOptions + ">")
+            arg = Option.builder(BootConstant.CLI_USE_ALTERNATIVE).desc("launch application with selected implementations, valid values <" + validOptions + ">")
                     .hasArgs().argName("items")
                     .build();
             arg.setArgs(Option.UNLIMITED_VALUES);
@@ -233,6 +230,12 @@ abstract public class SummerBigBang extends SummerSingularity {
                 .build();
         cliOptions.addOption(arg);
 
+        arg = Option.builder(BootConstant.CLI_DEBUGMODE)
+                .hasArg(false)
+                .desc("this will ignore @Log settings and not mask any sensitive data in logs")
+                .build();
+        cliOptions.addOption(arg);
+
         arg = Option.builder(BootConstant.CLI_DECRYPT)
                 .desc("Decrypt config file content with all \"ENC(encrypted text)\" using password:"
                         + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_DECRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
@@ -248,19 +251,18 @@ abstract public class SummerBigBang extends SummerSingularity {
             CommandLineParser parser = new DefaultParser();
             cli = parser.parse(cliOptions, args);
         } catch (ParseException ex) {
-            System.out.println(ex.getMessage());
             cliHelpFormatter.printHelp(appVersion, cliOptions);
-            System.exit(1);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLI_PARSER_ERROR, ex.getMessage(), null);
         }
     }
 
     protected List<SummerInitializer> scanImplementation_SummerInitializer() {
         log.trace("");
-        List<SummerInitializer> summerCLIs = new ArrayList();
+        List<SummerInitializer> summerCLIs = new ArrayList<>();
         Set<Class<? extends SummerInitializer>> summerCLI_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerInitializer.class, callerRootPackageNames);
         //prepare ordering
-        Set<Integer> orderSet = new TreeSet();
-        Map<Integer, List<SummerInitializer>> orderMapping = new HashMap();
+        Set<Integer> orderSet = new TreeSet<>();
+        Map<Integer, List<SummerInitializer>> orderMapping = new HashMap<>();
         //process scan result
         for (Class<? extends SummerInitializer> c : summerCLI_ImplClasses) {
             //get order
@@ -284,7 +286,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             orderSet.add(order);
             List<SummerInitializer> sameOoderCLIs = orderMapping.get(order);
             if (sameOoderCLIs == null) {
-                sameOoderCLIs = new ArrayList();
+                sameOoderCLIs = new ArrayList<>();
                 orderMapping.put(order, sameOoderCLIs);
             }
             sameOoderCLIs.add(instance);
@@ -343,77 +345,82 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void bigBang_AndThereWasCLI() {
         log.trace("");
         if (!runCLI_Utils()) {
-            System.exit(0);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, null, null);
         }
         /*
          * [Config File] Security - init app config password
          */
+        String masterPassword = "";
+        final String masterPasswordFileName;
         if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
-            String adminPwdFile = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD_FILE);
-            Properties props = new Properties();
-            try (InputStream is = new FileInputStream(adminPwdFile)) {
-                props.load(is);
-            } catch (Throwable ex) {
-                throw new RuntimeException("failed to load " + adminPwdFile, ex);
-            }
-            String adminPwd = props.getProperty("APP_ROOT_PASSWORD");
-            adminPwd = SecurityUtil.base64Decode(adminPwd);
-            EncryptorUtil.init(adminPwd);
+            masterPasswordFileName = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD_FILE);
         } else if (cli.hasOption(BootConstant.CLI_ADMIN_PWD)) {// "else" = only one option, cannot both
-            String adminPwd = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD);
-            EncryptorUtil.init(adminPwd);
+            masterPasswordFileName = null;
+            masterPassword = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD);
+        } else {
+            masterPasswordFileName = BootConstant.DEFAULT_MASTER_PASSWORD_FILE;
         }
+        try {
+            if (masterPasswordFileName != null) {
+                File masterPasswordFile = new File(masterPasswordFileName).getCanonicalFile();
+                MasterPassword.cfg.load(masterPasswordFile, true);
+                masterPassword = MasterPassword.cfg.getMasterPassword();
+            }
+            EncryptorUtil.setMasterPassword(masterPassword);
+        } catch (Throwable ex) {
+            ApplicationUtil.RTO(BootErrorCode.RTO_CFG_LOADING_ERROR, "Failed to load master password: " + ex.toString(), null);
+        }
+
 
         /*
          * [Config File] Monitoring - set configuration Change Monitor Interval
          */
         if (cli.hasOption(BootConstant.CLI_CONFIG_MONITOR_INTERVAL)) {
             String cmi = cli.getOptionValue(BootConstant.CLI_CONFIG_MONITOR_INTERVAL);
-            userSpecifiedCfgMonitorIntervalSec = Integer.parseInt(cmi);
+            userSpecifiedCfgMonitorThrottleMillis = Integer.parseInt(cmi);
         }
 
         /*
          * show config on demand
          */
-        if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO) && !cli.hasOption(BootConstant.CLI_CONFIG_DIR) && !cli.hasOption(BootConstant.CLI_CONFIG_DOMAIN)) {
+        if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO) && !cli.hasOption(BootConstant.CLI_CONFIG_DIR)) {
             String cfgName = cli.getOptionValue(BootConstant.CLI_CONFIG_DEMO);
             if (cfgName == null) {
                 String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
-                System.err.println("Missing config option, valid values <" + validOptions + ">");
-                System.exit(1);
+                String msg = "Missing config option, valid values <" + validOptions + ">";
+                ApplicationUtil.RTO(BootErrorCode.RTO_CLI_MISSING_ARG_ERROR, msg, null);
             }
             Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
             if (c == null) {
                 String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
-                System.err.println(cfgName + "is an invalid config option, valid values <" + validOptions + ">");
-                System.exit(1);
+                String msg = cfgName + "is an invalid config option, valid values <" + validOptions + ">";
+                ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ARG_ERROR, msg, null);
             }
             String t = BootConfig.generateTemplate(c);
-            System.out.println(t);
-            System.exit(0);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, t, null);
         }
 
-        log.trace(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorIntervalSec + ", StartCommand>" + jvmStartCommand);
+        log.trace(() -> I18n.info.launching.format(userSpecifiedResourceBundle) + ", cmi=" + userSpecifiedCfgMonitorThrottleMillis + ", StartCommand>" + jvmStartCommand);
 
         /*
          * [Config File] - encrypt/decrypt
          */
         if (cli.hasOption(BootConstant.CLI_ENCRYPT)) {
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_encrypt);
-            System.out.println(BootConstant.BR + "\t " + updated + " config items have been encrypted in " + userSpecifiedConfigDir.getAbsolutePath());
-            System.exit(0);
+            String msg = BootConstant.BR + "\t " + updated + " config items have been encrypted in " + userSpecifiedConfigDir.getAbsolutePath();
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
         } else if (cli.hasOption(BootConstant.CLI_DECRYPT)) {
             if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
-                System.err.println(BootConstant.BR + "\t error: -" + BootConstant.CLI_ADMIN_PWD_FILE + " is not allowed for decryption, please private password with -" + BootConstant.CLI_ADMIN_PWD + " option when decrypt data");
-                System.exit(1);
+                String msg = BootConstant.BR + "\t error: -" + BootConstant.CLI_ADMIN_PWD_FILE + " is not allowed for decryption, please private password with -" + BootConstant.CLI_ADMIN_PWD + " option when decrypt data";
+                ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ARG_ERROR, msg, null);
             }
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
-            System.out.println(BootConstant.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath());
-            System.exit(0);
+            String msg = BootConstant.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath();
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
         }
 
         /*
-         * [generate configurations list in PSV format]
+         * [generate configuration list in PSV format]
          */
         if (cli.hasOption(BootConstant.CLI_PSV)) {
             String envId = cli.getOptionValue(BootConstant.CLI_PSV);
@@ -443,27 +450,30 @@ abstract public class SummerBigBang extends SummerSingularity {
                     sb.append(ExceptionUtils.getRootCauseMessage(ex)).append(BootConstant.BR);
                 }
             }
-            System.out.println("\n\n" + sb);
-            System.exit(0);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, "\n\n" + sb, null);
+        }
+
+        if (cli.hasOption(BootConstant.CLI_DEBUGMODE)) {
+            BackOffice.agent.isDebugMode = true;
         }
 
         /*
          * [IoC] - set user selected implementations to override the default
          * should be invoked before genesis was initialezed to avoid caller invoks LogManager.static{}
          */
-        if (cli.hasOption(BootConstant.CLI_USE_IMPL)) {
-            userSpecifiedImplTags.clear();
-            String[] mockItemList = cli.getOptionValues(BootConstant.CLI_USE_IMPL);
+        if (cli.hasOption(BootConstant.CLI_USE_ALTERNATIVE)) {
+            userSpecifiedalternativeNames.clear();
+            String[] mockItemList = cli.getOptionValues(BootConstant.CLI_USE_ALTERNATIVE);
 
-            Set<String> mockInputValues = new HashSet(Arrays.asList(mockItemList));
+            Set<String> mockInputValues = new HashSet<>(Arrays.asList(mockItemList));
             mockInputValues.remove("");
             if (availableImplTagOptions.containsAll(mockInputValues)) {
-                userSpecifiedImplTags.addAll(mockInputValues);
+                userSpecifiedalternativeNames.addAll(mockInputValues);
             } else {
-                Set<String> invalidOptions = new HashSet(mockInputValues);
+                Set<String> invalidOptions = new HashSet<>(mockInputValues);
                 invalidOptions.removeAll(availableImplTagOptions);
-                System.out.println("invalid -" + BootConstant.CLI_USE_IMPL + " value: " + FormatterUtil.toCSV(invalidOptions) + ", valid -" + BootConstant.CLI_USE_IMPL + " values: " + FormatterUtil.toCSV(availableImplTagOptions));
-                System.exit(1);
+                String msg = "invalid -" + BootConstant.CLI_USE_ALTERNATIVE + " value: " + FormatterUtil.toCSV(invalidOptions) + ", valid -" + BootConstant.CLI_USE_ALTERNATIVE + " values: " + FormatterUtil.toCSV(availableImplTagOptions);
+                ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ALTERNATIVE_NAME_ERROR, msg, null);
             }
         }
 
@@ -477,14 +487,13 @@ abstract public class SummerBigBang extends SummerSingularity {
                 try {
                     ConfigUtil.createConfigFile(c, userSpecifiedConfigDir, cfgName, true);
                 } catch (IOException ex) {
-                    System.out.println(ex + BootConstant.BR + "\tFailed to generate config file (" + cfgName + ") in " + userSpecifiedConfigDir.getAbsolutePath());
-                    ex.printStackTrace();
-                    System.exit(1);
+                    String msg = ex + BootConstant.BR + "\tFailed to generate config file (" + cfgName + ") in " + userSpecifiedConfigDir.getAbsolutePath();
+                    ApplicationUtil.RTO(BootErrorCode.RTO_CFG_GENERATE_ERROR, msg, ex);
                 }
                 i++;
             }
-            System.out.println("Total generated " + i + " configuration files in " + userSpecifiedConfigDir.getAbsolutePath());
-            System.exit(0);
+            String msg = "Total generated " + i + " configuration files in " + userSpecifiedConfigDir.getAbsolutePath();
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
         }
 
         /*
@@ -531,7 +540,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         try {
             //1. get main configurations
             for (ConfigMetadata registeredAppConfig : scanedJExpressConfigs.values()) {
-                if (isUserSpecifiedImplTags(registeredAppConfig.checkImplTagUsed) ^ registeredAppConfig.loadWhenImplTagUsed) {
+                if (isUserSpecifieduserSpecifiedalternativeNames(registeredAppConfig.whenUseAlternative) ^ registeredAppConfig.thenLoadConfig) {
                     continue;
                 }
                 JExpressConfig instance = registeredAppConfig.instance;
@@ -546,17 +555,22 @@ abstract public class SummerBigBang extends SummerSingularity {
             }
 
             //2. load configurations
-            updated = ConfigUtil.loadConfigs(mode, log, userSpecifiedResourceBundle, userSpecifiedConfigDir.toPath(), configs, userSpecifiedCfgMonitorIntervalSec, userSpecifiedConfigDir);
+            updated = ConfigUtil.loadConfigs(mode, log, userSpecifiedResourceBundle, userSpecifiedConfigDir.toPath(), configs, userSpecifiedCfgMonitorThrottleMillis, userSpecifiedConfigDir);
         } catch (Throwable ex) {
             log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
-            System.exit(1);
+            ApplicationUtil.RTO(BootErrorCode.RTO_CFG_LOADING_ERROR, null, null);
         }
         return updated;
     }
 
     //abstract protected void runCLI(CommandLine bigBang, File cfgConfigDir);
-    protected boolean isUserSpecifiedImplTags(String mockItemName) {
-        return userSpecifiedImplTags.contains(mockItemName);
+    private static final String[] NA = {};
+
+    protected boolean isUserSpecifieduserSpecifiedalternativeNames(String... alternativeNames) {
+        if (alternativeNames == null) {
+            alternativeNames = NA;
+        }
+        return Arrays.stream(alternativeNames).anyMatch(userSpecifiedalternativeNames::contains);
     }
 
     /**
@@ -566,12 +580,12 @@ abstract public class SummerBigBang extends SummerSingularity {
      * ready
      *
      * @param primaryClass
-     * @param userSpecifiedImplTags
+     * @param userSpecifiedalternativeNames
      */
-    protected void genesis(Class primaryClass, Set<String> userSpecifiedImplTags) {
+    protected void genesis(Class primaryClass, Set<String> userSpecifiedalternativeNames) {
         log.trace("");
-        BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedImplTags, memo);
-        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedImplTags, channelHandlerNames, memo);
+        BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedalternativeNames, memo);
+        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedalternativeNames, channelHandlerNames, memo);
         Module bootModule = Modules.override(defaultModule).with(scanedModule);
         Module applicationModule = userOverrideModule == null
                 ? bootModule
@@ -626,8 +640,8 @@ abstract public class SummerBigBang extends SummerSingularity {
         log.trace("");
         Set<Class<? extends SummerRunner>> summerRunner_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerRunner.class, callerRootPackageNames);
         //prepare ordering
-        Set<Integer> orderSet = new TreeSet();
-        Map<Integer, List<SummerRunner>> orderMapping = new HashMap();
+        Set<Integer> orderSet = new TreeSet<>();
+        Map<Integer, List<SummerRunner>> orderMapping = new HashMap<>();
         //process scan result
         for (Class<? extends SummerRunner> c : summerRunner_ImplClasses) {
             //get order
@@ -643,7 +657,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             orderSet.add(order);
             List<SummerRunner> sameOoderRunners = orderMapping.get(order);
             if (sameOoderRunners == null) {
-                sameOoderRunners = new ArrayList();
+                sameOoderRunners = new ArrayList<>();
                 orderMapping.put(order, sameOoderRunners);
             }
             sameOoderRunners.add(instance);

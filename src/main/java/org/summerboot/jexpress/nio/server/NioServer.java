@@ -21,14 +21,15 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.ServerChannel;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollChannelOption;
-import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollIoHandler;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.kqueue.KQueue;
 import io.netty.channel.kqueue.KQueueServerSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http2.Http2SecurityUtil;
 import io.netty.handler.ssl.ClientAuth;
@@ -44,6 +45,7 @@ import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
+import org.summerboot.jexpress.nio.IdleEventMonitor;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -74,6 +76,8 @@ public class NioServer {
 
     protected final NioChannelInitializer channelInitializer;
     protected final NIOStatusListener nioListener;
+
+    public static final IdleEventMonitor IDLE_EVENT_MONITOR = new IdleEventMonitor(NioServer.class.getSimpleName());
 
     public NioServer(NioChannelInitializer channelInitializer, NIOStatusListener nioListener) {
         this.channelInitializer = channelInitializer;
@@ -137,24 +141,32 @@ public class NioServer {
         // Configure the server.
         //boss and work groups
 
-        int bossSize = nioCfg.getNioEventLoopGroupAcceptorSize();
-        int workerSize = nioCfg.getNioEventLoopGroupWorkerSize();
+        int bossSize = Math.max(0, nioCfg.getNioEventLoopGroupAcceptorSize());
+        int workerSize = Math.max(0, nioCfg.getNioEventLoopGroupWorkerSize());
+
         Class<? extends ServerChannel> serverChannelClass;
         ThreadFactory threadFactoryBoss = NamedDefaultThreadFactory.build("Netty-HTTP.Boss", nioCfg.isNioEventLoopGroupAcceptorUseVirtualThread());
         ThreadFactory threadFactoryWorker = NamedDefaultThreadFactory.build("Netty-HTTP.Worker", nioCfg.isNioEventLoopGroupWorkerUseVirtualThread());
+
         if (Epoll.isAvailable() && (IoMultiplexer.AVAILABLE.equals(multiplexer) || IoMultiplexer.EPOLL.equals(multiplexer))) {
-            bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize, threadFactoryBoss);
-            workerGroup = workerSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(workerSize, threadFactoryWorker);
+            //bossGroup = new EpollEventLoopGroup(bossSize, threadFactoryBoss);
+            //workerGroup = new EpollEventLoopGroup(workerSize, threadFactoryWorker);
+            bossGroup = new MultiThreadIoEventLoopGroup(bossSize, threadFactoryBoss, EpollIoHandler.newFactory());
+            workerGroup = new MultiThreadIoEventLoopGroup(workerSize, threadFactoryWorker, EpollIoHandler.newFactory());
             serverChannelClass = EpollServerSocketChannel.class;
             multiplexer = IoMultiplexer.EPOLL;
         } else if (KQueue.isAvailable() && (IoMultiplexer.AVAILABLE.equals(multiplexer) || IoMultiplexer.KQUEUE.equals(multiplexer))) {
-            bossGroup = bossSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(bossSize, threadFactoryBoss);
-            workerGroup = workerSize < 1 ? new EpollEventLoopGroup() : new EpollEventLoopGroup(workerSize, threadFactoryWorker);
+            //bossGroup = new EpollEventLoopGroup(bossSize, threadFactoryBoss);
+            //workerGroup = new EpollEventLoopGroup(workerSize, threadFactoryWorker);
+            bossGroup = new MultiThreadIoEventLoopGroup(bossSize, threadFactoryBoss, EpollIoHandler.newFactory());
+            workerGroup = new MultiThreadIoEventLoopGroup(workerSize, threadFactoryWorker, EpollIoHandler.newFactory());
             serverChannelClass = KQueueServerSocketChannel.class;
             multiplexer = IoMultiplexer.KQUEUE;
         } else {
-            bossGroup = bossSize < 1 ? new NioEventLoopGroup() : new NioEventLoopGroup(bossSize, threadFactoryBoss);
-            workerGroup = workerSize < 1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerSize, threadFactoryWorker);
+            //bossGroup = new NioEventLoopGroup(bossSize, threadFactoryBoss);
+            //workerGroup = new NioEventLoopGroup(workerSize, threadFactoryWorker);
+            bossGroup = new MultiThreadIoEventLoopGroup(bossSize, threadFactoryBoss, NioIoHandler.newFactory());
+            workerGroup = new MultiThreadIoEventLoopGroup(workerSize, threadFactoryWorker, NioIoHandler.newFactory());
             serverChannelClass = NioServerSocketChannel.class;
             multiplexer = IoMultiplexer.JDK;
         }
@@ -205,6 +217,9 @@ public class NioServer {
                 System.out.println("Server " + appInfo + " (" + listenerInfo + ") is stopped");
             });
             List<String> loadBalancingPingEndpoints = BackOffice.agent.getLoadBalancingPingEndpoints();
+            if (loadBalancingPingEndpoints.isEmpty()) {
+                loadBalancingPingEndpoints.add("");
+            }
             for (String loadBalancingPingEndpoint : loadBalancingPingEndpoints) {
                 String info = "Netty HTTP server [" + appInfo + "] (" + listenerInfo + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint);
                 memo.append(BootConstant.BR).append(info);
