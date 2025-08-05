@@ -91,9 +91,6 @@ public abstract class GrpcTestBase {
 
         private void createIfNotExist(String srcFileName, File destFile) {
             File parentDir = destFile.getParentFile();
-            if (parentDir != null && !parentDir.exists()) {
-                parentDir.mkdirs();
-            }
             String location = destFile.getParent();
             String destFileName = destFile.getName();
             ClassLoader classLoader = this.getClass().getClassLoader();
@@ -234,15 +231,6 @@ public abstract class GrpcTestBase {
 
     protected abstract BindableService[] getServerImpls();
 
-    //@Test
-    public void runTest() throws GeneralSecurityException, IOException {
-        TestConfig[] testConfigs = buildDefaultTestConfigs();
-        for (TestConfig config : testConfigs) {
-            System.out.println("Testing with config: " + config);
-            test2WayAuth(config);
-        }
-    }
-
     protected TestConfig[] buildDefaultTestConfigs() {
         BindableService[] serviceImpls = getServerImpls();
         return new TestConfig[]{
@@ -251,7 +239,16 @@ public abstract class GrpcTestBase {
         };
     }
 
-    protected void test2WayAuth(TestConfig config) throws GeneralSecurityException, IOException {
+    //@Test
+    public void runTest() throws GeneralSecurityException, IOException {
+        TestConfig[] testConfigs = buildDefaultTestConfigs();
+        for (TestConfig config : testConfigs) {
+            System.out.println("Testing with config: " + config);
+            run2WayTLSTestWithConfig(config);
+        }
+    }
+
+    protected void run2WayTLSTestWithConfig(TestConfig config) throws GeneralSecurityException, IOException {
         String keyStore = config.getKeyStore().getAbsolutePath();
         String serverTrustStore = config.getServerTrustStore().getAbsolutePath();
         String clientTrustStore = config.getClientTrustStore().getAbsolutePath();

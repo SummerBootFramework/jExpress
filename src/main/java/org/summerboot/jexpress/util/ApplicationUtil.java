@@ -205,6 +205,10 @@ public class ApplicationUtil {
         if (Files.exists(targetFile)) {
             return targetFile;
         }
+        Path targetParent = targetFile.getParent();
+        if (!Files.exists(targetParent)) {
+            targetParent.toFile().mkdirs();
+        }
         try (InputStream ioStream = classLoader.getResourceAsStream(RESOURCE_PATH + srcFileName);) {
             final byte[] bytes = IOUtils.toByteArray(ioStream);
             Files.write(targetFile, bytes);
