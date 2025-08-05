@@ -16,10 +16,14 @@ import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.nio.grpc.BootLoadBalancerProvider;
 import org.summerboot.jexpress.nio.grpc.GRPCClientConfig;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
+import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.security.SSLUtil;
-import org.summerboot.jexpress.security.auth.LDAPAuthenticator;
+import org.summerboot.jexpress.security.auth.AuthenticatorListener;
+import org.summerboot.jexpress.security.auth.BootAuthenticator;
+import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.ApplicationUtil;
 
+import javax.naming.NamingException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
@@ -86,6 +90,10 @@ public abstract class GrpcTestBase {
         }
 
         private void createIfNotExist(String srcFileName, File destFile) {
+            File parentDir = destFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
             String location = destFile.getParent();
             String destFileName = destFile.getName();
             ClassLoader classLoader = this.getClass().getClassLoader();
@@ -321,7 +329,12 @@ public abstract class GrpcTestBase {
     protected GRPCServer buildTestServer(String host, int port, KeyManagerFactory kmfServer, TrustManagerFactory tmfServer, BindableService[] serviceImpls) throws IOException {
         // 1. config server
         ThreadPoolExecutor tpe = BootConfig.buildThreadPoolExecutor("");
-        ServerInterceptor serverInterceptor = new LDAPAuthenticator();
+        ServerInterceptor serverInterceptor = new BootAuthenticator<>() {
+            @Override
+            protected Caller authenticate(String usename, String password, Object metaData, AuthenticatorListener listener, SessionContext context) throws NamingException {
+                return null;
+            }
+        };
         GRPCServer gRPCServer = new GRPCServer(host, port, kmfServer, tmfServer, tpe, true, false, null, serverInterceptor);
 
         ServerBuilder serverBuilder = gRPCServer.getServerBuilder();

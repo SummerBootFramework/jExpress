@@ -1,5 +1,15 @@
--domain dev -use RoleBased WebBased
-mvn clean deploy -Dmaven.test.skip=true -P release
+-- release 2.6.1
+
+- fixed:
+
+
+Maven Central Repository:
+https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.1/
+https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.1
+
+mvnrepository.com:
+https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.1
+
 
 -- release 2.6.0
 - enhanced security 1: this change use enhanced encryption/decryption to protect sensitive data, like password in config files.
