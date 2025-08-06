@@ -32,26 +32,28 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ThreadPoolExecutor;
 
 
-public abstract class GrpcTestBase {
+public abstract class TestCase_gRPCTwoWayTLS {
+
     public static class TestConfig {
         private final String testName;
         private final int length;
-        private String configDir = "src/test/resources/config/"; // "run/standalone_dev/configuration/";
-        private File keyStore = new File(configDir + "keystore.p12").getAbsoluteFile();
-        private File serverTrustStore = new File(configDir + "truststore_grpc_server.p12").getAbsoluteFile();
-        private File clientTrustStore = new File(configDir + "truststore_grpc_client.p12").getAbsoluteFile();
-        private File emptyTrustStore = new File(configDir + "truststore_empty.p12").getAbsoluteFile();
+        private String configDir;
+        private File keyStore;
+        private File serverTrustStore;
+        private File clientTrustStore;
+        private File emptyTrustStore;
         private String serverKeyAlias;
         private String clientKeyAlias;
         private String overrideAuthority;
 
 
-        private String keyStorePassword = "changeit";
-        private String keyPassword = "changeit";
-        private String trustStorePassword = "changeit";
+        private String keyStorePassword;
+        private String keyPassword;
+        private String trustStorePassword;
 
         private BindableService[] serviceImpls;
 
@@ -60,7 +62,7 @@ public abstract class GrpcTestBase {
         private String loadBalancingTargetScheme = "grpc";
 
         public TestConfig(int length, BindableService... serviceImpls) {
-            this("gRPC with TLS " + length, length, "src/test/resources/config/", serviceImpls);
+            this("TestCase_gRPCTwoWayTLS " + length, length, "src/test/resources/config/", serviceImpls);
         }
 
         public TestConfig(String testName, int length, BindableService... serviceImpls) {
@@ -87,6 +89,13 @@ public abstract class GrpcTestBase {
             this.overrideAuthority = "server2." + length + ".jexpress.org";
 
             this.serviceImpls = serviceImpls;
+
+            ClassLoader classLoader = this.getClass().getClassLoader();
+            Properties testProp = ApplicationUtil.getPropertiesFromResource("application-test.properties", classLoader);
+            String defaultPassword = testProp.getProperty("test.p12.password");
+            keyStorePassword = defaultPassword;
+            keyPassword = defaultPassword;
+            trustStorePassword = defaultPassword;
         }
 
         private void createIfNotExist(String srcFileName, File destFile) {

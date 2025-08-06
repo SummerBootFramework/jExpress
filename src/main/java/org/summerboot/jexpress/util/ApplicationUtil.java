@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -199,6 +200,20 @@ public class ApplicationUtil {
     }
 
     public static final String RESOURCE_PATH = "org/summerboot/jexpress/template/";
+
+    public static Properties getPropertiesFromResource(String srcFileName, ClassLoader classLoader) {
+        Properties properties = new Properties();
+        try (InputStream ioStream = classLoader.getResourceAsStream(RESOURCE_PATH + srcFileName);) {
+            if (ioStream == null) {
+                throw new IOException("Resource not found: " + RESOURCE_PATH + srcFileName);
+            }
+            properties.load(ioStream);
+        } catch (IOException ex) {
+            String msg = ex + "\n\tCould not load properties from " + srcFileName;
+            ApplicationUtil.RTO(BootErrorCode.RTO_CREATE_IF_NOT_EXIST_ERROR, msg, ex);
+        }
+        return properties;
+    }
 
     public static Path createIfNotExist(String location, ClassLoader classLoader, String srcFileName, String destFileName) {
         Path targetFile = Paths.get(location, destFileName).toAbsolutePath();
