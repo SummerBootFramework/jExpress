@@ -154,7 +154,7 @@
         <maven-install.version>3.1.4</maven-install.version>
         <!-- Commons -->
         <commons-lang3.version>3.18.0</commons-lang3.version>
-        <commons-cli.version>1.9.0</commons-cli.version>
+        <commons-cli.version>1.10.0</commons-cli.version>
         <commons-io.version>2.20.0</commons-io.version>
         <commons-text.version>1.14.0</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
@@ -182,7 +182,7 @@
 
 
         <!-- MIME-Type -->
-        <tika.version>3.2.1</tika.version>
+        <tika.version>3.2.2</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>4.0.0</rs-api.version>
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
@@ -192,15 +192,15 @@
         <jackson.version>2.19.2</jackson.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.9</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.10</tomcat-embed-el.version>
         <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.0.9.Final</hibernate.version>
-        <hikari-cp.version>7.0.0</hikari-cp.version>
+        <hibernate.version>7.1.0.Final</hibernate.version>
+        <hikari-cp.version>7.0.1</hikari-cp.version>
 
         <!-- Cache -->
         <jedis.version>6.1.0</jedis.version>
@@ -745,7 +745,7 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
-            <scope>test</scope>
+            <!--            <scope>test</scope>-->
         </dependency>
     </dependencies>
 

@@ -207,7 +207,8 @@ public class HealthMonitor {
                         setHealthStatus(healthCheckAllPassed, inspectionReport);
                     } else {
                         try {
-                            inspectionReport = BeanUtil.toJson(healthCheckFailedReport, true, true);
+                            //inspectionReport = BeanUtil.toJson(healthCheckFailedReport, true, true);
+                            inspectionReport = healthCheckFailedReport.toStringWithStackTrace();
                         } catch (Throwable ex) {
                             inspectionReport = " toJson failed " + ex;
                         }

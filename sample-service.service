@@ -1,4 +1,10 @@
 # sudo nano /etc/systemd/system/myapp-service.service
+# sudo systemctl daemon-reload
+# sudo systemctl start myapp-service
+# sudo systemctl enable myapp-service
+# sudo systemctl status myapp-service
+# sudo journalctl -u myapp-service -f
+
 [Unit]
 Description=myapp-name: (Java 21 + Netty 4.2.x + ZGC + OpenSSL on Linux)
 #After=network.target

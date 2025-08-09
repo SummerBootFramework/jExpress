@@ -951,14 +951,15 @@ public class SessionContext {
 //                }
 //            }
 //        }
-        List<Err> errors = serviceError.getErrors();
-        if (errors != null && !errors.isEmpty()) {
-            sb.append(BootConstant.BR + BootConstant.BR + "\tErrors: ");
-            for (var error : errors) {
-                sb.append(BootConstant.BR + "\t ").append(error.toStringEx(true));
-            }
-        }
-
+//        List<Err> errors = serviceError.getErrors();
+//        if (errors != null && !errors.isEmpty()) {
+//            sb.append(BootConstant.BR + BootConstant.BR + "\tErrors: " + serviceError.getRef());
+//            for (var error : errors) {
+//                sb.append(BootConstant.BR + "\t ").append(error.toStringEx(true));
+//            }
+//        }
+        sb.append(BootConstant.BR + BootConstant.BR + "\t");
+        serviceError.toStringWithStackTrace(sb);
         return this;
     }
 }
