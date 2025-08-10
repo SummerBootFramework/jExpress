@@ -129,7 +129,7 @@ https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.1
 - enhancement: Err with args
 - enhancement: add nio.JAX-RS.toJson.showRefInServiceError in cfg_nio.properties, default false to not show ref field in JSON/XML response
 - enhancement: verify Bearer Token if provided in request header for regardless of a @Controller method is role-based or not
-- enhancement: added GrpcTestBase for gRPC test (uased example in https://github.com/SummerBootFramework/jExpressDemo-HelloSummer/blob/main/HelloSummer-demo02/src/test/java/test/integration/grpc/GrpcTest.java)
+- enhancement: added GrpcTestBase for gRPC test (usage and example see https://github.com/SummerBootFramework/jExpressDemo-HelloSummer/blob/main/HelloSummer-demo02/src/test/java/test/integration/grpc/GrpcTest.java)
 	2-way TLS (server and client verify each other certificate)
 	client verify server certificate, server trust all client certificate
 	server verify server certificate, client trust all client certificate
