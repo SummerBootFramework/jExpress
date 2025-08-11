@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.Deamon;
+import org.summerboot.jexpress.boot.annotation.Daemon;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
@@ -106,17 +106,17 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             declareRoles.addAll(Arrays.asList(drs.value()));
         }
         // Reject ASAP
-        Deamon classLevelDeamon = (Deamon) controllerClass.getAnnotation(Deamon.class);
-        Deamon methodLevelDeamon = javaMethod.getAnnotation(Deamon.class);
-        if (methodLevelDeamon != null) {
-            rejectWhenPaused = !methodLevelDeamon.ignorePause();
-            //rejectWhenHealthCheckFailed = !methodLevelDeamon.ignoreHealthCheck();
-            requiredHealthChecks = methodLevelDeamon.requiredHealthChecks();
+        Daemon classLevelDaemon = (Daemon) controllerClass.getAnnotation(Daemon.class);
+        Daemon methodLevelDaemon = javaMethod.getAnnotation(Daemon.class);
+        if (methodLevelDaemon != null) {
+            rejectWhenPaused = !methodLevelDaemon.ignorePause();
+            //rejectWhenHealthCheckFailed = !methodLevelDaemon.ignoreHealthCheck();
+            requiredHealthChecks = methodLevelDaemon.requiredHealthChecks();
             emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
-        } else if (classLevelDeamon != null) {
-            rejectWhenPaused = !classLevelDeamon.ignorePause();
-            //rejectWhenHealthCheckFailed = !classLevelDeamon.ignoreHealthCheck();
-            requiredHealthChecks = classLevelDeamon.requiredHealthChecks();
+        } else if (classLevelDaemon != null) {
+            rejectWhenPaused = !classLevelDaemon.ignorePause();
+            //rejectWhenHealthCheckFailed = !classLevelDaemon.ignoreHealthCheck();
+            requiredHealthChecks = classLevelDaemon.requiredHealthChecks();
             emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
         } else {
             rejectWhenPaused = true;

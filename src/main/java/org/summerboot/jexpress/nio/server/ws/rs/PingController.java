@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import org.summerboot.jexpress.boot.annotation.Deamon;
+import org.summerboot.jexpress.boot.annotation.Daemon;
 import org.summerboot.jexpress.boot.annotation.Ping;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 
@@ -34,7 +34,7 @@ abstract public class PingController {
      * method with @Ping annotation will be handled by BootHttpPingHandler
      */
     @Ping
-    @Deamon
+    @Daemon
     @GET
     @Path(BootController.Config.CURRENT_VERSION + BootController.Config.LOAD_BALANCER_HEALTH_CHECK)
     @Operation(

@@ -27,8 +27,8 @@ https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.1
 - refactoring CLI exit code
 
 - API new: added @UniqueIgnore to mute @Unique check alert for expected duplicated values
-- API new: added @Inspector.name and @Deamon.requiredHealthChecks (array of @Inspector.names, empty/null means ignore all HealthChecks)
-	this is to set Controller and/or its methods on deamon mode (accessable when pause/health failed but not for specified @Inspector.name
+- API new: added @Inspector.name and @Daemon.requiredHealthChecks (array of @Inspector.names, empty/null means ignore all HealthChecks)
+	this is to set Controller and/or its methods on daemon mode (accessable when pause/health failed but not for specified @Inspector.name
 
 - API renamed: @Controller.implTag renamed to @Controller.AlternativeName
 - API renamed: @Service.implTag renamed to with @Service.AlternativeName
@@ -207,7 +207,7 @@ https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.0
 
 -- release 2.4.5 --
 - Refactoring: SummerInitializer init before and after Ioc is initialized
-- Enhancement: Reject with 503 asap when paused or health check failed, unless @Controller or its method has @Deamon
+- Enhancement: Reject with 503 asap when paused or health check failed, unless @Controller or its method has @Daemon
 
 -- release 2.4.4 --
 - Enhancement: command line arguments end with /r bu mistake in service script no longer impact application

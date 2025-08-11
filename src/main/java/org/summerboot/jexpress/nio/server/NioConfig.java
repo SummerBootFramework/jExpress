@@ -144,7 +144,7 @@ public class NioConfig extends BootConfig {
     protected String[] sslProtocols = {"TLSv1.2", "TLSv1.3"};
 
     @Config(key = "nio.server.ssl.CipherSuites",
-            desc = "use system default ciphersuites when not specified")
+            desc = "use system default cipher suites when not specified")
     protected String[] sslCipherSuites;
 
     //3.1 Socket controller
