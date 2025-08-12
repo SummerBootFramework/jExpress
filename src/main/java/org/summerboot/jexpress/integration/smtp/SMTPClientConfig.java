@@ -111,7 +111,7 @@ public class SMTPClientConfig extends BootConfig {
 
     public static final String KEY_DEBOUCING_INTERVAL = "debouncing.emailalert_minute";
     @Config(key = KEY_DEBOUCING_INTERVAL, defaultValue = "30",
-            desc = "Alert message with the same title will not be sent out within this minutes")
+            desc = "Alert message with the same subject will not be sent out within this minutes")
     protected volatile int emailAlertDebouncingIntervalMinutes = 30;
 
     //3. mail session for Json display only

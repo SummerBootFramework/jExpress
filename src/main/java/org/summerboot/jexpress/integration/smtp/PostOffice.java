@@ -28,69 +28,69 @@ public interface PostOffice extends HealthInspector<String> {
      * send email
      *
      * @param to
-     * @param title
+     * @param subject
      * @param content
      * @param isHTMLFormat
      * @param async
      * @return
      */
-    boolean sendEmail(Collection<String> to, String title, String content, boolean isHTMLFormat, boolean async);
+    boolean sendEmail(Collection<String> to, String subject, String content, boolean isHTMLFormat, boolean async);
 
     /**
      * send alert email
      *
      * @param to
-     * @param title
+     * @param subject
      * @param content
      * @param cause
      * @param debouncing
      * @param async
      */
-    void sendAlert(Collection<String> to, final String title, final String content, final Throwable cause, boolean debouncing, boolean async);
+    void sendAlert(Collection<String> to, final String subject, final String content, final Throwable cause, boolean debouncing, boolean async);
 
     /**
      * send alert email in async mode
      *
      * @param to
-     * @param title
+     * @param subject
      * @param content
      * @param cause
      * @param debouncing
      */
-    void sendAlertAsync(Collection<String> to, String title, String content, final Throwable cause, boolean debouncing);
+    void sendAlertAsync(Collection<String> to, String subject, String content, final Throwable cause, boolean debouncing);
 
     /**
      * send alert email in sync mode
      *
      * @param to
-     * @param title
+     * @param subject
      * @param content
      * @param cause
      * @param debouncing
      */
-    void sendAlertSync(Collection<String> to, String title, String content, final Throwable cause, boolean debouncing);
+    void sendAlertSync(Collection<String> to, String subject, String content, final Throwable cause, boolean debouncing);
 
     /**
      * send email in sync mode
      *
      * @param to
-     * @param title
+     * @param subject
      * @param content
      * @param isHTMLFormat
      * @return true is success
      */
-    boolean sendEmailSync(Collection<String> to, String title, String content, boolean isHTMLFormat);
+    boolean sendEmailSync(Collection<String> to, String subject, String content, boolean isHTMLFormat);
 
     /**
      * send email in async mode
      *
      * @param to
-     * @param title
+     * @param subject
      * @param content
      * @param isHTMLFormat
      * @return
      */
-    boolean sendEmailAsync(Collection<String> to, String title, String content, boolean isHTMLFormat);
+    boolean sendEmailAsync(Collection<String> to, String subject, String content, boolean isHTMLFormat);
 
     void setAppVersion(String appVersion);
 }
