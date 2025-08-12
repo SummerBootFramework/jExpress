@@ -200,7 +200,7 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "8192")
     protected volatile int httpServerCodec_MaxChunkSize = 8192;
 
-    @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Exector Pool")
+    @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Executor Pool")
     @Config(key = "nio.server.EventLoopGroup.Acceptor.useVirtualThread", defaultValue = "false")
     protected volatile boolean nioEventLoopGroupAcceptorUseVirtualThread = false;
     @Config(key = "nio.server.EventLoopGroup.AcceptorSize", defaultValue = "0",
@@ -240,7 +240,7 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.BizExecutor.allowCoreThreadTimeOut", defaultValue = "false")
     protected boolean allowCoreThreadTimeOut = false;
 
-    //4.2 Netty Performance - NIO and Biz Exector Pool
+    //4.2 Netty Performance - NIO and Biz Executor Pool
     protected ThreadPoolExecutor tpe = null;
 
     @Config(key = "nio.server.BizExecutor.bizTimeoutWarnThresholdMs", defaultValue = "5000")
