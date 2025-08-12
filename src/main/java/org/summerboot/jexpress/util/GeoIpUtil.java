@@ -134,7 +134,7 @@ public class GeoIpUtil {
     }
 
     public static enum CallerAddressFilterOption {
-        String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName
+        String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName
     }
 
     /**
@@ -160,7 +160,7 @@ public class GeoIpUtil {
                 case String -> host = address.toString();
                 case HostString -> host = address.getHostString();
                 case HostName -> host = address.getHostName();
-                case AddressStirng -> host = address.getAddress().toString();
+                case AddressString -> host = address.getAddress().toString();
                 case HostAddress -> host = address.getAddress().getHostAddress();
                 case AddrHostName -> host = address.getAddress().getHostName();
                 case CanonicalHostName -> host = address.getAddress().getCanonicalHostName();
