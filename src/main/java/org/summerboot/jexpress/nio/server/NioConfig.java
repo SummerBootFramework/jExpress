@@ -300,6 +300,11 @@ public class NioConfig extends BootConfig {
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
+    @Config(key = "nio.verbose.logChannelException", defaultValue = "true",
+            desc = "Show channel exception in the log, default=true, false value will be ignored if app starts with -debug\n"
+                    + "Set to false to avoid showing channel exception in log, this is useful when you have a lot of channel exceptions and want to reduce the noise in the log")
+    protected volatile boolean logChannelException = true;
+
     @Config(key = "nio.verbose.filter.usertype", defaultValue = "ignore",
             desc = "5.1 caller filter\n"
                     + "valid value = id, uid, group, role, ignore")
@@ -751,6 +756,10 @@ public class NioConfig extends BootConfig {
 
     public boolean isShowRefInServiceError() {
         return showRefInServiceError;
+    }
+
+    public boolean isLogChannelException() {
+        return logChannelException;
     }
 
     public VerboseTargetUserType getFilterUserType() {

@@ -17,7 +17,6 @@ package org.summerboot.jexpress.nio.server;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -99,15 +98,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable ex) {
-        if (ex instanceof DecoderException) {
-            log.warn(ctx.channel().remoteAddress() + " - caller(" + caller + "): " + ex);
-        } else {
-            log.warn(ctx.channel().remoteAddress() + " - caller(" + caller + "): " + ex, ex);
-        }
-        if (ex instanceof OutOfMemoryError) {
-            ctx.close();
-        }
-        //ctx.close();
+        NioHttpUtil.onExceptionCaught(ctx, ex, log);
     }
 
     @Override

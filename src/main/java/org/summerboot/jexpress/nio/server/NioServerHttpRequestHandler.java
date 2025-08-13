@@ -18,7 +18,6 @@ package org.summerboot.jexpress.nio.server;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -87,15 +86,9 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable ex) {
-        if (ex instanceof DecoderException) {
-            log.warn(ctx.channel().remoteAddress() + ": " + ex);
-        } else {
-            log.warn(ctx.channel().remoteAddress() + ": " + ex, ex);
-        }
-        if (ex instanceof OutOfMemoryError) {
-            ctx.close();
-        }
+        NioHttpUtil.onExceptionCaught(ctx, ex, log);
     }
+
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {

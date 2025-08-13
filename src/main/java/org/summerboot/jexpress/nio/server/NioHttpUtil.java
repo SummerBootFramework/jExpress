@@ -22,6 +22,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelProgressiveFuture;
 import io.netty.channel.ChannelProgressiveFutureListener;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -398,6 +399,19 @@ public class NioHttpUtil {
             return URLDecoder.decode(value, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException ex) {
             return value;
+        }
+    }
+
+    public static void onExceptionCaught(ChannelHandlerContext ctx, Throwable ex, Logger logger) {
+        if (BootConstant.isDebugMode() || NioConfig.cfg.isLogChannelException()) {
+            if (ex instanceof DecoderException) {
+                logger.warn(ctx.channel().remoteAddress() + ": " + ex);
+            } else {
+                logger.warn(ctx.channel().remoteAddress() + ": " + ex, ex);
+            }
+        }
+        if (ex instanceof OutOfMemoryError) {
+            ctx.close();
         }
     }
 

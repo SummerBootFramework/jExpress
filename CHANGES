@@ -1,6 +1,13 @@
 -- release 2.6.1
 
-- fixed:
+- enhanced logging: log detailed information and stack trace health check failure
+- enhanced logging and Config new: cfg_nio.properties/
+    ######################################
+    # 5. IO Communication logging filter #
+    ######################################
+    ## Show channel exception in the log, default=true, false value will be ignored if app starts with -debug
+    ## Set to false to avoid showing channel exception in log, this is useful when you have a lot of channel exceptions and want to reduce the noise in the log
+    #nio.verbose.logChannelException=true
 
 
 Maven Central Repository:

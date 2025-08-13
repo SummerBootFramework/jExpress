@@ -82,6 +82,14 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
 //        }
 //    }
 
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        clients.remove(ctx.channel());
+        //ctx.close();
+        NioHttpUtil.onExceptionCaught(ctx, cause, log);
+    }
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame msg) throws Exception {
         if (msg instanceof TextWebSocketFrame) {
@@ -204,13 +212,6 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
     public void handlerRemoved(ChannelHandlerContext ctx) {
         clients.remove(ctx.channel());
         log.trace(() -> "handlerRemoved: " + ctx.channel().remoteAddress());
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        clients.remove(ctx.channel());
-        ctx.close();
-        log.error(() -> "exceptionCaught: " + ctx.channel().remoteAddress() + " - " + cause);
     }
 
 }
