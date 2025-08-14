@@ -84,13 +84,11 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.autostart", defaultValue = "true")
     protected volatile boolean autoStart = true;
 
-    @Config(key = "CallerAddressFilter.option", defaultValue = "HostName", desc = "valid value = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")
-    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.HostName;
-    @Config(key = "CallerAddressFilter.Regex.Prefix", desc = "A non-blank prefix to mark a string as Regex in both Whitelist and Blacklist, blank means all strings are not Regex")
-    protected volatile String callerAddressFilterRegexPrefix;
-    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example (when Regex.Prefix = RG): 127.0.0.1, RG^192\\\\.168\\\\.1\\\\.")
+    @Config(key = "CallerAddressFilter.option", defaultValue = "String", desc = "valid value = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")
+    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
+    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
     protected volatile Set<String> callerAddressFilterWhitelist;
-    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\\\.168\\\\.2\\\\.")
+    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
     @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", desc = "@Inspector.names in CSV format, empty/null means require ALL HealthChecks")
@@ -300,11 +298,6 @@ public class NioConfig extends BootConfig {
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
-    @Config(key = "nio.verbose.logChannelException", defaultValue = "true",
-            desc = "Show channel exception in the log, default=true, false value will be ignored if app starts with -debug\n"
-                    + "Set to false to avoid showing channel exception in log, this is useful when you have a lot of channel exceptions and want to reduce the noise in the log")
-    protected volatile boolean logChannelException = true;
-
     @Config(key = "nio.verbose.filter.usertype", defaultValue = "ignore",
             desc = "5.1 caller filter\n"
                     + "valid value = id, uid, group, role, ignore")
@@ -422,27 +415,18 @@ public class NioConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
-        if (StringUtils.isBlank(callerAddressFilterRegexPrefix)) {
-            callerAddressFilterRegexPrefix = null;
-        } else {
-            if (callerAddressFilterWhitelist != null) {
-                for (String regex : callerAddressFilterWhitelist) {
-                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
-//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
-                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
-                    }
-                }
-            }
-            if (callerAddressFilterBlacklist != null) {
-                for (String regex : callerAddressFilterBlacklist) {
-                    GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
-                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
-//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
-                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
-                    }
-                }
+        // pre-compile regexes for whitelist and blacklist
+        if (callerAddressFilterWhitelist != null) {
+            for (String regex : callerAddressFilterWhitelist) {
+                GeoIpUtil.matches("", regex);
             }
         }
+        if (callerAddressFilterBlacklist != null) {
+            for (String regex : callerAddressFilterBlacklist) {
+                GeoIpUtil.matches("", regex);
+            }
+        }
+
         // 7. Web Server Mode       
         rootFolder = cfgFile.getParentFile().getParentFile();
         docrootDir = null;
@@ -564,10 +548,6 @@ public class NioConfig extends BootConfig {
 
     public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
         return CallerAddressFilterOption;
-    }
-
-    public String getCallerAddressFilterRegexPrefix() {
-        return callerAddressFilterRegexPrefix;
     }
 
     public Set<String> getCallerAddressFilterWhitelist() {
@@ -756,10 +736,6 @@ public class NioConfig extends BootConfig {
 
     public boolean isShowRefInServiceError() {
         return showRefInServiceError;
-    }
-
-    public boolean isLogChannelException() {
-        return logChannelException;
     }
 
     public VerboseTargetUserType getFilterUserType() {

@@ -17,7 +17,6 @@ package org.summerboot.jexpress.nio.grpc;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
@@ -70,13 +69,11 @@ public class GRPCServerConfig extends BootConfig {
     @Config(key = ID + ".autostart", defaultValue = "true")
     protected volatile boolean autoStart;
 
-    @Config(key = ID + ".CallerAddressFilter.option", defaultValue = "HostName", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
-    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.HostName;
-    @Config(key = ID + ".CallerAddressFilter.Regex.Prefix", desc = "A non-blank prefix to mark a string as Regex in both Whitelist and Blacklist, blank means all strings are not Regex")
-    protected volatile String callerAddressFilterRegexPrefix;
-    @Config(key = ID + ".CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example (when Regex.Prefix = RG): 127.0.0.1, RG^192\\\\.168\\\\.1\\\\.")
+    @Config(key = ID + ".CallerAddressFilter.option", defaultValue = "String", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
+    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
+    @Config(key = ID + ".CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
     protected volatile Set<String> callerAddressFilterWhitelist;
-    @Config(key = ID + ".CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\\\.168\\\\.2\\\\.")
+    @Config(key = ID + ".CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
     @Config(key = ID + ".pool.BizExecutor.mode", defaultValue = "VirtualThread",
@@ -152,27 +149,18 @@ public class GRPCServerConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException {
-        if (StringUtils.isBlank(callerAddressFilterRegexPrefix)) {
-            callerAddressFilterRegexPrefix = null;
-        } else {
-            if (callerAddressFilterWhitelist != null) {
-                for (String regex : callerAddressFilterWhitelist) {
-                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
-//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
-                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
-                    }
-                }
-            }
-            if (callerAddressFilterBlacklist != null) {
-                for (String regex : callerAddressFilterBlacklist) {
-                    GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
-                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
-//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
-                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
-                    }
-                }
+        // pre-compile regexes for whitelist and blacklist
+        if (callerAddressFilterWhitelist != null) {
+            for (String regex : callerAddressFilterWhitelist) {
+                GeoIpUtil.matches("", regex);
             }
         }
+        if (callerAddressFilterBlacklist != null) {
+            for (String regex : callerAddressFilterBlacklist) {
+                GeoIpUtil.matches("", regex);
+            }
+        }
+
         tpe = buildThreadPoolExecutor(tpe, "Netty-gRPC.Biz", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, true);
@@ -195,10 +183,6 @@ public class GRPCServerConfig extends BootConfig {
 
     public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
         return CallerAddressFilterOption;
-    }
-
-    public String getCallerAddressFilterRegexPrefix() {
-        return callerAddressFilterRegexPrefix;
     }
 
     public Set<String> getCallerAddressFilterWhitelist() {

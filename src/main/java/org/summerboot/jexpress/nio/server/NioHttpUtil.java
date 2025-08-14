@@ -53,6 +53,7 @@ import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.ApplicationUtil;
+import org.summerboot.jexpress.util.GeoIpUtil;
 import org.summerboot.jexpress.util.TimeUtil;
 
 import java.io.BufferedReader;
@@ -403,14 +404,16 @@ public class NioHttpUtil {
     }
 
     public static void onExceptionCaught(ChannelHandlerContext ctx, Throwable ex, Logger logger) {
-        if (BootConstant.isDebugMode() || NioConfig.cfg.isLogChannelException()) {
+        NioConfig nioCfg = NioConfig.cfg;
+        String isCallerIPInBlacklist = GeoIpUtil.callerAddressFilter(ctx.channel().remoteAddress(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
+        if (BootConstant.isDebugMode() || isCallerIPInBlacklist == null) {
             if (ex instanceof DecoderException) {
                 logger.warn(ctx.channel().remoteAddress() + ": " + ex);
             } else {
                 logger.warn(ctx.channel().remoteAddress() + ": " + ex, ex);
             }
         }
-        if (ex instanceof OutOfMemoryError) {
+        if (ex instanceof OutOfMemoryError || isCallerIPInBlacklist != null) {
             ctx.close();
         }
     }

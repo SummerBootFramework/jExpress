@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import static org.summerboot.jexpress.boot.config.ConfigUtil.DECRYPTED_WARPER_PREFIX;
@@ -572,5 +573,18 @@ public class FormatterUtil {
         T[] result = Arrays.copyOf(array1, size + 1);
         result[size] = newElement;
         return result;
+    }
+
+    public static Pattern checkValidRegex(String regexString) {
+        if (regexString == null || regexString.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return Pattern.compile(regexString);
+        } catch (PatternSyntaxException e) {
+            // If compilation fails, the string is not a valid regular expression.
+            return null;
+        }
     }
 }

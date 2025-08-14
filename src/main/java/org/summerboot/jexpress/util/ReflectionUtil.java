@@ -273,7 +273,7 @@ public class ReflectionUtil {
             for (int i = 0; i < valuesStr.length; i++) {
                 Array.set(array, i, toStandardJavaType(valuesStr[i], trim, classT, autoDecrypt, isEmailRecipients, enumConvert));
             }
-            return Set.of((Object[]) array);
+            return Set.of((Object[]) array);// Collections.newSetFromMap(new ConcurrentHashMap<>())
         } else if (targetClass.equals(SortedSet.class)) {
             String[] valuesStr = FormatterUtil.parseDsv(value, collectionDelimiter);
             if (valuesStr == null || valuesStr.length < 1) {

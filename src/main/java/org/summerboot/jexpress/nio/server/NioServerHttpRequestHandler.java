@@ -149,12 +149,12 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             ProcessorSettings processorSettings = null;
             try {
                 if (isDecoderSuccess) {
-                    String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterRegexPrefix(), nioCfg.getCallerAddressFilterOption());
+                    String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
                     if (error == null) {
                         processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
                     } else {
                         Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, "Invalid caller IP", null, "Invalid IP address: " + error);
-                        context.error(err).status(HttpResponseStatus.NOT_ACCEPTABLE);
+                        context.error(err).status(HttpResponseStatus.FORBIDDEN);
                     }
                 } else {
                     Throwable cause = req.decoderResult().cause();

@@ -25,12 +25,14 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -113,9 +115,11 @@ public class GeoIpUtil {
         return ret;
     }
 
-    public static void showAddress(String host, int port) {
-        InetSocketAddress address = new InetSocketAddress(host, port);
-        String info = showAddress(address);
+    public static void showAddress(String host, int port) throws UnknownHostException {
+        InetSocketAddress socketAddress = new InetSocketAddress(host, port);
+        //InetAddress address = InetAddress.getByName(host);
+        //InetSocketAddress socketAddress = new InetSocketAddress(address, port);
+        String info = showAddress(socketAddress);
         System.out.println(info);
     }
 
@@ -127,14 +131,40 @@ public class GeoIpUtil {
         sb.append("\n getHostString=").append(address.getHostString());
         sb.append("\n getHostName=").append(address.getHostName());
         sb.append("\n getAddress=").append(address.getAddress());
-        sb.append("\n getHostAddress=").append(address.getAddress().getHostAddress());
-        sb.append("\n getHostName=").append(address.getAddress().getHostName());
-        sb.append("\n getCanonicalHostName=").append(address.getAddress().getCanonicalHostName());
+        sb.append("\n getHostAddress=").append(address.getAddress() == null ? null : address.getAddress().getHostAddress());
+        sb.append("\n getHostName=").append(address.getAddress() == null ? null : address.getAddress().getHostName());
+        sb.append("\n getCanonicalHostName=").append(address.getAddress() == null ? null : address.getAddress().getCanonicalHostName());
         return sb.toString();
     }
 
     public static enum CallerAddressFilterOption {
         String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName
+    }
+
+    public static String getAddress(SocketAddress callerAddr, CallerAddressFilterOption option) {
+        if (callerAddr == null) {
+            return "";
+        }
+        final String host;
+        if (callerAddr instanceof InetSocketAddress) {
+            InetSocketAddress address = (InetSocketAddress) callerAddr;
+            if (address.isUnresolved()) {
+                return "caller address (" + address + ") is unresolved";
+            }
+            switch (option) {
+                case String -> host = address.toString();
+                case HostString -> host = address.getHostString();
+                case HostName -> host = address.getHostName();
+                case AddressString -> host = address.getAddress() == null ? address.toString() : address.getAddress().toString();
+                case HostAddress -> host = address.getAddress() == null ? address.toString() : address.getAddress().getHostAddress();
+                case AddrHostName -> host = address.getAddress() == null ? address.toString() : address.getAddress().getHostName();
+                case CanonicalHostName -> host = address.getAddress() == null ? address.toString() : address.getAddress().getCanonicalHostName();
+                default -> host = address.getHostName();
+            }
+        } else {
+            host = callerAddr.toString();
+        }
+        return host;
     }
 
     /**
@@ -146,30 +176,9 @@ public class GeoIpUtil {
      * @param option
      * @return null if OK, otherwise return the reason
      */
-    public static String callerAddressFilter(SocketAddress callerAddr, Set<String> whiteList, Set<String> blackList, String regexPrefix, CallerAddressFilterOption option) {
-        if (callerAddr == null) {
-            return "caller address is null";
-        }
-        String host;
-        if (callerAddr instanceof InetSocketAddress) {
-            InetSocketAddress address = (InetSocketAddress) callerAddr;
-            if (address.isUnresolved()) {
-                return "caller address (" + address + ") is unresolved";
-            }
-            switch (option) {
-                case String -> host = address.toString();
-                case HostString -> host = address.getHostString();
-                case HostName -> host = address.getHostName();
-                case AddressString -> host = address.getAddress().toString();
-                case HostAddress -> host = address.getAddress().getHostAddress();
-                case AddrHostName -> host = address.getAddress().getHostName();
-                case CanonicalHostName -> host = address.getAddress().getCanonicalHostName();
-                default -> host = address.getHostName();
-            }
-        } else {
-            host = callerAddr.toString();
-        }
-        return callerAddressFilter(host, whiteList, blackList, regexPrefix);
+    public static String callerAddressFilter(SocketAddress callerAddr, Set<String> whiteList, Set<String> blackList, CallerAddressFilterOption option) {
+        String host = getAddress(callerAddr, option);
+        return callerAddressFilter(host, whiteList, blackList);
     }
 
     /**
@@ -180,17 +189,13 @@ public class GeoIpUtil {
      * @param blackList
      * @return null if OK, otherwise return the reason
      */
-    public static String callerAddressFilter(String host, Set<String> whiteList, Set<String> blackList, String regexPrefix) {
+    public static String callerAddressFilter(String host, Set<String> whiteList, Set<String> blackList) {
         if (whiteList != null && !whiteList.isEmpty()) {
             if (!whiteList.contains(host)) {
                 // check regex
-                if (regexPrefix != null) {
-                    for (String whiteRegex : whiteList) {
-                        if (whiteRegex.startsWith(regexPrefix)) {
-                            if (matches(host, whiteRegex, regexPrefix)) {
-                                return null;
-                            }
-                        }
+                for (String whiteRegex : whiteList) {
+                    if (matches(host, whiteRegex)) {
+                        return null;
                     }
                 }
                 return "caller address (" + host + ") is not in white list";
@@ -199,20 +204,22 @@ public class GeoIpUtil {
         if (blackList != null && !blackList.isEmpty()) {
             if (blackList.contains(host)) {
                 return "caller address (" + host + ") is in black list";
-            } else if (regexPrefix != null) {
-                for (String blackRegex : blackList) {// check regex
-                    if (blackRegex.startsWith(regexPrefix)) {
-                        if (matches(host, blackRegex, regexPrefix)) {
-                            return "caller address (" + host + ") matches black list: " + blackRegex;
-                        }
-                    }
+            }
+            for (String blackRegex : blackList) {// check regex
+                if (matches(host, blackRegex)) {
+                    return "caller address (" + host + ") matches black list: " + blackRegex;
                 }
             }
         }
+
         return null;
     }
 
     public static Map<String, Pattern> REGEX_CACHE = new ConcurrentHashMap<>();
+
+    public static boolean matches(String input, String regex) {
+        return matches(input, regex, null);
+    }
 
     public static boolean matches(String input, String regex, String regexPrefix) {
         if (regex == null || regex.isEmpty()) {
@@ -220,12 +227,17 @@ public class GeoIpUtil {
         }
         Pattern p = REGEX_CACHE.get(regex);
         if (p == null) {
-            if (regexPrefix != null && regex.startsWith(regexPrefix)) {
-                p = Pattern.compile(regex.substring(regexPrefix.length()));
-            } else {
-                p = Pattern.compile(regex);
+            try {
+                if (regexPrefix != null && regex.startsWith(regexPrefix)) {
+                    p = Pattern.compile(regex.substring(regexPrefix.length()));
+                } else {
+                    p = Pattern.compile(regex);
+                }
+                REGEX_CACHE.put(regex, p);
+            } catch (PatternSyntaxException ex) {
+                // ignore invalid regex
+                ex.printStackTrace();
             }
-            REGEX_CACHE.put(regex, p);
         }
         Matcher m = p.matcher(input);
         //return m.matches();  This is a Java's misnamed method, it tries and matches ALL the input.

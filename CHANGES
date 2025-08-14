@@ -1,14 +1,17 @@
 -- release 2.6.1
 
 - enhanced logging: log detailed information and stack trace health check failure
-- enhanced logging and Config new: cfg_nio.properties/
-    ######################################
-    # 5. IO Communication logging filter #
-    ######################################
-    ## Show channel exception in the log, default=true, false value will be ignored if app starts with -debug
-    ## Set to false to avoid showing channel exception in log, this is useful when you have a lot of channel exceptions and want to reduce the noise in the log
-    #nio.verbose.logChannelException=true
+- enhanced logging: Netty channel handler exception will be logged only when:
+    1. run with -debug
+    2. or caller address is in enabled whitelist  or not in enabled blacklist
 
+- Config change: Regex.Prefix is no longer used in CallerAddressFilter, the whitelist and blacklist no longer need a prefix to mark a value as regex.
+    1. cfg_nio.properties
+        - removed: CallerAddressFilter.Regex.Prefix
+        - default value changed: CallerAddressFilter.option=String (was "HostName")
+    2. cfg_grpc.properties
+    - removed: gRpc.server.CallerAddressFilter.Regex.Prefix
+    - default value changed: gRpc.server.CallerAddressFilter.option=String (was "HostName")
 
 Maven Central Repository:
 https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.1/
