@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -227,16 +226,18 @@ public class GeoIpUtil {
         }
         Pattern p = REGEX_CACHE.get(regex);
         if (p == null) {
+            // Do NOT catch Exception here, let it throw, so that the NioConfig and GRPCConfig can fail earlier with wrong configuration.
+            if (regexPrefix != null && regex.startsWith(regexPrefix)) {
+                regex = regex.substring(regexPrefix.length());
+            }
             try {
-                if (regexPrefix != null && regex.startsWith(regexPrefix)) {
-                    p = Pattern.compile(regex.substring(regexPrefix.length()));
-                } else {
-                    p = Pattern.compile(regex);
-                }
+                // If the regex is not valid, it will throw PatternSyntaxException
+                // This is a Java's misnamed method, it tries and matches ALL the input.
+                // p = Pattern.compile(regex, Pattern.DOTALL);
+                p = Pattern.compile(regex);
                 REGEX_CACHE.put(regex, p);
-            } catch (PatternSyntaxException ex) {
-                // ignore invalid regex
-                ex.printStackTrace();
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Invalid regex (\"" + regex + "\"): " + ex.getMessage(), ex);
             }
         }
         Matcher m = p.matcher(input);
