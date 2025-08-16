@@ -1,5 +1,6 @@
 -- release 2.6.1
 
+- enhanced security: replace secpr5121 with secp256r1 for default ECGenParameterSpec
 - enhanced logging: log detailed information and stack trace health check failure
 - enhanced logging: Netty channel handler exception will be logged only when:
     1. run with -debug
