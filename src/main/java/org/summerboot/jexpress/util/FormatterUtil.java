@@ -61,10 +61,6 @@ public class FormatterUtil {
     public static final short NIBBLE_MASK = 0x0F;
 
     public static final String[] EMPTY_STR_ARRAY = {};
-    public static final String REGEX_CSV = "\\s*,\\s*";
-    public static final String REGEX_PSV = "[\\|\\s]+";
-    public static final String REGEX_URL = "\\s*/\\s*";
-    public static final String REGEX_BINDING_MAP = "\\s*:\\s*";
     public static final String REGEX_EMAIL = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     public static final Pattern REGEX_EMAIL_PATTERN = Pattern.compile(REGEX_EMAIL);
 
