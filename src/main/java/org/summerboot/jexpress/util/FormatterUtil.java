@@ -73,43 +73,72 @@ public class FormatterUtil {
         return StringUtils.isBlank(txt) ? EMPTY_STR_ARRAY : txt.split("\\r?\\n");
     }
 
-    public static String[] parseDsv(String csv, String delimiter) {
-        if (StringUtils.isBlank(delimiter) || ",".equals(delimiter)) {
-            return parseCsv(csv);
+    public static String[] parseDsv(String dsv, String delimiter) {
+        return parseDsv(dsv, delimiter, true);
+    }
+
+    public static String[] parseDsv(String dsv, String delimiter, boolean trim) {
+        if (StringUtils.isBlank(dsv)) {
+            return EMPTY_STR_ARRAY;
         }
-        return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split("\\s*" + delimiter + "\\s*");
+
+        if (trim) {
+            // Replace all consecutive spaces or delimiter characters with a single delimiter character
+            dsv = dsv.trim().replaceAll("\\s*" + delimiter + "\\s*", delimiter);
+        }
+        // Use StringUtils.split, which does not use regular expressions
+        return StringUtils.split(dsv, delimiter);
     }
 
     public static String[] parsePsv(String psv) {
+        return parsePsv(psv, true);
+    }
+
+    public static String[] parsePsv(String psv, boolean trim) {
         //return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split(REGEX_PSV);
         if (StringUtils.isBlank(psv)) {
             return EMPTY_STR_ARRAY;
         }
-        // Replace all consecutive spaces or target characters with a single target character
-        //String cleanedPsv = psv.trim().replaceAll("[\\s|]+", "|");
+        if (trim) {
+            // Replace all consecutive spaces or delimiter characters with a single delimiter character
+            psv = psv.trim().replaceAll("[\\s|]+", "|");
+        }
         // Use StringUtils.split, which does not use regular expressions
         return StringUtils.split(psv, '|');
     }
 
     public static String[] parseCsv(String csv) {
+        return parseCsv(csv, true);
+    }
+
+    public static String[] parseCsv(String csv, boolean trim) {
         //return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split(REGEX_CSV);
-        return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : StringUtils.split(csv);
+        if (StringUtils.isBlank(csv)) {
+            return EMPTY_STR_ARRAY;
+        }
+        //return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : StringUtils.split(csv);
+        if (trim) {
+            // Replace all consecutive spaces or delimiter characters with a single delimiter character
+            csv = csv.trim().replaceAll("\\s*,\\s*", ",");
+        }
+        // Use StringUtils.split, which does not use regular expressions
+        return StringUtils.split(csv, ',');
     }
 
     public static String[] parseURL(String url) {
+        return parseURL(url, true);
+    }
+
+    public static String[] parseURL(String url, boolean trim) {
         //return StringUtils.isBlank(url) ? EMPTY_STR_ARRAY : url.trim().split(REGEX_URL);
         if (StringUtils.isBlank(url)) {
             return EMPTY_STR_ARRAY;
         }
-        // Replace all consecutive spaces or target characters with a single target character
-        //String cleanedUrl = url.trim().replaceAll("\\s*/\\s*", "/");
-        return StringUtils.split(url, "/ ");
-    }
-
-    public static String[] parseURL(String url, boolean trim) {
-        return StringUtils.isBlank(url)
-                ? EMPTY_STR_ARRAY
-                : trim ? url.trim().split(REGEX_URL) : url.split(REGEX_URL);
+        if (trim) {
+            // Replace all consecutive spaces or delimiter characters with a single delimiter character
+            url = url.trim().replaceAll("\\s*/\\s*", "/");
+        }
+        return StringUtils.split(url, '/');
     }
 
     public static String parseUrlQueryParam(String url, Map<String, String> queryParam) {
@@ -253,24 +282,28 @@ public class FormatterUtil {
      * BindAddresses = 192.168.1.10:8445, 127.0.0.1:8446, 0.0.0.0:8447
      */
     public static Map<String, Integer> parseBindingAddresss(String bindAddresses) {
-        //int[] ports = Arrays.stream(portsStr).mapToInt(Integer::parseInt).toArray();
-        Map<String, Integer> ret = new HashMap<>();
-        String[] addrs = parseCsv(bindAddresses);
-        for (String addr : addrs) {
-            //String[] ap = addr.trim().split(REGEX_BINDING_MAP);
-            String[] ap = StringUtils.split(addr, ":");
-            ret.put(ap[0], Integer.parseInt(ap[1]));
-        }
-        return ret;
+        Map<String, String> stringMap = parseMap(bindAddresses, true);
+        Map<String, Integer> integerMap = stringMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey, // key remains the same
+                        entry -> Integer.valueOf(entry.getValue()) // convert value to Integer
+                ));
+        return integerMap;
     }
 
     public static Map<String, String> parseMap(String mapCVS) {
-        //int[] ports = Arrays.stream(portsStr).mapToInt(Integer::parseInt).toArray();
+        return parseMap(mapCVS, true);
+    }
+
+    public static Map<String, String> parseMap(String mapCVS, boolean trim) {
         Map<String, String> ret = new HashMap<>();
-        String[] mapKeyValues = parseCsv(mapCVS);
+        String[] mapKeyValues = parseCsv(mapCVS, true);
         for (String mapKeyValue : mapKeyValues) {
             //String[] ap = mapKeyValue.trim().split(REGEX_BINDING_MAP);
-            String[] ap = StringUtils.split(mapKeyValue, ":");
+            if (trim) {
+                mapKeyValue = mapKeyValue.trim().replaceAll("\\s*:\\s*", ":");
+            }
+            String[] ap = StringUtils.split(mapKeyValue, ':');
             ret.put(ap[0], ap[1]);
         }
         return ret;
