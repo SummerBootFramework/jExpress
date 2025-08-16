@@ -80,16 +80,30 @@ public class FormatterUtil {
         return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split("\\s*" + delimiter + "\\s*");
     }
 
-    public static String[] parsePsv(String csv) {
-        return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split(REGEX_PSV);
+    public static String[] parsePsv(String psv) {
+        //return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split(REGEX_PSV);
+        if (StringUtils.isBlank(psv)) {
+            return EMPTY_STR_ARRAY;
+        }
+        // Replace all consecutive spaces or target characters with a single target character
+        //String cleanedPsv = psv.trim().replaceAll("[\\s|]+", "|");
+        // Use StringUtils.split, which does not use regular expressions
+        return StringUtils.split(psv, '|');
     }
 
     public static String[] parseCsv(String csv) {
-        return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split(REGEX_CSV);
+        //return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split(REGEX_CSV);
+        return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : StringUtils.split(csv);
     }
 
     public static String[] parseURL(String url) {
-        return StringUtils.isBlank(url) ? EMPTY_STR_ARRAY : url.trim().split(REGEX_URL);
+        //return StringUtils.isBlank(url) ? EMPTY_STR_ARRAY : url.trim().split(REGEX_URL);
+        if (StringUtils.isBlank(url)) {
+            return EMPTY_STR_ARRAY;
+        }
+        // Replace all consecutive spaces or target characters with a single target character
+        //String cleanedUrl = url.trim().replaceAll("\\s*/\\s*", "/");
+        return StringUtils.split(url, "/ ");
     }
 
     public static String[] parseURL(String url, boolean trim) {
@@ -243,7 +257,8 @@ public class FormatterUtil {
         Map<String, Integer> ret = new HashMap<>();
         String[] addrs = parseCsv(bindAddresses);
         for (String addr : addrs) {
-            String[] ap = addr.trim().split(REGEX_BINDING_MAP);
+            //String[] ap = addr.trim().split(REGEX_BINDING_MAP);
+            String[] ap = StringUtils.split(addr, ":");
             ret.put(ap[0], Integer.parseInt(ap[1]));
         }
         return ret;
@@ -254,7 +269,8 @@ public class FormatterUtil {
         Map<String, String> ret = new HashMap<>();
         String[] mapKeyValues = parseCsv(mapCVS);
         for (String mapKeyValue : mapKeyValues) {
-            String[] ap = mapKeyValue.trim().split(REGEX_BINDING_MAP);
+            //String[] ap = mapKeyValue.trim().split(REGEX_BINDING_MAP);
+            String[] ap = StringUtils.split(mapKeyValue, ":");
             ret.put(ap[0], ap[1]);
         }
         return ret;
