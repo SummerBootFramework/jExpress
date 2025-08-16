@@ -467,7 +467,7 @@ public class EncryptorUtil {
     }
 
     public static KeyPair generateKeyPairEC() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException {
-        return generateKeyPair("EC", 512);
+        return generateKeyPair("EC", 256);// secp256r1 , secp384r1, secp521r1
     }
 
     /**
