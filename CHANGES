@@ -1,5 +1,25 @@
--domain dev -use RoleBased WebBased
-mvn clean deploy -Dmaven.test.skip=true -P release
+-- release 2.6.1
+
+- enhanced logging: log detailed information and stack trace health check failure
+- enhanced logging: Netty channel handler exception will be logged only when:
+    1. run with -debug
+    2. or caller address is in enabled whitelist  or not in enabled blacklist
+
+- Config change: Regex.Prefix is no longer used in CallerAddressFilter, the whitelist and blacklist no longer need a prefix to mark a value as regex.
+    1. cfg_nio.properties
+        - removed: CallerAddressFilter.Regex.Prefix
+        - default value changed: CallerAddressFilter.option=String (was "HostName")
+    2. cfg_grpc.properties
+    - removed: gRpc.server.CallerAddressFilter.Regex.Prefix
+    - default value changed: gRpc.server.CallerAddressFilter.option=String (was "HostName")
+
+Maven Central Repository:
+https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.1/
+https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.1
+
+mvnrepository.com:
+https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.1
+
 
 -- release 2.6.0
 - enhanced security 1: this change use enhanced encryption/decryption to protect sensitive data, like password in config files.
@@ -17,8 +37,8 @@ mvn clean deploy -Dmaven.test.skip=true -P release
 - refactoring CLI exit code
 
 - API new: added @UniqueIgnore to mute @Unique check alert for expected duplicated values
-- API new: added @Inspector.name and @Deamon.requiredHealthChecks (array of @Inspector.names, empty/null means ignore all HealthChecks)
-	this is to set Controller and/or its methods on deamon mode (accessable when pause/health failed but not for specified @Inspector.name
+- API new: added @Inspector.name and @Daemon.requiredHealthChecks (array of @Inspector.names, empty/null means ignore all HealthChecks)
+	this is to set Controller and/or its methods on daemon mode (accessable when pause/health failed but not for specified @Inspector.name
 
 - API renamed: @Controller.implTag renamed to @Controller.AlternativeName
 - API renamed: @Service.implTag renamed to with @Service.AlternativeName
@@ -119,7 +139,7 @@ mvn clean deploy -Dmaven.test.skip=true -P release
 - enhancement: Err with args
 - enhancement: add nio.JAX-RS.toJson.showRefInServiceError in cfg_nio.properties, default false to not show ref field in JSON/XML response
 - enhancement: verify Bearer Token if provided in request header for regardless of a @Controller method is role-based or not
-- enhancement: added GrpcTestBase for gRPC test (uased example in https://github.com/SummerBootFramework/jExpressDemo-HelloSummer/blob/main/HelloSummer-demo02/src/test/java/test/integration/grpc/GrpcTest.java)
+- enhancement: added GrpcTestBase for gRPC test (usage and example see https://github.com/SummerBootFramework/jExpressDemo-HelloSummer/blob/main/HelloSummer-demo02/src/test/java/test/integration/grpc/GrpcTest.java)
 	2-way TLS (server and client verify each other certificate)
 	client verify server certificate, server trust all client certificate
 	server verify server certificate, client trust all client certificate
@@ -197,7 +217,7 @@ https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.0
 
 -- release 2.4.5 --
 - Refactoring: SummerInitializer init before and after Ioc is initialized
-- Enhancement: Reject with 503 asap when paused or health check failed, unless @Controller or its method has @Deamon
+- Enhancement: Reject with 503 asap when paused or health check failed, unless @Controller or its method has @Daemon
 
 -- release 2.4.4 --
 - Enhancement: command line arguments end with /r bu mistake in service script no longer impact application

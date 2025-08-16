@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @BindingAnnotation
-public @interface Deamon {
+public @interface Daemon {
 
     boolean ignorePause() default true;
 

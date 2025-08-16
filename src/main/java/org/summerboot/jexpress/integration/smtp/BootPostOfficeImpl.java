@@ -49,13 +49,13 @@ public class BootPostOfficeImpl implements PostOffice {
     protected Logger log = LogManager.getLogger(getClass());
 
     /**
-     * Update alert title
+     * Update alert subject
      *
-     * @param title
+     * @param subject
      * @return
      */
-    protected String updateAlertTitle(String title) {
-        return "Alert@" + SummerApplication.HOST + " " + appVersion + "[" + BootConstant.APP_ID + "] - " + title + " [" + OffsetDateTime.now() + "]";
+    protected String updateAlertEmailSubject(String subject) {
+        return "Alert@" + SummerApplication.HOST + " " + appVersion + "[" + BootConstant.APP_ID + "] - " + subject + " [" + OffsetDateTime.now() + "]";
     }
 
     /**
@@ -74,29 +74,29 @@ public class BootPostOfficeImpl implements PostOffice {
     }
 
     @Override
-    public void sendAlertAsync(Collection<String> to, final String title, final String content, final Throwable cause, boolean debouncing) {
-        sendAlert(to, title, content, cause, debouncing, true);
+    public void sendAlertAsync(Collection<String> to, final String subject, final String content, final Throwable cause, boolean debouncing) {
+        sendAlert(to, subject, content, cause, debouncing, true);
     }
 
     @Override
-    public void sendAlertSync(Collection<String> to, final String title, final String content, final Throwable cause, boolean debouncing) {
-        sendAlert(to, title, content, cause, debouncing, false);
+    public void sendAlertSync(Collection<String> to, final String subject, final String content, final Throwable cause, boolean debouncing) {
+        sendAlert(to, subject, content, cause, debouncing, false);
     }
 
     /**
      * The implementation of both sendAlertAsync and sendAlertSync
      *
      * @param to
-     * @param title
+     * @param subject
      * @param content
      * @param cause
      * @param debouncing
      * @param async
      */
     @Override
-    public void sendAlert(Collection<String> to, final String title, final String content, final Throwable cause, boolean debouncing, boolean async) {
+    public void sendAlert(Collection<String> to, final String subject, final String content, final Throwable cause, boolean debouncing, boolean async) {
         if (debouncing) {
-            String key = title;
+            String key = subject;
             Throwable rootCause = ExceptionUtils.getRootCause(cause);
             if (rootCause == null) {
                 rootCause = cause;
@@ -108,22 +108,22 @@ public class BootPostOfficeImpl implements PostOffice {
                 return;
             }
         }
-        sendEmail(to, updateAlertTitle(title), updateAlertContent(content, cause), false, async);
+        sendEmail(to, updateAlertEmailSubject(subject), updateAlertContent(content, cause), false, async);
     }
 
     @Override
-    public boolean sendEmailAsync(Collection<String> to, String title, String content, boolean isHTMLFormat) {
-        return this.sendEmail(to, title, content, isHTMLFormat, true);
+    public boolean sendEmailAsync(Collection<String> to, String subject, String content, boolean isHTMLFormat) {
+        return this.sendEmail(to, subject, content, isHTMLFormat, true);
     }
 
     @Override
-    public boolean sendEmailSync(Collection<String> to, String title, String content, boolean isHTMLFormat) {
-        return this.sendEmail(to, title, content, isHTMLFormat, false);
+    public boolean sendEmailSync(Collection<String> to, String subject, String content, boolean isHTMLFormat) {
+        return this.sendEmail(to, subject, content, isHTMLFormat, false);
     }
 
     @Override
-    public boolean sendEmail(Collection<String> to, String title, String content, boolean isHTMLFormat, boolean async) {
-        Email email = Email.compose(title, content, isHTMLFormat ? Email.Format.html : Email.Format.text).to(to);
+    public boolean sendEmail(Collection<String> to, String subject, String content, boolean isHTMLFormat, boolean async) {
+        Email email = Email.compose(subject, content, isHTMLFormat ? Email.Format.html : Email.Format.text).to(to);
         if (to == null || to.isEmpty()) {
             log.warn(() -> "unknown recipient: " + email);
             return false;

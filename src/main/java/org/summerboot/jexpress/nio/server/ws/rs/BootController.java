@@ -51,7 +51,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.annotation.Deamon;
+import org.summerboot.jexpress.boot.annotation.Daemon;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
@@ -160,7 +160,7 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
     @Produces(MediaType.TEXT_HTML)
     @RolesAllowed({Config.ROLE_ADMIN})
-    @Deamon
+    @Daemon
     //@CaptureTransaction("admin.version")
     public void version(@Parameter(hidden = true) final SessionContext context) {
         context.response(getVersion()).status(HttpResponseStatus.OK);
@@ -196,7 +196,7 @@ abstract public class BootController extends PingController {
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
     @Produces(MediaType.TEXT_HTML)
     @RolesAllowed({Config.ROLE_ADMIN})
-    @Deamon
+    @Daemon
     //@CaptureTransaction("admin.inspect")
     public void inspect(@Parameter(hidden = true) final SessionContext context) {
         HealthMonitor.inspect();
@@ -221,7 +221,7 @@ abstract public class BootController extends PingController {
     @PUT
     @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
     @RolesAllowed({Config.ROLE_ADMIN})
-    @Deamon
+    @Daemon
     //@CaptureTransaction("admin.changeStatus")
     public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final SessionContext context) throws IOException {
         HealthMonitor.pauseService(pause, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
@@ -250,7 +250,7 @@ abstract public class BootController extends PingController {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Path(Config.CURRENT_VERSION + Config.API_NF_JSECURITYCHECK)
-    @Deamon
+    @Daemon
     //@CaptureTransaction("user.signJWT")
     @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
     public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
@@ -281,7 +281,7 @@ abstract public class BootController extends PingController {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
-    @Deamon
+    @Daemon
     //@CaptureTransaction("user.signJWT")
     @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
     public Caller longin_JSON(@Valid @Nonnull LoginVo loginVo,
@@ -332,7 +332,7 @@ abstract public class BootController extends PingController {
     )
     @DELETE
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
-    @Deamon
+    @Daemon
     //@PermitAll
     //@CaptureTransaction("user.logoutToken")
     public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final SessionContext context) {
@@ -350,7 +350,7 @@ abstract public class BootController extends PingController {
     @POST
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({Config.ROLE_ADMIN})
-    @Deamon
+    @Daemon
     public void loadTestBenchmarkPost1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -365,7 +365,7 @@ abstract public class BootController extends PingController {
     @Operation(hidden = true)
     @POST
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
-    @Deamon
+    @Daemon
     public void loadTestBenchmarkPost2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -381,7 +381,7 @@ abstract public class BootController extends PingController {
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({Config.ROLE_ADMIN})
-    @Deamon
+    @Daemon
     public void loadTestBenchmarkGet1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -396,7 +396,7 @@ abstract public class BootController extends PingController {
     @Operation(hidden = true)
     @GET
     @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
-    @Deamon
+    @Daemon
     public void loadTestBenchmarkGet2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {

@@ -425,10 +425,10 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         try {
             GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
             SocketAddress remoteAddr = serverCall.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
-            String error = GeoIpUtil.callerAddressFilter(remoteAddr, gRPCCfg.getCallerAddressFilterWhitelist(), gRPCCfg.getCallerAddressFilterBlacklist(), gRPCCfg.getCallerAddressFilterRegexPrefix(), gRPCCfg.getCallerAddressFilterOption());
+            String error = GeoIpUtil.callerAddressFilter(remoteAddr, gRPCCfg.getCallerAddressFilterWhitelist(), gRPCCfg.getCallerAddressFilterBlacklist(), gRPCCfg.getCallerAddressFilterOption());
             if (error != null) {
                 //Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + error);
-                status = Status.UNAUTHENTICATED.withDescription(ERROR + "Invalid IP address: " + error);
+                status = Status.PERMISSION_DENIED.withDescription(ERROR + "Invalid IP address: " + error);
             } else {
                 ctx = ctx.withValue(GrpcCallerAddr, remoteAddr);
                 String headerValueAuthorization = metadata.get(BearerAuthCredential.AUTHORIZATION_METADATA_KEY);

@@ -882,7 +882,7 @@ public class SessionContext {
         }
         //sb.append(TimeUtil.toOffsetDateTime(startTs, zoneId));
         sb.append("[").append(txId).append(" ").append(localIP).append("] [")
-                .append(status).append(", error=").append(errorCount).append(", queuing=").append(queuingTime).append("ms, process=").append(processTime).append("ms, response=").append(responseTime).append("] ")
+                .append(status).append(", error=").append(errorCount).append(", queuing=").append(queuingTime).append("ms, process=").append(processTime).append("ms, response=").append(responseTime).append("ms] ")
                 .append(protocol).append(" ").append(requestMethod).append(" ").append(requestURI).append(", ")
                 .append(remoteIP).append("=").append(caller == null ? callerId : caller);
         return this;
@@ -951,14 +951,15 @@ public class SessionContext {
 //                }
 //            }
 //        }
-        List<Err> errors = serviceError.getErrors();
-        if (errors != null && !errors.isEmpty()) {
-            sb.append(BootConstant.BR + BootConstant.BR + "\tErrors: ");
-            for (var error : errors) {
-                sb.append(BootConstant.BR + "\t ").append(error.toStringEx(true));
-            }
-        }
-
+//        List<Err> errors = serviceError.getErrors();
+//        if (errors != null && !errors.isEmpty()) {
+//            sb.append(BootConstant.BR + BootConstant.BR + "\tErrors: " + serviceError.getRef());
+//            for (var error : errors) {
+//                sb.append(BootConstant.BR + "\t ").append(error.toStringEx(true));
+//            }
+//        }
+        sb.append(BootConstant.BR + BootConstant.BR + "\t");
+        serviceError.toStringWithStackTrace(sb);
         return this;
     }
 }

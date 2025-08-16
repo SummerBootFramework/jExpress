@@ -84,13 +84,11 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.autostart", defaultValue = "true")
     protected volatile boolean autoStart = true;
 
-    @Config(key = "CallerAddressFilter.option", defaultValue = "HostName", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
-    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.HostName;
-    @Config(key = "CallerAddressFilter.Regex.Prefix", desc = "A non-blank prefix to mark a string as Regex in both Whitelist and Blacklist, blank means all strings are not Regex")
-    protected volatile String callerAddressFilterRegexPrefix;
-    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example (when Regex.Prefix = RG): 127.0.0.1, RG^192\\\\.168\\\\.1\\\\.")
+    @Config(key = "CallerAddressFilter.option", defaultValue = "String", desc = "valid value = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")
+    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
+    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
     protected volatile Set<String> callerAddressFilterWhitelist;
-    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example (when Regex.Prefix = RG): 10.1.1.40, RG^192\\\\.168\\\\.2\\\\.")
+    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
     @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", desc = "@Inspector.names in CSV format, empty/null means require ALL HealthChecks")
@@ -144,7 +142,7 @@ public class NioConfig extends BootConfig {
     protected String[] sslProtocols = {"TLSv1.2", "TLSv1.3"};
 
     @Config(key = "nio.server.ssl.CipherSuites",
-            desc = "use system default ciphersuites when not specified")
+            desc = "use system default cipher suites when not specified")
     protected String[] sslCipherSuites;
 
     //3.1 Socket controller
@@ -200,7 +198,7 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "8192")
     protected volatile int httpServerCodec_MaxChunkSize = 8192;
 
-    @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Exector Pool")
+    @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Executor Pool")
     @Config(key = "nio.server.EventLoopGroup.Acceptor.useVirtualThread", defaultValue = "false")
     protected volatile boolean nioEventLoopGroupAcceptorUseVirtualThread = false;
     @Config(key = "nio.server.EventLoopGroup.AcceptorSize", defaultValue = "0",
@@ -240,7 +238,7 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.BizExecutor.allowCoreThreadTimeOut", defaultValue = "false")
     protected boolean allowCoreThreadTimeOut = false;
 
-    //4.2 Netty Performance - NIO and Biz Exector Pool
+    //4.2 Netty Performance - NIO and Biz Executor Pool
     protected ThreadPoolExecutor tpe = null;
 
     @Config(key = "nio.server.BizExecutor.bizTimeoutWarnThresholdMs", defaultValue = "5000")
@@ -417,27 +415,18 @@ public class NioConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
-        if (StringUtils.isBlank(callerAddressFilterRegexPrefix)) {
-            callerAddressFilterRegexPrefix = null;
-        } else {
-            if (callerAddressFilterWhitelist != null) {
-                for (String regex : callerAddressFilterWhitelist) {
-                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
-//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
-                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
-                    }
-                }
-            }
-            if (callerAddressFilterBlacklist != null) {
-                for (String regex : callerAddressFilterBlacklist) {
-                    GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
-                    if (regex.startsWith(callerAddressFilterRegexPrefix)) {
-//                        Pattern.compile(regex.substring(callerAddressFilterRegexPrefix.length()));
-                        GeoIpUtil.matches("", regex, callerAddressFilterRegexPrefix);
-                    }
-                }
+        // pre-compile regexes for whitelist and blacklist
+        if (callerAddressFilterWhitelist != null) {
+            for (String regex : callerAddressFilterWhitelist) {
+                GeoIpUtil.matches("", regex);
             }
         }
+        if (callerAddressFilterBlacklist != null) {
+            for (String regex : callerAddressFilterBlacklist) {
+                GeoIpUtil.matches("", regex);
+            }
+        }
+
         // 7. Web Server Mode       
         rootFolder = cfgFile.getParentFile().getParentFile();
         docrootDir = null;
@@ -559,10 +548,6 @@ public class NioConfig extends BootConfig {
 
     public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
         return CallerAddressFilterOption;
-    }
-
-    public String getCallerAddressFilterRegexPrefix() {
-        return callerAddressFilterRegexPrefix;
     }
 
     public Set<String> getCallerAddressFilterWhitelist() {

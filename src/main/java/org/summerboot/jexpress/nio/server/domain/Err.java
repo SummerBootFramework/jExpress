@@ -96,14 +96,14 @@ public class Err {
 
     public String toStringEx(boolean isForInternalDebug) {
         if (!isForInternalDebug) {
-            return "{" + "\"errorCode\": " + errorCode + ", errorTag=" + errorTag + ", \"errorDesc\": \"" + errorDesc + "\"}";
+            return "{" + "\"errorCode\":" + errorCode + ", errorTag:" + errorTag + ", \"errorDesc\":\"" + errorDesc + "\"}";
         }
         Throwable rootCause = ExceptionUtils.getRootCause(cause);
         if (rootCause == null) {
             rootCause = cause;
         }
         String trace = ExceptionUtils.getStackTrace(cause);
-        return "{" + "\"errorCode\": \"" + errorCode + "\", \"errorTag\"=\"" + errorTag + "\", \"errorDesc\": \"" + errorDesc + "\", \"internalInfo\": \"" + internalInfo + "\", \"cause\": \"" + rootCause + "\"}\n\t" + trace + "\n\n";
+        return "{" + "\"errorCode\":\"" + errorCode + "\", \"errorTag\":\"" + errorTag + "\", \"errorDesc\":\"" + errorDesc + "\", \"internalInfo\":\"" + internalInfo + "\", \"cause\":\"" + rootCause + "\"}\n\t" + trace + "\n\n";
     }
 
     @JsonIgnore

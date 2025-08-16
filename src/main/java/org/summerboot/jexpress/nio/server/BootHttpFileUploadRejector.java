@@ -19,7 +19,6 @@ import com.google.inject.Singleton;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.util.ReferenceCountUtil;
@@ -44,15 +43,7 @@ public class BootHttpFileUploadRejector extends SimpleChannelInboundHandler<Http
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable ex) {
-        if (ex instanceof DecoderException) {
-            log.warn(ctx.channel().remoteAddress() + ": " + ex);
-        } else {
-            log.warn(ctx.channel().remoteAddress() + ": " + ex, ex);
-        }
-        if (ex instanceof OutOfMemoryError) {
-            ctx.close();
-        }
-        //ctx.close();
+        NioHttpUtil.onExceptionCaught(ctx, ex, log);
     }
 
     @Override

@@ -18,7 +18,6 @@ package org.summerboot.jexpress.nio.server;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -87,15 +86,9 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable ex) {
-        if (ex instanceof DecoderException) {
-            log.warn(ctx.channel().remoteAddress() + ": " + ex);
-        } else {
-            log.warn(ctx.channel().remoteAddress() + ": " + ex, ex);
-        }
-        if (ex instanceof OutOfMemoryError) {
-            ctx.close();
-        }
+        NioHttpUtil.onExceptionCaught(ctx, ex, log);
     }
+
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
@@ -156,12 +149,12 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             ProcessorSettings processorSettings = null;
             try {
                 if (isDecoderSuccess) {
-                    String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterRegexPrefix(), nioCfg.getCallerAddressFilterOption());
+                    String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
                     if (error == null) {
                         processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
                     } else {
                         Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, "Invalid caller IP", null, "Invalid IP address: " + error);
-                        context.error(err).status(HttpResponseStatus.NOT_ACCEPTABLE);
+                        context.error(err).status(HttpResponseStatus.FORBIDDEN);
                     }
                 } else {
                     Throwable cause = req.decoderResult().cause();

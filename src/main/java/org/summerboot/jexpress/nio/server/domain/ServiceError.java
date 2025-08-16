@@ -76,6 +76,21 @@ public class ServiceError {
         return "ServiceError{" + "ref=" + ref + ", attachedData=" + attachedData + ", errors=" + errors + '}';
     }
 
+    public void toStringWithStackTrace(StringBuilder sb) {
+        if (errors != null && !errors.isEmpty()) {
+            sb.append("ServiceError: " + ref);
+            for (var error : errors) {
+                sb.append(BootConstant.BR + "\t ").append(error.toStringEx(true));
+            }
+        }
+    }
+
+    public String toStringWithStackTrace() {
+        StringBuilder sb = new StringBuilder();
+        toStringWithStackTrace(sb);
+        return sb.toString();
+    }
+
     public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
         try {

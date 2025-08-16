@@ -22,6 +22,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelProgressiveFuture;
 import io.netty.channel.ChannelProgressiveFutureListener;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -52,6 +53,7 @@ import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.ApplicationUtil;
+import org.summerboot.jexpress.util.GeoIpUtil;
 import org.summerboot.jexpress.util.TimeUtil;
 
 import java.io.BufferedReader;
@@ -398,6 +400,21 @@ public class NioHttpUtil {
             return URLDecoder.decode(value, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException ex) {
             return value;
+        }
+    }
+
+    public static void onExceptionCaught(ChannelHandlerContext ctx, Throwable ex, Logger logger) {
+        NioConfig nioCfg = NioConfig.cfg;
+        String isCallerIPInBlacklist = GeoIpUtil.callerAddressFilter(ctx.channel().remoteAddress(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
+        if (BootConstant.isDebugMode() || isCallerIPInBlacklist == null) {
+            if (ex instanceof DecoderException) {
+                logger.warn(ctx.channel().remoteAddress() + ": " + ex);
+            } else {
+                logger.warn(ctx.channel().remoteAddress() + ": " + ex, ex);
+            }
+        }
+        if (ex instanceof OutOfMemoryError || isCallerIPInBlacklist != null) {
+            ctx.close();
         }
     }
 
