@@ -1,5 +1,6 @@
 # Summer Boot Framework
 
+
 Summer Boot Framework was initiated by a group of developers in 2004 to provide a high-performance, free, customizable, and lightweight Netty JAX-RS RESTful, WebSocket, and gRPC
 service with JPA and other powerful reusable non-functional features. Since 2011, it has been adopted by several Toronto law firms to customize their back-end services.
 
