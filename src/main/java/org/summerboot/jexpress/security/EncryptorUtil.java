@@ -485,6 +485,7 @@ public class EncryptorUtil {
     public static KeyPair generateKeyPair(String keyfactoryAlgorithm, int size) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException, NoSuchProviderException {
         if (keyfactoryAlgorithm == null) {
             keyfactoryAlgorithm = "EC";
+            size = 256; // default to EC with 256 bits
         }
         keyfactoryAlgorithm = keyfactoryAlgorithm.toUpperCase();
         KeyPairGenerator kpg;
