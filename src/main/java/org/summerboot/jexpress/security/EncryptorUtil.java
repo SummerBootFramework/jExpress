@@ -462,11 +462,11 @@ public class EncryptorUtil {
         }
     }
 
-    public static KeyPair generateKeyPairRSA() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException {
+    public static KeyPair generateKeyPairRSA() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException, NoSuchProviderException {
         return generateKeyPair("RSA", 4096);
     }
 
-    public static KeyPair generateKeyPairEC() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException {
+    public static KeyPair generateKeyPairEC() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException, NoSuchProviderException {
         return generateKeyPair("EC", 256);// secp256r1 , secp384r1, secp521r1
     }
 
@@ -482,33 +482,30 @@ public class EncryptorUtil {
      * @throws NoSuchAlgorithmException
      * @throws InvalidKeySpecException
      */
-    public static KeyPair generateKeyPair(String keyfactoryAlgorithm, int size) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException {
+    public static KeyPair generateKeyPair(String keyfactoryAlgorithm, int size) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException, NoSuchProviderException {
         if (keyfactoryAlgorithm == null) {
             keyfactoryAlgorithm = "EC";
         }
+        keyfactoryAlgorithm = keyfactoryAlgorithm.toUpperCase();
         KeyPairGenerator kpg;
-        switch (keyfactoryAlgorithm.toUpperCase()) {
-            case "RSA" -> {
+        switch (keyfactoryAlgorithm) {
+            case "RSA", "DSA", "DH" -> {
                 if (size < 2048) {
                     throw new InvalidAlgorithmParameterException("RSA key size must be at least 2048 bits.");
                 }
-                kpg = KeyPairGenerator.getInstance("RSA");
+                kpg = KeyPairGenerator.getInstance(keyfactoryAlgorithm);
                 kpg.initialize(size);
+            }
+            case "EDSA" -> {
+                kpg = KeyPairGenerator.getInstance(keyfactoryAlgorithm, "BC");
             }
             case "EC" -> {
                 if (size < 256) {
                     throw new InvalidAlgorithmParameterException("EC key size must be at least 256 bits.");
                 }
-                kpg = KeyPairGenerator.getInstance("EC");
+                kpg = KeyPairGenerator.getInstance(keyfactoryAlgorithm);
                 ECGenParameterSpec spec = getECCurveName(size);
                 kpg.initialize(spec);
-            }
-            case "DSA", "DH" -> {
-                if (size < 2048) {
-                    throw new InvalidAlgorithmParameterException(keyfactoryAlgorithm + " key size must be at least 2048 bits.");
-                }
-                kpg = KeyPairGenerator.getInstance(keyfactoryAlgorithm.toUpperCase());
-                kpg.initialize(size);
             }
             default -> throw new NoSuchAlgorithmException(keyfactoryAlgorithm);
         }
@@ -521,7 +518,7 @@ public class EncryptorUtil {
             case 256 -> "secp256r1"; // NIST P-256
             case 384 -> "secp384r1";
             case 521 -> "secp521r1";
-            default -> "secp521r1";// use 512
+            default -> "secp256r1";// use 256 by default
         });
     }
 
