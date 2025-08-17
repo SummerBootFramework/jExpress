@@ -56,8 +56,6 @@ public class SSLUtil {
 
     /**
      * A trust manager that does not validate certificate chains.
-     *
-     * @deprecated Insecure. Do not use. Use a properly configured TrustManagerFactory instead.
      */
     public static final TrustManager[] TRUST_ALL_CERTIFICATES = new TrustManager[]{
             new X509TrustManager() {
