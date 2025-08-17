@@ -167,14 +167,14 @@ Its sub-project, jExpress (a.k.a. Summer Boot Framework Core), focuses on solvin
         @GET
         @Path("/account/{name}")
         @Produces({MediaType.TEXT_PLAIN})
-        public String hello(@NotNull @PathParam("name") String myName) {// both Nonnull or NotNull works
+        public String hello(@NotNull @PathParam("name") String myName) { // both Nonnull or NotNull works
             return "Hello " + myName;
         }
     
         @POST
         @Path("/account/{name}")
-        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Content-Type: application/json or Content-Type: application/xml
-        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Accept: application/json or Accept: application/xml
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML}) // require request header Content-Type: application/json or Content-Type: application/xml
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML}) // require request header Accept: application/json or Accept: application/xml
         public ResponseDto hello_no_validation_unprotected_logging(@PathParam("name") String myName, RequestDto request) {
             return new ResponseDto();
         }
@@ -192,19 +192,19 @@ Its sub-project, jExpress (a.k.a. Summer Boot Framework Core), focuses on solvin
          */
         @POST
         @Path("/hello/{name}")
-        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Content-Type: application/json or Content-Type: application/xml
-        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})// require request header Accept: application/json or Accept: application/xml
+        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML}) // require request header Content-Type: application/json or Content-Type: application/xml
+        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML}) // require request header Accept: application/json or Accept: application/xml
         @Log(maskDataFields = {"creditCardNumber", "clientPrivacy", "secretList"})
         public ResponseDto hello_auto_validation_protected_logging_markWithPOI(@NotNull @PathParam("name") String myName, @NotNull @Valid RequestDto request, final SessionContext context) {
-            context.poi("DB begin");// about POI, see section8.3
+            context.poi("DB begin"); // about POI, see section8.3
             // DB access and it takes time ...
             context.poi("DB end");
     
-            context.poi("gRPC begin");// about POI, see section8.3
+            context.poi("gRPC begin"); // about POI, see section8.3
             // gRPC access and it takes time ...
             context.poi("gRPC end");
     
-           context.status(HttpResponseStatus.CREATED);// override default HTTP response status
+           context.status(HttpResponseStatus.CREATED); // override default HTTP response status
             return new ResponseDto();
         }
     
@@ -228,57 +228,53 @@ Its sub-project, jExpress (a.k.a. Summer Boot Framework Core), focuses on solvin
 
 **Below is the log of `hello_no_validation_unprotected_logging()`:**
 
-````
-
+```bash
 2023-04-20T19:48:12,523 INFO org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [pool-4-thread-1]
-request\_1.caller=null
-request\_1=POST /hellosummer/account1/123, dataSize=71, KeepAlive=true,
+request_1.caller=null
+request_1=POST /hellosummer/account1/123, dataSize=71, KeepAlive=true,
 chn=[id: 0xac275188, L:/127.0.0.1:8311 - R:/127.0.0.1:22517], ctx=475223663,
-hdl=org.summerboot.jexpress.nio.server.server.BootHttpRequestHandler@578198d9
-responsed\_1=200 OK, error=0, queuing=7ms, process=34ms, response=36ms, cont.len=68bytes
+hdl=org.summerboot.jexpress.nio.server.BootHttpRequestHandler@578198d9
+responsed_1=200 OK, error=0, queuing=7ms, process=34ms, response=36ms, cont.len=68bytes
 POI: service.begin=7ms, process.begin=8ms, biz.begin=33ms, biz.end=33ms, process.end=34ms, service.end=36ms,
-1.client\_req.headers=DefaultHttpHeaders[Connection: keep-alive, Accept: application/json, Content-Type: application/json, Content-Length: 71, Host: localhost:8311, User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.2)]
-2.client\_req.body={
+1.client_req.headers=DefaultHttpHeaders[Connection: keep-alive, Accept: application/json, Content-Type: application/json, Content-Length: 71, Host: localhost:8311, User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.2)]
+2.client_req.body={
 "creditCardNumber" : "123456",
 "shoppingList" : [ "a", "b" ]
 }
-3.server\_resp.headers=DefaultHttpHeaders[X-Reference: 1, X-ServerTs: 2023-04-20T19:48:12.519-04:00]
-4.server\_resp.body={"clientPrivacy":"secret: mylicenseKey","clientNonPrivacy":"shared","secretList":["aa","bb"]
+3.server_resp.headers=DefaultHttpHeaders[X-Reference: 1, X-ServerTs: 2023-04-20T19:48:12.519-04:00]
+4.server_resp.body={"clientPrivacy":"secret: mylicenseKey","clientNonPrivacy":"shared","secretList":["aa","bb"]
 }
 Memo: n/a
-
-```
+````
 
 **Below is the log of with `@Log(maskDataFields = {"creditCardNumber", "clientPrivacy", "secretList"})`**
 
-```
-
+```bash
 2023-04-20T19:53:47,167 INFO org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [pool-4-thread-2]
-request\_2.caller=null
-request\_2=POST /hellosummer/account2/123, dataSize=71, KeepAlive=true,
+request_2.caller=null
+request_2=POST /hellosummer/account2/123, dataSize=71, KeepAlive=true,
 chn=[id: 0x3748e908, L:/127.0.0.1:8311 - R:/127.0.0.1:22619], ctx=950626969,
 hdl=org.summerboot.jexpress.nio.server.BootHttpRequestHandler@578198d9
-responsed\_2=201 Created, error=0, queuing=1ms, process=217ms, response=219ms, cont.len=68bytes
+responsed_2=201 Created, error=0, queuing=1ms, process=217ms, response=219ms, cont.len=68bytes
 POI: service.begin=1ms, process.begin=1ms, biz.begin=217ms, db.begin=217ms, db.end=217ms, gRPC.begin=217ms,
 gRPC.end=217ms, biz.end=217ms, process.end=217ms, service.end=219ms,
-1.client\_req.headers=DefaultHttpHeaders[Connection: keep-alive, Accept: application/json, Content-Type: application/json, Content-Length: 71, Host: localhost:8311, User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.2)]
-2.client\_req.body={
+1.client_req.headers=DefaultHttpHeaders[Connection: keep-alive, Accept: application/json, Content-Type: application/json, Content-Length: 71, Host: localhost:8311, User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.2)]
+2.client_req.body={
 "creditCardNumber" : "***",
 "shoppingList" : [ "a", "b" ]
 }
-3.server\_resp.headers=DefaultHttpHeaders[X-Reference: 2, X-ServerTs: 2023-04-20T19:53:47.159-04:00]
-4.server\_resp.body={"clientPrivacy":"***","clientNonPrivacy":"shared","secretList":["\*\*\*"]}
+3.server_resp.headers=DefaultHttpHeaders[X-Reference: 2, X-ServerTs: 2023-04-20T19:53:47.159-04:00]
+4.server_resp.body={"clientPrivacy":"***","clientNonPrivacy":"shared","secretList":["***"]}
 Memo: n/a
-
-````
+```
 
 ### 1.4 Sample Code: Use `<AlternativeName>`
 
-Use the `@Controller.AlternativeName` field as below. This controller class will only be available with the `-use RoleBased` parameter to launch the application. See *section#9*.
+Use the `@Controller.AlternativeName` field as below. This controller class will only be available with the `-use RoleBased` parameter to launch the application. See *section\#9*.
 
 ```java
 @Controller(AlternativeName="RoleBased")
-````
+```
 
 ### 1.5 Sample Code: PING
 
@@ -672,7 +668,7 @@ public class WebController extends BootController {
     @GET
     @Ping
     @Path("/ping")
-    public void ping() {// or whatever method name you like
+    public void ping() { // or whatever method name you like
     }
     
     @GET
@@ -875,17 +871,17 @@ Full version:
 ```java
 @Service //this is the default
 public class MyServiceImpl implements MyServcie {
-    ...
+    // ...
 }
 
 @Service(AlternativeName="impl1")
 public class MyServiceImpl_1 implements MyServcie {
-    ...
+    // ...
 }
 
 @Service(AlternativeName="impl2")
 public class MyServiceImpl_2 implements MyServcie {
-    ...
+    // ...
 }
 ```
 
@@ -1013,6 +1009,7 @@ java -jar my-service.jar -unique POI
   * Some testing processes require the service to be only available to a limited caller and to tell others not to send requests to this service to make troubleshooting easy.
   * In production, it may be required to make the service (HTTP or gRPC) available to callers from a certain IP range.
 
+<!-- end list -->
 
 ```
 ```
