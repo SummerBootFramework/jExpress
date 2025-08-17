@@ -239,7 +239,7 @@ public class JaxRsRequestProcessorManager {
                                 : new HashMap<>();
                         httpMethodMapRef.put(httpMethod, processorMapPerHttpMethod);
                     }
-                    String key = processor.getDeclaredPath();
+                    String key = processor.getProcessedDeclaredPath();
 //                    if (subMap.containsKey(key)) {
 //                        errors.add("request already exists: " + httpMethod + " '" + path + "' @ " + controllerClass.getName() + "." + javaMethod.getName() + "()");
 //                        continue;

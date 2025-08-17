@@ -65,6 +65,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     protected final Object javaInstance;
     protected final Method javaMethod;
     protected final String declaredPath;
+    protected final String processedDeclaredPath;
     protected final Set<String> rolesAllowed;
     protected final boolean roleBased;
     protected final boolean permitAll;
@@ -95,10 +96,11 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 //    protected final boolean logResponseHeader;
 //    protected final boolean logResponseBody;
 
-    public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String path, final Set<String> declareRoles) {
+    public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String declaredPath, final Set<String> declareRoles) {
         //1. Basic info
         this.javaInstance = javaInstance;
         this.javaMethod = javaMethod;
+        this.declaredPath = declaredPath;
         Class controllerClass = javaInstance.getClass();
         String info = controllerClass.getName() + "." + javaMethod.getName();
         DeclareRoles drs = (DeclareRoles) controllerClass.getAnnotation(DeclareRoles.class);
@@ -245,7 +247,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         String pathParamRegex_OptionalInURL = "(\\/.*)?";
         String matrixParamRegx = "(;.+=.*)*";
         Map<String, MetaPathParam> pathParamMapTemp = new HashMap<>();
-        String[] pathMembers = FormatterUtil.parseURL(path);
+        String[] pathMembers = FormatterUtil.parseURL(declaredPath);
         StringBuilder sb = new StringBuilder();
         int size = pathMembers.length;
         int last = size - 1;
@@ -276,8 +278,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         this.hasPathParam = !pathParamMapTemp.isEmpty();
         this.pathParamMap = hasPathParam ? Map.copyOf(pathParamMapTemp) : null;
-        this.declaredPath = (hasPathParam || hasMatrixParam) ? sb.toString() : path;
-        this.regexPattern = (hasPathParam || hasMatrixParam) ? Pattern.compile(this.declaredPath) : null;
+        this.processedDeclaredPath = (hasPathParam || hasMatrixParam) ? sb.toString() : declaredPath;
+        this.regexPattern = (hasPathParam || hasMatrixParam) ? Pattern.compile(this.processedDeclaredPath) : null;
 
         //logging info
         classLevelLogAnnotation = (Log) controllerClass.getAnnotation(Log.class);
@@ -343,6 +345,11 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
+    public String getProcessedDeclaredPath() {
+        return processedDeclaredPath;
+    }
+
+    @Override
     public boolean isRoleBased() {
         return roleBased;
     }
@@ -352,7 +359,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (regexPattern != null) {
             return regexPattern.matcher(path).matches();
         } else {
-            return declaredPath.equals(path);
+            return processedDeclaredPath.equals(path);
         }
     }
 
@@ -390,7 +397,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         Object ret;
         Object[] paramValues = new Object[parameterSize];
         if (parameterSize > 0) {
-            ServiceRequest request = buildServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody);
+            ServiceRequest request = buildServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody, context);
             for (int i = 0; i < parameterSize; i++) {
                 paramValues[i] = parameterList.get(i).value(request, context);
             }
@@ -496,7 +503,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         return hasPathParam;
     }
 
-    public ServiceRequest buildServiceRequest(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody) {
+    public ServiceRequest buildServiceRequest(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context) {
         ServiceRequest req = new ServiceRequest(channelHandlerCtx, httpHeaders, httpRequestPath, queryParams, httpPostRequestBody);
         if (hasPathParam) {
             String[] pathList = FormatterUtil.parseURL(httpRequestPath);
@@ -527,6 +534,11 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                     }
                     if (meta.matches(value)) {
                         req.addPathParam(pathParamName, value);
+                    } else {
+                        String pattern = meta.pathParamMetaPattern.pattern();
+                        Err e = new Err(BootErrorCode.BAD_REQUEST_DATA, null,
+                                "Value (" + value + ") does not match parameter (" + pathParamName + ")'s pattern (" + pattern + ") in declared URL: " + declaredPath, null);
+                        context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     }
                 }
             });

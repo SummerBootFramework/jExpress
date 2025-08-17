@@ -53,6 +53,10 @@ public class SSLUtil {
     }
 
     protected static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
+
+    /**
+     * A trust manager that does not validate certificate chains.
+     */
     public static final TrustManager[] TRUST_ALL_CERTIFICATES = new TrustManager[]{
             new X509TrustManager() {
 
