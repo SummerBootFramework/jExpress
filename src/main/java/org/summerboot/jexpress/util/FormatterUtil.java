@@ -80,7 +80,9 @@ public class FormatterUtil {
 
         if (trim) {
             // Replace all consecutive spaces or delimiter characters with a single delimiter character
-            dsv = dsv.trim().replaceAll("\\s*" + delimiter + "\\s*", delimiter);
+            //String regex = "\\s*" + delimiter + "\\s*";
+            String regex = "\\s*+" + delimiter + "\\s*+";
+            dsv = dsv.trim().replaceAll(regex, delimiter);
         }
         // Use StringUtils.split, which does not use regular expressions
         return StringUtils.split(dsv, delimiter);
@@ -97,7 +99,9 @@ public class FormatterUtil {
         }
         if (trim) {
             // Replace all consecutive spaces or delimiter characters with a single delimiter character
-            psv = psv.trim().replaceAll("[\\s|]+", "|");
+            String regex = "[\\s|]+";
+            //String regex = "\\s*+|\\s*+";
+            psv = psv.trim().replaceAll(regex, "|");
         }
         // Use StringUtils.split, which does not use regular expressions
         return StringUtils.split(psv, '|');
@@ -108,14 +112,14 @@ public class FormatterUtil {
     }
 
     public static String[] parseCsv(String csv, boolean trim) {
-        //return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : csv.trim().split(REGEX_CSV);
         if (StringUtils.isBlank(csv)) {
             return EMPTY_STR_ARRAY;
         }
-        //return StringUtils.isBlank(csv) ? EMPTY_STR_ARRAY : StringUtils.split(csv);
         if (trim) {
             // Replace all consecutive spaces or delimiter characters with a single delimiter character
-            csv = csv.trim().replaceAll("\\s*,\\s*", ",");
+            //String regex = "\\s*,\\s*";
+            String regex = "\\s*+,\\s*+";
+            csv = csv.trim().replaceAll(regex, ",");
         }
         // Use StringUtils.split, which does not use regular expressions
         return StringUtils.split(csv, ',');
@@ -126,13 +130,14 @@ public class FormatterUtil {
     }
 
     public static String[] parseURL(String url, boolean trim) {
-        //return StringUtils.isBlank(url) ? EMPTY_STR_ARRAY : url.trim().split(REGEX_URL);
         if (StringUtils.isBlank(url)) {
             return EMPTY_STR_ARRAY;
         }
         if (trim) {
             // Replace all consecutive spaces or delimiter characters with a single delimiter character
-            url = url.trim().replaceAll("\\s*/\\s*", "/");
+            //String regex = "\\s*/\\s*";
+            String regex = "\\s*+/\\s*+";
+            url = url.trim().replaceAll(regex, "/");
         }
         return StringUtils.split(url, '/');
     }
@@ -295,9 +300,10 @@ public class FormatterUtil {
         Map<String, String> ret = new HashMap<>();
         String[] mapKeyValues = parseCsv(mapCVS, true);
         for (String mapKeyValue : mapKeyValues) {
-            //String[] ap = mapKeyValue.trim().split(REGEX_BINDING_MAP);
             if (trim) {
-                mapKeyValue = mapKeyValue.trim().replaceAll("\\s*:\\s*", ":");
+                //String regex = "\\s*:\\s*";
+                String regex = "\\s*+:\\s*+";
+                mapKeyValue = mapKeyValue.trim().replaceAll(regex, ":");
             }
             String[] ap = StringUtils.split(mapKeyValue, ':');
             ret.put(ap[0], ap[1]);
