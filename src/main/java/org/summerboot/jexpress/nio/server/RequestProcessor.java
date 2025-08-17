@@ -34,6 +34,8 @@ public interface RequestProcessor {
 
     String getDeclaredPath();
 
+    String getProcessedDeclaredPath();
+
     boolean isRoleBased();
 
     boolean matches(String httpRequestPath);
