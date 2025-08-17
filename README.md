@@ -565,8 +565,8 @@ my.key.name=DEC(plain password)
 
 * Sensitive Data - passwords, license keys, signing key (HS256, HS384, HS512 only), and 3rd party tokens (AWS integration token, etc.) cannot be plain text.
 * Protect sensitive data in the config files - just like the "one ring to rule them all" in The Lord of the Rings.
-    * **One-Way Protection:** The application admin can only write to the config file with plain text but cannot read encrypted sensitive data from the config file.
-    * **Two-Level Protection:** The application root password is managed/protected by the root admin. It controls sensitive data encryption/decryption, and it should not be managed
+  * **One-Way Protection:** The application admin can only write to the config file with plain text but cannot read encrypted sensitive data from the config file.
+  * **Two-Level Protection:** The application root password is managed/protected by the root admin. It controls sensitive data encryption/decryption, and it should not be managed
       by the application admin.
 
 ### 4.2 Motivation
@@ -582,9 +582,9 @@ my.key.name=DEC(plain password)
 
 * **Two-Level Access**: who controls what
 
-    * **Level 1: Application Admin** - can update application sensitive data as plain text **without knowing the root password nor how to encrypt/decrypt**. The plain text
+  * **Level 1: Application Admin** - can update application sensitive data as plain text **without knowing the root password nor how to encrypt/decrypt**. The plain text
       sensitive data will be automatically encrypted by the running application, or manually encrypted by the app admin without knowing the root password.
-    * **Level 2: Root (Linux/Windows) Admin** - controls the root password in a protected file, which is used to encrypt/decrypt the sensitive data stored inside the application
+  * **Level 2: Root (Linux/Windows) Admin** - controls the root password in a protected file, which is used to encrypt/decrypt the sensitive data stored inside the application
       config file, and is only accessible by the root admin but not the application admin or other users.
 
   Your application is launched as a system service controlled by the root admin and runs with:
@@ -605,11 +605,11 @@ my.key.name=DEC(plain password)
 
 * **Auto Encrypt mode**:
 
-    * **step1**: Wrap the plain text password with `DEC()` as shown below. Here, `DEC()` is a marker that tells the app what to encrypt, and the remaining values are untouched:
+  * **step1**: Wrap the plain text password with `DEC()` as shown below. Here, `DEC()` is a marker that tells the app what to encrypt, and the remaining values are untouched:
       ```properties
       datasource.password=DEC(plain password)
       ```
-    * **step2**: Save this config file. The application will automatically pick up the change in 5 seconds and then encrypt it using the app config password stored in
+  * **step2**: Save this config file. The application will automatically pick up the change in 5 seconds and then encrypt it using the app config password stored in
       `<path to a file which contains config password>`. Then, it will replace it with `ECN(encrypted value)` in the same file:
       ```properties
       datasource.password=ENC(encrypted password)
@@ -639,8 +639,8 @@ my.key.name=DEC(plain password)
 
 > **Note:**
 >
->   * The comments in the configuration file will not be auto/batch encrypted/decrypted.
->   * `changeit` is the default `<app root password>` when `-authfile` or `-auth` option is not specified.
+> * The comments in the configuration file will not be auto/batch encrypted/decrypted.
+> * `changeit` is the default `<app root password>` when `-authfile` or `-auth` option is not specified.
 
 -----
 
@@ -810,10 +810,10 @@ the cfg_smtp.properties
 
 1. **Request log** - It contains client request-related information. A single log entry contains the following information:
 
-    1. Security/Business required information: On which server life/session/location, who did what, when, how, and from where.
-    2. Performance tuning required information: POI (point of interest) of the key events.
-    3. App support required information: The full conversation between the client and the service.
-    4. App Debug required information: The full conversation between the service and a 3rd party.
+   1. Security/Business required information: On which server life/session/location, who did what, when, how, and from where.
+   2. Performance tuning required information: POI (point of interest) of the key events.
+   3. App support required information: The full conversation between the client and the service.
+   4. App Debug required information: The full conversation between the service and a 3rd party.
 
    Log sample:
 
