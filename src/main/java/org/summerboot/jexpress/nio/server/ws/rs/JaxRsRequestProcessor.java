@@ -536,7 +536,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                         req.addPathParam(pathParamName, value);
                     } else {
                         String pattern = meta.pathParamMetaPattern.pattern();
-                        Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_URLPARAM, null,
+                        Err e = new Err(BootErrorCode.BAD_REQUEST_DATA, null,
                                 "Value (" + value + ") does not match parameter (" + pathParamName + ")'s pattern (" + pattern + ") in declared URL: " + declaredPath, null);
                         context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     }

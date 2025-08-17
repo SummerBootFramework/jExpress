@@ -55,13 +55,12 @@ public interface BootErrorCode {
     int NIO_FILE_UPLOAD_BAD_LENGTH = getErrorCode(NIO_BASE + 6);
     int NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT = getErrorCode(NIO_BASE + 7);
     int NIO_REQUEST_BAD_HEADER = getErrorCode(NIO_BASE + 8);
-    int NIO_REQUEST_BAD_URLPARAM = getErrorCode(NIO_BASE + 9);
-    int BAD_REQUEST_DATA = getErrorCode(NIO_BASE + 10);
-    int NIO_REQUEST_BAD_ENCODING = getErrorCode(NIO_BASE + 11);
-    int NIO_REQUEST_BAD_DOWNLOAD = getErrorCode(NIO_BASE + 12);
-    int SERVICE_UNAVAILABLE = getErrorCode(NIO_BASE + 13);
-    int SERVICE_HEALTH_CHECK_FAILED = getErrorCode(NIO_BASE + 14);
-    int SERVICE_PAUSED = getErrorCode(NIO_BASE + 15);
+    int BAD_REQUEST_DATA = getErrorCode(NIO_BASE + 9);
+    int NIO_REQUEST_BAD_ENCODING = getErrorCode(NIO_BASE + 10);
+    int NIO_REQUEST_BAD_DOWNLOAD = getErrorCode(NIO_BASE + 11);
+    int SERVICE_UNAVAILABLE = getErrorCode(NIO_BASE + 12);
+    int SERVICE_HEALTH_CHECK_FAILED = getErrorCode(NIO_BASE + 13);
+    int SERVICE_PAUSED = getErrorCode(NIO_BASE + 14);
 
     //IO
     int IO_BASE = getErrorCode(20);
