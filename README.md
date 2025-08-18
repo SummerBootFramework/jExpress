@@ -1,4 +1,6 @@
-# Summer Boot Framework
+# Summer Boot Framework 
+
+[View Changelog (CHANGES)](CHANGES)
 
 
 Summer Boot Framework was initiated by a group of developers in 2004 to provide a high-performance, free, customizable, and lightweight Netty JAX-RS RESTful, WebSocket, and gRPC
@@ -48,7 +50,7 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
         <repository>
             <id>maven.snapshots</id>
             <name>Maven Snapshot Repository</name>
-            <url>[https://s01.oss.sonatype.org/content/repositories/snapshots/](https://s01.oss.sonatype.org/content/repositories/snapshots/)</url>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
             <releases>
                 <enabled>false</enabled>
             </releases>
@@ -1000,4 +1002,4 @@ java -jar my-service.jar -unique POI
 * Make the visitor pattern available at the application level.
 * You can even put all your logic in one or multiple external jar files developed by different teams as plugins.
 
-### 11.3 Supported typ
+
