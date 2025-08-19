@@ -12,9 +12,12 @@ import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.security.SSLConnectionFactory;
+import org.summerboot.jexpress.security.SSLUtil;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.util.Properties;
@@ -116,7 +119,9 @@ abstract public class MqttClientConfig extends BootConfig {
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
         if (kmf != null) {
-            socketFactory = new SSLConnectionFactory(kmf, tmf, sslProtocol);//.getSSLSocketFactory();
+            KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
+            TrustManager[] trustManagers = tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
+            socketFactory = new SSLConnectionFactory(keyManagers, trustManagers, sslProtocol);
         }
     }
 
@@ -149,11 +154,6 @@ abstract public class MqttClientConfig extends BootConfig {
         }
         if (socketFactory != null) {
             connOpts.setSocketFactory(socketFactory);
-//            if (tmf == null) {
-//                connOpts.setHttpsHostnameVerificationEnabled(false);
-//            } else {
-//                connOpts.setHttpsHostnameVerificationEnabled(isVerifyHostname());
-//            }
             connOpts.setHttpsHostnameVerificationEnabled(isVerifyHostname());
         }
         return connOpts;

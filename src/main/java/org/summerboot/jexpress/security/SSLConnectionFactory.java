@@ -23,15 +23,19 @@ public class SSLConnectionFactory extends SSLSocketFactory {
      * @param tmf
      * @param protocol default TLSv1.3 if null
      */
-    public SSLConnectionFactory(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol) {
-        KeyManager[] kms = kmf == null ? null : kmf.getKeyManagers();
-        TrustManager[] tms = tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
-        try {
-            SSLContext sslCtx = SSLUtil.buildSSLContext(kms, tms, protocol == null ? "TLSv1.3" : protocol);
-            sf = sslCtx.getSocketFactory();
-        } catch (IOException | GeneralSecurityException ex) {
-            throw new RuntimeException(ex);
-        }
+    public SSLConnectionFactory(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol) throws GeneralSecurityException, IOException {
+        this(kmf == null ? null : kmf.getKeyManagers(),
+                tmf == null ? null : tmf.getTrustManagers(),
+                protocol);
+    }
+
+    public SSLConnectionFactory(KeyManager[] kms, TrustManager[] tms, String protocol) throws GeneralSecurityException, IOException {
+        SSLContext sslCtx = SSLUtil.buildSSLContext(kms, tms, protocol == null ? "TLSv1.3" : protocol);
+        sf = sslCtx.getSocketFactory();
+    }
+
+    public SSLConnectionFactory(SSLSocketFactory sf) {
+        this.sf = sf;
     }
 
     public SSLSocketFactory getSSLSocketFactory() {
