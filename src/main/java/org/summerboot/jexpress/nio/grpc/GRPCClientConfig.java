@@ -27,13 +27,11 @@ import io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
-import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import jakarta.annotation.Nullable;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.security.SSLUtil;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
@@ -105,8 +103,8 @@ abstract public class GRPCClientConfig extends BootConfig {
                     + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
 
-    @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3")// "TLSv1.2, TLSv1.3"
-    protected String[] sslProtocols;
+    @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")// "TLSv1.2, TLSv1.3"
+    protected String[] tlsProtocols;
     @Config(key = ID + ".ssl.ciphers")
     protected List<String> ciphers;
     @Config(key = ID + ".ssl.Provider", defaultValue = "OPENSSL", desc = "ssl provider: OPENSSL (default), OPENSSL_REFCNT,  JDK")
@@ -141,10 +139,6 @@ abstract public class GRPCClientConfig extends BootConfig {
             desc = DESC_TMF)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
-
-    @Config(key = ID + ".ssl.TLS_AuthenticationPolicy", defaultValue = "TrustStore_Required",
-            desc = "valid values: TrustStore_Required (default), TrustStore_JDK_Default, TrustStore_TrustAllCertificates")
-    protected volatile SSLUtil.TLS_AuthenticationPolicy tlsAuthenticationPolicy = SSLUtil.TLS_AuthenticationPolicy.TrustStore_Required;
 
     protected void generateTemplate_truststore(StringBuilder sb) {
         sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
@@ -209,7 +203,7 @@ abstract public class GRPCClientConfig extends BootConfig {
             nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
             nameResolverRegistry.register(nameResolverProvider);
         }
-        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, tlsAuthenticationPolicy, overrideAuthority, ciphers, sslProvider, sslProtocols);
+        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, tlsProtocols);
         configNettyChannelBuilder(channelBuilder);
         for (GRPCClient listener : listeners) {
             listener.updateChannelBuilder(channelBuilder);
@@ -299,13 +293,13 @@ abstract public class GRPCClientConfig extends BootConfig {
      * @return
      * @throws javax.net.ssl.SSLException
      */
-    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory, SSLUtil.TLS_AuthenticationPolicy tlsAuthenticationPolicy,
+    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
                                                               @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
-        return initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, keyManagerFactory, trustManagerFactory, tlsAuthenticationPolicy, overrideAuthority, ciphers, SslProvider.OPENSSL, tlsVersionProtocols);
+        return initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, SslProvider.OPENSSL, tlsVersionProtocols);
     }
 
-    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory, SSLUtil.TLS_AuthenticationPolicy tlsAuthenticationPolicy,
-                                                              @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable SslProvider sslProvider, @Nullable String... tlsVersionProtocols) throws SSLException {
+    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+                                                              @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable SslProvider sslProvider, @Nullable String... tlsProtocols) throws SSLException {
         final NettyChannelBuilder channelBuilder;
         if (nameResolverProvider != null) {// use client side load balancing
             // register
@@ -333,40 +327,21 @@ abstract public class GRPCClientConfig extends BootConfig {
                     break;
             }
         }
-        if (keyManagerFactory == null) {
+        if (tlsProtocols == null || tlsProtocols.length == 0) {
             channelBuilder.usePlaintext();
         } else {
             final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
             // set keyManagerFactory
             sslBuilder.keyManager(keyManagerFactory);
-
-            // set trustManagerFactory
-            if (trustManagerFactory == null) {//ignore Server Certificate
-                switch (tlsAuthenticationPolicy) {
-                    case TrustStore_JDK_Default:
-                        // use JDK default truststore
-                        trustManagerFactory = null;
-                        break;
-                    case TrustStore_TrustAllCertificates:
-                        // use insecure trust manager
-                        trustManagerFactory = InsecureTrustManagerFactory.INSTANCE;
-                        break;
-                    case TrustStore_Required:
-                    default:
-                        // required truststore is not configured, throw an exception
-                        throw new IllegalArgumentException("No truststore is configured, please configure a truststore or set " + ID + ".ssl.TLS_AuthenticationPolicy to TrustStore_JDK_Default or TrustStore_TrustAllCertificates");
-                }
-                sslBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
-            }
-            sslBuilder.trustManager(trustManagerFactory);
+            sslBuilder.trustManager(trustManagerFactory);// io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
             if (overrideAuthority != null) {
                 channelBuilder.overrideAuthority(overrideAuthority);
             }
 
             // set sslProvider
             GrpcSslContexts.configure(sslBuilder, sslProvider);
-            if (tlsVersionProtocols != null) {
-                sslBuilder.protocols(tlsVersionProtocols);
+            if (tlsProtocols != null) {
+                sslBuilder.protocols(tlsProtocols);
             }
             if (ciphers != null) {
                 sslBuilder.ciphers(ciphers);
@@ -393,8 +368,8 @@ abstract public class GRPCClientConfig extends BootConfig {
         return uri;
     }
 
-    public String[] getSslProtocols() {
-        return sslProtocols;
+    public String[] getTlsProtocols() {
+        return tlsProtocols;
     }
 
     public List getCiphers() {
