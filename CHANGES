@@ -1,9 +1,9 @@
 
 \-- release 2.6.1
 
-  * Fixed all GitHub CodeQL alerts and security issues.
+  * Fixed all legacy GitHub CodeQL alerts and security issues.
 
-  * Fixed all GitHub Codacy Security Scan reported issues.
+  * Fixed all legacy GitHub Codacy Security Scan reported issues.
 
   * Improved security - configuration behavior changed as below for HttpClientConfig, GRPCClientConfig, MqttClientConfig and AuthConfig (cfg_aut.propertie)
     1. TLS protocol: Use plaintext no SSL/TLS if TLS protocol is configured as blank or empty string.
