@@ -138,12 +138,12 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.ssl.Provider", defaultValue = "OPENSSL")
     protected volatile SslProvider sslProvider = SslProvider.OPENSSL;
 
-    @Config(key = "nio.server.ssl.Protocols", defaultValue = "TLSv1.2, TLSv1.3")
-    protected String[] sslProtocols = {"TLSv1.2", "TLSv1.3"};
+    @Config(key = "nio.server.ssl.Protocols", defaultValue = "TLSv1.2, TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")// "TLSv1.2, TLSv1.3"
+    protected String[] tlsProtocols = {"TLSv1.2", "TLSv1.3"};
 
     @Config(key = "nio.server.ssl.CipherSuites",
             desc = "use system default cipher suites when not specified")
-    protected String[] sslCipherSuites;
+    protected String[] tlsCipherSuites;
 
     //3.1 Socket controller
     @ConfigHeader(title = "3.1 Socket controller")
@@ -586,12 +586,12 @@ public class NioConfig extends BootConfig {
         return sslProvider;
     }
 
-    public String[] getSslProtocols() {
-        return sslProtocols;
+    public String[] getTlsProtocols() {
+        return tlsProtocols;
     }
 
-    public String[] getSslCipherSuites() {
-        return sslCipherSuites;
+    public String[] getTlsCipherSuites() {
+        return tlsCipherSuites;
     }
 
     public boolean isSoReuseAddr() {
