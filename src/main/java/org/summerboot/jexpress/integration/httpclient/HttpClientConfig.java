@@ -112,8 +112,8 @@ abstract public class HttpClientConfig extends BootConfig {
 
     //3.1 HTTP Client Security
     @ConfigHeader(title = "1. HTTP Client Security")
-    @Config(key = "httpclient.ssl.protocol", defaultValue = "TLSv1.3")
-    protected volatile String protocol = "TLSv1.3";
+    @Config(key = "httpclient.ssl.protocol", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")
+    protected volatile String tlsProtocol = "TLSv1.3";
 
     protected static final String KEY_kmf_key = "httpclient.ssl.KeyStore";
     protected static final String KEY_kmf_StorePwdKey = "httpclient.ssl.KeyStorePwd";
@@ -140,10 +140,6 @@ abstract public class HttpClientConfig extends BootConfig {
             desc = DESC_TMF)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
-
-    @Config(key = "httpclient.ssl.TLS_AuthenticationPolicy", defaultValue = "TrustStore_Required",
-            desc = "valid values: TrustStore_Required (default), TrustStore_JDK_Default, TrustStore_TrustAllCertificates")
-    protected volatile SSLUtil.TLS_AuthenticationPolicy tlsAuthenticationPolicy = SSLUtil.TLS_AuthenticationPolicy.TrustStore_Required;
 
 
     protected void generateTemplate_truststore(StringBuilder sb) {
@@ -282,32 +278,16 @@ abstract public class HttpClientConfig extends BootConfig {
 
         RPCResult.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive);
 
-        // 3.1 HTTP Client keystore
-        KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
-        // 3.2 HTTP Client truststore
-        final TrustManager[] trustManagers;
-        if (tmf == null) {
-            switch (tlsAuthenticationPolicy) {
-                case TrustStore_JDK_Default:
-                    // use JDK default truststore
-                    trustManagers = null;
-                    break;
-                case TrustStore_TrustAllCertificates:
-                    // use insecure trust manager
-                    trustManagers = SSLUtil.InsecureTrustManager;
-                    break;
-                case TrustStore_Required:
-                default:
-                    // required truststore is not configured, throw an exception
-                    throw new IllegalArgumentException("No truststore is configured, please configure a truststore or set httpclient.ssl.TLS_AuthenticationPolicy to TrustStore_JDK_Default or TrustStore_TrustAllCertificates");
-            }
-
+        final SSLContext sslContext;
+        if (StringUtils.isBlank(tlsProtocol)) {
+            sslContext = null;
         } else {
-            trustManagers = tmf.getTrustManagers();
-        }
-        SSLContext sslContext = SSLUtil.buildSSLContext(keyManagers, trustManagers, protocol);
-        if (hostnameVerification != null) {
-            System.setProperty("jdk.internal.httpclient.disableHostnameVerification", hostnameVerification ? "false" : "true");
+            KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
+            final TrustManager[] trustManagers = tmf == null ? null : tmf.getTrustManagers();
+            sslContext = SSLUtil.buildSSLContext(keyManagers, trustManagers, tlsProtocol);
+            if (hostnameVerification != null) {
+                System.setProperty("jdk.internal.httpclient.disableHostnameVerification", hostnameVerification ? "false" : "true");
+            }
         }
 
         // 3.3 HTTP Client Executor
@@ -436,8 +416,8 @@ abstract public class HttpClientConfig extends BootConfig {
         return httpClientDefaultRequestHeaders;
     }
 
-    public String getProtocol() {
-        return protocol;
+    public String getTlsProtocol() {
+        return tlsProtocol;
     }
 
     public Boolean isHostnameVerificationEnabled() {

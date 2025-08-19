@@ -115,9 +115,9 @@ public class NioServer {
         ClientAuth clientAuth = kmf != null && tmf != null ? ClientAuth.REQUIRE : ClientAuth.NONE;
         if (kmf != null) {
             List<String> ciphers;
-            String[] cipherSuites = nioCfg.getSslCipherSuites();
+            String[] cipherSuites = nioCfg.getTlsCipherSuites();
             if (cipherSuites != null && cipherSuites.length > 0) {
-                ciphers = Arrays.asList(nioCfg.getSslCipherSuites());
+                ciphers = Arrays.asList(nioCfg.getTlsCipherSuites());
             } else {
                 ciphers = Http2SecurityUtil.CIPHERS;
             }
@@ -131,11 +131,11 @@ public class NioServer {
                     .clientAuth(clientAuth)
                     .sslProvider(sp)
                     .sessionTimeout(0)
-                    .protocols(nioCfg.getSslProtocols())
+                    .protocols(nioCfg.getTlsProtocols())
                     .ciphers(ciphers, SupportedCipherSuiteFilter.INSTANCE)
                     .build();
 //            }
-            log.info(StringUtils.join("[" + sp + "] " + Arrays.asList(nioCfg.getSslProtocols())) + " (" + nioCfg.getSslHandshakeTimeoutSeconds() + "s): " + ciphers);
+            log.info(StringUtils.join("[" + sp + "] " + Arrays.asList(nioCfg.getTlsProtocols())) + " (" + nioCfg.getSslHandshakeTimeoutSeconds() + "s): " + ciphers);
         }
 
         // Configure the server.

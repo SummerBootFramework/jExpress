@@ -18,6 +18,7 @@ package org.summerboot.jexpress.security.auth;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import org.apache.tika.utils.StringUtils;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
@@ -117,7 +118,7 @@ public class AuthConfig extends BootConfig {
             desc = DESC_KMF)
     protected volatile KeyManagerFactory kmf;
 
-    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3")
+    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")
     protected volatile String ldapTLSProtocol;
 
     @Config(key = "ldap.SSLConnectionFactoryClass")
@@ -221,7 +222,7 @@ public class AuthConfig extends BootConfig {
         // 1. LDAP Client keystore
         if (ldapHost != null) {
             // 1.1 LDAP Client keystore
-            boolean isSSLEnabled = kmf != null;
+            boolean isSSLEnabled = !StringUtils.isBlank(ldapTLSProtocol);
             if (isSSLEnabled) {
                 //LdapSSLConnectionFactory1.init(kmf == null ? null : kmf.getKeyManagers(), tmf == null ? null : tmf.getTrustManagers(), ldapTLSProtocol);
                 //ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();

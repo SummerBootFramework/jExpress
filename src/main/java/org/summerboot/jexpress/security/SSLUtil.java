@@ -24,7 +24,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +32,6 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -52,27 +50,9 @@ public class SSLUtil {
         client, server
     }
 
-    public enum TLS_AuthenticationPolicy {
-        /**
-         * Client authentication
-         */
-        TrustStore_Required,
-        /**
-         * Server authentication
-         */
-        TrustStore_JDK_Default,
-        /**
-         * Both client and server authentication
-         */
-        TrustStore_TrustAllCertificates
-    }
+    /*protected static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
 
-    ;
-    protected static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
-
-    /**
-     * A trust manager that does not validate certificate chains.
-     */
+    // A trust manager that does not validate certificate chains.
     public static final TrustManager[] InsecureTrustManager = new TrustManager[]{
             new X509TrustManager() {
 
@@ -98,32 +78,8 @@ public class SSLUtil {
 //                }
 //            }
             }
-    };
-    //public static final TrustManager[] TRUST_ALL_CERTIFICATES = null;
+    };*/
 
-    /*public static void disableSslVerification(KeyManager[] kms) throws NoSuchAlgorithmException, KeyManagementException {
-        // 1. ignore the host name verification
-        HttpsURLConnection.setDefaultHostnameVerifier(IGNORE_HOST_NAME_VERIFIER);
-
-        //2. trust all certificates
-        // Create a trust manager that does not validate certificate chains
-        //导入客户端证书
-//        KeyStore ks = KeyStore.getInstance("pkcs12");
-//        FileInputStream instream = new FileInputStream(new File(PATH));
-//        ks.load(instream, psw.toCharArray());
-//        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-//        kmf.init(ks, psw.toCharArray());
-//        KeyManager[] kms = kmf.getKeyManagers();
-        //String TLS_VERSION = "TLSv1.3";// "SSL";
-        // Install the all-trusting trust manager
-        SSLContext sc = SSLContext.getInstance(DEFAULT_PROTOCOL);
-        sc.init(kms, TRUST_ALL_CERTIFICATES, new java.security.SecureRandom());
-        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-    }*/
-    //    public static KeyManager[] buildKeyManagers(String keyStorePath, String keyStorePwdStr) throws GeneralSecurityException, IOException {
-//        char[] keyStorePwd = StringUtils.isBlank(keyStorePwdStr) ? null : SecurityUtil.decrypt(v).toCharArray();
-//        return buildKeyManagers(keyStorePath, char[] keyStorePwd);
-//    }
     public static KeyManagerFactory buildKeyManagerFactory(String keyStorePath, char[] keyStorePwd, String keyAlias, char[] keyPwd) throws GeneralSecurityException, IOException {
         if (StringUtils.isBlank(keyStorePath)) {
             return null;

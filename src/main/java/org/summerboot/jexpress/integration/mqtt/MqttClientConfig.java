@@ -12,7 +12,6 @@ import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.security.SSLConnectionFactory;
-import org.summerboot.jexpress.security.SSLUtil;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.KeyManager;
@@ -49,8 +48,8 @@ abstract public class MqttClientConfig extends BootConfig {
     protected volatile String serverURI;
 
 
-    @Config(key = ID + ".ssl.Protocol", defaultValue = "TLSv1.3")// "TLSv1.2, TLSv1.3"
-    protected String sslProtocol;
+    @Config(key = ID + ".ssl.Protocol", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")
+    protected String tlsProtocol;
 
     // 2. keystore
     protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
@@ -81,10 +80,6 @@ abstract public class MqttClientConfig extends BootConfig {
             desc = DESC_TMF)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
-
-    @Config(key = ID + ".ssl.TLS_AuthenticationPolicy", defaultValue = "TrustStore_Required",
-            desc = "valid values: TrustStore_Required (default), TrustStore_JDK_Default, TrustStore_TrustAllCertificates")
-    protected volatile SSLUtil.TLS_AuthenticationPolicy tlsAuthenticationPolicy = SSLUtil.TLS_AuthenticationPolicy.TrustStore_Required;
 
     protected void generateTemplate_truststore(StringBuilder sb) {
         sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
@@ -122,28 +117,12 @@ abstract public class MqttClientConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
-        if (kmf != null) {
+        if (StringUtils.isBlank(tlsProtocol)) {
+            socketFactory = null;
+        } else {
             KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
-            final TrustManager[] trustManagers;
-            if (tmf == null && SSLUtil.TLS_AuthenticationPolicy.TrustStore_TrustAllCertificates.equals(tlsAuthenticationPolicy)) {
-                switch (tlsAuthenticationPolicy) {
-                    case TrustStore_JDK_Default:
-                        // use JDK default truststore
-                        trustManagers = null;
-                        break;
-                    case TrustStore_TrustAllCertificates:
-                        // use insecure trust manager
-                        trustManagers = SSLUtil.InsecureTrustManager;
-                        break;
-                    case TrustStore_Required:
-                    default:
-                        // required truststore is not configured, throw an exception
-                        throw new IllegalArgumentException("No truststore is configured, please configure a truststore or set " + ID + ".ssl.TLS_AuthenticationPolicy to TrustStore_JDK_Default or TrustStore_TrustAllCertificates");
-                }
-            } else {
-                trustManagers = tmf.getTrustManagers();
-            }
-            socketFactory = new SSLConnectionFactory(keyManagers, trustManagers, sslProtocol);
+            final TrustManager[] trustManagers = tmf == null ? null : tmf.getTrustManagers();
+            socketFactory = new SSLConnectionFactory(keyManagers, trustManagers, tlsProtocol);
         }
     }
 
@@ -193,8 +172,8 @@ abstract public class MqttClientConfig extends BootConfig {
         return serverURI;
     }
 
-    public String getSslProtocol() {
-        return sslProtocol;
+    public String getTlsProtocol() {
+        return tlsProtocol;
     }
 
     public KeyManagerFactory getKmf() {
