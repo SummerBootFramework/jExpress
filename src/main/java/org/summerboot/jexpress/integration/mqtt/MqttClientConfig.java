@@ -82,6 +82,10 @@ abstract public class MqttClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
+    @Config(key = ID + ".ssl.TLS_AuthenticationPolicy", defaultValue = "TrustStore_Required",
+            desc = "valid values: TrustStore_Required (default), TrustStore_JDK_Default, TrustStore_TrustAllCertificates")
+    protected volatile SSLUtil.TLS_AuthenticationPolicy tlsAuthenticationPolicy = SSLUtil.TLS_AuthenticationPolicy.TrustStore_Required;
+
     protected void generateTemplate_truststore(StringBuilder sb) {
         sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
         sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE);
@@ -120,7 +124,25 @@ abstract public class MqttClientConfig extends BootConfig {
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
         if (kmf != null) {
             KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
-            TrustManager[] trustManagers = tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers();
+            final TrustManager[] trustManagers;
+            if (tmf == null && SSLUtil.TLS_AuthenticationPolicy.TrustStore_TrustAllCertificates.equals(tlsAuthenticationPolicy)) {
+                switch (tlsAuthenticationPolicy) {
+                    case TrustStore_JDK_Default:
+                        // use JDK default truststore
+                        trustManagers = null;
+                        break;
+                    case TrustStore_TrustAllCertificates:
+                        // use insecure trust manager
+                        trustManagers = SSLUtil.InsecureTrustManager;
+                        break;
+                    case TrustStore_Required:
+                    default:
+                        // required truststore is not configured, throw an exception
+                        throw new IllegalArgumentException("No truststore is configured, please configure a truststore or set " + ID + ".ssl.TLS_AuthenticationPolicy to TrustStore_JDK_Default or TrustStore_TrustAllCertificates");
+                }
+            } else {
+                trustManagers = tmf.getTrustManagers();
+            }
             socketFactory = new SSLConnectionFactory(keyManagers, trustManagers, sslProtocol);
         }
     }
