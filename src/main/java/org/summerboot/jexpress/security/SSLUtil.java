@@ -52,12 +52,28 @@ public class SSLUtil {
         client, server
     }
 
+    public enum TLS_AuthenticationPolicy {
+        /**
+         * Client authentication
+         */
+        TrustStore_Required,
+        /**
+         * Server authentication
+         */
+        TrustStore_JDK_Default,
+        /**
+         * Both client and server authentication
+         */
+        TrustStore_TrustAllCertificates
+    }
+
+    ;
     protected static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
 
     /**
      * A trust manager that does not validate certificate chains.
      */
-    public static final TrustManager[] TRUST_ALL_CERTIFICATES = new TrustManager[]{
+    public static final TrustManager[] InsecureTrustManager = new TrustManager[]{
             new X509TrustManager() {
 
                 @Override

@@ -33,6 +33,7 @@ import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.security.SSLUtil;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
@@ -141,6 +142,10 @@ abstract public class GRPCClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
+    @Config(key = ID + ".ssl.TLS_AuthenticationPolicy", defaultValue = "TrustStore_Required",
+            desc = "valid values: TrustStore_Required (default), TrustStore_JDK_Default, TrustStore_TrustAllCertificates")
+    protected volatile SSLUtil.TLS_AuthenticationPolicy tlsAuthenticationPolicy = SSLUtil.TLS_AuthenticationPolicy.TrustStore_Required;
+
     protected void generateTemplate_truststore(StringBuilder sb) {
         sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
         sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE);
@@ -204,7 +209,7 @@ abstract public class GRPCClientConfig extends BootConfig {
             nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
             nameResolverRegistry.register(nameResolverProvider);
         }
-        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, sslProtocols);
+        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, tlsAuthenticationPolicy, overrideAuthority, ciphers, sslProvider, sslProtocols);
         configNettyChannelBuilder(channelBuilder);
         for (GRPCClient listener : listeners) {
             listener.updateChannelBuilder(channelBuilder);
@@ -294,12 +299,12 @@ abstract public class GRPCClientConfig extends BootConfig {
      * @return
      * @throws javax.net.ssl.SSLException
      */
-    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory, SSLUtil.TLS_AuthenticationPolicy tlsAuthenticationPolicy,
                                                               @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
-        return initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, SslProvider.OPENSSL, tlsVersionProtocols);
+        return initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, keyManagerFactory, trustManagerFactory, tlsAuthenticationPolicy, overrideAuthority, ciphers, SslProvider.OPENSSL, tlsVersionProtocols);
     }
 
-    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory, SSLUtil.TLS_AuthenticationPolicy tlsAuthenticationPolicy,
                                                               @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable SslProvider sslProvider, @Nullable String... tlsVersionProtocols) throws SSLException {
         final NettyChannelBuilder channelBuilder;
         if (nameResolverProvider != null) {// use client side load balancing
@@ -332,15 +337,33 @@ abstract public class GRPCClientConfig extends BootConfig {
             channelBuilder.usePlaintext();
         } else {
             final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
+            // set keyManagerFactory
             sslBuilder.keyManager(keyManagerFactory);
+
+            // set trustManagerFactory
             if (trustManagerFactory == null) {//ignore Server Certificate
-                sslBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
-            } else {
-                sslBuilder.trustManager(trustManagerFactory);
-                if (overrideAuthority != null) {
-                    channelBuilder.overrideAuthority(overrideAuthority);
+                switch (tlsAuthenticationPolicy) {
+                    case TrustStore_JDK_Default:
+                        // use JDK default truststore
+                        trustManagerFactory = null;
+                        break;
+                    case TrustStore_TrustAllCertificates:
+                        // use insecure trust manager
+                        trustManagerFactory = InsecureTrustManagerFactory.INSTANCE;
+                        break;
+                    case TrustStore_Required:
+                    default:
+                        // required truststore is not configured, throw an exception
+                        throw new IllegalArgumentException("No truststore is configured, please configure a truststore or set " + ID + ".ssl.TLS_AuthenticationPolicy to TrustStore_JDK_Default or TrustStore_TrustAllCertificates");
                 }
+                sslBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
             }
+            sslBuilder.trustManager(trustManagerFactory);
+            if (overrideAuthority != null) {
+                channelBuilder.overrideAuthority(overrideAuthority);
+            }
+
+            // set sslProvider
             GrpcSslContexts.configure(sslBuilder, sslProvider);
             if (tlsVersionProtocols != null) {
                 sslBuilder.protocols(tlsVersionProtocols);
