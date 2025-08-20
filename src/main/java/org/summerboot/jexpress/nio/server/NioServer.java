@@ -108,12 +108,18 @@ public class NioServer {
         System.setProperty("io.netty.allocator.normalCacheSize", "0");
 
         // Configure SSL.
+        String[] tlsProtocols = nioCfg.getTlsProtocols();
+        boolean isTLSEnalbed = tlsProtocols != null && tlsProtocols.length > 0;
         SSLContext jdkSslContext = null;
         SslContext nettySslContext = null;
         KeyManagerFactory kmf = nioCfg.getKmf();
         TrustManagerFactory tmf = nioCfg.getTmf();
-        ClientAuth clientAuth = kmf != null && tmf != null ? ClientAuth.REQUIRE : ClientAuth.NONE;
-        if (kmf != null) {
+        ClientAuth clientAuth = isTLSEnalbed && tmf != null ? ClientAuth.REQUIRE : ClientAuth.NONE;
+        if (isTLSEnalbed) {
+            if (kmf == null) {
+                String msg = "NioConfig is missing " + NioConfig.KEY_kmf_key + " for TLS/SSL configuration. Please check your configuration.";
+                throw new IllegalStateException(msg);
+            }
             List<String> ciphers;
             String[] cipherSuites = nioCfg.getTlsCipherSuites();
             if (cipherSuites != null && cipherSuites.length > 0) {
@@ -131,11 +137,11 @@ public class NioServer {
                     .clientAuth(clientAuth)
                     .sslProvider(sp)
                     .sessionTimeout(0)
-                    .protocols(nioCfg.getTlsProtocols())
+                    .protocols(tlsProtocols)
                     .ciphers(ciphers, SupportedCipherSuiteFilter.INSTANCE)
                     .build();
 //            }
-            log.info(StringUtils.join("[" + sp + "] " + Arrays.asList(nioCfg.getTlsProtocols())) + " (" + nioCfg.getSslHandshakeTimeoutSeconds() + "s): " + ciphers);
+            log.info(StringUtils.join("[" + sp + "] " + Arrays.asList(tlsProtocols)) + " (" + nioCfg.getSslHandshakeTimeoutSeconds() + "s): " + ciphers);
         }
 
         // Configure the server.

@@ -108,7 +108,7 @@ public class NioConfig extends BootConfig {
 
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
-            desc = DESC_KMF,
+            desc = DESC_KMF_SERVER,
             callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf = null;
 
@@ -123,7 +123,7 @@ public class NioConfig extends BootConfig {
     protected static final String KEY_tmf_key = "nio.server.ssl.TrustStore";
     protected static final String KEY_tmf_StorePwdKey = "nio.server.ssl.TrustStorePwd";
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
-            desc = DESC_TMF)
+            desc = DESC_TMF_SERVER)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf = null;
 

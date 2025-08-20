@@ -122,7 +122,7 @@ abstract public class HttpClientConfig extends BootConfig {
 
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
-            desc = DESC_KMF,
+            desc = DESC_KMF_CLIENT,
             callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf;
 
@@ -137,7 +137,7 @@ abstract public class HttpClientConfig extends BootConfig {
     protected static final String KEY_tmf_key = "httpclient.ssl.TrustStore";
     protected static final String KEY_tmf_StorePwdKey = "httpclient.ssl.TrustStorePwd";
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
-            desc = DESC_TMF)
+            desc = DESC_TMF_CLIENT)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
