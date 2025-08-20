@@ -203,7 +203,7 @@ abstract public class GRPCClientConfig extends BootConfig {
             nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
             nameResolverRegistry.register(nameResolverProvider);
         }
-        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, tlsProtocols);
+        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy.getValue(), uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, tlsProtocols);
         configNettyChannelBuilder(channelBuilder);
         for (GRPCClient listener : listeners) {
             listener.updateChannelBuilder(channelBuilder);
@@ -295,10 +295,10 @@ abstract public class GRPCClientConfig extends BootConfig {
      */
     public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
                                                               @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
-        return initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, SslProvider.OPENSSL, tlsVersionProtocols);
+        return initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy.getValue(), uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, SslProvider.OPENSSL, tlsVersionProtocols);
     }
 
-    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, String loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
                                                               @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable SslProvider sslProvider, @Nullable String... tlsProtocols) throws SSLException {
         final NettyChannelBuilder channelBuilder;
         if (nameResolverProvider != null) {// use client side load balancing
@@ -306,10 +306,9 @@ abstract public class GRPCClientConfig extends BootConfig {
             NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// Use singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(new nameResolverRegistry().asFactory());
             nameResolverRegistry.register(nameResolverProvider);
             // init
-            String policy = loadBalancingPolicy.getValue();
             String target = nameResolverProvider.getDefaultScheme() + ":///"; // build target as URI
             channelBuilder = NettyChannelBuilder.forTarget(target)
-                    .defaultLoadBalancingPolicy(policy);
+                    .defaultLoadBalancingPolicy(loadBalancingPolicy);
         } else {
             switch (uri.getScheme()) {
                 case "unix": //https://github.com/grpc/grpc-java/issues/1539
@@ -327,7 +326,7 @@ abstract public class GRPCClientConfig extends BootConfig {
                     break;
             }
         }
-        if (tlsProtocols == null || tlsProtocols.length == 0) {
+        if (tlsProtocols == null || tlsProtocols.length == 0 || tlsProtocols[0] == null || tlsProtocols[0].isEmpty()) {
             channelBuilder.usePlaintext();
         } else {
             final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
