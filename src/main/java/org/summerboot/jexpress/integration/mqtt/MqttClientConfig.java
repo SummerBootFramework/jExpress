@@ -48,7 +48,7 @@ abstract public class MqttClientConfig extends BootConfig {
     protected volatile String serverURI;
 
 
-    @Config(key = ID + ".ssl.Protocol", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")
+    @Config(key = ID + ".ssl.Protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
     protected String tlsProtocol;
 
     // 2. keystore

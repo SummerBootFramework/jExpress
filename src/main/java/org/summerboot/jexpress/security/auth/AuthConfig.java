@@ -118,7 +118,7 @@ public class AuthConfig extends BootConfig {
             desc = DESC_KMF_CLIENT)
     protected volatile KeyManagerFactory kmf;
 
-    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")
+    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
     protected volatile String ldapTLSProtocol;
 
     @Config(key = "ldap.SSLConnectionFactoryClass")

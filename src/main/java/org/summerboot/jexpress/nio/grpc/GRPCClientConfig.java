@@ -103,7 +103,7 @@ abstract public class GRPCClientConfig extends BootConfig {
                     + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
 
-    @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")// "TLSv1.2, TLSv1.3"
+    @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)// "TLSv1.2, TLSv1.3"
     protected String[] tlsProtocols;
     @Config(key = ID + ".ssl.ciphers")
     protected List<String> ciphers;

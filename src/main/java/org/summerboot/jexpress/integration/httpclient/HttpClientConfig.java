@@ -112,7 +112,7 @@ abstract public class HttpClientConfig extends BootConfig {
 
     //3.1 HTTP Client Security
     @ConfigHeader(title = "1. HTTP Client Security")
-    @Config(key = "httpclient.ssl.protocol", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")
+    @Config(key = "httpclient.ssl.protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
     protected volatile String tlsProtocol = "TLSv1.3";
 
     protected static final String KEY_kmf_key = "httpclient.ssl.KeyStore";
