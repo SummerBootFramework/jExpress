@@ -109,7 +109,7 @@ public class NioConfig extends BootConfig {
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
             desc = DESC_KMF_SERVER,
-            callbackMethodName4Dump = "generateTemplate_keystore")
+            callbackMethodName4Dump = "generateTemplate_keystore", required = true)
     protected volatile KeyManagerFactory kmf = null;
 
     protected void generateTemplate_keystore(StringBuilder sb) {
