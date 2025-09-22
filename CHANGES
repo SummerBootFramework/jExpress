@@ -5,7 +5,7 @@
 
   * Fixed all legacy GitHub Codacy Security Scan reported issues.
 
-  * Improved security - configuration behavior changed as below of HttpClientConfig, GRPCClientConfig, MqttClientConfig and AuthConfig (cfg_aut.propertie)
+  * Improved security - configuration behavior changed as below of HttpClientConfig, GRPCClientConfig, MqttClientConfig and AuthConfig (cfg_auth.propertie)
     1. TLS protocol: Use plaintext no SSL/TLS if TLS protocol is configured as blank or empty string.
     2. Keystore: Use JDK default keystore if not specified, behavior of using 'plaintext no SSL/TLS' has been removed.
     3. Truststore: Use JDK default truststore if not specified, behavior of using `TrustManager` that accepts all certificates has been removed.

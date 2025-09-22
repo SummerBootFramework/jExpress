@@ -108,22 +108,20 @@ public class NioServer {
         System.setProperty("io.netty.allocator.normalCacheSize", "0");
 
         // Configure SSL.
-        String[] tlsProtocols = nioCfg.getTlsProtocols();
-        boolean isTLSEnalbed = tlsProtocols != null && tlsProtocols.length > 0;
         SSLContext jdkSslContext = null;
         SslContext nettySslContext = null;
         KeyManagerFactory kmf = nioCfg.getKmf();
         TrustManagerFactory tmf = nioCfg.getTmf();
-        ClientAuth clientAuth = isTLSEnalbed && tmf != null ? ClientAuth.REQUIRE : ClientAuth.NONE;
-        if (isTLSEnalbed) {
+        boolean isTLSEnabled = nioCfg.isTLSEnabled();
+        ClientAuth clientAuth = isTLSEnabled && tmf != null ? ClientAuth.REQUIRE : ClientAuth.NONE;
+        if (isTLSEnabled) {
             if (kmf == null) {
-                String msg = "NioConfig is missing " + NioConfig.KEY_kmf_key + " for TLS/SSL configuration. Please check your configuration.";
-                throw new IllegalStateException(msg);
+                throw new IllegalStateException("NioConfig with TLS is enabled by assigning TLS protocols, but " + NioConfig.KEY_kmf_key + " for TLS/SSL configuration is not properly configured");
             }
             List<String> ciphers;
             String[] cipherSuites = nioCfg.getTlsCipherSuites();
             if (cipherSuites != null && cipherSuites.length > 0) {
-                ciphers = Arrays.asList(nioCfg.getTlsCipherSuites());
+                ciphers = Arrays.asList(cipherSuites);
             } else {
                 ciphers = Http2SecurityUtil.CIPHERS;
             }
@@ -132,6 +130,7 @@ public class NioServer {
 //                jdkSslContext = SSLContext.getInstance(instance.getSslProtocols()[0]);
 //                jdkSslContext.init(kmf.getKeyManagers(), tmf == null ? SSLUtil.TRUST_ALL_CERTIFICATES : tmf.getTrustManagers(), SecureRandom.getInstanceStrong());
 //            } else {
+            String[] tlsProtocols = nioCfg.getTlsProtocols();
             nettySslContext = SslContextBuilder.forServer(kmf)
                     .trustManager(tmf)
                     .clientAuth(clientAuth)

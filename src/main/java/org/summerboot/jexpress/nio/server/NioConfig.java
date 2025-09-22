@@ -109,7 +109,7 @@ public class NioConfig extends BootConfig {
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
             desc = DESC_KMF_SERVER,
-            callbackMethodName4Dump = "generateTemplate_keystore", required = true)
+            callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf = null;
 
     protected void generateTemplate_keystore(StringBuilder sb) {
@@ -415,6 +415,10 @@ public class NioConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
+        if (isTLSEnabled() && kmf == null) {
+            throw new IllegalStateException("NioConfig with TLS is enabled by assigning TLS protocols, but " + KEY_kmf_key + " for TLS/SSL configuration is not properly configured");
+        }
+
         // pre-compile regexes for whitelist and blacklist
         if (callerAddressFilterWhitelist != null) {
             for (String regex : callerAddressFilterWhitelist) {
@@ -500,6 +504,10 @@ public class NioConfig extends BootConfig {
                 }
                 break;
         }
+    }
+
+    public boolean isTLSEnabled() {
+        return tlsProtocols != null && tlsProtocols.length > 0;
     }
 
     public ThreadPoolExecutor getBizExecutor() {
