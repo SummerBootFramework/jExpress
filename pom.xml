@@ -165,45 +165,46 @@
         <jakarta-mail.version>2.0.2</jakarta-mail.version>
         <jakarta-activation.version>2.0.1</jakarta-activation.version>
         <!-- Security -->
-        <bouncycastle.version>1.81</bouncycastle.version>
+        <bouncycastle.version>1.82</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.13.0</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.2.4.Final</netty.version>
-        <netty-tcnative.version>2.0.72.Final</netty-tcnative.version>
+        <netty.version>4.2.6.Final</netty.version>
+        <netty-tcnative.version>2.0.73.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.75.0</grpc.version>
-        <guava.version>33.4.8-jre</guava.version>
-        <protobuf.version>4.32.0</protobuf.version>
+        <guava.version>33.5.0-jre</guava.version>
+        <protobuf.version>4.32.1</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.36</swagger.core.version>
+        <swagger.core.version>2.2.37</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
         <!-- MIME-Type -->
-        <tika.version>3.2.2</tika.version>
+        <tika.version>3.2.3</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>4.0.0</rs-api.version>
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.19.2</jackson.version>
+        <jackson.version>2.20.0</jackson.version>
+        <jackson.versiona>2.20</jackson.versiona>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.10</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.11</tomcat-embed-el.version>
         <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.1.0.Final</hibernate.version>
+        <hibernate.version>7.1.1.Final</hibernate.version>
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>6.1.0</jedis.version>
+        <jedis.version>6.2.0</jedis.version>
 
         <quartz.version>2.5.0</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
@@ -218,8 +219,8 @@
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext-core.version>9.2.0</itext-core.version>
-        <itext-html2pdf.version>6.2.0</itext-html2pdf.version>
+        <itext-core.version>9.3.0</itext-core.version>
+        <itext-html2pdf.version>6.2.1</itext-html2pdf.version>
 
         <veracode.version>1.2.1</veracode.version>
 
@@ -481,7 +482,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
+            <version>${jackson.versiona}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 Apache 2.0-->
         <dependency>
