@@ -159,7 +159,7 @@
         <commons-text.version>1.14.0</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
-        <log4j-api.version>2.25.1</log4j-api.version>
+        <log4j-api.version>2.25.2</log4j-api.version>
         <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.2</jakarta-mail.version>
@@ -171,7 +171,7 @@
 
         <!-- NIO Netty -->
         <netty.version>4.2.6.Final</netty.version>
-        <netty-tcnative.version>2.0.73.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.74.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.75.0</grpc.version>
         <guava.version>33.5.0-jre</guava.version>
