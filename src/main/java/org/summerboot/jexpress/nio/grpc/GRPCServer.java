@@ -102,6 +102,8 @@ public class GRPCServer {
         if (tmf != null) {
             tlsBuilder.trustManager(tmf.getTrustManagers());
             tlsBuilder.clientAuth(TlsServerCredentials.ClientAuth.REQUIRE);
+        } else {
+            tlsBuilder.clientAuth(TlsServerCredentials.ClientAuth.NONE);
         }
         return tlsBuilder.build();
     }

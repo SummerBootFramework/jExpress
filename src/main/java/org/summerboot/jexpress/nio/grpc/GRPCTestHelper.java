@@ -2,16 +2,12 @@ package org.summerboot.jexpress.nio.grpc;
 
 import io.grpc.BindableService;
 import io.grpc.NameResolverProvider;
-import io.grpc.NameResolverRegistry;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
 import io.grpc.StatusRuntimeException;
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
-import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.security.SSLUtil;
@@ -64,6 +60,7 @@ public abstract class GRPCTestHelper {
         private int port = 8425;
         private String loadBalancingPolicy = GRPCClientConfig.LoadBalancingPolicy.PICK_FIRST.getValue();
         private String loadBalancingTargetScheme = "grpc";
+        private String tlsProtocalClient = "TLSv1.3";
 
         public GRPCSimpleClient(int length) throws GeneralSecurityException, IOException {
             this("GRPCTestHelper " + length, length, "src/test/resources/config/");
@@ -274,6 +271,14 @@ public abstract class GRPCTestHelper {
         public TrustManagerFactory getTmfEmpty() {
             return tmfEmpty;
         }
+
+        public String getTlsProtocalClient() {
+            return tlsProtocalClient;
+        }
+
+        public void setTlsProtocalClient(String tlsProtocalClient) {
+            this.tlsProtocalClient = tlsProtocalClient;
+        }
     }
 
     public static GRPCServer buildGRPCServer(GRPCSimpleClient config, BindableService... serviceImps) throws GeneralSecurityException, IOException {
@@ -334,46 +339,23 @@ public abstract class GRPCTestHelper {
         String trustStorePassword = config.getTrustStorePassword();
         KeyManagerFactory kmfClient = SSLUtil.buildKeyManagerFactory(keyStore.getAbsolutePath(), keyStorePassword.toCharArray(), clientKeyAlias, keyPassword.toCharArray());
         TrustManagerFactory tmfClient = SSLUtil.buildTrustManagerFactory(clientTrustStore.getAbsolutePath(), trustStorePassword.toCharArray());
+        String tlsProtocal = config.getTlsProtocalClient();
         // client
-        return buildGRPCClient(host, port, loadBalancingPolicy, loadBalancingTargetScheme, kmfClient, tmfClient, overrideAuthority);
+        return buildGRPCClient(tlsProtocal, host, port, loadBalancingPolicy, loadBalancingTargetScheme, kmfClient, tmfClient, overrideAuthority);
     }
 
-    public static NettyChannelBuilder buildGRPCClient(String host, int port, KeyManagerFactory kmfClient, TrustManagerFactory tmfClient, String overrideAuthority) throws SSLException {
+    public static NettyChannelBuilder buildGRPCClient(String tlsProtocal, String host, int port, KeyManagerFactory kmfClient, TrustManagerFactory tmfClient, String overrideAuthority) throws SSLException {
         String loadBalancingPolicy = GRPCClientConfig.LoadBalancingPolicy.PICK_FIRST.getValue();
         String loadBalancingTargetScheme = "grpc";
-        return buildGRPCClient(host, port, loadBalancingPolicy, loadBalancingTargetScheme, kmfClient, tmfClient, overrideAuthority);
+        return buildGRPCClient(tlsProtocal, host, port, loadBalancingPolicy, loadBalancingTargetScheme, kmfClient, tmfClient, overrideAuthority);
     }
 
-    public static NettyChannelBuilder buildGRPCClient(String host, int port, String loadBalancingPolicy, String loadBalancingTargetScheme, KeyManagerFactory kmfClient, TrustManagerFactory tmfClient, String overrideAuthority) throws SSLException {
+    public static NettyChannelBuilder buildGRPCClient(String tlsProtocal, String host, int port, String loadBalancingPolicy, String loadBalancingTargetScheme, KeyManagerFactory kmfClient, TrustManagerFactory tmfClient, String overrideAuthority) throws SSLException {
         int priority = 0;
         List<InetSocketAddress> loadBalancingServers = List.of(new InetSocketAddress(host, port));
         NameResolverProvider nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
-        // register
-        NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();
-        nameResolverRegistry.register(nameResolverProvider);
-        // init
-        String target = nameResolverProvider.getDefaultScheme() + ":///";
-        NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget(target).defaultLoadBalancingPolicy(loadBalancingPolicy);
-        // set SSL
-        final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
-        sslBuilder.keyManager(kmfClient);
-        //
-        if (tmfClient == null) {//ignore Server Certificate
-            sslBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
-        } else {
-            sslBuilder.trustManager(tmfClient);
-            if (overrideAuthority != null) {
-                channelBuilder.overrideAuthority(overrideAuthority);
-            }
-        }
-        GrpcSslContexts.configure(sslBuilder, SslProvider.OPENSSL);
-        String[] tlsVersionProtocols = {"TLSv1.3"};//{"TLSv1.2", "TLSv1.3"};
-        if (tlsVersionProtocols != null) {
-            sslBuilder.protocols(tlsVersionProtocols);
-        }
-        SslContext sslContext = sslBuilder.build();
-        channelBuilder.sslContext(sslContext).useTransportSecurity();
-        return channelBuilder;
+
+        return GRPCClientConfig.initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, null, kmfClient, tmfClient, overrideAuthority, null, SslProvider.OPENSSL, tlsProtocal);
     }
 
 
@@ -413,27 +395,42 @@ public abstract class GRPCTestHelper {
 
 
         BindableService[] serviceImpls = getServerImpls();
+        String tlsProtocalClient = "TLSv1.3";
 
-        // test: 2-way TLS
-        test2WayTLS(host, port, kmfServer, tmfServer, serviceImpls, loadBalancingTargetScheme, kmfClient, tmfClient, overrideAuthority);
-        // test: client verify server certificate, server trust all client certificate
-        test2WayTLS(host, port, kmfServer, null, serviceImpls, loadBalancingTargetScheme, kmfClient, tmfClient, overrideAuthority);
-        // test: server verify server certificate, client trust all client certificate
-        test2WayTLS(host, port, kmfServer, tmfServer, serviceImpls, loadBalancingTargetScheme, kmfClient, null, overrideAuthority);
-        // test: server and client trust all certificates
-        test2WayTLS(host, port, kmfServer, null, serviceImpls, loadBalancingTargetScheme, kmfClient, null, overrideAuthority);
-        // test: server does NOT trust client certificate, client trust server certificate
+        // test1: // test2: server verify client certificate, client verify server certificate (most restrictive)
+        test2WayTLS(host, port, kmfServer, tmfServer, serviceImpls, loadBalancingTargetScheme, tlsProtocalClient, kmfClient, tmfClient, overrideAuthority);
+
+        // test2: server do NOT verify client certificate, client verify server certificate (common case)
+        test2WayTLS(host, port, kmfServer, null, serviceImpls, loadBalancingTargetScheme, tlsProtocalClient, kmfClient, tmfClient, overrideAuthority);// client use its cert
+        test2WayTLS(host, port, kmfServer, null, serviceImpls, loadBalancingTargetScheme, tlsProtocalClient, null, tmfClient, overrideAuthority);// client use JDK default cert
+
+        // test3: server do NOT verify client certificate, client do NOT verify server certificate (plain socket)
+        test2WayTLS(host, port, null, null, serviceImpls, loadBalancingTargetScheme, null, null, null, overrideAuthority);
+
+        // test4: server do NOT verify client certificate, client verify server certificate via JDK default trust store (error expected)
         try {
-            test2WayTLS(host, port, kmfServer, tmfEmpty, serviceImpls, loadBalancingTargetScheme, kmfClient, tmfClient, overrideAuthority);
+            test2WayTLS(host, port, kmfServer, null, serviceImpls, loadBalancingTargetScheme, tlsProtocalClient, kmfClient, null, overrideAuthority);
+        } catch (StatusRuntimeException ex) {
+            Throwable cause = ExceptionUtils.getRootCause(ex);
+            assert cause.getMessage().equals("unable to find valid certification path to requested target");
+        }
+
+        // test5: server verify client certificate, client do NOT verify server certificate (not possible)
+        //test2WayTLS(host, port, kmfServer, tmfServer, serviceImpls, loadBalancingTargetScheme, tlsProtocalClient, kmfClient, null, overrideAuthority);
+
+
+        // test5: server does NOT trust client certificate, client trust server certificate
+        try {
+            test2WayTLS(host, port, kmfServer, tmfEmpty, serviceImpls, loadBalancingTargetScheme, tlsProtocalClient, kmfClient, tmfClient, overrideAuthority);
             throw new RuntimeException("Expected exception not thrown");
         } catch (StatusRuntimeException ex) {
             System.out.println("server does NOT trust client certificate - Expected exception: " + ex);
             //assertEquals(ex.getMessage(), "UNAVAILABLE: ssl exception");
             assert ex.getMessage().equals("UNAVAILABLE: ssl exception");
         }
-        // test: client does NOT trust server certificate, server trust server certificate
+        // test6: client does NOT trust server certificate, server trust server certificate
         try {
-            test2WayTLS(host, port, kmfServer, tmfServer, serviceImpls, loadBalancingTargetScheme, kmfClient, tmfEmpty, overrideAuthority);
+            test2WayTLS(host, port, kmfServer, tmfServer, serviceImpls, loadBalancingTargetScheme, tlsProtocalClient, kmfClient, tmfEmpty, overrideAuthority);
         } catch (StatusRuntimeException ex) {
             System.out.println("client does NOT trust server certificate - Expected exception: " + ex);
             String receivedMessage = ex.getMessage();
@@ -457,7 +454,7 @@ public abstract class GRPCTestHelper {
      * @param overrideAuthority         override authority for the client
      * @throws IOException if an I/O error occurs
      */
-    public void test2WayTLS(String host, int port, KeyManagerFactory kmfServer, TrustManagerFactory tmfServer, BindableService[] serviceImpls, String loadBalancingTargetScheme, KeyManagerFactory kmfClient, TrustManagerFactory tmfClient, String overrideAuthority) throws IOException {
+    public void test2WayTLS(String host, int port, KeyManagerFactory kmfServer, TrustManagerFactory tmfServer, BindableService[] serviceImpls, String loadBalancingTargetScheme, String tlsProtocalClient, KeyManagerFactory kmfClient, TrustManagerFactory tmfClient, String overrideAuthority) throws IOException {
         // 1. run server if not null
         GRPCServer gRPCServer = buildGRPCServer(host, port, kmfServer, tmfServer, serviceImpls);
         if (gRPCServer != null) {
@@ -468,7 +465,7 @@ public abstract class GRPCTestHelper {
         try {
             // 2. run client
             String loadBalancingPolicy = GRPCClientConfig.LoadBalancingPolicy.PICK_FIRST.getValue();
-            NettyChannelBuilder channelBuilder = buildGRPCClient(host, port, loadBalancingPolicy, loadBalancingTargetScheme, kmfClient, tmfClient, overrideAuthority);
+            NettyChannelBuilder channelBuilder = buildGRPCClient(tlsProtocalClient, host, port, loadBalancingPolicy, loadBalancingTargetScheme, kmfClient, tmfClient, overrideAuthority);
             runClient(channelBuilder);
         } finally {
             if (gRPCServer != null) {

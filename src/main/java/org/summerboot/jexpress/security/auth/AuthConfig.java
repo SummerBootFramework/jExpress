@@ -115,10 +115,10 @@ public class AuthConfig extends BootConfig {
     @JsonIgnore
     @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
             AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd",
-            desc = DESC_KMF)
+            desc = DESC_KMF_CLIENT)
     protected volatile KeyManagerFactory kmf;
 
-    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")
+    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
     protected volatile String ldapTLSProtocol;
 
     @Config(key = "ldap.SSLConnectionFactoryClass")
@@ -127,7 +127,7 @@ public class AuthConfig extends BootConfig {
     //1.3 LDAP Client truststore
     @ConfigHeader(title = "1.3 LDAP Client truststore")
     @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd",
-            desc = DESC_TMF)
+            desc = DESC_TMF_CLIENT)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 

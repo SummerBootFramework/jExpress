@@ -103,7 +103,7 @@ abstract public class GRPCClientConfig extends BootConfig {
                     + "unix:/tmp/grpcsrver.socket")
     protected volatile URI uri;
 
-    @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")// "TLSv1.2, TLSv1.3"
+    @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)// "TLSv1.2, TLSv1.3"
     protected String[] tlsProtocols;
     @Config(key = ID + ".ssl.ciphers")
     protected List<String> ciphers;
@@ -118,7 +118,7 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     @ConfigHeader(title = "2. " + ID + " keystore")
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
-            desc = DESC_KMF,
+            desc = DESC_KMF_CLIENT,
             callbackMethodName4Dump = "generateTemplate_keystore")
     //@JsonIgnore
     protected volatile KeyManagerFactory kmf;
@@ -136,7 +136,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
-            desc = DESC_TMF)
+            desc = DESC_TMF_CLIENT)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
@@ -203,7 +203,7 @@ abstract public class GRPCClientConfig extends BootConfig {
             nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
             nameResolverRegistry.register(nameResolverProvider);
         }
-        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, tlsProtocols);
+        channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy.getValue(), uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, tlsProtocols);
         configNettyChannelBuilder(channelBuilder);
         for (GRPCClient listener : listeners) {
             listener.updateChannelBuilder(channelBuilder);
@@ -295,10 +295,10 @@ abstract public class GRPCClientConfig extends BootConfig {
      */
     public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
                                                               @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable String... tlsVersionProtocols) throws SSLException {
-        return initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy, uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, SslProvider.OPENSSL, tlsVersionProtocols);
+        return initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy.getValue(), uri, keyManagerFactory, trustManagerFactory, overrideAuthority, ciphers, SslProvider.OPENSSL, tlsVersionProtocols);
     }
 
-    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, LoadBalancingPolicy loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
+    public static NettyChannelBuilder initNettyChannelBuilder(NameResolverProvider nameResolverProvider, String loadBalancingPolicy, URI uri, @Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory,
                                                               @Nullable String overrideAuthority, @Nullable Iterable<String> ciphers, @Nullable SslProvider sslProvider, @Nullable String... tlsProtocols) throws SSLException {
         final NettyChannelBuilder channelBuilder;
         if (nameResolverProvider != null) {// use client side load balancing
@@ -306,10 +306,9 @@ abstract public class GRPCClientConfig extends BootConfig {
             NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();// Use singleton instance in new API to replace deprecated channelBuilder.nameResolverFactory(new nameResolverRegistry().asFactory());
             nameResolverRegistry.register(nameResolverProvider);
             // init
-            String policy = loadBalancingPolicy.getValue();
             String target = nameResolverProvider.getDefaultScheme() + ":///"; // build target as URI
             channelBuilder = NettyChannelBuilder.forTarget(target)
-                    .defaultLoadBalancingPolicy(policy);
+                    .defaultLoadBalancingPolicy(loadBalancingPolicy);
         } else {
             switch (uri.getScheme()) {
                 case "unix": //https://github.com/grpc/grpc-java/issues/1539
@@ -327,7 +326,7 @@ abstract public class GRPCClientConfig extends BootConfig {
                     break;
             }
         }
-        if (tlsProtocols == null || tlsProtocols.length == 0) {
+        if (tlsProtocols == null || tlsProtocols.length == 0 || tlsProtocols[0] == null || tlsProtocols[0].isEmpty()) {
             channelBuilder.usePlaintext();
         } else {
             final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
