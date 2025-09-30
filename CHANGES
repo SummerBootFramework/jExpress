@@ -1,18 +1,22 @@
 
 \-- release 2.6.1
 
-  * Fixed all GitHub CodeQL alerts and security issues.
+  * Fixed all legacy GitHub CodeQL alerts and security issues.
 
-  * Fixed all GitHub Codacy Security Scan reported issues.
+  * Fixed all legacy GitHub Codacy Security Scan reported issues.
 
-  * Improved security - configuration behavior changed: HttpClientConfig, GRPCClientConfig, MqttClientConfig and AuthConfig (cfg_aut.properties)
-    1. Use plaintext no SSL/TLS if TLS protocol is configured as blank or empty string.
-    2. Use JDK default keystore if keystore not specified.
-    3. Use JDK default truststore if truststore not specified.
+  * Improved security - configuration behavior changed as below of HttpClientConfig, GRPCClientConfig, MqttClientConfig and AuthConfig (cfg_auth.propertie)
+    1. TLS protocol: Use plaintext no SSL/TLS if TLS protocol is configured as blank or empty string.
+    2. Keystore: Use JDK default keystore if not specified, behavior of using 'plaintext no SSL/TLS' has been removed.
+    3. Truststore: Use JDK default truststore if not specified, behavior of using `TrustManager` that accepts all certificates has been removed.
+
+  * Improved security - configuration behavior of NioConfig
+    1. TLS protocol: Use plaintext no SSL/TLS if TLS protocol is configured as blank or empty string.
+    2. Keystore: Required when TLS protocol is configured, otherwise throw IllegalStateException if not specified.
 
   * Enhanced security: Replaced `secpr5121` with `secp256r1` for default `ECGenParameterSpec`.
 
-  * Enhanced security: Use of a cryptographic algorithm with insufficient key size - Threw `InvalidAlgorithmParameterException` when using a cryptographic algorithm with insufficient key size to call `EncryptorUtil.generateKeyPair()`.
+  * Enhanced security: Fixed the use of a cryptographic algorithm with insufficient key size - Threw `InvalidAlgorithmParameterException` when using a cryptographic algorithm with insufficient key size to call `EncryptorUtil.generateKeyPair()`.
 
   * Enhanced security: Fixed polynomial regular expression used on uncontrolled data (`FormatterUtil`).
 

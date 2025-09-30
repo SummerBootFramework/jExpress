@@ -77,8 +77,13 @@ public abstract class BootConfig implements JExpressConfig {
     protected static String BR = System.lineSeparator();
     protected static final String DEFAULT_DEC_VALUE = "=DEC(changeit)" + BR;
 
-    protected static final String DESC_KMF = "Path to key store file. Use JDK default keystore when not specified";
-    protected static final String DESC_TMF = "Path to trust store file. Use JDK default truststore when not specified";
+    protected static final String DESC_KMF_SERVER = "Path to key store file. Required when TLS protocol is not blank or not empty";
+    protected static final String DESC_TMF_SERVER = "Path to trust store file. Two-Way SSL (Client-Auth required) when specified, otherwise One-Way SSL (Client-Auth not required)";
+
+    protected static final String DESC_TLS_PROTOCOL = "Valid values: TLSv1.2, TLSv1.3. Use plaintext socket no SSL/TLS when specified as blank";
+
+    protected static final String DESC_KMF_CLIENT = "Path to key store file. Use JDK default keystore when not specified";
+    protected static final String DESC_TMF_CLIENT = "Path to trust store file. Use JDK default truststore when not specified";
     public static final String DESC_PLAINPWD = "plain text inside DEC() will be automatically encrypted by app root password when the application starts or is running";
     protected static final String FILENAME_KEYSTORE = "keystore.p12";
     protected static final String FILENAME_SRC_TRUSTSTORE = "truststore.p12";

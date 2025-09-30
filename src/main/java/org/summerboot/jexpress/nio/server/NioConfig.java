@@ -108,7 +108,7 @@ public class NioConfig extends BootConfig {
 
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
-            desc = DESC_KMF,
+            desc = DESC_KMF_SERVER,
             callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf = null;
 
@@ -123,7 +123,7 @@ public class NioConfig extends BootConfig {
     protected static final String KEY_tmf_key = "nio.server.ssl.TrustStore";
     protected static final String KEY_tmf_StorePwdKey = "nio.server.ssl.TrustStorePwd";
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, //callbackMethodName4Dump = "generateTemplate_truststore",
-            desc = DESC_TMF)
+            desc = DESC_TMF_SERVER)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf = null;
 
@@ -138,7 +138,7 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.ssl.Provider", defaultValue = "OPENSSL")
     protected volatile SslProvider sslProvider = SslProvider.OPENSSL;
 
-    @Config(key = "nio.server.ssl.Protocols", defaultValue = "TLSv1.2, TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")// "TLSv1.2, TLSv1.3"
+    @Config(key = "nio.server.ssl.Protocols", defaultValue = "TLSv1.2, TLSv1.3", desc = DESC_TLS_PROTOCOL)// "TLSv1.2, TLSv1.3"
     protected String[] tlsProtocols = {"TLSv1.2", "TLSv1.3"};
 
     @Config(key = "nio.server.ssl.CipherSuites",
@@ -415,6 +415,10 @@ public class NioConfig extends BootConfig {
 
     @Override
     protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws Exception {
+        if (isTLSEnabled() && kmf == null) {
+            throw new IllegalStateException("NioConfig with TLS is enabled by assigning TLS protocols, but " + KEY_kmf_key + " for TLS/SSL configuration is not properly configured");
+        }
+
         // pre-compile regexes for whitelist and blacklist
         if (callerAddressFilterWhitelist != null) {
             for (String regex : callerAddressFilterWhitelist) {
@@ -500,6 +504,10 @@ public class NioConfig extends BootConfig {
                 }
                 break;
         }
+    }
+
+    public boolean isTLSEnabled() {
+        return tlsProtocols != null && tlsProtocols.length > 0;
     }
 
     public ThreadPoolExecutor getBizExecutor() {

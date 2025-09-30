@@ -112,7 +112,7 @@ abstract public class HttpClientConfig extends BootConfig {
 
     //3.1 HTTP Client Security
     @ConfigHeader(title = "1. HTTP Client Security")
-    @Config(key = "httpclient.ssl.protocol", defaultValue = "TLSv1.3", desc = "Valid values: TLSv1.2, TLSv1.3. Blank value = plaintext no SSL/TLS")
+    @Config(key = "httpclient.ssl.protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
     protected volatile String tlsProtocol = "TLSv1.3";
 
     protected static final String KEY_kmf_key = "httpclient.ssl.KeyStore";
@@ -122,7 +122,7 @@ abstract public class HttpClientConfig extends BootConfig {
 
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
-            desc = DESC_KMF,
+            desc = DESC_KMF_CLIENT,
             callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf;
 
@@ -137,7 +137,7 @@ abstract public class HttpClientConfig extends BootConfig {
     protected static final String KEY_tmf_key = "httpclient.ssl.TrustStore";
     protected static final String KEY_tmf_StorePwdKey = "httpclient.ssl.TrustStorePwd";
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
-            desc = DESC_TMF)
+            desc = DESC_TMF_CLIENT)
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
