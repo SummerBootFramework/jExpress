@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.integration.httpclient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
@@ -183,6 +184,9 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.fromJson.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
+    @JsonIgnore
+    protected volatile ObjectMapper objectMapper = new ObjectMapper();
+
     //3.2 HTTP Client Performance    
     @ConfigHeader(title = "2. HTTP Client Performance")
     @JsonIgnore
@@ -276,7 +280,7 @@ abstract public class HttpClientConfig extends BootConfig {
             }
         });
 
-        RPCResult.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive);
+        RPCResult.configure(objectMapper, jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive);
 
         final SSLContext sslContext;
         if (StringUtils.isBlank(tlsProtocol)) {
@@ -458,6 +462,10 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public TimeZone getJsonParserTimeZone() {
         return jsonParserTimeZone;
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
     }
 
     public long getHttpConnectTimeoutMs() {

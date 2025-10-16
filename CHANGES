@@ -1,4 +1,10 @@
 
+\-- release 2.6.2
+
+  * In case of multiple HttpClient instances, each with different ObjectMapper configuration (e.g. different date format), a default shared ObjectMapper instance was being used to parse the response, this has been changed to let each HttpClient instance has its own ObjectMapper instance by passing the ObjectMapper instance from HttpClient to RPCResult.
+
+
+
 \-- release 2.6.1
 
   * Fixed all legacy GitHub CodeQL alerts and security issues.
