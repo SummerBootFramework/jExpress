@@ -60,6 +60,12 @@ public class RPCResult<T> {
     protected final boolean remoteSuccess;
     protected T successResponse;
 
+    private static ObjectMapper DefaultObjectMapper = new ObjectMapper();
+
+    static {
+        configure(DefaultObjectMapper, TimeZone.getDefault(), true, false);
+    }
+
     protected ObjectMapper httpClientConfiguredObjectMapper;
 
     public RPCResult(HttpRequest originRequest, String originRequestBody, HttpResponse httpResponse, boolean remoteSuccess) {
@@ -70,6 +76,7 @@ public class RPCResult<T> {
         this.httpStatusCode = httpResponse == null ? 0 : httpResponse.statusCode();
         this.httpStatus = HttpResponseStatus.valueOf(httpStatusCode);
         this.remoteSuccess = remoteSuccess;
+        this.httpClientConfiguredObjectMapper = DefaultObjectMapper;
     }
 
     public HttpRequest getOriginRequest() {
