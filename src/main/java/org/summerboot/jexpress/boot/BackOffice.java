@@ -23,10 +23,9 @@ import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -48,7 +47,7 @@ public class BackOffice extends BootConfig {
     boolean isDebugMode = false;
 
     protected BackOffice() {
-        loadBalancingPingEndpoints = new ArrayList<>();
+        loadBalancingPingEndpoints = new HashSet<>();
     }
 
     @Override
@@ -83,11 +82,11 @@ public class BackOffice extends BootConfig {
     }
 
     protected ThreadPoolExecutor tpe;
-    private List<String> loadBalancingPingEndpoints;
+    private Set<String> loadBalancingPingEndpoints;
     private String version;
     private String versionShort;
 
-    public List<String> getLoadBalancingPingEndpoints() {
+    public Set<String> getLoadBalancingPingEndpoints() {
         return loadBalancingPingEndpoints;
     }
 
@@ -339,7 +338,7 @@ public class BackOffice extends BootConfig {
                     + "\n  Note: BC will not verify the key password, so it is not recommended for production use."
                     + "\n  Note: BCFIPS is a FIPS compliant provider, which is required by some government applications.")
     private String keystoreSecurityProvider = null;
-    
+
     @ConfigHeader(title = "5.2 Security Settings: message digest")
     @Config(key = "algorithm.Messagedigest", defaultValue = "SHA3-256",
             desc = "SHA3-224, SHA3-256 (default), SHA3-384, SHA3-512, SHA-256, SHA-384, SHA-512, etc. "
