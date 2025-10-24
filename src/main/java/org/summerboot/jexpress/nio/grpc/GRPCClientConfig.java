@@ -332,7 +332,10 @@ abstract public class GRPCClientConfig extends BootConfig {
             final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
             // set keyManagerFactory
             sslBuilder.keyManager(keyManagerFactory);
-            sslBuilder.trustManager(trustManagerFactory);// io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
+            if (trustManagerFactory == null) { // ignore Server Certificate
+                trustManagerFactory = io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory.INSTANCE;
+            }
+            sslBuilder.trustManager(trustManagerFactory);
             if (overrideAuthority != null) {
                 channelBuilder.overrideAuthority(overrideAuthority);
             }
