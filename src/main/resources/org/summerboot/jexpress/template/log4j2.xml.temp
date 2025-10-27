@@ -82,8 +82,10 @@
         <Logger level="debug" name="org.summerboot.jexpress.boot" includeLocation="true"/>
         <Logger level="info" name="org.summerboot.jexpress.integration.httpclient.HttpClientConfig" includeLocation="true"/>
         <Logger level="info" name="org.summerboot.jexpress.nio.server.NioServerHttpInitializer" includeLocation="true"/>
+        <Logger level="info" name="org.summerboot.jexpress.nio.IdleEventMonitor" includeLocation="true"/>
         <Logger level="debug" name="org.summerboot.jexpress.nio.server.NioServer" includeLocation="true"/>
         <Logger level="debug" name="org.summerboot.jexpress.nio.grpc.GRPCServer" includeLocation="true"/>
+
 
 
         <Logger level="warn" name="io.netty.handler" includeLocation="false" additivity="false">
