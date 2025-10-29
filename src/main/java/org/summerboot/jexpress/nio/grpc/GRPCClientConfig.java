@@ -80,7 +80,7 @@ abstract public class GRPCClientConfig extends BootConfig {
     }
 
     public enum DefaultTrustStore {
-        JDK, InsecureTrustAll
+        JDK, TrustAll
     }
 
     protected GRPCClientConfig() {
@@ -154,7 +154,7 @@ abstract public class GRPCClientConfig extends BootConfig {
             desc = "This value tells the channel's security layer what hostname or SNI (Server Name Indication)) to expect in the server's TLS certificate, regardless of the actual address you are connecting to. The certificate validation process will then proceed as usual against your trust store, but the final hostname check will use the value you provide instead of the connection address. Set server certificate DNS name here when server is not yet running on its certificate Subject Alternative Names (SAN)")
     protected volatile String overrideAuthority;
 
-    @Config(key = ID + ".ssl.TrustStore.Default", defaultValue = "JDK", desc = "Only used when trust store is not specified, available options: JDK, InsecureTrustAll")
+    @Config(key = ID + ".ssl.TrustStore.Default", defaultValue = "JDK", desc = "Only used when trust store is not specified, available options: JDK (use JDK truststore), TrustAll (no cert verification and insecure)")
     protected volatile DefaultTrustStore defaultTrustStore = DefaultTrustStore.JDK;
 
     @JsonIgnore
@@ -210,7 +210,7 @@ abstract public class GRPCClientConfig extends BootConfig {
             nameResolverProvider = new BootLoadBalancerProvider(loadBalancingTargetScheme, ++priority, loadBalancingServers);
             nameResolverRegistry.register(nameResolverProvider);
         }
-        if (tmf == null && defaultTrustStore == DefaultTrustStore.InsecureTrustAll) { // ignore Server Certificate
+        if (tmf == null && defaultTrustStore == DefaultTrustStore.TrustAll) { // ignore Server Certificate
             tmf = io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory.INSTANCE;
         }
         channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy.getValue(), uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, tlsProtocols);

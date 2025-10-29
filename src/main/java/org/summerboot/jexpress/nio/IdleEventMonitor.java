@@ -79,6 +79,10 @@ public class IdleEventMonitor {
         if (idleEventMonitor == null) {
             throw new IllegalArgumentException("Request tracker cannot be null");
         }
+        if (threshold < 1) {
+            log.warn("IdleEventMonitor (" + idleEventMonitor.getName() + ") cannot start due to threshold = " + threshold);
+            return;
+        }
         idleEventListener.onIdle(idleEventMonitor);
         Thread vThread = Thread.startVirtualThread(() -> {
             log.info("IdleEventMonitor.start: " + idleEventMonitor.getName());
