@@ -177,7 +177,7 @@
         <guava.version>33.5.0-jre</guava.version>
         <protobuf.version>4.33.0</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.39</swagger.core.version>
+        <swagger.core.version>2.2.40</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -200,13 +200,13 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.1.4.Final</hibernate.version>
+        <hibernate.version>7.1.5.Final</hibernate.version>
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
         <jedis.version>7.0.0</jedis.version>
 
-        <quartz.version>2.5.0</quartz.version>
+        <quartz.version>2.5.1</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
 
         <!-- Template Engine -->
