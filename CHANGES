@@ -2,6 +2,9 @@
 \-- release 2.6.2
 
   * In case of multiple HttpClient instances, each with different ObjectMapper configuration (e.g. different date format), a default shared ObjectMapper instance was being used to parse the response, this has been changed to let each HttpClient instance has its own ObjectMapper instance by passing the ObjectMapper instance from HttpClient to RPCResult.
+  * gRPC client config: when trust store is not specified, user can choose default one as JDK or TrustAll
+  * IdleEventMonitor only start when the param threshold > 0
+
 
 
 
