@@ -226,7 +226,7 @@
 
         <!-- Testing  -->
         <testng.version>7.11.0</testng.version>
-        <jdbc.version>9.4.0</jdbc.version>
+        <jdbc.version>9.5.0</jdbc.version>
     </properties>
 
     <dependencies>
