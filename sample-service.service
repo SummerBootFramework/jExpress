@@ -6,11 +6,13 @@
 # sudo journalctl -u myapp-service -f
 
 [Unit]
-Description=myapp-name: (Java 21 + Netty 4.2.x + ZGC + OpenSSL on Linux)
-#After=network.target
-After=network-online.target
+Description=myapp-name: (Java 21/25 + Netty 4.2.x + ZGC + OpenSSL on Linux)
+After=syslog.target network.target
 
 [Service]
+User=myapp-user
+Group=myapp-group
+WorkingDirectory=/apps/myapp
 ExecStart=/usr/bin/java \
  -Djava.awt.headless=true \
  -Xms2G -Xmx2G \
@@ -32,11 +34,9 @@ ExecStart=/usr/bin/java \
  -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
  -jar /apps/myapp/myap.jar -authfile /etc/security/myapp-master.password
 
-WorkingDirectory=/apps/myapp
-User=myapp-user
-Group=myapp-group
 LimitNOFILE=65535
 Restart=always
+#Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target

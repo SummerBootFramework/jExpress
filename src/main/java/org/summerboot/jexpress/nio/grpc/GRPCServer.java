@@ -131,9 +131,6 @@ public class GRPCServer {
             }
             long bizHit = serviceCounter.getBiz();
             long cancelled = serviceCounter.getCancelled();
-//            if (lastBizHitRef.get() == bizHit && !servicePaused) {
-//                return;
-//            }
             lastBizHitRef.set(bizHit);
             long hps = serviceCounter.getHitAndReset();
             long tps = serviceCounter.getProcessedAndReset();
@@ -152,11 +149,12 @@ public class GRPCServer {
             long largest = tpe.getLargestPoolSize();
             long task = tpe.getTaskCount();
             long completed = tpe.getCompletedTaskCount();
-            //long checksum = hps + tps + active + queue + activeChannel + totalChannel + totalHit + bizHit + task + completed + active + pool + core + max + largest;
-            long checksum = hps + tps + active + queue /*+ activeChannel*/ + bizHit + task + completed + active + pool + core + max + largest;
+            long checksum = hps + tps + bizHit + task + completed + queue + active + core + max + largest;
+            if (log.isTraceEnabled()) {
+                checksum += pool;
+            }
             if (lastChecksum.get() != checksum) {
                 lastChecksum.set(checksum);
-                //log.debug(() -> "hps=" + hps + ", tps=" + tps + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
                 log.debug(() -> "hps=" + hps + ", tps=" + tps + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + " + cancelled" + cancelled + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
                 if (nioListener != null) {
                     nioListener.onNIOAccessReportUpdate(appInfo, hps, tps, totalHit, pingHit, bizHit, totalChannel, activeChannel, task, completed, queue, active, pool, core, max, largest);
