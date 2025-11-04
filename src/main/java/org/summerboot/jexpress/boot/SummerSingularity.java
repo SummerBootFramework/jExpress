@@ -50,6 +50,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -320,7 +321,11 @@ abstract public class SummerSingularity {
             userSpecifiedConfigDir = DEFAULT_CFG_DIR;
         }
         if (!userSpecifiedConfigDir.exists()) {
-            userSpecifiedConfigDir.mkdirs();
+            if (userSpecifiedConfigDir.getParentFile().exists()) {
+                userSpecifiedConfigDir.mkdirs();
+            } else {
+                throw new FileSystemNotFoundException("Config folder not found: " + userSpecifiedConfigDir.getAbsolutePath());
+            }
         }
 
         if (BackOffice.agent.isTraceWithSystemOut()) {

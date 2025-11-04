@@ -5,6 +5,7 @@
   * gRPC client config: when trust store is not specified, user can choose default one as JDK or TrustAll
   * IdleEventMonitor only start when the param threshold > 0
   * log refactoring: make HTTP server and gRPC server status log triggered by pool size change when log.trace is enabled
+  * -domain <name> will throw exception when folder does not exist
 
 
 
