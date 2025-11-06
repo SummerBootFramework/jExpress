@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
@@ -41,36 +40,15 @@ import java.util.TimeZone;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class RPCResult<T> {
-    /**
-     * Default Jackson ObjectMapper for RPCResult
-     * <p>
-     * This mapper is configured to:
-     * - Use the default time zone
-     * - Write dates as ISO-8601 strings (not timestamps)
-     * - Ignore empty beans during serialization
-     * - Ignore unknown properties during deserialization
-     * - Accept case-insensitive property names if configured
-     */
-    public static ObjectMapper DefaultJacksonMapper = new ObjectMapper();
 
-    static {
-        init(TimeZone.getDefault(), true, false);
-    }
-
-    public static void init(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive) {
-        if (fromJsonCaseInsensitive) {
-            DefaultJacksonMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
-        }
-        update(DefaultJacksonMapper, timeZone, fromJsonFailOnUnknownProperties);
-    }
-
-    protected static void update(ObjectMapper objectMapper, TimeZone timeZone, boolean isFromJsonFailOnUnknownProperties) {
+    public static void configure(ObjectMapper objectMapper, TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive) {
         objectMapper.registerModules(new JavaTimeModule());
         objectMapper.setTimeZone(timeZone);
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, fromJsonFailOnUnknownProperties);
+        objectMapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, fromJsonCaseInsensitive);// objectMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
     }
 
     protected final HttpRequest originRequest;
@@ -82,6 +60,14 @@ public class RPCResult<T> {
     protected final boolean remoteSuccess;
     protected T successResponse;
 
+    private static ObjectMapper DefaultObjectMapper = new ObjectMapper();
+
+    static {
+        configure(DefaultObjectMapper, TimeZone.getDefault(), true, false);
+    }
+
+    protected ObjectMapper httpClientConfiguredObjectMapper;
+
     public RPCResult(HttpRequest originRequest, String originRequestBody, HttpResponse httpResponse, boolean remoteSuccess) {
         this.originRequest = originRequest;
         this.originRequestBody = originRequestBody;
@@ -90,6 +76,7 @@ public class RPCResult<T> {
         this.httpStatusCode = httpResponse == null ? 0 : httpResponse.statusCode();
         this.httpStatus = HttpResponseStatus.valueOf(httpStatusCode);
         this.remoteSuccess = remoteSuccess;
+        this.httpClientConfiguredObjectMapper = DefaultObjectMapper;
     }
 
     public HttpRequest getOriginRequest() {
@@ -124,26 +111,50 @@ public class RPCResult<T> {
         return successResponse;
     }
 
+    public ObjectMapper getHttpClientConfiguredObjectMapper() {
+        return httpClientConfiguredObjectMapper;
+    }
+
+    public void setHttpClientConfiguredObjectMapper(ObjectMapper httpClientConfiguredObjectMapper) {
+        this.httpClientConfiguredObjectMapper = httpClientConfiguredObjectMapper;
+    }
+
     public RPCResult<T> update(Class<T> successResponseClass, final SessionContext context) {
+        return update(httpClientConfiguredObjectMapper, successResponseClass, context);
+    }
+
+    public RPCResult<T> update(ObjectMapper jacksonMapper, Class<T> successResponseClass, final SessionContext context) {
         if (remoteSuccess) {
-            successResponse = parseJsonResponse(successResponseClass, context);
+            successResponse = parseJsonResponse(jacksonMapper, successResponseClass, context);
         }
         return this;
     }
 
     public RPCResult<T> update(JavaType successResponseType, final SessionContext context) {
+        return update(httpClientConfiguredObjectMapper, successResponseType, context);
+    }
+
+    public RPCResult<T> update(ObjectMapper jacksonMapper, JavaType successResponseType, final SessionContext context) {
         if (remoteSuccess) {
-            successResponse = parseJsonResponse(successResponseType, context);
+            successResponse = parseJsonResponse(jacksonMapper, successResponseType, context);
         }
         return this;
     }
 
     public <R> R parseJsonResponse(Class<R> responseClass, final SessionContext context) {
-        return parseJsonResponse(DefaultJacksonMapper, null, responseClass, true, context);
+        return parseJsonResponse(httpClientConfiguredObjectMapper, responseClass, context);
+    }
+
+    public <R> R parseJsonResponse(ObjectMapper jacksonMapper, Class<R> responseClass, final SessionContext context) {
+        return parseJsonResponse(jacksonMapper, null, responseClass, true, context);
     }
 
     public <R> R parseJsonResponse(JavaType responseType, final SessionContext context) {
-        return parseJsonResponse(DefaultJacksonMapper, responseType, null, true, context);
+        return parseJsonResponse(httpClientConfiguredObjectMapper, responseType, context);
+    }
+
+    public <R> R parseJsonResponse(ObjectMapper jacksonMapper, JavaType responseType, final SessionContext context) {
+        return parseJsonResponse(jacksonMapper, responseType, null, true, context);
     }
 
     public <R> R parseJsonResponse(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, boolean doValidation, final SessionContext context) {
@@ -184,4 +195,6 @@ public class RPCResult<T> {
         }
         return ret;
     }
+
+
 }

@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
@@ -66,7 +67,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
     }
 
     @Override
-    public void onNIOBindNewPort(String version, String sslMode, String protocol, String bindAddr, int listeningPort, List<String> loadBalancingEndpoints) {
+    public void onNIOBindNewPort(String version, String sslMode, String protocol, String bindAddr, int listeningPort, Set<String> loadBalancingEndpoints) {
         //log.info(() -> "Server " + version + " (" + sslMode + ") is listening on " + protocol + bindAddr + ":" + listeningPort + webApiContextRoot);
     }
 

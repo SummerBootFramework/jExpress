@@ -103,7 +103,9 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
             Thread.currentThread().interrupt();
             Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "Http Client Interrupted", ex);
             context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
-            return new RPCResult<>(originRequest, originRequestBody, null, false);
+            RPCResult<T> rpcResult = new RPCResult<>(originRequest, originRequestBody, null, false);
+            rpcResult.setHttpClientConfiguredObjectMapper(getHttpClientConfig().getObjectMapper());
+            return rpcResult;
         } finally {
             context.poi(BootPOI.RPC_END);
         }
@@ -125,6 +127,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
 
         //3b. update status   
         RPCResult<T> rpcResult = new RPCResult<>(originRequest, originRequestBody, httpResponse, isRemoteSuccess);
+        rpcResult.setHttpClientConfiguredObjectMapper(getHttpClientConfig().getObjectMapper());
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
         context.memo(RPCMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + httpResponse.headers());
         context.memo(RPCMemo.MEMO_RPC_RESPONSE_DATA, rpcResponseJsonBody);

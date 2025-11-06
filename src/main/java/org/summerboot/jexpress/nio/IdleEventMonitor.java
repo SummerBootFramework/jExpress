@@ -30,14 +30,13 @@ public class IdleEventMonitor {
         return name;
     }
 
-    public void update(String transactionId) {
-        lastTimestamp.set(System.currentTimeMillis());
-        lastTransactionId.set(transactionId);
+    public void update(String lastTransactionId) {
+        update(System.currentTimeMillis(), lastTransactionId);
     }
 
-    public void update(long timestamp, String transactionId) {
-        lastTimestamp.set(timestamp);
-        lastTransactionId.set(transactionId);
+    public void update(long timestamp, String lastTransactionId) {
+        this.lastTimestamp.set(timestamp);
+        this.lastTransactionId.set(lastTransactionId);
     }
 
     public String getLastTransactionId() {
@@ -49,8 +48,7 @@ public class IdleEventMonitor {
     }
 
     public long getTTLMillis(long threshold, TimeUnit timeUnit) {
-        long thresholdMillis = timeUnit.toMillis(threshold);
-        return getTTLMillis(thresholdMillis);
+        return getTTLMillis(timeUnit.toMillis(threshold));
     }
 
     public long getTTLMillis(long thresholdMillis) {
@@ -58,8 +56,7 @@ public class IdleEventMonitor {
     }
 
     public boolean isTimeout(long threshold, TimeUnit timeUnit) {
-        long thresholdMillis = timeUnit.toMillis(threshold);
-        return isTimeout(thresholdMillis);
+        return isTimeout(timeUnit.toMillis(threshold));
     }
 
     public boolean isTimeout(long thresholdMillis) {
@@ -79,9 +76,13 @@ public class IdleEventMonitor {
         if (idleEventMonitor == null) {
             throw new IllegalArgumentException("Request tracker cannot be null");
         }
+        if (threshold < 1) {
+            log.warn("IdleEventMonitor ({}}) cannot start due to threshold = {}}", idleEventMonitor.getName(), threshold);
+            return;
+        }
         idleEventListener.onIdle(idleEventMonitor);
-        Thread vThread = Thread.startVirtualThread(() -> {
-            log.info("IdleEventMonitor.start: " + idleEventMonitor.getName());
+        Thread.startVirtualThread(() -> {
+            log.info("IdleEventMonitor.start: {}", idleEventMonitor.getName());
             do {
                 try {
                     long ttlMillis = idleEventMonitor.getTTLMillis(threshold, timeUnit);
@@ -89,16 +90,16 @@ public class IdleEventMonitor {
                         Thread.sleep(ttlMillis);
                         continue;
                     }
-                    log.info("IdleEventMonitor.onIdle: " + idleEventMonitor.getName() + ", lastTxId=" + idleEventMonitor.getLastTransactionId() + ", lastTS=" + TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null));
+                    log.info("IdleEventMonitor.onIdle: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null));
                     idleEventListener.onIdle(idleEventMonitor);
                     idleEventMonitor.update(idleEventMonitor.getName());
                 } catch (InterruptedException ex) {
-                    log.error("IdleEventMonitor.interrupted: " + idleEventMonitor.getName(), ex);
+                    log.info("IdleEventMonitor.interrupted: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null), ex);
                 } catch (Throwable ex) {
-                    log.error("IdleEventMonitor.exception: " + idleEventMonitor.getName(), ex);
+                    log.info("IdleEventMonitor.exception: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null), ex);
                 }
             } while (statusMap.getOrDefault(idleEventMonitor, true));
-            log.info("IdleEventMonitor.shutdown: " + idleEventMonitor.getName());
+            log.info("IdleEventMonitor.shutdown: {}", idleEventMonitor.getName());
         });
     }
 

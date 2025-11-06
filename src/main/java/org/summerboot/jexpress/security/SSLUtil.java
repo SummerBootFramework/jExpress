@@ -24,6 +24,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +33,7 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -50,7 +52,7 @@ public class SSLUtil {
         client, server
     }
 
-    /*protected static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
+    protected static final X509Certificate[] TRUSTED_CERTIFICATE = new X509Certificate[0];
 
     // A trust manager that does not validate certificate chains.
     public static final TrustManager[] InsecureTrustManager = new TrustManager[]{
@@ -78,7 +80,7 @@ public class SSLUtil {
 //                }
 //            }
             }
-    };*/
+    };
 
     public static KeyManagerFactory buildKeyManagerFactory(String keyStorePath, char[] keyStorePwd, String keyAlias, char[] keyPwd) throws GeneralSecurityException, IOException {
         if (StringUtils.isBlank(keyStorePath)) {

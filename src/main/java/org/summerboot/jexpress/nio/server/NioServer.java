@@ -54,6 +54,7 @@ import javax.net.ssl.TrustManagerFactory;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -199,7 +200,10 @@ public class NioServer {
                 .childHandler(channelInitializer);
 
         String appInfo = BootConstant.VERSION + " " + BootConstant.PID;
-        List<String> loadBalancingEndpoints = BackOffice.agent.getLoadBalancingPingEndpoints();
+        Set<String> loadBalancingPingEndpoints = BackOffice.agent.getLoadBalancingPingEndpoints();
+        if (loadBalancingPingEndpoints.isEmpty()) {
+            loadBalancingPingEndpoints.add("");
+        }
         //for (String bindAddr : bindingAddresses.keySet()) {
         for (InetSocketAddress addr : bindingAddresses) {
             // info
@@ -221,10 +225,7 @@ public class NioServer {
                 //shutdown();
                 System.out.println("Server " + appInfo + " (" + listenerInfo + ") is stopped");
             });
-            List<String> loadBalancingPingEndpoints = BackOffice.agent.getLoadBalancingPingEndpoints();
-            if (loadBalancingPingEndpoints.isEmpty()) {
-                loadBalancingPingEndpoints.add("");
-            }
+
             for (String loadBalancingPingEndpoint : loadBalancingPingEndpoints) {
                 String info = "Netty HTTP server [" + appInfo + "] (" + listenerInfo + ") is listening on " + protocol + bindAddr + ":" + listeningPort + (loadBalancingPingEndpoint == null ? "" : loadBalancingPingEndpoint);
                 memo.append(BootConstant.BR).append(info);
@@ -232,7 +233,7 @@ public class NioServer {
             }
 
             if (nioListener != null) {
-                nioListener.onNIOBindNewPort(appInfo, listenerInfo, protocol, bindAddr, listeningPort, loadBalancingEndpoints);
+                nioListener.onNIOBindNewPort(appInfo, listenerInfo, protocol, bindAddr, listeningPort, loadBalancingPingEndpoints);
             }
         }
 
@@ -272,7 +273,10 @@ public class NioServer {
                 long completed = tpe.getCompletedTaskCount();
                 long pingHit = NioCounter.COUNTER_PING_HIT.get();
                 long totalHit = bizHit + pingHit;
-                long checksum = hps + tps + active + queue + activeChannel + bizHit + task + completed + active + pool + core + max + largest;
+                long checksum = hps + tps + bizHit + task + completed + queue + active + core + max + largest;
+                if (log.isTraceEnabled()) {
+                    checksum += pool;
+                }
                 if (lastChecksum.get() != checksum) {
                     lastChecksum.set(checksum);
                     log.debug(() -> "hps=" + hps + ", tps=" + tps + ", activeChannel=" + activeChannel + ", totalChannel=" + totalChannel + ", totalHit=" + totalHit + " (ping" + pingHit + " + biz" + bizHit + "), task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
