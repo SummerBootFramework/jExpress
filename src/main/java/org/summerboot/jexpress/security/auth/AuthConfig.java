@@ -232,11 +232,11 @@ public class AuthConfig extends BootConfig {
                     Method method = sslFactoryClass.getMethod("init", KeyManagerFactory.class, TrustManagerFactory.class, String.class);
                     method.invoke(null, kmf, tmf, ldapTLSProtocol);
                 } catch (ClassNotFoundException ex) {
-                    helper.addError("invalid \"" + key + ", error=" + ex);
+                    helper.addError("invalid \"" + key + ", error=" + ex, ex);
                 } catch (NoSuchMethodException ex) {
-                    helper.addError("invalid \"" + key + "missing method: public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol), error=" + ex);
+                    helper.addError("invalid \"" + key + "missing method: public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol), error=" + ex, ex);
                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                    helper.addError("invalid \"" + key + "failed to invoke method: public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol), error=" + ex);
+                    helper.addError("invalid \"" + key + "failed to invoke method: public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol), error=" + ex, ex);
                 }
             }
             //1.2 LDAP info
@@ -275,7 +275,7 @@ public class AuthConfig extends BootConfig {
                 String[] names = name.split("\\.");
                 String roleName = names[1];
                 if (!declareRoles.contains(roleName)) {
-                    helper.addError("Undefined role: (\"" + roleName + "\") is not defined in any @Controller @RolesAllowed(" + declareRoles + ") - line: " + key + "=" + props.getProperty(key.toString()));
+                    helper.addError("Undefined role: (\"" + roleName + "\") is not defined in any @Controller @RolesAllowed(" + declareRoles + ") - line: " + key + "=" + props.getProperty(key.toString()), null);
                 }
                 RoleMapping.Type type = RoleMapping.Type.valueOf(names[2]);
                 RoleMapping rm = rolesTemp.get(roleName);
