@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.6.2</version>
+    <version>2.6.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress ${project.version}</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -153,9 +153,9 @@
         <maven-surefire.version>3.5.3</maven-surefire.version>
         <maven-install.version>3.1.4</maven-install.version>
         <!-- Commons -->
-        <commons-lang3.version>3.19.0</commons-lang3.version>
-        <commons-cli.version>1.10.0</commons-cli.version>
-        <commons-io.version>2.20.0</commons-io.version>
+        <commons-lang3.version>3.20.0</commons-lang3.version>
+        <commons-cli.version>1.11.0</commons-cli.version>
+        <commons-io.version>2.21.0</commons-io.version>
         <commons-text.version>1.14.0</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
@@ -173,9 +173,9 @@
         <netty.version>4.2.7.Final</netty.version>
         <netty-tcnative.version>2.0.74.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.76.0</grpc.version>
+        <grpc.version>1.77.0</grpc.version>
         <guava.version>33.5.0-jre</guava.version>
-        <protobuf.version>4.33.0</protobuf.version>
+        <protobuf.version>4.33.1</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>2.2.40</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
@@ -193,14 +193,14 @@
         <jackson.versiona>2.20</jackson.versiona>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.13</tomcat-embed-el.version>
-        <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
+        <tomcat-embed-el.version>11.0.14</tomcat-embed-el.version>
+        <hibernate-validator.version>9.1.0.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.1.6.Final</hibernate.version>
+        <hibernate.version>7.1.8.Final</hibernate.version>
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
@@ -212,15 +212,15 @@
         <!-- Template Engine -->
         <freemarker.version>2.3.34</freemarker.version>
         <!-- Barcode -->
-        <zxing.version>3.5.3</zxing.version>
+        <zxing.version>3.5.4</zxing.version>
         <!-- PDF - PDFBox 
         <pdfbox.version>2.0.25</pdfbox.version>-->
         <!-- PDF - com.openhtmltopdf -->
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext-core.version>9.3.0</itext-core.version>
-        <itext-html2pdf.version>6.2.1</itext-html2pdf.version>
+        <itext-core.version>9.4.0</itext-core.version>
+        <itext-html2pdf.version>6.3.0</itext-html2pdf.version>
 
         <veracode.version>1.2.1</veracode.version>
 

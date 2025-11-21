@@ -812,14 +812,22 @@ public class SessionContext {
     }
 
     public SessionContext memo(String desc) {
-        return this.memo(null, desc);
+        return this.memo(null, desc, null);
     }
 
     public SessionContext memo(String id, String desc) {
+        return this.memo(id, desc, null);
+    }
+
+    public SessionContext memo(String desc, Level logLevel) {
+        return this.memo(null, desc, logLevel);
+    }
+
+    public SessionContext memo(String id, String desc, Level logLevel) {
         if (memo == null) {
             memo = new ArrayList<>();
         }
-        memo.add(new Memo(id, desc));
+        memo.add(new Memo(id, desc, logLevel));
         return this;
     }
 
@@ -832,26 +840,22 @@ public class SessionContext {
         return autoConvertBlank200To204;
     }
 
-    public static class POI {
-
-        public final String name;
-        public final long ts = System.currentTimeMillis();
-
+    public record POI(String name, long ts) {
         public POI(String name) {
-            this.name = name;
+            this(name, System.currentTimeMillis());
         }
     }
 
-    public static class Memo {
-
-        public final String id;
-        public final String desc;
-
+    public record Memo(String id, String desc, Level logLevel) {
         public Memo(String id, String desc) {
-            this.id = id;
-            this.desc = desc;
+            this(id, desc, null);
         }
 
+        public Memo(String id, String desc, Level logLevel) {
+            this.id = id;
+            this.desc = desc;
+            this.logLevel = logLevel == null ? Level.OFF : logLevel;
+        }
     }
 
     public StringBuilder report() {
@@ -919,17 +923,22 @@ public class SessionContext {
     }
 
     public SessionContext reportMemo(StringBuilder sb) {
+        return this.reportMemo(sb, Level.ALL);
+    }
+
+    public SessionContext reportMemo(StringBuilder sb, Level reportLevel) {
         if (memo == null || memo.isEmpty()) {
             return this;
         }
         sb.append(BootConstant.BR + BootConstant.BR + "\tMemo: ");
-        memo.forEach((m) -> {
-            if (m.id == null || m.id.isEmpty()) {
-                sb.append(BootConstant.BR + "\t\t").append(m.desc);
-            } else {
-                sb.append(BootConstant.BR + "\t\t").append(m.id).append(BootConstant.MEMO_DELIMITER).append(m.desc);
-            }
-        });
+        memo.stream().filter(m -> m.logLevel.isMoreSpecificThan(reportLevel))
+                .forEach((m) -> {
+                    if (m.id == null || m.id.isEmpty()) {
+                        sb.append(BootConstant.BR + "\t\t").append(m.desc);
+                    } else {
+                        sb.append(BootConstant.BR + "\t\t").append(m.id).append(BootConstant.MEMO_DELIMITER).append(m.desc);
+                    }
+                });
         return this;
     }
 

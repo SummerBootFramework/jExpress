@@ -18,6 +18,7 @@ package org.summerboot.jexpress.boot.config;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
@@ -196,12 +197,16 @@ public class ConfigUtil {
         this.cfgFile = cfgFile;
     }
 
-    public void addError(String e) {
+    public void addError(String e, Throwable ex) {
         if (sb == null) {
             sb = new StringBuilder();
             sb.append("config file = ").append(cfgFile);
         }
         sb.append(BootConstant.BR).append("\t").append(e);
+        if (ex != null) {
+            String trace = ExceptionUtils.getStackTrace(ex);
+            sb.append(BootConstant.BR).append("\t").append(trace);
+        }
     }
 
     public String getError() {
@@ -219,7 +224,7 @@ public class ConfigUtil {
         String v = props.getProperty(key);
         if (StringUtils.isBlank(v)) {
             if (defaultValue == null) {
-                addError("missing \"" + key + "\"");
+                addError("missing \"" + key + "\"", null);
                 return false;
             } else {
                 return defaultValue;
@@ -228,7 +233,7 @@ public class ConfigUtil {
         try {
             return Boolean.parseBoolean(v.trim());
         } catch (RuntimeException ex) {
-            addError("invalid \"" + key + "\"");
+            addError("invalid \"" + key + "\"", ex);
             return false;
         }
     }
@@ -244,7 +249,7 @@ public class ConfigUtil {
         String v = props.getProperty(key);
         if (StringUtils.isBlank(v)) {
             if (defaultValue == null) {
-                addError("missing \"" + key + "\"");
+                addError("missing \"" + key + "\"", null);
                 return Integer.MIN_VALUE;
             } else {
                 return defaultValue;
@@ -253,7 +258,7 @@ public class ConfigUtil {
         try {
             return Integer.parseInt(v.trim());
         } catch (RuntimeException ex) {
-            addError("invalid \"" + key + "\"");
+            addError("invalid \"" + key + "\"", ex);
             return Integer.MIN_VALUE;
         }
     }
@@ -269,7 +274,7 @@ public class ConfigUtil {
         String v = props.getProperty(key);
         if (StringUtils.isBlank(v)) {
             if (defaultValue == null) {
-                addError("missing \"" + key + "\"");
+                addError("missing \"" + key + "\"", null);
                 return Long.MIN_VALUE;
             } else {
                 return defaultValue;
@@ -278,7 +283,7 @@ public class ConfigUtil {
         try {
             return Long.parseLong(v.trim());
         } catch (RuntimeException ex) {
-            addError("invalid \"" + key + "\"");
+            addError("invalid \"" + key + "\"", ex);
             return Long.MIN_VALUE;
         }
     }
@@ -294,7 +299,7 @@ public class ConfigUtil {
         String v = props.getProperty(key);
         if (StringUtils.isBlank(v)) {
             if (defaultValue == null) {
-                addError("missing \"" + key + "\"");
+                addError("missing \"" + key + "\"", null);
                 return Float.MIN_VALUE;
             } else {
                 return defaultValue;
@@ -303,7 +308,7 @@ public class ConfigUtil {
         try {
             return Float.parseFloat(v.trim());
         } catch (RuntimeException ex) {
-            addError("invalid \"" + key + "\"");
+            addError("invalid \"" + key + "\"", ex);
             return Float.MIN_VALUE;
         }
     }
@@ -319,7 +324,7 @@ public class ConfigUtil {
         String v = props.getProperty(key);
         if (StringUtils.isBlank(v)) {
             if (defaultValue == null) {
-                addError("missing \"" + key + "\"");
+                addError("missing \"" + key + "\"", null);
                 return Double.MIN_VALUE;
             } else {
                 return defaultValue;
@@ -328,7 +333,7 @@ public class ConfigUtil {
         try {
             return Double.parseDouble(v.trim());
         } catch (RuntimeException ex) {
-            addError("invalid \"" + key + "\"");
+            addError("invalid \"" + key + "\"", ex);
             return Double.MIN_VALUE;
         }
     }
@@ -344,7 +349,7 @@ public class ConfigUtil {
         String v = props.getProperty(key);
         if (StringUtils.isBlank(v)) {
             if (defaultValue == null) {
-                addError("missing \"" + key + "\"");
+                addError("missing \"" + key + "\"", null);
                 return null;
             } else {
                 return defaultValue;
@@ -364,20 +369,20 @@ public class ConfigUtil {
         String v = props.getProperty(key);
         if (StringUtils.isBlank(v)) {
             if (defaultValue == null) {
-                addError("missing \"" + key + "\"");
+                addError("missing \"" + key + "\"", null);
                 return FormatterUtil.EMPTY_STR_ARRAY;
             } else {
                 try {
                     return FormatterUtil.parseCsv(defaultValue);
                 } catch (RuntimeException ex) {
-                    addError("invalid default CSV  of \"" + key + "\"");
+                    addError("invalid default CSV  of \"" + key + "\"", ex);
                 }
             }
         }
         try {
             return FormatterUtil.parseCsv(v);
         } catch (RuntimeException ex) {
-            addError("invalid CSV of \"" + key + "\"");
+            addError("invalid CSV of \"" + key + "\"", ex);
         }
         return FormatterUtil.EMPTY_STR_ARRAY;
     }
@@ -396,7 +401,7 @@ public class ConfigUtil {
                     ? filterCodeRangeFrom
                     : Long.valueOf(ra[1]);
             if (filterCodeRangeFrom > filterCodeRangeTo) {
-                addError("\"" + key + "\" " + filterCodeRangeFrom + " should be less than \"" + filterCodeRangeTo + "\"");
+                addError("\"" + key + "\" " + filterCodeRangeFrom + " should be less than \"" + filterCodeRangeTo + "\"", null);
             } else {
                 Long[] range = {filterCodeRangeFrom, filterCodeRangeTo};
                 ret = range;
@@ -421,7 +426,7 @@ public class ConfigUtil {
                     ? filterCodeRangeFrom
                     : Double.parseDouble(ra[1]);
             if (filterCodeRangeFrom > filterCodeRangeTo) {
-                addError("\"" + key + "\" " + filterCodeRangeFrom + " should be less than \"" + filterCodeRangeTo + "\"");
+                addError("\"" + key + "\" " + filterCodeRangeFrom + " should be less than \"" + filterCodeRangeTo + "\"", null);
             } else {
                 Double[] range = {filterCodeRangeFrom, filterCodeRangeTo};
                 ret = range;
@@ -446,11 +451,11 @@ public class ConfigUtil {
             if (value.startsWith(ENCRYPTED_WARPER_PREFIX + "(") && value.endsWith(")")) {
                 pwd = EncryptorUtil.decrypt(value, true);
             } else {
-                addError("invalid format, expected:  \"" + key + "\"=ENC(encrypted value)");
+                addError("invalid format, expected:  \"" + key + "\"=ENC(encrypted value)", null);
             }
         } catch (Throwable ex) {
             pwd = null;
-            addError("invalid \"" + key + "\"");
+            addError("invalid \"" + key + "\"", ex);
         }
         return pwd;
     }
@@ -490,12 +495,12 @@ public class ConfigUtil {
         try {
             String v = props.getProperty(key).trim();
             if (StringUtils.isBlank(v)) {
-                addError("invalid \"" + key + "\"");
+                addError("invalid \"" + key + "\"", null);
                 return null;
             }
             return FormatterUtil.parseBindingAddresss(v);
         } catch (Throwable ex) {
-            addError("invalid \"" + key + "\"");
+            addError("invalid \"" + key + "\"", ex);
             return null;
         }
     }
@@ -517,7 +522,7 @@ public class ConfigUtil {
 
             kmf = SSLUtil.buildKeyManagerFactory(sslKeyStorePath, pwdStore, alias, pwdKey);
         } catch (Throwable ex) {
-            addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString());
+            addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString(), ex);
         }
         return kmf;
     }
@@ -535,7 +540,7 @@ public class ConfigUtil {
             char[] pwdStore = pwd == null ? null : pwd.toCharArray();
             tmf = SSLUtil.buildTrustManagerFactory(sslKeyStorePath, pwdStore);
         } catch (Throwable ex) {
-            addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString());
+            addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString(), ex);
         }
         return tmf;
     }

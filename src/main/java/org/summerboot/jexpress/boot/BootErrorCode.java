@@ -124,4 +124,5 @@ public interface BootErrorCode {
     int RTO_UNKNOWN_HOST_ERROR = getErrorCode(RTO_CLS_EXIT + 15);
     int RTO_BINDING_ERROR = getErrorCode(RTO_CLS_EXIT + 16);
     int RTO_UNKNOWN_ERROR = getErrorCode(RTO_CLS_EXIT + 17);
+    int RTO_CFG_LOAD_ERROR = getErrorCode(RTO_CLS_EXIT + 18);
 }

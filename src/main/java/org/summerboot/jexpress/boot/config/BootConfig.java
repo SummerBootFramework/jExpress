@@ -250,7 +250,7 @@ public abstract class BootConfig implements JExpressConfig {
             preLoad(cfgFile, isReal, helper, props);
         } catch (Throwable ex) {
             ex.printStackTrace();
-            helper.addError("failed to preLoad configs:" + ex);
+            helper.addError("failed to preLoad configs:" + ex, ex);
         }
 
         Class c = this.getClass();
@@ -264,7 +264,7 @@ public abstract class BootConfig implements JExpressConfig {
             } catch (Throwable ex) {
                 String key = field.getAnnotation(Config.class).key();
                 Class expectedType = field.getType();
-                helper.addError("invalid \"" + key + "\" - " + expectedType + ", error=" + ex);
+                helper.addError("invalid \"" + key + "\" - " + expectedType + ", error=" + ex, ex);
             }
         }
 
@@ -273,7 +273,7 @@ public abstract class BootConfig implements JExpressConfig {
             loadCustomizedConfigs(cfgFile, isReal, helper, props);
         } catch (Throwable ex) {
             ex.printStackTrace();
-            helper.addError("failed to init customized configs:" + ex);
+            helper.addError("failed to init customized configs:" + ex, ex);
         } finally {
             if (!isReal) {
                 shutdown();
@@ -283,6 +283,8 @@ public abstract class BootConfig implements JExpressConfig {
         String error = helper.getError();
         if (error != null) {
             throw new IllegalArgumentException(error);
+            //logger.fatal(error);
+            //System.exit(BootErrorCode.RTO_CFG_LOAD_ERROR);
         }
         if (isReal && logger == null) {
             logger = LogManager.getLogger(getClass());
@@ -301,7 +303,7 @@ public abstract class BootConfig implements JExpressConfig {
         field.setAccessible(true);
         if (StringUtils.isBlank(valueInCfgFile)) {
             if (cfgAnnotation.required()) {// 1. no cfg value, but required
-                helper.addError("missing \"" + annotationKey + "\"");
+                helper.addError("missing \"" + annotationKey + "\"", null);
                 return;
             }
             boolean isSpecifiedInCfgFile = props.containsKey(annotationKey);
@@ -333,7 +335,7 @@ public abstract class BootConfig implements JExpressConfig {
                     throw new IllegalArgumentException("Failed to decrypt", ex);
                 }
             } else {
-                helper.addError("invalid \"" + annotationKey + "\" - require encrypted format, missing warpper: ENC(encrypted value)");
+                helper.addError("invalid \"" + annotationKey + "\" - require encrypted format, missing warpper: ENC(encrypted value)", null);
                 return;
             }
         }
