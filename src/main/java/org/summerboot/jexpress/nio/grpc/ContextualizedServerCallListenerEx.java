@@ -235,7 +235,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         long requestDataBytes = 0;
         long responseDataBytes = 0;
         NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, sessionContext, sb, isTraceAll);
-        sessionContext.reportMemo(sb);
+        sessionContext.reportMemo(sb, log.getLevel());
         sessionContext.reportError(sb);
         sb.append(BootConstant.BR);
         String report = sb.toString();

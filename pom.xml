@@ -153,8 +153,8 @@
         <maven-surefire.version>3.5.3</maven-surefire.version>
         <maven-install.version>3.1.4</maven-install.version>
         <!-- Commons -->
-        <commons-lang3.version>3.19.0</commons-lang3.version>
-        <commons-cli.version>1.10.0</commons-cli.version>
+        <commons-lang3.version>3.20.0</commons-lang3.version>
+        <commons-cli.version>1.11.0</commons-cli.version>
         <commons-io.version>2.21.0</commons-io.version>
         <commons-text.version>1.14.0</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
@@ -173,9 +173,9 @@
         <netty.version>4.2.7.Final</netty.version>
         <netty-tcnative.version>2.0.74.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.76.0</grpc.version>
+        <grpc.version>1.77.0</grpc.version>
         <guava.version>33.5.0-jre</guava.version>
-        <protobuf.version>4.33.0</protobuf.version>
+        <protobuf.version>4.33.1</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>2.2.40</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
@@ -200,7 +200,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.1.7.Final</hibernate.version>
+        <hibernate.version>7.1.8.Final</hibernate.version>
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
@@ -219,8 +219,8 @@
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext-core.version>9.3.0</itext-core.version>
-        <itext-html2pdf.version>6.2.1</itext-html2pdf.version>
+        <itext-core.version>9.4.0</itext-core.version>
+        <itext-html2pdf.version>6.3.0</itext-html2pdf.version>
 
         <veracode.version>1.2.1</veracode.version>
 

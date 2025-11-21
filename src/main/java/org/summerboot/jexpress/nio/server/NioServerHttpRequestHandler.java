@@ -191,7 +191,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         context.reportPOI(nioCfg, sb);
                         String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
                         verboseClientServerCommunication(nioCfg, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, context, sb, isTraceAll);
-                        context.reportMemo(sb);
+                        context.reportMemo(sb, log.getLevel());
                         context.reportError(sb);
                         sb.append(BootConstant.BR);
                         report = sb.toString();
