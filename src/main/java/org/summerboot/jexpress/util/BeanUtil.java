@@ -37,6 +37,7 @@ import org.summerboot.jexpress.boot.BootConstant;
 
 import java.lang.reflect.Array;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
@@ -137,38 +138,50 @@ public class BeanUtil {
      * Deserialization , convert JSON string to object T
      *
      * @param <T>
-     * @param c
      * @param json
+     * @param c
      * @return
      * @throws JsonProcessingException
      */
-    public static <T extends Object> T fromJson(Class<T> c, String json) throws JsonProcessingException {
+    public static <T extends Object> T fromJson(String json, Class<T> c) throws JsonProcessingException {
         if (StringUtils.isBlank(json)) {
             return null;
         }
         return JacksonMapper.readValue(json, c);
     }
 
+    public static <T extends Object> T fromJson(Class<T> c, String json) throws JsonProcessingException {
+        return fromJson(json, c);
+    }
+
     /**
      * Deserialization , convert JSON string to object T
      *
      * @param <T>
-     * @param javaType
      * @param json
+     * @param javaType
      * @return
      * @throws JsonProcessingException
      */
-    public static <T extends Object> T fromJson(JavaType javaType, String json) throws JsonProcessingException {
+    public static <T extends Object> T fromJson(String json, JavaType javaType) throws JsonProcessingException {
         if (StringUtils.isBlank(json)) {
             return null;
         }
         return JacksonMapper.readValue(json, javaType);
     }
 
-    public static <T extends Object> T fromJson(TypeReference<T> javaType, String json) throws JsonProcessingException {
+    public static <T extends Object> T fromJson(String json, TypeReference<T> javaType) throws JsonProcessingException {
         if (StringUtils.isBlank(json)) {
             return null;
         }
+        return JacksonMapper.readValue(json, javaType);
+    }
+
+    public static <T extends Object> T fromJson(String json, Class keyClass, Class valueClass) throws JsonProcessingException {
+        if (StringUtils.isBlank(json)) {
+            return null;
+        }
+        JavaType javaType = buildMapType(keyClass, valueClass);
         return JacksonMapper.readValue(json, javaType);
     }
 
@@ -176,24 +189,32 @@ public class BeanUtil {
      * Deserialization , convert JSON string to object T
      *
      * @param <R>
-     * @param collectionClass
-     * @param genericClass
      * @param json
+     * @param collectionClass
+     * @param genericClasses
      * @return
      * @throws JsonProcessingException
      */
-    public static <R extends Object> R fromJson(Class<R> collectionClass, Class<?> genericClass, String json) throws JsonProcessingException {
+    public static <R extends Object> R fromJson(String json, Class<R> collectionClass, Class<?>... genericClasses) throws JsonProcessingException {
         if (StringUtils.isBlank(json)) {
             return null;
         }
-        if (genericClass == null) {
-            return fromJson(collectionClass, json);
+        if (genericClasses == null) {
+            return fromJson(json, collectionClass);
         }
-        JavaType javaType = JacksonMapper.getTypeFactory().constructParametricType(collectionClass, genericClass);
+        JavaType javaType = JacksonMapper.getTypeFactory().constructParametricType(collectionClass, genericClasses);
         return JacksonMapper.readValue(json, javaType);
     }
 
-    public static <T extends Object> T fromXML(Class<T> targetClass, String xml) throws JsonProcessingException {
+    public static JavaType buildJavaType(Class collectionClass, Class... genericClasses) {
+        return JacksonMapper.getTypeFactory().constructParametricType(collectionClass, genericClasses);
+    }
+
+    public static JavaType buildMapType(Class keyClass, Class valueClass) {
+        return JacksonMapper.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
+    }
+
+    public static <T extends Object> T fromXML(String xml, Class<T> targetClass) throws JsonProcessingException {
         return (T) XMLMapper.readValue(xml, targetClass);
     }
 
