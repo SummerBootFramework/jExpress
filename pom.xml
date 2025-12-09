@@ -165,7 +165,7 @@
         <jakarta-mail.version>2.0.2</jakarta-mail.version>
         <jakarta-activation.version>2.0.1</jakarta-activation.version>
         <!-- Security -->
-        <bouncycastle.version>1.82</bouncycastle.version>
+        <bouncycastle.version>1.83</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.13.0</jwt.version>
 
@@ -177,7 +177,7 @@
         <guava.version>33.5.0-jre</guava.version>
         <protobuf.version>4.33.1</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.40</swagger.core.version>
+        <swagger.core.version>2.2.41</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -200,20 +200,20 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.1.8.Final</hibernate.version>
+        <hibernate.version>7.1.11.Final</hibernate.version>
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>7.0.0</jedis.version>
+        <jedis.version>7.1.0</jedis.version>
 
-        <quartz.version>2.5.1</quartz.version>
+        <quartz.version>2.5.2</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.34</freemarker.version>
         <!-- Barcode -->
         <zxing.version>3.5.4</zxing.version>
-        <!-- PDF - PDFBox 
+        <!-- PDF - PDFBox
         <pdfbox.version>2.0.25</pdfbox.version>-->
         <!-- PDF - com.openhtmltopdf -->
         <openhtml.version>1.0.10</openhtml.version>

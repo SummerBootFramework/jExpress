@@ -263,9 +263,9 @@ class JaxRsRequestParameter {
                 Object postDataObj;
                 try {
                     if (genericClassT == null) {
-                        postDataObj = BeanUtil.fromJson(targetClass, request.getHttpPostRequestBody());
+                        postDataObj = BeanUtil.fromJson(request.getHttpPostRequestBody(), targetClass);
                     } else {
-                        postDataObj = BeanUtil.fromJson(targetClass, genericClassT, request.getHttpPostRequestBody());
+                        postDataObj = BeanUtil.fromJson(request.getHttpPostRequestBody(), targetClass, genericClassT);
                     }
                 } catch (Throwable ex) {
                     // 1. convert to JSON
@@ -319,7 +319,7 @@ class JaxRsRequestParameter {
             case Body_XML:
                 v = request.getHttpPostRequestBody();
                 try {
-                    postDataObj = BeanUtil.fromXML(targetClass, v);
+                    postDataObj = BeanUtil.fromXML(v, targetClass);
                 } catch (Throwable ex) {
                     // 1. convert to JSON
                     Err e = new Err(BootErrorCode.BAD_REQUEST_UNKNOWN_XML_REQUEST_BODY, null, "Unknown request(XML) body", ex, "Unknown request(XML) body: " + ex.toString());

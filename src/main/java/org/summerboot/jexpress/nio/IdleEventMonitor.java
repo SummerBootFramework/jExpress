@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class IdleEventMonitor {
 
-    private final AtomicLong lastTimestamp = new AtomicLong(0);
+    private final AtomicLong lastTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicReference<String> lastTransactionId = new AtomicReference<>();
     private final String name;
 
@@ -77,10 +77,10 @@ public class IdleEventMonitor {
             throw new IllegalArgumentException("Request tracker cannot be null");
         }
         if (threshold < 1) {
-            log.warn("IdleEventMonitor ({}}) cannot start due to threshold = {}}", idleEventMonitor.getName(), threshold);
+            log.warn("IdleEventMonitor ({}}) is disabled due to threshold = {}}", idleEventMonitor.getName(), threshold);
             return;
         }
-        idleEventListener.onIdle(idleEventMonitor);
+        //idleEventListener.onIdle(idleEventMonitor);
         Thread.startVirtualThread(() -> {
             log.info("IdleEventMonitor.start: {}", idleEventMonitor.getName());
             do {

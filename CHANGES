@@ -4,6 +4,7 @@
 
   * log root cause for config error
   * memo with log level
+  * IdleEventMonitor no longer trigger the onIdle() when start
 
 \-- release 2.6.2
 
