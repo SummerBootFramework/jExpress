@@ -151,7 +151,7 @@ public class BeanUtil {
     }
 
     public static <T extends Object> T fromJson(Class<T> c, String json) throws JsonProcessingException {
-        return fromJson(c, json);
+        return fromJson(json, c);
     }
 
     /**
