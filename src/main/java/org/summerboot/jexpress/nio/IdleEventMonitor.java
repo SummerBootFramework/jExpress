@@ -30,11 +30,11 @@ public class IdleEventMonitor {
         return name;
     }
 
-    public void update(String lastTransactionId) {
-        update(System.currentTimeMillis(), lastTransactionId);
+    public void onCall(String lastTransactionId) {
+        onCall(System.currentTimeMillis(), lastTransactionId);
     }
 
-    public void update(long timestamp, String lastTransactionId) {
+    public void onCall(long timestamp, String lastTransactionId) {
         this.lastTimestamp.set(timestamp);
         this.lastTransactionId.set(lastTransactionId);
     }
@@ -47,11 +47,11 @@ public class IdleEventMonitor {
         return lastTimestamp.get();
     }
 
-    public long getTTLMillis(long threshold, TimeUnit timeUnit) {
-        return getTTLMillis(timeUnit.toMillis(threshold));
+    public long getWaitMillis(long threshold, TimeUnit timeUnit) {
+        return getWaitMillis(timeUnit.toMillis(threshold));
     }
 
-    public long getTTLMillis(long thresholdMillis) {
+    public long getWaitMillis(long thresholdMillis) {
         return thresholdMillis - (System.currentTimeMillis() - lastTimestamp.get());
     }
 
@@ -69,7 +69,7 @@ public class IdleEventMonitor {
     private static final Map<IdleEventMonitor, Boolean> statusMap = new ConcurrentHashMap<>();
 
     public static interface IdleEventListener {
-        void onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
+        boolean onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
     }
 
     public static void start(final IdleEventMonitor idleEventMonitor, final IdleEventListener idleEventListener, long threshold, TimeUnit timeUnit) throws Exception {
@@ -85,14 +85,14 @@ public class IdleEventMonitor {
             log.info("IdleEventMonitor.start: {}", idleEventMonitor.getName());
             do {
                 try {
-                    long ttlMillis = idleEventMonitor.getTTLMillis(threshold, timeUnit);
+                    long ttlMillis = idleEventMonitor.getWaitMillis(threshold, timeUnit);
                     if (ttlMillis >= 0) {
                         Thread.sleep(ttlMillis);
                         continue;
                     }
                     log.info("IdleEventMonitor.onIdle: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null));
                     idleEventListener.onIdle(idleEventMonitor);
-                    idleEventMonitor.update(idleEventMonitor.getName());
+                    idleEventMonitor.onCall(idleEventMonitor.getName());
                 } catch (InterruptedException ex) {
                     log.info("IdleEventMonitor.interrupted: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null), ex);
                 } catch (Throwable ex) {

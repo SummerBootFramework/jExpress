@@ -34,24 +34,31 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     protected final Logger log = LogManager.getLogger(this);
 
-    protected ZoneId zoneId = ZoneId.systemDefault();
+    protected static ZoneId zoneId = ZoneId.systemDefault();
 
+    protected static String protectedContectReplaceWith = "***";
+
+    public static boolean isPing(String methodName) {
+        return methodName.endsWith("/ping");
+    }
 
     public static <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(long startTs, Caller caller, String jti, Context context, ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-        GRPCServer.getServiceCounter().incrementHit();
         Context previous;
         ContextualizedServerCallListenerEx<ReqT> listener;
         final SessionContext sessionContext;
         var serverCall = call;
+        boolean isPing = false;
         try {
             String methodName = call.getMethodDescriptor().getFullMethodName();
-            if (isPing(methodName)) {
+            isPing = isPing(methodName);
+            if (isPing) {
                 GRPCServer.getServiceCounter().incrementPing();
                 sessionContext = null;
             } else {
+                GRPCServer.getServiceCounter().incrementHit();
                 final long hitIndex = GRPCServer.getServiceCounter().incrementBiz();
                 final String txId = BootConstant.APP_ID + "-" + hitIndex;
-                GRPCServer.IDLE_EVENT_MONITOR.update(txId);
+                GRPCServer.IDLE_EVENT_MONITOR.onCall(txId);
                 HttpHeaders httpHeaders = new DefaultHttpHeaders();
                 for (String key : headers.keys()) {
                     httpHeaders.add(key, headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER)));
@@ -102,7 +109,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         }
 
         try {
-            listener = new ContextualizedServerCallListenerEx<>(next.startCall(serverCall, headers), context, sessionContext);
+            listener = new ContextualizedServerCallListenerEx<>(next.startCall(serverCall, headers), context, sessionContext, !isPing);
         } finally {
             context.detach(previous);
         }
@@ -110,11 +117,6 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         return listener;
     }
 
-    protected static String protectedContectReplaceWith = "***";
-
-    public static boolean isPing(String methodName) {
-        return methodName.endsWith("/ping");
-    }
 
     private final Context context;
 
@@ -122,10 +124,13 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     private String httpPostRequestBody;
 
-    public ContextualizedServerCallListenerEx(ServerCall.Listener<ReqT> delegate, Context context, SessionContext sessionContext) {
+    private boolean isBusinessRequest;
+
+    public ContextualizedServerCallListenerEx(ServerCall.Listener<ReqT> delegate, Context context, SessionContext sessionContext, boolean isBusinessRequest) {
         super(delegate);
         this.context = context;
         this.sessionContext = sessionContext;
+        this.isBusinessRequest = isBusinessRequest;
     }
 
     public void onReady() {
@@ -163,8 +168,10 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     }
 
     public void onCancel() {
-        GRPCServer.getServiceCounter().incrementCancelled();
-        GRPCServer.getServiceCounter().incrementProcessed();
+        if (isBusinessRequest) {
+            GRPCServer.getServiceCounter().incrementCancelled();
+            GRPCServer.getServiceCounter().incrementProcessed();
+        }
         Context previous = this.context.attach();
 
         try {
@@ -177,7 +184,9 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     }
 
     public void onComplete() {
-        GRPCServer.getServiceCounter().incrementProcessed();
+        if (isBusinessRequest) {
+            GRPCServer.getServiceCounter().incrementProcessed();
+        }
         Context previous = this.context.attach();
 
         try {

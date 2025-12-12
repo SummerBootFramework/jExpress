@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.6.3</version>
+    <version>2.6.4-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress ${project.version}</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -156,7 +156,7 @@
         <commons-lang3.version>3.20.0</commons-lang3.version>
         <commons-cli.version>1.11.0</commons-cli.version>
         <commons-io.version>2.21.0</commons-io.version>
-        <commons-text.version>1.14.0</commons-text.version>
+        <commons-text.version>1.15.0</commons-text.version>
         <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
         <!-- Logging -->
         <log4j-api.version>2.25.2</log4j-api.version>
@@ -175,7 +175,7 @@
         <!-- gRPC and protobuf -->
         <grpc.version>1.77.0</grpc.version>
         <guava.version>33.5.0-jre</guava.version>
-        <protobuf.version>4.33.1</protobuf.version>
+        <protobuf.version>4.33.2</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>2.2.41</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
@@ -193,7 +193,7 @@
         <jackson.versiona>2.20</jackson.versiona>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.14</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.15</tomcat-embed-el.version>
         <hibernate-validator.version>9.1.0.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->

@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.boot.event;
 
+import org.summerboot.jexpress.boot.SummerRunner;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
 
 import java.io.File;
@@ -23,9 +24,11 @@ import java.io.File;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface AppLifecycleListener {
-    void onApplicationStart(String appVersion, String fullConfigInfo);
+    void beforeApplicationStart(SummerRunner.RunnerContext context);
 
-    void onApplicationStop(String appVersion);
+    void onApplicationStart(SummerRunner.RunnerContext context, String appVersion, String fullConfigInfo);
+
+    void onApplicationStop(SummerRunner.RunnerContext context, String appVersion);
 
     /**
      * called when application paused or resumed by configuration/pause file or BottController's ${context-root}/status?pause=true|false
@@ -35,9 +38,9 @@ public interface AppLifecycleListener {
      * @param serviceStatusChanged true if service status changed
      * @param reason               the reason
      */
-    void onApplicationStatusUpdated(boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason);
+    void onApplicationStatusUpdated(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason);
 
-    void onHealthInspectionFailed(boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds);
+    void onHealthInspectionFailed(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds);
 
     void onConfigChangeBefore(File configFile, JExpressConfig cfg);
 

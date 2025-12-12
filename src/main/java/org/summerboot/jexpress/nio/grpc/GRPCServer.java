@@ -149,7 +149,7 @@ public class GRPCServer {
             long largest = tpe.getLargestPoolSize();
             long task = tpe.getTaskCount();
             long completed = tpe.getCompletedTaskCount();
-            long checksum = hps + tps + bizHit + task + completed + queue + active + core + max + largest;
+            long checksum = hps + tps + bizHit + /*task + completed*/ +queue + active + core + max /*+ largest*/;
             if (log.isTraceEnabled()) {
                 checksum += pool;
             }

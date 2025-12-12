@@ -26,14 +26,16 @@ import java.io.File;
  */
 public interface SummerRunner {
 
-    class RunnerContext {
+    record RunnerContext(String appVersion,
+                         CommandLine cli,
+                         File configDir,
+                         Injector guiceInjector,
+                         PostOffice postOffice) {
+    }
 
-        protected final CommandLine cli;
-        protected final File configDir;
-        protected final Injector guiceInjector;
-        protected final PostOffice postOffice;
 
-        public RunnerContext(CommandLine cli, File configDir, Injector guiceInjector, PostOffice postOffice) {
+        /*public RunnerContext(String appVersion, CommandLine cli, File configDir, Injector guiceInjector, PostOffice postOffice) {
+            this.appVersion = appVersion;
             this.cli = cli;
             this.configDir = configDir;
             this.guiceInjector = guiceInjector;
@@ -54,9 +56,9 @@ public interface SummerRunner {
 
         public PostOffice getPostOffice() {
             return postOffice;
-        }
+        }*/
 
-    }
+    //}
 
     /**
      * @param context
