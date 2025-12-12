@@ -40,11 +40,11 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     protected PostOffice postOffice;
 
     @Override
-    public void beforeApplicationStart(SummerRunner.RunnerContext context) {
+    public void beforeApplicationStart(SummerRunner.RunnerContext context) throws Exception {
     }
 
     @Override
-    public void onApplicationStart(SummerRunner.RunnerContext context, String appVersion, String fullConfigInfo) {
+    public void onApplicationStart(SummerRunner.RunnerContext context, String appVersion, String fullConfigInfo) throws Exception {
         if (postOffice != null) {
             postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Started", fullConfigInfo, null, false);
         }
@@ -68,7 +68,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
      * @param reason
      */
     @Override
-    public void onApplicationStatusUpdated(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) {
+    public void onApplicationStatusUpdated(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) throws Exception {
         if (serviceStatusChanged) {
             boolean serviceAvaliable = healthOk && !paused;
             String content = HealthMonitor.buildMessage();
@@ -79,7 +79,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     }
 
     @Override
-    public void onHealthInspectionFailed(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) {
+    public void onHealthInspectionFailed(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception {
         if (postOffice != null) {
             String content = HealthMonitor.buildMessage();
             postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Health Inspection Failed", content, null, true);
