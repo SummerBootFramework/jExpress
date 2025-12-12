@@ -20,7 +20,7 @@ import com.google.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.SummerRunner;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
@@ -40,18 +40,18 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     protected PostOffice postOffice;
 
     @Override
-    public void beforeApplicationStart(SummerRunner.RunnerContext context) throws Exception {
+    public void beforeApplicationStart(SummerApplication.AppContext context) throws Exception {
     }
 
     @Override
-    public void onApplicationStart(SummerRunner.RunnerContext context, String appVersion, String fullConfigInfo) throws Exception {
+    public void onApplicationStart(SummerApplication.AppContext context, String appVersion, String fullConfigInfo) throws Exception {
         if (postOffice != null) {
             postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Started", fullConfigInfo, null, false);
         }
     }
 
     @Override
-    public void onApplicationStop(SummerRunner.RunnerContext context, String appVersion) {
+    public void onApplicationStop(SummerApplication.AppContext context, String appVersion) {
         log.warn(appVersion);
         if (postOffice != null) {
             postOffice.sendAlertSync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Shutdown", "pid#" + BootConstant.PID, null, false);
@@ -68,7 +68,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
      * @param reason
      */
     @Override
-    public void onApplicationStatusUpdated(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) throws Exception {
+    public void onApplicationStatusUpdated(SummerApplication.AppContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) throws Exception {
         if (serviceStatusChanged) {
             boolean serviceAvaliable = healthOk && !paused;
             String content = HealthMonitor.buildMessage();
@@ -79,7 +79,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     }
 
     @Override
-    public void onHealthInspectionFailed(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception {
+    public void onHealthInspectionFailed(SummerApplication.AppContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception {
         if (postOffice != null) {
             String content = HealthMonitor.buildMessage();
             postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Health Inspection Failed", content, null, true);

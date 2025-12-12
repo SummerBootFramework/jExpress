@@ -2,6 +2,7 @@ package org.summerboot.jexpress.nio;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.util.TimeUtil;
 
 import java.util.Map;
@@ -69,23 +70,30 @@ public class IdleEventMonitor {
     private static final Map<IdleEventMonitor, Boolean> statusMap = new ConcurrentHashMap<>();
 
     public static interface IdleEventListener {
-        boolean onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
+        void onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
+
+        long getIdleIntervalMillis();
     }
 
-    public static void start(final IdleEventMonitor idleEventMonitor, final IdleEventListener idleEventListener, long threshold, TimeUnit timeUnit) throws Exception {
+    public static void start(final IdleEventMonitor idleEventMonitor, final IdleEventListener idleEventListener) throws Exception {
         if (idleEventMonitor == null) {
             throw new IllegalArgumentException("Request tracker cannot be null");
         }
-        if (threshold < 1) {
-            log.warn("IdleEventMonitor ({}}) is disabled due to threshold = {}}", idleEventMonitor.getName(), threshold);
-            return;
-        }
+//        if (threshold < 1) {
+//            log.warn("IdleEventMonitor ({}}) is disabled due to threshold = {}}", idleEventMonitor.getName(), threshold);
+//            return;
+//        }
         //idleEventListener.onIdle(idleEventMonitor);
         Thread.startVirtualThread(() -> {
             log.info("IdleEventMonitor.start: {}", idleEventMonitor.getName());
             do {
                 try {
-                    long ttlMillis = idleEventMonitor.getWaitMillis(threshold, timeUnit);
+                    long idleIntervalMillis = idleEventListener.getIdleIntervalMillis();
+                    if (idleIntervalMillis < 1) {
+                        Thread.sleep(TimeUnit.SECONDS.toMillis(BackOffice.agent.getIdleConfig0ReloadIntervalSec()));
+                        continue;
+                    }
+                    long ttlMillis = idleEventMonitor.getWaitMillis(idleIntervalMillis);
                     if (ttlMillis >= 0) {
                         Thread.sleep(ttlMillis);
                         continue;

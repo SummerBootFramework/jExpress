@@ -218,6 +218,10 @@ public class BackOffice extends BootConfig {
     @Config(key = "backoffice.executor.allowCoreThreadTimeOut", defaultValue = "false")
     private boolean allowCoreThreadTimeOut = false;
 
+    @Config(key = "backoffice.IdleMonotor.Config0.Reload.IntervalSec", defaultValue = "30")
+    private int idleConfig0ReloadIntervalSec = 30;
+
+
     @ConfigHeader(title = "4.1 Default Path/File Naming")
     @Config(key = "naming.file.defaultMasterPasswordFile", defaultValue = "master.password")
     private String defaultMasterPasswordFile = "master.password";
@@ -426,6 +430,10 @@ public class BackOffice extends BootConfig {
 
     public String getPortInUseAlertMessage() {
         return portInUseAlertMessage;
+    }
+
+    public int getIdleConfig0ReloadIntervalSec() {
+        return idleConfig0ReloadIntervalSec;
     }
 
     public String getDefaultMasterPasswordFile() {

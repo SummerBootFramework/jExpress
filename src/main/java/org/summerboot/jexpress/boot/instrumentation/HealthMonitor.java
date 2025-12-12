@@ -22,7 +22,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.SummerRunner;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.annotation.Inspector;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
@@ -129,10 +129,10 @@ public class HealthMonitor {
     }
 
 
-    private static SummerRunner.RunnerContext runnerContext;
+    private static SummerApplication.AppContext appContext;
 
-    public static String start(SummerRunner.RunnerContext context, boolean returnRsult, Injector guiceInjector) {
-        runnerContext = context;
+    public static String start(SummerApplication.AppContext context, boolean returnRsult, Injector guiceInjector) {
+        appContext = context;
         if (keepRunning) {
             return "HealthMonitor is already running";
         }
@@ -294,7 +294,7 @@ public class HealthMonitor {
                         long retryIndex = HealthInspector.retryIndex.get();// not being set yet
                         if (appLifecycleListener != null && started) {
                             try {
-                                appLifecycleListener.onHealthInspectionFailed(runnerContext, isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
+                                appLifecycleListener.onHealthInspectionFailed(appContext, isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
                             } catch (Throwable ex) {
                                 log.error("appLifecycleListener.onHealthInspectionFailed() error", ex);
                             }
@@ -356,7 +356,7 @@ public class HealthMonitor {
         log.warn(buildMessage());// always warn for status changed
         if (appLifecycleListener != null) {
             try {
-                appLifecycleListener.onApplicationStatusUpdated(runnerContext, isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);
+                appLifecycleListener.onApplicationStatusUpdated(appContext, isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);
             } catch (Throwable ex) {
                 log.error("appLifecycleListener.onApplicationStatusUpdated() error", ex);
             }

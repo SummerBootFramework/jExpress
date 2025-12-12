@@ -3,12 +3,13 @@
 \-- release 2.6.4
 
   * replace SummerRunner.run() with AppLifecycleListener.beforeApplicationStart()
+  * IdleEventListener need to provide idle interval
 
 \-- release 2.6.3
 
   * log root cause for config error
   * memo with log level
-  * IdleEventMonitor no longer trigger the onIdle() when start
+  * IdleEventMonitor interval will be provided by IdleEventListener.getIdleIntervalMillis() to avoid app from restarting for new config value
 
 \-- release 2.6.2
 

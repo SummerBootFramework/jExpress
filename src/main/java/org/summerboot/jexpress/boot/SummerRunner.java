@@ -15,54 +15,14 @@
  */
 package org.summerboot.jexpress.boot;
 
-import com.google.inject.Injector;
-import org.apache.commons.cli.CommandLine;
-import org.summerboot.jexpress.integration.smtp.PostOffice;
-
-import java.io.File;
-
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
+@Deprecated
 public interface SummerRunner {
-
-    record RunnerContext(String appVersion,
-                         CommandLine cli,
-                         File configDir,
-                         Injector guiceInjector,
-                         PostOffice postOffice) {
-    }
-
-
-        /*public RunnerContext(String appVersion, CommandLine cli, File configDir, Injector guiceInjector, PostOffice postOffice) {
-            this.appVersion = appVersion;
-            this.cli = cli;
-            this.configDir = configDir;
-            this.guiceInjector = guiceInjector;
-            this.postOffice = postOffice;
-        }
-
-        public CommandLine getCli() {
-            return cli;
-        }
-
-        public File getConfigDir() {
-            return configDir;
-        }
-
-        public Injector getGuiceInjector() {
-            return guiceInjector;
-        }
-
-        public PostOffice getPostOffice() {
-            return postOffice;
-        }*/
-
-    //}
-
     /**
      * @param context
      * @throws Exception
      */
-    void run(RunnerContext context) throws Exception;
+    void run(SummerApplication.AppContext context) throws Exception;
 }

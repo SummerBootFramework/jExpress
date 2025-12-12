@@ -16,11 +16,13 @@
 package org.summerboot.jexpress.boot;
 
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.grpc.BindableService;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerServiceDefinition;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Appender;
@@ -239,24 +241,31 @@ abstract public class SummerApplication extends SummerBigBang {
         log.trace(() -> memo.toString());
     }
 
-    private SummerRunner.RunnerContext runnerContext;
+    public record AppContext(String appVersion,
+                             CommandLine cli,
+                             File configDir,
+                             Injector guiceInjector,
+                             PostOffice postOffice) {
+    }
 
-    public SummerRunner.RunnerContext getRunnerContext() {
-        return runnerContext;
+    private AppContext appContext;
+
+    public AppContext getRunnerContext() {
+        return appContext;
     }
 
     /**
      * run application with ping enabled, URI as webApiContextRoot +
      * loadBalancerHealthCheckPath
      */
-    public SummerRunner.RunnerContext start() {
+    public AppContext start() {
         log.trace("");
         traceConfig();
         if (appLifecycleListener != null) {
             ConfigUtil.setConfigChangeListener(appLifecycleListener);
         }
 
-        runnerContext = new SummerRunner.RunnerContext(super.appVersion, cli, userSpecifiedConfigDir, guiceInjector, postOffice);
+        appContext = new AppContext(super.appVersion, cli, userSpecifiedConfigDir, guiceInjector, postOffice);
 
         //1. init email
         log.trace("1. init email");
@@ -265,7 +274,7 @@ abstract public class SummerApplication extends SummerBigBang {
             //gracefully shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                         if (appLifecycleListener != null) {
-                            appLifecycleListener.onApplicationStop(runnerContext, super.appVersion);
+                            appLifecycleListener.onApplicationStop(appContext, super.appVersion);
                         }
                     }, "ShutdownHook.BootApp")
             );
@@ -281,12 +290,13 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 3a. runner.run
-            log.trace("3a. runner.run");
-            for (SummerRunner summerRunner : summerRunners) {
-                summerRunner.run(runnerContext);
-            }
+            //@Deprecated
+//            for (SummerRunner summerRunner : summerRunners) {
+//                summerRunner.run(appContext);
+//            }
+            log.trace("3a. LifecycleListener.beforeApplicationStart");
             if (appLifecycleListener != null) {
-                appLifecycleListener.beforeApplicationStart(runnerContext);
+                appLifecycleListener.beforeApplicationStart(appContext);
             }
             // 3b. start scheduler
             log.trace("3b. start scheduler");
@@ -300,7 +310,7 @@ abstract public class SummerApplication extends SummerBigBang {
 
             // 4. health inspection
             log.trace("4. health inspection");
-            String serviceStatus = HealthMonitor.start(runnerContext, true, guiceInjector);
+            String serviceStatus = HealthMonitor.start(appContext, true, guiceInjector);
 
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
@@ -356,7 +366,7 @@ abstract public class SummerApplication extends SummerBigBang {
             startingMemo.append(BootConstant.BR).append("pid#" + BootConstant.PID);
             log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus);
             if (appLifecycleListener != null) {
-                appLifecycleListener.onApplicationStart(runnerContext, super.appVersion, startingMemo.toString());
+                appLifecycleListener.onApplicationStart(appContext, super.appVersion, startingMemo.toString());
             }
         } catch (java.net.BindException ex) {// from NioServer
             log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
@@ -403,7 +413,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 System.out.println(prompt);
             }
         }
-        return runnerContext;
+        return appContext;
     }
 
     public void shutdown() {
