@@ -2,7 +2,7 @@
 
 \-- release 2.6.4
 
-  * todo
+  * replace SummerRunner.run() with AppLifecycleListener.beforeApplicationStart()
 
 \-- release 2.6.3
 

@@ -293,7 +293,11 @@ public class HealthMonitor {
                         setHealthStatus(healthCheckAllPassed, inspectionReport);
                         long retryIndex = HealthInspector.retryIndex.get();// not being set yet
                         if (appLifecycleListener != null && started) {
-                            appLifecycleListener.onHealthInspectionFailed(runnerContext, isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
+                            try {
+                                appLifecycleListener.onHealthInspectionFailed(runnerContext, isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
+                            } catch (Throwable ex) {
+                                log.error("appLifecycleListener.onHealthInspectionFailed() error", ex);
+                            }
                         }
                     }
                 }
@@ -351,7 +355,11 @@ public class HealthMonitor {
         }
         log.warn(buildMessage());// always warn for status changed
         if (appLifecycleListener != null) {
-            appLifecycleListener.onApplicationStatusUpdated(runnerContext, isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);
+            try {
+                appLifecycleListener.onApplicationStatusUpdated(runnerContext, isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);
+            } catch (Throwable ex) {
+                log.error("appLifecycleListener.onApplicationStatusUpdated() error", ex);
+            }
         }
     }
 

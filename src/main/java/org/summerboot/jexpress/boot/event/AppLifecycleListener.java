@@ -24,9 +24,9 @@ import java.io.File;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public interface AppLifecycleListener {
-    void beforeApplicationStart(SummerRunner.RunnerContext context);
+    void beforeApplicationStart(SummerRunner.RunnerContext context) throws Exception;
 
-    void onApplicationStart(SummerRunner.RunnerContext context, String appVersion, String fullConfigInfo);
+    void onApplicationStart(SummerRunner.RunnerContext context, String appVersion, String fullConfigInfo) throws Exception;
 
     void onApplicationStop(SummerRunner.RunnerContext context, String appVersion);
 
@@ -38,9 +38,9 @@ public interface AppLifecycleListener {
      * @param serviceStatusChanged true if service status changed
      * @param reason               the reason
      */
-    void onApplicationStatusUpdated(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason);
+    void onApplicationStatusUpdated(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) throws Exception;
 
-    void onHealthInspectionFailed(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds);
+    void onHealthInspectionFailed(SummerRunner.RunnerContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception;
 
     void onConfigChangeBefore(File configFile, JExpressConfig cfg);
 
