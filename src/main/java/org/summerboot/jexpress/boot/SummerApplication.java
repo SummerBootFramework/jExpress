@@ -220,6 +220,10 @@ abstract public class SummerApplication extends SummerBigBang {
         return gRPCServerList;
     }
 
+    public NioServer getHTTPServers() {
+        return httpServer;
+    }
+
     @Override
     protected Class getAddtionalI18n() {
         return null;
