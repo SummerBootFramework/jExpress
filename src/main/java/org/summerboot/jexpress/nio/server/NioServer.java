@@ -78,7 +78,12 @@ public class NioServer {
     protected final NioChannelInitializer channelInitializer;
     protected final NIOStatusListener nioListener;
 
-    public static final IdleEventMonitor IDLE_EVENT_MONITOR = new IdleEventMonitor(NioServer.class.getSimpleName());
+    public static final IdleEventMonitor IDLE_EVENT_MONITOR = new IdleEventMonitor(NioServer.class.getSimpleName()) {
+        @Override
+        public long getIdleIntervalMillis() {
+            return TimeUnit.SECONDS.toMillis(NioConfig.cfg.getIdleThresholdSecond());
+        }
+    };
 
     public NioServer(NioChannelInitializer channelInitializer, NIOStatusListener nioListener) {
         this.channelInitializer = channelInitializer;

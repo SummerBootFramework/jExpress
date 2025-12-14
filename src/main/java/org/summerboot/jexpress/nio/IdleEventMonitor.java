@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * It can be used to monitor idle states and trigger events when a request has not been received within a specified threshold.
  * This class is thread-safe and can be used in a multi-threaded environment.
  */
-public class IdleEventMonitor {
+public abstract class IdleEventMonitor {
 
     private final AtomicLong lastTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicReference<String> lastTransactionId = new AtomicReference<>();
@@ -71,9 +71,10 @@ public class IdleEventMonitor {
 
     public static interface IdleEventListener {
         void onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
-
-        long getIdleIntervalMillis();
     }
+
+
+    public abstract long getIdleIntervalMillis();
 
     public static void start(final IdleEventMonitor idleEventMonitor, final IdleEventListener idleEventListener) throws Exception {
         if (idleEventMonitor == null) {
@@ -88,7 +89,7 @@ public class IdleEventMonitor {
             log.info("IdleEventMonitor.start: {}", idleEventMonitor.getName());
             do {
                 try {
-                    long idleIntervalMillis = idleEventListener.getIdleIntervalMillis();
+                    long idleIntervalMillis = idleEventMonitor.getIdleIntervalMillis();
                     if (idleIntervalMillis < 1) {
                         Thread.sleep(TimeUnit.SECONDS.toMillis(BackOffice.agent.getIdleConfig0ReloadIntervalSec()));
                         continue;

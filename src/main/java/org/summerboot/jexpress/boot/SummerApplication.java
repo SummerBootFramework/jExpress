@@ -39,6 +39,7 @@ import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
+import org.summerboot.jexpress.nio.IdleEventMonitor;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
@@ -347,6 +348,9 @@ abstract public class SummerApplication extends SummerBigBang {
                         }
                         gRPCServerList.add(gRPCServer);
                     }
+                    if (appLifecycleListener != null) {
+                        IdleEventMonitor.start(GRPCServer.IDLE_EVENT_MONITOR, appLifecycleListener);
+                    }
                 }
             }
 
@@ -358,6 +362,9 @@ abstract public class SummerApplication extends SummerBigBang {
                     NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
                     httpServer = new NioServer(channelInitializer.init(guiceInjector, channelHandlerNames), nioListener);
                     httpServer.bind(NioConfig.cfg, startingMemo);
+                    if (appLifecycleListener != null) {
+                        IdleEventMonitor.start(NioServer.IDLE_EVENT_MONITOR, appLifecycleListener);
+                    }
                 }
             }
 

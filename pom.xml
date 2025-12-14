@@ -170,7 +170,7 @@
         <jwt.version>0.13.0</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.2.7.Final</netty.version>
+        <netty.version>4.2.8.Final</netty.version>
         <netty-tcnative.version>2.0.74.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.77.0</grpc.version>
@@ -200,7 +200,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.1.11.Final</hibernate.version>
+        <hibernate.version>7.2.0.Final</hibernate.version>
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->

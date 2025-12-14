@@ -25,6 +25,7 @@ import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
+import org.summerboot.jexpress.nio.IdleEventMonitor;
 
 import java.io.File;
 
@@ -99,5 +100,9 @@ public class AppLifecycleHandler implements AppLifecycleListener {
         if (postOffice != null) {
             postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Config Changed - after", cfg.info(), ex, false);
         }
+    }
+
+    @Override
+    public void onIdle(IdleEventMonitor idleEventMonitor) throws Exception {
     }
 }

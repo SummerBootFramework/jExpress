@@ -9,7 +9,13 @@
 
   * log root cause for config error
   * memo with log level
-  * IdleEventMonitor interval will be provided by IdleEventListener.getIdleIntervalMillis() to avoid app from restarting for new config value
+  * AppLifecycleHandler handles onIdle event for both NIO HTTP server and gRPC server, implemented with two internal API changes:
+  * 1. IdleEventMonitor interval will be provided by IdleEventMonitor.getIdleIntervalMillis() to avoid app from restarting for new config value, and this
+  * 2. Config change: added two idle.threshold config items into both nio and grpc configs listed below,
+        1.  `cfg_nio.properties`
+              * add: `nio.server.idle.threshold.second`
+        2.  `cfg_grpc.properties`
+              * add: `gRpc.server.idle.threshold.second`
 
 \-- release 2.6.2
 
