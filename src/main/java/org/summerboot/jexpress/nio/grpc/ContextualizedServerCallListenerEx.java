@@ -7,6 +7,7 @@ import io.grpc.Grpc;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
+import io.grpc.Status;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -15,6 +16,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.NioServerHttpRequestHandler;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
@@ -27,7 +29,9 @@ import org.summerboot.jexpress.util.TimeUtil;
 import java.net.SocketAddress;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
 
@@ -43,11 +47,30 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     }
 
     public static <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(long startTs, Caller caller, String jti, Context context, ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
+        String[] requiredHealthChecks = null;
+        HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
+        Set<String> failedHealthChecks = new HashSet<>();
+        boolean isHealtchCheckFailed = HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicy, failedHealthChecks);
+        if (isHealtchCheckFailed) {
+            final String internalError = failedHealthChecks.toString();
+            call.close(Status.FAILED_PRECONDITION.withDescription("Service health check failed by HealthMonitor: " + internalError), new Metadata());
+            return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(new ServerCall.Listener<ReqT>() {
+            }) {
+            };
+        }
+        if (HealthMonitor.isServicePaused()) {
+            call.close(Status.UNAVAILABLE.withDescription("Service is temporarily paused by HealthMonitor: " + HealthMonitor.getStatusReasonPaused()), new Metadata());
+            return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(new ServerCall.Listener<ReqT>() {
+            }) {
+            };
+        }
+
         Context previous;
         ContextualizedServerCallListenerEx<ReqT> listener;
         final SessionContext sessionContext;
         var serverCall = call;
         boolean isPing = false;
+
         try {
             String methodName = call.getMethodDescriptor().getFullMethodName();
             isPing = isPing(methodName);

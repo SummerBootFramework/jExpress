@@ -412,13 +412,13 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             if (!HealthMonitor.isHealthCheckSuccess() && HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicy, failedHealthChecks)) {
                 final String internalError = failedHealthChecks.toString();
                 context.status(HttpResponseStatus.BAD_GATEWAY)
-                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, "Service health check failed", null,
-                                "Service health check failed: " + internalError));
+                        .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, "Service health check failed by HealthMonitor", null,
+                                "Service health check failed by HealthMonitor: " + internalError));
                 return null;
             }
             if (rejectWhenPaused && HealthMonitor.isServicePaused()) {
                 context.status(HttpResponseStatus.SERVICE_UNAVAILABLE)
-                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, "Service is paused", null, "Service is paused: " + HealthMonitor.getStatusReasonPaused()));
+                        .error(new Err(BootErrorCode.SERVICE_PAUSED, null, "Service is temporarily paused by HealthMonitor", null, "Service is temporarily paused by HealthMonitor: " + HealthMonitor.getStatusReasonPaused()));
                 return null;
             }
 
