@@ -352,9 +352,9 @@ abstract public class SummerApplication extends SummerBigBang {
                         }
                         gRPCServerList.add(gRPCServer);
                     }
-                    if (appLifecycleListener != null) {
-                        IdleEventMonitor.start(GRPCServer.IDLE_EVENT_MONITOR, appLifecycleListener);
-                    }
+                }
+                if (appLifecycleListener != null) {
+                    IdleEventMonitor.start(GRPCServer.IDLE_EVENT_MONITOR, appLifecycleListener);
                 }
             }
 

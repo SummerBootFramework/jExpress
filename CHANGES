@@ -1,13 +1,14 @@
 \-- release 2.6.4
 
-  * replace SummerRunner.run() with AppLifecycleListener.beforeApplicationStart()
+  * Deprecated SummerRunner and replace SummerRunner.run() with AppLifecycleListener.beforeApplicationStart()
+  * updated log4j2.xml
   * AppLifecycleHandler handles onIdle event for both NIO HTTP server and gRPC server, implemented with two internal API changes:
     * 1. IdleEventMonitor interval will be provided by IdleEventMonitor.getIdleIntervalMillis() to avoid app from restarting for new config value, and this
     * 2. Config change: added two idle.threshold config items into both nio and grpc configs listed below,
           1.  `cfg_nio.properties`
-                * add: `nio.server.idle.threshold.second`
+                * added: `nio.server.idle.threshold.second`
           2.  `cfg_grpc.properties`
-                * add: `gRpc.server.idle.threshold.second`
+                * added: `gRpc.server.idle.threshold.second`
 
 
 \-- release 2.6.3
@@ -23,8 +24,6 @@
   * IdleEventMonitor only start when the param threshold > 0
   * log refactoring: make HTTP server and gRPC server status log triggered by pool size change when log.trace is enabled
   * -domain <name> will throw exception when folder does not exist
-
-
 
 
 \-- release 2.6.1
@@ -72,6 +71,7 @@
 
   * **mvnrepository.com:**
     `https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.1`
+
 
 \-- release 2.6.0
 
@@ -238,27 +238,33 @@
   * **mvnrepository.com:**
     `https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.0`
 
+
 \-- release 2.5.1 --
 
   * Replaced `String.format(0x%02X, i)` with a better-performance API, 100 times faster via byte operations: `10k` loads performance: `317ms` vs `2ms`.
   * `@Config` added `boolean trim` (default=`true`) flag to allow configuration items to keep space when `trim=false`.
 
+
 \-- release 2.5.0 --
 
   * **Virtual Thread:** And the four (`VirtualThread`, `CPU`, `IO`, `Mixed`) modes are supported in the configuration file for HTTP server, HTTP client, gRPC server, and BackOffice.
+
 
 \-- release 2.4.18 --
 
   * `BootController.login` will call `preLogin()` and `postLogin()` before and after signing JWT.
 
+
 \-- release 2.4.17 --
 
   * Backward compatible with JWT and configurable in `etc/boot.ini`.
+
 
 \-- release 2.4.16 --
 
   * Changed `BootJobListener` log level to `DEBUG` (configurable in `etc/boot.conf` section 4.2 `naming.log4j2.jboListenerLogLevel`).
   * `ServiceContext.reset()` renamed to `resetResponseData()`. It only resets response data, not the status.
+
 
 \-- release 2.4.13 --
 
@@ -269,6 +275,7 @@
   * Enhanced GRPC client, supported dynamic configuration change.
   * Enhanced email alert and logging.
   * Migrated to `jjwt 0.12`.
+
 
 \-- release 2.4.10 --
 
@@ -283,32 +290,39 @@
   * `NioServer` only logs status on change.
   * Service pause by multiple reasons via password, and can only be resumed by all those reasons via correct password.
 
+
 \-- release 2.4.9 --
 
   * Enabled configurable `TimeZone` for JSON parser in both Nio and Http config.
   * `afterProcess` only gets triggered when `beforeProcess` succeeds.
+
 
 \-- release 2.4.8 --
 
   * Added `ServiceContext.report()` and `ServiceContext.report(StringBuilder)`.
   * `BootCache.debounced()` supports `TimeUnit`.
 
+
 \-- release 2.4.7 --
 
   * Added `afterService()` into `HttpLifecycleListener`, called after sending a response to the client, before starting logging.
 
+
 \-- release 2.4.6 --
 
   * Recognized `LocalDate` as JAX-RS parameter type.
+
 
 \-- release 2.4.5 --
 
   * **Refactoring:** `SummerInitializer` init before and after `Ioc` is initialized.
   * **Enhancement:** Rejected with `503` asap when paused or health check failed, unless `@Controller` or its method has `@Daemon`.
 
+
 \-- release 2.4.4 --
 
   * **Enhancement:** Command line arguments ending with `/r` by mistake in service script no longer impact the application.
+
 
 \-- release 2.4.3 --
 
@@ -316,6 +330,7 @@
   * **Enhancement:** `generateTemplate` follows parent first order.
   * **Refactoring:** HTTP Client classes moved to `org.summerboot.jexpress.integration.httpclient`.
   * **New:** Released MQTT client to public.
+
 
 \-- release 2.4.2 --
 
@@ -328,12 +343,14 @@
   * Logged both raw and decoded uri.
   * Refactored lifecycle/exception listeners/handlers to `org.summerboot.jexpress.boot.event`.
 
+
 \-- release 2.4.1 --
 
   * Enabled `@jakarta.validation.constraints.Pattern` for RESTFul api parameters: `PathParam`, `MatrixParam`, `QueryParam`, `FormParam`, `HeaderParam`, and `CookieParam`.
   * Fixed: cli `-decrypt` generates `cfg_grpc.properties` even if there is no gRPC impl.
   * Log trace enable on `org.summerboot.jexpress.nio.server.BootHttpRequestHandler` will override `@org.summerboot.jexpress.boot.annotation.Log` settings to log all requests and responses.
   * Reformatted Java source code via IDEA default formatter.
+
 
 \-- release 2.3.13 --
 
@@ -342,11 +359,13 @@
   * Auto generated `temp` dir for file uploading.
   * Show internal error message in the log.
 
+
 \-- release 2.3.12 --
 
   * Enabled customized delimiter of collection in `@Config` with new `collectionDelimiter` field.
   * Enhanced logging: `ServiceError.ref` changed to `String` from `long`: replaced hit with transaction id (server session id + hit).
   * Monthly security patch.
+
 
 \-- release 2.3.11 --
 
@@ -354,10 +373,12 @@
   * `@Scheduled` supports dynamic config via specifying a private static field.
   * Monthly security patch.
 
+
 \-- release 2.3.10 --
 
   * `HealthMonitor` will send an email alert when status changes without debouncing.
   * `HealthMonitor` will send an email alert when inspection failed with debouncing.
+
 
 \-- release 2.3.9 --
 
@@ -367,6 +388,7 @@
   * Supports `org.quartz` with Guice `@Singleton`.
   * Supports `logId`.
   * Refactored `changeit` to `Constant`.
+
 
 \-- release 2.3.8 --
 
@@ -385,6 +407,7 @@
   * Added `ServiceContext.file(String)`.
   * JWT TTL can be overridden by the Caller.
   * `NioHttpUtil.WebResourceCache` as `SimpleLocalCacheImpl`.
+
 
 \-- release 2.3.7 --
 
@@ -406,6 +429,7 @@
   * Created configuration folder if not exists.
 
 TODO: JSR356
+
 
 \-- release 2.3.6 --
 
