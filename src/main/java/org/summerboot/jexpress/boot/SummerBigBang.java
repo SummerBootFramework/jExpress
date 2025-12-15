@@ -74,7 +74,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected final Module userOverrideModule;
     protected Injector guiceInjector;
     protected List<SummerInitializer> summerInitializers = new ArrayList<>();
-    protected List<SummerRunner> summerRunners = new ArrayList<>();
+    //protected List<SummerRunner> summerRunners = new ArrayList<>();
     protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
     protected int schedulerTriggers = 0;
 
@@ -93,7 +93,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         log.trace("");
         guiceInjector = null;
         summerInitializers.clear();
-        summerRunners.clear();
+        //summerRunners.clear();
         schedulerTriggers = 0;
     }
 
@@ -614,7 +614,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         // Guice.createInjector(module) --> ScanedGuiceModule.configure() --> this will trigger SummerBigBang.onGuiceInjectorCreated_ControllersInjected
         guiceInjector = Guice.createInjector(Stage.PRODUCTION, applicationModule);
         //NioConfig.agent.setGuiceInjector(guiceInjector);
-        scanImplementation_SummerRunner(guiceInjector);
+        //scanImplementation_SummerRunner(guiceInjector);
         schedulerTriggers = scanAnnotation_Scheduled(guiceInjector, callerRootPackageNames);
     }
 
@@ -640,7 +640,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         HealthMonitor.registerDefaultHealthInspectors(defaultHealthInspectors, memo);
     }
 
-    protected void scanImplementation_SummerRunner(Injector injector) {
+    /*protected void scanImplementation_SummerRunner(Injector injector) {
         log.trace("");
         Set<Class<? extends SummerRunner>> summerRunner_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerRunner.class, callerRootPackageNames);
         //prepare ordering
@@ -669,7 +669,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         for (int order : orderSet) {
             summerRunners.addAll(orderMapping.get(order));
         }
-    }
+    }*/
 
     protected int scanAnnotation_Scheduled(Injector injector, String... rootPackageNames) {
         log.trace("");
