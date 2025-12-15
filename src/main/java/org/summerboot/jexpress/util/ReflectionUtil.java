@@ -32,6 +32,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
@@ -636,5 +637,68 @@ public class ReflectionUtil {
             }
         } while (ret == null && targetClass != null);
         return ret;
+    }
+
+    /**
+     * Checks if the given Class object is an abstract class.
+     *
+     * @param clazz The Class object to be checked.
+     * @return true if the class is abstract; otherwise, returns false.
+     */
+    public static boolean isAbstract(Class<?> clazz) {
+        // 1. 获取类的修饰符的位掩码
+        int modifiers = clazz.getModifiers();
+
+        // 2. 使用 Modifier.isAbstract 静态方法检查 abstract 标志是否设置
+        return Modifier.isAbstract(modifiers);
+    }
+
+    /**
+     * Removes all Class objects from the set that are superclasses of any other member
+     * within the set. It retains only the most concrete subclasses in the inheritance chain.
+     * * 使用 Set<? extends Class<?>> 的形式，可以接受 Set<Class<? extends T>> 类型的输入。
+     *
+     * @param classSet The set containing Class objects that extend ABC.
+     * @return A new Set<Class<?>> containing only the most specific subclasses.
+     */
+    public static <T extends Object> Set<Class<? extends T>> retainSubclasses(Set<? extends Class<?>> classSet) {
+
+        if (classSet == null || classSet.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        // 泛型通配符捕获。由于我们需要在循环中进行 isAssignableFrom 检查，
+        // 且知道传入的元素是 Class<?> 的子类型，这里可以安全地进行转换。
+        @SuppressWarnings("unchecked")
+        Set<Class<? extends T>> cs = (Set<Class<? extends T>>) classSet;
+
+        // 过滤逻辑：保留那些“不是集合中任何其他类的父类”的成员
+        Set<Class<? extends T>> filteredSet = cs.stream()
+                .filter(potentialSubclass ->
+                        !isSuperclassOfAnyOther(potentialSubclass, cs)
+                )
+                .collect(Collectors.toSet());
+
+        return filteredSet;
+    }
+
+    /**
+     * Checks if the given class 'clazz' is a superclass or interface of any other class
+     * in the provided set 'allClasses'.
+     */
+    private static boolean isSuperclassOfAnyOther(Class<?> clazz, Set<? extends Class<?>> allClasses) {
+        for (Class<?> otherClass : allClasses) {
+            // 排除自身比较
+            if (clazz.equals(otherClass)) {
+                continue;
+            }
+
+            // isAssignableFrom() checks if clazz is a superclass/interface of otherClass
+            // If true, it means 'clazz' is a less specific class and should be filtered out.
+            if (clazz.isAssignableFrom(otherClass)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

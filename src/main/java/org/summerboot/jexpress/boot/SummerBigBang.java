@@ -260,6 +260,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         log.trace("");
         List<SummerInitializer> summerCLIs = new ArrayList<>();
         Set<Class<? extends SummerInitializer>> summerCLI_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerInitializer.class, callerRootPackageNames);
+        summerCLI_ImplClasses = ReflectionUtil.retainSubclasses(summerCLI_ImplClasses);
         //prepare ordering
         Set<Integer> orderSet = new TreeSet<>();
         Map<Integer, List<SummerInitializer>> orderMapping = new HashMap<>();
@@ -274,6 +275,9 @@ abstract public class SummerBigBang extends SummerSingularity {
             //get data, cannot inject due to injector is not initialized yet
             final SummerInitializer instance;
             try {
+                if (ReflectionUtil.isAbstract(c)) {
+                    continue;
+                }
                 Constructor<? extends SummerInitializer> cc = c.getConstructor();
                 cc.setAccessible(true);
                 instance = cc.newInstance();

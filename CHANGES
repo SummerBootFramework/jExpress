@@ -1,7 +1,8 @@
 \-- release 2.6.4
 
   * gRPC server will follow the same behavior as NIO HTTP server: reject with Status.FAILED_PRECONDITION when health check failed and reject with Status.UNAVAILABLE when service is paused.
-  * Deprecated SummerRunner and replace SummerRunner.run() with AppLifecycleListener.beforeApplicationStart()
+  * API change: AppLifecycleListener new extends SummerInitializer, IdleEventMonitor.IdleEventListener
+  * API change: Deprecated SummerRunner and replace SummerRunner.run() with AppLifecycleListener.beforeApplicationStart()
   * updated log4j2.xml
   * AppLifecycleHandler handles onIdle event for both NIO HTTP server and gRPC server, implemented with two internal API changes:
     * 1. IdleEventMonitor interval will be provided by IdleEventMonitor.getIdleIntervalMillis() to avoid app from restarting for new config value, and this
