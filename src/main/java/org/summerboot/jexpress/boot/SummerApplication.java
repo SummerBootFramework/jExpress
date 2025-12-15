@@ -16,11 +16,13 @@
 package org.summerboot.jexpress.boot;
 
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.grpc.BindableService;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerServiceDefinition;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Appender;
@@ -37,6 +39,7 @@ import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
 import org.summerboot.jexpress.i18n.I18n;
 import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
+import org.summerboot.jexpress.nio.IdleEventMonitor;
 import org.summerboot.jexpress.nio.grpc.GRPCServer;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.nio.server.NioChannelInitializer;
@@ -217,6 +220,10 @@ abstract public class SummerApplication extends SummerBigBang {
         return gRPCServerList;
     }
 
+    public NioServer getHTTPServers() {
+        return httpServer;
+    }
+
     @Override
     protected Class getAddtionalI18n() {
         return null;
@@ -239,16 +246,31 @@ abstract public class SummerApplication extends SummerBigBang {
         log.trace(() -> memo.toString());
     }
 
+    public record AppContext(String appVersion,
+                             CommandLine cli,
+                             File configDir,
+                             Injector guiceInjector,
+                             PostOffice postOffice) {
+    }
+
+    private AppContext appContext;
+
+    public AppContext getRunnerContext() {
+        return appContext;
+    }
+
     /**
      * run application with ping enabled, URI as webApiContextRoot +
      * loadBalancerHealthCheckPath
      */
-    public void start() {
+    public AppContext start() {
         log.trace("");
         traceConfig();
         if (appLifecycleListener != null) {
             ConfigUtil.setConfigChangeListener(appLifecycleListener);
         }
+
+        appContext = new AppContext(super.appVersion, cli, userSpecifiedConfigDir, guiceInjector, postOffice);
 
         //1. init email
         log.trace("1. init email");
@@ -257,7 +279,7 @@ abstract public class SummerApplication extends SummerBigBang {
             //gracefully shutdown
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                         if (appLifecycleListener != null) {
-                            appLifecycleListener.onApplicationStop(super.appVersion);
+                            appLifecycleListener.onApplicationStop(appContext, super.appVersion);
                         }
                     }, "ShutdownHook.BootApp")
             );
@@ -273,10 +295,13 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 3a. runner.run
-            log.trace("3a. runner.run");
-            SummerRunner.RunnerContext context = new SummerRunner.RunnerContext(cli, userSpecifiedConfigDir, guiceInjector, postOffice);
-            for (SummerRunner summerRunner : summerRunners) {
-                summerRunner.run(context);
+            //@Deprecated
+//            for (SummerRunner summerRunner : summerRunners) {
+//                summerRunner.run(appContext);
+//            }
+            log.trace("3a. LifecycleListener.beforeApplicationStart");
+            if (appLifecycleListener != null) {
+                appLifecycleListener.beforeApplicationStart(appContext);
             }
             // 3b. start scheduler
             log.trace("3b. start scheduler");
@@ -290,7 +315,7 @@ abstract public class SummerApplication extends SummerBigBang {
 
             // 4. health inspection
             log.trace("4. health inspection");
-            String serviceStatus = HealthMonitor.start(true, guiceInjector);
+            String serviceStatus = HealthMonitor.start(appContext, true, guiceInjector);
 
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
@@ -328,6 +353,9 @@ abstract public class SummerApplication extends SummerBigBang {
                         gRPCServerList.add(gRPCServer);
                     }
                 }
+                if (appLifecycleListener != null) {
+                    IdleEventMonitor.start(GRPCServer.IDLE_EVENT_MONITOR, appLifecycleListener);
+                }
             }
 
             // 5b. start server: HTTP
@@ -338,6 +366,9 @@ abstract public class SummerApplication extends SummerBigBang {
                     NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
                     httpServer = new NioServer(channelInitializer.init(guiceInjector, channelHandlerNames), nioListener);
                     httpServer.bind(NioConfig.cfg, startingMemo);
+                    if (appLifecycleListener != null) {
+                        IdleEventMonitor.start(NioServer.IDLE_EVENT_MONITOR, appLifecycleListener);
+                    }
                 }
             }
 
@@ -346,7 +377,7 @@ abstract public class SummerApplication extends SummerBigBang {
             startingMemo.append(BootConstant.BR).append("pid#" + BootConstant.PID);
             log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus);
             if (appLifecycleListener != null) {
-                appLifecycleListener.onApplicationStart(super.appVersion, startingMemo.toString());
+                appLifecycleListener.onApplicationStart(appContext, super.appVersion, startingMemo.toString());
             }
         } catch (java.net.BindException ex) {// from NioServer
             log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
@@ -393,6 +424,7 @@ abstract public class SummerApplication extends SummerBigBang {
                 System.out.println(prompt);
             }
         }
+        return appContext;
     }
 
     public void shutdown() {

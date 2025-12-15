@@ -155,14 +155,20 @@ public class TimeUtil {
         return ZonedDateTime.ofInstant(Instant.ofEpochSecond(epochSec), zoneId).plusDays(days).withHour(hourOfDay).withMinute(minuteOfHour).withSecond(secondOfMinute);
     }
 
+    public static OffsetDateTime toOffsetDateTime(LocalDateTime localDateTime, ZoneId zoneId) {
+        return localDateTime.atZone(zoneId).toOffsetDateTime();
+    }
+
     public static OffsetDateTime toOffsetDateTime(LocalDate localDate, ZoneId zoneId) {
-        ZonedDateTime zdt = toZonedDateTime(localDate, zoneId);
-        return zdt.withZoneSameInstant(zoneId).toOffsetDateTime();
+        return toOffsetDateTime(localDate.atStartOfDay(), zoneId);
+    }
+
+    public static ZonedDateTime toZonedDateTime(LocalDateTime localDateTime, ZoneId zoneId) {
+        return ZonedDateTime.of(localDateTime, zoneId);
     }
 
     public static ZonedDateTime toZonedDateTime(LocalDate localDate, ZoneId zoneId) {
-        LocalDateTime localDateTime = localDate.atStartOfDay();
-        return ZonedDateTime.of(localDateTime, ZoneId.systemDefault());
+        return toZonedDateTime(localDate.atStartOfDay(), zoneId);
     }
 
     protected static SecureRandom RANDOM = new SecureRandom();

@@ -16,14 +16,18 @@
 package org.summerboot.jexpress.boot.event;
 
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Singleton;
+import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
+import org.summerboot.jexpress.nio.IdleEventMonitor;
 
 import java.io.File;
 
@@ -35,18 +39,39 @@ public class AppLifecycleHandler implements AppLifecycleListener {
 
     protected static final Logger log = LogManager.getLogger(AppLifecycleHandler.class.getName());
 
+
+    @Override
+    public void initCLI(Options options) {
+        log.debug("");
+    }
+
+    @Override
+    public void initAppBeforeIoC(File configDir) {
+        log.debug(configDir);
+    }
+
+    @Override
+    public void initAppAfterIoC(File configDir, Injector guiceInjector) {
+        log.debug(configDir);
+    }
+
     @Inject
     protected PostOffice postOffice;
 
     @Override
-    public void onApplicationStart(String appVersion, String fullConfigInfo) {
+    public void beforeApplicationStart(SummerApplication.AppContext context) throws Exception {
+        log.debug("");
+    }
+
+    @Override
+    public void onApplicationStart(SummerApplication.AppContext context, String appVersion, String fullConfigInfo) throws Exception {
         if (postOffice != null) {
             postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Started", fullConfigInfo, null, false);
         }
     }
 
     @Override
-    public void onApplicationStop(String appVersion) {
+    public void onApplicationStop(SummerApplication.AppContext context, String appVersion) {
         log.warn(appVersion);
         if (postOffice != null) {
             postOffice.sendAlertSync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Shutdown", "pid#" + BootConstant.PID, null, false);
@@ -63,7 +88,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
      * @param reason
      */
     @Override
-    public void onApplicationStatusUpdated(boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) {
+    public void onApplicationStatusUpdated(SummerApplication.AppContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) throws Exception {
         if (serviceStatusChanged) {
             boolean serviceAvaliable = healthOk && !paused;
             String content = HealthMonitor.buildMessage();
@@ -74,7 +99,7 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     }
 
     @Override
-    public void onHealthInspectionFailed(boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) {
+    public void onHealthInspectionFailed(SummerApplication.AppContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception {
         if (postOffice != null) {
             String content = HealthMonitor.buildMessage();
             postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Health Inspection Failed", content, null, true);
@@ -94,5 +119,9 @@ public class AppLifecycleHandler implements AppLifecycleListener {
         if (postOffice != null) {
             postOffice.sendAlertAsync(SMTPClientConfig.cfg.getEmailToAppSupport(), "Config Changed - after", cfg.info(), ex, false);
         }
+    }
+
+    @Override
+    public void onIdle(IdleEventMonitor idleEventMonitor) throws Exception {
     }
 }

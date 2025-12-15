@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
+import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.annotation.Inspector;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
@@ -127,6 +128,83 @@ public class HealthMonitor {
         }
     }
 
+
+    private static SummerApplication.AppContext appContext;
+
+    public static String start(SummerApplication.AppContext context, boolean returnRsult, Injector guiceInjector) {
+        appContext = context;
+        if (keepRunning) {
+            return "HealthMonitor is already running";
+        }
+        StringBuilder memo = new StringBuilder();
+        boolean hasUnregistered = false;
+        // 1. remove unused (via -use <implTag>) inspectors with @Service annotation
+        Iterator<HealthInspector> iterator = registeredHealthInspectors.iterator();
+        while (iterator.hasNext()) {
+            HealthInspector healthInspector = iterator.next();
+            Service serviceAnnotation = healthInspector.getClass().getAnnotation(Service.class);
+            if (serviceAnnotation != null) {
+                Class c = healthInspector.getClass();
+                boolean usedByTag = false;
+                Class[] bindingClasses = serviceAnnotation.binding();
+                if (bindingClasses == null || bindingClasses.length < 1) {
+                    bindingClasses = c.getInterfaces();
+                }
+                for (Class bindingClasse : bindingClasses) {
+                    Object o = guiceInjector.getInstance(bindingClasse);
+                    if (o.getClass().equals(c)) {
+                        usedByTag = true;
+                        break;
+                    }
+                }
+                if (!usedByTag) {
+                    hasUnregistered = true;
+                    memo.append(BootConstant.BR).append("\t- @Inspector unused due to CLI argument -" + BootConstant.CLI_USE_ALTERNATIVE + " <alternativeNames>: ").append(c.getName());
+                    iterator.remove();
+                }
+            }
+        }
+        if (hasUnregistered) {
+            log.warn(memo);
+        }
+
+        // 2. start health monitor sync to return result
+        String ret = null;
+        if (returnRsult) {
+            // start sync to get result
+            int size = inspect();
+            keepRunning = false;
+            if (size > 0) {
+                AsyncTask.run();
+                ret = buildMessage();
+            } else {
+                ret = "No health inspectors registered";
+            }
+        }
+
+        // 3. start async in background
+        keepRunning = true;
+        if (!isServiceAvailable()) {
+            inspect();
+        }
+        tpe.execute(AsyncTask);
+
+        // return sync result
+        return ret;
+    }
+
+    public static void shutdown() {
+        keepRunning = false;
+        tpe.shutdown();
+    }
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    HealthMonitor.shutdown();
+                }, "HealthMonitor.shutdownHook")
+        );
+    }
+
     private static final Runnable AsyncTask = () -> {
         int inspectionIntervalSeconds = NioConfig.cfg.getHealthInspectionIntervalSeconds();
         long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
@@ -215,7 +293,11 @@ public class HealthMonitor {
                         setHealthStatus(healthCheckAllPassed, inspectionReport);
                         long retryIndex = HealthInspector.retryIndex.get();// not being set yet
                         if (appLifecycleListener != null && started) {
-                            appLifecycleListener.onHealthInspectionFailed(isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
+                            try {
+                                appLifecycleListener.onHealthInspectionFailed(appContext, isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
+                            } catch (Throwable ex) {
+                                log.error("appLifecycleListener.onHealthInspectionFailed() error", ex);
+                            }
                         }
                     }
                 }
@@ -229,80 +311,6 @@ public class HealthMonitor {
             }
         } while (keepRunning);
     };
-
-    public static String start(boolean returnRsult, Injector guiceInjector) {
-        if (keepRunning) {
-            return "HealthMonitor is already running";
-        }
-        StringBuilder memo = new StringBuilder();
-        boolean hasUnregistered = false;
-        // 1. remove unused (via -use <implTag>) inspectors with @Service annotation
-        Iterator<HealthInspector> iterator = registeredHealthInspectors.iterator();
-        while (iterator.hasNext()) {
-            HealthInspector healthInspector = iterator.next();
-            Service serviceAnnotation = healthInspector.getClass().getAnnotation(Service.class);
-            if (serviceAnnotation != null) {
-                Class c = healthInspector.getClass();
-                boolean usedByTag = false;
-                Class[] bindingClasses = serviceAnnotation.binding();
-                if (bindingClasses == null || bindingClasses.length < 1) {
-                    bindingClasses = c.getInterfaces();
-                }
-                for (Class bindingClasse : bindingClasses) {
-                    Object o = guiceInjector.getInstance(bindingClasse);
-                    if (o.getClass().equals(c)) {
-                        usedByTag = true;
-                        break;
-                    }
-                }
-                if (!usedByTag) {
-                    hasUnregistered = true;
-                    memo.append(BootConstant.BR).append("\t- @Inspector unused due to CLI argument -" + BootConstant.CLI_USE_ALTERNATIVE + " <alternativeNames>: ").append(c.getName());
-                    iterator.remove();
-                }
-            }
-        }
-        if (hasUnregistered) {
-            log.warn(memo);
-        }
-
-        // 2. start health monitor sync to return result
-        String ret = null;
-        if (returnRsult) {
-            // start sync to get result
-            int size = inspect();
-            keepRunning = false;
-            if (size > 0) {
-                AsyncTask.run();
-                ret = buildMessage();
-            } else {
-                ret = "No health inspectors registered";
-            }
-        }
-
-        // 3. start async in background
-        keepRunning = true;
-        if (!isServiceAvailable()) {
-            inspect();
-        }
-        tpe.execute(AsyncTask);
-
-        // return sync result
-        return ret;
-    }
-
-    public static void shutdown() {
-        keepRunning = false;
-        tpe.shutdown();
-    }
-
-    static {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                    HealthMonitor.shutdown();
-                }, "HealthMonitor.shutdownHook")
-        );
-    }
-
 
     protected static void setHealthStatus(boolean newStatus, String reason) {
         boolean serviceStatusChanged = isHealthCheckSuccess ^ newStatus;
@@ -347,7 +355,11 @@ public class HealthMonitor {
         }
         log.warn(buildMessage());// always warn for status changed
         if (appLifecycleListener != null) {
-            appLifecycleListener.onApplicationStatusUpdated(isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);
+            try {
+                appLifecycleListener.onApplicationStatusUpdated(appContext, isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);
+            } catch (Throwable ex) {
+                log.error("appLifecycleListener.onApplicationStatusUpdated() error", ex);
+            }
         }
     }
 

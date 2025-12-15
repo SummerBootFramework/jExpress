@@ -15,17 +15,22 @@
  */
 package org.summerboot.jexpress.boot.event;
 
+import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.SummerInitializer;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
+import org.summerboot.jexpress.nio.IdleEventMonitor;
 
 import java.io.File;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface AppLifecycleListener {
-    void onApplicationStart(String appVersion, String fullConfigInfo);
+public interface AppLifecycleListener extends SummerInitializer, IdleEventMonitor.IdleEventListener {
+    void beforeApplicationStart(SummerApplication.AppContext context) throws Exception;
 
-    void onApplicationStop(String appVersion);
+    void onApplicationStart(SummerApplication.AppContext context, String appVersion, String fullConfigInfo) throws Exception;
+
+    void onApplicationStop(SummerApplication.AppContext context, String appVersion);
 
     /**
      * called when application paused or resumed by configuration/pause file or BottController's ${context-root}/status?pause=true|false
@@ -35,9 +40,9 @@ public interface AppLifecycleListener {
      * @param serviceStatusChanged true if service status changed
      * @param reason               the reason
      */
-    void onApplicationStatusUpdated(boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason);
+    void onApplicationStatusUpdated(SummerApplication.AppContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) throws Exception;
 
-    void onHealthInspectionFailed(boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds);
+    void onHealthInspectionFailed(SummerApplication.AppContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception;
 
     void onConfigChangeBefore(File configFile, JExpressConfig cfg);
 

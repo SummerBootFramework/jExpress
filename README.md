@@ -77,8 +77,7 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
   or if you need to initialize or run anything before the application starts:
 
     ```java
-    import com.google.inject.Key;
-    import com.google.inject.name.Names;
+
     import java.io.File;
     import org.apache.commons.cli.Options;
     import org.apache.logging.log4j.LogManager;
@@ -103,7 +102,7 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
         }
     
         @Override
-        public void run(RunnerContext context) throws Exception {
+        public void run(AppContext context) throws Exception {
             log.debug("beforeStart");
         }
     }
@@ -112,15 +111,13 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
   or put everything together:
 
     ```java
-    import com.google.inject.Key;
-    import com.google.inject.name.Names;
+
     import java.io.File;
     import org.apache.commons.cli.Options;
     import org.apache.logging.log4j.LogManager;
     import org.apache.logging.log4j.Logger;
     import org.summerboot.jexpress.boot.SummerApplication;
     import org.summerboot.jexpress.boot.SummerRunner;
-    import org.summerboot.jexpress.boot.annotation.Order;
     import org.summerboot.jexpress.boot.SummerInitializer;
     
     public class Main implements SummerInitializer, SummerRunner {
@@ -138,7 +135,7 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
         }
     
         @Override
-        public void run(RunnerContext context) throws Exception {
+        public void run(AppContext context) throws Exception {
             log.debug("beforeStart");
         }
         

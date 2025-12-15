@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- version 2.6.2 -->
+<!-- version 2.6.4 -->
 <Configuration status="WARN" monitorInterval="30">
     <Properties>
         <Property name="logPattern" value="[${sys:logId}] %d{ISO8601} %p %c{}.%M() [%t] %m %ex%n"/>
@@ -81,11 +81,10 @@
         <Logger level="info" name="io.netty.util.internal.CleanerJava9" includeLocation="true"/>
         <Logger level="debug" name="org.summerboot.jexpress.boot" includeLocation="true"/>
         <Logger level="info" name="org.summerboot.jexpress.integration.httpclient.HttpClientConfig" includeLocation="true"/>
-        <Logger level="info" name="org.summerboot.jexpress.nio.IdleEventMonitor" includeLocation="true"/>
+        <Logger level="warn" name="org.summerboot.jexpress.nio.IdleEventMonitor" includeLocation="true"/>
         <Logger level="info" name="org.summerboot.jexpress.nio.server.NioServerHttpInitializer" includeLocation="true"/>
         <Logger level="debug" name="org.summerboot.jexpress.nio.server.NioServer" includeLocation="true"/>
         <Logger level="debug" name="org.summerboot.jexpress.nio.grpc.GRPCServer" includeLocation="true"/>
-
 
 
         <Logger level="warn" name="io.netty.handler" includeLocation="false" additivity="false">

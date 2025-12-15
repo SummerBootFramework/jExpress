@@ -68,6 +68,8 @@ public class GRPCServerConfig extends BootConfig {
     protected volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = ID + ".autostart", defaultValue = "true")
     protected volatile boolean autoStart;
+    @Config(key = ID + ".idle.threshold.second", defaultValue = "59", desc = "make it prime number when you have both NIO and gRPC server running")
+    protected volatile int idleThresholdSecond;
 
     @Config(key = ID + ".CallerAddressFilter.option", defaultValue = "String", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
     protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
@@ -179,6 +181,10 @@ public class GRPCServerConfig extends BootConfig {
 
     public boolean isAutoStart() {
         return autoStart;
+    }
+
+    public int getIdleThresholdSecond() {
+        return idleThresholdSecond;
     }
 
     public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
