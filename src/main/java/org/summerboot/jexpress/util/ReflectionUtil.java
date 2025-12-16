@@ -656,10 +656,10 @@ public class ReflectionUtil {
     /**
      * Removes all Class objects from the set that are superclasses of any other member
      * within the set. It retains only the most concrete subclasses in the inheritance chain.
-     * * 使用 Set<? extends Class<?>> 的形式，可以接受 Set<Class<? extends T>> 类型的输入。
      *
-     * @param classSet The set containing Class objects that extend ABC.
-     * @return A new Set<Class<?>> containing only the most specific subclasses.
+     * @param classSet
+     * @param <T>
+     * @return
      */
     public static <T extends Object> Set<Class<? extends T>> retainSubclasses(Set<? extends Class<?>> classSet) {
 
@@ -685,6 +685,10 @@ public class ReflectionUtil {
     /**
      * Checks if the given class 'clazz' is a superclass or interface of any other class
      * in the provided set 'allClasses'.
+     *
+     * @param clazz
+     * @param allClasses
+     * @return
      */
     private static boolean isSuperclassOfAnyOther(Class<?> clazz, Set<? extends Class<?>> allClasses) {
         for (Class<?> otherClass : allClasses) {
