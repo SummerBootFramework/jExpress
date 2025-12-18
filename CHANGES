@@ -49,12 +49,6 @@ New configuration items have been added to set the server-specific idle connecti
 3.  **Update Startup Logic:** Migrate the logic from the former `SummerRunner.run()` method to the new **`AppLifecycleListener.beforeApplicationStart()`** method.
 4.  **Configure Idle Threshold:** If you require custom idle monitoring, set the new `idle.threshold.second` configuration item in the corresponding `.properties` file.
 
-  * **Maven Central Repository:**
-    `https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.4/`
-    `https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.4`
-
-  * **mvnrepository.com:**
-    `https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.4`
 
 ### Version2.6.3
 
