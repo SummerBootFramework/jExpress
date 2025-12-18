@@ -2,13 +2,6 @@
 
 ### Version 2.6.5 (2025-12-18)
 
-#### Netty upgrade on Dec 15
-
-#### 💥 Breaking Changes & API Refactoring
-This release revised one of the changes from 2.6.4
-* SummerInitializer will no long be implemented by AppLifecycleListener to avoid early initialization of AppLifecycleListener in some cases, which need to access config file.
-
-
   * **[Apache Central Repository][1]**
   * **[Maven Central Repository][2]**
   * **[mvnrepository.com][3]**
@@ -18,17 +11,13 @@ This release revised one of the changes from 2.6.4
 [3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.5
 
 
-### Version 2.6.4 (2025-12-14)
-
-#### updated log4j2.xml
-
 #### 💥 Breaking Changes & API Refactoring
 
 This release introduces significant simplification and consolidation of the application lifecycle management APIs. Migration is required for projects using the deprecated interfaces.
 
 * **Lifecycle API Consolidation:**
     * **Removed/Deprecated:** The interfaces **`SummerRunner`** has been removed.
-    * **New Interface:** All (SummerInitializer, SummerRunner and IdleEventMonitor.IdleEventListener) combined functionality for initialization, startup, and idle event listening is now consolidated into the new **`AppLifecycleListener`** / **`AppLifecycleHandler`** interface.
+    * **New Interface:** All (SummerRunner and IdleEventMonitor.IdleEventListener) combined functionality for initialization, startup, and idle event listening is now consolidated into the new **`AppLifecycleListener`** / **`AppLifecycleHandler`** interface.
 * **Startup Method Renamed:**
     * The functionality previously found in **`SummerRunner.run()`** has been moved to **`AppLifecycleListener.beforeApplicationStart()`**.
 
@@ -44,6 +33,8 @@ This release introduces significant simplification and consolidation of the appl
 
 #### ⚙️ Configuration Changes
 
+* #### updated log4j2.xml
+
 New configuration items have been added to set the server-specific idle connection thresholds:
 
 * **`cfg_nio.properties`** added:
@@ -53,7 +44,7 @@ New configuration items have been added to set the server-specific idle connecti
 
 ### Migration Guide (Mandatory Steps for Upgrade)
 
-1.  **Remove Old Interfaces:** Delete any classes implementing `SummerRunner`, `SummerInitializer`, or `IdleEventMonitor.IdleEventListener`.
+1.  **Remove Old Interfaces:** Delete any classes implementing `SummerRunner` or `IdleEventMonitor.IdleEventListener`.
 2.  **Implement New Handler:** Implement the new **`AppLifecycleListener`** or **`AppLifecycleHandler`** interface.
 3.  **Update Startup Logic:** Migrate the logic from the former `SummerRunner.run()` method to the new **`AppLifecycleListener.beforeApplicationStart()`** method.
 4.  **Configure Idle Threshold:** If you require custom idle monitoring, set the new `idle.threshold.second` configuration item in the corresponding `.properties` file.
