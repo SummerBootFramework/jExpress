@@ -16,7 +16,6 @@
 package org.summerboot.jexpress.boot.event;
 
 import org.summerboot.jexpress.boot.SummerApplication;
-import org.summerboot.jexpress.boot.SummerInitializer;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.nio.IdleEventMonitor;
 
@@ -25,7 +24,7 @@ import java.io.File;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface AppLifecycleListener extends SummerInitializer, IdleEventMonitor.IdleEventListener {
+public interface AppLifecycleListener extends /* do NOT SummerInitializer (it will init this instance before app init),*/ IdleEventMonitor.IdleEventListener {
     void beforeApplicationStart(SummerApplication.AppContext context) throws Exception;
 
     void onApplicationStart(SummerApplication.AppContext context, String appVersion, String fullConfigInfo) throws Exception;

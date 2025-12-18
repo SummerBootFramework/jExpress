@@ -1,5 +1,11 @@
 ## 📅 CHANGES
 
+### Version 2.6.5 (2025-12-18)
+
+#### Netty upgrade on Dec 15
+#### SummerInitializer will no long be implemented by AppLifecycleListener to avoid early initialization of AppLifecycleListener in some cases, which need to access config file.
+
+
 ### Version 2.6.4 (2025-12-14)
 
 #### updated log4j2.xml
