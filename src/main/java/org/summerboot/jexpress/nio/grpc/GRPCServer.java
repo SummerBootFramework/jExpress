@@ -64,7 +64,8 @@ public class GRPCServer {
     protected ScheduledExecutorService statusReporter = null;
     //protected boolean servicePaused = false;
 
-    public static final IdleEventMonitor IDLE_EVENT_MONITOR = new IdleEventMonitor(GRPCServer.class.getSimpleName()) {
+    public static final String IDLE_EVENT_MONITOR_ID = "gRPCServer";
+    public static final IdleEventMonitor IDLE_EVENT_MONITOR = new IdleEventMonitor(IDLE_EVENT_MONITOR_ID) {
         @Override
         public long getIdleIntervalMillis() {
             return TimeUnit.SECONDS.toMillis(GRPCServerConfig.cfg.getIdleThresholdSecond());

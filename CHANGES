@@ -1,5 +1,23 @@
 ## 📅 CHANGES
 
+### Version 2.6.5 (2025-12-18)
+
+#### Netty upgrade on Dec 15
+
+#### 💥 Breaking Changes & API Refactoring
+This release revised one of the changes from 2.6.4
+* SummerInitializer will no long be implemented by AppLifecycleListener to avoid early initialization of AppLifecycleListener in some cases, which need to access config file.
+
+
+  * **[Apache Central Repository][1]**
+  * **[Maven Central Repository][2]**
+  * **[mvnrepository.com][3]**
+
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.5
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.5
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.5
+
+
 ### Version 2.6.4 (2025-12-14)
 
 #### updated log4j2.xml

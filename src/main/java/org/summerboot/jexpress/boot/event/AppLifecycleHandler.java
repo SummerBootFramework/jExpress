@@ -16,9 +16,7 @@
 package org.summerboot.jexpress.boot.event;
 
 import com.google.inject.Inject;
-import com.google.inject.Injector;
 import com.google.inject.Singleton;
-import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
@@ -40,20 +38,20 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     protected static final Logger log = LogManager.getLogger(AppLifecycleHandler.class.getName());
 
 
-    @Override
+    /*@Override
     public void initCLI(Options options) {
         log.debug("");
     }
 
     @Override
     public void initAppBeforeIoC(File configDir) {
-        log.debug(configDir);
+        log.debug(configDir);*
     }
 
     @Override
     public void initAppAfterIoC(File configDir, Injector guiceInjector) {
         log.debug(configDir);
-    }
+    }*/
 
     @Inject
     protected PostOffice postOffice;
