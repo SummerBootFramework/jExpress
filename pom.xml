@@ -190,7 +190,7 @@
 
         <!-- JSON/XML/Bean Validation -->
         <jackson.version>2.20.0</jackson.version>
-        <jackson.versiona>2.20</jackson.versiona>
+        <jackson.annotations.version>2.21</jackson.annotations.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
         <tomcat-embed-el.version>11.0.18</tomcat-embed-el.version>
@@ -215,8 +215,8 @@
         <zxing.version>3.5.4</zxing.version>
         <!-- PDF - PDFBox -->
         <pdfbox.version>3.0.6</pdfbox.version>
-        <!-- PDF - com.openhtmltopdf -->
-        <openhtml.version>1.0.10</openhtml.version>
+        <!-- PDF - io.github.openhtmltopdf -->
+        <openhtml.version>1.1.37</openhtml.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
         <!-- PDF - iText -->
         <itext-core.version>9.5.0</itext-core.version>
@@ -482,7 +482,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.versiona}</version>
+            <version>${jackson.annotations.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 Apache 2.0-->
         <dependency>
@@ -651,34 +651,34 @@
         </dependency>
 
         <!-- PDF - com.openhtmltopdf -->
-        <!-- https://mvnrepository.com/artifact/com.openhtmltopdf/openhtmltopdf-pdfbox LGPL 2.1-->
+        <!-- https://mvnrepository.com/artifact/io.github.openhtmltopdf/openhtmltopdf-pdfbox LGPL 2.1-->
         <dependency>
             <!-- ALWAYS required, usually included transitively. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-core</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Required for PDF output. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-pdfbox</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Required for image output only. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-java2d</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need right-to-left or bi-directional text support. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-rtl-support</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need logging via slf4j. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-slf4j</artifactId>
             <version>${openhtml.version}</version>
             <exclusions>
@@ -690,7 +690,7 @@
         </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need SVG support. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-svg-support</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
@@ -704,7 +704,7 @@
         <dependency>
             <!-- Optional, leave out if you do not need MathML support. -->
             <!-- Introduced in RC-13. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-mathml-support</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
@@ -726,10 +726,10 @@
             <artifactId>pdfbox</artifactId>
             <version>${pdfbox.version}</version>
         </dependency>
-        <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/fontbox -->
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/xmpbox -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
-            <artifactId>fontbox</artifactId>
+            <artifactId>xmpbox</artifactId>
             <version>${pdfbox.version}</version>
         </dependency>
 

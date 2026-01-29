@@ -350,14 +350,14 @@ public class PDFBox {
 
     public static List<BufferedImage> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = Loader.loadPDF(pdfData);) {
+        try (PDDocument document = Loader.loadPDF(pdfData);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
             return pdf2Images(document, dpi, imageType, destination);
         }
     }
 
     public static List<BufferedImage> pdf2Images(File pdfFile, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = Loader.loadPDF(pdfFile);) {
+        try (PDDocument document = Loader.loadPDF(pdfFile);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
             return pdf2Images(document, dpi, imageType, destination);
         }
     }
