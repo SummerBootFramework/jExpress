@@ -213,8 +213,8 @@
         <freemarker.version>2.3.34</freemarker.version>
         <!-- Barcode -->
         <zxing.version>3.5.4</zxing.version>
-        <!-- PDF - PDFBox
-        <pdfbox.version>2.0.25</pdfbox.version>-->
+        <!-- PDF - PDFBox -->
+        <pdfbox.version>3.0.6</pdfbox.version>
         <!-- PDF - com.openhtmltopdf -->
         <openhtml.version>1.0.10</openhtml.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
@@ -649,13 +649,6 @@
             <version>${itext-html2pdf.version}</version>
             <scope>provided</scope>
         </dependency>
-        <!-- PDF - PDFBox -->
-        <!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox Apache 2.0-->
-        <!--        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>${pdfbox.version}</version>
-        </dependency>-->
 
         <!-- PDF - com.openhtmltopdf -->
         <!-- https://mvnrepository.com/artifact/com.openhtmltopdf/openhtmltopdf-pdfbox LGPL 2.1-->
@@ -725,6 +718,20 @@
             <type>pom</type>
         </dependency>
         -->
+
+        <!-- PDF - PDFBox -->
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/fontbox -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>fontbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.veracode.annotation/VeracodeAnnotations -->
         <dependency>

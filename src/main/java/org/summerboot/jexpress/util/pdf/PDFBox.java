@@ -21,6 +21,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.render.Box;
 import com.openhtmltopdf.render.PageBox;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
@@ -138,7 +139,7 @@ public class PDFBox {
         ap.setCanModify(false);
         ap.setCanModifyAnnotations(true);
         ap.setCanPrint(true);
-        ap.setCanPrintDegraded(true);
+        ap.setCanPrintFaithful(true);
         ap.setReadOnly();
         return ap;
     }
@@ -349,14 +350,14 @@ public class PDFBox {
 
     public static List<BufferedImage> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = PDDocument.load(pdfData);) {
+        try (PDDocument document = Loader.loadPDF(pdfData);) {
             return pdf2Images(document, dpi, imageType, destination);
         }
     }
 
     public static List<BufferedImage> pdf2Images(File pdfFile, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = PDDocument.load(pdfFile);) {
+        try (PDDocument document = Loader.loadPDF(pdfFile);) {
             return pdf2Images(document, dpi, imageType, destination);
         }
     }
