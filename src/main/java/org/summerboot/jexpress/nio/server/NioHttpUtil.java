@@ -237,13 +237,17 @@ public class NioHttpUtil {
         long fileLength = -1;
         RandomAccessFile randomAccessFile = null;
         File file = sessionContext.file();
+        String filePathRequested = file.getAbsolutePath();
+        sessionContext.memo("sendFile.requested", filePathRequested);
+        String filePathChecked = SecurityUtil.escape4Filename(filePathRequested);
+        sessionContext.memo("sendFile.checked", filePathRequested);
+        file = new File(filePathChecked);
         if (!SecurityUtil.precheckFile(file, sessionContext)) {
             file = buildErrorFile(sessionContext);
             sessionContext.response(file, false);
             return sendResponse(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings);
         }
 
-        sessionContext.memo("sendFile", file.getAbsolutePath());
         String filePath = file.getName();
         try {
             randomAccessFile = new RandomAccessFile(file, "r");// CWE-404 False Positive: try with resource will close the IO while the async thread is still using it.

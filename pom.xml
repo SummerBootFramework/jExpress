@@ -171,11 +171,11 @@
 
         <!-- NIO Netty -->
         <netty.version>4.2.9.Final</netty.version>
-        <netty-tcnative.version>2.0.74.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.75.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.78.0</grpc.version>
+        <grpc.version>1.79.0</grpc.version>
         <guava.version>33.5.0-jre</guava.version>
-        <protobuf.version>4.33.4</protobuf.version>
+        <protobuf.version>4.33.5</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>2.2.42</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
@@ -200,7 +200,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.2.2.Final</hibernate.version>
+        <hibernate.version>7.2.3.Final</hibernate.version>
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
@@ -226,7 +226,7 @@
 
         <!-- Testing  -->
         <testng.version>7.12.0</testng.version>
-        <jdbc.version>9.5.0</jdbc.version>
+        <jdbc.version>9.6.0</jdbc.version>
     </properties>
 
     <dependencies>
