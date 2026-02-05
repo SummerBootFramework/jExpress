@@ -17,8 +17,8 @@
 
 #### 💥 Breaking Changes & API Refactoring
 * ** SessionContext: uri() renamed to uriRawDecoded() - the difference between SessionContext.uriRawDecoded() and ServiceRequest.etHttpRequestPath():
-    * **SessionContext.uriRawDecoded() is the raw URL resutl from URLDecoder.decode()
-    * **ServiceRequest.getHttpRequestPath() is the URI result from  QueryStringDecoder.path(uriRawDecoded)
+    * **SessionContext.uriRawDecoded() is the raw URI from FullHttpRequest.uri()
+    * **ServiceRequest.getHttpRequestPath() is the URI from  QueryStringDecoder.path(uriRawDecoded)
 
 
 

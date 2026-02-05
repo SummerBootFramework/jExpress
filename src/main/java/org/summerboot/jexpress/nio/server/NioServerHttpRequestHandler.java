@@ -111,7 +111,6 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         final long requestDataBytes = req.content().capacity();
         final HttpMethod httpMethod = req.method();
         final String httpRequestUriRaw = req.uri();
-        final String httpRequestUriRawDecoded = URLDecoder.decode(httpRequestUriRaw, StandardCharsets.UTF_8);
         final boolean isKeepAlive = HttpUtil.isKeepAlive(req);
         final HttpHeaders requestHeaders = req.headers();
         final String httpPostRequestBody;// = NioHttpUtil.getHttpPostBodyString(req);
@@ -122,19 +121,18 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         }
         ReferenceCountUtil.release(req);
 
+
 //        if (dataSize > _5MB) {
 //            ServiceError e = new ServiceError(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT, null, "Upload file cannot over 5MB", null);
 //            SessionContext context = SessionContext.build(hitIndex).txt(e.toJson()).status(HttpResponseStatus.INSUFFICIENT_STORAGE).errorCode(BootErrorCode.NIO_FILE_UPLOAD_EXCEED_SIZE_LIMIT).level(Level.DEBUG);
 //            NioHttpUtil.sendText(ctx, true, null, context.status(), context.txt(), context.contentType(), true);
 //            return;
 //        }
-        final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequestUriRaw, StandardCharsets.UTF_8, true);
-        final String httpRequestUri = queryStringDecoder.path();
-        final String requestMetaInfo = requestMetaInfo(ctx, txId, protocol, httpMethod, httpRequestUriRaw, httpRequestUriRawDecoded, isKeepAlive, requestDataBytes);
+        final String requestMetaInfo = requestMetaInfo(ctx, txId, protocol, httpMethod, httpRequestUriRaw, isKeepAlive, requestDataBytes);
         log.debug(() -> requestMetaInfo);
+        final SessionContext context = SessionContext.build(ctx, txId, hitIndex, start, requestHeaders, protocol, httpMethod, httpRequestUriRaw, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
 
 
-        final SessionContext context = SessionContext.build(ctx, txId, hitIndex, start, requestHeaders, protocol, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody).responseHeaders(nioCfg.getServerDefaultResponseHeaders()).clientAcceptContentType(requestHeaders.get(HttpHeaderNames.ACCEPT));
         //ScopedValue.where(SessionContext.SESSION_CONTEXT, context).run(() -> {
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
@@ -148,12 +146,19 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             long processTime = -1;
             ProcessorSettings processorSettings = null;
             Map<String, List<String>> parameters = null;
+            String httpRequestUri = httpRequestUriRaw;
             try {
+                final String httpRequestUriRawDecoded = URLDecoder.decode(httpRequestUriRaw, StandardCharsets.UTF_8);
+                if (!httpRequestUriRaw.equals(httpRequestUriRawDecoded)) {
+                    context.memo("URLRecevied", httpRequestUriRaw);
+                    context.memo("URL_Decoded", httpRequestUriRawDecoded);
+                }
+                final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequestUriRaw, StandardCharsets.UTF_8, true);
+                httpRequestUri = queryStringDecoder.path();
                 parameters = queryStringDecoder.parameters();
                 if (isDecoderSuccess) {
                     String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
                     if (error == null) {
-
                         processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
                     } else {
                         Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, "Invalid caller IP", null, "Invalid IP address: " + error);
@@ -218,7 +223,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                                 }
                             }
                         }
-                        report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseDataBytes, ioEx);
+                        report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRaw, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseDataBytes, ioEx);
                         // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
                         log.log(level, "{}", report);// CWE-117 False Positive
                     }
@@ -226,7 +231,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     log.fatal("logging failed \n{}", report, ex);// CWE-117 False Positive
                 }
                 try {
-                    afterLogging(report, requestHeaders, httpMethod, httpRequestUriRawDecoded, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseDataBytes, ioEx);
+                    afterLogging(report, requestHeaders, httpMethod, httpRequestUriRaw, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseDataBytes, ioEx);
                 } catch (Throwable ex) {
                     log.error("afterLogging failed", ex);
                 }
@@ -282,18 +287,15 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 .toString();
     }
 
-    protected String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, String protol, HttpMethod httpMethod, String httpRequestUriRaw, String httpRequestUriDecoded, boolean isKeepAlive, long requestDataBytes) {
+    protected String requestMetaInfo(ChannelHandlerContext ctx, String hitIndex, String protol, HttpMethod httpMethod, String httpRequestUriRaw, boolean isKeepAlive, long requestDataBytes) {
         StringBuilder sb = new StringBuilder().append(protol)
                 .append("_request_").append(hitIndex)
-                .append("=").append(httpMethod).append(" ").append(httpRequestUriDecoded)
+                .append("=").append(httpMethod).append(" ").append(httpRequestUriRaw)
                 .append(", requestDataBytes=").append(requestDataBytes)
                 .append(", KeepAlive=").append(isKeepAlive)
                 .append(", chn=").append(ctx.channel())
                 .append(", ctx=").append(ctx.hashCode())
                 .append(me);
-        if (!httpRequestUriRaw.equals(httpRequestUriDecoded)) {
-            sb.append(BootConstant.BR).append("\trawURI=").append(httpRequestUriRaw).append(BootConstant.BR);
-        }
         return sb.toString();
     }
 
