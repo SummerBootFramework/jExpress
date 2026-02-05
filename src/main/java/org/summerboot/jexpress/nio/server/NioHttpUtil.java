@@ -230,22 +230,22 @@ public class NioHttpUtil {
         return responseDataBytes;
     }
 
-    private static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final SessionContext sessionContext, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings) {
-        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, sessionContext.status());
+    private static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final SessionContext context, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings) {
+        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, context.status());
         HttpHeaders h = response.headers();
-        h.set(sessionContext.responseHeaders());
+        h.set(context.responseHeaders());
         long fileLength = -1;
         RandomAccessFile randomAccessFile = null;
-        File file = sessionContext.file();
+        File file = context.file();
         String filePathRequested = file.getAbsolutePath();
-        sessionContext.memo("sendFile.requested", filePathRequested);
+        context.memo("sendFile.requested", filePathRequested);
         String filePathChecked = SecurityUtil.escape4Filename(filePathRequested);
-        sessionContext.memo("sendFile.checked", filePathRequested);
+        context.memo("sendFile.checked", filePathRequested);
         file = new File(filePathChecked);
-        if (!SecurityUtil.precheckFile(file, sessionContext)) {
-            file = buildErrorFile(sessionContext);
-            sessionContext.response(file, false);
-            return sendResponse(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings);
+        if (!SecurityUtil.precheckFile(file, context)) {
+            file = buildErrorFile(context);
+            context.response(file, false);
+            return sendResponse(ctx, isKeepAlive, context, errorAuditor, processorSettings);
         }
 
         String filePath = file.getName();
@@ -293,8 +293,8 @@ public class NioHttpUtil {
             }
             Err err = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send file: " + file.getName(), ex, "Failed to send file: " + file.getAbsolutePath());
             file = null;
-            sessionContext.response(file, false).error(err).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-            return sendResponse(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings);
+            context.response(file, false).error(err).status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            return sendResponse(ctx, isKeepAlive, context, errorAuditor, processorSettings);
         }
         return fileLength;
     }

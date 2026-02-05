@@ -147,11 +147,14 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             Throwable ioEx = null;
             long processTime = -1;
             ProcessorSettings processorSettings = null;
+            Map<String, List<String>> parameters = null;
             try {
+                parameters = queryStringDecoder.parameters();
                 if (isDecoderSuccess) {
                     String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
                     if (error == null) {
-                        processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
+
+                        processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
                     } else {
                         Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, "Invalid caller IP", null, "Invalid IP address: " + error);
                         context.error(err).status(HttpResponseStatus.FORBIDDEN);
@@ -164,15 +167,23 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 processTime = System.currentTimeMillis() - start;
                 responseDataBytes = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
                 context.poi(BootPOI.SERVICE_END);
+            } catch (IllegalArgumentException ex) {
+                // may caused by queryStringDecoder.parameters() when process query string contains invalid hex byte, like '%', below are sample requests:
+                // /jackrabbit/search.jsp?q=%"<script>alert(1770213717)</script>
+                // /?action:%{(new java.lang.ProcessBuilder(new java.lang.String[]{'id'})).start()}
+                ioEx = ex;
+                Err e = new Err(BootErrorCode.BAD_REQUEST_DATA, null, "Unable to serve client request", ex);
+                context.error(e).status(HttpResponseStatus.BAD_REQUEST).level(Level.WARN);
+                responseDataBytes = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
             } catch (Throwable ex) {
                 ioEx = ex;
-                Err e = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to send context to client", ex);
+                Err e = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to serve client request", ex);
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
                 responseDataBytes = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
             } finally {
                 NioCounter.COUNTER_SENT.incrementAndGet();
                 long responseTime = System.currentTimeMillis() - start;
-                this.afterService(requestHeaders, httpMethod, httpRequestUri, queryStringDecoder.parameters(), httpPostRequestBody, context);
+                this.afterService(requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
                 String report = null;
                 try {
                     boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThresholdMs();
