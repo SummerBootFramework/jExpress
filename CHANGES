@@ -15,6 +15,11 @@
 * **Enhanced security for requesting file downloading/content: SecurityUtil.escape4Filename
 * **Enhanced security: handle query string contains invalid hex byte
 
+#### 💥 Breaking Changes & API Refactoring
+* ** SessionContext: uri() renamed to uriRawDecoded() - the difference between SessionContext.uriRawDecoded() and ServiceRequest.etHttpRequestPath():
+    * **SessionContext.uriRawDecoded() is the raw URL resutl from URLDecoder.decode()
+    * **ServiceRequest.getHttpRequestPath() is the URI result from  QueryStringDecoder.path(uriRawDecoded)
+
 
 
 ### Version 2.6.5 (2025-12-18)

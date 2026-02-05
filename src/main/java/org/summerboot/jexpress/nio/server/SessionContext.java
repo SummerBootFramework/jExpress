@@ -66,7 +66,7 @@ public class SessionContext {
     protected final SocketAddress remoteIP;
     protected final String protocol;
     protected final HttpMethod requestMethod;
-    protected final String requestURI;
+    protected final String httpRequestUriRawDecoded;
     protected final HttpHeaders requestHeaders;
     protected final String requestBody;
     protected final String txId;
@@ -121,8 +121,8 @@ public class SessionContext {
         return new SessionContext(null, txId, hit, System.currentTimeMillis(), null, null, null, null, null);
     }
 
-    public static SessionContext build(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, String protocol, HttpMethod requestMethod, String requestURI, String requestBody) {
-        return new SessionContext(ctx, txId, hit, startTs, requestHeaders, protocol, requestMethod, requestURI, requestBody);
+    public static SessionContext build(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, String protocol, HttpMethod requestMethod, String httpRequestUriRawDecoded, String requestBody) {
+        return new SessionContext(ctx, txId, hit, startTs, requestHeaders, protocol, requestMethod, httpRequestUriRawDecoded, requestBody);
     }
 
     @Override
@@ -131,7 +131,7 @@ public class SessionContext {
         return "SessionContext{" + "status=" + status + ", responseHeaders=" + responseHeaders + ", contentType=" + contentType + ", data=" + data + ", txt=" + txt + ", errors=" + serviceError + ", level=" + level + ", logReqHeader=" + logRequestHeader + ", logRespHeader=" + logResponseHeader + ", logReqContent=" + logRequestBody + ", logRespContent=" + logResponseBody + '}';
     }
 
-    protected SessionContext(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, String protocol, HttpMethod requestMethod, String requestURI, String requestBody) {
+    protected SessionContext(ChannelHandlerContext ctx, String txId, long hit, long startTs, HttpHeaders requestHeaders, String protocol, HttpMethod requestMethod, String httpRequestUriRawDecoded, String requestBody) {
         if (ctx != null && ctx.channel() != null) {
             this.localIP = ctx.channel().localAddress();
             this.remoteIP = ctx.channel().remoteAddress();
@@ -146,12 +146,12 @@ public class SessionContext {
         this.requestHeaders = requestHeaders;
         this.protocol = protocol;
         this.requestMethod = requestMethod;
-        this.requestURI = requestURI;
+        this.httpRequestUriRawDecoded = httpRequestUriRawDecoded;
         this.requestBody = requestBody;
         poi.add(new POI(BootPOI.SERVICE_BEGIN));
     }
 
-    public SessionContext(SocketAddress localIP, SocketAddress remoteIP, String txId, long hit, long startTs, HttpHeaders requestHeaders, String protocol, HttpMethod requestMethod, String requestURI, String requestBody) {
+    public SessionContext(SocketAddress localIP, SocketAddress remoteIP, String txId, long hit, long startTs, HttpHeaders requestHeaders, String protocol, HttpMethod requestMethod, String httpRequestUriRawDecoded, String requestBody) {
         this.localIP = localIP;
         this.remoteIP = remoteIP;
         this.txId = txId;
@@ -161,7 +161,7 @@ public class SessionContext {
         this.requestHeaders = requestHeaders;
         this.protocol = protocol;
         this.requestMethod = requestMethod;
-        this.requestURI = requestURI;
+        this.httpRequestUriRawDecoded = httpRequestUriRawDecoded;
         this.requestBody = requestBody;
         poi.add(new POI(BootPOI.SERVICE_BEGIN));
     }
@@ -279,8 +279,8 @@ public class SessionContext {
         return requestMethod;
     }
 
-    public String uri() {
-        return requestURI;
+    public String uriRawDecoded() {
+        return httpRequestUriRawDecoded;
     }
 
     public String requestBody() {
@@ -887,7 +887,7 @@ public class SessionContext {
         //sb.append(TimeUtil.toOffsetDateTime(startTs, zoneId));
         sb.append("[").append(txId).append(" ").append(localIP).append("] [")
                 .append(status).append(", error=").append(errorCount).append(", queuing=").append(queuingTime).append("ms, process=").append(processTime).append("ms, response=").append(responseTime).append("ms] ")
-                .append(protocol).append(" ").append(requestMethod).append(" ").append(requestURI).append(", ")
+                .append(protocol).append(" ").append(requestMethod).append(" ").append(httpRequestUriRawDecoded).append(", ")
                 .append(remoteIP).append("=").append(caller == null ? callerId : caller);
         return this;
     }
