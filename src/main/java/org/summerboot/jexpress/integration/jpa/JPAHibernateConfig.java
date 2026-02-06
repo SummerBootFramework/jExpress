@@ -103,9 +103,9 @@ abstract public class JPAHibernateConfig extends JPAConfig {
             if (settings.get(Environment.JAKARTA_JDBC_PASSWORD) != null) {
                 settings.put(Environment.JAKARTA_JDBC_PASSWORD, "****");// protect password from being logged
             }
-            if (settings.get(Environment.PASS) != null) {
+            /*if (settings.get(Environment.PASS) != null) {
                 settings.put(Environment.PASS, "****");// protect password from being logged
-            }
+            }*/
         }
     }
 

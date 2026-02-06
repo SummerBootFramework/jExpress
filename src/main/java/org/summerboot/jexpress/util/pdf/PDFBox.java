@@ -165,7 +165,7 @@ public class PDFBox {
         if (info != null) {
             builder.withProducer(info.getProducer());
         }
-        builder.useFastMode();
+        //builder.useFastMode();
         if (units != null) {
             builder.useDefaultPageSize(pageWidth, pageHeight, units);
         }
@@ -250,7 +250,7 @@ public class PDFBox {
         PdfRendererBuilder builderTemp = new PdfRendererBuilder();
         useFonts(builderTemp, null);
         builderTemp.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
-        builderTemp.useFastMode();
+        //builderTemp.useFastMode();
         try (PdfBoxRenderer renderer = builderTemp.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {//need to close doc if use box
             renderer.layout();
             // The root box is <html>, the first child is <body>, then <div>.
@@ -268,7 +268,7 @@ public class PDFBox {
         if (info != null) {
             builder.withProducer(info.getProducer());
         }
-        builder.useFastMode();
+        //builder.useFastMode();
 
         //builder.useDefaultPageSize(pageWidth, pageHeight, units);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {

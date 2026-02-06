@@ -21,8 +21,8 @@ import io.netty.channel.ChannelHandler;
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.help.HelpFormatter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -121,7 +121,7 @@ abstract public class SummerSingularity {
      */
     protected CommandLine cli;
     protected final Options cliOptions = new Options();
-    protected final HelpFormatter cliHelpFormatter = new HelpFormatter();
+    protected final HelpFormatter cliHelpFormatter = HelpFormatter.builder().get();
 
     /*
      * CLI results

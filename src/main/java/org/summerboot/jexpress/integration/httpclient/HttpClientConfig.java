@@ -17,6 +17,7 @@ package org.summerboot.jexpress.integration.httpclient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
@@ -185,7 +186,7 @@ abstract public class HttpClientConfig extends BootConfig {
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
     @JsonIgnore
-    protected volatile ObjectMapper objectMapper = new ObjectMapper();
+    protected volatile ObjectMapper objectMapper = JsonMapper.builder().build();
 
     //3.2 HTTP Client Performance    
     @ConfigHeader(title = "2. HTTP Client Performance")
