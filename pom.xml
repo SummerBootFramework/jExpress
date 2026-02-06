@@ -157,7 +157,7 @@
         <commons-cli.version>1.11.0</commons-cli.version>
         <commons-io.version>2.21.0</commons-io.version>
         <commons-text.version>1.15.0</commons-text.version>
-        <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
+        <owasp.encoder.version>1.4.0</owasp.encoder.version>
         <!-- Logging -->
         <log4j-api.version>2.25.3</log4j-api.version>
         <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
@@ -257,13 +257,6 @@
             <version>${commons-text.version}</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
-        <!--        <dependency>
-            <groupId>org.owasp.encoder</groupId>
-            <artifactId>encoder</artifactId>
-            <version>${owasp.encoder.version}</version>
-        </dependency>-->
-
         <!-- Reflection -->
         <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
         <dependency>
@@ -328,6 +321,12 @@
             <artifactId>bcprov-jdk18on</artifactId>
             <version>${bouncycastle.version}</version>
         </dependency>-->
+        <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
+        <dependency>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+            <version>${owasp.encoder.version}</version>
+        </dependency>
 
         <!-- JWT -->
         <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt Apache 2.0-->

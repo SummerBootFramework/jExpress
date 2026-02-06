@@ -38,11 +38,11 @@ import org.summerboot.jexpress.nio.server.domain.ProcessorSettings;
 import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.UrlSanitizer;
 import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.GeoIpUtil;
 
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.util.List;
@@ -148,15 +148,20 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
             Map<String, List<String>> parameters = null;
             String httpRequestUri = httpRequestUriRaw;
             try {
-                final String httpRequestUriRawDecoded = URLDecoder.decode(httpRequestUriRaw, StandardCharsets.UTF_8);
-                if (!httpRequestUriRaw.equals(httpRequestUriRawDecoded)) {
-                    context.memo("URLRecevied", httpRequestUriRaw);
-                    context.memo("URL_Decoded", httpRequestUriRawDecoded);
-                }
-                final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequestUriRaw, StandardCharsets.UTF_8, true);
+                UrlSanitizer.UrlSanitized urlSanitizedVo = UrlSanitizer.cleanUrl(httpRequestUriRaw);
+                final String urlSanitized = urlSanitizedVo.cleanedURL();
+                final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(urlSanitized, StandardCharsets.UTF_8, true);
                 httpRequestUri = queryStringDecoder.path();
                 parameters = queryStringDecoder.parameters();
-                if (isDecoderSuccess) {
+                if (!httpRequestUriRaw.equals(urlSanitized)) {
+                    context.memo("URL_Received", httpRequestUriRaw);
+                    context.memo("URLSanitized", urlSanitized);
+                    context.memo("URLQueryPath", httpRequestUri);
+                }
+                if (urlSanitizedVo.isPathTraversal()) {
+                    Err err = new Err(BootErrorCode.BAD_REQUEST_DATA, null, "Invalid URL", null, "PathTraversal URL: " + httpRequestUriRaw);
+                    context.error(err).status(HttpResponseStatus.BAD_REQUEST);
+                } else if (isDecoderSuccess) {
                     String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
                     if (error == null) {
                         processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
