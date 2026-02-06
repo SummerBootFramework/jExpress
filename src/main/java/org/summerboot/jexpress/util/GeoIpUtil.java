@@ -15,6 +15,8 @@
  */
 package org.summerboot.jexpress.util;
 
+import org.summerboot.jexpress.security.SecurityUtil;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,11 +29,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -193,7 +191,7 @@ public class GeoIpUtil {
             if (!whiteList.contains(host)) {
                 // check regex
                 for (String whiteRegex : whiteList) {
-                    if (matches(host, whiteRegex)) {
+                    if (SecurityUtil.matches(host, whiteRegex)) {
                         return null;
                     }
                 }
@@ -205,7 +203,7 @@ public class GeoIpUtil {
                 return "caller address (" + host + ") is in black list";
             }
             for (String blackRegex : blackList) {// check regex
-                if (matches(host, blackRegex)) {
+                if (SecurityUtil.matches(host, blackRegex)) {
                     return "caller address (" + host + ") matches black list: " + blackRegex;
                 }
             }
@@ -214,34 +212,4 @@ public class GeoIpUtil {
         return null;
     }
 
-    public static Map<String, Pattern> REGEX_CACHE = new ConcurrentHashMap<>();
-
-    public static boolean matches(String input, String regex) {
-        return matches(input, regex, null);
-    }
-
-    public static boolean matches(String input, String regex, String regexPrefix) {
-        if (regex == null || regex.isEmpty()) {
-            return true;
-        }
-        Pattern p = REGEX_CACHE.get(regex);
-        if (p == null) {
-            // Do NOT catch Exception here, let it throw, so that the NioConfig and GRPCConfig can fail earlier with wrong configuration.
-            if (regexPrefix != null && regex.startsWith(regexPrefix)) {
-                regex = regex.substring(regexPrefix.length());
-            }
-            try {
-                // If the regex is not valid, it will throw PatternSyntaxException
-                // This is a Java's misnamed method, it tries and matches ALL the input.
-                // p = Pattern.compile(regex, Pattern.DOTALL);
-                p = Pattern.compile(regex);
-                REGEX_CACHE.put(regex, p);
-            } catch (Exception ex) {
-                throw new IllegalArgumentException("Invalid regex (\"" + regex + "\"): " + ex.getMessage(), ex);
-            }
-        }
-        Matcher m = p.matcher(input);
-        //return m.matches();  This is a Java's misnamed method, it tries and matches ALL the input.
-        return m.find();// If you want to see if the regex matches an input text, use the .find() method of the matcher
-    }
 }

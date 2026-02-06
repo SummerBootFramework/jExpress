@@ -32,6 +32,9 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -482,5 +485,37 @@ public class SecurityUtil {
             }
         }
         return decoded;
+    }
+
+
+    public static Map<String, Pattern> REGEX_CACHE = new ConcurrentHashMap<>();
+
+    public static boolean matches(String input, String regex) {
+        return matches(input, regex, null);
+    }
+
+    public static boolean matches(String input, String regex, String regexPrefix) {
+        if (regex == null || regex.isEmpty()) {
+            return true;
+        }
+        Pattern p = REGEX_CACHE.get(regex);
+        if (p == null) {
+            // Do NOT catch Exception here, let it throw, so that the NioConfig and GRPCConfig can fail earlier with wrong configuration.
+            if (regexPrefix != null && regex.startsWith(regexPrefix)) {
+                regex = regex.substring(regexPrefix.length());
+            }
+            try {
+                // If the regex is not valid, it will throw PatternSyntaxException
+                // This is a Java's misnamed method, it tries and matches ALL the input.
+                // p = Pattern.compile(regex, Pattern.DOTALL);
+                p = Pattern.compile(regex);
+                REGEX_CACHE.put(regex, p);
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Invalid regex (\"" + regex + "\"): " + ex.getMessage(), ex);
+            }
+        }
+        Matcher m = p.matcher(input);
+        //return m.matches();  This is a Java's misnamed method, it tries and matches ALL the input.
+        return m.find();// If you want to see if the regex matches an input text, use the .find() method of the matcher
     }
 }
