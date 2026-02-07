@@ -153,7 +153,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(urlSanitized, StandardCharsets.UTF_8, true);
                 httpRequestUri = queryStringDecoder.path();
                 parameters = queryStringDecoder.parameters();
-                if (!httpRequestUriRaw.equals(urlSanitized)) {
+                if (urlSanitizedVo.isPathTraversal() || !httpRequestUriRaw.equals(urlSanitized)) {
                     context.memo("URL_Received", httpRequestUriRaw);
                     context.memo("URLSanitized", urlSanitized);
                     context.memo("URLQueryPath", httpRequestUri);

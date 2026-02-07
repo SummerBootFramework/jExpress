@@ -885,9 +885,9 @@ public class SessionContext {
             errorCount = 0;
         }
         //sb.append(TimeUtil.toOffsetDateTime(startTs, zoneId));
-        sb.append("[").append(txId).append(" ").append(localIP).append("] [")
-                .append(status).append(", error=").append(errorCount).append(", queuing=").append(queuingTime).append("ms, process=").append(processTime).append("ms, response=").append(responseTime).append("ms] ")
-                .append(protocol).append(" ").append(requestMethod).append(" ").append(httpRequestUriRawDecoded).append(", ")
+        sb.append("[").append(txId).append(" ").append(localIP).append("] [error=")
+                .append(errorCount).append(", queuing=").append(queuingTime).append("ms, process=").append(processTime).append("ms, response=").append(responseTime).append("ms] ")
+                .append(status).append(" ").append(protocol).append(" ").append(requestMethod).append(" ").append(httpRequestUriRawDecoded).append(" caller=")
                 .append(remoteIP).append("=").append(caller == null ? callerId : caller);
         return this;
     }

@@ -13,7 +13,7 @@
 #### ✨ Features and Enhancements
 * **PDFBox lib migrated to io.github.openhtmltopdf from com.openhtmltopdf by Sam Li 黎韦辰**
 * **Enhanced security for requesting file downloading/content: SecurityUtil.escape4Filename
-* **Enhanced security: handle query string contains invalid hex byte
+* **Enhanced security: reject and response 400 when URL contains illegal char or Path Traversal
 
 #### 💥 Breaking Changes & API Refactoring
 * ** SessionContext: uri() renamed to uriRawDecoded() - the difference between SessionContext.uriRawDecoded() and ServiceRequest.etHttpRequestPath():
