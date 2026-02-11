@@ -291,9 +291,9 @@ public class SecurityUtil {
      * Security Features:
      * Path Traversal Prevention - Removes all .. parent directory references
      * URL Encoding Handling - Decodes sequences like %2e (dot) and %2f (slash)
-     * XSS Attack Prevention - Removes <script>, <iframe>, <object>, <embed> tags and their content
+     * XSS Attack Prevention - Removes {@literal <script>, <iframe>, <object>, <embed>} tags and their content
      * JavaScript Injection Prevention - Removes javascript: and event handlers like onclick=
-     * Special Character Sanitization - Converts dangerous chars (?, &, =, ", ', ;, (, ), etc.) to underscores
+     * Special Character Sanitization - Converts dangerous chars {@literal (?, &, =, ", ', ;, (, ), etc.) } to underscores
      * Preserves Absolute Paths - Keeps Windows drive letters (C:/) and Unix absolute paths (/)
      * Trailing Underscore Logic - Trims trailing underscores from path segments but preserves them for standalone filenames
      * The implementation handles all edge cases including empty inputs, complex path traversal attempts, URL-encoded attacks, and XSS injection attempts while maintaining legitimate file paths.
