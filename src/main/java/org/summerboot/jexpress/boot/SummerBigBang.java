@@ -99,8 +99,12 @@ abstract public class SummerBigBang extends SummerSingularity {
 
     protected <T extends SummerApplication> T aParallelUniverse(String... args) {
         log.trace("");
-        bigBang_LetThereBeCLI(args);
-        bigBang_AndThereWasCLI();
+        try {
+            bigBang_LetThereBeCLI(args);
+            bigBang_AndThereWasCLI();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
 
         /*
          * 2. load configs:
@@ -134,23 +138,23 @@ abstract public class SummerBigBang extends SummerSingularity {
         return (T) this;
     }
 
-    protected void bigBang_LetThereBeCLI(String[] args) {
+    protected void bigBang_LetThereBeCLI(String[] args) throws IOException {
         log.trace("");
         memo.append(BootConstant.BR).append("\t- CLI.init: args=").append(Arrays.asList(args));
         Option arg = Option.builder(BootConstant.CLI_USAGE)
                 .desc("Usage/Help")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_VERSION)
                 .desc("check application version")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_CONFIG_MONITOR_INTERVAL)
                 .desc("configuration monitoring interval in second (default " + userSpecifiedCfgMonitorThrottleMillis + " seconds)")
                 .hasArg().argName("second")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         arg = new Option(BootConstant.CLI_I8N, true, "language <en | fr-CA>");
@@ -161,7 +165,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             String validOptions = FormatterUtil.toCSV(availableImplTagOptions);
             arg = Option.builder(BootConstant.CLI_USE_ALTERNATIVE).desc("launch application with selected implementations, valid values <" + validOptions + ">")
                     .hasArgs().argName("items")
-                    .build();
+                    .get();
             arg.setArgs(Option.UNLIMITED_VALUES);
             arg.setRequired(false);
             cliOptions.addOption(arg);
@@ -170,12 +174,12 @@ abstract public class SummerBigBang extends SummerSingularity {
         arg = Option.builder(BootConstant.CLI_CONFIG_DOMAIN)
                 .desc("Start the program using the configuration in the ../" + BootConstant.DIR_STANDALONE + "_<domain_name> directory. For example, if you specify -" + BootConstant.CLI_CONFIG_DOMAIN + " foo, the program will load the configuration files from the ../" + BootConstant.DIR_STANDALONE + "_foo directory. If this option is not specified, the program will start using the default configuration files.")
                 .hasArg().argName("domain suffix")
-                .build();
+                .get();
         cliOptions.addOption(arg);
         arg = Option.builder(BootConstant.CLI_CONFIG_DIR)
                 .desc("the path to load the configuration files, or load from current folder when not specified")
                 .hasArg().argName("path")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         if (scanedJExpressConfigs != null && !scanedJExpressConfigs.isEmpty()) {
@@ -183,7 +187,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             arg = Option.builder(BootConstant.CLI_CONFIG_DEMO)
                     .desc("Show specified configuration template (" + validOptions + "), or when specified with -" + BootConstant.CLI_CONFIG_DOMAIN + " just dump all available configuration templates to the specified folder")
                     .hasArgs().argName("config").optionalArg(true)
-                    .build();
+                    .get();
             cliOptions.addOption(arg);
         }
 
@@ -191,7 +195,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             arg = Option.builder(BootConstant.CLI_LIST_UNIQUE)
                     .desc("Show list of: " + availableUniqueTagOptions)
                     .hasArg().argName("item")
-                    .build();
+                    .get();
             cliOptions.addOption(arg);
         }
 
@@ -199,20 +203,20 @@ abstract public class SummerBigBang extends SummerSingularity {
                 .desc("Specify an application configuration password in a file which contains a line: APP_ROOT_PASSWORD=<base64 encoded password>"
                         + BootConstant.BR + "Note: Unlike the -" + BootConstant.CLI_ADMIN_PWD + " opton, this option protects the app config password from being exposed via ps command.")
                 .hasArg().argName("file")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_ADMIN_PWD)
                 .desc("Specify an application config password instead of the default one."
                         + BootConstant.BR + "Note: This option exposes the app config password via ps command")
                 .hasArg().argName("password")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_JWT)
                 .desc("generate JWT root signing key with the specified algorithm <HS256, HS384, HS512>")
                 .hasArg().argName("algorithm")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_ENCRYPT)
@@ -220,26 +224,26 @@ abstract public class SummerBigBang extends SummerSingularity {
                         + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> -" + BootConstant.CLI_ADMIN_PWD_FILE + " <path>"
                         + BootConstant.BR + BootConstant.BR + "\t or"
                         + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_PSV)
                 .hasArg().argName("envId")
                 .desc("Generate configuration list in PSV format with the specified environment id"
                         + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_PSV + " <envId> -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain>")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_DEBUGMODE)
                 .hasArg(false)
                 .desc("this will ignore @Log settings and not mask any sensitive data in logs")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         arg = Option.builder(BootConstant.CLI_DECRYPT)
                 .desc("Decrypt config file content with all \"ENC(encrypted text)\" using password:"
                         + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_DECRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
-                .build();
+                .get();
         cliOptions.addOption(arg);
 
         summerInitializers.addAll(scanImplementation_SummerInitializer());
@@ -251,7 +255,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             CommandLineParser parser = new DefaultParser();
             cli = parser.parse(cliOptions, args);
         } catch (ParseException ex) {
-            cliHelpFormatter.printHelp(appVersion, cliOptions);
+            cliHelpFormatter.printHelp(appVersion, "-------------------", cliOptions, "", true);
             ApplicationUtil.RTO(BootErrorCode.RTO_CLI_PARSER_ERROR, ex.getMessage(), null);
         }
     }
@@ -301,13 +305,13 @@ abstract public class SummerBigBang extends SummerSingularity {
         return summerCLIs;
     }
 
-    protected boolean runCLI_Utils() {
+    protected boolean runCLI_Utils() throws IOException {
         log.trace("");
         boolean continueCLI = true;
         // usage
         if (cli.hasOption(BootConstant.CLI_USAGE)) {
             continueCLI = false;
-            cliHelpFormatter.printHelp(appVersion, cliOptions);
+            cliHelpFormatter.printHelp(appVersion, "-------------------", cliOptions, "", true);
         }
         // callerVersion
         if (cli.hasOption(BootConstant.CLI_VERSION)) {
@@ -346,7 +350,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         return continueCLI;
     }
 
-    protected void bigBang_AndThereWasCLI() {
+    protected void bigBang_AndThereWasCLI() throws IOException {
         log.trace("");
         if (!runCLI_Utils()) {
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, null, null);

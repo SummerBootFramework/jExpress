@@ -55,19 +55,46 @@ public class BeanUtil {
             .addFilter(BootConstant.JSONFILTER_NAME_SERVICEERROR, SimpleBeanPropertyFilter.serializeAll());
 
     protected static boolean showRefInServiceError = false;
-    public static ObjectMapper JacksonMapper = new ObjectMapper();//JsonMapper.builder().init(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-    public static ObjectMapper JacksonMapperIgnoreNull = new ObjectMapper()
-            .setSerializationInclusion(Include.NON_NULL)
-            .setSerializationInclusion(Include.NON_EMPTY);
-    public static XmlMapper XMLMapper = new XmlMapper();
+//    public static ObjectMapper JacksonMapper = new ObjectMapper();//JsonMapper.builder().init(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+//    public static ObjectMapper JacksonMapperIgnoreNull = new ObjectMapper()
+//            .setSerializationInclusion(Include.NON_NULL)
+//            .setSerializationInclusion(Include.NON_EMPTY);
+//    public static XmlMapper XMLMapper = new XmlMapper();
+
+
+    public static ObjectMapper JacksonMapper = JsonMapper.builder()
+            .addModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+            .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
+            .build();
+    //@SuppressWarnings("deprecation")
+    public static ObjectMapper JacksonMapperIgnoreNull = JsonMapper.builder()
+            .addModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+            .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
+            .serializationInclusion(Include.NON_NULL)
+            .serializationInclusion(Include.NON_EMPTY)
+            .build();
+    public static XmlMapper XMLMapper = XmlMapper.builder()
+            .addModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+            .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
+            .build();
 
     public static void update(ObjectMapper objectMapper, TimeZone timeZone, boolean isFromJsonFailOnUnknownProperties, boolean showRefInServiceError) {
         objectMapper.registerModules(new JavaTimeModule());
         objectMapper.setTimeZone(timeZone);
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFromJsonFailOnUnknownProperties);
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        objectMapper.disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
+        if (isFromJsonFailOnUnknownProperties) {
+            objectMapper.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        } else {
+            objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        }
         if (showRefInServiceError) {
             objectMapper.setFilterProvider(EmptyFilter);
         } else {

@@ -21,6 +21,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.render.Box;
 import com.openhtmltopdf.render.PageBox;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
@@ -138,7 +139,7 @@ public class PDFBox {
         ap.setCanModify(false);
         ap.setCanModifyAnnotations(true);
         ap.setCanPrint(true);
-        ap.setCanPrintDegraded(true);
+        ap.setCanPrintFaithful(true);
         ap.setReadOnly();
         return ap;
     }
@@ -164,7 +165,7 @@ public class PDFBox {
         if (info != null) {
             builder.withProducer(info.getProducer());
         }
-        builder.useFastMode();
+        //builder.useFastMode();
         if (units != null) {
             builder.useDefaultPageSize(pageWidth, pageHeight, units);
         }
@@ -249,7 +250,7 @@ public class PDFBox {
         PdfRendererBuilder builderTemp = new PdfRendererBuilder();
         useFonts(builderTemp, null);
         builderTemp.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
-        builderTemp.useFastMode();
+        //builderTemp.useFastMode();
         try (PdfBoxRenderer renderer = builderTemp.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {//need to close doc if use box
             renderer.layout();
             // The root box is <html>, the first child is <body>, then <div>.
@@ -267,7 +268,7 @@ public class PDFBox {
         if (info != null) {
             builder.withProducer(info.getProducer());
         }
-        builder.useFastMode();
+        //builder.useFastMode();
 
         //builder.useDefaultPageSize(pageWidth, pageHeight, units);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
@@ -349,14 +350,14 @@ public class PDFBox {
 
     public static List<BufferedImage> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = PDDocument.load(pdfData);) {
+        try (PDDocument document = Loader.loadPDF(pdfData);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
             return pdf2Images(document, dpi, imageType, destination);
         }
     }
 
     public static List<BufferedImage> pdf2Images(File pdfFile, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = PDDocument.load(pdfFile);) {
+        try (PDDocument document = Loader.loadPDF(pdfFile);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
             return pdf2Images(document, dpi, imageType, destination);
         }
     }

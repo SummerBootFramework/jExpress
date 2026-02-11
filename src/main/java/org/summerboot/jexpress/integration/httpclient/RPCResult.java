@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
@@ -44,11 +45,19 @@ public class RPCResult<T> {
     public static void configure(ObjectMapper objectMapper, TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive) {
         objectMapper.registerModules(new JavaTimeModule());
         objectMapper.setTimeZone(timeZone);
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, fromJsonFailOnUnknownProperties);
-        objectMapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, fromJsonCaseInsensitive);// objectMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        objectMapper.disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
+        if (fromJsonFailOnUnknownProperties) {
+            objectMapper.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        } else {
+            objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        }
+        if (fromJsonCaseInsensitive) {
+            objectMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);// objectMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
+        } else {
+            objectMapper.disable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);
+        }
     }
 
     protected final HttpRequest originRequest;
@@ -60,10 +69,19 @@ public class RPCResult<T> {
     protected final boolean remoteSuccess;
     protected T successResponse;
 
-    private static ObjectMapper DefaultObjectMapper = new ObjectMapper();
+    private static final ObjectMapper DefaultObjectMapper;// = new ObjectMapper();
 
     static {
-        configure(DefaultObjectMapper, TimeZone.getDefault(), true, false);
+        //configure(DefaultObjectMapper, TimeZone.getDefault(), true, false);
+        DefaultObjectMapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .defaultTimeZone(TimeZone.getDefault())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
+                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .disable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+                .build();
     }
 
     protected ObjectMapper httpClientConfiguredObjectMapper;

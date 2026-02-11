@@ -142,6 +142,7 @@ public class FormatterUtil {
         return StringUtils.split(url, '/');
     }
 
+    @Deprecated
     public static String parseUrlQueryParam(String url, Map<String, String> queryParam) {
         final QueryStringDecoder qd = new QueryStringDecoder(url, StandardCharsets.UTF_8, true);
         Map<String, List<String>> pms = qd.parameters();

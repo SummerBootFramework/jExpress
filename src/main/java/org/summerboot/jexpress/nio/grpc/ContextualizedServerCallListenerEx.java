@@ -255,7 +255,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         sb.append("\n\t")
                 .append("gRPC")
                 .append("_request_").append(sessionContext.hit())
-                .append("=").append(methodType).append(" ").append(sessionContext.uri())
+                .append("=").append(methodType).append(" ").append(sessionContext.uriRawDecoded())
                 //.append(", dataSize=").append(dataSize)
                 .append(", remoteAddr=").append(sessionContext.remoteIP()).append(", localAddr=").append(sessionContext.localIP()).append("\n\tresponse_").append(txId).append("=").append(sessionContext.status())
                 .append(", error=").append(errorCount)

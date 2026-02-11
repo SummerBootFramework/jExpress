@@ -1,14 +1,28 @@
 ## 📅 CHANGES
 
-### Version 2.6.5 (2025-12-18)
+### Version 2.6.6 (2026-01-29)
 
   * **[Apache Central Repository][1]**
   * **[Maven Central Repository][2]**
   * **[mvnrepository.com][3]**
 
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.5
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.5
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.5
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.6
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.6
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.6
+
+#### ✨ Features and Enhancements
+* **PDFBox lib migrated to io.github.openhtmltopdf from com.openhtmltopdf by Sam Li 黎韦辰**
+* **Enhanced security for requesting file downloading/content: SecurityUtil.escape4Filename
+* **Enhanced security: reject and response 400 when URL contains illegal char or Path Traversal
+
+#### 💥 Breaking Changes & API Refactoring
+* ** SessionContext: uri() renamed to uriRawDecoded() - the difference between SessionContext.uriRawDecoded() and ServiceRequest.etHttpRequestPath():
+    * **SessionContext.uriRawDecoded() is the raw URI from FullHttpRequest.uri()
+    * **ServiceRequest.getHttpRequestPath() is the URI from  QueryStringDecoder.path(uriRawDecoded)
+
+
+
+### Version 2.6.5 (2025-12-18)
 
 
 #### 💥 Breaking Changes & API Refactoring

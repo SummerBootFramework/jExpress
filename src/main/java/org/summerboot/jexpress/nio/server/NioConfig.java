@@ -25,6 +25,7 @@ import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.GeoIpUtil;
 
@@ -424,12 +425,12 @@ public class NioConfig extends BootConfig {
         // pre-compile regexes for whitelist and blacklist
         if (callerAddressFilterWhitelist != null) {
             for (String regex : callerAddressFilterWhitelist) {
-                GeoIpUtil.matches("", regex);
+                SecurityUtil.matches("", regex);
             }
         }
         if (callerAddressFilterBlacklist != null) {
             for (String regex : callerAddressFilterBlacklist) {
-                GeoIpUtil.matches("", regex);
+                SecurityUtil.matches("", regex);
             }
         }
 

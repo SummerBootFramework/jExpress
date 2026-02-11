@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.6.5</version>
+    <version>2.6.6</version>
     <packaging>jar</packaging>
     <name>Summer Boot jExpress ${project.version}</name>
     <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
@@ -151,13 +151,14 @@
         <maven-jar.version>3.4.2</maven-jar.version>
         <maven-resources.version>3.3.1</maven-resources.version>
         <maven-surefire.version>3.5.3</maven-surefire.version>
+        <maven-doc-version>3.12.0</maven-doc-version>
         <maven-install.version>3.1.4</maven-install.version>
         <!-- Commons -->
         <commons-lang3.version>3.20.0</commons-lang3.version>
         <commons-cli.version>1.11.0</commons-cli.version>
         <commons-io.version>2.21.0</commons-io.version>
         <commons-text.version>1.15.0</commons-text.version>
-        <!--        <owasp.encoder.version>1.2.3</owasp.encoder.version>-->
+        <owasp.encoder.version>1.4.0</owasp.encoder.version>
         <!-- Logging -->
         <log4j-api.version>2.25.3</log4j-api.version>
         <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
@@ -170,14 +171,14 @@
         <jwt.version>0.13.0</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.2.9.Final</netty.version>
-        <netty-tcnative.version>2.0.74.Final</netty-tcnative.version>
+        <netty.version>4.2.10.Final</netty.version>
+        <netty-tcnative.version>2.0.75.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.77.0</grpc.version>
+        <grpc.version>1.79.0</grpc.version>
         <guava.version>33.5.0-jre</guava.version>
-        <protobuf.version>4.33.2</protobuf.version>
+        <protobuf.version>4.33.5</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.41</swagger.core.version>
+        <swagger.core.version>2.2.42</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -189,22 +190,22 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.20.0</jackson.version>
-        <jackson.versiona>2.20</jackson.versiona>
+        <jackson.version>2.21.0</jackson.version>
+        <jackson.annotations.version>2.21</jackson.annotations.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.15</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.18</tomcat-embed-el.version>
         <hibernate-validator.version>9.1.0.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.2.0.Final</hibernate.version>
+        <hibernate.version>7.2.4.Final</hibernate.version>
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>7.1.0</jedis.version>
+        <jedis.version>7.2.1</jedis.version>
 
         <quartz.version>2.5.2</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
@@ -213,20 +214,20 @@
         <freemarker.version>2.3.34</freemarker.version>
         <!-- Barcode -->
         <zxing.version>3.5.4</zxing.version>
-        <!-- PDF - PDFBox
-        <pdfbox.version>2.0.25</pdfbox.version>-->
-        <!-- PDF - com.openhtmltopdf -->
-        <openhtml.version>1.0.10</openhtml.version>
+        <!-- PDF - PDFBox -->
+        <pdfbox.version>3.0.6</pdfbox.version>
+        <!-- PDF - io.github.openhtmltopdf -->
+        <openhtml.version>1.1.37</openhtml.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext-core.version>9.4.0</itext-core.version>
-        <itext-html2pdf.version>6.3.0</itext-html2pdf.version>
+        <itext-core.version>9.5.0</itext-core.version>
+        <itext-html2pdf.version>6.3.1</itext-html2pdf.version>
 
         <veracode.version>1.2.1</veracode.version>
 
         <!-- Testing  -->
-        <testng.version>7.11.0</testng.version>
-        <jdbc.version>9.5.0</jdbc.version>
+        <testng.version>7.12.0</testng.version>
+        <jdbc.version>9.6.0</jdbc.version>
     </properties>
 
     <dependencies>
@@ -256,13 +257,6 @@
             <artifactId>commons-text</artifactId>
             <version>${commons-text.version}</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
-        <!--        <dependency>
-            <groupId>org.owasp.encoder</groupId>
-            <artifactId>encoder</artifactId>
-            <version>${owasp.encoder.version}</version>
-        </dependency>-->
 
         <!-- Reflection -->
         <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
@@ -328,6 +322,12 @@
             <artifactId>bcprov-jdk18on</artifactId>
             <version>${bouncycastle.version}</version>
         </dependency>-->
+        <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
+        <dependency>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+            <version>${owasp.encoder.version}</version>
+        </dependency>
 
         <!-- JWT -->
         <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt Apache 2.0-->
@@ -482,7 +482,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.versiona}</version>
+            <version>${jackson.annotations.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 Apache 2.0-->
         <dependency>
@@ -649,43 +649,36 @@
             <version>${itext-html2pdf.version}</version>
             <scope>provided</scope>
         </dependency>
-        <!-- PDF - PDFBox -->
-        <!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox Apache 2.0-->
-        <!--        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>${pdfbox.version}</version>
-        </dependency>-->
 
         <!-- PDF - com.openhtmltopdf -->
-        <!-- https://mvnrepository.com/artifact/com.openhtmltopdf/openhtmltopdf-pdfbox LGPL 2.1-->
+        <!-- https://mvnrepository.com/artifact/io.github.openhtmltopdf/openhtmltopdf-pdfbox LGPL 2.1-->
         <dependency>
             <!-- ALWAYS required, usually included transitively. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-core</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Required for PDF output. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-pdfbox</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Required for image output only. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-java2d</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need right-to-left or bi-directional text support. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-rtl-support</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need logging via slf4j. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-slf4j</artifactId>
             <version>${openhtml.version}</version>
             <exclusions>
@@ -697,7 +690,7 @@
         </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need SVG support. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-svg-support</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
@@ -711,7 +704,7 @@
         <dependency>
             <!-- Optional, leave out if you do not need MathML support. -->
             <!-- Introduced in RC-13. -->
-            <groupId>com.openhtmltopdf</groupId>
+            <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-mathml-support</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
@@ -725,6 +718,20 @@
             <type>pom</type>
         </dependency>
         -->
+
+        <!-- PDF - PDFBox -->
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/xmpbox -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>xmpbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.veracode.annotation/VeracodeAnnotations -->
         <dependency>
@@ -829,13 +836,22 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire.version}</version>
                 <configuration>
-                    <argLine>-server -Xms1G -Xmx1G -XX:+UseG1GC -XX:+AlwaysPreTouch -Djava.awt.headless=true
-                        -Djna.nosys=true -Dfile.encoding=UTF-8
+                    <argLine>-Djava.awt.headless=true -Xms2G -Xmx2G -XX:+UseZGC -XX:ZUncommitDelay=300 -XX:+ZGenerational -XX:+AlwaysPreTouch -XX:+PerfDisableSharedMem
+                        -XX:+ZUncommit -XX:+DisableExplicitGC -XX:MaxDirectMemorySize=1g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=heapdump.hprof -XX:+ExitOnOutOfMemoryError
+                        -Xlog:gc*:file=gc.log:time,level,tags:filecount=5,filesize=10M -Dfile.encoding=UTF-8 -Duser.timezone=America/Toronto -Djava.security.egd=file:/dev/./urandom
+                        -Dio.netty.handler.ssl.openssl.engine.enable=true -Dio.netty.leakDetectionLevel=SIMPLE -Dio.netty.native.workdir=lib
                         -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector
-                        -Dopenssl -Dio.netty.leakDetectionLevel=advanced -Dio.netty.noUnsafe=true
-                        -Dio.netty.noKeySetOptimization=true -Dio.netty.recycler.maxCapacityPerThread=0
-                        -Dio.netty.native.workdir=temp
                     </argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven-doc-version}</version>
+                <configuration>
+                    <additionalJOptions>
+                        <additionalJOption>--allow-script-in-comments</additionalJOption>
+                    </additionalJOptions>
                 </configuration>
             </plugin>
         </plugins>
