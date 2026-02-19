@@ -205,7 +205,7 @@
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>7.2.1</jedis.version>
+        <jedis.version>7.3.0</jedis.version>
 
         <quartz.version>2.5.2</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
