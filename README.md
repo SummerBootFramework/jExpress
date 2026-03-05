@@ -1,13 +1,13 @@
-# Summer Boot Framework 
+# Summer Boot Framework — jExpress v2.6.6
 
 [View Changelog (CHANGES)](CHANGES)
 
+> **Java 21+ · Netty 4.2 · Guice 7 · Jakarta EE · Virtual Threads**
 
 Summer Boot Framework was initiated by a group of developers in 2004 to provide a high-performance, free, customizable, and lightweight Netty JAX-RS RESTful, WebSocket, and gRPC
 service with JPA and other powerful reusable non-functional features. Since 2011, it has been adopted by several Toronto law firms to customize their back-end services.
 
-Its sub-project, jExpress (a.k.a. Summer Boot Framework Core), focuses on solving the following non-functional and operational maintainability requirements, which are (probably)
-not yet available in Spring Boot.
+Its sub-project, **jExpress** (a.k.a. Summer Boot Framework Core), focuses on solving the following non-functional and operational maintainability requirements.
 
 ![Summer Boot Overview](SummerBootOverview.png)
 
@@ -19,275 +19,199 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
 
 ---
 
-## 1. Performance: RESTful Web Services (JAX-RS) with Non-blocking I/O (powered by Netty Reactor - *multiplexing* approach)
+## Maven Dependency
+
+```xml
+
+<dependency>
+    <groupId>org.summerboot</groupId>
+    <artifactId>jexpress</artifactId>
+    <version>2.6.6</version>
+</dependency>
+```
+
+SNAPSHOT repository:
+
+```xml
+
+<repositories>
+    <repository>
+        <id>maven.snapshots</id>
+        <name>Maven Snapshot Repository</name>
+        <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+```
+
+- **Apache Central:** https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.6
+- **Sonatype Central:** https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.6
+- **mvnrepository.com:** https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.6
+
+---
+
+## 1. Performance: RESTful Web Services (JAX-RS) with Non-blocking I/O (powered by Netty Reactor)
 
 ### 1.1 Intent
 
-* To solve the performance bottleneck of traditional multi-threading mode at the I/O layer.
-* Quickly develop a RESTful Web Service with JAX-RS with minimal code required.
+* Solve the performance bottleneck of traditional multi-threading at the I/O layer.
+* Quickly develop a RESTful Web Service with JAX-RS with minimal code.
 
 ### 1.2 Motivation
 
-* Application servers are always heavy, and some of them are not free, including but not limited to IBM WebSphere, Oracle Glassfish, Payara, Red Hat JBoss, or Tomcat.
-* Netty Reactor's *multiplexing* approach provides an incredible amount of power for developers who need to work down on the socket level, for example, when developing custom
-  communication protocols between clients and servers.
+* Application servers are always heavy, and some are not free (IBM WebSphere, Oracle Glassfish, Payara, Red Hat JBoss, Tomcat).
+* Netty Reactor's *multiplexing* approach provides incredible power for socket-level custom communication protocols.
+* **Virtual Thread** support (Java 21): `VirtualThread`, `CPU`, `IO`, and `Mixed` modes are configurable for HTTP server, HTTP client, gRPC server, and BackOffice.
 
 ### 1.3 Sample Code
 
-* **step1** - add the jExpress dependency to pom.xml
+**step 1 — main class:**
 
-    ```xml
-    <dependency>
-        <groupId>org.summerboot</groupId>
-        <artifactId>jexpress</artifactId>
-    </dependency>
-    ```
+```java
+import org.summerboot.jexpress.boot.SummerApplication;
 
-  or in your pom.xml file you can add the Maven 2 snapshot repository if you want to try out the SNAPSHOT versions:
-
-    ```xml
-    <repositories>
-        <repository>
-            <id>maven.snapshots</id>
-            <name>Maven Snapshot Repository</name>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-    ```
-
-* **step2** - a main class to launch the application
-
-    ```java
-    import org.summerboot.jexpress.boot.SummerApplication;
-
-    public class Main {
-    
-        public static void main(String... args) {
-            SummerApplication.run();
-        }
+public class Main {
+    public static void main(String... args) {
+        SummerApplication.run();
     }
-    ```
-
-  or if you need to initialize or run anything before the application starts:
-
-    ```java
-
-    import java.io.File;
-    import org.apache.commons.cli.Options;
-    import org.apache.logging.log4j.LogManager;
-    import org.apache.logging.log4j.Logger;
-    import org.summerboot.jexpress.boot.SummerRunner;
-    import org.summerboot.jexpress.boot.annotation.Order;
-    import org.summerboot.jexpress.boot.SummerInitializer;
-    
-    @Order(1)
-    public class MainRunner implements SummerInitializer, SummerRunner {
-    
-        private static final Logger log = LogManager.getLogger(MainRunner.class);
-    
-        @Override
-        public void initCLI(Options options) {
-            log.info("");
-        }
-    
-        @Override
-        public void initApp(File configDir) {
-            log.info(configDir);
-        }
-    
-        @Override
-        public void run(AppContext context) throws Exception {
-            log.debug("beforeStart");
-        }
-    }
-    ```
-
-  or put everything together:
-
-    ```java
-
-    import java.io.File;
-    import org.apache.commons.cli.Options;
-    import org.apache.logging.log4j.LogManager;
-    import org.apache.logging.log4j.Logger;
-    import org.summerboot.jexpress.boot.SummerApplication;
-    import org.summerboot.jexpress.boot.SummerRunner;
-    import org.summerboot.jexpress.boot.SummerInitializer;
-    
-    public class Main implements SummerInitializer, SummerRunner {
-    
-        private static final Logger log = LogManager.getLogger(Main.class);
-    
-        @Override
-        public void initCLI(Options options) {
-            log.info("");
-        }
-    
-        @Override
-        public void initApp(File configDir) {
-            log.info(configDir);
-        }
-    
-        @Override
-        public void run(AppContext context) throws Exception {
-            log.debug("beforeStart");
-        }
-        
-        public static void main(String... args) {
-            SummerApplication.run();
-        }
-    }
-    ```
-
-* **step3** - A RESTful API class with JAX-RS style, and annotate this class with `@Controller`
-
-    ```java
-    import com.google.inject.Singleton;
-    import jakarta.validation.Valid;
-    import jakarta.validation.constraints.NotEmpty;
-    import jakarta.validation.constraints.NotNull;
-    import jakarta.ws.rs.Consumes;
-    import jakarta.ws.rs.GET;
-    import jakarta.ws.rs.POST;
-    import jakarta.ws.rs.Path;
-    import jakarta.ws.rs.PathParam;
-    import jakarta.ws.rs.Produces;
-    import jakarta.ws.rs.core.MediaType;
-    import java.util.List;
-    import org.summerboot.jexpress.boot.annotation.Controller;
-    import org.summerboot.jexpress.boot.annotation.Log;
-    import org.summerboot.jexpress.nio.server.SessionContext;
-    
-    @Singleton
-    @Controller
-    @Path("/hellosummer")
-    public class MyController {
-    
-        @GET
-        @Path("/account/{name}")
-        @Produces({MediaType.TEXT_PLAIN})
-        public String hello(@NotNull @PathParam("name") String myName) { // both Nonnull or NotNull works
-            return "Hello " + myName;
-        }
-    
-        @POST
-        @Path("/account/{name}")
-        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML}) // require request header Content-Type: application/json or Content-Type: application/xml
-        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML}) // require request header Accept: application/json or Accept: application/xml
-        public ResponseDto hello_no_validation_unprotected_logging(@PathParam("name") String myName, RequestDto request) {
-            return new ResponseDto();
-        }
-    
-        /**
-         * Three features:
-         * <p> 1. auto validate JSON request by @Valid and @NotNull annotation
-         * <p> 2. protected user credit card and privacy information from being logged by @Log annotation
-         * <p> 3. mark performance POI (point of interest) by using SessionContext.poi(key), see section#8.3
-         *
-         * @param myName
-         * @param request
-         * @param context
-         * @return
-         */
-        @POST
-        @Path("/hello/{name}")
-        @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML}) // require request header Content-Type: application/json or Content-Type: application/xml
-        @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML}) // require request header Accept: application/json or Accept: application/xml
-        @Log(maskDataFields = {"creditCardNumber", "clientPrivacy", "secretList"})
-        public ResponseDto hello_auto_validation_protected_logging_markWithPOI(@NotNull @PathParam("name") String myName, @NotNull @Valid RequestDto request, final SessionContext context) {
-            context.poi("DB begin"); // about POI, see section8.3
-            // DB access and it takes time ...
-            context.poi("DB end");
-    
-            context.poi("gRPC begin"); // about POI, see section8.3
-            // gRPC access and it takes time ...
-            context.poi("gRPC end");
-    
-           context.status(HttpResponseStatus.CREATED); // override default HTTP response status
-            return new ResponseDto();
-        }
-    
-        public static class RequestDto {
-    
-            @NotNull
-            private String creditCardNumber;
-    
-            @Valid
-            @NotEmpty
-            private List<String> shoppingList;
-        }
-    
-        public static class ResponseDto {
-    
-            private String clientPrivacy;
-            private final List<String> secretList = List.of("aa", "bb");
-        }
-    }
-    ```
-
-**Below is the log of `hello_no_validation_unprotected_logging()`:**
-
-```bash
-2023-04-20T19:48:12,523 INFO org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [pool-4-thread-1]
-request_1.caller=null
-request_1=POST /hellosummer/account1/123, dataSize=71, KeepAlive=true,
-chn=[id: 0xac275188, L:/127.0.0.1:8311 - R:/127.0.0.1:22517], ctx=475223663,
-hdl=org.summerboot.jexpress.nio.server.BootHttpRequestHandler@578198d9
-responsed_1=200 OK, error=0, queuing=7ms, process=34ms, response=36ms, cont.len=68bytes
-POI: service.begin=7ms, process.begin=8ms, biz.begin=33ms, biz.end=33ms, process.end=34ms, service.end=36ms,
-1.client_req.headers=DefaultHttpHeaders[Connection: keep-alive, Accept: application/json, Content-Type: application/json, Content-Length: 71, Host: localhost:8311, User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.2)]
-2.client_req.body={
-"creditCardNumber" : "123456",
-"shoppingList" : [ "a", "b" ]
 }
-3.server_resp.headers=DefaultHttpHeaders[X-Reference: 1, X-ServerTs: 2023-04-20T19:48:12.519-04:00]
-4.server_resp.body={"clientPrivacy":"secret: mylicenseKey","clientNonPrivacy":"shared","secretList":["aa","bb"]
-}
-Memo: n/a
-````
-
-**Below is the log of with `@Log(maskDataFields = {"creditCardNumber", "clientPrivacy", "secretList"})`**
-
-```bash
-2023-04-20T19:53:47,167 INFO org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [pool-4-thread-2]
-request_2.caller=null
-request_2=POST /hellosummer/account2/123, dataSize=71, KeepAlive=true,
-chn=[id: 0x3748e908, L:/127.0.0.1:8311 - R:/127.0.0.1:22619], ctx=950626969,
-hdl=org.summerboot.jexpress.nio.server.BootHttpRequestHandler@578198d9
-responsed_2=201 Created, error=0, queuing=1ms, process=217ms, response=219ms, cont.len=68bytes
-POI: service.begin=1ms, process.begin=1ms, biz.begin=217ms, db.begin=217ms, db.end=217ms, gRPC.begin=217ms,
-gRPC.end=217ms, biz.end=217ms, process.end=217ms, service.end=219ms,
-1.client_req.headers=DefaultHttpHeaders[Connection: keep-alive, Accept: application/json, Content-Type: application/json, Content-Length: 71, Host: localhost:8311, User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.2)]
-2.client_req.body={
-"creditCardNumber" : "***",
-"shoppingList" : [ "a", "b" ]
-}
-3.server_resp.headers=DefaultHttpHeaders[X-Reference: 2, X-ServerTs: 2023-04-20T19:53:47.159-04:00]
-4.server_resp.body={"clientPrivacy":"***","clientNonPrivacy":"shared","secretList":["***"]}
-Memo: n/a
 ```
 
-### 1.4 Sample Code: Use `<AlternativeName>`
+**step 2 — lifecycle hooks (replaces deprecated `SummerRunner`):**
 
-Use the `@Controller.AlternativeName` field as below. This controller class will only be available with the `-use RoleBased` parameter to launch the application. See *section\#9*.
+Implement `AppLifecycleListener` or extend `AppLifecycleHandler` (recommended):
+
+```java
+import com.google.inject.Singleton;
+import org.summerboot.jexpress.boot.SummerApplication;
+import org.summerboot.jexpress.boot.SummerInitializer;
+import org.summerboot.jexpress.boot.annotation.Order;
+import org.summerboot.jexpress.boot.event.AppLifecycleHandler;
+import org.apache.commons.cli.Options;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+
+@Singleton
+@Order(1)
+public class MainLifecycle extends AppLifecycleHandler implements SummerInitializer {
+
+    private static final Logger log = LogManager.getLogger(MainLifecycle.class);
+
+    @Override
+    public void initCLI(Options options) {
+        log.info("CLI options initialized");
+    }
+
+    @Override
+    public void initAppBeforeIoC(File configDir) {
+        log.info("before IoC: {}", configDir);
+    }
+
+    @Override
+    public void initAppAfterIoC(File configDir, com.google.inject.Injector guiceInjector) {
+        log.info("after IoC: {}", configDir);
+    }
+
+    @Override
+    public void beforeApplicationStart(SummerApplication.AppContext context) throws Exception {
+        log.debug("application about to start");
+    }
+}
+```
+
+> **Migration note (from < 2.6.5):**  
+> `SummerRunner` has been removed. Move your `run()` logic to `AppLifecycleListener.beforeApplicationStart()`.
+
+**step 3 — a RESTful controller:**
+
+```java
+import com.google.inject.Singleton;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+
+import java.util.List;
+
+import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.boot.annotation.Log;
+import org.summerboot.jexpress.nio.server.SessionContext;
+import io.netty.handler.codec.http.HttpResponseStatus;
+
+@Singleton
+@Controller
+@Path("/hellosummer")
+public class MyController {
+
+    @GET
+    @Path("/account/{name}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String hello(@NotNull @PathParam("name") String myName) {
+        return "Hello " + myName;
+    }
+
+    @POST
+    @Path("/account/{name}")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public ResponseDto hello_no_validation(@PathParam("name") String myName, RequestDto request) {
+        return new ResponseDto();
+    }
+
+    /**
+     * Three features:
+     * 1. auto-validate JSON request via Bean Validation (enabled by default in v2.6+, no @Valid needed)
+     * 2. mask sensitive fields in log via @Log(maskDataFields)
+     * 3. mark performance POI via context.poi(key)
+     */
+    @POST
+    @Path("/hello/{name}")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Log(maskDataFields = {"creditCardNumber", "clientPrivacy", "secretList"})
+    public ResponseDto hello(@NotNull @PathParam("name") String myName,
+                             @NotNull RequestDto request,          // @Valid not required since v2.6.0
+                             final SessionContext context) {
+        context.poi("DB begin");
+        // ... DB access ...
+        context.poi("DB end");
+
+        context.status(HttpResponseStatus.CREATED);
+        return new ResponseDto();
+    }
+
+    public static class RequestDto {
+        @NotNull
+        private String creditCardNumber;
+        @NotNull
+        private List<String> shoppingList;
+    }
+
+    public static class ResponseDto {
+        private String clientPrivacy;
+        private final List<String> secretList = List.of("aa", "bb");
+    }
+}
+```
+
+> **v2.6.0+:** Bean Validation is **enabled by default** for all `@Controller` methods — no need to add `@Valid` on request body parameters.
+
+### 1.4 Use `AlternativeName`
+
+The controller is only activated when the app is launched with `-use RoleBased`:
 
 ```java
 @Controller(AlternativeName = "RoleBased")
 ```
 
-### 1.5 Sample Code: PING
-
-See *section\#5*.
-
-To make the controller enable the ping API at `/hellosummer/ping`, you do not want to log it at all, since ping will occur every 5 seconds.
-
-Extends `PingController` or `BootController` as below:
+### 1.5 PING endpoint
 
 ```java
 import org.summerboot.jexpress.nio.server.ws.rs.PingController;
@@ -295,23 +219,11 @@ import org.summerboot.jexpress.nio.server.ws.rs.PingController;
 @Controller
 @Path("/hellosummer")
 public class MyController extends PingController {
-    // ...
+    // GET /hellosummer/ping is auto-registered
 }
 ```
 
-or
-
-```java
-import org.summerboot.jexpress.nio.server.ws.rs.BootController;
-
-@Controller
-@Path("/hellosummer")
-public class MyController extends BootController {
-    // ...
-}
-```
-
-or use `@Ping` on a `GET` method. You need to add the OpenAPI doc yourself or copy it from `PingController`.
+or use `@Ping` directly:
 
 ```java
 import org.summerboot.jexpress.boot.annotation.Ping;
@@ -322,179 +234,195 @@ public class MyController {
     @GET
     @Path("/ping")
     @Ping
-    public void hello() {
+    public void ping() {
     }
 }
 ```
 
-### 1.6 Sample Code: Role Based Access
+### 1.6 Role-Based Access Control
 
-* **step1**: Extends `BootController` as below:
+**step 1 — annotate the controller:**
 
-  ```java
-  import jakarta.annotation.security.PermitAll;
-  import jakarta.annotation.security.RolesAllowed;
-  import org.summerboot.jexpress.nio.server.ws.rs.BootController;
+```java
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
+import org.summerboot.jexpress.nio.server.ws.rs.BootController;
 
-  @Controller
-  @Path("/hellosummer")
-  public class MyController extends BootController {
-      @GET
-      @Path("/hello/anonymous")
-      public void anonymous() {
-      }
+@Controller
+@Path("/hellosummer")
+public class MyController extends BootController {
 
-      @GET
-      @Path("/helloAdmin/user")
-      @PermitAll
-      public void loginedUserOnly() {
-      }
+    @GET
+    @Path("/hello/anonymous")
+    public void anonymous() {
+    }
 
-      @GET
-      @Path("/helloAdmin/admin")
-      @RolesAllowed({"AppAdmin"})
-      public void adminOnly() {
-      }
-      
-      @GET
-      @Path("/helloAdmin/employee")
-      @RolesAllowed({"Employee"})
-      public void employeeOnly() {
-      }
-  }
-  ```
+    @GET
+    @Path("/helloAdmin/user")
+    @PermitAll
+    public void loginedUserOnly() {
+    }
 
-* **step2**: define an `Authenticator` service with annotation `@Service(binding = Authenticator.class)`
+    @GET
+    @Path("/helloAdmin/admin")
+    @RolesAllowed({"AppAdmin"})
+    public void adminOnly() {
+    }
 
-  simply extends `BootAuthenticator`:
+    @GET
+    @Path("/helloAdmin/employee")
+    @RolesAllowed({"Employee"})
+    public void employeeOnly() {
+    }
+}
+```
 
-  ```java
-  import com.google.inject.Singleton;
-  import io.netty.handler.codec.http.HttpHeaders;
-  import javax.naming.NamingException;
-  import org.summerboot.jexpress.boot.annotation.Service;
-  import org.summerboot.jexpress.nio.server.RequestProcessor;
-  import org.summerboot.jexpress.nio.server.SessionContext;
-  import org.summerboot.jexpress.security.auth.Authenticator;
-  import org.summerboot.jexpress.security.auth.AuthenticatorListener;
-  import org.summerboot.jexpress.security.auth.BootAuthenticator;
-  import org.summerboot.jexpress.security.auth.Caller;
-  import org.summerboot.jexpress.security.auth.User;
+**step 2 — implement an Authenticator:**
 
-  @Singleton
-  @Service(binding = Authenticator.class)
-  public class MyAuthenticator extends BootAuthenticator<Long> {
+```java
+import com.google.inject.Singleton;
+import io.netty.handler.codec.http.HttpHeaders;
 
-      @Override
-      protected Caller authenticate(String usename, String password, Long metaData, AuthenticatorListener listener, SessionContext context) throws NamingException {
-          // verify username and password against LDAP
-          if ("wrongpwd".equals(password)) {
-              return null;
-          }
-          // build a caller to return
-          long tenantId = 1;
-          String tenantName = "jExpress Org";
-          long userId = 456;
-          User user = new User(tenantId, tenantName, userId, usename);
-          user.addGroup("AdminGroup");
-          user.addGroup("EmployeeGroup");
-          return user;
-      }
+import javax.naming.NamingException;
 
-      @Override
-      public boolean customizedAuthorizationCheck(RequestProcessor processor, HttpHeaders httpRequestHeaders, String httpRequestPath, SessionContext context) throws Exception {
-          return true;
-      }
-  }
-  ```
+import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.nio.server.RequestProcessor;
+import org.summerboot.jexpress.nio.server.SessionContext;
+import org.summerboot.jexpress.security.auth.*;
 
-* **step3**: define Role-Group mapping in **cfg\_auth.properties**
+@Singleton
+@Service(binding = Authenticator.class)
+public class MyAuthenticator extends BootAuthenticator<Long> {
 
-  Format of **role-group mapping**: `roles.<role name>.groups`=csv list of groups
-  Format of **role-user mapping**: `roles.<role name>.users`=csv list of users
+    @Override
+    protected Caller authenticate(String username, String password, Long metaData,
+                                  AuthenticatorListener listener, SessionContext context) throws NamingException {
+        if ("wrongpwd".equals(password)) return null;
+        long tenantId = 1;
+        String tenantName = "jExpress Org";
+        long userId = 456;
+        User user = new User(tenantId, tenantName, userId, username);
+        user.addGroup("AdminGroup");
+        user.addGroup("EmployeeGroup");
+        return user;
+    }
 
-  ```properties
-  roles.AppAdmin.groups=AdminGroup
-  #roles.AppAdmin.users=admin1, admin2
-  roles.Employee.groups=EmployeeGroup
-  #roles.Employee.users=employee1, employee2
-  ```
+    @Override
+    public boolean customizedAuthorizationCheck(RequestProcessor processor,
+                                                HttpHeaders httpRequestHeaders,
+                                                String httpRequestPath,
+                                                SessionContext context) throws Exception {
+        return true;
+    }
+}
+```
 
------
+> **v2.6+:** `BootAuthenticator` also implements `ServerInterceptor` for unified JWT auth across both HTTP and gRPC.
 
-## 2\. Auto Generated Configuration Files
+**step 3 — cfg_auth.properties:**
+
+```properties
+roles.AppAdmin.groups=AdminGroup
+#roles.AppAdmin.users=admin1, admin2
+roles.Employee.groups=EmployeeGroup
+#roles.Employee.users=employee1, employee2
+```
+
+### 1.7 Request Log Sample (v2.6.6)
+
+```
+[411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1]
+[411043-2 /127.0.0.1:8311] [200 OK, error=0, queuing=1ms, process=5798ms, response=5801ms]
+HTTP/1.1 GET /hellosummer/services/appname/v1/aaa/111
+POI.t0=2025-08-17T11:50:52.627-04:00 service.begin=0ms, process.begin=1ms, biz.begin=6ms, biz.end=5795ms, process.end=5798ms, service.end=5801ms,
+1.client_req.headers=...
+2.client_req.body(0 bytes)=null
+3.server_resp.headers=...
+4.server_resp.body(158 bytes)={"name":"...","value":"..."}
+```
+
+> **v2.6.6 API change:** `SessionContext.uri()` renamed to `SessionContext.uriRawDecoded()`.  
+> `SessionContext.uriRawDecoded()` = raw URI from `FullHttpRequest.uri()`  
+> `ServiceRequest.getHttpRequestPath()` = decoded path from `QueryStringDecoder.path()`
+
+---
+
+## 2. Auto-Generated Configuration Files
 
 ### 2.1 Intent
 
 * Keep configuration files clean and in sync with your code.
 
-### 2.2 Motivation
+### 2.2 Auto-generated configs — all applications
 
-* With the development of more functions, like document maintenance, the configuration file may be inconsistent with the code.
-* You need a way to dump a clean configurations template from code.
+| File                  | Purpose                                                      |
+|-----------------------|--------------------------------------------------------------|
+| `log4j2.xml`          | Async logging via Log4j2 + Disruptor                         |
+| `cfg_smtp.properties` | SMTP / email alert settings                                  |
+| `cfg_auth.properties` | JWT signing, role/group mapping                              |
+| `etc/boot.ini`        | Master security algorithms, keystore type, thread pool modes |
 
-### 2.3 Auto generated configuration files - for all applications
+> `log4j2.xml` requires JVM arg: `-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector`
 
-* **log4j2.xml**
+### 2.3 Auto-generated configs — type-based
 
-  > 1. Requires JVM arg: `-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector`
-  > 2. Required total disk space: around 200MB
-  > 3. Archive logs: by DAY and split them by MINUTE
-  > 4. Default log level is tuned for development
+| File                         | Condition                                                                              |
+|------------------------------|----------------------------------------------------------------------------------------|
+| `cfg_nio.properties`         | Application contains `@Controller`                                                     |
+| `cfg_grpc.properties`        | Application contains a gRPC service                                                    |
+| Any `@ImportResource` config | Annotated with `@ImportResource`, extends `BootConfig`, or implements `JExpressConfig` |
 
-* **cfg\_smtp.properties**
+### 2.4 etc/boot.ini — new in v2.6.0
 
-  > for sending email alerts
+Key new sections in `etc/boot.ini`:
 
-* **cfg\_auth.properties**
+```properties
+#######################
+# 3. Default Settings #
+#######################
+#default.ConfigChangeMonitor.Throttle.Milliseconds=100
+#####################################################
+# 5.1 Security Settings: keystore type and provider #
+#####################################################
+## PKCS12 (default), PKCS11, JCEKS, JKS, BCFKS
+#keystore.type=PKCS12
+#keystore.provider=
+#########################################
+# 5.2 Security Settings: message digest #
+#########################################
+## SHA3-256 (default), SHA3-384, SHA3-512, SHA-256, SHA-384, SHA-512
+#algorithm.Messagedigest=SHA3-256
+###################################################################
+# 5.3 Security Settings: asymmetric key                          #
+###################################################################
+#algorithm.Asymmetric=RSA
+#transformation.Asymmetric=RSA/None/OAEPWithSHA-256AndMGF1Padding
+######################################################
+# 5.4 Security Settings: symmetric key               #
+######################################################
+#algorithm.Symmetric=AES
+#length.SymmetricKey.Bits=256
+#transformation.Symmetric=AES/GCM/NoPadding
+#length.SymmetricKey.AuthenticationTag.Bits=128
+#length.symmetricKey.InitializationVector.Bytes=12
+#####################################################
+# 5.5 Security Settings: secret key (with password) #
+#####################################################
+#algorithm.SecretKey=PBKDF2WithHmacSHA256
+#length.algorithm.SecretKey.Bits=256
+#length.algorithm.SecretKey.Salt.Bits=16
+#count.algorithm.SecretKey.iteration=310000
+```
 
-  > Authentication: Sign JWT and parse JWT
+---
 
-  > Authorization: Role and User Group mapping
-
-### 2.4 Auto generated configuration files - application type based
-
-* **cfg\_nio.properties**
-
-  > generated when application contains `@Controller` (running as RESTFul API service)
-
-* **cfg\_grpc.properties**
-
-  > generated when application contains gRPC service (running as gRPC service)
-
-* **All other application specific configurations, which:**
-
-  > 1. annotated with `@ImportResource`
-
-  > 2. extends `org.summerboot.jexpress.boot.config.BootConfig` or implements `org.summerboot.jexpress.boot.config.JExpressConfig`
-
-  > 3. implemented as a singleton via Eager Initialization
-
-  > ```
-    > example\#1: `public static final AppConfig cfg = BootConfig.instance(AppConfig.class);`
-    > ```
-
-  > ```
-    > example\#2: `public static final AppConfig cfg = new AppConfig();`
-    > ```
-
------
-
-## 3\. Hot Configuration
+## 3. Hot Configuration
 
 ### 3.1 Intent
 
-* Need to guarantee service continuity and protect it from configuration changes (3rd party tokens, license keys, etc.).
+* Guarantee service continuity when configuration changes (3rd-party tokens, license keys, etc.).
 
-### 3.2 Motivation
-
-* Your Wall Street investors definitely do not want to stop and restart the "cash cow" just because you need to update the config file with a renewed 3rd party license key.
-
-### 3.3 Sample Code
-
-Once the configuration files have changed, jExpress will automatically load it up and refresh the singleton instance.
-
-**MyConfig.java**
+### 3.2 Sample Code
 
 ```java
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -508,10 +436,6 @@ import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 
-/**
- *
- * @author Changski Tie Zheng Zhang
- */
 @ImportResource("cfg_app.properties")
 public class MyConfig extends BootConfig {
 
@@ -539,7 +463,7 @@ public class MyConfig extends BootConfig {
 }
 ```
 
-During application start, it will generate `cfg_app.properties` if it doesn't exist, although the following code will generate the `cfg_app.properties` template at any time:
+Generate the template at any time:
 
 ```java
 public static void main(String[] args) {
@@ -548,130 +472,84 @@ public static void main(String[] args) {
 }
 ```
 
-**cfg\_app.properties:**
+Generated `cfg_app.properties`:
 
-```bash
+```properties
 #########################
 # My Header description #
 #########################
-my.key.name=DEC(plain password)
+my.licenseKey=DEC(plain password)
 ```
 
------
+---
 
-## 4\. Protected Configuration
+## 4. Protected Configuration
 
 ### 4.1 Intent
 
-* Sensitive Data - passwords, license keys, signing key (HS256, HS384, HS512 only), and 3rd party tokens (AWS integration token, etc.) cannot be plain text.
-* Protect sensitive data in the config files - just like the "one ring to rule them all" in The Lord of the Rings.
-  * **One-Way Protection:** The application admin can only write to the config file with plain text but cannot read encrypted sensitive data from the config file.
-  * **Two-Level Protection:** The application root password is managed/protected by the root admin. It controls sensitive data encryption/decryption, and it should not be managed
-      by the application admin.
+* Sensitive data (passwords, license keys, JWT signing keys, 3rd-party tokens) must not be plain text.
+* **Two-Level Protection:** root admin controls the encryption key; app admin manages the config values.
 
-### 4.2 Motivation
+### 4.2 How It Works
 
-* You want to protect sensitive data in the config files, and you encrypt them with a key.
+| Level   | Role              | Capability                                             |
+|---------|-------------------|--------------------------------------------------------|
+| Level 1 | Application Admin | Writes plain `DEC(...)` values; app auto-encrypts them |
+| Level 2 | Root (OS) Admin   | Holds the root password file used to encrypt/decrypt   |
 
-* Nobody hangs the key on the door it just locked, so you do need to protect the key, which just locks (encrypts) the sensitive data in your safe box, and you do NOT want to keep
-  it hardcoded in your source code.
+Launch the app with:
 
-* You really do NOT want to enter an endless loop by keep creating a new key to protect the original key, which protects the sensitive data.
-
-* You only need one extra root password to encrypt/decrypt the sensitive data, and this root password is not with your application admin.
-
-* **Two-Level Access**: who controls what
-
-  * **Level 1: Application Admin** - can update application sensitive data as plain text **without knowing the root password nor how to encrypt/decrypt**. The plain text
-      sensitive data will be automatically encrypted by the running application, or manually encrypted by the app admin without knowing the root password.
-  * **Level 2: Root (Linux/Windows) Admin** - controls the root password in a protected file, which is used to encrypt/decrypt the sensitive data stored inside the application
-      config file, and is only accessible by the root admin but not the application admin or other users.
-
-  Your application is launched as a system service controlled by the root admin and runs with:
-
-  `"-authfile <path to root password file>"`
-
-  ```bash
-  java -jar jExpressApp.jar -authfile /etc/security/my-service-name.root_pwd
-  ```
-
-  Your root password is stored in file `/etc/security/my-service.root_pwd`, and has the following format:
-
-  ```bash
-  APP_ROOT_PASSWORD=<base64 encoded my app root password>
-  ```
-
-### 4.3 Implementation
-
-* **Auto Encrypt mode**:
-
-  * **step1**: Wrap the plain text password with `DEC()` as shown below. Here, `DEC()` is a marker that tells the app what to encrypt, and the remaining values are untouched:
-      ```properties
-      datasource.password=DEC(plain password)
-      ```
-  * **step2**: Save this config file. The application will automatically pick up the change in 5 seconds and then encrypt it using the app config password stored in
-      `<path to a file which contains config password>`. Then, it will replace it with `ECN(encrypted value)` in the same file:
-      ```properties
-      datasource.password=ENC(encrypted password)
-      ```
-
-* **Manual Batch Encrypt mode**:
-  The commands below encrypt all values in the format of `DEC(plain text)` in the specified configuration environment:
-
-  ```bash
-  java -jar my-service.jar -cfgdir <path to config folder> -encrypt -authfile <path to root pwd file>
-  ```
-
-  In case you happen to know the root password (you wear two hats, the app admin and root admin is the same person), you can do the same by providing the root password directly:
-
-  ```bash
-  java -jar my-service.jar -cfgdir <path to config folder> -encrypt -auth <my app root password>
-  ```
-
-* **Manual Batch Decrypt mode**:
-  You cannot decrypt without knowing the root password. That is to say, you cannot decrypt with the root password file.
-
-  The command below decrypts all values in the format of `ENC(encrypted text)` in the specified configuration environment:
-
-  ```bash
-  java -jar my-service.jar -cfgdir <path to config folder> -decrypt -auth <my app root password>
-  ```
-
-> **Note:**
->
-> * The comments in the configuration file will not be auto/batch encrypted/decrypted.
-> * `changeit` is the default `<app root password>` when `-authfile` or `-auth` option is not specified.
-
------
-
-## 5\. Ping with Load Balancer
-
-### 5.1 Intent
-
-* Work with a load balancer.
-
-### 5.2 Motivation
-
-* Need to tell the load balancer my service status but do not affect my application log.
-
-### 5.3 Sample Code
-
-Add the following to enable ping on `https://host:port/hellosummer/ping`:
-
-```java
-@Ping
-@GET
+```bash
+java -jar jExpressApp.jar -authfile /etc/security/my-service.root_pwd
 ```
 
-Full version:
+Root password file format:
+
+```bash
+APP_ROOT_PASSWORD=<base64 encoded root password>
+```
+
+> **v2.6.0+:** The default master password is no longer hardcoded. It is loaded from `etc/master.password` (auto-created if absent) when `-authfile` is not provided.
+
+### 4.3 Operations
+
+**Auto-encrypt:** Wrap plain text with `DEC()` and save. The app encrypts it within 5 seconds:
+
+```properties
+datasource.password=DEC(plain password)
+# becomes →
+datasource.password=ENC(encrypted password)
+```
+
+**Manual batch encrypt:**
+
+```bash
+java -jar my-service.jar -cfgdir <config folder> -encrypt -authfile <root pwd file>
+java -jar my-service.jar -cfgdir <config folder> -encrypt -auth <root password>
+```
+
+**Manual batch decrypt (root password required):**
+
+```bash
+java -jar my-service.jar -cfgdir <config folder> -decrypt -auth <root password>
+```
+
+> Default `<app root password>` is `changeit` when neither `-authfile` nor `-auth` is provided.
+
+---
+
+## 5. Ping with Load Balancer
+
+### 5.1 Sample Code
+
+Enable `GET /hellosummer/ping` without polluting your application log:
 
 ```java
+import org.summerboot.jexpress.boot.annotation.Ping;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.nio.server.ws.rs.BootController;
-import org.summerboot.jexpress.boot.annotation.Ping;
 
 @Controller
 @Path("/hellosummer")
@@ -680,81 +558,74 @@ public class WebController extends BootController {
     @GET
     @Ping
     @Path("/ping")
-    public void ping() { // or whatever method name you like
+    public void ping() {
     }
 
     @GET
     @Path("/hello/{name}")
-    public String hello(@PathParam("sce") String name) {
+    public String hello(@PathParam("name") String name) {
         return "Hello " + name;
     }
 }
 ```
 
------
+### 5.2 cfg_nio.properties — ping-related new items (v2.6.0)
 
-## 6\. Ping with Health Check/Auto-Shutdown
+```properties
+ping.sync.HealthStatus.requiredHealthChecks=
+ping.sync.PauseStatus=
+ping.sync.showRootCause=
+```
+
+---
+
+## 6. Ping with Health Check / Auto-Shutdown
 
 ### 6.1 Intent
 
-* Tell the load balancer I'm not in a good state.
+* Automatically respond with an error to the load balancer when a dependency (DB, 3rd-party service) is down.
 
-### 6.2 Motivation
-
-* When one of your application/service's dependencies (database, 3rd party service, etc.) is down, the framework will automatically respond with an error to the load balancer so
-  that no upcoming requests will route to this node.
-
-### 6.3 Sample Code
-
-Add the following:
+### 6.2 Sample Code
 
 ```java
-@Service(binding = HealthInspector.class)
-Class MyHealthInspector extends BootHealthInspectorImpl
-```
-
-Full version:
-
-```java
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.annotation.Inspector;
 import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.boot.instrumentation.BootHealthInspectorImpl;
 import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
 import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceError;
 
+import java.util.List;
+
+@Inspector(name = "myDB")
 @Service(binding = HealthInspector.class)
-public class MyHealthInspector extends BootHealthInspectorImpl {
+public class MyHealthInspector implements HealthInspector<Void> {
 
     @Override
-    protected void healthCheck(@Nonnull ServiceError error, @Nullable Logger callerLog) {
-        if (error detected){
-            error.addError(new Err(123, "error tag", "error meessage", null));
-        }
+    public List<Err> ping(Void... param) {
+        List<Err> errors = new java.util.ArrayList<>();
+        // check DB connectivity, add Err on failure
+        // errors.add(new Err(123, "DB_DOWN", "Database is unreachable", null));
+        return errors;
     }
 }
 ```
 
------
+> **Daemon mode:** Annotate a `@Controller` class or method with `@Daemon` to keep it accessible even when the service is paused or health-check fails:
+>
+> ```java
+> @Daemon(requiredHealthChecks = {"myDB"})
+> @GET @Path("/admin/status")
+> public void adminStatus() {}
+> ```
 
-## 7\. Auto-Alert
+---
+
+## 7. Auto-Alert (SMTP)
 
 ### 7.1 Intent
 
-* Get noticed before someone knocks on your door.
+* Get notified before someone knocks on your door. Debounce repeated alerts.
 
-### 7.2 Motivation
-
-* The support team wants to get noticed when some expected issues happen, like a database being down or a network issue.
-* The development team wants to get noticed when some unexpected issues happen, like a defect or bug causing a runtime exception.
-* But you don't want to be bombed by emails.
-
-### 7.3 Sample Code
-
-There is a pre-defined config: `cfg_smtp.properties`.
+### 7.2 cfg_smtp.properties
 
 ```properties
 ####################
@@ -762,241 +633,440 @@ There is a pre-defined config: `cfg_smtp.properties`.
 ####################
 mail.smtp.host=smtpserver
 mail.smtp.user=abc_service@email.addr
-mail.smtp.userName=ABC Service
+mail.smtp.user.displayname=ABC Service
+mail.smtp.user.password=DEC(changeit)
 ###########################################
-# 2. Alert Recipients                     #
-# Format: CSV format                      #
-# Example: johndoe@xx.com, janedoe@xx.com #
+# 2. Alert Recipients (CSV format)        #
 ###########################################
 #email.to.AppSupport=
-## use AppSupport if not provided
 #email.to.Development=
-## use AppSupport if not provided
 #email.to.ReportViewer=
-## Alert message with the same title will not be sent out within this minutes
+## Same-title alerts suppressed within this many minutes
 debouncing.emailalert_minute=30
 ```
 
-add the following:
+No code changes required — just update `cfg_smtp.properties`.
+
+---
+
+## 8. Log After Response Sent
+
+### 8.1 Features
+
+* Request and response logged together in a single log entry.
+* Client receives response without waiting for logging.
+* Log file auto-rotated and named with the server hostname.
+
+### 8.2 POI (Point of Interest)
 
 ```java
-nothing,
-the only
-thing you
-need to do
-is update
-the cfg_smtp.properties
+context.poi("DB begin");
+// ... DB access ...
+context.
+
+poi("DB end");
 ```
 
------
+Sample POI output:
 
-## 8\. Log after response sent
-
-### 8.1 Intent
-
-* Show the request log and response log from the same client together.
-* The client receives a response without waiting for the application to finish the logging/reporting as before.
-* Save disk space for log files.
-* Easy to identify where the log file is generated and by which server.
-
-### 8.2 Motivation
-
-* Request\#1 is logged, and its response is logged separately after hundreds of lines.
-* You don't want to keep the client waiting just because your application is doing logging.
-* The log file will be zipped automatically when the file size exceeds the predefined limit.
-* The log file name will be automatically filled with the server name when created.
-
-### 8.3 And there are 2 type of separated logs:
-
-1. **Request log** - It contains client request-related information. A single log entry contains the following information:
-
-   1. Security/Business required information: On which server life/session/location, who did what, when, how, and from where.
-   2. Performance tuning required information: POI (point of interest) of the key events.
-   3. App support required information: The full conversation between the client and the service.
-   4. App Debug required information: The full conversation between the service and a 3rd party.
-
-   Log sample:
-
-   ```bash
-   [411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1] [411043-2 /127.0.0.1:8311] [200 OK, error=0, queuing=1ms, process=5798ms, response=5801ms] HTTP/1.1 GET /hellosummer/services/appname/v1/aaa/111;m4=88;m5=99;m1=123 ; m2=456 /bbb/a2;    m3=789  , /127.0.0.1:21513=null
-	POI.t0=2025-08-17T11:50:52.627-04:00 service.begin=0ms, process.begin=1ms, biz.begin=6ms, biz.end=5795ms, process.end=5798ms, service.end=5801ms, 
-	1.client_req.headers=DefaultHttpHeaders[Connection: keep-alive, Accept: application/json, Authorization1: Bearer eyJhbGciOiJSUzUxMiJ9.eyJqdGkiOiIxLTQ1NkAzOTUwMzktMiIsInN1YiI6InR6aGFuZyIsImF1ZCI6WyJBZG1pbkdyb3VwIiwiRW1wbG95ZWVHcm91cCJdLCJ0ZW5hbnROYW1lIjoiakV4cHJlc3MgT3JnIiwiZXhwIjoxNzU1MjgwNzg0LCJpYXQiOjE3NTUxOTQzODR9.m9pkWGSWvCXj1sGESP4iw6l1L8Hqp37k4WEP-N9jhbP9NTsIOeKygsVo5DDDGVZQg7BbYpTW_iwIUI2ChNZgKvvzuWUEkBlfMSMKL4IbzlJyFm6qnXS2zzsE4vOSp44zJE1H4Ab7g3H3Qdwr_3GOy95gSmDZjEW0lKiXt4OeGfJ0iIIbuMgF1bvAjdHqC6SwCbfVjCjMDuhUVBIKF1DIFKw9bxZn7knePXSZFxQng3s2aQmFunS2R7dkOMZmZGzLhmE6N1Q30gUpGgPxv4l9owrMxmfE2k-mpmGMnPuBf4SBETgQbDnB9gels-kC-lmGGVVL6fC_eV6-G-Sp9dL4I5lsw2iCWJD1E4hh7vhvFwAOnNTzLCN6dtlJ9M04cn1eym6lK1iLxFGO8O6WxUP6oI-9OVnEQF7spKig5ajqYlatVUu9tHg9Araxeed077MIe2IJTd8PDDtdx2AEZn6iS-QOdT-31ibyHaYZ-jbXHp1qgw7eCY3fp5RpN-UNBWnSkAJtN1RLt0jtKR1EuF1bnVls1X1JSlY80rsVYbkdzGlZr5PSZTItk0FHkUyFD8waSsWLI8DrLbvt21zaoRaseX1F4bt9QyFsL2Vp2-uCBVcR-vfA0ng6cVgpwAkDCfEB-mL3JmVbBza_1zZDMYYpbBN0W_wGCa42torStj1-EuI, Host: localhost:8311, User-Agent: Apache-HttpClient/4.5.13 (Java/21.0.5), content-length: 0]
-	2.client_req.body(0 bytes)=null
-	3.server_resp.headers=DefaultHttpHeaders[X-Reference: 411043-2, X-ServerTs: 2025-08-17T11:50:58.426-04:00, content-type: application/json;charset=UTF-8, content-length: 158, connection: keep-alive]
-	4.server_resp.body(158 bytes)={"name":"testMatrixParamWithRegex","value":"pa1=111, pa2=a2, m1=123, m2=456, m3=789, m4=88, txId=411043-2","receivedTime":"2025-08-17T11:50:58.4226452-04:00"}
-   ```
-
-   ```bash
-   POI: service.begin=4ms, auth.begin=4ms, process.begin=4ms, biz.begin=4ms, biz.end=18ms, process.end=18ms, service.end=18ms
-
-   This shows service begins to process the client request after 4ms from I/O layer process, and business process took 14ms (18 - 4) to finish, and I/O layer took 0ms (18 - 18) to send the response to client.
-   ```
-
-2. **Application Status/Event log** - It contains application status-related information (version, start event, configuration change event, TPS, etc.). Below is a sample:
-
-   ```bash
-   2021-09-24 14:11:06,181 INFO org.summerboot.jexpress.nio.server.NioServer.bind() [main] starting... Epoll=false,
-   KQueue=false, multiplexer=AVAILABLE
-   2021-09-24 14:11:06,633 INFO org.summerboot.jexpress.nio.server.NioServer.bind() [main] [OPENSSL] [TLSv1.2, TLSv1.3] (
-   30s): [TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256, TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256]
-   2021-09-24 14:11:07,987 INFO org.summerboot.jexpress.nio.server.NioServer.bind() [main] Server
-   jExpress.v2.1.4@server1 (Client Auth: NONE) is listening on JDK [https://0.0.0.0:8989/service](https://0.0.0.0:8989/service)
-   2021-09-24 14:11:07,988 INFO org.summerboot.jexpress.boot.SummerApplication.start() [main] CourtFiling
-   v1.0.0RC1u1_jExpress.v2.1.4@server1_UTF-8 pid#29768@server1 application launched (success), kill -9 or Ctrl+C to
-   shutdown
-   2021-09-24 14:12:37,010 DEBUG org.summerboot.jexpress.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=20,
-   tps=20, activeChannel=2, totalChannel=10, totalHit=24 (ping0 + biz24), task=24, completed=24, queue=0, active=0,
-   pool=9,
-   core=9, max=9, largest=9
-   2021-09-24 14:12:38,001 DEBUG org.summerboot.jexpress.nio.server.NioServer.lambda$bind$3() [pool-5-thread-1] hps=4,
-   tps=4, activeChannel=2, totalChannel=10, totalHit=24 (ping0 + biz24), task=24, completed=24, queue=0, active=0,
-   pool=9,
-   core=9, max=9, largest=9
-   ```
-
------
-
-## 9\. CLI - A/B/Mock mode
-
-### 9.1 Intent
-
-* Run in mock mode or switch to a different implementation.
-
-### 9.2 Motivation
-
-* You need to run your application with mocked implementations.
-* You need to tell the application which component(s) should use the mocked implementation.
-
-### 9.3 Sample Code
-
-Use the `@Service` annotation with the `AlternativeName` attribute.
-
-```java
-@Service(AlternativeName = "myImpl")
+```
+POI: service.begin=4ms, auth.begin=4ms, process.begin=4ms, biz.begin=4ms,
+     biz.end=18ms, process.end=18ms, service.end=18ms
 ```
 
-Full version:
+### 8.3 Two Log Types
+
+1. **Request log** — Security, performance, full client↔server conversation.
+2. **App status/event log** — Version, start/stop events, config-change events, TPS counters.
+
+---
+
+## 9. Application Lifecycle — `AppLifecycleListener`
+
+### 9.1 Interface (v2.6.5+)
+
+`SummerRunner` and `IdleEventMonitor.IdleEventListener` have been consolidated into:
+
+```java
+public interface AppLifecycleListener extends IdleEventMonitor.IdleEventListener {
+    void beforeApplicationStart(SummerApplication.AppContext context) throws Exception;
+
+    void onApplicationStart(SummerApplication.AppContext context, String appVersion, String fullConfigInfo) throws Exception;
+
+    void onApplicationStop(SummerApplication.AppContext context, String appVersion);
+
+    void onApplicationStatusUpdated(SummerApplication.AppContext context, boolean healthOk, boolean paused,
+                                    boolean serviceStatusChanged, String reason) throws Exception;
+
+    void onHealthInspectionFailed(SummerApplication.AppContext context, boolean healthOk, boolean paused,
+                                  long retryIndex, int nextInspectionIntervalSeconds) throws Exception;
+
+    void onConfigChangeBefore(File configFile, JExpressConfig cfg);
+
+    void onConfigChangedAfter(File configFile, JExpressConfig cfg, Throwable ex);
+
+    // from IdleEventMonitor.IdleEventListener:
+    void onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
+}
+```
+
+Extend the default adapter `AppLifecycleHandler` and override only what you need.
+
+### 9.2 Idle Event Monitoring (v2.6.5+)
+
+Configure idle thresholds in configuration files:
+
+```properties
+# cfg_nio.properties
+nio.server.idle.threshold.second=60
+# cfg_grpc.properties
+gRpc.server.idle.threshold.second=60
+```
+
+---
+
+## 10. CLI — A/B/Mock Mode
+
+### 10.1 Sample Code
 
 ```java
 
-@Service //this is the default
-public class MyServiceImpl implements MyServcie {
-    // ...
+@Service                           // default implementation
+public class MyServiceImpl implements MyService { ...
 }
 
 @Service(AlternativeName = "impl1")
-public class MyServiceImpl_1 implements MyServcie {
-    // ...
+public class MyServiceImpl_1 implements MyService { ...
 }
 
 @Service(AlternativeName = "impl2")
-public class MyServiceImpl_2 implements MyServcie {
-    // ...
+public class MyServiceImpl_2 implements MyService { ...
 }
 ```
 
-run the following command:
-
 ```bash
 java -jar my-service.jar -?
-```
+# shows: -use <items>  launch application in mock mode, valid values <impl1, impl2>
 
-you will see the following:
-
-> \-use \<items\> launch application in mock mode, valid values \<impl1, impl2\>
-
-The command below will run your application with the `MyServiceImpl_1` implementation:
-
-```bash
 java -jar my-service.jar -use impl1
 ```
 
------
+---
 
-## 10\. CLI - list and check duplicated error code
+## 11. CLI — List and Check Duplicate Error Codes
 
-### 10.1 Intent
-
-* Check your error codes defined in your application.
-
-### 10.2 Motivation
-
-* With the development of more functions, you might have duplicated error codes.
-* You may need to have an error code list.
-
-### 10.3 Sample Code
-
-Add the following if you define all your error codes in the `AppErrorCode` class:
-
-```java
-@Unique(name = "ErrorCode", type = int.class)
-```
-
-Full version:
+### 11.1 Sample Code
 
 ```java
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.annotation.Unique;
+import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
 
 @Unique(name = "ErrorCode", type = int.class)
 public interface AppErrorCode extends BootErrorCode {
-
     int APP_UNEXPECTED_FAILURE = 1001;
     int BAD_REQUEST = 1002;
     int AUTH_CUSTOMER_NOT_FOUND = 1003;
     int DB_SP_ERROR = 1004;
+
+    // suppress false-positive duplicate alert:
+    @UniqueIgnore
+    int ALIAS_BAD_REQUEST = BAD_REQUEST;
 }
-```
-
-Add the following if you define all your String codes in the `AppPOI` class:
-
-```java
-@Unique(name = "POI", type = String.class)
-```
-
-Full version:
-
-```java
-import org.summerboot.jexpress.boot.BootPOI;
-import org.summerboot.jexpress.boot.annotation.Unique;
 
 @Unique(name = "POI", type = String.class)
 public interface AppPOI extends BootPOI {
-
     String FILE_BEGIN = "file.begin";
     String FILE_END = "file.end";
 }
 ```
-
-run the following command:
-
-```bash
-java -jar my-service.jar -?
-```
-
-you will see the following:
-
-> \-unique \<item\> list unique: \[ErrorCode, POI\]
-
-The command below will show you a list of error codes, or an error message indicates the duplicated ones:
 
 ```bash
 java -jar my-service.jar -unique ErrorCode
 java -jar my-service.jar -unique POI
 ```
 
------
+---
 
-## 11\. Plugin - run with external jar files in plugin folder
+## 12. Scheduled Tasks — `@Scheduled`
 
-### 11.1 Intent
+```java
+import org.summerboot.jexpress.boot.annotation.Scheduled;
 
-* Once the application is on production, you need a way to add new features or override existing logic without changing the existing code.
+public class MyJob {
 
-### 11.2 Motivation
+    @Scheduled(cron = "0 15 10 ? * 6L 2024-2030")  // every last Friday at 10:15am
+    public void monthlyReport() { ...}
 
-* Make the application focus on the interface, and its implements can be developed as external jar files.
-* Make the visitor pattern available at the application level.
-* You can even put all your logic in one or multiple external jar files developed by different teams as plugins.
+    @Scheduled(hour = 2, minute = 0)               // daily at 2:00am
+    public void dailyMaintenance() { ...}
 
+    @Scheduled(fixedRateMs = 10_000, initialDelayMs = 5_000)  // every 10s
+    public void polling() { ...}
 
+    @Scheduled(fixedDelayMs = 10_000)              // 10s after completion
+    public void delayedPolling() { ...}
+}
+```
+
+Dynamic cron from a static field:
+
+```java
+private static String MY_CRON = "0 0 * * * ?";
+
+@Scheduled(cronField = "MY_CRON")
+public void dynamicJob() { ...}
+```
+
+---
+
+## 13. gRPC Service
+
+### 13.1 Server-side
+
+Annotate your gRPC service implementation with `@GrpcService`:
+
+```java
+import org.summerboot.jexpress.boot.annotation.GrpcService;
+
+@GrpcService
+public class MyGrpcServiceImpl extends MyGrpcService.MyGrpcServiceImplBase {
+    // implement gRPC methods
+}
+```
+
+Configure in **cfg_grpc.properties**.
+
+### 13.2 Client-side
+
+```java
+import org.summerboot.jexpress.nio.grpc.GRPCClient;
+import org.summerboot.jexpress.nio.grpc.GRPCClientConfig;
+
+GRPCClient client = new GRPCClient(GRPCClientConfig.cfg);
+```
+
+Supports:
+
+- 2-way TLS (mutual authentication)
+- Client-side load balancing via `BootLoadBalancerProvider`
+- Bearer token authentication via `BearerAuthCredential`
+- Dynamic configuration reload
+
+### 13.3 gRPC Test Helper
+
+```java
+import org.summerboot.jexpress.nio.grpc.GRPCTestHelper;
+// see https://github.com/SummerBootFramework/jExpressDemo-HelloSummer
+```
+
+---
+
+## 14. HTTP Client
+
+```java
+import org.summerboot.jexpress.integration.httpclient.RPCDelegate;
+import org.summerboot.jexpress.integration.httpclient.RPCResult;
+
+// inject or create an RPCDelegate instance
+RPCResult<MyResponseDto> result = rpcDelegate.get(url, MyResponseDto.class, context);
+if(result.
+
+        hasError()){
+        // handle errors
+        }
+        MyResponseDto dto = result.getResult();
+```
+
+Configure in **cfg_httpclient.properties** (proxy, TLS, timeout, thread pool mode, etc.).
+
+---
+
+## 15. JPA / Database
+
+```java
+import org.summerboot.jexpress.integration.jpa.JPAHibernateConfig;
+import org.summerboot.jexpress.integration.jpa.AbstractEntity;
+```
+
+Configure in a JPA config file that extends `JPAHibernateConfig`. DB credentials use `DEC()`/`ENC()`:
+
+```properties
+jakarta.persistence.jdbc.url=jdbc:mysql://localhost:3306/mydb
+jakarta.persistence.jdbc.user=myuser
+jakarta.persistence.jdbc.password=DEC(changeit)
+jakarta.persistence.jdbc.driver=com.mysql.jdbc.Driver
+```
+
+---
+
+## 16. MQTT Client
+
+```java
+import org.summerboot.jexpress.integration.mqtt.MqttClientConfig;
+```
+
+Configure in a MQTT config file. TLS settings follow the same pattern as HTTP/gRPC clients.
+
+---
+
+## 17. Cache (Redis)
+
+```java
+import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+```
+
+Jedis (Redis) is a provided dependency. Add it to your app's dependencies if needed:
+
+```xml
+
+<dependency>
+    <groupId>redis.clients</groupId>
+    <artifactId>jedis</artifactId>
+    <version>7.2.1</version>
+</dependency>
+```
+
+---
+
+## 18. Security Enhancements (v2.6.x)
+
+### 18.1 URL Sanitizer
+
+Requests with illegal characters or path traversal in the URL are automatically rejected with **400 Bad Request**:
+
+```
+/../../../../windows/win.ini?q=<script>alert(1)</script>   → 400
+/?action:%{(new java.lang.ProcessBuilder(...)).start()}    → 400
+```
+
+`UrlSanitizer.cleanUrl(String url)` returns:
+
+```java
+public record UrlSanitized(String cleanPath, String cleanQuery, String cleanedURL, boolean isPathTraversal) {
+}
+```
+
+### 18.2 Caller Address Filter
+
+Whitelist/blacklist with regex support (no prefix required since v2.6.1):
+
+```properties
+# cfg_nio.properties
+CallerAddressFilter.option=String   # String, Regex, or HostName
+# cfg_grpc.properties
+gRpc.server.CallerAddressFilter.option=String
+```
+
+### 18.3 File Download Security
+
+```java
+import org.summerboot.jexpress.security.SecurityUtil;
+
+String safeFilename = SecurityUtil.escape4Filename(userInput);
+```
+
+### 18.4 Keystore & Cipher Defaults
+
+| Setting        | Default                                |
+|----------------|----------------------------------------|
+| Keystore type  | PKCS12                                 |
+| Message digest | SHA3-256                               |
+| Asymmetric     | RSA/None/OAEPWithSHA-256AndMGF1Padding |
+| Symmetric      | AES/GCM/NoPadding                      |
+| Secret key     | PBKDF2WithHmacSHA256                   |
+| EC curve       | secp256r1                              |
+
+---
+
+## 19. Plugin — External JAR Files
+
+Place plugin JARs in the `plugin/` folder. The framework picks them up at startup, allowing you to:
+
+* Add new features without modifying the core application.
+* Override existing logic via the Visitor pattern.
+* Deploy logic developed by separate teams as independent plugins.
+
+---
+
+## 20. CLI Reference
+
+| Option             | Description                                                     |
+|--------------------|-----------------------------------------------------------------|
+| `-?`               | Show help                                                       |
+| `-cfgdir <path>`   | Config folder path                                              |
+| `-authfile <path>` | Root password file                                              |
+| `-auth <password>` | Root password (inline)                                          |
+| `-encrypt`         | Batch encrypt all `DEC(...)` values                             |
+| `-decrypt`         | Batch decrypt all `ENC(...)` values                             |
+| `-use <name>`      | Launch with alternative service implementation                  |
+| `-unique <name>`   | List/validate unique codes                                      |
+| `-domain <name>`   | Domain name                                                     |
+| `-psv <envId>`     | Print service version for environment                           |
+| `-debug`           | Enable debug mode (logs all requests/responses, ignores `@Log`) |
+
+---
+
+## 21. Key Dependencies (v2.6.6)
+
+| Library             | Version      |
+|---------------------|--------------|
+| Java                | 21           |
+| Netty               | 4.2.10.Final |
+| gRPC                | 1.79.0       |
+| Guice (IoC)         | 7.0.0        |
+| Jackson             | 2.21.0       |
+| Hibernate ORM       | 7.2.4.Final  |
+| HikariCP            | 7.0.2        |
+| Log4j2              | 2.25.3       |
+| BouncyCastle        | 1.83         |
+| jjwt                | 0.13.0       |
+| Hibernate Validator | 9.1.0.Final  |
+| Quartz              | 2.5.2        |
+| PDFBox              | 3.0.6        |
+| openhtmltopdf       | 1.1.37       |
+| iText               | 9.5.0        |
+| Apache Tika         | 3.2.3        |
+| ZXing (barcode)     | 3.5.4        |
+| Jedis (Redis)       | 7.2.1        |
+| Freemarker          | 2.3.34       |
+
+---
+
+## Migration Guides
+
+### From < 2.6.5 (SummerRunner removed)
+
+1. Delete classes implementing `SummerRunner` or `IdleEventMonitor.IdleEventListener`.
+2. Implement `AppLifecycleListener` **or** extend `AppLifecycleHandler`.
+3. Move `SummerRunner.run()` logic → `AppLifecycleListener.beforeApplicationStart()`.
+4. Move idle listener logic → `AppLifecycleListener.onIdle()`.
+5. Set `nio.server.idle.threshold.second` / `gRpc.server.idle.threshold.second` in config.
+
+### From < 2.6.6 (URI method rename)
+
+- `SessionContext.uri()` → `SessionContext.uriRawDecoded()`
+
+### From < 2.6.0 (encryption format change)
+
+The encryption format changed in 2.6.0. Before upgrading, either:
+
+```bash
+java -jar your-app.jar -decrypt -auth <root password>
+```
+
+or redeploy with `DEC(...)` values and let the new version re-encrypt them.
+
+### From < 2.6.0 (API renames)
+
+| Old                                                                          | New                                  |
+|------------------------------------------------------------------------------|--------------------------------------|
+| `@Controller.implTag`                                                        | `@Controller.AlternativeName`        |
+| `@Service.implTag`                                                           | `@Service.AlternativeName`           |
+| `@Log.hideJsonStringFields` / `hideJsonNumberFields` / `hideJsonArrayFields` | `@Log.maskDataFields`                |
+| `ServiceContext`                                                             | `SessionContext`                     |
+| `@ImportResource.checkImplTagUsed`                                           | `@ImportResource.whenUseAlternative` |
+| `@ImportResource.loadWhenImplTagUsed`                                        | `@ImportResource.thenLoadConfig`     |
+| `BootHealthInspectorImpl`                                                    | `@DefaultHealthInspector`            |
+| `ServiceContext.reset()`                                                     | `SessionContext.resetResponseData()` |
+| DB config `hibernate.*`                                                      | `jakarta.persistence.*`              |
