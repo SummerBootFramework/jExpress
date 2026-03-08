@@ -20,6 +20,7 @@ import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.http.HttpRequest;
@@ -104,7 +105,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
             Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "Http Client Interrupted", ex);
             context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
             RPCResult<T> rpcResult = new RPCResult<>(originRequest, originRequestBody, null, false);
-            rpcResult.setHttpClientConfiguredObjectMapper(getHttpClientConfig().getObjectMapper());
+            rpcResult.setHttpClientConfiguredObjectMapper(getHttpClientConfig().getJsonMapper());
             return rpcResult;
         } finally {
             context.poi(BootPOI.RPC_END);
@@ -127,7 +128,11 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
 
         //3b. update status   
         RPCResult<T> rpcResult = new RPCResult<>(originRequest, originRequestBody, httpResponse, isRemoteSuccess);
-        rpcResult.setHttpClientConfiguredObjectMapper(getHttpClientConfig().getObjectMapper());
+        ObjectMapper httpClientConfiguredObjectMapper = switch (rpcResult.contentType()) {
+            case JSON, OTHER -> getHttpClientConfig().getJsonMapper();
+            case XML -> getHttpClientConfig().getJsonMapper();
+        };
+        rpcResult.setHttpClientConfiguredObjectMapper(httpClientConfiguredObjectMapper);
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
         context.memo(RPCMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + httpResponse.headers());
         context.memo(RPCMemo.MEMO_RPC_RESPONSE_DATA, rpcResponseJsonBody);

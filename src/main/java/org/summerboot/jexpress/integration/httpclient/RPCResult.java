@@ -15,13 +15,6 @@
  */
 package org.summerboot.jexpress.integration.httpclient;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
@@ -29,7 +22,10 @@ import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 import org.summerboot.jexpress.util.BeanUtil;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ObjectMapper;
 
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
@@ -42,24 +38,6 @@ import java.util.TimeZone;
  */
 public class RPCResult<T> {
 
-    public static void configure(ObjectMapper objectMapper, TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive) {
-        objectMapper.registerModules(new JavaTimeModule());
-        objectMapper.setTimeZone(timeZone);
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-        objectMapper.disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
-        if (fromJsonFailOnUnknownProperties) {
-            objectMapper.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        } else {
-            objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        }
-        if (fromJsonCaseInsensitive) {
-            objectMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);// objectMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
-        } else {
-            objectMapper.disable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);
-        }
-    }
-
     protected final HttpRequest originRequest;
     protected final String originRequestBody;
     protected final HttpResponse httpResponse;
@@ -68,21 +46,9 @@ public class RPCResult<T> {
     protected final HttpResponseStatus httpStatus;
     protected final boolean remoteSuccess;
     protected T successResponse;
+    protected final ContentType contentType;
 
-    private static final ObjectMapper DefaultObjectMapper;// = new ObjectMapper();
-
-    static {
-        //configure(DefaultObjectMapper, TimeZone.getDefault(), true, false);
-        DefaultObjectMapper = JsonMapper.builder()
-                .addModule(new JavaTimeModule())
-                .defaultTimeZone(TimeZone.getDefault())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-                .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
-                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .disable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-                .build();
-    }
+    enum ContentType {JSON, XML, OTHER}
 
     protected ObjectMapper httpClientConfiguredObjectMapper;
 
@@ -94,7 +60,28 @@ public class RPCResult<T> {
         this.httpStatusCode = httpResponse == null ? 0 : httpResponse.statusCode();
         this.httpStatus = HttpResponseStatus.valueOf(httpStatusCode);
         this.remoteSuccess = remoteSuccess;
-        this.httpClientConfiguredObjectMapper = DefaultObjectMapper;
+        this.httpClientConfiguredObjectMapper = null;
+
+        if (httpResponse != null) {
+            HttpHeaders headers = httpResponse.headers();
+            if (headers != null) {
+                String contentTypeString = headers
+                        .firstValue("Content-Type")
+                        .orElse("unknown")
+                        .toLowerCase();
+                if (contentTypeString.contains("json")) {
+                    contentType = ContentType.JSON;
+                } else if (contentTypeString.contains("xml")) {
+                    contentType = ContentType.XML;
+                } else {
+                    contentType = ContentType.OTHER;
+                }
+            } else {
+                contentType = ContentType.JSON;
+            }
+        } else {
+            contentType = ContentType.JSON;
+        }
     }
 
     public HttpRequest getOriginRequest() {
@@ -127,6 +114,10 @@ public class RPCResult<T> {
 
     public T successResponse() {
         return successResponse;
+    }
+
+    public ContentType contentType() {
+        return contentType;
     }
 
     public ObjectMapper getHttpClientConfiguredObjectMapper() {
@@ -178,6 +169,12 @@ public class RPCResult<T> {
     public <R> R parseJsonResponse(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, boolean doValidation, final SessionContext context) {
         if (responseClass == null && responseType == null || StringUtils.isBlank(rpcResponseBody)) {
             return null;
+        }
+        if (jacksonMapper == null) {
+            jacksonMapper = switch (contentType) {
+                case JSON, OTHER -> BeanUtil.buildJsonMapper(TimeZone.getDefault(), true, false, false, true);
+                case XML -> BeanUtil.buildXmlMapper(TimeZone.getDefault(), true, false, false, true);
+            };
         }
         R ret;
         try {

@@ -9,10 +9,10 @@
 [1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.7
 [2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.7
 [3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.7
+[Jackson 3 Migration Guide]: https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
 
 #### ✨ Features and Enhancements
-* JSON lib updated to v3.x
-
+* Jackson migrated to v3.x: com.fasterxml.jackson -> tools.jackson ([Jackson 3 Migration Guide])
 
 ### Version 2.6.6 (2026-02-11)
 

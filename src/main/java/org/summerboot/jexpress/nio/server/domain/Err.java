@@ -16,7 +16,7 @@
 package org.summerboot.jexpress.nio.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -29,9 +29,16 @@ public class Err {
 
     @JsonSerialize(using = ErrorCodeSerializer.class)
     @JsonDeserialize(using = ErrorCodeDeserializer.class)
+    @JsonProperty(index = 1)
     protected String errorCode;
+
+    @JsonProperty(index = 2)
     protected String errorTag;
+
+    @JsonProperty(index = 3)
     protected String errorDesc;
+
+    @JsonProperty(index = 4)
     protected Object[] args;
 
     @JsonIgnore
@@ -82,11 +89,7 @@ public class Err {
 //    }
     public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
-        try {
-            return BeanUtil.toJson(this, true, true);
-        } catch (JsonProcessingException ex) {
-            return toStringEx(false);
-        }
+        return BeanUtil.toJson(this, true, true);
     }
 
     @Override

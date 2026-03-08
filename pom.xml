@@ -178,7 +178,7 @@
         <guava.version>33.5.0-jre</guava.version>
         <protobuf.version>4.34.0</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.43</swagger.core.version>
+        <swagger.core.version>2.2.44</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -190,7 +190,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>2.21.0</jackson.version>
+        <jackson.version>3.1.0</jackson.version>
         <jackson.annotations.version>2.21</jackson.annotations.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
@@ -466,16 +466,23 @@
 
 
         <!-- JSON/XML/Bean Validation -->
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind Apache 2.0-->
+        <!-- Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
+            <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core Apache 2.0-->
+        <!-- Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-core -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
+            <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- XML -->
+        <!-- Source: https://mvnrepository.com/artifact/tools.jackson.dataformat/jackson-dataformat-xml -->
+        <dependency>
+            <groupId>tools.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
             <version>${jackson.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations Apache 2.0-->
@@ -484,28 +491,6 @@
             <artifactId>jackson-annotations</artifactId>
             <version>${jackson.annotations.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 Apache 2.0-->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-jsonSchema Apache 2.0-->
-        <!-- it has dependency on https://mvnrepository.com/artifact/javax.validation/validation-api, which is replaced by jakarta.validation
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jsonSchema</artifactId>
-            <version>${jackson.version}</version>
-            <scope>test</scope>
-        </dependency>-->
-        <!-- XML -->
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml Apache 2.0-->
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-xml</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-
 
         <!-- Bean Validation -->
         <!-- https://mvnrepository.com/artifact/jakarta.el/jakarta.el-api -->
@@ -836,10 +821,14 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire.version}</version>
                 <configuration>
-                    <argLine>-Djava.awt.headless=true -Xms2G -Xmx2G -XX:+UseZGC -XX:ZUncommitDelay=300 -XX:+ZGenerational -XX:+AlwaysPreTouch -XX:+PerfDisableSharedMem
-                        -XX:+ZUncommit -XX:+DisableExplicitGC -XX:MaxDirectMemorySize=1g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=heapdump.hprof -XX:+ExitOnOutOfMemoryError
-                        -Xlog:gc*:file=gc.log:time,level,tags:filecount=5,filesize=10M -Dfile.encoding=UTF-8 -Duser.timezone=America/Toronto -Djava.security.egd=file:/dev/./urandom
-                        -Dio.netty.handler.ssl.openssl.engine.enable=true -Dio.netty.leakDetectionLevel=SIMPLE -Dio.netty.native.workdir=lib
+                    <argLine>-Djava.awt.headless=true -Xms2G -Xmx2G -XX:+UseZGC -XX:ZUncommitDelay=300
+                        -XX:+ZGenerational -XX:+AlwaysPreTouch -XX:+PerfDisableSharedMem
+                        -XX:+ZUncommit -XX:+DisableExplicitGC -XX:MaxDirectMemorySize=1g -XX:+HeapDumpOnOutOfMemoryError
+                        -XX:HeapDumpPath=heapdump.hprof -XX:+ExitOnOutOfMemoryError
+                        -Xlog:gc*:file=gc.log:time,level,tags:filecount=5,filesize=10M -Dfile.encoding=UTF-8
+                        -Duser.timezone=America/Toronto -Djava.security.egd=file:/dev/./urandom
+                        -Dio.netty.handler.ssl.openssl.engine.enable=true -Dio.netty.leakDetectionLevel=SIMPLE
+                        -Dio.netty.native.workdir=lib
                         -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector
                     </argLine>
                 </configuration>

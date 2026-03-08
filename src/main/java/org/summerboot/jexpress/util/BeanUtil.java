@@ -15,25 +15,22 @@
  */
 package org.summerboot.jexpress.util;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.ser.FilterProvider;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootConstant;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.ser.FilterProvider;
+import tools.jackson.databind.ser.std.SimpleBeanPropertyFilter;
+import tools.jackson.databind.ser.std.SimpleFilterProvider;
+import tools.jackson.dataformat.xml.XmlMapper;
 
 import java.lang.reflect.Array;
 import java.util.Iterator;
@@ -62,57 +59,85 @@ public class BeanUtil {
 //    public static XmlMapper XMLMapper = new XmlMapper();
 
 
-    public static ObjectMapper JacksonMapper = JsonMapper.builder()
-            .addModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-            .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
-            .build();
+    public static JsonMapper JsonMapper = buildJsonMapper(TimeZone.getDefault(), false, false, false, true);
     //@SuppressWarnings("deprecation")
-    public static ObjectMapper JacksonMapperIgnoreNull = JsonMapper.builder()
-            .addModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-            .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
-            .serializationInclusion(Include.NON_NULL)
-            .serializationInclusion(Include.NON_EMPTY)
-            .build();
-    public static XmlMapper XMLMapper = XmlMapper.builder()
-            .addModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-            .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
-            .build();
+    public static JsonMapper JsonMapperIgnoreEmptyArray = buildJsonMapper(TimeZone.getDefault(), false, false, true, true);
+    public static XmlMapper XMLMapper = buildXmlMapper(TimeZone.getDefault(), false, false, false, true);
 
-    public static void update(ObjectMapper objectMapper, TimeZone timeZone, boolean isFromJsonFailOnUnknownProperties, boolean showRefInServiceError) {
-        objectMapper.registerModules(new JavaTimeModule());
-        objectMapper.setTimeZone(timeZone);
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-        objectMapper.disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
-        if (isFromJsonFailOnUnknownProperties) {
-            objectMapper.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    public static JsonMapper buildJsonMapper(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties,
+                                             boolean fromJsonCaseInsensitive, boolean ignoreEmptyArray, boolean showRefInServiceError) {
+        JsonMapper.Builder builder = JsonMapper.builder()
+                .defaultTimeZone(timeZone)
+                .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
+                .enable(MapperFeature.SORT_CREATOR_PROPERTIES_FIRST);
+
+        if (fromJsonFailOnUnknownProperties) {
+            builder.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         } else {
-            objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+            builder.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         }
-        if (showRefInServiceError) {
-            objectMapper.setFilterProvider(EmptyFilter);
+
+        if (fromJsonCaseInsensitive) {
+            builder.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);
+        }
+
+        FilterProvider filterProvider = showRefInServiceError ? EmptyFilter : ServiceErrorFilter;
+        builder.filterProvider(filterProvider);
+
+        // Note: tools.jackson does not support setSerializationInclusion() on ObjectMapper
+        // The ignoreNull feature may need to be handled differently in tools.jackson
+        // For now, this feature is not available with tools.jackson
+        if (ignoreEmptyArray) {
+            builder.disable(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS);
+            builder.changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL));
         } else {
-            objectMapper.setFilterProvider(ServiceErrorFilter);
+            builder.enable(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS);
         }
+
+
+        return builder.build();
+    }
+
+    public static XmlMapper buildXmlMapper(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties,
+                                           boolean fromJsonCaseInsensitive, boolean ignoreEmptyArray, boolean showRefInServiceError) {
+        XmlMapper.Builder builder = XmlMapper.builder()
+                .defaultTimeZone(timeZone)
+                .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
+                .enable(MapperFeature.SORT_CREATOR_PROPERTIES_FIRST);
+
+        if (fromJsonFailOnUnknownProperties) {
+            builder.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        } else {
+            builder.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        }
+
+        if (fromJsonCaseInsensitive) {
+            builder.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);
+        }
+
+        if (ignoreEmptyArray) {
+            builder.disable(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS);
+            builder.changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL));
+        } else {
+            builder.enable(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS);
+        }
+
+        FilterProvider filterProvider = showRefInServiceError ? EmptyFilter : ServiceErrorFilter;
+        builder.filterProvider(filterProvider);
+
+        return builder.build();
     }
 
     public static void init(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive, boolean toJsonPretty, boolean toJsonIgnoreNull, boolean showRefInServiceError) {
         isToJsonPretty = toJsonPretty;
         isToJsonIgnoreNull = toJsonIgnoreNull;
-        showRefInServiceError = showRefInServiceError;
-        if (fromJsonCaseInsensitive) {
-            JacksonMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
-            XMLMapper = XmlMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
-        }
-        update(JacksonMapper, timeZone, fromJsonFailOnUnknownProperties, showRefInServiceError);
-        update(JacksonMapperIgnoreNull, timeZone, fromJsonFailOnUnknownProperties, showRefInServiceError);
-        update(XMLMapper, timeZone, fromJsonFailOnUnknownProperties, showRefInServiceError);
+        BeanUtil.showRefInServiceError = showRefInServiceError;
+
+        JsonMapper = buildJsonMapper(timeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, showRefInServiceError);
+        JsonMapperIgnoreEmptyArray = buildJsonMapper(timeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, true, showRefInServiceError);
+        XMLMapper = buildXmlMapper(timeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, showRefInServiceError);
     }
 
     static {
@@ -125,9 +150,8 @@ public class BeanUtil {
      * @param <T>
      * @param obj
      * @return
-     * @throws JsonProcessingException
      */
-    public static <T extends Object> String toJson(T obj) throws JsonProcessingException {
+    public static <T extends Object> String toJson(T obj) {
         return toJson(obj, isToJsonPretty, isToJsonIgnoreNull);
     }
 
@@ -139,24 +163,23 @@ public class BeanUtil {
      * @param pretty
      * @param ignoreNull
      * @return
-     * @throws JsonProcessingException
      */
-    public static <T extends Object> String toJson(T obj, boolean pretty, boolean ignoreNull) throws JsonProcessingException {
+    public static <T extends Object> String toJson(T obj, boolean pretty, boolean ignoreNull) {
         if (obj == null) {
             return "";
         }
 
         if (pretty) {
             if (ignoreNull) {
-                return JacksonMapperIgnoreNull.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+                return JsonMapperIgnoreEmptyArray.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
             } else {
-                return JacksonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+                return JsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
             }
         } else {
             if (ignoreNull) {
-                return JacksonMapperIgnoreNull.writeValueAsString(obj);
+                return JsonMapperIgnoreEmptyArray.writeValueAsString(obj);
             } else {
-                return JacksonMapper.writeValueAsString(obj);
+                return JsonMapper.writeValueAsString(obj);
             }
         }
     }
@@ -168,16 +191,15 @@ public class BeanUtil {
      * @param json
      * @param c
      * @return
-     * @throws JsonProcessingException
      */
-    public static <T extends Object> T fromJson(String json, Class<T> c) throws JsonProcessingException {
+    public static <T extends Object> T fromJson(String json, Class<T> c) {
         if (StringUtils.isBlank(json)) {
             return null;
         }
-        return JacksonMapper.readValue(json, c);
+        return JsonMapper.readValue(json, c);
     }
 
-    public static <T extends Object> T fromJson(Class<T> c, String json) throws JsonProcessingException {
+    public static <T extends Object> T fromJson(Class<T> c, String json) {
         return fromJson(json, c);
     }
 
@@ -188,28 +210,27 @@ public class BeanUtil {
      * @param json
      * @param javaType
      * @return
-     * @throws JsonProcessingException
      */
-    public static <T extends Object> T fromJson(String json, JavaType javaType) throws JsonProcessingException {
+    public static <T extends Object> T fromJson(String json, JavaType javaType) {
         if (StringUtils.isBlank(json)) {
             return null;
         }
-        return JacksonMapper.readValue(json, javaType);
+        return JsonMapper.readValue(json, javaType);
     }
 
-    public static <T extends Object> T fromJson(String json, TypeReference<T> javaType) throws JsonProcessingException {
+    public static <T extends Object> T fromJson(String json, TypeReference<T> javaType) {
         if (StringUtils.isBlank(json)) {
             return null;
         }
-        return JacksonMapper.readValue(json, javaType);
+        return JsonMapper.readValue(json, javaType);
     }
 
-    public static <T extends Object> T fromJson(String json, Class keyClass, Class valueClass) throws JsonProcessingException {
+    public static <T extends Object> T fromJson(String json, Class keyClass, Class valueClass) {
         if (StringUtils.isBlank(json)) {
             return null;
         }
         JavaType javaType = buildMapType(keyClass, valueClass);
-        return JacksonMapper.readValue(json, javaType);
+        return JsonMapper.readValue(json, javaType);
     }
 
     /**
@@ -220,32 +241,31 @@ public class BeanUtil {
      * @param collectionClass
      * @param genericClasses
      * @return
-     * @throws JsonProcessingException
      */
-    public static <R extends Object> R fromJson(String json, Class<R> collectionClass, Class<?>... genericClasses) throws JsonProcessingException {
+    public static <R extends Object> R fromJson(String json, Class<R> collectionClass, Class<?>... genericClasses) {
         if (StringUtils.isBlank(json)) {
             return null;
         }
         if (genericClasses == null) {
             return fromJson(json, collectionClass);
         }
-        JavaType javaType = JacksonMapper.getTypeFactory().constructParametricType(collectionClass, genericClasses);
-        return JacksonMapper.readValue(json, javaType);
+        JavaType javaType = JsonMapper.getTypeFactory().constructParametricType(collectionClass, genericClasses);
+        return JsonMapper.readValue(json, javaType);
     }
 
     public static JavaType buildJavaType(Class collectionClass, Class... genericClasses) {
-        return JacksonMapper.getTypeFactory().constructParametricType(collectionClass, genericClasses);
+        return JsonMapper.getTypeFactory().constructParametricType(collectionClass, genericClasses);
     }
 
     public static JavaType buildMapType(Class keyClass, Class valueClass) {
-        return JacksonMapper.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
+        return JsonMapper.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
     }
 
-    public static <T extends Object> T fromXML(String xml, Class<T> targetClass) throws JsonProcessingException {
+    public static <T extends Object> T fromXML(String xml, Class<T> targetClass) {
         return (T) XMLMapper.readValue(xml, targetClass);
     }
 
-    public static String toXML(Object obj) throws JsonProcessingException {
+    public static String toXML(Object obj) {
         return XMLMapper.writeValueAsString(obj);
     }
 

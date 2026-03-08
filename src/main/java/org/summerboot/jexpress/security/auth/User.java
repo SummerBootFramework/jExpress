@@ -17,7 +17,6 @@ package org.summerboot.jexpress.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.summerboot.jexpress.util.BeanUtil;
 
 import java.io.Serializable;
@@ -71,7 +70,7 @@ public class User implements Serializable, Caller, Comparable<User> {
         try {
             //return "User{" + "id=" + id + ", uid=" + uid + ", groups=" + groups + ", type=" + type + '}';
             return BeanUtil.toJson(this, false, true);
-        } catch (JsonProcessingException ex) {
+        } catch (RuntimeException ex) {
             return "User{" + "id=" + id + ", uid=" + uid + ", type=" + type + ", ex=" + ex + '}';
         }
     }
@@ -140,6 +139,8 @@ public class User implements Serializable, Caller, Comparable<User> {
         }
     }
 
+
+    @JsonProperty("jti")
     @Override
     public String getJTI() {
         return jti;

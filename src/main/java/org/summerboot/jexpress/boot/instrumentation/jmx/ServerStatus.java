@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.boot.instrumentation.jmx;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.Singleton;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
@@ -118,7 +117,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
             List<Object> data = events.stream().collect(Collectors.toList());
             //data.add(0, Constant.VERSION);
             ret = BeanUtil.toJson(data);
-        } catch (JsonProcessingException ex) {
+        } catch (RuntimeException ex) {
             ret = ex.toString();//Constant.VERSION + ": " + ex.toString();
         }
         return ret;
