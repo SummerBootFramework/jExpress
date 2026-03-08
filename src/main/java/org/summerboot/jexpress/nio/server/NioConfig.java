@@ -141,7 +141,8 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.ssl.Provider", defaultValue = "OPENSSL")
     protected volatile SslProvider sslProvider = SslProvider.OPENSSL;
 
-    @Config(key = "nio.server.ssl.Protocols", defaultValue = "TLSv1.2, TLSv1.3", desc = DESC_TLS_PROTOCOL)// "TLSv1.2, TLSv1.3"
+    @Config(key = "nio.server.ssl.Protocols", defaultValue = "TLSv1.2, TLSv1.3", desc = DESC_TLS_PROTOCOL)
+    // "TLSv1.2, TLSv1.3"
     protected String[] tlsProtocols = {"TLSv1.2", "TLSv1.3"};
 
     @Config(key = "nio.server.ssl.CipherSuites",
@@ -270,6 +271,8 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
     protected volatile boolean toJsonIgnoreNull = true;
+    @Config(key = "nio.JAX-RS.toJson.IgnoreEmptyArray", defaultValue = "false")
+    protected volatile boolean toJsonIgnoreEmptyArray = false;
     @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
     protected volatile boolean toJsonPretty = false;
     @Config(key = "nio.JAX-RS.toJson.showRefInServiceError", defaultValue = "true")
@@ -472,7 +475,7 @@ public class NioConfig extends BootConfig {
         tpe = buildThreadPoolExecutor(tpe, "Netty-HTTP.Biz", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
-        BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreNull, showRefInServiceError);
+        BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreEmptyArray, toJsonIgnoreNull, showRefInServiceError);
 
         //5.1 caller filter
         switch (filterUserType) {

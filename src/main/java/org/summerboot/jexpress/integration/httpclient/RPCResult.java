@@ -172,8 +172,8 @@ public class RPCResult<T> {
         }
         if (jacksonMapper == null) {
             jacksonMapper = switch (contentType) {
-                case JSON, OTHER -> BeanUtil.buildJsonMapper(TimeZone.getDefault(), true, false, false, true);
-                case XML -> BeanUtil.buildXmlMapper(TimeZone.getDefault(), true, false, false, true);
+                case JSON, OTHER -> BeanUtil.buildJsonMapper(TimeZone.getDefault(), true, false, false, true, true);
+                case XML -> BeanUtil.buildXmlMapper(TimeZone.getDefault(), true, false, false, true, true);
             };
         }
         R ret;

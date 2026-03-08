@@ -13,6 +13,7 @@
 
 #### ✨ Features and Enhancements
 * Jackson migrated to v3.x: com.fasterxml.jackson -> tools.jackson ([Jackson 3 Migration Guide])
+* JSON/XML response show empty array by default, and now config line is added to cfg_nio.properties added line136: #nio.JAX-RS.toJson.IgnoreEmptyArray=false
 
 ### Version 2.6.6 (2026-02-11)
 
