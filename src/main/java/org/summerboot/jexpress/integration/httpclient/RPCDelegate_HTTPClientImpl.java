@@ -130,7 +130,7 @@ public abstract class RPCDelegate_HTTPClientImpl implements RPCDelegate {
         RPCResult<T> rpcResult = new RPCResult<>(originRequest, originRequestBody, httpResponse, isRemoteSuccess);
         ObjectMapper httpClientConfiguredObjectMapper = switch (rpcResult.contentType()) {
             case JSON, OTHER -> getHttpClientConfig().getJsonMapper();
-            case XML -> getHttpClientConfig().getJsonMapper();
+            case XML -> getHttpClientConfig().getXmlMapper();
         };
         rpcResult.setHttpClientConfiguredObjectMapper(httpClientConfiguredObjectMapper);
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
