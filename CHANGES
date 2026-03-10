@@ -9,10 +9,10 @@
 [1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.7
 [2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.7
 [3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.7
-[Jackson 3 Migration Guide]: https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
 
 #### ✨ Features and Enhancements
-* Jackson migrated to v3.x: com.fasterxml.jackson -> tools.jackson ([Jackson 3 Migration Guide])
+[4]: https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
+* Jackson migrated to v3.x: com.fasterxml.jackson -> tools.jackson ([Jackson 3 Migration Guide][4])
 * JSON/XML response show empty array by default, and now config line is added to cfg_nio.properties added line136: #nio.JAX-RS.toJson.IgnoreEmptyArray=false
 
 ### Version 2.6.6 (2026-02-11)
