@@ -89,7 +89,11 @@ public class Err {
 //    }
     public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
-        return BeanUtil.toJson(this, true, true);
+        try {
+            return BeanUtil.toJson(this, true, true);
+        } catch (RuntimeException ex) {
+            return toStringEx(false);
+        }
     }
 
     @Override
