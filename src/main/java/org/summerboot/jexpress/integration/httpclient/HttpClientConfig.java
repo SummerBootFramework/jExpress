@@ -187,10 +187,10 @@ abstract public class HttpClientConfig extends BootConfig {
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
     @JsonIgnore
-    protected volatile JsonMapper jsonMapper = BeanUtil.buildJsonMapper(TimeZone.getDefault(), false, false, false, true, true);
+    protected volatile JsonMapper jsonMapper = BeanUtil.JsonMapper;
 
     @JsonIgnore
-    protected volatile XmlMapper xmlMapper = BeanUtil.buildXmlMapper(TimeZone.getDefault(), false, false, false, true, true);
+    protected volatile XmlMapper xmlMapper = BeanUtil.XMLMapper;
 
     //3.2 HTTP Client Performance    
     @ConfigHeader(title = "2. HTTP Client Performance")
@@ -285,8 +285,8 @@ abstract public class HttpClientConfig extends BootConfig {
             }
         });
 
-        jsonMapper = BeanUtil.buildJsonMapper(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, true, true);
-        xmlMapper = BeanUtil.buildXmlMapper(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, true, true);
+        jsonMapper = BeanUtil.buildJsonMapper(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, true, true).build();
+        xmlMapper = BeanUtil.buildXmlMapper(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, true, true).build();
 
         final SSLContext sslContext;
         if (StringUtils.isBlank(tlsProtocol)) {
