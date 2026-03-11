@@ -18,7 +18,6 @@ package org.summerboot.jexpress.boot.config;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -171,12 +170,7 @@ public abstract class BootConfig implements JExpressConfig {
 
     @Override
     public String info() {
-        try {
-            return BeanUtil.toJson(this, true, false);
-        } catch (JsonProcessingException ex) {
-            ex.printStackTrace();
-            return ex.getMessage();
-        }
+        return BeanUtil.toJson(this, true, false);
     }
 
     protected void createIfNotExist(String srcFileName, String destFileName) {

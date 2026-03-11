@@ -17,7 +17,7 @@ package org.summerboot.jexpress.nio.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -34,12 +34,14 @@ import java.util.List;
 public class ServiceError {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The index of requests received by current server since start")
+    @JsonProperty(index = 1)
     protected final String ref;
 
     @JsonIgnore
     protected Object attachedData;
 
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "The optional error list")
+    @JsonProperty(index = 2)
     protected List<Err> errors;
 
     public ServiceError() {
@@ -93,19 +95,11 @@ public class ServiceError {
 
     public String toJson() {
         //return AppConfig.GsonSerializeNulls.toJson(this);
-        try {
-            return BeanUtil.toJson(this, true, true);
-        } catch (JsonProcessingException ex) {
-            return toString();
-        }
+        return BeanUtil.toJson(this, true, true);
     }
 
     public String toXML() {
-        try {
-            return BeanUtil.toXML(this);
-        } catch (JsonProcessingException ex) {
-            return toString();
-        }
+        return BeanUtil.toXML(this);
     }
 
     public String getRef() {

@@ -15,7 +15,6 @@
  */
 package org.summerboot.jexpress.boot;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import io.netty.channel.ChannelHandler;
@@ -137,7 +136,7 @@ public class ScanedGuiceModule extends AbstractModule {
         try {
             String c = BeanUtil.toJson(channelHandlerNames, true, true);
             memo.append(BootConstant.BR).append("\t- Ioc.userdefined.ChannelHandlers: ").append(c);
-        } catch (JsonProcessingException ex) {
+        } catch (RuntimeException ex) {
         }
     }
 

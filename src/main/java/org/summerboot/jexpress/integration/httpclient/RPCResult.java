@@ -15,13 +15,6 @@
  */
 package org.summerboot.jexpress.integration.httpclient;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
@@ -29,7 +22,10 @@ import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
 import org.summerboot.jexpress.util.BeanUtil;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ObjectMapper;
 
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
@@ -42,24 +38,6 @@ import java.util.TimeZone;
  */
 public class RPCResult<T> {
 
-    public static void configure(ObjectMapper objectMapper, TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive) {
-        objectMapper.registerModules(new JavaTimeModule());
-        objectMapper.setTimeZone(timeZone);
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-        objectMapper.disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
-        if (fromJsonFailOnUnknownProperties) {
-            objectMapper.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        } else {
-            objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        }
-        if (fromJsonCaseInsensitive) {
-            objectMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);// objectMapper = JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true).build();
-        } else {
-            objectMapper.disable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);
-        }
-    }
-
     protected final HttpRequest originRequest;
     protected final String originRequestBody;
     protected final HttpResponse httpResponse;
@@ -68,25 +46,17 @@ public class RPCResult<T> {
     protected final HttpResponseStatus httpStatus;
     protected final boolean remoteSuccess;
     protected T successResponse;
+    protected final ContentType contentType;
 
-    private static final ObjectMapper DefaultObjectMapper;// = new ObjectMapper();
+    enum ContentType {JSON, XML, OTHER}
 
-    static {
-        //configure(DefaultObjectMapper, TimeZone.getDefault(), true, false);
-        DefaultObjectMapper = JsonMapper.builder()
-                .addModule(new JavaTimeModule())
-                .defaultTimeZone(TimeZone.getDefault())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-                .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
-                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .disable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-                .build();
-    }
-
-    protected ObjectMapper httpClientConfiguredObjectMapper;
+    protected ObjectMapper httpClientConfiguredObjectMapper = null;
 
     public RPCResult(HttpRequest originRequest, String originRequestBody, HttpResponse httpResponse, boolean remoteSuccess) {
+        this(originRequest, originRequestBody, httpResponse, remoteSuccess, null);
+    }
+
+    public RPCResult(HttpRequest originRequest, String originRequestBody, HttpResponse httpResponse, boolean remoteSuccess, HttpClientConfig httpClientConfig) {
         this.originRequest = originRequest;
         this.originRequestBody = originRequestBody;
         this.httpResponse = httpResponse;
@@ -94,7 +64,39 @@ public class RPCResult<T> {
         this.httpStatusCode = httpResponse == null ? 0 : httpResponse.statusCode();
         this.httpStatus = HttpResponseStatus.valueOf(httpStatusCode);
         this.remoteSuccess = remoteSuccess;
-        this.httpClientConfiguredObjectMapper = DefaultObjectMapper;
+
+        if (httpResponse != null) {
+            HttpHeaders headers = httpResponse.headers();
+            if (headers != null) {
+                String contentTypeString = headers
+                        .firstValue("Content-Type")
+                        .orElse("unknown")
+                        .toLowerCase();
+                if (contentTypeString.contains("json")) {
+                    contentType = ContentType.JSON;
+                } else if (contentTypeString.contains("xml")) {
+                    contentType = ContentType.XML;
+                } else {
+                    contentType = ContentType.OTHER;
+                }
+            } else {
+                contentType = ContentType.JSON;
+            }
+        } else {
+            contentType = ContentType.JSON;
+        }
+        if (httpClientConfig == null) {
+            this.httpClientConfiguredObjectMapper = switch (contentType) {
+                case JSON, OTHER ->
+                        BeanUtil.buildJsonMapper(TimeZone.getDefault(), true, false, false, true, true).build();
+                case XML -> BeanUtil.buildXmlMapper(TimeZone.getDefault(), true, false, false, true, true).build();
+            };
+        } else {
+            this.httpClientConfiguredObjectMapper = switch (contentType) {
+                case JSON, OTHER -> httpClientConfig.getJsonMapper();
+                case XML -> httpClientConfig.getXmlMapper();
+            };
+        }
     }
 
     public HttpRequest getOriginRequest() {
@@ -129,53 +131,80 @@ public class RPCResult<T> {
         return successResponse;
     }
 
-    public ObjectMapper getHttpClientConfiguredObjectMapper() {
-        return httpClientConfiguredObjectMapper;
-    }
-
-    public void setHttpClientConfiguredObjectMapper(ObjectMapper httpClientConfiguredObjectMapper) {
-        this.httpClientConfiguredObjectMapper = httpClientConfiguredObjectMapper;
+    public ContentType contentType() {
+        return contentType;
     }
 
     public RPCResult<T> update(Class<T> successResponseClass, final SessionContext context) {
         return update(httpClientConfiguredObjectMapper, successResponseClass, context);
     }
 
-    public RPCResult<T> update(ObjectMapper jacksonMapper, Class<T> successResponseClass, final SessionContext context) {
-        if (remoteSuccess) {
-            successResponse = parseJsonResponse(jacksonMapper, successResponseClass, context);
-        }
-        return this;
-    }
-
     public RPCResult<T> update(JavaType successResponseType, final SessionContext context) {
         return update(httpClientConfiguredObjectMapper, successResponseType, context);
     }
 
-    public RPCResult<T> update(ObjectMapper jacksonMapper, JavaType successResponseType, final SessionContext context) {
+    /**
+     * Deserialize the response body to successResponse if remoteSuccess is true, otherwise keep successResponse as null.
+     * If the deserialized response is invalid or indicates error, set error in context and return null for successResponse.
+     * <p>
+     * This is a convenience method for the common case where you do ONLY need to deserialize success response and leave the error in the log for receiving error response,
+     * so it does not require caller to check remoteSuccess before calling this method, and it will handle both deserialization error and error response indicated by the deserialized response.
+     * <p>
+     * <p>
+     * If you need more control, you can call the deserialize method directly, or simply leave the error response handling to the framework (by implementing ServiceErrorConvertible in the successResponseClass).
+     *
+     * @param jacksonMapper
+     * @param successResponseClass
+     * @param context
+     * @return this
+     */
+    public RPCResult<T> update(ObjectMapper jacksonMapper, Class<T> successResponseClass, final SessionContext context) {
         if (remoteSuccess) {
-            successResponse = parseJsonResponse(jacksonMapper, successResponseType, context);
+            successResponse = deserialize(jacksonMapper, successResponseClass, context);
         }
         return this;
     }
 
-    public <R> R parseJsonResponse(Class<R> responseClass, final SessionContext context) {
-        return parseJsonResponse(httpClientConfiguredObjectMapper, responseClass, context);
+
+    /**
+     * Deserialize the response body to successResponse if remoteSuccess is true, otherwise keep successResponse as null.
+     * If the deserialized response is invalid or indicates error, set error in context and return null for successResponse.
+     * <p>
+     * This is a convenience method for the common case where you do ONLY need to deserialize success response and leave the error in the log for receiving error response,
+     * so it does not require caller to check remoteSuccess before calling this method, and it will handle both deserialization error and error response indicated by the deserialized response.
+     * <p>
+     * <p>
+     * If you need more control, you can call the deserialize method directly, or simply leave the error response handling to the framework (by implementing ServiceErrorConvertible in the successResponseClass).
+     *
+     * @param jacksonMapper
+     * @param successResponseType
+     * @param context
+     * @return this
+     */
+    public RPCResult<T> update(ObjectMapper jacksonMapper, JavaType successResponseType, final SessionContext context) {
+        if (remoteSuccess) {
+            successResponse = deserialize(jacksonMapper, successResponseType, context);
+        }
+        return this;
     }
 
-    public <R> R parseJsonResponse(ObjectMapper jacksonMapper, Class<R> responseClass, final SessionContext context) {
-        return parseJsonResponse(jacksonMapper, null, responseClass, true, context);
+    public <R> R deserialize(Class<R> responseClass, final SessionContext context) {
+        return deserialize(httpClientConfiguredObjectMapper, responseClass, context);
     }
 
-    public <R> R parseJsonResponse(JavaType responseType, final SessionContext context) {
-        return parseJsonResponse(httpClientConfiguredObjectMapper, responseType, context);
+    public <R> R deserialize(JavaType responseType, final SessionContext context) {
+        return deserialize(httpClientConfiguredObjectMapper, responseType, context);
     }
 
-    public <R> R parseJsonResponse(ObjectMapper jacksonMapper, JavaType responseType, final SessionContext context) {
-        return parseJsonResponse(jacksonMapper, responseType, null, true, context);
+    public <R> R deserialize(ObjectMapper jacksonMapper, Class<R> responseClass, final SessionContext context) {
+        return deserialize(jacksonMapper, null, responseClass, true, context);
     }
 
-    public <R> R parseJsonResponse(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, boolean doValidation, final SessionContext context) {
+    public <R> R deserialize(ObjectMapper jacksonMapper, JavaType responseType, final SessionContext context) {
+        return deserialize(jacksonMapper, responseType, null, true, context);
+    }
+
+    protected <R> R deserialize(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, boolean doValidation, final SessionContext context) {
         if (responseClass == null && responseType == null || StringUtils.isBlank(rpcResponseBody)) {
             return null;
         }
@@ -213,6 +242,6 @@ public class RPCResult<T> {
         }
         return ret;
     }
-
-
 }
+
+

@@ -16,8 +16,6 @@
 package org.summerboot.jexpress.integration.httpclient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
@@ -27,6 +25,9 @@ import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
 import org.summerboot.jexpress.security.SSLUtil;
+import org.summerboot.jexpress.util.BeanUtil;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.xml.XmlMapper;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -186,7 +187,10 @@ abstract public class HttpClientConfig extends BootConfig {
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
     @JsonIgnore
-    protected volatile ObjectMapper objectMapper = JsonMapper.builder().build();
+    protected volatile JsonMapper jsonMapper = BeanUtil.JSONMapper;
+
+    @JsonIgnore
+    protected volatile XmlMapper xmlMapper = BeanUtil.XMLMapper;
 
     //3.2 HTTP Client Performance    
     @ConfigHeader(title = "2. HTTP Client Performance")
@@ -281,7 +285,8 @@ abstract public class HttpClientConfig extends BootConfig {
             }
         });
 
-        RPCResult.configure(objectMapper, jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive);
+        jsonMapper = BeanUtil.buildJsonMapper(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, true, true).build();
+        xmlMapper = BeanUtil.buildXmlMapper(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, true, true).build();
 
         final SSLContext sslContext;
         if (StringUtils.isBlank(tlsProtocol)) {
@@ -465,8 +470,12 @@ abstract public class HttpClientConfig extends BootConfig {
         return jsonParserTimeZone;
     }
 
-    public ObjectMapper getObjectMapper() {
-        return objectMapper;
+    public JsonMapper getJsonMapper() {
+        return jsonMapper;
+    }
+
+    public XmlMapper getXmlMapper() {
+        return xmlMapper;
     }
 
     public long getHttpConnectTimeoutMs() {

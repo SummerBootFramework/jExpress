@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
@@ -206,9 +207,11 @@ public class TimeUtil {
     public static class TimeDto {
 
         @JsonIgnoreProperties
+        @JsonProperty(index = 1)
         protected ZoneId zoneId;
 
         @JsonIgnoreProperties
+        @JsonProperty(index = 2)
         protected long epochTs;
 
         //@JsonDeserialize(using = LocalDateTimeDeserializer.class)
@@ -217,17 +220,21 @@ public class TimeUtil {
         //@JsonProperty("EffectiveDate")
         //@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYYY-MM-DD'T'hh:mm:ss.sTZD")
         @JsonIgnoreProperties
+        @JsonProperty(index = 3)
         protected Timestamp timestamp;
 
         //@JsonDeserialize(using = LocalDateTimeDeserializer.class)
         //@JsonSerialize(using = LocalDateTimeSerializer.class)
         @JsonIgnoreProperties
+        @JsonProperty(index = 4)
         protected LocalDateTime localDateTime;
 
         @JsonIgnoreProperties
+        @JsonProperty(index = 5)
         protected OffsetDateTime offsetDateTime;
 
         @JsonIgnoreProperties
+        @JsonProperty(index = 6)
         protected ZonedDateTime zonedDateTime;
 
         public TimeDto() {

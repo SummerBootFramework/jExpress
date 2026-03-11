@@ -16,7 +16,6 @@
 package org.summerboot.jexpress.integration.cache;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,7 +77,7 @@ public class RedisConfig implements JExpressConfig {
     public String info() {
         try {
             return BeanUtil.toJson(this, true, false);
-        } catch (JsonProcessingException ex) {
+        } catch (RuntimeException ex) {
             return ex.toString();
         }
     }

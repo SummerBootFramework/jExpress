@@ -325,8 +325,8 @@ public class ReflectionUtil {
             }
         } else if (targetClass.equals(JsonNode.class)) {
             try {
-                return BeanUtil.JacksonMapper.readTree(value);
-            } catch (JsonProcessingException ex) {
+                return BeanUtil.JSONMapper.readTree(value);
+            } catch (RuntimeException ex) {
                 throw new IllegalArgumentException("invalid json data: " + value, ex);
             }
         } else {
