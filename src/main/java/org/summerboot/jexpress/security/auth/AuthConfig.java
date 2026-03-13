@@ -146,7 +146,8 @@ public class AuthConfig extends BootConfig {
                     + "step1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
                     + "step2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out " + JWT_PUBLIC_KEY_FILE + " \n"
                     + "step3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM \n"
-                    + "step4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out " + JWT_PRIVATE_KEY_FILE)
+                    + "step4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out " + JWT_PRIVATE_KEY_FILE + " \n"
+                    + "In case need to re-encrypt: openssl pkcs8 -topk8 -v2 aes256 -in " + JWT_PRIVATE_KEY_FILE + " -out new.key")
     @Config(key = KEY_privateKeyFile,
             desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size",
             callbackMethodName4Dump = "generateTemplate_privateKeyFile")
