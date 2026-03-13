@@ -32,6 +32,7 @@ import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Daemon;
 import org.summerboot.jexpress.boot.annotation.Log;
+import org.summerboot.jexpress.boot.annotation.ParamCollectionDelimiter;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.SessionContext;
@@ -225,12 +226,13 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
 
         //5. Parse Parameters
+        final String collectionDelimiter = getCollectionDelimiter(javaMethod, controllerClass);
         Parameter[] params = javaMethod.getParameters();
         List<JaxRsRequestParameter> parameterListTemp = new ArrayList<>();
         List<MetaMatrixParam> metaMatrixParamListTemp = new ArrayList<>();
         if (params != null && params.length > 0) {
             for (Parameter param : params) {
-                JaxRsRequestParameter srp = new JaxRsRequestParameter(info, httpMethod, consumes, param);
+                JaxRsRequestParameter srp = new JaxRsRequestParameter(info, httpMethod, consumes, param, collectionDelimiter);
                 parameterListTemp.add(srp);
                 if (srp.getType().equals(JaxRsRequestParameter.ParamType.MatrixParam)) {
                     metaMatrixParamListTemp.add(new MetaMatrixParam(srp.getKey()));
@@ -301,6 +303,22 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             processorSettings.setHttpServiceResponseHeaderName_Reference(controllerAnnotation.responseHeader_Reference());
             processorSettings.setHttpServiceResponseHeaderName_ServerTimestamp(controllerAnnotation.responseHeader_ServerTs());
         }
+    }
+
+    private static String getCollectionDelimiter(Method javaMethod, Class controllerClass) {
+        final String collectionDelimiter;
+        ParamCollectionDelimiter methodLevelCollectionDelimiter = javaMethod.getAnnotation(ParamCollectionDelimiter.class);
+        if (methodLevelCollectionDelimiter != null) {
+            collectionDelimiter = methodLevelCollectionDelimiter.value();
+        } else {
+            ParamCollectionDelimiter classLeveCollectionDelimiter = (ParamCollectionDelimiter) controllerClass.getAnnotation(ParamCollectionDelimiter.class);
+            if (classLeveCollectionDelimiter != null) {
+                collectionDelimiter = classLeveCollectionDelimiter.value();
+            } else {
+                collectionDelimiter = ",";
+            }
+        }
+        return collectionDelimiter;
     }
 
     protected void updateLogSettings(Log log) {
