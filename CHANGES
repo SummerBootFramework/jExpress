@@ -17,6 +17,7 @@
     * Example: @ParamCollectionDelimiter(";") means your List<Object> will use ; as the delimiter (obj1; obj2; obj3; ...)
 * @Controller.responseHeader_ServerTs default value, was hardcoded, is now configured in boot.ini (line 138): naming.responseHeader.X-Reference=X-Reference
 * @Controller.responseHeader_Reference default value, was hardcoded, is now configured in boot.ini (line 139): naming.responseHeader.X-ServerTs=X-ServerTs
+* New API: force pretty response for specified @Controller method via SessionContext.forcePrettyResponse(true)
 
 
 ### Version 2.6.8 (2026-03-11)

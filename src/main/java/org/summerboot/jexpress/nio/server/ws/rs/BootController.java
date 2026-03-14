@@ -170,7 +170,7 @@ abstract public class BootController extends PingController {
 
     protected String getVersion() {
         if (version == null) {
-            version = "[" + BootConstant.APP_ID + "]" + BackOffice.agent.getVersion();
+            version = "[" + BootConstant.APP_ID + "] " + BackOffice.agent.getVersion();
         }
         return version;
     }

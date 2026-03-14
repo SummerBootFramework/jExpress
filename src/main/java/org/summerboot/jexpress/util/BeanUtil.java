@@ -156,6 +156,10 @@ public class BeanUtil {
         return toJson(obj, isToJsonPretty, isToJsonIgnoreNull);
     }
 
+    public static <T extends Object> String toJson(T obj, boolean pretty) {
+        return toJson(obj, pretty, isToJsonIgnoreNull);
+    }
+
     /**
      * Serialization, convert to JSON string
      *

@@ -94,6 +94,7 @@ public class SessionContext {
     protected String redirect;
     protected final List<POI> poi = new ArrayList<>();
     protected List<Memo> memo;
+    protected boolean forcePrettyResponse = false;
 
     // Session attributes
     protected Map<Object, Object> sessionAttributes;
@@ -793,6 +794,15 @@ public class SessionContext {
 
     public SessionContext processorSettings(ProcessorSettings processorSettings) {
         this.processorSettings = processorSettings;
+        return this;
+    }
+
+    public boolean forcePrettyResponse() {
+        return forcePrettyResponse;
+    }
+
+    public SessionContext forcePrettyResponse(boolean forcePrettyResponse) {
+        this.forcePrettyResponse = forcePrettyResponse;
         return this;
     }
 

@@ -501,17 +501,23 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                     context.response((String) ret);
                 } else {
                     switch (responseContentType) {
-                        case MediaType.APPLICATION_JSON:
-                            context.response(BeanUtil.toJson(ret));
-                            break;
-                        case MediaType.APPLICATION_XML:
-                        case MediaType.TEXT_XML:
-                            context.response(BeanUtil.toXML(ret));
-                            break;
-                        case MediaType.TEXT_HTML:
-                        case MediaType.TEXT_PLAIN:
+                        case MediaType.APPLICATION_JSON -> {
+                            if (context.forcePrettyResponse()) {
+                                context.response(BeanUtil.toJson(ret, true));
+                            } else {
+                                context.response(BeanUtil.toJson(ret));
+                            }
+                        }
+                        case MediaType.APPLICATION_XML, MediaType.TEXT_XML -> {
+                            if (context.forcePrettyResponse()) {
+                                context.response(BeanUtil.toXML(ret, true));
+                            } else {
+                                context.response(BeanUtil.toXML(ret));
+                            }
+                        }
+                        case MediaType.TEXT_HTML, MediaType.TEXT_PLAIN -> {
                             context.response(ret.toString());
-                            break;
+                        }
                     }
                 }
                 //3. update content type
