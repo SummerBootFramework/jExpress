@@ -253,6 +253,12 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.file.pause", defaultValue = "pause")
     private String pauseFileName = "pause";
 
+    @Config(key = "naming.responseHeader.X-Reference", defaultValue = "X-Reference")
+    private String responseHeaderRefName = "X-Reference";
+
+    @Config(key = "naming.responseHeader.X-ServerTs", defaultValue = "X-ServerTs")
+    private String responseHeaderServerTsName = "X-ServerTs";
+
 
     @Config(key = "HealthMonitor.PauseLockCode.viaFile", defaultValue = "PauseLockCode.file")
     private String pauseLockCodeViaFile = "PauseLockCode.file";
@@ -474,6 +480,14 @@ public class BackOffice extends BootConfig {
 
     public String getPauseFileName() {
         return pauseFileName;
+    }
+
+    public String getResponseHeaderRefName() {
+        return responseHeaderRefName;
+    }
+
+    public String getResponseHeaderServerTsName() {
+        return responseHeaderServerTsName;
     }
 
     public String getPauseLockCodeViaFile() {

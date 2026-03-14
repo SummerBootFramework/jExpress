@@ -69,8 +69,8 @@ public interface BootConstant {
     String FILE_CFG_GRPC = BackOffice.agent.getgRPCConfigFileName();
     String FILE_PAUSE = BackOffice.agent.getPauseFileName();
 
-    String RESPONSE_HEADER_KEY_REF = "X-Reference";
-    String RESPONSE_HEADER_KEY_TS = "X-ServerTs";
+    String RESPONSE_HEADER_KEY_REF = BackOffice.agent.getResponseHeaderRefName();
+    String RESPONSE_HEADER_KEY_TS = BackOffice.agent.getResponseHeaderServerTsName();
 
     String PAUSE_LOCK_CODE_VIAFILE = BackOffice.agent.getPauseLockCodeViaFile();
     String PAUSE_LOCK_CODE_VIAWEB = BackOffice.agent.getPauseLockCodeViaWeb();

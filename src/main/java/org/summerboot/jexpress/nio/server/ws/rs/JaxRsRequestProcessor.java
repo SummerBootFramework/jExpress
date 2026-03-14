@@ -27,6 +27,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.boot.annotation.Controller;
@@ -300,8 +301,17 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         Controller controllerAnnotation = (Controller) controllerClass.getAnnotation(Controller.class);
         if (controllerAnnotation != null) {
-            processorSettings.setHttpServiceResponseHeaderName_Reference(controllerAnnotation.responseHeader_Reference());
-            processorSettings.setHttpServiceResponseHeaderName_ServerTimestamp(controllerAnnotation.responseHeader_ServerTs());
+            String responseHeaderRefName = controllerAnnotation.responseHeader_Reference();
+            if (StringUtils.isBlank(responseHeaderRefName)) {
+                responseHeaderRefName = BootConstant.RESPONSE_HEADER_KEY_TS;
+            }
+            processorSettings.setHttpServiceResponseHeaderName_Reference(responseHeaderRefName);
+
+            String responseHeaderServerTsName = controllerAnnotation.responseHeader_ServerTs();
+            if (StringUtils.isBlank(responseHeaderServerTsName)) {
+                responseHeaderServerTsName = BootConstant.RESPONSE_HEADER_KEY_REF;
+            }
+            processorSettings.setHttpServiceResponseHeaderName_ServerTimestamp(responseHeaderServerTsName);
         }
     }
 
