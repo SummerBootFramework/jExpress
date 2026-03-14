@@ -12,7 +12,7 @@
 
 #### ✨ Features and Enhancements
 * return Application session ID when admin request version
-* new Annotation: @ParamCollectionDelimiter
+* new Annotation: @ParamCollectionDelimiter - to be used if developer need to override the default delimiter: comma (",")
     * Scope: to be used in @Controller class or method level
     * Example: @ParamCollectionDelimiter(";") means your List<Object> will use ; as the delimiter (obj1; obj2; obj3; ...)
 
