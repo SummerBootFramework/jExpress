@@ -34,7 +34,7 @@ public @interface Controller {
 
     String NOT_TAGGED = "";
 
-    String Alternativeme() default NOT_TAGGED;
+    String AlternativeName() default NOT_TAGGED;
 
     String responseHeader_ServerTs() default "";
 
