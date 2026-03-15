@@ -19,6 +19,7 @@
 * @Controller.responseHeader_Reference default value, was hardcoded, is now configured in boot.ini (line 139): naming.responseHeader.X-ServerTs=X-ServerTs
 * New API: force pretty response for specified @Controller method via SessionContext.forcePrettyResponse(true)
 * File response and redirect response now come with SessionContext response headers
+* Ping handler response header now includes X-Reference and X-ServerTs
 
 
 ### Version 2.6.8 (2026-03-11)
