@@ -303,13 +303,13 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (controllerAnnotation != null) {
             String responseHeaderRefName = controllerAnnotation.responseHeader_Reference();
             if (StringUtils.isBlank(responseHeaderRefName)) {
-                responseHeaderRefName = BootConstant.RESPONSE_HEADER_KEY_TS;
+                responseHeaderRefName = BootConstant.RESPONSE_HEADER_KEY_REF;
             }
             processorSettings.setHttpServiceResponseHeaderName_Reference(responseHeaderRefName);
 
             String responseHeaderServerTsName = controllerAnnotation.responseHeader_ServerTs();
             if (StringUtils.isBlank(responseHeaderServerTsName)) {
-                responseHeaderServerTsName = BootConstant.RESPONSE_HEADER_KEY_REF;
+                responseHeaderServerTsName = BootConstant.RESPONSE_HEADER_KEY_TS;
             }
             processorSettings.setHttpServiceResponseHeaderName_ServerTimestamp(responseHeaderServerTsName);
         }
