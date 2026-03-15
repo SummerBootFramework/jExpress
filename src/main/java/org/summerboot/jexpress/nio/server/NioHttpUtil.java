@@ -107,8 +107,11 @@ public class NioHttpUtil {
     public static final AsciiString KEEP_ALIVE = new AsciiString("keep-alive");
     public static final AsciiString CONNECTION = new AsciiString("Connection");
 
-    private static void sendRedirect(ChannelHandlerContext ctx, String newUri, HttpResponseStatus status) {
+    private static void sendRedirect(ChannelHandlerContext ctx, String newUri, HttpResponseStatus status, HttpHeaders responseHeaders) {
         FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);//HttpResponseStatus.FOUND, HttpResponseStatus.PERMANENT_REDIRECT : HttpResponseStatus.TEMPORARY_REDIRECT
+        if (responseHeaders != null) {
+            resp.headers().set(responseHeaders);
+        }
         resp.headers().set(HttpHeaderNames.LOCATION, newUri);
         ctx.writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
     }
@@ -129,10 +132,10 @@ public class NioHttpUtil {
         final HttpResponseStatus status = sessionContext.status();
 
         if (sessionContext.file() != null) {
-            return sendFile(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings);
+            return sendFile(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings, sessionContext.responseHeaders());
         }
         if (sessionContext.redirect() != null) {
-            sendRedirect(ctx, sessionContext.redirect(), status);
+            sendRedirect(ctx, sessionContext.redirect(), status, sessionContext.responseHeaders());
             return 0;
         }
 
@@ -230,9 +233,12 @@ public class NioHttpUtil {
         return responseDataBytes;
     }
 
-    private static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final SessionContext context, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings) {
+    private static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final SessionContext context, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings, HttpHeaders responseHeaders) {
         HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, context.status());
         HttpHeaders h = response.headers();
+        if (responseHeaders != null) {
+            h.set(responseHeaders);
+        }
         h.set(context.responseHeaders());
         long fileLength = -1;
         RandomAccessFile randomAccessFile = null;
