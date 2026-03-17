@@ -31,6 +31,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +39,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -253,5 +259,45 @@ public class ApplicationUtil {
             ex.printStackTrace(System.err);
         }
         System.exit(code);
+    }
+
+    /**
+     * Use multi-virtual-threaded concurrent calls and wait for all calls to complete before summarizing and returning.
+     * The results keep the same order as tasks
+     *
+     * @param tasks   list of callables to execute concurrently
+     * @param results list to collect results into, in the same order as tasks
+     * @return
+     * @throws IOException
+     */
+    public static <T> boolean runAndWaitForAllResults(List<Callable<T>> tasks, List<T> results) {
+        int size = tasks.size();
+        List<Future<T>> futures = new ArrayList<>(size);
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (Callable<T> task : tasks) {
+                futures.add(
+                        executor.submit(task)
+                );
+            }
+        }  // executor.close() blocks until all submitted tasks have completed
+
+        for (Future<T> future : futures) {
+            try {
+                T result = future.get();
+                if (result == null) {
+                    return false;
+                }
+                results.add(result);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                //return false;
+                throw new RuntimeException("Execution interrupted", ex);
+            } catch (ExecutionException ex) {
+                //Throwable cause = ex.getCause();
+                throw new RuntimeException("Execution failed on one of the task", ex);
+            }
+        }
+
+        return true;
     }
 }

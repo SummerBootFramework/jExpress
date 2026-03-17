@@ -20,6 +20,7 @@
 * New API: force pretty response for specified @Controller method via SessionContext.forcePrettyResponse(true)
 * File response and redirect response now come with SessionContext response headers
 * Ping handler response header now includes X-Reference and X-ServerTs
+* New API: ApplicationUtil.runAndWaitForAllResults(List<Callable<T>> tasks, List<T> results): Use multi-virtual-threaded concurrent calls and wait for all calls to complete before summarizing and returning and The results keep the same order as tasks
 
 
 ### Version 2.6.8 (2026-03-11)
