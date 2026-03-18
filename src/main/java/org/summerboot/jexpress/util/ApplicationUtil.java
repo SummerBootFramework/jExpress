@@ -270,7 +270,7 @@ public class ApplicationUtil {
      * @return
      * @throws IOException
      */
-    public static <T> boolean runAndWaitForAllResults(List<Callable<T>> tasks, List<T> results) {
+    public static <T> void runAndWaitForAllResults(List<Callable<T>> tasks, List<T> results) throws ExecutionException {
         int size = tasks.size();
         List<Future<T>> futures = new ArrayList<>(size);
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -284,20 +284,19 @@ public class ApplicationUtil {
         for (Future<T> future : futures) {
             try {
                 T result = future.get();
-                if (result == null) {
+                /*if (result == null) {
                     return false;
-                }
+                }*/
                 results.add(result);
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 //return false;
-                throw new RuntimeException("Execution interrupted", ex);
-            } catch (ExecutionException ex) {
+                //throw new RuntimeException("Execution interrupted", ex);
+                throw new ExecutionException("Execution interrupted", ex);
+            } /*catch (ExecutionException ex) {
                 //Throwable cause = ex.getCause();
                 throw new RuntimeException("Execution failed on one of the task", ex);
-            }
+            }*/
         }
-
-        return true;
     }
 }
