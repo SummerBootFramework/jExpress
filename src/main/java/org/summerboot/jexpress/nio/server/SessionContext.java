@@ -102,9 +102,6 @@ public class SessionContext {
     protected ProcessorSettings processorSettings;
 
     // 2.1 error
-//    protected int errorCode;
-//    protected String errorTag;
-//    protected Throwable cause;
     protected ServiceError serviceError;
     protected Throwable cause;
     // 2.2 logging control
@@ -194,7 +191,7 @@ public class SessionContext {
      * @param create
      * @return
      */
-    public Map<Object, Object> session(boolean create) {
+    public synchronized Map<Object, Object> session(boolean create) {
         if (sessionAttributes == null && create) {
             sessionAttributes = new HashMap<>();
         }
@@ -207,7 +204,7 @@ public class SessionContext {
      * @param key
      * @return
      */
-    public <T extends Object> T sessionAttribute(Object key) {
+    public synchronized <T extends Object> T sessionAttribute(Object key) {
         return sessionAttributes == null ? null : (T) sessionAttributes.get(key);
     }
 
@@ -218,7 +215,7 @@ public class SessionContext {
      * @param value remove key-value if value is null, otherwise add key-value
      * @return current SessionContext instance
      */
-    public SessionContext sessionAttribute(Object key, Object value) {
+    public synchronized SessionContext sessionAttribute(Object key, Object value) {
         if (sessionAttributes == null) {
             sessionAttributes = new HashMap<>();
         }
@@ -252,7 +249,7 @@ public class SessionContext {
         return startDateTime;
     }
 
-    public SessionContext resetResponseData() {
+    public synchronized SessionContext resetResponseData() {
         // 1. data
         txt = "";
         file = null;
@@ -639,16 +636,16 @@ public class SessionContext {
 //        return this;
 //    }
 
-    public boolean hasError() {
+    public synchronized boolean hasError() {
         return serviceError != null && serviceError.getErrors() != null && !serviceError.getErrors().isEmpty();
     }
 
-    public List<Err> errors() {
+    public synchronized List<Err> errors() {
         return hasError() ? serviceError.getErrors() : null;
     }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
-    public ServiceError error() {
+    public synchronized ServiceError error() {
 //        if (serviceError == null || serviceError.getErrors() == null || serviceError.getErrors().isEmpty()) {
 //            return null;
 //        }
@@ -661,7 +658,7 @@ public class SessionContext {
      * @param error
      * @return
      */
-    public SessionContext error(Err error) {
+    public synchronized SessionContext error(Err error) {
         if (serviceError == null) {
             serviceError = new ServiceError(txId);
         }
@@ -686,7 +683,7 @@ public class SessionContext {
      * @param es
      * @return
      */
-    public SessionContext errors(Collection<Err> es) {
+    public synchronized SessionContext errors(Collection<Err> es) {
         if (es == null || es.isEmpty()) {
             if (serviceError != null && serviceError.getErrors() != null) {
                 serviceError.getErrors().clear();
@@ -711,7 +708,7 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext cause(Throwable cause) {
+    public synchronized SessionContext cause(Throwable cause) {
         this.cause = cause;
         if (cause != null) {
             Throwable root = ExceptionUtils.getRootCause(cause);
@@ -728,7 +725,7 @@ public class SessionContext {
         return this;
     }
 
-    public Throwable cause() {
+    public synchronized Throwable cause() {
         return cause;
     }
 
