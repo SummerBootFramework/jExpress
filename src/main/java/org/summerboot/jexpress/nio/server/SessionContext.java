@@ -93,7 +93,7 @@ public class SessionContext {
     protected boolean downloadMode = true;
     protected String redirect;
     protected final List<POI> poi = new ArrayList<>();
-    protected List<Memo> memo;
+    protected final List<Memo> memo = new ArrayList<>();
     protected boolean forcePrettyResponse = false;
 
     // Session attributes
@@ -803,43 +803,35 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext poi(String marker) {
-//        if (poi == null) {
-//            //poi = new LinkedHashMap();
-//            poi = new ArrayList();
-//        }
-        //poi.put(marker, System.currentTimeMillis());
+    public synchronized SessionContext poi(String marker) {
         poi.add(new POI(marker));
         return this;
     }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
-    public List<POI> poi() {
+    public synchronized List<POI> poi() {
         return poi;
     }
 
-    public SessionContext memo(String desc) {
+    public synchronized SessionContext memo(String desc) {
         return this.memo(null, desc, null);
     }
 
-    public SessionContext memo(String id, String desc) {
+    public synchronized SessionContext memo(String id, String desc) {
         return this.memo(id, desc, null);
     }
 
-    public SessionContext memo(String desc, Level logLevel) {
+    public synchronized SessionContext memo(String desc, Level logLevel) {
         return this.memo(null, desc, logLevel);
     }
 
-    public SessionContext memo(String id, String desc, Level logLevel) {
-        if (memo == null) {
-            memo = new ArrayList<>();
-        }
+    public synchronized SessionContext memo(String id, String desc, Level logLevel) {
         memo.add(new Memo(id, desc, logLevel));
         return this;
     }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
-    public List<Memo> memo() {
+    public synchronized List<Memo> memo() {
         return memo;
     }
 
@@ -899,12 +891,12 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext reportPOI(StringBuilder sb) {
+    public synchronized SessionContext reportPOI(StringBuilder sb) {
         return reportPOI(null, sb);
     }
 
-    public SessionContext reportPOI(NioConfig cfg, StringBuilder sb) {
-        if (poi == null || poi.isEmpty()) {
+    public synchronized SessionContext reportPOI(NioConfig cfg, StringBuilder sb) {
+        if (poi.isEmpty()) {
             sb.append(BootConstant.BR + "\tPOI: n/a");
             return this;
         }
@@ -929,12 +921,12 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext reportMemo(StringBuilder sb) {
+    public synchronized SessionContext reportMemo(StringBuilder sb) {
         return this.reportMemo(sb, Level.ALL);
     }
 
-    public SessionContext reportMemo(StringBuilder sb, Level reportLevel) {
-        if (memo == null || memo.isEmpty()) {
+    public synchronized SessionContext reportMemo(StringBuilder sb, Level reportLevel) {
+        if (memo.isEmpty()) {
             return this;
         }
         sb.append(BootConstant.BR + BootConstant.BR + "\tMemo: ");
