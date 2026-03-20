@@ -43,6 +43,7 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
@@ -451,6 +452,8 @@ public class ReflectionUtil {
             //String[] ap = value.trim().split(FormatterUtil.REGEX_BINDING_MAP);
             String[] ap = value.trim().split(":");
             return new InetSocketAddress(ap[0], Integer.parseInt(ap[1]));
+        } else if (targetClass.equals(Charset.class)) {
+            return Charset.forName(value);
         } else {
 //            //1. try JSON
 //            try {

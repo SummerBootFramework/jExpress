@@ -64,6 +64,7 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -165,7 +166,7 @@ public class NioHttpUtil {
         return sendText(ctx, isKeepAlive, sessionContext.responseHeaders(), sessionContext.status(), sessionContext.txt(), sessionContext.contentType(), sessionContext.charsetName(), true, sessionContext.responseEncoder());
     }
 
-    protected static final String DEFAULT_CHARSET = "UTF-8";
+    //protected static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     protected static long sendText(ChannelHandlerContext ctx, boolean isKeepAlive, HttpHeaders serviceHeaders, HttpResponseStatus status, String content, String contentType, String charsetName, boolean flush, ResponseEncoder responseEncoder) {
         if (content == null) {
@@ -177,21 +178,20 @@ public class NioHttpUtil {
         //FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.wrappedBuffer(content.getBytes(CharsetUtil.UTF_8)));
         byte[] contentBytes;
         if (charsetName == null) {
-            contentBytes = content.getBytes(StandardCharsets.UTF_8);
-            charsetName = DEFAULT_CHARSET;
+            Charset DEFAULT_CHARSET = NioConfig.cfg.getDefaultResponseCharset();
+            contentBytes = content.getBytes(DEFAULT_CHARSET);
+            charsetName = DEFAULT_CHARSET.name();
         } else {
             try {
                 contentBytes = content.getBytes(charsetName);
             } catch (UnsupportedEncodingException ex) {
-//                String error = "Unsupported Header (Accept-Charset: " + charsetName + "): " + ex.getMessage();
-//                contentBytes = error.getBytes(StandardCharsets.UTF_8);
-//                status = HttpResponseStatus.NOT_ACCEPTABLE;
                 if (log.isWarnEnabled()) {
                     String error = SecurityUtil.sanitizeCRLF("Unsupported Header (Accept-Charset: " + charsetName + "): " + ex.getMessage());
                     log.warn(error);
                 }
-                contentBytes = content.getBytes(StandardCharsets.UTF_8);
-                charsetName = DEFAULT_CHARSET;
+                Charset DEFAULT_CHARSET = NioConfig.cfg.getDefaultResponseCharset();
+                contentBytes = content.getBytes(DEFAULT_CHARSET);
+                charsetName = DEFAULT_CHARSET.name();
             }
         }
 //        int a = 252;//"ü"

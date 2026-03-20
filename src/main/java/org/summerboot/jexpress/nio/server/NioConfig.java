@@ -33,6 +33,8 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -279,6 +281,9 @@ public class NioConfig extends BootConfig {
 
     @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
+
+    @Config(key = "nio.default.response.Charset", desc = "Accept-Charset header is deprecated and no longer used by modern browsers, servers often default to a widely compatible encoding (like UTF-8) or the resource's default encoding for better user experience.", defaultValue = "UTF-8")
+    protected Charset defaultResponseCharset = StandardCharsets.UTF_8;
 
     @Config(key = "nio.WebSocket.Compress", defaultValue = "true")
     protected volatile boolean webSocketCompress = true;
@@ -741,6 +746,10 @@ public class NioConfig extends BootConfig {
 
     public TimeZone getJsonParserTimeZone() {
         return jsonParserTimeZone;
+    }
+
+    public Charset getDefaultResponseCharset() {
+        return defaultResponseCharset;
     }
 
     public boolean isToJsonIgnoreNull() {
