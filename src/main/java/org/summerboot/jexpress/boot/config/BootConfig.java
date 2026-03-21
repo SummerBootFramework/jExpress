@@ -428,7 +428,9 @@ public abstract class BootConfig implements JExpressConfig {
         for (Field field : configItems) {
             // desc
             ConfigHeader header = field.getAnnotation(ConfigHeader.class);
+            boolean headerProcessed = false;
             if (header != null) {
+                headerProcessed = true;
                 List<String> list = parse(header);
                 int maxSize = 0;
                 for (String s : list) {
@@ -483,13 +485,19 @@ public abstract class BootConfig implements JExpressConfig {
             Config cfg = field.getAnnotation(Config.class);
             if (cfg != null) {
                 boolean isEncrypted = cfg.validate().equals(Config.Validate.Encrypted);
-                String cm = cfg.desc();
-                if (StringUtils.isNotBlank(cm)) {
+                String desc = cfg.desc();
+                if (StringUtils.isNotBlank(desc)) {
                     List<String> memoList = new ArrayList<>();
-                    lineBreak(cm, null, memoList);
+                    lineBreak(desc, "Note: ", memoList);
+                    boolean isMultyLineNote = false;
                     for (String s : memoList) {
                         hasConfig = true;
-                        sb.append("#").append(s).append("\n");
+                        if (!headerProcessed && !isMultyLineNote) {
+                            sb.append("\n");
+                        }
+                        isMultyLineNote = true;
+                        sb.append(s).append("\n");
+                        headerProcessed = false;
                     }
                 }
                 boolean isRequired = cfg.required();
@@ -574,9 +582,9 @@ public abstract class BootConfig implements JExpressConfig {
                         i++;
                     }
                 }
-                if (StringUtils.isNotBlank(cm)) {
-                    sb.append("\n");
-                }
+//                if (StringUtils.isNotBlank(desc)) {
+//                    sb.append("\n");
+//                }
             }
         }
 
