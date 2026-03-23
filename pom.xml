@@ -174,9 +174,9 @@
         <netty.version>4.2.10.Final</netty.version>
         <netty-tcnative.version>2.0.75.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.79.0</grpc.version>
+        <grpc.version>1.80.0</grpc.version>
         <guava.version>33.5.0-jre</guava.version>
-        <protobuf.version>4.34.0</protobuf.version>
+        <protobuf.version>4.34.1</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>2.2.45</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
@@ -194,7 +194,7 @@
         <jackson.annotations.version>2.21</jackson.annotations.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.18</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.20</tomcat-embed-el.version>
         <hibernate-validator.version>9.1.0.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->

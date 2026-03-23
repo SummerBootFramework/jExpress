@@ -24,6 +24,7 @@
 * make SessionContext thread safe
 * New cfg_nio.properties added: #nio.default.response.Charset=UTF-8: Accept-Charset header is deprecated and no longer used by modern browsers, servers often default to a widely compatible encoding (like UTF-8) or the resource's default encoding for better user experience.
 * Reformating config files
+* New Class: CustomizedJsonField, ServiceError and Err now both extend this new class, so that setAdditionalField(Object additionalFieldData, String additionalFieldName) can be use to set customized JSON field
 
 ### Version 2.6.8 (2026-03-11)
 #### ✨ Features and Enhancements
