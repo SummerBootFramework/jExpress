@@ -17,9 +17,9 @@ public class CustomizedJsonField {
 
     @JsonAnyGetter
     @JsonProperty(index = 4)
-    public Map<String, Object> serializeArgs() {
+    public Map<String, Object> serializeAdditionalField() {
         if (additionalField == null) {
-            return Collections.emptyMap();   // nothing written when args is null
+            return Collections.emptyMap();   // nothing written when additionalField is null
         }
         return Collections.singletonMap(additionalFieldName, additionalField);
     }
@@ -42,8 +42,8 @@ public class CustomizedJsonField {
         this.additionalField = additionalField;
     }
 
-    public void setAdditionalField(Object additionalFieldData, String additionalFieldName) {
-        this.additionalField = additionalFieldData;
+    public void setAdditionalField(Object additionalField, String additionalFieldName) {
+        this.additionalField = additionalField;
         this.additionalFieldName = additionalFieldName;
     }
 }

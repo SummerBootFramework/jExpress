@@ -26,6 +26,7 @@
 * Reformating config files
 * New Class: CustomizedJsonField, ServiceError and Err now both extend this new class, so that setAdditionalField(Object additionalFieldData, String additionalFieldName) can be use to set customized JSON field
 
+
 ### Version 2.6.8 (2026-03-11)
 #### ✨ Features and Enhancements
 [4]: https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
