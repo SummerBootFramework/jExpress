@@ -1,37 +1,41 @@
+
+
 ## 📅 CHANGES
 
 ### Version 2.6.9 (2026-03-11)
 
-  * **[Apache Central Repository][1]**
-  * **[Maven Central Repository][2]**
-  * **[mvnrepository.com][3]**
-
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.9
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
+* **[Apache Central Repository][1]**
+* **[Maven Central Repository][2]**
+* **[mvnrepository.com][3]**
 
 #### ✨ Features and Enhancements
 * return Application session ID when admin request version
 * new Annotation: @ParamCollectionDelimiter - to be used if developer need to override the default delimiter: comma (",")
-    * Scope: to be used in @Controller class or method level
-    * Example: @ParamCollectionDelimiter(";") means your List<Object> will use ; as the delimiter (obj1; obj2; obj3; ...)
+    * Scope: to be used in @Controller class or method level.
+    * Example: @ParamCollectionDelimiter(";") means your List\<Objetc\> will use ; as the delimiter (obj1; obj2; obj3; ...)
 * @Controller.responseHeader_ServerTs default value, was hardcoded, is now configured in boot.ini (line 138): naming.responseHeader.X-Reference=X-Reference
 * @Controller.responseHeader_Reference default value, was hardcoded, is now configured in boot.ini (line 139): naming.responseHeader.X-ServerTs=X-ServerTs
 * New API: force pretty response for specified @Controller method via SessionContext.forcePrettyResponse(true)
 * File response and redirect response now come with SessionContext response headers
 * Ping handler response header now includes X-Reference and X-ServerTs
-* New API: ApplicationUtil.runAndWaitForAllResults(List<Callable<T>> tasks, List<T> results): Use multi-virtual-threaded concurrent calls and wait for all calls to complete before summarizing and returning and The results keep the same order as tasks
+* New API: ApplicationUtil.runAndWaitForAllResults(List\<Callable\<T\>\> tasks, List\<T\> results): Use multi-virtual-threaded concurrent calls and wait for all calls to complete before summarizing and returning and The results keep the same order as tasks
 * make SessionContext thread safe
 * New cfg_nio.properties added: #nio.default.response.Charset=UTF-8: Accept-Charset header is deprecated and no longer used by modern browsers, servers often default to a widely compatible encoding (like UTF-8) or the resource's default encoding for better user experience.
 * Reformating config files
 * New Class: CustomizedJsonField, ServiceError and Err now both extend this new class, so that setAdditionalField(Object additionalFieldData, String additionalFieldName) can be use to set customized JSON field
 
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.9
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
+
 
 ### Version 2.6.8 (2026-03-11)
+
 #### ✨ Features and Enhancements
-[4]: https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
 * Jackson migrated to v3.x: com.fasterxml.jackson -> tools.jackson ([Jackson 3 Migration Guide][4])
 * JSON/XML response show empty array by default, and now config line is added to cfg_nio.properties added line136: #nio.JAX-RS.toJson.IgnoreEmptyArray=false
+
+[4]: https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
 
 
 ### Version 2.6.6 (2026-02-11)
@@ -44,7 +48,7 @@
 #### 💥 Breaking Changes & API Refactoring
 * SessionContext: uri() renamed to uriRawDecoded() - the difference between SessionContext.uriRawDecoded() and ServiceRequest.etHttpRequestPath():
     * SessionContext.uriRawDecoded() is the raw URI from FullHttpRequest.uri()
-    * ServiceRequest.getHttpRequestPath() is the URI from  QueryStringDecoder.path(uriRawDecoded)
+    * ServiceRequest.getHttpRequestPath() is the URI from QueryStringDecoder.path(uriRawDecoded)
 
 
 ### Version 2.6.5 (2025-12-18)
@@ -71,7 +75,7 @@ This release introduces significant simplification and consolidation of the appl
 
 #### ⚙️ Configuration Changes
 
-* #### updated log4j2.xml
+##### updated `log4j2.xml`
 
 New configuration items have been added to set the server-specific idle connection thresholds:
 
@@ -88,19 +92,21 @@ New configuration items have been added to set the server-specific idle connecti
 4.  **Configure Idle Threshold:** If you require custom idle monitoring, set the new `idle.threshold.second` configuration item in the corresponding `.properties` file.
 
 
-### Version2.6.3
+### Version 2.6.3
 
-  * log root cause for config error
-  * memo with log level
+* log root cause for config error
+* memo with log level
 
 
 ### Version 2.6.2
 
-  * In case of multiple HttpClient instances, each with different ObjectMapper configuration (e.g. different date format), a default shared ObjectMapper instance was being used to parse the response, this has been changed to let each HttpClient instance has its own ObjectMapper instance by passing the ObjectMapper instance from HttpClient to RPCResult.
-  * gRPC client config: when trust store is not specified, user can choose default one as JDK or TrustAll
-  * IdleEventMonitor only start when the param threshold > 0
-  * log refactoring: make HTTP server and gRPC server status log triggered by pool size change when log.trace is enabled
-  * -domain <name> will throw exception when folder does not exist
+* In case of multiple HttpClient instances, each with different ObjectMapper configuration (e.g. different date format), a default shared ObjectMapper instance was being used to parse the response, this has been changed to let each HttpClient instance has its own ObjectMapper instance by passing the ObjectMapper instance from HttpClient to RPCResult.
+* gRPC client config: when trust store is not specified, user can choose default one as JDK or TrustAll
+* IdleEventMonitor only start when the param threshold > 0
+* log refactoring: make HTTP server and gRPC server status log triggered by pool size change when log.trace is enabled
+* -domain <name> will throw exception when folder does not exist
+
+
 
 
 ### Version 2.6.1

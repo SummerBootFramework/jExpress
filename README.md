@@ -1,6 +1,6 @@
 # Summer Boot Framework — jExpress
 
-[View Changelog (CHANGES)](CHANGES)
+[View Changelog (CHANGES)](CHANGES.md)
 
 > **Java 21+ · Netty 4.2 · Guice 7 · Jakarta EE · Virtual Threads**
 
