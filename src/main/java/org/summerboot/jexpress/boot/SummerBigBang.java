@@ -99,6 +99,15 @@ abstract public class SummerBigBang extends SummerSingularity {
 
     protected <T extends SummerApplication> T aParallelUniverse(String... args) {
         log.trace("");
+        // This will print the specific reason/exception for the failure
+        log.info("io.netty.handler.ssl.OpenSSL available: " + io.netty.handler.ssl.OpenSsl.isAvailable());
+        if (!io.netty.handler.ssl.OpenSsl.isAvailable()) {
+            io.netty.handler.ssl.OpenSsl.unavailabilityCause().printStackTrace();
+        }
+        log.info("io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl available: " + io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl.isAvailable());
+        if (!io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl.isAvailable()) {
+            io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl.unavailabilityCause().printStackTrace();
+        }
         try {
             bigBang_LetThereBeCLI(args);
             bigBang_AndThereWasCLI();
