@@ -1,5 +1,3 @@
-
-
 ## 📅 CHANGES
 
 ### Version 2.6.9 (2026-03-11)
@@ -9,6 +7,7 @@
 * **[mvnrepository.com][3]**
 
 #### ✨ Features and Enhancements
+
 * return Application session ID when admin request version
 * new Annotation: @ParamCollectionDelimiter - to be used if developer need to override the default delimiter: comma (",")
     * Scope: to be used in @Controller class or method level.
@@ -18,38 +17,44 @@
 * New API: force pretty response for specified @Controller method via SessionContext.forcePrettyResponse(true)
 * File response and redirect response now come with SessionContext response headers
 * Ping handler response header now includes X-Reference and X-ServerTs
-* New API: ApplicationUtil.runAndWaitForAllResults(List\<Callable\<T\>\> tasks, List\<T\> results): Use multi-virtual-threaded concurrent calls and wait for all calls to complete before summarizing and returning and The results keep the same order as tasks
+* New API: ApplicationUtil.runAndWaitForAllResults(List\<Callable\<T\>\> tasks, List\<T\> results): Use multi-virtual-threaded concurrent calls and wait for all calls to complete before summarizing
+  and returning and The results keep the same order as tasks
 * make SessionContext thread safe
-* New cfg_nio.properties added: #nio.default.response.Charset=UTF-8: Accept-Charset header is deprecated and no longer used by modern browsers, servers often default to a widely compatible encoding (like UTF-8) or the resource's default encoding for better user experience.
+* New cfg_nio.properties added: #nio.default.response.Charset=UTF-8: Accept-Charset header is deprecated and no longer used by modern browsers, servers often default to a widely compatible encoding (
+  like UTF-8) or the resource's default encoding for better user experience.
 * Reformating config files
-* New Class: CustomizedJsonField, ServiceError and Err now both extend this new class, so that setAdditionalField(Object additionalFieldData, String additionalFieldName) can be use to set customized JSON field
+* New Class: CustomizedJsonField, ServiceError and Err now both extend this new class, so that setAdditionalField(Object additionalFieldData, String additionalFieldName) can be use to set customized
+  JSON field
+* RFE269-1: Enhanced Security check
 
 [1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.9
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
 
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
+
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
 
 ### Version 2.6.8 (2026-03-11)
 
 #### ✨ Features and Enhancements
+
 * Jackson migrated to v3.x: com.fasterxml.jackson -> tools.jackson ([Jackson 3 Migration Guide][4])
 * JSON/XML response show empty array by default, and now config line is added to cfg_nio.properties added line136: #nio.JAX-RS.toJson.IgnoreEmptyArray=false
 
 [4]: https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
 
-
 ### Version 2.6.6 (2026-02-11)
 
 #### ✨ Features and Enhancements
+
 * PDFBox lib migrated to io.github.openhtmltopdf from com.openhtmltopdf by Sam Li 黎韦辰
 * Enhanced security for requesting file downloading/content: SecurityUtil.escape4Filename
 * Enhanced security: reject and response 400 when URL contains illegal char or Path Traversal
 
 #### 💥 Breaking Changes & API Refactoring
+
 * SessionContext: uri() renamed to uriRawDecoded() - the difference between SessionContext.uriRawDecoded() and ServiceRequest.etHttpRequestPath():
     * SessionContext.uriRawDecoded() is the raw URI from FullHttpRequest.uri()
     * ServiceRequest.getHttpRequestPath() is the URI from QueryStringDecoder.path(uriRawDecoded)
-
 
 ### Version 2.6.5 (2025-12-18)
 
@@ -59,7 +64,8 @@ This release introduces significant simplification and consolidation of the appl
 
 * **Lifecycle API Consolidation:**
     * **Removed/Deprecated:** The interfaces **`SummerRunner`** has been removed.
-    * **New Interface:** All (SummerRunner and IdleEventMonitor.IdleEventListener) combined functionality for initialization, startup, and idle event listening is now consolidated into the new **`AppLifecycleListener`** / **`AppLifecycleHandler`** interface.
+    * **New Interface:** All (SummerRunner and IdleEventMonitor.IdleEventListener) combined functionality for initialization, startup, and idle event listening is now consolidated into the new *
+      *`AppLifecycleListener`** / **`AppLifecycleHandler`** interface.
 * **Startup Method Renamed:**
     * The functionality previously found in **`SummerRunner.run()`** has been moved to **`AppLifecycleListener.beforeApplicationStart()`**.
 
@@ -68,7 +74,8 @@ This release introduces significant simplification and consolidation of the appl
 * **Unified Idle Event Handling:**
     * The `AppLifecycleHandler` now supports unified handling of idle (inactivity) events for both the NIO HTTP server and the gRPC server.
 * **Dynamic Idle Interval:**
-    * The `IdleEventMonitor` now determines its detection interval via the new API **`IdleEventMonitor.getIdleIntervalMillis()`**. This internal change prevents the monitoring application from unnecessary restarts when only configuration values are updated, improving stability.
+    * The `IdleEventMonitor` now determines its detection interval via the new API **`IdleEventMonitor.getIdleIntervalMillis()`**. This internal change prevents the monitoring application from
+      unnecessary restarts when only configuration values are updated, improving stability.
 * **Updated files:**
     * etc/boot.ini (added line#122 #backoffice.IdleMonotor.Config0.Reload.IntervalSec=30)
     * ./configuration/log4j2.xml
@@ -86,458 +93,434 @@ New configuration items have been added to set the server-specific idle connecti
 
 ### Migration Guide (Mandatory Steps for Upgrade)
 
-1.  **Remove Old Interfaces:** Delete any classes implementing `SummerRunner` or `IdleEventMonitor.IdleEventListener`.
-2.  **Implement New Handler:** Implement the new **`AppLifecycleListener`** or **`AppLifecycleHandler`** interface.
-3.  **Update Startup Logic:** Migrate the logic from the former `SummerRunner.run()` method to the new **`AppLifecycleListener.beforeApplicationStart()`** method.
-4.  **Configure Idle Threshold:** If you require custom idle monitoring, set the new `idle.threshold.second` configuration item in the corresponding `.properties` file.
-
+1. **Remove Old Interfaces:** Delete any classes implementing `SummerRunner` or `IdleEventMonitor.IdleEventListener`.
+2. **Implement New Handler:** Implement the new **`AppLifecycleListener`** or **`AppLifecycleHandler`** interface.
+3. **Update Startup Logic:** Migrate the logic from the former `SummerRunner.run()` method to the new **`AppLifecycleListener.beforeApplicationStart()`** method.
+4. **Configure Idle Threshold:** If you require custom idle monitoring, set the new `idle.threshold.second` configuration item in the corresponding `.properties` file.
 
 ### Version 2.6.3
 
 * log root cause for config error
 * memo with log level
 
-
 ### Version 2.6.2
 
-* In case of multiple HttpClient instances, each with different ObjectMapper configuration (e.g. different date format), a default shared ObjectMapper instance was being used to parse the response, this has been changed to let each HttpClient instance has its own ObjectMapper instance by passing the ObjectMapper instance from HttpClient to RPCResult.
+* In case of multiple HttpClient instances, each with different ObjectMapper configuration (e.g. different date format), a default shared ObjectMapper instance was being used to parse the response,
+  this has been changed to let each HttpClient instance has its own ObjectMapper instance by passing the ObjectMapper instance from HttpClient to RPCResult.
 * gRPC client config: when trust store is not specified, user can choose default one as JDK or TrustAll
 * IdleEventMonitor only start when the param threshold > 0
 * log refactoring: make HTTP server and gRPC server status log triggered by pool size change when log.trace is enabled
 * -domain <name> will throw exception when folder does not exist
 
-
-
-
 ### Version 2.6.1
 
-  * Fixed all legacy GitHub CodeQL alerts and security issues.
+* Fixed all legacy GitHub CodeQL alerts and security issues.
 
-  * Fixed all legacy GitHub Codacy Security Scan reported issues.
+* Fixed all legacy GitHub Codacy Security Scan reported issues.
 
-  * Improved security - configuration behavior changed as below of HttpClientConfig, GRPCClientConfig, MqttClientConfig and AuthConfig (cfg_auth.propertie)
+* Improved security - configuration behavior changed as below of HttpClientConfig, GRPCClientConfig, MqttClientConfig and AuthConfig (cfg_auth.propertie)
     1. TLS protocol: Use plaintext no SSL/TLS if TLS protocol is configured as blank or empty string.
     2. Keystore: Use JDK default keystore if not specified, behavior of using 'plaintext no SSL/TLS' has been removed.
     3. Truststore: Use JDK default truststore if not specified, behavior of using `TrustManager` that accepts all certificates has been removed.
 
-  * Improved security - configuration behavior of NioConfig
+* Improved security - configuration behavior of NioConfig
     1. TLS protocol: Use plaintext no SSL/TLS if TLS protocol is configured as blank or empty string.
     2. Keystore: Required when TLS protocol is configured, otherwise throw IllegalStateException if not specified.
 
-  * Enhanced security: Replaced `secpr5121` with `secp256r1` for default `ECGenParameterSpec`.
+* Enhanced security: Replaced `secpr5121` with `secp256r1` for default `ECGenParameterSpec`.
 
-  * Enhanced security: Fixed the use of a cryptographic algorithm with insufficient key size - Threw `InvalidAlgorithmParameterException` when using a cryptographic algorithm with insufficient key size to call `EncryptorUtil.generateKeyPair()`.
+* Enhanced security: Fixed the use of a cryptographic algorithm with insufficient key size - Threw `InvalidAlgorithmParameterException` when using a cryptographic algorithm with insufficient key size
+  to call `EncryptorUtil.generateKeyPair()`.
 
-  * Enhanced security: Fixed polynomial regular expression used on uncontrolled data (`FormatterUtil`).
+* Enhanced security: Fixed polynomial regular expression used on uncontrolled data (`FormatterUtil`).
 
-  * Enhanced error handling: `PathParm` with regex inside URL will return `400 Bad Request` when regex does not match.
+* Enhanced error handling: `PathParm` with regex inside URL will return `400 Bad Request` when regex does not match.
 
-  * Enhanced logging: Logged detailed information and stack trace for health check failure.
+* Enhanced logging: Logged detailed information and stack trace for health check failure.
 
-  * Enhanced logging: Netty channel handler exception will be logged only when:
+* Enhanced logging: Netty channel handler exception will be logged only when:
 
-    1.  run with `-debug`
-    2.  or caller address is in enabled whitelist or not in enabled blacklist
+    1. run with `-debug`
+    2. or caller address is in enabled whitelist or not in enabled blacklist
 
-  * Config change: `Regex.Prefix` is removed in `CallerAddressFilter`, the whitelist and blacklist no longer need a prefix to mark a value as regex.
+* Config change: `Regex.Prefix` is removed in `CallerAddressFilter`, the whitelist and blacklist no longer need a prefix to mark a value as regex.
 
-    1.  `cfg_nio.properties`
-          * removed: `CallerAddressFilter.Regex.Prefix`
-          * default value changed: `CallerAddressFilter.option=String` (was `"HostName"`)
-    2.  `cfg_grpc.properties`
-          * removed: `gRpc.server.CallerAddressFilter.Regex.Prefix`
-          * default value changed: `gRpc.server.CallerAddressFilter.option=String` (was `"HostName"`)
+    1. `cfg_nio.properties`
+        * removed: `CallerAddressFilter.Regex.Prefix`
+        * default value changed: `CallerAddressFilter.option=String` (was `"HostName"`)
+    2. `cfg_grpc.properties`
+        * removed: `gRpc.server.CallerAddressFilter.Regex.Prefix`
+        * default value changed: `gRpc.server.CallerAddressFilter.option=String` (was `"HostName"`)
 
-  * **Maven Central Repository:**
-    `https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.1/`
-    `https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.1`
+* **Maven Central Repository:**
+  `https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.1/`
+  `https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.1`
 
-  * **mvnrepository.com:**
-    `https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.1`
-
+* **mvnrepository.com:**
+  `https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.1`
 
 ### Version 2.6.0
 
-  * **Enhanced security 1:** This change uses enhanced encryption/decryption to protect sensitive data, like passwords in config files.
-    The 2.5.2 cannot read the current encrypted data by 2.5.1.
-    It requires the app with 2.5.1 to decrypt to `DEC`, or deploy with `DEC`.
+* **Enhanced security 1:** This change uses enhanced encryption/decryption to protect sensitive data, like passwords in config files.
+  The 2.5.2 cannot read the current encrypted data by 2.5.1.
+  It requires the app with 2.5.1 to decrypt to `DEC`, or deploy with `DEC`.
 
-      * to decrypt: `java -jar your-app.jar -decrypt -auth <root password> [-domain <your domain>]`
-        or: `java -jar your-app.jar -decrypt -authfile <path to root password file> [-domain <your domain>]`
+    * to decrypt: `java -jar your-app.jar -decrypt -auth <root password> [-domain <your domain>]`
+      or: `java -jar your-app.jar -decrypt -authfile <path to root password file> [-domain <your domain>]`
 
-  * **Enhanced security 2:** The default master password is no longer hardcoded. It will be loaded from `etc/master.password` file (auto create if not exists) when `"-authfile <path to master.password>"` is not provided to launch the app.
+* **Enhanced security 2:** The default master password is no longer hardcoded. It will be loaded from `etc/master.password` file (auto create if not exists) when
+  `"-authfile <path to master.password>"` is not provided to launch the app.
 
-  * **Enhanced security 3:** HTTP server supports caller address filter with regex precheck.
+* **Enhanced security 3:** HTTP server supports caller address filter with regex precheck.
 
-  * **Enhanced security 4:** gRPC server supports caller address filter with regex precheck.
+* **Enhanced security 4:** gRPC server supports caller address filter with regex precheck.
 
-  * **Enhanced security 5:** Added `@Log.maskDataFields` and refactoring `FormatterUtil.replaceDataField` to protect data not only in JSON format but also for sanitized JSON, XML, sanitized XML, and Form data.
+* **Enhanced security 5:** Added `@Log.maskDataFields` and refactoring `FormatterUtil.replaceDataField` to protect data not only in JSON format but also for sanitized JSON, XML, sanitized XML, and
+  Form data.
 
-  * **Enhanced security 6:** Fixed `CWE-117, 331, 338, 327, 73, 90` flaws, and also verified and marked false positive CWE flaws.
+* **Enhanced security 6:** Fixed `CWE-117, 331, 338, 327, 73, 90` flaws, and also verified and marked false positive CWE flaws.
 
-  * **Enhanced security 7:** Replaced `JKS` with `PKCS12`.
+* **Enhanced security 7:** Replaced `JKS` with `PKCS12`.
 
-  * Upgraded to Netty `4.2.x`.
+* Upgraded to Netty `4.2.x`.
 
-  * Refactoring CLI exit code.
+* Refactoring CLI exit code.
 
-  * **API new:** Added `@UniqueIgnore` to mute `@Unique` check alert for expected duplicated values.
+* **API new:** Added `@UniqueIgnore` to mute `@Unique` check alert for expected duplicated values.
 
-  * **API new:** Added `@Inspector.name` and `@Daemon.requiredHealthChecks` (array of `@Inspector.names`, empty/null means ignore all HealthChecks).
-    This is to set `Controller` and/or its methods on daemon mode (accessible when pause/health failed but not for specified `@Inspector.name`).
+* **API new:** Added `@Inspector.name` and `@Daemon.requiredHealthChecks` (array of `@Inspector.names`, empty/null means ignore all HealthChecks).
+  This is to set `Controller` and/or its methods on daemon mode (accessible when pause/health failed but not for specified `@Inspector.name`).
 
-  * **API renamed:**
+* **API renamed:**
 
-      * `@Controller.implTag` renamed to `@Controller.AlternativeName`.
-      * `@Service.implTag` renamed to with `@Service.AlternativeName`.
-      * `@Log.hideJsonStringFields`, `hideJsonNumberFields` and `hideJsonArrayFields` all renamed to with `@Log.maskDataFields`.
-      * `org.summerboot.jexpress.nio.server.domain.ServiceContext` renamed to `org.summerboot.jexpress.nio.server.SessionContext`.
-      * `@ImportResource.checkImplTagUsed` renamed to `@ImportResource.whenUseAlternative`.
-      * `@ImportResource.loadWhenImplTagUsed` renamed to `@ImportResource.thenLoadConfig`.
+    * `@Controller.implTag` renamed to `@Controller.AlternativeName`.
+    * `@Service.implTag` renamed to with `@Service.AlternativeName`.
+    * `@Log.hideJsonStringFields`, `hideJsonNumberFields` and `hideJsonArrayFields` all renamed to with `@Log.maskDataFields`.
+    * `org.summerboot.jexpress.nio.server.domain.ServiceContext` renamed to `org.summerboot.jexpress.nio.server.SessionContext`.
+    * `@ImportResource.checkImplTagUsed` renamed to `@ImportResource.whenUseAlternative`.
+    * `@ImportResource.loadWhenImplTagUsed` renamed to `@ImportResource.thenLoadConfig`.
 
-  * **Config removed:** `etc/boot.ini/default.interval.ConfigChangeMonitor`.
+* **Config removed:** `etc/boot.ini/default.interval.ConfigChangeMonitor`.
 
-  * **Config new:** `etc/boot.ini`
+* **Config new:** `etc/boot.ini`
 
-    ```properties
-    #######################
-    # 3. Default Settings #
-    #######################
-    #default.ConfigChangeMonitor.Throttle.Milliseconds=100
+  ```properties
+  #######################
+  # 3. Default Settings #
+  #######################
+  #default.ConfigChangeMonitor.Throttle.Milliseconds=100
 
-    #####################################################
-    # 5.1 Security Settings: keystore type and provider #
-    #####################################################
-    ## keystore type for SSL/TLS, valid values: PKCS12 (default), PKCS11, JCEKS, JKS, BCFKS
-    #keystore.type=PKCS12
+  #####################################################
+  # 5.1 Security Settings: keystore type and provider #
+  #####################################################
+  ## keystore type for SSL/TLS, valid values: PKCS12 (default), PKCS11, JCEKS, JKS, BCFKS
+  #keystore.type=PKCS12
 
-    ## keystore provider for SSL/TLS, valid values: null=JDK default, BC (BouncyCastle), SunJSSE, BCFIPS, etc.
-    ## Note: BC will not verify the key password, so it is not recommended for production use.
-    ## Note: BCFIPS is a FIPS compliant provider, which is required by some government applications.
-    #keystore.provider=
+  ## keystore provider for SSL/TLS, valid values: null=JDK default, BC (BouncyCastle), SunJSSE, BCFIPS, etc.
+  ## Note: BC will not verify the key password, so it is not recommended for production use.
+  ## Note: BCFIPS is a FIPS compliant provider, which is required by some government applications.
+  #keystore.provider=
 
-    #########################################
-    # 5.2 Security Settings: message digest #
-    #########################################
-    ## SHA3-224, SHA3-256 (default), SHA3-384, SHA3-512, SHA-256, SHA-384, SHA-512, etc.
-    ## Note: MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
-    #algorithm.Messagedigest=SHA3-256
+  #########################################
+  # 5.2 Security Settings: message digest #
+  #########################################
+  ## SHA3-224, SHA3-256 (default), SHA3-384, SHA3-512, SHA-256, SHA-384, SHA-512, etc.
+  ## Note: MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+  #algorithm.Messagedigest=SHA3-256
 
-    ###################################################################
-    # 5.3 Security Settings: asymmetric key (public/private key pair) #
-    ###################################################################
-    ## Asymmetric key algorithm, valid values: RSA (default), DSA, EC, DiffieHellman, Ed25519, Ed448, etc.
-    #algorithm.Asymmetric=RSA
+  ###################################################################
+  # 5.3 Security Settings: asymmetric key (public/private key pair) #
+  ###################################################################
+  ## Asymmetric key algorithm, valid values: RSA (default), DSA, EC, DiffieHellman, Ed25519, Ed448, etc.
+  #algorithm.Asymmetric=RSA
 
-    ## Asymmetric cipher transformation, valid values: RSA/None/OAEPWithSHA-256AndMGF1Padding (default), RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc.
-    ## Note: cryptographic algorithm ECB is weak and should not be used: RSA/ECB/PKCS1Padding
-    #transformation.Asymmetric=RSA/None/OAEPWithSHA-256AndMGF1Padding
+  ## Asymmetric cipher transformation, valid values: RSA/None/OAEPWithSHA-256AndMGF1Padding (default), RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc.
+  ## Note: cryptographic algorithm ECB is weak and should not be used: RSA/ECB/PKCS1Padding
+  #transformation.Asymmetric=RSA/None/OAEPWithSHA-256AndMGF1Padding
 
-    ######################################################
-    # 5.4 Security Settings: symmetric key (no password) #
-    ######################################################
-    ## Symmetric key algorithm, valid values: AES (default), DES, DESede, Blowfish, ARCFOUR, ChaCha20, HmacMD5, HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512, HmacSHA512/224, HmacSHA512/256, HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512, RC2, etc.
-    #algorithm.Symmetric=AES
+  ######################################################
+  # 5.4 Security Settings: symmetric key (no password) #
+  ######################################################
+  ## Symmetric key algorithm, valid values: AES (default), DES, DESede, Blowfish, ARCFOUR, ChaCha20, HmacMD5, HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512, HmacSHA512/224, HmacSHA512/256, HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512, RC2, etc.
+  #algorithm.Symmetric=AES
 
-    ## key size in bits for symmetric key generation, algorithms may have different key size requirements.
-    #length.SymmetricKey.Bits=256
+  ## key size in bits for symmetric key generation, algorithms may have different key size requirements.
+  #length.SymmetricKey.Bits=256
 
-    ## Symmetric cipher transformation, valid values: AES/GCM/NoPadding (default, for modern applications), AES/CBC/PKCS5Padding (more compatible with older systems), AES/CBC/NoPadding, AES/CTR/NoPadding, AES/CFB/NoPadding, DES/CBC/PKCS5Padding, DESede/CBC/PKCS5Padding, Blowfish/CBC/PKCS5Padding, etc.
-    ## Note: do not use AES/CBC, and AES/GCM/PKCS5Padding is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html
-    #transformation.Symmetric=AES/GCM/NoPadding
+  ## Symmetric cipher transformation, valid values: AES/GCM/NoPadding (default, for modern applications), AES/CBC/PKCS5Padding (more compatible with older systems), AES/CBC/NoPadding, AES/CTR/NoPadding, AES/CFB/NoPadding, DES/CBC/PKCS5Padding, DESede/CBC/PKCS5Padding, Blowfish/CBC/PKCS5Padding, etc.
+  ## Note: do not use AES/CBC, and AES/GCM/PKCS5Padding is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html
+  #transformation.Symmetric=AES/GCM/NoPadding
 
-    ## AuthenticationTag size in bits for symmetric key generation, algorithms may have different AuthenticationTag size requirements.
-    #length.SymmetricKey.AuthenticationTag.Bits=128
+  ## AuthenticationTag size in bits for symmetric key generation, algorithms may have different AuthenticationTag size requirements.
+  #length.SymmetricKey.AuthenticationTag.Bits=128
 
-    ## IV size in bits for symmetric key generation, algorithms may have different IV size requirements.
-    #length.symmetricKey.InitializationVector.Bytes=12
+  ## IV size in bits for symmetric key generation, algorithms may have different IV size requirements.
+  #length.symmetricKey.InitializationVector.Bytes=12
 
-    #####################################################
-    # 5.5 Security Settings: secret key (with password) #
-    #####################################################
-    ## Symmetric key factory generation algorithm, valid values: PBKDF2WithHmacSHA256 (default), PBKDF2WithHmacSHA512, PBKDF2WithHmacSHA1, etc.
-    #algorithm.SecretKey=PBKDF2WithHmacSHA256
+  #####################################################
+  # 5.5 Security Settings: secret key (with password) #
+  #####################################################
+  ## Symmetric key factory generation algorithm, valid values: PBKDF2WithHmacSHA256 (default), PBKDF2WithHmacSHA512, PBKDF2WithHmacSHA1, etc.
+  #algorithm.SecretKey=PBKDF2WithHmacSHA256
 
-    ## key size in bits for symmetric key generation, algorithms may have different key size requirements.
-    #length.algorithm.SecretKey.Bits=256
+  ## key size in bits for symmetric key generation, algorithms may have different key size requirements.
+  #length.algorithm.SecretKey.Bits=256
 
-    ## salt size in bytes for symmetric key generation, algorithms may have different salt size requirements.
-    #length.algorithm.SecretKey.Salt.Bits=16
+  ## salt size in bytes for symmetric key generation, algorithms may have different salt size requirements.
+  #length.algorithm.SecretKey.Salt.Bits=16
 
-    ## for symmetric key generation, algorithms may have different iteration requirements.
-    #count.algorithm.SecretKey.iteration=310000
-    ```
+  ## for symmetric key generation, algorithms may have different iteration requirements.
+  #count.algorithm.SecretKey.iteration=310000
+  ```
 
-  * **Config new:** `cfg_nio.properties`
+* **Config new:** `cfg_nio.properties`
 
-      * `ping.sync.HealthStatus.requiredHealthChecks`
-      * `ping.sync.PauseStatus`
-      * `ping.sync.showRootCause`
-      * `nio.WebSocket.Compress.maxAllocation`
-      * `nio.JAX-RS.fromJson.autoBeanValidation` (default true to enable Bean Validation by default for `@Controller` methods, no need to add `@Valid`)
-      * `nio.JAX-RS.toJson.showRefInServiceError`
+    * `ping.sync.HealthStatus.requiredHealthChecks`
+    * `ping.sync.PauseStatus`
+    * `ping.sync.showRootCause`
+    * `nio.WebSocket.Compress.maxAllocation`
+    * `nio.JAX-RS.fromJson.autoBeanValidation` (default true to enable Bean Validation by default for `@Controller` methods, no need to add `@Valid`)
+    * `nio.JAX-RS.toJson.showRefInServiceError`
 
-  * **Config renamed:** DB config use jakarta to replace hibernate
+* **Config renamed:** DB config use jakarta to replace hibernate
 
-      * `jakarta.persistence.jdbc.url=`
-      * `jakarta.persistence.jdbc.user=`
-      * `jakarta.persistence.jdbc.password=DEC(changeit)`
-      * `jakarta.persistence.jdbc.driver=com.mysql.jdbc.Driver`
+    * `jakarta.persistence.jdbc.url=`
+    * `jakarta.persistence.jdbc.user=`
+    * `jakarta.persistence.jdbc.password=DEC(changeit)`
+    * `jakarta.persistence.jdbc.driver=com.mysql.jdbc.Driver`
 
-  * **Enhancement:** Replaced space with `_` in log file name.
+* **Enhancement:** Replaced space with `_` in log file name.
 
-  * **Added:** app CLI `-debug` for debug mode.
+* **Added:** app CLI `-debug` for debug mode.
 
-  * **Enhancement:** Added `IdleEventMonitor` and `IdleEventMonitor.IdleEventListener` to enable the app to handle gRPC/RESTFul idle event.
+* **Enhancement:** Added `IdleEventMonitor` and `IdleEventMonitor.IdleEventListener` to enable the app to handle gRPC/RESTFul idle event.
 
-  * **Enhancement:** HttpClient proxy config.
+* **Enhancement:** HttpClient proxy config.
 
-  * **Enhancement:** Refactoring `RPCResult`:
+* **Enhancement:** Refactoring `RPCResult`:
 
-    1.  Supporting multiple error response types.
-    2.  Enabled Bean Validation by default.
+    1. Supporting multiple error response types.
+    2. Enabled Bean Validation by default.
 
-  * **Enhancement:** Enabled Bean Validation by default for `@Controller` methods, no need to add `@Valid`.
+* **Enhancement:** Enabled Bean Validation by default for `@Controller` methods, no need to add `@Valid`.
 
-  * **Enhancement:** `Err` with args.
+* **Enhancement:** `Err` with args.
 
-  * **Enhancement:** Added `nio.JAX-RS.toJson.showRefInServiceError` in `cfg_nio.properties`, default false to not show ref field in JSON/XML response.
+* **Enhancement:** Added `nio.JAX-RS.toJson.showRefInServiceError` in `cfg_nio.properties`, default false to not show ref field in JSON/XML response.
 
-  * **Enhancement:** Verified Bearer Token if provided in request header for regardless of a `@Controller` method is role-based or not.
+* **Enhancement:** Verified Bearer Token if provided in request header for regardless of a `@Controller` method is role-based or not.
 
-  * **Enhancement:** Added `GrpcTestBase` for gRPC test (usage and example see `https://github.com/SummerBootFramework/jExpressDemo-HelloSummer/blob/main/HelloSummer-demo02/src/test/java/test/integration/grpc/GrpcTest.java`)
+* **Enhancement:** Added `GrpcTestBase` for gRPC test (usage and example see
+  `https://github.com/SummerBootFramework/jExpressDemo-HelloSummer/blob/main/HelloSummer-demo02/src/test/java/test/integration/grpc/GrpcTest.java`)
 
-      * 2-way TLS (server and client verify each other's certificate)
-      * Client verify server certificate, server trusts all client certificates.
-      * Server verify server certificate, client trusts all client certificates.
-      * Server and client trust all certificates.
-      * Server does NOT trust the client certificate, client trusts the server certificate; this will fail with `StatusRuntimeException (UNAVAILABLE: ssl exception)`.
-      * Client does NOT trust the server certificate, server trusts the server certificate; this will fail with `StatusRuntimeException (UNAVAILABLE: io exception)`.
+    * 2-way TLS (server and client verify each other's certificate)
+    * Client verify server certificate, server trusts all client certificates.
+    * Server verify server certificate, client trusts all client certificates.
+    * Server and client trust all certificates.
+    * Server does NOT trust the client certificate, client trusts the server certificate; this will fail with `StatusRuntimeException (UNAVAILABLE: ssl exception)`.
+    * Client does NOT trust the server certificate, server trusts the server certificate; this will fail with `StatusRuntimeException (UNAVAILABLE: io exception)`.
 
-  * **Maven Central Repository:**
-    `https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.0/`
-    `https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.0`
+* **Maven Central Repository:**
+  `https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.0/`
+  `https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.0`
 
-  * **mvnrepository.com:**
-    `https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.0`
-
+* **mvnrepository.com:**
+  `https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.0`
 
 ### Version 2.5.1
 
-  * Replaced `String.format(0x%02X, i)` with a better-performance API, 100 times faster via byte operations: `10k` loads performance: `317ms` vs `2ms`.
-  * `@Config` added `boolean trim` (default=`true`) flag to allow configuration items to keep space when `trim=false`.
-
+* Replaced `String.format(0x%02X, i)` with a better-performance API, 100 times faster via byte operations: `10k` loads performance: `317ms` vs `2ms`.
+* `@Config` added `boolean trim` (default=`true`) flag to allow configuration items to keep space when `trim=false`.
 
 ### Version 2.5.0
 
-  * **Virtual Thread:** And the four (`VirtualThread`, `CPU`, `IO`, `Mixed`) modes are supported in the configuration file for HTTP server, HTTP client, gRPC server, and BackOffice.
-
+* **Virtual Thread:** And the four (`VirtualThread`, `CPU`, `IO`, `Mixed`) modes are supported in the configuration file for HTTP server, HTTP client, gRPC server, and BackOffice.
 
 ### Version 2.4.18
 
-  * `BootController.login` will call `preLogin()` and `postLogin()` before and after signing JWT.
-
+* `BootController.login` will call `preLogin()` and `postLogin()` before and after signing JWT.
 
 ### Version 2.4.17
 
-  * Backward compatible with JWT and configurable in `etc/boot.ini`.
-
+* Backward compatible with JWT and configurable in `etc/boot.ini`.
 
 ### Version 2.4.16
 
-  * Changed `BootJobListener` log level to `DEBUG` (configurable in `etc/boot.conf` section 4.2 `naming.log4j2.jboListenerLogLevel`).
-  * `ServiceContext.reset()` renamed to `resetResponseData()`. It only resets response data, not the status.
-
+* Changed `BootJobListener` log level to `DEBUG` (configurable in `etc/boot.conf` section 4.2 `naming.log4j2.jboListenerLogLevel`).
+* `ServiceContext.reset()` renamed to `resetResponseData()`. It only resets response data, not the status.
 
 ### Version 2.4.13
 
-  * `BootHttpFileUploadHandler<T>.T onFileUploaded()` accepts return object `T`.
-  * Enhanced `HealthMonitor` with email alert.
-  * Enhanced logging.
-  * Replaced Glassfish EL impl with Tomcat Embed EL.
-  * Enhanced GRPC client, supported dynamic configuration change.
-  * Enhanced email alert and logging.
-  * Migrated to `jjwt 0.12`.
-
+* `BootHttpFileUploadHandler<T>.T onFileUploaded()` accepts return object `T`.
+* Enhanced `HealthMonitor` with email alert.
+* Enhanced logging.
+* Replaced Glassfish EL impl with Tomcat Embed EL.
+* Enhanced GRPC client, supported dynamic configuration change.
+* Enhanced email alert and logging.
+* Migrated to `jjwt 0.12`.
 
 ### Version 2.4.10
 
-  * Fixed: Renaming a config file will pause/resume service.
-  * Added CLI: `-psv <envId>`.
-  * Refactored: `BootHttpFileUploadHandler`.
-  * HttpClient: Remote HTTP response status will not be set to the response status of `ServiceContext`.
-  * Supported ISO9601 offset with no colon.
-  * `PingHandler` returns `502 Bad Gateway` when service is paused; `503 Service Unavailable` when health check failed.
-  * `HealthInspector` can set log level and status of pause/healthcheck.
-  * Removed `BootHealthInspectorImpl.java`, replaced with newly added `@DefaultHealthInspector`.
-  * `NioServer` only logs status on change.
-  * Service pause by multiple reasons via password, and can only be resumed by all those reasons via correct password.
-
+* Fixed: Renaming a config file will pause/resume service.
+* Added CLI: `-psv <envId>`.
+* Refactored: `BootHttpFileUploadHandler`.
+* HttpClient: Remote HTTP response status will not be set to the response status of `ServiceContext`.
+* Supported ISO9601 offset with no colon.
+* `PingHandler` returns `502 Bad Gateway` when service is paused; `503 Service Unavailable` when health check failed.
+* `HealthInspector` can set log level and status of pause/healthcheck.
+* Removed `BootHealthInspectorImpl.java`, replaced with newly added `@DefaultHealthInspector`.
+* `NioServer` only logs status on change.
+* Service pause by multiple reasons via password, and can only be resumed by all those reasons via correct password.
 
 ### Version 2.4.9
 
-  * Enabled configurable `TimeZone` for JSON parser in both Nio and Http config.
-  * `afterProcess` only gets triggered when `beforeProcess` succeeds.
-
+* Enabled configurable `TimeZone` for JSON parser in both Nio and Http config.
+* `afterProcess` only gets triggered when `beforeProcess` succeeds.
 
 ### Version 2.4.8
 
-  * Added `ServiceContext.report()` and `ServiceContext.report(StringBuilder)`.
-  * `BootCache.debounced()` supports `TimeUnit`.
-
+* Added `ServiceContext.report()` and `ServiceContext.report(StringBuilder)`.
+* `BootCache.debounced()` supports `TimeUnit`.
 
 ### Version 2.4.7
 
-  * Added `afterService()` into `HttpLifecycleListener`, called after sending a response to the client, before starting logging.
-
+* Added `afterService()` into `HttpLifecycleListener`, called after sending a response to the client, before starting logging.
 
 ### Version 2.4.6
 
-  * Recognized `LocalDate` as JAX-RS parameter type.
-
+* Recognized `LocalDate` as JAX-RS parameter type.
 
 ### Version 2.4.5
 
-  * **Refactoring:** `SummerInitializer` init before and after `Ioc` is initialized.
-  * **Enhancement:** Rejected with `503` asap when paused or health check failed, unless `@Controller` or its method has `@Daemon`.
-
+* **Refactoring:** `SummerInitializer` init before and after `Ioc` is initialized.
+* **Enhancement:** Rejected with `503` asap when paused or health check failed, unless `@Controller` or its method has `@Daemon`.
 
 ### Version 2.4.4
 
-  * **Enhancement:** Command line arguments ending with `/r` by mistake in service script no longer impact the application.
-
+* **Enhancement:** Command line arguments ending with `/r` by mistake in service script no longer impact the application.
 
 ### Version 2.4.3
 
-  * **Fixed:** Version updated.
-  * **Enhancement:** `generateTemplate` follows parent first order.
-  * **Refactoring:** HTTP Client classes moved to `org.summerboot.jexpress.integration.httpclient`.
-  * **New:** Released MQTT client to public.
-
+* **Fixed:** Version updated.
+* **Enhancement:** `generateTemplate` follows parent first order.
+* **Refactoring:** HTTP Client classes moved to `org.summerboot.jexpress.integration.httpclient`.
+* **New:** Released MQTT client to public.
 
 ### Version 2.4.2
 
-  * Supported multiple `@Ping`.
-  * Configured `ObjectMapper` with timezone specified in `etc/boot.ini#backoffice.jsonParser.TimeZone`.
-  * Enhanced error handling: Http decoder failed (error code 11) and File download.
-  * Enhanced `@FormParam` processing.
-  * Other than `j_security_check`, also supported `POST ${context-root}/login` with JSON request in `BootController {"username" : "value", "password" : "value"}`.
-  * Let the controller layer handle LDAP escape.
-  * Logged both raw and decoded uri.
-  * Refactored lifecycle/exception listeners/handlers to `org.summerboot.jexpress.boot.event`.
-
+* Supported multiple `@Ping`.
+* Configured `ObjectMapper` with timezone specified in `etc/boot.ini#backoffice.jsonParser.TimeZone`.
+* Enhanced error handling: Http decoder failed (error code 11) and File download.
+* Enhanced `@FormParam` processing.
+* Other than `j_security_check`, also supported `POST ${context-root}/login` with JSON request in `BootController {"username" : "value", "password" : "value"}`.
+* Let the controller layer handle LDAP escape.
+* Logged both raw and decoded uri.
+* Refactored lifecycle/exception listeners/handlers to `org.summerboot.jexpress.boot.event`.
 
 ### Version 2.4.1
 
-  * Enabled `@jakarta.validation.constraints.Pattern` for RESTFul api parameters: `PathParam`, `MatrixParam`, `QueryParam`, `FormParam`, `HeaderParam`, and `CookieParam`.
-  * Fixed: cli `-decrypt` generates `cfg_grpc.properties` even if there is no gRPC impl.
-  * Log trace enable on `org.summerboot.jexpress.nio.server.BootHttpRequestHandler` will override `@org.summerboot.jexpress.boot.annotation.Log` settings to log all requests and responses.
-  * Reformatted Java source code via IDEA default formatter.
-
+* Enabled `@jakarta.validation.constraints.Pattern` for RESTFul api parameters: `PathParam`, `MatrixParam`, `QueryParam`, `FormParam`, `HeaderParam`, and `CookieParam`.
+* Fixed: cli `-decrypt` generates `cfg_grpc.properties` even if there is no gRPC impl.
+* Log trace enable on `org.summerboot.jexpress.nio.server.BootHttpRequestHandler` will override `@org.summerboot.jexpress.boot.annotation.Log` settings to log all requests and responses.
+* Reformatted Java source code via IDEA default formatter.
 
 ### Version 2.3.13
 
-  * Added `etc/boot.ini`: `log.traceWithSystemOut` (default = `false`).
-  * Application start with log trace.
-  * Auto generated `temp` dir for file uploading.
-  * Show internal error message in the log.
-
+* Added `etc/boot.ini`: `log.traceWithSystemOut` (default = `false`).
+* Application start with log trace.
+* Auto generated `temp` dir for file uploading.
+* Show internal error message in the log.
 
 ### Version 2.3.12
 
-  * Enabled customized delimiter of collection in `@Config` with new `collectionDelimiter` field.
-  * Enhanced logging: `ServiceError.ref` changed to `String` from `long`: replaced hit with transaction id (server session id + hit).
-  * Monthly security patch.
-
+* Enabled customized delimiter of collection in `@Config` with new `collectionDelimiter` field.
+* Enhanced logging: `ServiceError.ref` changed to `String` from `long`: replaced hit with transaction id (server session id + hit).
+* Monthly security patch.
 
 ### Version 2.3.11
 
-  * No internal error will be sent to the client.
-  * `@Scheduled` supports dynamic config via specifying a private static field.
-  * Monthly security patch.
-
+* No internal error will be sent to the client.
+* `@Scheduled` supports dynamic config via specifying a private static field.
+* Monthly security patch.
 
 ### Version 2.3.10
 
-  * `HealthMonitor` will send an email alert when status changes without debouncing.
-  * `HealthMonitor` will send an email alert when inspection failed with debouncing.
-
+* `HealthMonitor` will send an email alert when status changes without debouncing.
+* `HealthMonitor` will send an email alert when inspection failed with debouncing.
 
 ### Version 2.3.9
 
-  * `TPE` with name thread pool by `NamedDefaultThreadFactory`.
-  * Supports `org.quartz` with `@Scheduled`.
-  * Supports `org.quartz` with Guice IoC.
-  * Supports `org.quartz` with Guice `@Singleton`.
-  * Supports `logId`.
-  * Refactored `changeit` to `Constant`.
-
+* `TPE` with name thread pool by `NamedDefaultThreadFactory`.
+* Supports `org.quartz` with `@Scheduled`.
+* Supports `org.quartz` with Guice IoC.
+* Supports `org.quartz` with Guice `@Singleton`.
+* Supports `logId`.
+* Refactored `changeit` to `Constant`.
 
 ### Version 2.3.8
 
-  * `BootAuthenticator<T>` implements `Authenticator`, `ServerInterceptor` to support gRPC jwt with the same logic as the Web server.
-  * Fixed gRPC jwt is required by `ServerInterceptor` issue.
-  * Fixed gRPC client `overrideAuthority` issue:
-    1.  certificates with no Subject Alternative Names (SAN) caused `gRpc.client.ssl.overrideAuthority` not working, because SAN empty will DNS name is empty string as `""` in `sun.security.util.HostnameChecker.matchDNS()`.
-    2.  `BootLoadBalancerProvider.authority` is the remote server DNS name, cannot use CSV format.
-  * Threw `UnsupportedOperationException` when LDAP or JWT is not configured.
-  * Hid the cause from sending to the client.
-  * Fixed duplicated `@Ping` error message showing default Ping.
-  * Added `etc/boot.conf` to enable the user to override boot error codes.
-  * Supported multiple `callerRootPackageNames`.
-  * Added `TimeoutAlert` to catch entropy issue (`cat /dev/random`).
-  * Fixed `NioCinfig` load `docrootDir` with double `"run/run"` when run from the current root folder.
-  * Added `ServiceContext.file(String)`.
-  * JWT TTL can be overridden by the Caller.
-  * `NioHttpUtil.WebResourceCache` as `SimpleLocalCacheImpl`.
-
+* `BootAuthenticator<T>` implements `Authenticator`, `ServerInterceptor` to support gRPC jwt with the same logic as the Web server.
+* Fixed gRPC jwt is required by `ServerInterceptor` issue.
+* Fixed gRPC client `overrideAuthority` issue:
+    1. certificates with no Subject Alternative Names (SAN) caused `gRpc.client.ssl.overrideAuthority` not working, because SAN empty will DNS name is empty string as `""` in
+       `sun.security.util.HostnameChecker.matchDNS()`.
+    2. `BootLoadBalancerProvider.authority` is the remote server DNS name, cannot use CSV format.
+* Threw `UnsupportedOperationException` when LDAP or JWT is not configured.
+* Hid the cause from sending to the client.
+* Fixed duplicated `@Ping` error message showing default Ping.
+* Added `etc/boot.conf` to enable the user to override boot error codes.
+* Supported multiple `callerRootPackageNames`.
+* Added `TimeoutAlert` to catch entropy issue (`cat /dev/random`).
+* Fixed `NioCinfig` load `docrootDir` with double `"run/run"` when run from the current root folder.
+* Added `ServiceContext.file(String)`.
+* JWT TTL can be overridden by the Caller.
+* `NioHttpUtil.WebResourceCache` as `SimpleLocalCacheImpl`.
 
 ### Version 2.3.7
 
-  * Empty configuration value in config file will result in field value = `null`.
-  * Cleaned up `GRPCServerConfig`.
-  * Cleaned up `NioCinfig`.
-  * JSON/XML request will not receive HTML error when web resource is enabled.
-  * Moved template files to `org/summerboot/jexpress/template/`.
-  * Generated `jwt_public.key` and `jwt_private.key` when auth is enabled.
-  * Refactored `cfg_auth.properties`.
-  * `@Config` added `predefinedValue`.
-  * Added `JPAConfig`.
-  * `cfg_smtp.properties`:
-      * `mail.smtp.user.displayname` replaced `mail.smtp.userName`.
-      * `mail.smtp.user.password` replaced `mail.smtp.pwd`.
-  * Fixed `@Service(named + implTag)` as key causing combination duplicated false alert error.
-  * Refactored `IoC` memo.
-  * Added `type` to `@Service(binding = ChannelHandler.class, type=)`.
-  * Created configuration folder if not exists.
+* Empty configuration value in config file will result in field value = `null`.
+* Cleaned up `GRPCServerConfig`.
+* Cleaned up `NioCinfig`.
+* JSON/XML request will not receive HTML error when web resource is enabled.
+* Moved template files to `org/summerboot/jexpress/template/`.
+* Generated `jwt_public.key` and `jwt_private.key` when auth is enabled.
+* Refactored `cfg_auth.properties`.
+* `@Config` added `predefinedValue`.
+* Added `JPAConfig`.
+* `cfg_smtp.properties`:
+    * `mail.smtp.user.displayname` replaced `mail.smtp.userName`.
+    * `mail.smtp.user.password` replaced `mail.smtp.pwd`.
+* Fixed `@Service(named + implTag)` as key causing combination duplicated false alert error.
+* Refactored `IoC` memo.
+* Added `type` to `@Service(binding = ChannelHandler.class, type=)`.
+* Created configuration folder if not exists.
 
 TODO: JSR356
 
-
 ### Version 2.3.6
 
-  * Auto-generated HTTP error page by status code when running as a web server.
+* Auto-generated HTTP error page by status code when running as a web server.
 
-  * Enabled testing with programmatically starting/shutting down a server multiple times.
+* Enabled testing with programmatically starting/shutting down a server multiple times.
 
-  * Enabled auto-start NIO service via `cfg`.
+* Enabled auto-start NIO service via `cfg`.
 
-  * Enabled auto-start gRPC service via `cfg`.
+* Enabled auto-start gRPC service via `cfg`.
 
-  * Enabled gRPC server binding on multiple NICs.
+* Enabled gRPC server binding on multiple NICs.
 
-  * Enabled gRPC with Bearer token.
+* Enabled gRPC with Bearer token.
 
-  * Enabled gRPC client-side load balancing.
+* Enabled gRPC client-side load balancing.
 
-  * Added `SocketAddress` as a config type.
+* Added `SocketAddress` as a config type.
 
-  * Called `SummerRunner.run` before `HealthInspector.ping()`.
+* Called `SummerRunner.run` before `HealthInspector.ping()`.
 
-  * Fixed `JMX` shutdown issue.
+* Fixed `JMX` shutdown issue.
 
-  * Fixed web server cannot handle invalid file name issue.
+* Fixed web server cannot handle invalid file name issue.
 
-  * Fixed `multi-binding-binding` duplicated key issue.
+* Fixed `multi-binding-binding` duplicated key issue.
 
-  * Fixed password contains `()` issue.
+* Fixed password contains `()` issue.
