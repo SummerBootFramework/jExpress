@@ -1,10 +1,16 @@
 ## 📅 CHANGES
 
-### Version 2.6.9 (2026-03-11)
-
 * **[Apache Central Repository][1]**
 * **[Maven Central Repository][2]**
 * **[mvnrepository.com][3]**
+
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.9
+
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
+
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
+
+### Version 2.6.9 (2026-03-11)
 
 #### ✨ Features and Enhancements
 
@@ -27,11 +33,31 @@
   JSON field
 * RFE269-1: Enhanced Security check
 
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.9
+### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
 
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
+jExpress 2.6.9 includes an important security upgrade to address a vulnerability disclosed by the Netty project.
 
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
+#### 📌 Impacted Versions
+
+According to the official Netty advisory, the vulnerability affects:
+
+- Netty versions`<= 4.2.10.Final`
+- jExpress versions`<= 2.6.8.Final`
+
+#### 🛠 Fix Included in This Release
+
+jExpress v2.6.9 has upgraded Netty to: 4.2.12.Final
+
+This version contains the complete upstream fix for the vulnerability and additional stability improvements.
+
+#### ✔ Is jExpress Affected?
+
+jExpress relies entirely on Netty’s official HTTP decoders and does **not** implement any custom HTTP parsing logic.  
+Therefore, upgrading Netty to a patched version fully mitigates the vulnerability.
+
+#### 🔧 Recommendation
+
+All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to ensure their applications remain secure.
 
 ### Version 2.6.8 (2026-03-11)
 
