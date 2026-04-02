@@ -32,6 +32,7 @@
 * New Class: CustomizedJsonField, ServiceError and Err now both extend this new class, so that setAdditionalField(Object additionalFieldData, String additionalFieldName) can be use to set customized
   JSON field
 * RFE269-1: Enhanced Security check
+* REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml
 
 ### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
 

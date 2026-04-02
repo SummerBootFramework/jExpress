@@ -160,7 +160,7 @@
         <commons-text.version>1.15.0</commons-text.version>
         <owasp.encoder.version>1.4.0</owasp.encoder.version>
         <!-- Logging -->
-        <log4j-api.version>2.25.3</log4j-api.version>
+        <log4j-api.version>2.25.4</log4j-api.version>
         <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
         <!-- Mail -->
         <jakarta-mail.version>2.0.2</jakarta-mail.version>
@@ -178,7 +178,7 @@
         <guava.version>33.5.0-jre</guava.version>
         <protobuf.version>4.34.1</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.45</swagger.core.version>
+        <swagger.core.version>2.2.46</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -190,7 +190,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>3.1.0</jackson.version>
+        <jackson.version>3.1.1</jackson.version>
         <jackson.annotations.version>2.21</jackson.annotations.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>

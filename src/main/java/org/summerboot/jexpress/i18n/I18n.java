@@ -56,14 +56,14 @@ public interface I18n {
                 "啟動應用程序......");
 
         I18nLabel launched = new I18nLabel(
-                "%ARG1% application launched (success), kill -9 or Ctrl+C to shutdown",
-                "%ARG1% application lancée (succès), kill -9 ou Ctrl + C pour arrêter",
-                "%ARG1% 应用程序启动（成功），请用 kill -9 或 Ctrl + C 关闭");
+                "Application launched (success) %ARG1%, kill -9 or Ctrl+C to shutdown",
+                "Application lancée (succès) %ARG1%, kill -9 ou Ctrl + C pour arrêter",
+                "应用程序启动（成功） %ARG1%，请用 kill -9 或 Ctrl + C 关闭");
 
         I18nLabel unlaunched = new I18nLabel(
-                "Appliclation failed to start",
-                "L'application n'a pas pu démarrer",
-                "应用程序无法启动");
+                "Appliclation failed to start %ARG1%",
+                "L'application n'a pas pu démarrer %ARG1%",
+                "应用程序无法启动 %ARG1%");
 
         I18nLabel cfgChangedBefore = new I18nLabel(
                 "Configuration changed, before - \n%ARG1%",
