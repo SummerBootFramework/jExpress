@@ -425,10 +425,10 @@ public abstract class BootConfig implements JExpressConfig {
         List<Field> configItems = ReflectionUtil.getDeclaredAndSuperClassesFields(configClass, true);
         boolean hasConfig = false;
         StringBuilder sb = new StringBuilder();
+        boolean headerProcessed = false;
         for (Field field : configItems) {
             // desc
             ConfigHeader header = field.getAnnotation(ConfigHeader.class);
-            boolean headerProcessed = false;
             if (header != null) {
                 headerProcessed = true;
                 List<String> list = parse(header);

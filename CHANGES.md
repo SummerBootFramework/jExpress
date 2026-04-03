@@ -10,7 +10,7 @@
 
 [3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
 
-### Version 2.6.9 (2026-03-11)
+### Version 2.6.9 (2026-04-24)
 
 #### ✨ Features and Enhancements
 
@@ -31,7 +31,7 @@
 * Reformating config files
 * New Class: CustomizedJsonField, ServiceError and Err now both extend this new class, so that setAdditionalField(Object additionalFieldData, String additionalFieldName) can be use to set customized
   JSON field
-* RFE269-1: Enhanced Security check
+* RFE269-1: Enhanced Security check - gRPC Client
 * REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml
 
 ### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
