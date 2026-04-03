@@ -495,11 +495,12 @@ public abstract class BootConfig implements JExpressConfig {
                         if (!headerProcessed && !isMultyLineNote) {
                             sb.append("\n");
                         }
+                        headerProcessed = false;
                         isMultyLineNote = true;
                         sb.append(s).append("\n");
-                        headerProcessed = false;
                     }
                 }
+                headerProcessed = false;
                 boolean isRequired = cfg.required();
                 boolean hasDefaultValue = false, hasPredefinedValue = false;
                 String dv = cfg.predefinedValue();
