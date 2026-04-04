@@ -69,7 +69,6 @@ abstract public class HttpClientConfig extends BootConfig {
         System.out.println(t);
     }
 
-    protected static final String FILENAME_KEYSTORE = "keystore.p12";
     protected static final String FILENAME_TRUSTSTORE_4CLIENT = "truststore_httpclient.p12";
 
     protected enum ProxyAuthenticationType {

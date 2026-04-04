@@ -89,7 +89,6 @@ public interface BootConstant {
     String CLI_CONFIG_DEMO = BackOffice.agent.getCliName_cfgdemo();
     String CLI_LIST_UNIQUE = BackOffice.agent.getCliName_list();
     String CLI_ADMIN_PWD_FILE = BackOffice.agent.getCliName_authfile();
-    String CLI_ADMIN_PWD = BackOffice.agent.getCliName_auth();
     String CLI_JWT = BackOffice.agent.getCliName_jwt();
     String CLI_ENCRYPT = BackOffice.agent.getCliName_encrypt();
     String CLI_DECRYPT = BackOffice.agent.getCliName_decrypt();

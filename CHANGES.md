@@ -33,6 +33,8 @@
   JSON field
 * RFE269-1: Enhanced Security check - gRPC Client
 * REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml
+* REF269-3a: Enhanced CLI Security - implemented password masking and removed "-auth"
+* REF269-3b: New API SecurityUtil.promptPassword();
 
 ### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
 

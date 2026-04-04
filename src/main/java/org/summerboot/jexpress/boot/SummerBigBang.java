@@ -43,6 +43,7 @@ import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.JwtUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.PropertiesFile;
@@ -210,15 +211,8 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         arg = Option.builder(BootConstant.CLI_ADMIN_PWD_FILE)
                 .desc("Specify an application configuration password in a file which contains a line: APP_ROOT_PASSWORD=<base64 encoded password>"
-                        + BootConstant.BR + "Note: Unlike the -" + BootConstant.CLI_ADMIN_PWD + " opton, this option protects the app config password from being exposed via ps command.")
+                        + BootConstant.BR + "Note: this option not only avoid console prompt for password and also protects the app config password from being exposed via ps command.")
                 .hasArg().argName("file")
-                .get();
-        cliOptions.addOption(arg);
-
-        arg = Option.builder(BootConstant.CLI_ADMIN_PWD)
-                .desc("Specify an application config password instead of the default one."
-                        + BootConstant.BR + "Note: This option exposes the app config password via ps command")
-                .hasArg().argName("password")
                 .get();
         cliOptions.addOption(arg);
 
@@ -230,9 +224,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         arg = Option.builder(BootConstant.CLI_ENCRYPT)
                 .desc("Encrypt config file content with all \"DEC(plain text)\":"
-                        + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> -" + BootConstant.CLI_ADMIN_PWD_FILE + " <path>"
-                        + BootConstant.BR + BootConstant.BR + "\t or"
-                        + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
+                        + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> [-" + BootConstant.CLI_ADMIN_PWD_FILE + " <path>]")// REF269-3
                 .get();
         cliOptions.addOption(arg);
 
@@ -251,7 +243,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         arg = Option.builder(BootConstant.CLI_DECRYPT)
                 .desc("Decrypt config file content with all \"ENC(encrypted text)\" using password:"
-                        + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_DECRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> -" + BootConstant.CLI_ADMIN_PWD + " <password>")
+                        + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_DECRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> ")// REF269-3
                 .get();
         cliOptions.addOption(arg);
 
@@ -371,10 +363,11 @@ abstract public class SummerBigBang extends SummerSingularity {
         final String masterPasswordFileName;
         if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
             masterPasswordFileName = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD_FILE);
-        } else if (cli.hasOption(BootConstant.CLI_ADMIN_PWD)) {// "else" = only one option, cannot both
+        } /*else if (cli.hasOption(BootConstant.CLI_ADMIN_PWD)) {// "else" = only one option, cannot both
             masterPasswordFileName = null;
-            masterPassword = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD);
-        } else {
+            // REF269-3
+            masterPassword = SecurityUtil.promptPassword("Enter password: ");
+        }*/ else {
             masterPasswordFileName = BootConstant.DEFAULT_MASTER_PASSWORD_FILE;
         }
         try {
@@ -423,14 +416,22 @@ abstract public class SummerBigBang extends SummerSingularity {
          * [Config File] - encrypt/decrypt
          */
         if (cli.hasOption(BootConstant.CLI_ENCRYPT)) {
+            // REF269-3
+            if (!cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
+                masterPassword = SecurityUtil.promptPassword("Enter new application root password: ", "Enter again to confirm: ");
+                EncryptorUtil.setMasterPassword(masterPassword);
+            }
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_encrypt);
             String msg = BootConstant.BR + "\t " + updated + " config items have been encrypted in " + userSpecifiedConfigDir.getAbsolutePath();
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
         } else if (cli.hasOption(BootConstant.CLI_DECRYPT)) {
             if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
-                String msg = BootConstant.BR + "\t error: -" + BootConstant.CLI_ADMIN_PWD_FILE + " is not allowed for decryption, please private password with -" + BootConstant.CLI_ADMIN_PWD + " option when decrypt data";
+                String msg = BootConstant.BR + "\t error: -" + BootConstant.CLI_ADMIN_PWD_FILE + " is not allowed for decryption";
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ARG_ERROR, msg, null);
             }
+            // REF269-3
+            masterPassword = SecurityUtil.promptPassword("Enter current application root password: ", null);
+            EncryptorUtil.setMasterPassword(masterPassword);
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
             String msg = BootConstant.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath();
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);

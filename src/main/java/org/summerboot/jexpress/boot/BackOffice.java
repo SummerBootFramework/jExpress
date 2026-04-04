@@ -317,9 +317,6 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.cli.authfile", defaultValue = "authfile")
     private String cliName_authfile = "authfile";
 
-    @Config(key = "naming.cli.auth", defaultValue = "auth")
-    private String cliName_auth = "auth";
-
     @Config(key = "naming.cli.jwt", defaultValue = "jwt")
     private String cliName_jwt = "jwt";
 
@@ -556,10 +553,6 @@ public class BackOffice extends BootConfig {
 
     public String getCliName_authfile() {
         return cliName_authfile;
-    }
-
-    public String getCliName_auth() {
-        return cliName_auth;
     }
 
     public String getCliName_jwt() {
