@@ -1,6 +1,14 @@
+#!/bin/bash
+
 JAVA_PATH=$(find /usr/lib/jvm -name "java-21-openjdk*" -type d | head -1)
 echo "${JAVA_PATH}"
-“${JAVA_PATH}”/bin/java \
+# Check if Java was actually found
+if [ -z "$JAVA_PATH" ]; then
+    echo "Error: Java 21 OpenJDK not found in /usr/lib/jvm"
+    exit 1
+fi
+
+"${JAVA_PATH}"/bin/java \
  -Dio.netty.native.workdir=./ \
  -Dio.grpc.netty.shaded.io.netty.native.workdir=./ \
  -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005 \
