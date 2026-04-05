@@ -1,4 +1,3 @@
-#PATH=/usr/lib/jvm/java-21-openjdk-21.0.9.0.10-2.el9.x86_64/bin/:$PATH
 JAVA_PATH=$(find /usr/lib/jvm -name "java-21-openjdk*" -type d | head -1)
 echo "${JAVA_PATH}"
 ${JAVA_PATH}/bin/java \
