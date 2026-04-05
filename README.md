@@ -1,4 +1,4 @@
-# Summer Boot Framework — jExpress
+# jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>
 
 [View Changelog (CHANGES)](CHANGES.md)
 
@@ -525,16 +525,16 @@ datasource.password=ENC(encrypted password)
 
 ```bash
 java -jar my-service.jar -cfgdir <config folder> -encrypt -authfile <root pwd file>
-java -jar my-service.jar -cfgdir <config folder> -encrypt -auth <root password>
+java -jar my-service.jar -cfgdir <config folder> -encrypt
 ```
 
 **Manual batch decrypt (root password required):**
 
 ```bash
-java -jar my-service.jar -cfgdir <config folder> -decrypt -auth <root password>
+java -jar my-service.jar -cfgdir <config folder> -decrypt
 ```
 
-> Default `<app root password>` is `changeit` when neither `-authfile` nor `-auth` is provided.
+> Default `<app root password>` is `changeit` when `-authfile` is provided.
 
 ---
 
@@ -996,7 +996,6 @@ Place plugin JARs in the `plugin/` folder. The framework picks them up at startu
 | `-?`               | Show help                                                       |
 | `-cfgdir <path>`   | Config folder path                                              |
 | `-authfile <path>` | Root password file                                              |
-| `-auth <password>` | Root password (inline)                                          |
 | `-encrypt`         | Batch encrypt all `DEC(...)` values                             |
 | `-decrypt`         | Batch decrypt all `ENC(...)` values                             |
 | `-use <name>`      | Launch with alternative service implementation                  |
@@ -1052,7 +1051,7 @@ Place plugin JARs in the `plugin/` folder. The framework picks them up at startu
 The encryption format changed in 2.6.0. Before upgrading, either:
 
 ```bash
-java -jar your-app.jar -decrypt -auth <root password>
+java -jar your-app.jar -decrypt
 ```
 
 or redeploy with `DEC(...)` values and let the new version re-encrypt them.

@@ -7,10 +7,8 @@
     <artifactId>jexpress</artifactId>
     <version>2.6.9-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Summer Boot jExpress ${project.version}</name>
-    <description>Summer Boot jExpress focuses on solving non-functional and operational maintainability requirements,
-        some of which Spring Boot has (may) not yet provided
-    </description>
+    <name>jExpress ${project.version}</name>
+    <description>jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>
     <url>https://github.com/SummerBootFramework</url>
     <licenses>
         <license>
@@ -194,7 +192,7 @@
         <jackson.annotations.version>2.21</jackson.annotations.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.20</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.21</tomcat-embed-el.version>
         <hibernate-validator.version>9.1.0.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
@@ -205,7 +203,7 @@
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>7.4.0</jedis.version>
+        <jedis.version>7.4.1</jedis.version>
 
         <quartz.version>2.5.2</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
