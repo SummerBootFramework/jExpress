@@ -377,7 +377,7 @@ abstract public class SummerApplication extends SummerBigBang {
             startingMemo.append(BootConstant.BR).append("pid#" + BootConstant.PID);
             log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus); // REF269-2
             if (appLifecycleListener != null) {
-                appLifecycleListener.onApplicationStart(appContext, super.appVersion, startingMemo.toString()); // REF269-2
+                appLifecycleListener.onApplicationStart(appContext, super.appVersion, startingMemo.toString());
             }
         } catch (java.net.BindException ex) {// from NioServer
             log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
@@ -387,7 +387,7 @@ abstract public class SummerApplication extends SummerBigBang {
             if (cause instanceof java.net.BindException) {// from gRPC server
                 log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
             } else {
-                log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle, appVersion), ex);
+                log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle, appVersion), ex); // REF269-2
             }
             ApplicationUtil.RTO(BootErrorCode.RTO_UNKNOWN_ERROR, null, null);
         } finally {
