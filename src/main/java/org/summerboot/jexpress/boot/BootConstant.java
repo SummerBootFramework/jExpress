@@ -32,7 +32,7 @@ public interface BootConstant {
     String APP_ID = String.format("%06d", APP_ID_VALUE);
 
     //version
-    String VERSION = "jExpress 2.6.8";
+    String VERSION = "jExpress 2.6.9";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
     String JSONFILTER_NAME_SERVICEERROR = "ServiceErrorFilter";
@@ -69,8 +69,8 @@ public interface BootConstant {
     String FILE_CFG_GRPC = BackOffice.agent.getgRPCConfigFileName();
     String FILE_PAUSE = BackOffice.agent.getPauseFileName();
 
-    String RESPONSE_HEADER_KEY_REF = "X-Reference";
-    String RESPONSE_HEADER_KEY_TS = "X-ServerTs";
+    String RESPONSE_HEADER_KEY_REF = BackOffice.agent.getResponseHeaderRefName();
+    String RESPONSE_HEADER_KEY_TS = BackOffice.agent.getResponseHeaderServerTsName();
 
     String PAUSE_LOCK_CODE_VIAFILE = BackOffice.agent.getPauseLockCodeViaFile();
     String PAUSE_LOCK_CODE_VIAWEB = BackOffice.agent.getPauseLockCodeViaWeb();
@@ -89,7 +89,6 @@ public interface BootConstant {
     String CLI_CONFIG_DEMO = BackOffice.agent.getCliName_cfgdemo();
     String CLI_LIST_UNIQUE = BackOffice.agent.getCliName_list();
     String CLI_ADMIN_PWD_FILE = BackOffice.agent.getCliName_authfile();
-    String CLI_ADMIN_PWD = BackOffice.agent.getCliName_auth();
     String CLI_JWT = BackOffice.agent.getCliName_jwt();
     String CLI_ENCRYPT = BackOffice.agent.getCliName_encrypt();
     String CLI_DECRYPT = BackOffice.agent.getCliName_decrypt();

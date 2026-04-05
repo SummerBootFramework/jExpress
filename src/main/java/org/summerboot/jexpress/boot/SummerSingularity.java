@@ -279,7 +279,7 @@ abstract public class SummerSingularity {
             if (versionCount > 1) {
                 appVersion = appVersion + " (";
                 for (int i = 1; i < versionCount; i++) {
-                    appVersion = appVersion + version.value()[i] + " ";
+                    appVersion = appVersion + version.value()[i] + (i < versionCount - 1 ? " " : ""); // REF269-2
                 }
                 appVersion = appVersion + ")";
             }

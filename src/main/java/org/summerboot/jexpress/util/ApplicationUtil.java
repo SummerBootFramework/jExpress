@@ -31,6 +31,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +39,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -253,5 +259,50 @@ public class ApplicationUtil {
             ex.printStackTrace(System.err);
         }
         System.exit(code);
+    }
+
+
+    /**
+     * Use multi-virtual-threaded concurrent calls and wait for all calls to complete before summarizing and returning.
+     * The results keep the same order as tasks, if any task throws exception, the result of that task will be null,
+     * and the exception will be collected and thrown as a combined exception after all tasks have completed,
+     * so that the caller can get the result of all tasks and the exceptions to all failed tasks,
+     * instead of failing fast on the first exception and losing the results and exceptions to other tasks.
+     *
+     * @param tasks
+     * @param results
+     * @param <T>
+     * @throws ExecutionException
+     */
+    public static <T> void runAndWaitForAllResults(List<Callable<T>> tasks, List<T> results) throws ExecutionException {
+        int size = tasks.size();
+        if (size < 1) {
+            return;
+        }
+        List<Future<T>> futures = new ArrayList<>(size);
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (Callable<T> task : tasks) {
+                futures.add(executor.submit(task));
+            }
+        }  // executor.close() blocks until all submitted tasks have completed
+
+        List<Throwable> errors = new ArrayList<>();
+        for (Future<T> future : futures) {
+            T result = null;
+            try {
+                result = future.get();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                errors.add(ex);
+            } catch (ExecutionException ex) {
+                Throwable cause = ex.getCause();
+                errors.add(cause);
+            } finally {
+                results.add(result);
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new ExecutionException("Execution failed on one or more tasks: " + errors, errors.get(0));
+        }
     }
 }

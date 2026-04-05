@@ -93,7 +93,8 @@ public class SessionContext {
     protected boolean downloadMode = true;
     protected String redirect;
     protected final List<POI> poi = new ArrayList<>();
-    protected List<Memo> memo;
+    protected final List<Memo> memo = new ArrayList<>();
+    protected boolean forcePrettyResponse = false;
 
     // Session attributes
     protected Map<Object, Object> sessionAttributes;
@@ -101,9 +102,6 @@ public class SessionContext {
     protected ProcessorSettings processorSettings;
 
     // 2.1 error
-//    protected int errorCode;
-//    protected String errorTag;
-//    protected Throwable cause;
     protected ServiceError serviceError;
     protected Throwable cause;
     // 2.2 logging control
@@ -193,7 +191,7 @@ public class SessionContext {
      * @param create
      * @return
      */
-    public Map<Object, Object> session(boolean create) {
+    public synchronized Map<Object, Object> session(boolean create) {
         if (sessionAttributes == null && create) {
             sessionAttributes = new HashMap<>();
         }
@@ -206,7 +204,7 @@ public class SessionContext {
      * @param key
      * @return
      */
-    public <T extends Object> T sessionAttribute(Object key) {
+    public synchronized <T extends Object> T sessionAttribute(Object key) {
         return sessionAttributes == null ? null : (T) sessionAttributes.get(key);
     }
 
@@ -217,7 +215,7 @@ public class SessionContext {
      * @param value remove key-value if value is null, otherwise add key-value
      * @return current SessionContext instance
      */
-    public SessionContext sessionAttribute(Object key, Object value) {
+    public synchronized SessionContext sessionAttribute(Object key, Object value) {
         if (sessionAttributes == null) {
             sessionAttributes = new HashMap<>();
         }
@@ -251,7 +249,7 @@ public class SessionContext {
         return startDateTime;
     }
 
-    public SessionContext resetResponseData() {
+    public synchronized SessionContext resetResponseData() {
         // 1. data
         txt = "";
         file = null;
@@ -638,16 +636,16 @@ public class SessionContext {
 //        return this;
 //    }
 
-    public boolean hasError() {
+    public synchronized boolean hasError() {
         return serviceError != null && serviceError.getErrors() != null && !serviceError.getErrors().isEmpty();
     }
 
-    public List<Err> errors() {
+    public synchronized List<Err> errors() {
         return hasError() ? serviceError.getErrors() : null;
     }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
-    public ServiceError error() {
+    public synchronized ServiceError error() {
 //        if (serviceError == null || serviceError.getErrors() == null || serviceError.getErrors().isEmpty()) {
 //            return null;
 //        }
@@ -660,7 +658,7 @@ public class SessionContext {
      * @param error
      * @return
      */
-    public SessionContext error(Err error) {
+    public synchronized SessionContext error(Err error) {
         if (serviceError == null) {
             serviceError = new ServiceError(txId);
         }
@@ -685,7 +683,7 @@ public class SessionContext {
      * @param es
      * @return
      */
-    public SessionContext errors(Collection<Err> es) {
+    public synchronized SessionContext errors(Collection<Err> es) {
         if (es == null || es.isEmpty()) {
             if (serviceError != null && serviceError.getErrors() != null) {
                 serviceError.getErrors().clear();
@@ -710,7 +708,7 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext cause(Throwable cause) {
+    public synchronized SessionContext cause(Throwable cause) {
         this.cause = cause;
         if (cause != null) {
             Throwable root = ExceptionUtils.getRootCause(cause);
@@ -727,7 +725,7 @@ public class SessionContext {
         return this;
     }
 
-    public Throwable cause() {
+    public synchronized Throwable cause() {
         return cause;
     }
 
@@ -796,43 +794,44 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext poi(String marker) {
-//        if (poi == null) {
-//            //poi = new LinkedHashMap();
-//            poi = new ArrayList();
-//        }
-        //poi.put(marker, System.currentTimeMillis());
+    public boolean forcePrettyResponse() {
+        return forcePrettyResponse;
+    }
+
+    public SessionContext forcePrettyResponse(boolean forcePrettyResponse) {
+        this.forcePrettyResponse = forcePrettyResponse;
+        return this;
+    }
+
+    public synchronized SessionContext poi(String marker) {
         poi.add(new POI(marker));
         return this;
     }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
-    public List<POI> poi() {
+    public synchronized List<POI> poi() {
         return poi;
     }
 
-    public SessionContext memo(String desc) {
+    public synchronized SessionContext memo(String desc) {
         return this.memo(null, desc, null);
     }
 
-    public SessionContext memo(String id, String desc) {
+    public synchronized SessionContext memo(String id, String desc) {
         return this.memo(id, desc, null);
     }
 
-    public SessionContext memo(String desc, Level logLevel) {
+    public synchronized SessionContext memo(String desc, Level logLevel) {
         return this.memo(null, desc, logLevel);
     }
 
-    public SessionContext memo(String id, String desc, Level logLevel) {
-        if (memo == null) {
-            memo = new ArrayList<>();
-        }
+    public synchronized SessionContext memo(String id, String desc, Level logLevel) {
         memo.add(new Memo(id, desc, logLevel));
         return this;
     }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
-    public List<Memo> memo() {
+    public synchronized List<Memo> memo() {
         return memo;
     }
 
@@ -892,12 +891,12 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext reportPOI(StringBuilder sb) {
+    public synchronized SessionContext reportPOI(StringBuilder sb) {
         return reportPOI(null, sb);
     }
 
-    public SessionContext reportPOI(NioConfig cfg, StringBuilder sb) {
-        if (poi == null || poi.isEmpty()) {
+    public synchronized SessionContext reportPOI(NioConfig cfg, StringBuilder sb) {
+        if (poi.isEmpty()) {
             sb.append(BootConstant.BR + "\tPOI: n/a");
             return this;
         }
@@ -922,12 +921,12 @@ public class SessionContext {
         return this;
     }
 
-    public SessionContext reportMemo(StringBuilder sb) {
+    public synchronized SessionContext reportMemo(StringBuilder sb) {
         return this.reportMemo(sb, Level.ALL);
     }
 
-    public SessionContext reportMemo(StringBuilder sb, Level reportLevel) {
-        if (memo == null || memo.isEmpty()) {
+    public synchronized SessionContext reportMemo(StringBuilder sb, Level reportLevel) {
+        if (memo.isEmpty()) {
             return this;
         }
         sb.append(BootConstant.BR + BootConstant.BR + "\tMemo: ");

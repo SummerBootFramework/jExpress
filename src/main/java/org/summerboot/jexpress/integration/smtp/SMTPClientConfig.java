@@ -95,23 +95,19 @@ public class SMTPClientConfig extends BootConfig {
             format = "CSV format",
             example = "johndoe@test.com, janedoe@test.com")
     public static final String KEY_MAILTO_APPSUPPORT = "email.to.AppSupport";
-    @Config(key = KEY_MAILTO_APPSUPPORT, validate = Config.Validate.EmailRecipients,
-            desc = "The default alert email recipients")
+    @Config(key = KEY_MAILTO_APPSUPPORT, validate = Config.Validate.EmailRecipients, desc = "The default alert email recipients")
     protected volatile Set<String> emailToAppSupport;
 
     public static final String KEY_MAILTO_DEV = "email.to.Development";
-    @Config(key = KEY_MAILTO_DEV, validate = Config.Validate.EmailRecipients,
-            desc = "use AppSupport if not provided")
+    @Config(key = KEY_MAILTO_DEV, validate = Config.Validate.EmailRecipients, desc = "use AppSupport if not provided")
     protected volatile Set<String> emailToDevelopment;
 
     public static final String KEY_MAILTO_REPORT = "email.to.ReportViewer";
-    @Config(key = "email.to.ReportViewer", validate = Config.Validate.EmailRecipients,
-            desc = "use AppSupport if not provided")
+    @Config(key = "email.to.ReportViewer", validate = Config.Validate.EmailRecipients, desc = "use AppSupport if not provided")
     protected volatile Set<String> emailToReportViewer;
 
     public static final String KEY_DEBOUCING_INTERVAL = "debouncing.emailalert_minute";
-    @Config(key = KEY_DEBOUCING_INTERVAL, defaultValue = "30",
-            desc = "Alert message with the same subject will not be sent out within this minutes")
+    @Config(key = KEY_DEBOUCING_INTERVAL, defaultValue = "30", desc = "Alert message with the same subject will not be sent out within this minutes")
     protected volatile int emailAlertDebouncingIntervalMinutes = 30;
 
     //3. mail session for Json display only

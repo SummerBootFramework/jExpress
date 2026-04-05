@@ -27,11 +27,13 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Daemon;
 import org.summerboot.jexpress.boot.annotation.Log;
+import org.summerboot.jexpress.boot.annotation.ParamCollectionDelimiter;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.SessionContext;
@@ -225,12 +227,13 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
 
         //5. Parse Parameters
+        final String collectionDelimiter = getCollectionDelimiter(javaMethod, controllerClass);
         Parameter[] params = javaMethod.getParameters();
         List<JaxRsRequestParameter> parameterListTemp = new ArrayList<>();
         List<MetaMatrixParam> metaMatrixParamListTemp = new ArrayList<>();
         if (params != null && params.length > 0) {
             for (Parameter param : params) {
-                JaxRsRequestParameter srp = new JaxRsRequestParameter(info, httpMethod, consumes, param);
+                JaxRsRequestParameter srp = new JaxRsRequestParameter(info, httpMethod, consumes, param, collectionDelimiter);
                 parameterListTemp.add(srp);
                 if (srp.getType().equals(JaxRsRequestParameter.ParamType.MatrixParam)) {
                     metaMatrixParamListTemp.add(new MetaMatrixParam(srp.getKey()));
@@ -298,9 +301,34 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         Controller controllerAnnotation = (Controller) controllerClass.getAnnotation(Controller.class);
         if (controllerAnnotation != null) {
-            processorSettings.setHttpServiceResponseHeaderName_Reference(controllerAnnotation.responseHeader_Reference());
-            processorSettings.setHttpServiceResponseHeaderName_ServerTimestamp(controllerAnnotation.responseHeader_ServerTs());
+            String responseHeaderRefName = controllerAnnotation.responseHeader_Reference();
+            if (StringUtils.isBlank(responseHeaderRefName)) {
+                responseHeaderRefName = BootConstant.RESPONSE_HEADER_KEY_REF;
+            }
+            processorSettings.setHttpServiceResponseHeaderName_Reference(responseHeaderRefName);
+
+            String responseHeaderServerTsName = controllerAnnotation.responseHeader_ServerTs();
+            if (StringUtils.isBlank(responseHeaderServerTsName)) {
+                responseHeaderServerTsName = BootConstant.RESPONSE_HEADER_KEY_TS;
+            }
+            processorSettings.setHttpServiceResponseHeaderName_ServerTimestamp(responseHeaderServerTsName);
         }
+    }
+
+    private static String getCollectionDelimiter(Method javaMethod, Class controllerClass) {
+        final String collectionDelimiter;
+        ParamCollectionDelimiter methodLevelCollectionDelimiter = javaMethod.getAnnotation(ParamCollectionDelimiter.class);
+        if (methodLevelCollectionDelimiter != null) {
+            collectionDelimiter = methodLevelCollectionDelimiter.value();
+        } else {
+            ParamCollectionDelimiter classLeveCollectionDelimiter = (ParamCollectionDelimiter) controllerClass.getAnnotation(ParamCollectionDelimiter.class);
+            if (classLeveCollectionDelimiter != null) {
+                collectionDelimiter = classLeveCollectionDelimiter.value();
+            } else {
+                collectionDelimiter = ",";
+            }
+        }
+        return collectionDelimiter;
     }
 
     protected void updateLogSettings(Log log) {
@@ -473,17 +501,23 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                     context.response((String) ret);
                 } else {
                     switch (responseContentType) {
-                        case MediaType.APPLICATION_JSON:
-                            context.response(BeanUtil.toJson(ret));
-                            break;
-                        case MediaType.APPLICATION_XML:
-                        case MediaType.TEXT_XML:
-                            context.response(BeanUtil.toXML(ret));
-                            break;
-                        case MediaType.TEXT_HTML:
-                        case MediaType.TEXT_PLAIN:
+                        case MediaType.APPLICATION_JSON -> {
+                            if (context.forcePrettyResponse()) {
+                                context.response(BeanUtil.toJson(ret, true));
+                            } else {
+                                context.response(BeanUtil.toJson(ret));
+                            }
+                        }
+                        case MediaType.APPLICATION_XML, MediaType.TEXT_XML -> {
+                            if (context.forcePrettyResponse()) {
+                                context.response(BeanUtil.toXML(ret, true));
+                            } else {
+                                context.response(BeanUtil.toXML(ret));
+                            }
+                        }
+                        case MediaType.TEXT_HTML, MediaType.TEXT_PLAIN -> {
                             context.response(ret.toString());
-                            break;
+                        }
                     }
                 }
                 //3. update content type

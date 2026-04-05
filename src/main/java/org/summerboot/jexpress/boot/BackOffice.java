@@ -253,6 +253,12 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.file.pause", defaultValue = "pause")
     private String pauseFileName = "pause";
 
+    @Config(key = "naming.responseHeader.X-Reference", defaultValue = "X-Reference")
+    private String responseHeaderRefName = "X-Reference";
+
+    @Config(key = "naming.responseHeader.X-ServerTs", defaultValue = "X-ServerTs")
+    private String responseHeaderServerTsName = "X-ServerTs";
+
 
     @Config(key = "HealthMonitor.PauseLockCode.viaFile", defaultValue = "PauseLockCode.file")
     private String pauseLockCodeViaFile = "PauseLockCode.file";
@@ -310,9 +316,6 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "naming.cli.authfile", defaultValue = "authfile")
     private String cliName_authfile = "authfile";
-
-    @Config(key = "naming.cli.auth", defaultValue = "auth")
-    private String cliName_auth = "auth";
 
     @Config(key = "naming.cli.jwt", defaultValue = "jwt")
     private String cliName_jwt = "jwt";
@@ -476,6 +479,14 @@ public class BackOffice extends BootConfig {
         return pauseFileName;
     }
 
+    public String getResponseHeaderRefName() {
+        return responseHeaderRefName;
+    }
+
+    public String getResponseHeaderServerTsName() {
+        return responseHeaderServerTsName;
+    }
+
     public String getPauseLockCodeViaFile() {
         return pauseLockCodeViaFile;
     }
@@ -542,10 +553,6 @@ public class BackOffice extends BootConfig {
 
     public String getCliName_authfile() {
         return cliName_authfile;
-    }
-
-    public String getCliName_auth() {
-        return cliName_auth;
     }
 
     public String getCliName_jwt() {

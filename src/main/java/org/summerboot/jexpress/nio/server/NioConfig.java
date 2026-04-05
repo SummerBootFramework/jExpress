@@ -33,6 +33,8 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -260,25 +262,6 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.health.InspectionIntervalSeconds", defaultValue = "5")
     protected volatile int healthInspectionIntervalSeconds = 5;
 
-    @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive", defaultValue = "false")
-    protected volatile boolean fromJsonCaseInsensitive = false;
-    @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
-    protected volatile boolean fromJsonFailOnUnknownProperties = true;
-
-    @Config(key = "nio.JAX-RS.fromJson.autoBeanValidation", defaultValue = "true")
-    protected volatile boolean fromJsonAutoBeanValidation = true;
-
-    @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
-    protected volatile boolean toJsonIgnoreNull = true;
-    @Config(key = "nio.JAX-RS.toJson.IgnoreEmptyArray", defaultValue = "false")
-    protected volatile boolean toJsonIgnoreEmptyArray = false;
-    @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
-    protected volatile boolean toJsonPretty = false;
-    @Config(key = "nio.JAX-RS.toJson.showRefInServiceError", defaultValue = "true")
-    protected volatile boolean showRefInServiceError = true;
-
-    @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
-    protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
     @Config(key = "nio.WebSocket.Compress", defaultValue = "true")
     protected volatile boolean webSocketCompress = true;
@@ -300,6 +283,33 @@ public class NioConfig extends BootConfig {
     protected volatile boolean webSocketDropPongFrames = true;
     @Config(key = "nio.WebSocket.HandshakeTimeoutMs", defaultValue = "10000")
     protected volatile long webSocketHandshakeTimeoutMs = 10000L;//io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig.DEFAULT_HANDSHAKE_TIMEOUT_MILLIS;
+
+
+    // 4.4. Request/Response
+    @ConfigHeader(title = "4.4. Request/Response ")
+    @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive", defaultValue = "false")
+    protected volatile boolean fromJsonCaseInsensitive = false;
+    @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
+    protected volatile boolean fromJsonFailOnUnknownProperties = true;
+
+    @Config(key = "nio.JAX-RS.fromJson.autoBeanValidation", defaultValue = "true")
+    protected volatile boolean fromJsonAutoBeanValidation = true;
+
+    @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
+    protected volatile boolean toJsonIgnoreNull = true;
+    @Config(key = "nio.JAX-RS.toJson.IgnoreEmptyArray", defaultValue = "false")
+    protected volatile boolean toJsonIgnoreEmptyArray = false;
+    @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
+    protected volatile boolean toJsonPretty = false;
+    @Config(key = "nio.JAX-RS.toJson.showRefInServiceError", defaultValue = "true")
+    protected volatile boolean showRefInServiceError = true;
+
+    @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
+    protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
+
+    @Config(key = "nio.default.response.Charset", desc = "Accept-Charset header is deprecated and no longer used by modern browsers, \nservers often default to a widely compatible encoding (like UTF-8) or the resource's default encoding for better user experience.", defaultValue = "UTF-8")
+    protected Charset defaultResponseCharset = StandardCharsets.UTF_8;
+
 
     //5. IO Communication logging filter
     @ConfigHeader(title = "5. IO Communication logging filter")
@@ -741,6 +751,10 @@ public class NioConfig extends BootConfig {
 
     public TimeZone getJsonParserTimeZone() {
         return jsonParserTimeZone;
+    }
+
+    public Charset getDefaultResponseCharset() {
+        return defaultResponseCharset;
     }
 
     public boolean isToJsonIgnoreNull() {

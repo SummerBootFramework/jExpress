@@ -31,14 +31,11 @@ import java.util.List;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonFilter(BootConstant.JSONFILTER_NAME_SERVICEERROR)
-public class ServiceError {
+public class ServiceError extends CustomizedJsonField {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The index of requests received by current server since start")
     @JsonProperty(index = 1)
     protected final String ref;
-
-    @JsonIgnore
-    protected Object attachedData;
 
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "The optional error list")
     @JsonProperty(index = 2)
@@ -75,7 +72,7 @@ public class ServiceError {
 //    }
     @Override
     public String toString() {
-        return "ServiceError{" + "ref=" + ref + ", attachedData=" + attachedData + ", errors=" + errors + '}';
+        return "ServiceError{" + "ref=" + ref + ", attachedData=" + additionalField + ", errors=" + errors + '}';
     }
 
     public void toStringWithStackTrace(StringBuilder sb) {
@@ -106,16 +103,6 @@ public class ServiceError {
         return ref;
     }
 
-    //    public void setRef(long ref) {
-//        this.ref = BootConstant.APP_ID + "-" + ref;
-//    }
-    public Object getAttachedData() {
-        return attachedData;
-    }
-
-    public void setAttachedData(Object attachedData) {
-        this.attachedData = attachedData;
-    }
 
     public List<Err> getErrors() {
         return errors;

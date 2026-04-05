@@ -20,6 +20,7 @@ import com.google.inject.Singleton;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
@@ -30,9 +31,12 @@ import io.netty.util.ReferenceCountUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.event.HttpLifecycleListener;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
+import org.summerboot.jexpress.util.TimeUtil;
 
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 /**
@@ -82,7 +86,10 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                         if (!NioConfig.cfg.isPingSyncShowRootCause()) {
                             internalReason = null;
                         }
-                        NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), null, status, internalReason, null, null, true, null);
+                        DefaultHttpHeaders responseHeaders = new DefaultHttpHeaders();
+                        responseHeaders.set(BootConstant.RESPONSE_HEADER_KEY_REF, BootConstant.APP_ID);
+                        responseHeaders.set(BootConstant.RESPONSE_HEADER_KEY_TS, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
+                        NioHttpUtil.sendText(ctx, HttpUtil.isKeepAlive((HttpRequest) req), responseHeaders, status, internalReason, null, null, true, null);
                         httpLifecycleListener.afterSendPingResponse(ctx, req.uri(), hit, status);
                     }
                 } finally {

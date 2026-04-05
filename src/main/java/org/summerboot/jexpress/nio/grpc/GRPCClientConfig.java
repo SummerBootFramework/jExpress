@@ -339,16 +339,17 @@ abstract public class GRPCClientConfig extends BootConfig {
         if (tlsProtocols == null || tlsProtocols.length == 0 || tlsProtocols[0] == null || tlsProtocols[0].isEmpty()) {
             channelBuilder.usePlaintext();
         } else {
-            final SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
-            // set keyManagerFactory
-            sslBuilder.keyManager(keyManagerFactory);
-            sslBuilder.trustManager(trustManagerFactory);
+            final SslContextBuilder sslBuilder = GrpcSslContexts
+                    .forClient()
+                    .sslProvider(sslProvider) // RFE269-1 preferred because it let Netty handle this config internally
+                    .keyManager(keyManagerFactory)
+                    .trustManager(trustManagerFactory);
             if (overrideAuthority != null) {
                 channelBuilder.overrideAuthority(overrideAuthority);
             }
 
-            // set sslProvider
-            GrpcSslContexts.configure(sslBuilder, sslProvider);
+            // set sslProvider in a way also works but not preferred, better let Netty handle this config internally.
+            //RFE269-1 GrpcSslContexts.configure(sslBuilder, sslProvider).sslContextProvider(null);
             if (tlsProtocols != null) {
                 sslBuilder.protocols(tlsProtocols);
             }

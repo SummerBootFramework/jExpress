@@ -375,7 +375,7 @@ abstract public class SummerApplication extends SummerBigBang {
             // 6. announcement
             startingMemo.append(BootConstant.BR).append(serviceStatus);
             startingMemo.append(BootConstant.BR).append("pid#" + BootConstant.PID);
-            log.info(() -> BootConstant.BR + BootConstant.BR + I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus);
+            log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus); // REF269-2
             if (appLifecycleListener != null) {
                 appLifecycleListener.onApplicationStart(appContext, super.appVersion, startingMemo.toString());
             }
@@ -387,7 +387,7 @@ abstract public class SummerApplication extends SummerBigBang {
             if (cause instanceof java.net.BindException) {// from gRPC server
                 log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
             } else {
-                log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
+                log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle, appVersion), ex); // REF269-2
             }
             ApplicationUtil.RTO(BootErrorCode.RTO_UNKNOWN_ERROR, null, null);
         } finally {

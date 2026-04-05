@@ -24,14 +24,17 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.util.ApplicationUtil;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
+import java.io.Console;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -517,5 +520,48 @@ public class SecurityUtil {
         Matcher m = p.matcher(input);
         //return m.matches();  This is a Java's misnamed method, it tries and matches ALL the input.
         return m.find();// If you want to see if the regex matches an input text, use the .find() method of the matcher
+    }
+
+    /**
+     * // REF269-3: Prompts for a password with an optional confirmation step.
+     *
+     * @param prompt        The initial message shown to the user.
+     * @param confirmPrompt The message for confirmation (null to skip).
+     * @return The password string, or null if the user chooses not to continue after a mismatch.
+     */
+    public static String promptPassword(String prompt, String confirmPrompt) {
+        Console console = System.console();
+        if (console == null) {
+            throw new IllegalStateException("Console not available. Ensure you are running in a terminal.");
+        }
+
+        while (true) {
+            // 1. Get first password input
+            char[] firstPass = console.readPassword(prompt);
+            String passowrd = new String(firstPass);
+
+            // 2. Check if a confirmation (promptAgain) is required
+            if (confirmPrompt != null) {
+                char[] secondPass = console.readPassword(confirmPrompt);
+                boolean isSame = Arrays.equals(firstPass, secondPass);
+                Arrays.fill(firstPass, ' ');
+                Arrays.fill(secondPass, ' ');
+
+                // 3. Compare the two inputs
+                if (!isSame) {
+                    // 4. Handle mismatch: Ask to continue
+                    String choice = console.readLine("Not match. Try again? (y/n): ");
+                    if (choice != null && choice.trim().equalsIgnoreCase("n")) {
+                        ApplicationUtil.RTO(BootErrorCode.RTO_PWD_NOT_MATCH, "mission aborted", null);
+                    }
+                    // If 'y' or other input, the loop continues to the top
+                    continue;
+                }
+            }
+
+            // Return password as a String if it matches (or if promptAgain was null)
+            Arrays.fill(firstPass, ' ');
+            return passowrd;
+        }
     }
 }

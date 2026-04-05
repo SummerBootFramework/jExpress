@@ -72,9 +72,9 @@ class JaxRsRequestParameter {
     protected boolean autoBeanValidation = false;
     protected boolean cookieParamObj = false;
     protected final EnumConvert.To enumConvert;
-    protected final String collectionDelimiter = null;// TODO
+    protected final String collectionDelimiter;
 
-    public JaxRsRequestParameter(String info, HttpMethod httpMethod, List<String> consumes, Parameter param) {
+    public JaxRsRequestParameter(String info, HttpMethod httpMethod, List<String> consumes, Parameter param, String collectionDelimiter) {
         String error = "\n\tparameter is not allowed in " + info + "(" + param + ")\n\t - ";
         /*requestBodyAllowed = httpMethod.equals(HttpMethod.POST)
                 || httpMethod.equals(HttpMethod.PUT)
@@ -86,6 +86,7 @@ class JaxRsRequestParameter {
         The 2nd quote "The GET method means retrieve whatever information ... is identified by the Request-URI" was deleted. 
          */
 
+        this.collectionDelimiter = collectionDelimiter == null ? "," : collectionDelimiter;
         parameterizedType = param.getParameterizedType();
 
         if (parameterizedType instanceof ParameterizedType) {

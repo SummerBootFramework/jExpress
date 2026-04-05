@@ -25,7 +25,7 @@ import org.summerboot.jexpress.util.BeanUtil;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class Err {
+public class Err extends CustomizedJsonField {
 
     @JsonSerialize(using = ErrorCodeSerializer.class)
     @JsonDeserialize(using = ErrorCodeDeserializer.class)
@@ -37,9 +37,6 @@ public class Err {
 
     @JsonProperty(index = 3)
     protected String errorDesc;
-
-    @JsonProperty(index = 4)
-    protected Object[] args;
 
     @JsonIgnore
     protected Throwable cause;
@@ -113,6 +110,7 @@ public class Err {
         return "{" + "\"errorCode\":\"" + errorCode + "\", \"errorTag\":\"" + errorTag + "\", \"errorDesc\":\"" + errorDesc + "\", \"internalInfo\":\"" + internalInfo + "\", \"cause\":\"" + rootCause + "\"}\n\t" + trace + "\n\n";
     }
 
+
     @JsonIgnore
     public int getErrorCodeInt() {
         return Integer.parseInt(errorCode);
@@ -160,13 +158,5 @@ public class Err {
 
     public void setInternalInfo(Object internalInfo) {
         this.internalInfo = internalInfo;
-    }
-
-    public Object[] getArgs() {
-        return args;
-    }
-
-    public void setArgs(Object... args) {
-        this.args = args;
     }
 }
