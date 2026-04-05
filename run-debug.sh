@@ -1,6 +1,6 @@
 JAVA_PATH=$(find /usr/lib/jvm -name "java-21-openjdk*" -type d | head -1)
 echo "${JAVA_PATH}"
-${JAVA_PATH}/bin/java \
+“${JAVA_PATH}”/bin/java \
  -Dio.netty.native.workdir=./ \
  -Dio.grpc.netty.shaded.io.netty.native.workdir=./ \
  -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005 \
