@@ -1,5 +1,3 @@
-
-
 /*
  * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
  *

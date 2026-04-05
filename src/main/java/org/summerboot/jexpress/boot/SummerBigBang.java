@@ -211,7 +211,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
         arg = Option.builder(BootConstant.CLI_ADMIN_PWD_FILE)
                 .desc("Specify an application configuration password in a file which contains a line: APP_ROOT_PASSWORD=<base64 encoded password>"
-                        + BootConstant.BR + "Note: this option not only avoid console prompt for password and also protects the app config password from being exposed via ps command.")
+                        + BootConstant.BR + "Note: This option not only avoids prompting for a password in the console, but also prevents the application configuration password from being leaked via the ps command.")
                 .hasArg().argName("file")
                 .get();
         cliOptions.addOption(arg);
@@ -432,6 +432,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             // REF269-3
             masterPassword = SecurityUtil.promptPassword("Enter current application root password: ", null);
             EncryptorUtil.setMasterPassword(masterPassword);
+            
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
             String msg = BootConstant.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath();
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
