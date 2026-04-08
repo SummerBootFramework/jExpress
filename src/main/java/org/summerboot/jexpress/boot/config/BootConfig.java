@@ -606,14 +606,12 @@ public abstract class BootConfig implements JExpressConfig {
         if (StringUtils.isBlank(s)) {
             return null;
         }
-        String[] ret = s.trim().split("\\r?\\n");
+        String[] ret = s/*.trim()*/.split("\\r?\\n", -1);
         if (ret != null) {
             for (String r : ret) {
                 if (r != null) {
-                    if (StringUtils.isBlank(prefix)) {
-                        r = r.trim();
-                    } else {
-                        r = prefix + r.trim();
+                    if (StringUtils.isNotBlank(prefix)) {
+                        r = prefix + r;
                     }
                     list.add("# " + r);
                 }
@@ -623,7 +621,7 @@ public abstract class BootConfig implements JExpressConfig {
     }
 
     protected static int getLength(String s) {
-        return StringUtils.isBlank(s) ? 0 : s.trim().length();
+        return StringUtils.isBlank(s) ? 0 : s/*.trim()*/.length();
     }
 
     protected static final int CPU_CORE = Runtime.getRuntime().availableProcessors();

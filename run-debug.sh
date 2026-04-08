@@ -2,7 +2,7 @@
 # shellcheck shell=bash
 
 # Check if Java was actually found
-JAVA_PATH=$(find /usr/lib/jvm -name "java-21-openjdk*" -type d | head -1)
+JAVA_PATH=$(find /usr/lib/jvm -name 'java-21-openjdk*' -type d | head -1)
 
 if [ -z "$JAVA_PATH" ]; then
     echo "Error: Java 21 OpenJDK not found in /usr/lib/jvm"

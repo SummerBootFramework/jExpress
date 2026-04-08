@@ -1,16 +1,6 @@
 ## 📅 CHANGES
 
-* **[Apache Central Repository][1]**
-* **[Maven Central Repository][2]**
-* **[mvnrepository.com][3]**
-
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.9
-
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
-
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
-
-### Version 2.6.9 (2026-04-24)
+## Version 2.6.9 (2026-04-24)
 
 #### ✨ Features and Enhancements
 
@@ -35,6 +25,7 @@
 * REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml
 * REF269-3a: Enhanced CLI Security - implemented password masking and removed "-auth"
 * REF269-3b: New API SecurityUtil.promptPassword();
+* REF269-4: Enhanced gRPC client config description (GRPCClientConfig.java)
 
 ### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
 
@@ -62,7 +53,7 @@ Therefore, upgrading Netty to a patched version fully mitigates the vulnerabilit
 
 All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to ensure their applications remain secure.
 
-### Version 2.6.8 (2026-03-11)
+## Version 2.6.8 (2026-03-11)
 
 #### ✨ Features and Enhancements
 
@@ -71,7 +62,7 @@ All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to e
 
 [4]: https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
 
-### Version 2.6.6 (2026-02-11)
+## Version 2.6.6 (2026-02-11)
 
 #### ✨ Features and Enhancements
 
@@ -85,7 +76,7 @@ All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to e
     * SessionContext.uriRawDecoded() is the raw URI from FullHttpRequest.uri()
     * ServiceRequest.getHttpRequestPath() is the URI from QueryStringDecoder.path(uriRawDecoded)
 
-### Version 2.6.5 (2025-12-18)
+## Version 2.6.5 (2025-12-18)
 
 #### 💥 Breaking Changes & API Refactoring
 
@@ -127,12 +118,12 @@ New configuration items have been added to set the server-specific idle connecti
 3. **Update Startup Logic:** Migrate the logic from the former `SummerRunner.run()` method to the new **`AppLifecycleListener.beforeApplicationStart()`** method.
 4. **Configure Idle Threshold:** If you require custom idle monitoring, set the new `idle.threshold.second` configuration item in the corresponding `.properties` file.
 
-### Version 2.6.3
+## Version 2.6.3
 
 * log root cause for config error
 * memo with log level
 
-### Version 2.6.2
+## Version 2.6.2
 
 * In case of multiple HttpClient instances, each with different ObjectMapper configuration (e.g. different date format), a default shared ObjectMapper instance was being used to parse the response,
   this has been changed to let each HttpClient instance has its own ObjectMapper instance by passing the ObjectMapper instance from HttpClient to RPCResult.
@@ -141,7 +132,7 @@ New configuration items have been added to set the server-specific idle connecti
 * log refactoring: make HTTP server and gRPC server status log triggered by pool size change when log.trace is enabled
 * -domain <name> will throw exception when folder does not exist
 
-### Version 2.6.1
+## Version 2.6.1
 
 * Fixed all legacy GitHub CodeQL alerts and security issues.
 
@@ -188,7 +179,7 @@ New configuration items have been added to set the server-specific idle connecti
 * **mvnrepository.com:**
   `https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.1`
 
-### Version 2.6.0
+## Version 2.6.0
 
 * **Enhanced security 1:** This change uses enhanced encryption/decryption to protect sensitive data, like passwords in config files.
   The 2.5.2 cannot read the current encrypted data by 2.5.1.
@@ -356,29 +347,29 @@ New configuration items have been added to set the server-specific idle connecti
 * **mvnrepository.com:**
   `https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.0`
 
-### Version 2.5.1
+## Version 2.5.1
 
 * Replaced `String.format(0x%02X, i)` with a better-performance API, 100 times faster via byte operations: `10k` loads performance: `317ms` vs `2ms`.
 * `@Config` added `boolean trim` (default=`true`) flag to allow configuration items to keep space when `trim=false`.
 
-### Version 2.5.0
+## Version 2.5.0
 
 * **Virtual Thread:** And the four (`VirtualThread`, `CPU`, `IO`, `Mixed`) modes are supported in the configuration file for HTTP server, HTTP client, gRPC server, and BackOffice.
 
-### Version 2.4.18
+## Version 2.4.18
 
 * `BootController.login` will call `preLogin()` and `postLogin()` before and after signing JWT.
 
-### Version 2.4.17
+## Version 2.4.17
 
 * Backward compatible with JWT and configurable in `etc/boot.ini`.
 
-### Version 2.4.16
+## Version 2.4.16
 
 * Changed `BootJobListener` log level to `DEBUG` (configurable in `etc/boot.conf` section 4.2 `naming.log4j2.jboListenerLogLevel`).
 * `ServiceContext.reset()` renamed to `resetResponseData()`. It only resets response data, not the status.
 
-### Version 2.4.13
+## Version 2.4.13
 
 * `BootHttpFileUploadHandler<T>.T onFileUploaded()` accepts return object `T`.
 * Enhanced `HealthMonitor` with email alert.
@@ -388,7 +379,7 @@ New configuration items have been added to set the server-specific idle connecti
 * Enhanced email alert and logging.
 * Migrated to `jjwt 0.12`.
 
-### Version 2.4.10
+## Version 2.4.10
 
 * Fixed: Renaming a config file will pause/resume service.
 * Added CLI: `-psv <envId>`.
@@ -401,41 +392,41 @@ New configuration items have been added to set the server-specific idle connecti
 * `NioServer` only logs status on change.
 * Service pause by multiple reasons via password, and can only be resumed by all those reasons via correct password.
 
-### Version 2.4.9
+## Version 2.4.9
 
 * Enabled configurable `TimeZone` for JSON parser in both Nio and Http config.
 * `afterProcess` only gets triggered when `beforeProcess` succeeds.
 
-### Version 2.4.8
+## Version 2.4.8
 
 * Added `ServiceContext.report()` and `ServiceContext.report(StringBuilder)`.
 * `BootCache.debounced()` supports `TimeUnit`.
 
-### Version 2.4.7
+## Version 2.4.7
 
 * Added `afterService()` into `HttpLifecycleListener`, called after sending a response to the client, before starting logging.
 
-### Version 2.4.6
+## Version 2.4.6
 
 * Recognized `LocalDate` as JAX-RS parameter type.
 
-### Version 2.4.5
+## Version 2.4.5
 
 * **Refactoring:** `SummerInitializer` init before and after `Ioc` is initialized.
 * **Enhancement:** Rejected with `503` asap when paused or health check failed, unless `@Controller` or its method has `@Daemon`.
 
-### Version 2.4.4
+## Version 2.4.4
 
 * **Enhancement:** Command line arguments ending with `/r` by mistake in service script no longer impact the application.
 
-### Version 2.4.3
+## Version 2.4.3
 
 * **Fixed:** Version updated.
 * **Enhancement:** `generateTemplate` follows parent first order.
 * **Refactoring:** HTTP Client classes moved to `org.summerboot.jexpress.integration.httpclient`.
 * **New:** Released MQTT client to public.
 
-### Version 2.4.2
+## Version 2.4.2
 
 * Supported multiple `@Ping`.
 * Configured `ObjectMapper` with timezone specified in `etc/boot.ini#backoffice.jsonParser.TimeZone`.
@@ -446,38 +437,38 @@ New configuration items have been added to set the server-specific idle connecti
 * Logged both raw and decoded uri.
 * Refactored lifecycle/exception listeners/handlers to `org.summerboot.jexpress.boot.event`.
 
-### Version 2.4.1
+## Version 2.4.1
 
 * Enabled `@jakarta.validation.constraints.Pattern` for RESTFul api parameters: `PathParam`, `MatrixParam`, `QueryParam`, `FormParam`, `HeaderParam`, and `CookieParam`.
 * Fixed: cli `-decrypt` generates `cfg_grpc.properties` even if there is no gRPC impl.
 * Log trace enable on `org.summerboot.jexpress.nio.server.BootHttpRequestHandler` will override `@org.summerboot.jexpress.boot.annotation.Log` settings to log all requests and responses.
 * Reformatted Java source code via IDEA default formatter.
 
-### Version 2.3.13
+## Version 2.3.13
 
 * Added `etc/boot.ini`: `log.traceWithSystemOut` (default = `false`).
 * Application start with log trace.
 * Auto generated `temp` dir for file uploading.
 * Show internal error message in the log.
 
-### Version 2.3.12
+## Version 2.3.12
 
 * Enabled customized delimiter of collection in `@Config` with new `collectionDelimiter` field.
 * Enhanced logging: `ServiceError.ref` changed to `String` from `long`: replaced hit with transaction id (server session id + hit).
 * Monthly security patch.
 
-### Version 2.3.11
+## Version 2.3.11
 
 * No internal error will be sent to the client.
 * `@Scheduled` supports dynamic config via specifying a private static field.
 * Monthly security patch.
 
-### Version 2.3.10
+## Version 2.3.10
 
 * `HealthMonitor` will send an email alert when status changes without debouncing.
 * `HealthMonitor` will send an email alert when inspection failed with debouncing.
 
-### Version 2.3.9
+## Version 2.3.9
 
 * `TPE` with name thread pool by `NamedDefaultThreadFactory`.
 * Supports `org.quartz` with `@Scheduled`.
@@ -486,7 +477,7 @@ New configuration items have been added to set the server-specific idle connecti
 * Supports `logId`.
 * Refactored `changeit` to `Constant`.
 
-### Version 2.3.8
+## Version 2.3.8
 
 * `BootAuthenticator<T>` implements `Authenticator`, `ServerInterceptor` to support gRPC jwt with the same logic as the Web server.
 * Fixed gRPC jwt is required by `ServerInterceptor` issue.
@@ -505,7 +496,7 @@ New configuration items have been added to set the server-specific idle connecti
 * JWT TTL can be overridden by the Caller.
 * `NioHttpUtil.WebResourceCache` as `SimpleLocalCacheImpl`.
 
-### Version 2.3.7
+## Version 2.3.7
 
 * Empty configuration value in config file will result in field value = `null`.
 * Cleaned up `GRPCServerConfig`.
@@ -526,7 +517,7 @@ New configuration items have been added to set the server-specific idle connecti
 
 TODO: JSR356
 
-### Version 2.3.6
+## Version 2.3.6
 
 * Auto-generated HTTP error page by status code when running as a web server.
 

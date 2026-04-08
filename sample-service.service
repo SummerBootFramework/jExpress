@@ -1,3 +1,4 @@
+
 # sudo nano /etc/systemd/system/myapp-service.service
 # sudo systemctl daemon-reload
 # sudo systemctl start myapp-service
@@ -16,7 +17,7 @@ Environment=APP_JAR=MyService.jar
 Environment=APP_ARGS="-debug"
 
 
-Environment="OPTIONS=\
+Environment="JVM_OPTIONS=\
  -Djava.awt.headless=true \
  -Xms2G -Xmx2G \
  -XX:+UseZGC -XX:ZUncommitDelay=300 -XX:+ZGenerational -XX:+AlwaysPreTouch \
@@ -30,9 +31,11 @@ Environment="OPTIONS=\
  -Xlog:gc*:file=gc.log:time,level,tags:filecount=5,filesize=10M \
  -Dfile.encoding=UTF-8 \
  -Duser.timezone=America/Toronto \
+ -Djava.security.egd=file:/dev/./urandom \
  -Dio.netty.handler.ssl.openssl.engine.enable=true \
  -Dio.netty.leakDetectionLevel=SIMPLE \
  -Dio.netty.native.workdir=lib \
+ -Dio.grpc.netty.shaded.io.netty.native.workdir=lib \
  -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
 
 
@@ -40,8 +43,7 @@ Environment="OPTIONS=\
 ExecStartPre=
 
 # Run the application with Java 21/25
-ExecStart=/bin/sh -c  "JAVA_PATH=$(find /usr/lib/jvm -name "java-21*" -type d | head -1)/bin/java; $JAVA_PATH \
- $OPTIONS -jar $APP_DIR/$APP_JAR $APP_ARGS"
+ExecStart=/bin/sh -c "JAVA_PATH=$(find /usr/lib/jvm -name 'java-21*' -type d | head -1)/bin/java; $JAVA_PATH $JVM_OPTIONS -jar $APP_DIR/$APP_JAR $APP_ARGS"
 
 # Clean up temp file on stop
 ExecStopPost=
