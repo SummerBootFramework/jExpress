@@ -88,8 +88,6 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     //1. NIO Network Listeners REF269-4
     @ConfigHeader(title = "1. " + ID + " provider",
-            format = "server1:port1, server2:port2, ..., serverN:portN",
-            example = "grpc-node1.mycompany.com:8424, grpc-node2.mycompany.com:8424, grpc-node3.mycompany.com:8424",
             desc = "Scenario 1 (overrideAuthority not needed): In a well-configured environment, each node's DNS name is listed as a Subject Alternative Name (SAN) in the certificate, so TLS verification succeeds without any override.  \n" +
                     "Example: 3-node gRPC cluster, certificate SANs cover every node's individual DNS name:\n" +
                     "  Subject: CN=grpc.mycompany.com\n" +
@@ -106,9 +104,13 @@ abstract public class GRPCClientConfig extends BootConfig {
                     "  Subject Alternative Names:\n" +
                     "    DNS: grpc.cluster.mycompany.com     <- cluster VIP / load balancer, shared DNS name used for TLS verification across all nodes\n" +
                     "    DNS: grpc-node-n.mycompany.com      <- each node's own DNS name (not used for TLS verification)\n\n" +
-                    "  gRpc.client.ssl.overrideAuthority = grpc.cluster.mycompany.com\n"
+                    "  gRpc.client.ssl.overrideAuthority = grpc.cluster.mycompany.com"
     )
-    @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = false)
+    @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425",
+            desc = "cluster target",
+            format = "server1:port1, server2:port2, ..., serverN:portN",
+            example = "grpc-node1.mycompany.com:8424, grpc-node2.mycompany.com:8424, grpc-node3.mycompany.com:8424"
+    )
     protected volatile List<InetSocketAddress> loadBalancingServers;
     @Config(key = ID + ".LoadBalancing.scheme", defaultValue = "grpc", desc = "In case you have more than one gRPC client needs to connect to different gRPC services, you can set this to distinguish them")
     protected volatile String loadBalancingTargetScheme = "grpc";
@@ -120,9 +122,12 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     //1. gRPC connection
     @Config(key = ID + ".target.url", defaultValue = "grpc:///",
-            desc = "grpc:///\n"
+            desc = "non-cluster server target",
+            format = "scheme://host:port",
+            example = "grpc:///\n"
                     + "grpc://127.0.0.1:8424\n"
-                    + "unix:/tmp/grpcsrver.socket")
+                    + "unix:/tmp/grpcsrver.socket"
+    )
     protected volatile URI uri;
 
     @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)// "TLSv1.2, TLSv1.3"

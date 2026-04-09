@@ -32,6 +32,10 @@ public @interface Config {
 
     String desc() default "";
 
+    String format() default "";
+
+    String example() default "";
+
     String key();
 
     boolean required() default false;

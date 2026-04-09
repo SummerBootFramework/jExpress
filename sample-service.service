@@ -1,4 +1,3 @@
-
 # sudo nano /etc/systemd/system/myapp-service.service
 # sudo systemctl daemon-reload
 # sudo systemctl start myapp-service
@@ -12,7 +11,6 @@ After=syslog.target network.target
 
 [Service]
 WorkingDirectory=/apps/MyService
-Environment=APP_DIR=/apps/MyService
 Environment=APP_JAR=MyService.jar
 Environment=APP_ARGS="-debug"
 
@@ -38,15 +36,19 @@ Environment="JVM_OPTIONS=\
  -Dio.grpc.netty.shaded.io.netty.native.workdir=lib \
  -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
 
+# 1. Find Java 21, validate, write KEY=VALUE to env file (single line — mandatory)
+#ExecStartPre=/bin/sh -c 'JAVA=$(find /usr/lib/jvm -name "java-21-openjdk*" -type d | head -1); if [ -z "$JAVA" ]; then echo "Error: Java 21 OpenJDK not found in /usr/lib/jvm" >&2; exit 1; fi; echo "JAVA_PATH=$JAVA/bin/java" > /tmp/java.env'
 
-# Init temp file on start
-ExecStartPre=
+# 2. Load JAVA_PATH — hardcoded filename, $VAR is NOT expanded in EnvironmentFile paths
+#EnvironmentFile=-/tmp/java.env
 
-# Run the application with Java 21/25
-ExecStart=/bin/sh -c "JAVA_PATH=$(find /usr/lib/jvm -name 'java-21*' -type d | head -1)/bin/java; $JAVA_PATH $JVM_OPTIONS -jar $APP_DIR/$APP_JAR $APP_ARGS"
+# 3. Run the application with Java 21/25
+#ExecStart=/bin/sh -c 'exec $JAVA_PATH $JVM_OPTIONS -jar $APP_JAR $APP_ARGS'
+ExecStart=/bin/sh -c "JAVA_PATH=$(find /usr/lib/jvm -name 'java-21*' -type d | head -1)/bin/java; exec $JAVA_PATH $JVM_OPTIONS -jar $APP_JAR $APP_ARGS"
 
-# Clean up temp file on stop
-ExecStopPost=
+# 4. Cleanup
+#ExecStopPost=/bin/sh -c 'rm -f /tmp/java.env'
+
 
 Type=simple
 SuccessExitStatus=143

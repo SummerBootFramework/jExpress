@@ -425,12 +425,10 @@ public abstract class BootConfig implements JExpressConfig {
         List<Field> configItems = ReflectionUtil.getDeclaredAndSuperClassesFields(configClass, true);
         boolean hasConfig = false;
         StringBuilder sb = new StringBuilder();
-        boolean headerProcessed = false;
         for (Field field : configItems) {
             // desc
             ConfigHeader header = field.getAnnotation(ConfigHeader.class);
             if (header != null) {
-                headerProcessed = true;
                 List<String> list = parse(header);
                 int maxSize = 0;
                 for (String s : list) {
@@ -439,7 +437,7 @@ public abstract class BootConfig implements JExpressConfig {
                 maxSize += 2;
 
                 //1. top line ######################
-                sb.append("\n\n");
+                sb.append("\n");
                 hasConfig = true;
                 for (int i = 0; i < maxSize; i++) {
                     sb.append("#");
@@ -484,23 +482,42 @@ public abstract class BootConfig implements JExpressConfig {
             //config
             Config cfg = field.getAnnotation(Config.class);
             if (cfg != null) {
-                boolean isEncrypted = cfg.validate().equals(Config.Validate.Encrypted);
                 String desc = cfg.desc();
-                if (StringUtils.isNotBlank(desc)) {
+                boolean hasDesc = StringUtils.isNotBlank(desc);
+                String format = cfg.format();
+                boolean hasFormat = StringUtils.isNotBlank(format);
+                String example = cfg.example();
+                boolean hasExample = StringUtils.isNotBlank(example);
+                if (header == null && (hasDesc || hasFormat || hasExample)) {
+                    sb.append("\n");
+                }
+
+                boolean isEncrypted = cfg.validate().equals(Config.Validate.Encrypted);
+                if (hasDesc) {
                     List<String> memoList = new ArrayList<>();
                     lineBreak(desc, "Note: ", memoList);
-                    boolean isMultyLineNote = false;
                     for (String s : memoList) {
                         hasConfig = true;
-                        if (!headerProcessed && !isMultyLineNote) {
-                            sb.append("\n");
-                        }
-                        headerProcessed = false;
-                        isMultyLineNote = true;
                         sb.append(s).append("\n");
                     }
                 }
-                headerProcessed = false;
+                if (hasFormat) {
+                    List<String> memoList = new ArrayList<>();
+                    lineBreak(format, "Format> ", memoList);
+                    for (String s : memoList) {
+                        hasConfig = true;
+                        sb.append(s).append("\n");
+                    }
+                }
+                if (hasExample) {
+                    List<String> memoList = new ArrayList<>();
+                    lineBreak(example, "Example> ", memoList);
+                    for (String s : memoList) {
+                        hasConfig = true;
+                        sb.append(s).append("\n");
+                    }
+                }
+
                 boolean isRequired = cfg.required();
                 boolean hasDefaultValue = false, hasPredefinedValue = false;
                 String dv = cfg.predefinedValue();
@@ -583,9 +600,9 @@ public abstract class BootConfig implements JExpressConfig {
                         i++;
                     }
                 }
-//                if (StringUtils.isNotBlank(desc)) {
-//                    sb.append("\n");
-//                }
+                /*if (hasDesc) {
+                    sb.append("\n");
+                }*/
             }
         }
 
