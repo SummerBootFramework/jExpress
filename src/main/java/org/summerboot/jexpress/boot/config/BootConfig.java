@@ -503,7 +503,7 @@ public abstract class BootConfig implements JExpressConfig {
                 }
                 if (hasFormat) {
                     List<String> memoList = new ArrayList<>();
-                    lineBreak(format, "Format> ", memoList);
+                    lineBreak(format, "[Format] ", memoList);
                     for (String s : memoList) {
                         hasConfig = true;
                         sb.append(s).append("\n");
@@ -511,7 +511,7 @@ public abstract class BootConfig implements JExpressConfig {
                 }
                 if (hasExample) {
                     List<String> memoList = new ArrayList<>();
-                    lineBreak(example, "Example> ", memoList);
+                    lineBreak(example, "[Example] ", memoList);
                     for (String s : memoList) {
                         hasConfig = true;
                         sb.append(s).append("\n");
@@ -613,8 +613,8 @@ public abstract class BootConfig implements JExpressConfig {
         List<String> ret = new ArrayList<>();
         lineBreak(memo.title(), null, ret);
         lineBreak(memo.desc(), null, ret);
-        lineBreak(memo.format(), "Format> ", ret);
-        lineBreak(memo.example(), "Example> ", ret);
+        lineBreak(memo.format(), "[Format] ", ret);
+        lineBreak(memo.example(), "[Example] ", ret);
 
         return ret;
     }

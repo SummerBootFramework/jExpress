@@ -198,9 +198,9 @@ public class AuthConfig extends BootConfig {
 
     @Config(key = "jwt.filter.by", defaultValue = "jti", desc = "filter JWT by this value, default is jti")
     protected volatile String jwtFilterKey;
-    @Config(key = "jwt.filter.Whitelist", desc = "Whitelist in CSV format, example: abcd.1234.efg, .*1234.*")
+    @Config(key = "jwt.filter.Whitelist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")
     protected volatile Set<String> jwtFilterWhitelist;
-    @Config(key = "jwt.filter.Blacklist", desc = "Blacklist in CSV format, example: abcd.1234.efg, .*1234.*")
+    @Config(key = "jwt.filter.Blacklist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")
     protected volatile Set<String> jwtFilterBlacklist;
 
     //3. Role mapping
