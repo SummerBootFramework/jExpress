@@ -166,7 +166,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                     if (error == null) {
                         processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
                     } else {
-                        Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, "Invalid caller IP", null, "Invalid IP address: " + error);
+                        Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_IP, null, "Forbidden caller IP", null, "Forbidden caller IP: " + error);
                         context.error(err).status(HttpResponseStatus.FORBIDDEN);
                     }
                 } else {

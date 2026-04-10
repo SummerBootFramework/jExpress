@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.6.9</version>
+    <version>2.6.9-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>jExpress ${project.version}</name>
     <description>jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>

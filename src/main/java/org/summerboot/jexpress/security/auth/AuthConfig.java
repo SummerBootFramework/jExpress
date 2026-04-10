@@ -28,6 +28,7 @@ import org.summerboot.jexpress.integration.ldap.LdapAgent;
 import org.summerboot.jexpress.integration.ldap.LdapSSLConnectionFactory1;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.JwtUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
 
 import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
@@ -195,6 +196,13 @@ public class AuthConfig extends BootConfig {
     @Config(key = "jwt.issuer")
     protected volatile String jwtIssuer;
 
+    @Config(key = "jwt.filter.by", defaultValue = "jti", desc = "filter JWT by this value, default is jti")
+    protected volatile String jwtFilterKey;
+    @Config(key = "jwt.filter.Whitelist", desc = "Whitelist in CSV format, example: abcd.1234.efg, abcd\\\\.1234\\\\.")
+    protected volatile Set<String> jwtFilterWhitelist;
+    @Config(key = "jwt.filter.Blacklist", desc = "Blacklist in CSV format, example: abcd.1234.efg, abcd\\\\.1234\\\\.")
+    protected volatile Set<String> jwtFilterBlacklist;
+
     //3. Role mapping
     @ConfigHeader(title = "3. Role mapping",
             desc = "Map the role (defined as @RolesAllowed({\"AppAdmin\"})) with user group (no matter the group is defined in LDAP or DB)",
@@ -262,6 +270,17 @@ public class AuthConfig extends BootConfig {
             jwtParser = Jwts.parser() // (1)
                     .verifyWith(publicKey) // (2)
                     .build(); // (3)
+        }
+        // pre-compile regexes for whitelist and blacklist
+        if (jwtFilterWhitelist != null) {
+            for (String regex : jwtFilterWhitelist) {
+                SecurityUtil.matches("", regex);
+            }
+        }
+        if (jwtFilterBlacklist != null) {
+            for (String regex : jwtFilterBlacklist) {
+                SecurityUtil.matches("", regex);
+            }
         }
 
         // 3. Cache TTL
@@ -356,6 +375,18 @@ public class AuthConfig extends BootConfig {
 
     public int getJwtTTLMinutes() {
         return jwtTTLMinutes;
+    }
+
+    public String getJwtFilterKey() {
+        return jwtFilterKey;
+    }
+
+    public Set<String> getJwtFilterWhitelist() {
+        return jwtFilterWhitelist;
+    }
+
+    public Set<String> getJwtFilterBlacklist() {
+        return jwtFilterBlacklist;
     }
 
     public RoleMapping getRole(String role) {

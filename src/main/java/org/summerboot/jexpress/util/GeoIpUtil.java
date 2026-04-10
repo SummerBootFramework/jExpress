@@ -187,29 +187,7 @@ public class GeoIpUtil {
      * @return null if OK, otherwise return the reason
      */
     public static String callerAddressFilter(String host, Set<String> whiteList, Set<String> blackList) {
-        if (whiteList != null && !whiteList.isEmpty()) {
-            if (!whiteList.contains(host)) {
-                // check regex
-                for (String whiteRegex : whiteList) {
-                    if (SecurityUtil.matches(host, whiteRegex)) {
-                        return null;
-                    }
-                }
-                return "caller address (" + host + ") is not in white list";
-            }
-        }
-        if (blackList != null && !blackList.isEmpty()) {
-            if (blackList.contains(host)) {
-                return "caller address (" + host + ") is in black list";
-            }
-            for (String blackRegex : blackList) {// check regex
-                if (SecurityUtil.matches(host, blackRegex)) {
-                    return "caller address (" + host + ") matches black list: " + blackRegex;
-                }
-            }
-        }
-
-        return null;
+        return SecurityUtil.whitelistbalcklistilter("caller address", host, whiteList, blackList);
     }
 
 }

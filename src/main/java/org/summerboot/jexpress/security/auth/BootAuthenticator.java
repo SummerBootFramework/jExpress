@@ -46,6 +46,7 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.security.JwtUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.GeoIpUtil;
 
@@ -338,7 +339,16 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                     Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "AuthToken has been logout", null, "AuthToken has been logout: " + jti);
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
-                    caller = fromJwt(claims);
+                    AuthConfig authConfig = AuthConfig.cfg;
+                    Object target = claims.get(authConfig.getJwtFilterKey());
+                    String targetKey = target == null ? jti : target.toString();
+                    String error = SecurityUtil.whitelistbalcklistilter("JWT." + targetKey, targetKey, authConfig.getJwtFilterWhitelist(), authConfig.getJwtFilterBlacklist());
+                    if (error == null) {
+                        caller = fromJwt(claims);
+                    } else {
+                        Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_JWT, null, "Forbidden JWT", null, "Forbidden JWT: " + error);
+                        context.error(err).status(HttpResponseStatus.FORBIDDEN);
+                    }
                 }
             } catch (ExpiredJwtException ex) {
                 Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Expired AuthToken", null, "Expired AuthToken: " + ex);

@@ -36,6 +36,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -563,5 +564,41 @@ public class SecurityUtil {
             Arrays.fill(firstPass, ' ');
             return passowrd;
         }
+    }
+
+
+    /**
+     * filter target against whitelist and blacklist
+     *
+     * @param memo
+     * @param target
+     * @param whiteList
+     * @param blackList
+     * @return null if target is in whitelist (if provided) and not in blacklist (if provided), otherwise error message
+     */
+    public static String whitelistbalcklistilter(String memo, String target, Set<String> whiteList, Set<String> blackList) {
+        if (whiteList != null && !whiteList.isEmpty()) {
+            if (!whiteList.contains(target)) {
+                // check regex
+                for (String whiteRegex : whiteList) {
+                    if (SecurityUtil.matches(target, whiteRegex)) {
+                        return null;
+                    }
+                }
+                return memo + " (" + target + ") is not in white list";
+            }
+        }
+        if (blackList != null && !blackList.isEmpty()) {
+            if (blackList.contains(target)) {
+                return memo + " (" + target + ") is in black list";
+            }
+            for (String blackRegex : blackList) {// check regex
+                if (SecurityUtil.matches(target, blackRegex)) {
+                    return memo + " (" + target + ") matches black list: " + blackRegex;
+                }
+            }
+        }
+
+        return null;
     }
 }

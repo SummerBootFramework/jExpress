@@ -26,6 +26,8 @@
 * REF269-3a: Enhanced CLI Security - implemented password masking and removed "-auth"
 * REF269-3b: New API SecurityUtil.promptPassword();
 * REF269-4: Enhanced gRPC client config description (GRPCClientConfig.java)
+* REF269-5: @Config supports format and example
+* REF269-6: HTTP and gRPC request can be filtered by JWT whitelist/blacklist, added JWT filter into cfg_auth.properties
 
 ### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
 

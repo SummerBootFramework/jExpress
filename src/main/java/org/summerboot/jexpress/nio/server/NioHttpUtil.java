@@ -415,15 +415,15 @@ public class NioHttpUtil {
 
     public static void onExceptionCaught(ChannelHandlerContext ctx, Throwable ex, Logger logger) {
         NioConfig nioCfg = NioConfig.cfg;
-        String isCallerIPInBlacklist = GeoIpUtil.callerAddressFilter(ctx.channel().remoteAddress(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
-        if (BootConstant.isDebugMode() || isCallerIPInBlacklist == null) {
+        String error = GeoIpUtil.callerAddressFilter(ctx.channel().remoteAddress(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
+        if (BootConstant.isDebugMode() || error == null) {
             if (ex instanceof DecoderException) {
                 logger.warn(ctx.channel().remoteAddress() + ": " + ex);
             } else {
                 logger.warn(ctx.channel().remoteAddress() + ": " + ex, ex);
             }
         }
-        if (ex instanceof OutOfMemoryError || isCallerIPInBlacklist != null) {
+        if (ex instanceof OutOfMemoryError || error != null) {
             ctx.close();
         }
     }
