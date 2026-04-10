@@ -606,7 +606,7 @@ public abstract class BootConfig implements JExpressConfig {
             }
         }
 
-        return hasConfig ? sb.substring(2) : sb.toString();
+        return hasConfig ? sb.substring(1) : sb.toString();
     }
 
     protected static List<String> parse(ConfigHeader memo) {

@@ -340,9 +340,10 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
                     AuthConfig authConfig = AuthConfig.cfg;
-                    Object target = claims.get(authConfig.getJwtFilterKey());
+                    String key = authConfig.getJwtFilterKey();
+                    Object target = claims.get(key);
                     String targetKey = target == null ? jti : target.toString();
-                    String error = SecurityUtil.whitelistbalcklistilter("JWT." + targetKey, targetKey, authConfig.getJwtFilterWhitelist(), authConfig.getJwtFilterBlacklist());
+                    String error = SecurityUtil.whitelistbalcklistilter("JWT." + key, targetKey, authConfig.getJwtFilterWhitelist(), authConfig.getJwtFilterBlacklist());
                     if (error == null) {
                         caller = fromJwt(claims);
                     } else {
