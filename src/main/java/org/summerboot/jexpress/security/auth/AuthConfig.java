@@ -16,6 +16,7 @@
 package org.summerboot.jexpress.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import org.apache.tika.utils.StringUtils;
@@ -196,9 +197,10 @@ public class AuthConfig extends BootConfig {
     @Config(key = "jwt.issuer")
     protected volatile String jwtIssuer;
 
-    public static final String DEFAULT_JWT_FILTER_KEY = "jti";
-    @Config(key = "jwt.filter.by", defaultValue = DEFAULT_JWT_FILTER_KEY, desc = "filter JWT by this value, default is jti")
-    protected volatile String jwtFilterKey = DEFAULT_JWT_FILTER_KEY;
+    @Config(key = "jwt.filter.by", desc = "filter JWT by attribute key name: " +
+            Claims.ID + ", " + Claims.ISSUER + ", " + Claims.SUBJECT + ", " + Claims.AUDIENCE + ", " + Claims.ISSUED_AT + ", " + Claims.EXPIRATION + ", " + Claims.NOT_BEFORE +
+            ", and customized fields")
+    protected volatile String jwtFilterKey;
     @Config(key = "jwt.filter.Whitelist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")
     protected volatile Set<String> jwtFilterWhitelist;
     @Config(key = "jwt.filter.Blacklist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")
