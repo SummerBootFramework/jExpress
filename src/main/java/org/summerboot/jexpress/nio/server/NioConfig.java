@@ -178,11 +178,11 @@ public class NioConfig extends BootConfig {
     protected volatile int soBacklog = 1024;
 
     @Config(key = "nio.server.socket.SO_RCVBUF", defaultValue = "1048576",
-            desc = " - cat /proc/sys/net/ipv4/tcp_rmem (max 1024k)")
+            desc = "cat /proc/sys/net/ipv4/tcp_rmem (max 1024k)")
     protected volatile int soRcvBuf = 1048576;
 
     @Config(key = "nio.server.socket.SO_SNDBUF", defaultValue = "1048576",
-            desc = " - cat /proc/sys/net/ipv4/tcp_smem (max 1024k)")
+            desc = "cat /proc/sys/net/ipv4/tcp_smem (max 1024k)")
     protected volatile int soSndBuf = 1048576;
     @Config(key = "nio.server.HttpObjectAggregator.maxContentLength", defaultValue = "65536",
             desc = "default - 64kb")
@@ -217,7 +217,7 @@ public class NioConfig extends BootConfig {
     protected volatile int nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
 
     @Config(key = "nio.server.BizExecutor.mode", defaultValue = "VirtualThread",
-            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \n use CPU core + 1 when application is CPU bound\n"
+            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \nuse CPU core + 1 when application is CPU bound\n"
                     + "use CPU core x 2 + 1 when application is I/O bound\n"
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
