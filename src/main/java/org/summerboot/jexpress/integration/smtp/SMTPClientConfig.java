@@ -91,10 +91,10 @@ public class SMTPClientConfig extends BootConfig {
     protected volatile String smtpPassword;
 
     //2. Alert Recipients
+    public static final String KEY_MAILTO_APPSUPPORT = "email.to.AppSupport";
     @ConfigHeader(title = "2. Alert Recipients",
             format = "CSV format",
             example = "johndoe@test.com, janedoe@test.com")
-    public static final String KEY_MAILTO_APPSUPPORT = "email.to.AppSupport";
     @Config(key = KEY_MAILTO_APPSUPPORT, validate = Config.Validate.EmailRecipients, desc = "The default alert email recipients")
     protected volatile Set<String> emailToAppSupport;
 
