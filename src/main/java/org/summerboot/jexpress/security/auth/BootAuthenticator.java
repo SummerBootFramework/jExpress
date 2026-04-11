@@ -313,6 +313,18 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         return verifyToken(authToken, cache, errorCode, context);
     }
 
+    protected String getJwtFilterKey() {
+        return AuthConfig.cfg.getJwtFilterKey();
+    }
+
+    protected Set<String> getJwtFilterWhitelist() {
+        return AuthConfig.cfg.getJwtFilterWhitelist();
+    }
+
+    protected Set<String> getJwtFilterBlacklist() {
+        return AuthConfig.cfg.getJwtFilterBlacklist();
+    }
+
     /**
      * @param authToken
      * @param cache
@@ -339,11 +351,13 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                     Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "AuthToken has been logout", null, "AuthToken has been logout: " + jti);
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
-                    AuthConfig authConfig = AuthConfig.cfg;
-                    String key = authConfig.getJwtFilterKey();
-                    Object target = claims.get(key);
-                    String targetKey = target == null ? jti : target.toString();
-                    String error = SecurityUtil.whitelistbalcklistilter("JWT." + key, targetKey, authConfig.getJwtFilterWhitelist(), authConfig.getJwtFilterBlacklist());
+                    final String key = getJwtFilterKey();
+                    String error = null;
+                    if (key != null) {
+                        Object target = claims.get(key);
+                        final String targetValue = String.valueOf(target);
+                        error = SecurityUtil.whitelistbalcklistilter("JWT." + key, targetValue, getJwtFilterWhitelist(), getJwtFilterBlacklist());
+                    }
                     if (error == null) {
                         caller = fromJwt(claims);
                     } else {

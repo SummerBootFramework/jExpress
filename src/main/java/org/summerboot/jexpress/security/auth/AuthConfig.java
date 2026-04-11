@@ -196,8 +196,9 @@ public class AuthConfig extends BootConfig {
     @Config(key = "jwt.issuer")
     protected volatile String jwtIssuer;
 
-    @Config(key = "jwt.filter.by", defaultValue = "jti", desc = "filter JWT by this value, default is jti")
-    protected volatile String jwtFilterKey;
+    public static final String DEFAULT_JWT_FILTER_KEY = "jti";
+    @Config(key = "jwt.filter.by", defaultValue = DEFAULT_JWT_FILTER_KEY, desc = "filter JWT by this value, default is jti")
+    protected volatile String jwtFilterKey = DEFAULT_JWT_FILTER_KEY;
     @Config(key = "jwt.filter.Whitelist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")
     protected volatile Set<String> jwtFilterWhitelist;
     @Config(key = "jwt.filter.Blacklist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")

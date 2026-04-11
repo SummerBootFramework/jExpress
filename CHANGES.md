@@ -27,7 +27,7 @@
 * REF269-3b: New API SecurityUtil.promptPassword();
 * REF269-4: Enhanced gRPC client config description (GRPCClientConfig.java)
 * REF269-5: @Config supports format and example
-* REF269-6: HTTP and gRPC request can be filtered by JWT whitelist/blacklist, added JWT filter into cfg_auth.properties
+* REF269-6: HTTP and gRPC request can be filtered by JWT whitelist/blacklist, JWT filter configurations are added into cfg_auth.properties and handled by BootAuthenticator
 
 ### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
 
