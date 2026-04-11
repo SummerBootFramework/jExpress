@@ -437,27 +437,27 @@ public abstract class BootConfig implements JExpressConfig {
                 maxSize += 2;
 
                 //1. top line ######################
-                sb.append("\n");
+                sb.append(BR + BR);
                 hasConfig = true;
                 for (int i = 0; i < maxSize; i++) {
                     sb.append("#");
                 }
                 //2. desc
-                sb.append("\n");
+                sb.append(BR);
                 for (String s : list) {
                     sb.append(s);
                     int size = maxSize - s.length() - 1;
                     for (int i = 0; i < size; i++) {
                         sb.append(" ");
                     }
-                    sb.append("#").append("\n");
+                    sb.append("#").append(BR);
                 }
 
                 //3. bottom line ######################
                 for (int i = 0; i < maxSize; i++) {
                     sb.append("#");
                 }
-                sb.append("\n");
+                sb.append(BR);
 
                 if (objectInstance != null) {
                     String callbackFunc = header.callbackMethodName4Dump();
@@ -469,11 +469,11 @@ public abstract class BootConfig implements JExpressConfig {
                                 cbMethod.setAccessible(true);
                                 cbMethod.invoke(objectInstance, sb);
                             } else {
-                                sb.append("NoSuchMethodException: ").append(callbackFunc).append("\n");
+                                sb.append("NoSuchMethodException: ").append(callbackFunc).append(BR);
                             }
                         } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/
                                  SecurityException | InvocationTargetException ex) {
-                            sb.append(ex).append("\n");
+                            sb.append(ex).append(BR);
                         }
                     }
                 }
@@ -489,7 +489,7 @@ public abstract class BootConfig implements JExpressConfig {
                 String example = cfg.example();
                 boolean hasExample = StringUtils.isNotBlank(example);
                 if (header == null && (hasDesc || hasFormat || hasExample)) {
-                    sb.append("\n");
+                    sb.append(BR);
                 }
 
                 boolean isEncrypted = cfg.validate().equals(Config.Validate.Encrypted);
@@ -498,7 +498,7 @@ public abstract class BootConfig implements JExpressConfig {
                     lineBreak(desc, "Note: ", memoList);
                     for (String s : memoList) {
                         hasConfig = true;
-                        sb.append(s).append("\n");
+                        sb.append(s).append(BR);
                     }
                 }
                 if (hasFormat) {
@@ -506,7 +506,7 @@ public abstract class BootConfig implements JExpressConfig {
                     lineBreak(format, "[Format] ", memoList);
                     for (String s : memoList) {
                         hasConfig = true;
-                        sb.append(s).append("\n");
+                        sb.append(s).append(BR);
                     }
                 }
                 if (hasExample) {
@@ -514,7 +514,7 @@ public abstract class BootConfig implements JExpressConfig {
                     lineBreak(example, "[Example] ", memoList);
                     for (String s : memoList) {
                         hasConfig = true;
-                        sb.append(s).append("\n");
+                        sb.append(s).append(BR);
                     }
                 }
 
@@ -557,11 +557,11 @@ public abstract class BootConfig implements JExpressConfig {
                                 cbMethod.invoke(objectInstance, sb);
                                 dumpDefault = false;
                             } else {
-                                sb.append("NoSuchMethodException: ").append(callbackFunc).append("\n");
+                                sb.append("NoSuchMethodException: ").append(callbackFunc).append(BR);
                             }
                         } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/
                                  SecurityException | InvocationTargetException ex) {
-                            sb.append(ex).append("\n");
+                            sb.append(ex).append(BR);
                         }
                     }
                 }
@@ -582,7 +582,7 @@ public abstract class BootConfig implements JExpressConfig {
                     if (isEncrypted) {
                         sb.append(")");
                     }
-                    sb.append("\n");
+                    sb.append(BR);
 
                     int i = 0;
                     String[] keys = {cfg.StorePwdKey(), cfg.AliasKey(), cfg.AliasPwdKey()};
@@ -595,18 +595,18 @@ public abstract class BootConfig implements JExpressConfig {
                             if (i == 0 || i == 2) {
                                 sb.append("DEC(").append(DESC_PLAINPWD).append(")");
                             }
-                            sb.append("\n");
+                            sb.append(BR);
                         }
                         i++;
                     }
                 }
                 /*if (hasDesc) {
-                    sb.append("\n");
+                    sb.append(BR);
                 }*/
             }
         }
 
-        return hasConfig ? sb.substring(1) : sb.toString();
+        return hasConfig ? sb.substring(BR.length() * 2) : sb.toString();
     }
 
     protected static List<String> parse(ConfigHeader memo) {

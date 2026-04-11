@@ -124,8 +124,8 @@ public class BackOffice extends BootConfig {
                     .stream()
                     .sorted(Map.Entry.comparingByValue())
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-            StringBuilder sb = new StringBuilder().append("## Default Error Codes:").append(BR);
-            sorted.forEach((value, key) -> sb.append("## ").append(key).append(": ").append(value).append(BR));
+            StringBuilder sb = new StringBuilder().append("## Default Error Codes:").append(BootConstant.BR);
+            sorted.forEach((value, key) -> sb.append("## ").append(key).append(": ").append(value).append(BootConstant.BR));
             ret = sb.toString();
         } catch (Throwable ex) {
             ex.printStackTrace();
