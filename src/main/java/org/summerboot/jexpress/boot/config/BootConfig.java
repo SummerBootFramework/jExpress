@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
@@ -73,8 +74,7 @@ public abstract class BootConfig implements JExpressConfig {
 
     protected static final Map<Class, JExpressConfig> cache = new HashMap<>();
 
-    protected static String BR = System.lineSeparator();
-    protected static final String DEFAULT_DEC_VALUE = "=DEC(changeit)" + BR;
+    protected static final String DEFAULT_DEC_VALUE = "=DEC(changeit)";
 
     protected static final String DESC_KMF_SERVER = "Path to key store file. Required when TLS protocol is not blank or not empty";
     protected static final String DESC_TMF_SERVER = "Path to trust store file. Two-Way SSL (Client-Auth required) when specified, otherwise One-Way SSL (Client-Auth not required)";
@@ -378,6 +378,7 @@ public abstract class BootConfig implements JExpressConfig {
             return;
         }
         StringBuilder sb = new StringBuilder();
+        String BR = BootConstant.BR;
         try (Stream<String> lines = Files.lines(cfgFile.toPath())) {
             lines.forEach(line -> {
                 if (!line.startsWith("#")) {
@@ -399,6 +400,10 @@ public abstract class BootConfig implements JExpressConfig {
     }
 
     public static String generateTemplate(Class configClass) {
+        return generateTemplate(configClass, BootConstant.BR);
+    }
+
+    public static String generateTemplate(Class configClass, String BR) {
         Object objectInstance = null;
         if (JExpressConfig.class.isAssignableFrom(configClass)) {
             objectInstance = instance(configClass);
@@ -425,12 +430,10 @@ public abstract class BootConfig implements JExpressConfig {
         List<Field> configItems = ReflectionUtil.getDeclaredAndSuperClassesFields(configClass, true);
         boolean hasConfig = false;
         StringBuilder sb = new StringBuilder();
-        boolean headerProcessed = false;
         for (Field field : configItems) {
             // desc
             ConfigHeader header = field.getAnnotation(ConfigHeader.class);
             if (header != null) {
-                headerProcessed = true;
                 List<String> list = parse(header);
                 int maxSize = 0;
                 for (String s : list) {
@@ -439,27 +442,27 @@ public abstract class BootConfig implements JExpressConfig {
                 maxSize += 2;
 
                 //1. top line ######################
-                sb.append("\n\n");
+                sb.append(BR + BR);
                 hasConfig = true;
                 for (int i = 0; i < maxSize; i++) {
                     sb.append("#");
                 }
                 //2. desc
-                sb.append("\n");
+                sb.append(BR);
                 for (String s : list) {
                     sb.append(s);
                     int size = maxSize - s.length() - 1;
                     for (int i = 0; i < size; i++) {
                         sb.append(" ");
                     }
-                    sb.append("#").append("\n");
+                    sb.append("#").append(BR);
                 }
 
                 //3. bottom line ######################
                 for (int i = 0; i < maxSize; i++) {
                     sb.append("#");
                 }
-                sb.append("\n");
+                sb.append(BR);
 
                 if (objectInstance != null) {
                     String callbackFunc = header.callbackMethodName4Dump();
@@ -471,11 +474,11 @@ public abstract class BootConfig implements JExpressConfig {
                                 cbMethod.setAccessible(true);
                                 cbMethod.invoke(objectInstance, sb);
                             } else {
-                                sb.append("NoSuchMethodException: ").append(callbackFunc).append("\n");
+                                sb.append("NoSuchMethodException: ").append(callbackFunc).append(BR);
                             }
                         } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/
                                  SecurityException | InvocationTargetException ex) {
-                            sb.append(ex).append("\n");
+                            sb.append(ex).append(BR);
                         }
                     }
                 }
@@ -484,23 +487,42 @@ public abstract class BootConfig implements JExpressConfig {
             //config
             Config cfg = field.getAnnotation(Config.class);
             if (cfg != null) {
-                boolean isEncrypted = cfg.validate().equals(Config.Validate.Encrypted);
                 String desc = cfg.desc();
-                if (StringUtils.isNotBlank(desc)) {
+                boolean hasDesc = StringUtils.isNotBlank(desc);
+                String format = cfg.format();
+                boolean hasFormat = StringUtils.isNotBlank(format);
+                String example = cfg.example();
+                boolean hasExample = StringUtils.isNotBlank(example);
+                if (header == null && (hasDesc || hasFormat || hasExample)) {
+                    sb.append(BR);
+                }
+
+                boolean isEncrypted = cfg.validate().equals(Config.Validate.Encrypted);
+                if (hasDesc) {
                     List<String> memoList = new ArrayList<>();
                     lineBreak(desc, "Note: ", memoList);
-                    boolean isMultyLineNote = false;
                     for (String s : memoList) {
                         hasConfig = true;
-                        if (!headerProcessed && !isMultyLineNote) {
-                            sb.append("\n");
-                        }
-                        headerProcessed = false;
-                        isMultyLineNote = true;
-                        sb.append(s).append("\n");
+                        sb.append(s).append(BR);
                     }
                 }
-                headerProcessed = false;
+                if (hasFormat) {
+                    List<String> memoList = new ArrayList<>();
+                    lineBreak(format, "[Format] ", memoList);
+                    for (String s : memoList) {
+                        hasConfig = true;
+                        sb.append(s).append(BR);
+                    }
+                }
+                if (hasExample) {
+                    List<String> memoList = new ArrayList<>();
+                    lineBreak(example, "[Example] ", memoList);
+                    for (String s : memoList) {
+                        hasConfig = true;
+                        sb.append(s).append(BR);
+                    }
+                }
+
                 boolean isRequired = cfg.required();
                 boolean hasDefaultValue = false, hasPredefinedValue = false;
                 String dv = cfg.predefinedValue();
@@ -540,11 +562,11 @@ public abstract class BootConfig implements JExpressConfig {
                                 cbMethod.invoke(objectInstance, sb);
                                 dumpDefault = false;
                             } else {
-                                sb.append("NoSuchMethodException: ").append(callbackFunc).append("\n");
+                                sb.append("NoSuchMethodException: ").append(callbackFunc).append(BR);
                             }
                         } catch (IllegalAccessException | IllegalArgumentException | /*NoSuchMethodException |*/
                                  SecurityException | InvocationTargetException ex) {
-                            sb.append(ex).append("\n");
+                            sb.append(ex).append(BR);
                         }
                     }
                 }
@@ -565,7 +587,7 @@ public abstract class BootConfig implements JExpressConfig {
                     if (isEncrypted) {
                         sb.append(")");
                     }
-                    sb.append("\n");
+                    sb.append(BR);
 
                     int i = 0;
                     String[] keys = {cfg.StorePwdKey(), cfg.AliasKey(), cfg.AliasPwdKey()};
@@ -578,26 +600,26 @@ public abstract class BootConfig implements JExpressConfig {
                             if (i == 0 || i == 2) {
                                 sb.append("DEC(").append(DESC_PLAINPWD).append(")");
                             }
-                            sb.append("\n");
+                            sb.append(BR);
                         }
                         i++;
                     }
                 }
-//                if (StringUtils.isNotBlank(desc)) {
-//                    sb.append("\n");
-//                }
+                /*if (hasDesc) {
+                    sb.append(BR);
+                }*/
             }
         }
 
-        return hasConfig ? sb.substring(2) : sb.toString();
+        return hasConfig ? sb.substring(BR.length() * 2) : sb.toString();
     }
 
     protected static List<String> parse(ConfigHeader memo) {
         List<String> ret = new ArrayList<>();
         lineBreak(memo.title(), null, ret);
         lineBreak(memo.desc(), null, ret);
-        lineBreak(memo.format(), "Format> ", ret);
-        lineBreak(memo.example(), "Example> ", ret);
+        lineBreak(memo.format(), "[Format] ", ret);
+        lineBreak(memo.example(), "[Example] ", ret);
 
         return ret;
     }
@@ -606,14 +628,12 @@ public abstract class BootConfig implements JExpressConfig {
         if (StringUtils.isBlank(s)) {
             return null;
         }
-        String[] ret = s.trim().split("\\r?\\n");
+        String[] ret = s/*.trim()*/.split("\\r?\\n", -1);
         if (ret != null) {
             for (String r : ret) {
                 if (r != null) {
-                    if (StringUtils.isBlank(prefix)) {
-                        r = r.trim();
-                    } else {
-                        r = prefix + r.trim();
+                    if (StringUtils.isNotBlank(prefix)) {
+                        r = prefix + r;
                     }
                     list.add("# " + r);
                 }
@@ -623,7 +643,7 @@ public abstract class BootConfig implements JExpressConfig {
     }
 
     protected static int getLength(String s) {
-        return StringUtils.isBlank(s) ? 0 : s.trim().length();
+        return StringUtils.isBlank(s) ? 0 : s/*.trim()*/.length();
     }
 
     protected static final int CPU_CORE = Runtime.getRuntime().availableProcessors();

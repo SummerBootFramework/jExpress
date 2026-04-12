@@ -28,6 +28,7 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import jakarta.annotation.Nullable;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
@@ -86,11 +87,31 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected GRPCClientConfig() {
     }
 
-    //1. NIO Network Listeners
+    //1. NIO Network Listeners REF269-4
     @ConfigHeader(title = "1. " + ID + " provider",
+            desc = "Scenario 1 (overrideAuthority not needed): In a well-configured environment, each node's DNS name is listed as a Subject Alternative Name (SAN) in the certificate, so TLS verification succeeds without any override.  \n" +
+                    "Example: 3-node gRPC cluster, certificate SANs cover every node's individual DNS name:\n" +
+                    "  Subject: CN=grpc.mycompany.com\n" +
+                    "  Subject Alternative Names:\n" +
+                    "    DNS: grpc.cluster.mycompany.com     <- cluster VIP / load balancer, shared DNS name used for TLS verification across all nodes\n" +
+                    "    DNS: grpc-node1.mycompany.com       <- node 1\n" +
+                    "    DNS: grpc-node2.mycompany.com       <- node 2\n" +
+                    "    DNS: grpc-node3.mycompany.com       <- node 3\n\n" +
+                    "  gRpc.client.ssl.overrideAuthority is not required\n" +
+                    "\n" +
+                    "Scenario 2 (overrideAuthority required): When nodes share a certificate that does not list each node's DNS name individually, set overrideAuthority to a shared SAN so TLS verification succeeds for all nodes.\n" +
+                    "Example: N-node gRPC cluster, certificate SANs include a shared cluster DNS name in addition to per-node names:\n" +
+                    "  Subject: CN=grpc.mycompany.com\n" +
+                    "  Subject Alternative Names:\n" +
+                    "    DNS: grpc.cluster.mycompany.com     <- cluster VIP / load balancer, shared DNS name used for TLS verification across all nodes\n" +
+                    "    DNS: grpc-node-n.mycompany.com      <- each node's own DNS name (not used for TLS verification)\n\n" +
+                    "  gRpc.client.ssl.overrideAuthority = grpc.cluster.mycompany.com"
+    )
+    @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425",
+            desc = "cluster target",
             format = "server1:port1, server2:port2, ..., serverN:portN",
-            example = "localhost:8424, remotehost:8425, 127.0.0.1:8426")
-    @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425", required = false)
+            example = "grpc-node1.mycompany.com:8424, grpc-node2.mycompany.com:8424, grpc-node3.mycompany.com:8424"
+    )
     protected volatile List<InetSocketAddress> loadBalancingServers;
     @Config(key = ID + ".LoadBalancing.scheme", defaultValue = "grpc", desc = "In case you have more than one gRPC client needs to connect to different gRPC services, you can set this to distinguish them")
     protected volatile String loadBalancingTargetScheme = "grpc";
@@ -102,9 +123,12 @@ abstract public class GRPCClientConfig extends BootConfig {
 
     //1. gRPC connection
     @Config(key = ID + ".target.url", defaultValue = "grpc:///",
-            desc = "grpc:///\n"
+            desc = "non-cluster server target",
+            format = "scheme://host:port",
+            example = "grpc:///\n"
                     + "grpc://127.0.0.1:8424\n"
-                    + "unix:/tmp/grpcsrver.socket")
+                    + "unix:/tmp/grpcsrver.socket"
+    )
     protected volatile URI uri;
 
     @Config(key = ID + ".ssl.Protocols", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)// "TLSv1.2, TLSv1.3"
@@ -128,10 +152,10 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected volatile KeyManagerFactory kmf;
 
     protected void generateTemplate_keystore(StringBuilder sb) {
-        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + "\n");
-        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE);
-        sb.append(KEY_kmf_AliasKey + "=server3_4096.jexpress.org\n");
-        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE);
+        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + BootConstant.BR);
+        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
+        sb.append(KEY_kmf_AliasKey + "=server3_4096.jexpress.org" + BootConstant.BR);
+        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
         generateTemplate = true;
     }
 
@@ -145,13 +169,14 @@ abstract public class GRPCClientConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
     protected void generateTemplate_truststore(StringBuilder sb) {
-        sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + "\n");
-        sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE);
+        sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + BootConstant.BR);
+        sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
         generateTemplate = true;
     }
 
-    @Config(key = ID + ".ssl.overrideAuthority", predefinedValue = "server2.4096.jexpress.org",
-            desc = "This value tells the channel's security layer what hostname or SNI (Server Name Indication)) to expect in the server's TLS certificate, regardless of the actual address you are connecting to. The certificate validation process will then proceed as usual against your trust store, but the final hostname check will use the value you provide instead of the connection address. Set server certificate DNS name here when server is not yet running on its certificate Subject Alternative Names (SAN)")
+    // REF269-4
+    @Config(key = ID + ".ssl.overrideAuthority"/*, predefinedValue = "server2.4096.jexpress.org"*/,
+            desc = "Common use cases in Scenario 2: connecting via IP address, an internal alias, or a cluster VIP where the server certificate is issued for a specific DNS name not listed as a Subject Alternative Name (SAN) of the connection address.")
     protected volatile String overrideAuthority;
 
     @Config(key = ID + ".ssl.TrustStore.Default", defaultValue = "JDK", desc = "Only used when trust store is not specified, available options: JDK (use JDK truststore), TrustAll (no cert verification and insecure)")

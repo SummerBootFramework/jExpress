@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.boot;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
 public class BackOffice extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(BackOffice.class);
+        String t = generateTemplate(BackOffice.class, "\n");
         System.out.println(t);
     }
 
@@ -57,6 +58,16 @@ public class BackOffice extends BootConfig {
         }
         if (tpeMax < 1) {
             tpeMax = CPU_CORE + 1;
+        }
+
+        if (StringUtils.isBlank(lineSeparator) || lineSeparator.equalsIgnoreCase("system") || lineSeparator.equalsIgnoreCase("default") || lineSeparator.equalsIgnoreCase("SystemDefault")) {
+            lineSeparator = System.lineSeparator();
+        } else if (lineSeparator.equalsIgnoreCase("Linux") || lineSeparator.equalsIgnoreCase("Unix") || lineSeparator.equalsIgnoreCase("LF")) {
+            lineSeparator = "\n";
+        } else if (lineSeparator.equalsIgnoreCase("Windows") || lineSeparator.equalsIgnoreCase("Win") || lineSeparator.equalsIgnoreCase("CRLF ")) {
+            lineSeparator = "\r\n";
+        } else {
+            throw new IllegalArgumentException("efault.lineSeparator=" + lineSeparator + ", available values: system, Linux, Windows");
         }
 
         tpe = buildThreadPoolExecutor(tpe, "BackOffice", tpeThreadingMode,
@@ -116,6 +127,7 @@ public class BackOffice extends BootConfig {
 
     private static String listBootErrorCode() {
         String ret = "";
+        String BR = agent.lineSeparator;
         try {
             Map<String, Integer> results = new HashMap();
             ReflectionUtil.loadFields(BootErrorCode.class, int.class, results, false);
@@ -164,6 +176,9 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "type.JWTAudAsCSV", defaultValue = "true", desc = "Parse JWT Audience value as CSV for JWT backward compatibility")
     private boolean jwtAudAsCSV = true;
+
+    @Config(key = "default.lineSeparator", defaultValue = "system", desc = "available values: system, Linux, Windows")
+    private String lineSeparator = System.lineSeparator();
 
     @Config(key = "default.ConfigChangeMonitor.Throttle.Milliseconds", defaultValue = "100")
     private long CfgChangeMonitorThrottleMillis = 100;
@@ -409,6 +424,10 @@ public class BackOffice extends BootConfig {
 
     public boolean isJwtAudAsCSV() {
         return jwtAudAsCSV;
+    }
+
+    public String getLineSeparator() {
+        return lineSeparator;
     }
 
     public long getCfgChangeMonitorThrottleMillis() {

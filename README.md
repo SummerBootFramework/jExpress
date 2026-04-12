@@ -1,5 +1,15 @@
 # jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>
 
+* **[Apache Central Repository][1]**
+* **[Maven Central Repository][2]**
+* **[mvnrepository.com][3]**
+
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.9
+
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
+
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
+
 [View Changelog (CHANGES)](CHANGES.md)
 
 > **Java 21+ · Netty 4.2 · Guice 7 · Jakarta EE · Virtual Threads**

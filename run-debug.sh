@@ -2,7 +2,7 @@
 # shellcheck shell=bash
 
 # Check if Java was actually found
-JAVA_PATH=$(find /usr/lib/jvm -name "java-21-openjdk*" -type d | head -1)
+JAVA_PATH=$(find /usr/lib/jvm -name 'java-21-openjdk*' -type d | head -1)
 
 if [ -z "$JAVA_PATH" ]; then
     echo "Error: Java 21 OpenJDK not found in /usr/lib/jvm"
@@ -12,9 +12,9 @@ fi
 echo "Starting with Java: ${JAVA_PATH}"
 
 "${JAVA_PATH}/bin/java" \
+ -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005 \
  -Dio.netty.native.workdir=./ \
  -Dio.grpc.netty.shaded.io.netty.native.workdir=./ \
- -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005 \
  -Djava.awt.headless=true \
  -Xms2G -Xmx2G \
  -XX:+UseZGC -XX:ZUncommitDelay=300 -XX:+ZGenerational -XX:+AlwaysPreTouch \

@@ -46,6 +46,7 @@ import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.security.JwtUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.GeoIpUtil;
 
@@ -312,6 +313,18 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         return verifyToken(authToken, cache, errorCode, context);
     }
 
+    protected String getJwtFilterKey() {
+        return AuthConfig.cfg.getJwtFilterKey();
+    }
+
+    protected Set<String> getJwtFilterWhitelist() {
+        return AuthConfig.cfg.getJwtFilterWhitelist();
+    }
+
+    protected Set<String> getJwtFilterBlacklist() {
+        return AuthConfig.cfg.getJwtFilterBlacklist();
+    }
+
     /**
      * @param authToken
      * @param cache
@@ -338,7 +351,19 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                     Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "AuthToken has been logout", null, "AuthToken has been logout: " + jti);
                     context.error(e).status(HttpResponseStatus.UNAUTHORIZED);
                 } else {
-                    caller = fromJwt(claims);
+                    final String key = getJwtFilterKey();
+                    String error = null;
+                    if (key != null) {
+                        Object target = claims.get(key);
+                        final String targetValue = String.valueOf(target);
+                        error = SecurityUtil.whitelistbalcklistilter("JWT." + key, targetValue, getJwtFilterWhitelist(), getJwtFilterBlacklist());
+                    }
+                    if (error == null) {
+                        caller = fromJwt(claims);
+                    } else {
+                        Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_JWT, null, "Forbidden JWT", null, "Forbidden JWT: " + error);
+                        context.error(err).status(HttpResponseStatus.FORBIDDEN);
+                    }
                 }
             } catch (ExpiredJwtException ex) {
                 Err e = new Err(errorCode != null ? errorCode : BootErrorCode.AUTH_EXPIRED_TOKEN, null, "Expired AuthToken", null, "Expired AuthToken: " + ex);

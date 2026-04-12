@@ -42,7 +42,6 @@ public interface BootConstant {
      */
     int CPU_CORE = Runtime.getRuntime().availableProcessors();
     String PID = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
-    String BR = System.lineSeparator();
 
     //logging metadata
     String LOG4J2_KEY = "log4j.configurationFile";
@@ -52,6 +51,7 @@ public interface BootConstant {
     /**
      * 3. jExpress Default Settings
      */
+    String BR = BackOffice.agent.getLineSeparator();
     boolean CFG_ERROR_CODE_AS_INT = BackOffice.agent.isErrorCodeAsInt();
     boolean CFG_JWT_AUD_AS_CSV = BackOffice.agent.isJwtAudAsCSV();
     long CFG_CHANGE_MONITOR_THROTTLE_MS = BackOffice.agent.getCfgChangeMonitorThrottleMillis();
