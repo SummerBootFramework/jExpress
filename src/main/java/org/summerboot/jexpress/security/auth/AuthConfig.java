@@ -21,6 +21,7 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import org.apache.tika.utils.StringUtils;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
@@ -146,9 +147,9 @@ public class AuthConfig extends BootConfig {
     @ConfigHeader(title = "2. JWT",
             example = "To generate the keypair manually:\n"
                     + "step1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
-                    + "step2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out " + JWT_PUBLIC_KEY_FILE + " \n"
-                    + "step3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM \n"
-                    + "step4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out " + JWT_PRIVATE_KEY_FILE + " \n"
+                    + "step2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out " + JWT_PUBLIC_KEY_FILE + "\n"
+                    + "step3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM " + "\n"
+                    + "step4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out " + JWT_PRIVATE_KEY_FILE + "\n"
                     + "In case need to re-encrypt: openssl pkcs8 -topk8 -v2 aes256 -in " + JWT_PRIVATE_KEY_FILE + " -out new.key")
     @Config(key = KEY_privateKeyFile,
             desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size",
@@ -156,7 +157,7 @@ public class AuthConfig extends BootConfig {
     protected volatile File privateKeyFile;
 
     protected void generateTemplate_privateKeyFile(StringBuilder sb) {
-        sb.append(KEY_privateKeyFile + "=" + JWT_PRIVATE_KEY_FILE + "\n");
+        sb.append(KEY_privateKeyFile + "=" + JWT_PRIVATE_KEY_FILE + BootConstant.BR);
         generateTemplate = true;
     }
 
@@ -167,7 +168,7 @@ public class AuthConfig extends BootConfig {
     protected volatile String privateKeyPwd;
 
     protected void generateTemplate_privateKeyPwd(StringBuilder sb) {
-        sb.append(KEY_privateKeyPwd + DEFAULT_DEC_VALUE);
+        sb.append(KEY_privateKeyPwd + DEFAULT_DEC_VALUE + BootConstant.BR);
     }
 
     @Config(key = KEY_publicKeyFile,
@@ -176,7 +177,7 @@ public class AuthConfig extends BootConfig {
     protected volatile File publicKeyFile;
 
     protected void generateTemplate_publicKeyFile(StringBuilder sb) {
-        sb.append(KEY_publicKeyFile + "=" + JWT_PUBLIC_KEY_FILE + "\n");
+        sb.append(KEY_publicKeyFile + "=" + JWT_PUBLIC_KEY_FILE + BootConstant.BR);
     }
 
     @JsonIgnore
@@ -224,8 +225,8 @@ public class AuthConfig extends BootConfig {
      */
     protected void generateTemplate_DumpRoleMapping(StringBuilder sb) {
         for (String role : declareRoles) {
-            sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>\n");
-            sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>\n");
+            sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>" + BootConstant.BR);
+            sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>" + BootConstant.BR);
         }
     }
 

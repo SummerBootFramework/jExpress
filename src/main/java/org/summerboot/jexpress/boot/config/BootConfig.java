@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
@@ -73,8 +74,7 @@ public abstract class BootConfig implements JExpressConfig {
 
     protected static final Map<Class, JExpressConfig> cache = new HashMap<>();
 
-    protected static String BR = System.lineSeparator();
-    protected static final String DEFAULT_DEC_VALUE = "=DEC(changeit)" + BR;
+    protected static final String DEFAULT_DEC_VALUE = "=DEC(changeit)";
 
     protected static final String DESC_KMF_SERVER = "Path to key store file. Required when TLS protocol is not blank or not empty";
     protected static final String DESC_TMF_SERVER = "Path to trust store file. Two-Way SSL (Client-Auth required) when specified, otherwise One-Way SSL (Client-Auth not required)";
@@ -378,6 +378,7 @@ public abstract class BootConfig implements JExpressConfig {
             return;
         }
         StringBuilder sb = new StringBuilder();
+        String BR = BootConstant.BR;
         try (Stream<String> lines = Files.lines(cfgFile.toPath())) {
             lines.forEach(line -> {
                 if (!line.startsWith("#")) {
@@ -399,6 +400,10 @@ public abstract class BootConfig implements JExpressConfig {
     }
 
     public static String generateTemplate(Class configClass) {
+        return generateTemplate(configClass, BootConstant.BR);
+    }
+
+    public static String generateTemplate(Class configClass, String BR) {
         Object objectInstance = null;
         if (JExpressConfig.class.isAssignableFrom(configClass)) {
             objectInstance = instance(configClass);

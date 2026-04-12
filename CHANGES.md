@@ -28,6 +28,8 @@
 * REF269-4: Enhanced gRPC client config description (GRPCClientConfig.java)
 * REF269-5: @Config supports format and example
 * REF269-6: HTTP and gRPC request can be filtered by JWT whitelist/blacklist, JWT filter configurations are added into cfg_auth.properties and handled by BootAuthenticator
+* REF269-6: default lineSeparator is now configurable in etc/boot.ini (default.lineSeparator=system). Use case: If your Java application is running on Windows but specifically generating config files
+  intended for a Linux system, you should set default.lineSeparator=Linux
 
 ### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
 
