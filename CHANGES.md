@@ -30,6 +30,7 @@
 * REF269-6: HTTP and gRPC request can be filtered by JWT whitelist/blacklist, JWT filter configurations are added into cfg_auth.properties and handled by BootAuthenticator
 * REF269-6: default lineSeparator is now configurable in etc/boot.ini (default.lineSeparator=system). Use case: If your Java application is running on Windows but specifically generating config files
   intended for a Linux system, you should set default.lineSeparator=Linux
+* REF269-7: Enhanced/refactoring cfg_nio.properties: added section "2.2 NIO Security - Filter", filter by caller address and request
 
 ### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
 

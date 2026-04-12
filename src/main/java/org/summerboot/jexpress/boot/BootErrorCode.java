@@ -84,6 +84,7 @@ public interface BootErrorCode {
     int AUTH_NO_PERMISSION = getErrorCode(AUTH_BASE + 6);
     int AUTH_FORBIDDEN_IP = getErrorCode(AUTH_BASE + 7);
     int AUTH_FORBIDDEN_JWT = getErrorCode(AUTH_BASE + 8);
+    int AUTH_FORBIDDEN_REQUST = getErrorCode(AUTH_BASE + 9);
 
     //Integration
     int ACCESS_BASE = getErrorCode(50);

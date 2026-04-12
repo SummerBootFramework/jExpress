@@ -89,13 +89,6 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.idle.threshold.second", defaultValue = "61", desc = "make it prime number when you have both NIO and gRPC server running")
     protected volatile int idleThresholdSecond;
 
-    @Config(key = "CallerAddressFilter.option", defaultValue = "String", desc = "valid value = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")
-    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
-    @Config(key = "CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
-    protected volatile Set<String> callerAddressFilterWhitelist;
-    @Config(key = "CallerAddressFilter.Blacklist", desc = "Blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
-    protected volatile Set<String> callerAddressFilterBlacklist;
-
     @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", desc = "@Inspector.names in CSV format, empty/null means require ALL HealthChecks")
     protected volatile Set<String> pingSyncHealthStatus_requiredHealthChecks;
     @Config(key = "ping.sync.PauseStatus", defaultValue = "true", desc = "Ping response status is synced with PAUSE status")
@@ -104,7 +97,7 @@ public class NioConfig extends BootConfig {
     protected volatile boolean pingSyncShowRootCause;
 
     //2. NIO Security
-    @ConfigHeader(title = "2. NIO Security")
+    @ConfigHeader(title = "2.1 NIO Security - TLS")
 
     protected static final String KEY_kmf_key = "nio.server.ssl.KeyStore";
     protected static final String KEY_kmf_StorePwdKey = "nio.server.ssl.KeyStorePwd";
@@ -150,9 +143,21 @@ public class NioConfig extends BootConfig {
             desc = "use system default cipher suites when not specified")
     protected String[] tlsCipherSuites;
 
+    @ConfigHeader(title = "2.2 NIO Security - Filter")
+    @Config(key = "filter.CallerAddress.option", defaultValue = "String", desc = "valid value = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")
+    protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
+    @Config(key = "filter.CallerAddress.Whitelist", desc = "Whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
+    protected volatile Set<String> callerAddressFilterWhitelist;
+    @Config(key = "filter.CallerAddress.Blacklist", desc = "Blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
+    protected volatile Set<String> callerAddressFilterBlacklist;
+
+    @Config(key = "filter.Request.Whitelist", desc = "Whitelist in CSV format, example: GET/myservice1/.* , /service1/action1/ , /service1/action2")
+    protected volatile Set<String> requestFilterWhitelist;
+    @Config(key = "filter.Request.Blacklist", desc = "Blacklist in CSV format, example: POST/myservice2/.* , DELETE/service2/action1/ , /service2/action2")
+    protected volatile Set<String> requestFilterBlacklist;
+
     //3.1 Socket controller
     @ConfigHeader(title = "3.1 Socket controller")
-
     @Config(key = "nio.server.socket.SO_REUSEADDR", defaultValue = "true")
     protected volatile boolean soReuseAddr = true;
 
@@ -445,6 +450,16 @@ public class NioConfig extends BootConfig {
                 SecurityUtil.matches("", regex);
             }
         }
+        if (requestFilterWhitelist != null) {
+            for (String regex : requestFilterWhitelist) {
+                SecurityUtil.matches("", regex);
+            }
+        }
+        if (requestFilterBlacklist != null) {
+            for (String regex : requestFilterBlacklist) {
+                SecurityUtil.matches("", regex);
+            }
+        }
 
         // 7. Web Server Mode       
         rootFolder = cfgFile.getParentFile().getParentFile();
@@ -573,18 +588,6 @@ public class NioConfig extends BootConfig {
         return idleThresholdSecond;
     }
 
-    public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
-        return CallerAddressFilterOption;
-    }
-
-    public Set<String> getCallerAddressFilterWhitelist() {
-        return callerAddressFilterWhitelist;
-    }
-
-    public Set<String> getCallerAddressFilterBlacklist() {
-        return callerAddressFilterBlacklist;
-    }
-
     public Set<String> getPingSyncHealthStatus_requiredHealthChecks() {
         return pingSyncHealthStatus_requiredHealthChecks;
     }
@@ -619,6 +622,26 @@ public class NioConfig extends BootConfig {
 
     public String[] getTlsCipherSuites() {
         return tlsCipherSuites;
+    }
+
+    public GeoIpUtil.CallerAddressFilterOption getCallerAddressFilterOption() {
+        return CallerAddressFilterOption;
+    }
+
+    public Set<String> getCallerAddressFilterWhitelist() {
+        return callerAddressFilterWhitelist;
+    }
+
+    public Set<String> getCallerAddressFilterBlacklist() {
+        return callerAddressFilterBlacklist;
+    }
+
+    public Set<String> getRequestFilterWhitelist() {
+        return requestFilterWhitelist;
+    }
+
+    public Set<String> getRequestFilterBlacklist() {
+        return requestFilterBlacklist;
     }
 
     public boolean isSoReuseAddr() {

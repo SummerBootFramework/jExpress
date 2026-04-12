@@ -161,18 +161,25 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 if (urlSanitizedVo.isPathTraversal()) {
                     Err err = new Err(BootErrorCode.BAD_REQUEST_DATA, null, "Invalid URL", null, "PathTraversal URL: " + httpRequestUriRaw);
                     context.error(err).status(HttpResponseStatus.BAD_REQUEST);
-                } else if (isDecoderSuccess) {
-                    String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
-                    if (error == null) {
-                        processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
-                    } else {
-                        Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_IP, null, "Forbidden caller IP", null, "Forbidden caller IP: " + error);
-                        context.error(err).status(HttpResponseStatus.FORBIDDEN);
-                    }
-                } else {
+                } else if (!isDecoderSuccess) {
                     Throwable cause = req.decoderResult().cause();
                     Err err = new Err(BootErrorCode.NIO_REQUEST_BAD_ENCODING, null, cause == null ? "" : cause.getMessage(), null, cause.toString());
                     context.error(err).status(HttpResponseStatus.BAD_REQUEST);
+                } else {
+                    String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
+                    if (error != null) {
+                        Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_IP, null, "Forbidden caller IP", null, "Forbidden caller IP: " + error);
+                        context.error(err).status(HttpResponseStatus.FORBIDDEN);
+                    } else {
+                        String request = httpMethod + httpRequestUri;
+                        error = SecurityUtil.whitelistbalcklistilter("request", request, nioCfg.getRequestFilterWhitelist(), nioCfg.getRequestFilterBlacklist());
+                        if (error != null) {
+                            Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_REQUST, null, "Forbidden caller request", null, "Forbidden caller request: " + error);
+                            context.error(err).status(HttpResponseStatus.FORBIDDEN);
+                        } else {
+                            processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
+                        }
+                    }
                 }
                 processTime = System.currentTimeMillis() - start;
                 responseDataBytes = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
