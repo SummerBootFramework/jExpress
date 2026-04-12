@@ -32,4 +32,4 @@ echo "Starting with Java: ${JAVA_PATH}"
  -Dio.netty.handler.ssl.openssl.engine.enable=true \
  -Dio.netty.leakDetectionLevel=SIMPLE \
  -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
- -jar jExpressApp.jar -domain ""$1"" -debug
+ -jar jExpressApp.jar -domain "$1" -debug
