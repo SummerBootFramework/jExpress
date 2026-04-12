@@ -151,9 +151,9 @@ public class NioConfig extends BootConfig {
     @Config(key = "filter.CallerAddress.Blacklist", desc = "Blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
-    @Config(key = "filter.Request.Whitelist", desc = "Whitelist in CSV format, example: GET/myservice1/.* , /service1/action1/ , /service1/action2")
+    @Config(key = "filter.Request.Whitelist", desc = "Whitelist in CSV format, example: ^POST/myservice1/.* , /service1/action1/ , /service1/action2")
     protected volatile Set<String> requestFilterWhitelist;
-    @Config(key = "filter.Request.Blacklist", desc = "Blacklist in CSV format, example: POST/myservice2/.* , DELETE/service2/action1/ , /service2/action2")
+    @Config(key = "filter.Request.Blacklist", desc = "Blacklist in CSV format, example: ^POST/myservice2/.* , ^DELETE/service2/action1/ , /service2/action2")
     protected volatile Set<String> requestFilterBlacklist;
 
     //3.1 Socket controller
