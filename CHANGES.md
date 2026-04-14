@@ -2,7 +2,37 @@
 
 ## Version 2.6.9 (2026-04-24)
 
-#### ✨ Features and Enhancements
+### 🔒 1. Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
+
+jExpress 2.6.9 includes two important security upgrades to address a vulnerability disclosed by the Netty and Log4J project.
+
+#### 📌 Impacted Versions
+
+According to the official Netty advisory, the vulnerability affects:
+
+- Netty versions`<= 4.2.10.Final`
+- Log4J version`<= 2.25.3`
+- jExpress versions`<= 2.6.8.Final`
+
+#### 🛠 Fix Included in This Release
+
+jExpress v2.6.9 has upgraded
+
+* Netty to: 4.2.12.Final
+* Log4J to : 2.25.4
+
+This version contains the complete upstream fix for the vulnerability and additional stability improvements.
+
+#### ✔ Is jExpress Affected?
+
+jExpress relies entirely on Netty’s official HTTP decoders and Log4J, and does **not** implement any custom HTTP parsing or logging logic.  
+Therefore, upgrading Netty to a patched version fully mitigates the vulnerability.
+
+#### 🔧 Recommendation
+
+All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to ensure their applications remain secure.
+
+### ✨ 2. Features and Enhancements
 
 * return Application session ID when admin request version
 * new Annotation: @ParamCollectionDelimiter - to be used if developer need to override the default delimiter: comma (",")
@@ -33,32 +63,6 @@
 * REF269-7: Enhanced/refactoring cfg_nio.properties: added section "2.2 NIO Security - Filter", filter by caller address and request
 * REF269-8: New CLI: -format (format configuration files)
 * REF269-9: Error Code Offset - The new `errorCodeBase` in boot.conf defines the starting numeric range for error codes within this framework.
-
-### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
-
-jExpress 2.6.9 includes an important security upgrade to address a vulnerability disclosed by the Netty project.
-
-#### 📌 Impacted Versions
-
-According to the official Netty advisory, the vulnerability affects:
-
-- Netty versions`<= 4.2.10.Final`
-- jExpress versions`<= 2.6.8.Final`
-
-#### 🛠 Fix Included in This Release
-
-jExpress v2.6.9 has upgraded Netty to: 4.2.12.Final
-
-This version contains the complete upstream fix for the vulnerability and additional stability improvements.
-
-#### ✔ Is jExpress Affected?
-
-jExpress relies entirely on Netty’s official HTTP decoders and does **not** implement any custom HTTP parsing logic.  
-Therefore, upgrading Netty to a patched version fully mitigates the vulnerability.
-
-#### 🔧 Recommendation
-
-All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to ensure their applications remain secure.
 
 ## Version 2.6.8 (2026-03-11)
 
