@@ -128,11 +128,11 @@ abstract public class HttpClientConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf;
 
-    protected void generateTemplate_keystore(StringBuilder sb) {
-        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + BootConstant.BR);
-        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
-        sb.append(KEY_kmf_AliasKey + "=server3_2048.jexpress.org" + BootConstant.BR);
-        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
+    protected void generateTemplate_keystore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_kmf_key, currentValues, FILENAME_KEYSTORE, sb);
+        appendCurrentValue(KEY_kmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
+        appendCurrentValue(KEY_kmf_AliasKey, currentValues, "server3_2048.jexpress.org", sb);
+        appendCurrentValue(KEY_kmf_AliasPwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
         generateTemplate = true;
     }
 
@@ -144,9 +144,9 @@ abstract public class HttpClientConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
 
-    protected void generateTemplate_truststore(StringBuilder sb) {
-        sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + BootConstant.BR);
-        sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
+    protected void generateTemplate_truststore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_tmf_key, currentValues, FILENAME_TRUSTSTORE_4CLIENT, sb);
+        appendCurrentValue(KEY_tmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
         generateTemplate = true;
     }
 
@@ -206,7 +206,7 @@ abstract public class HttpClientConfig extends BootConfig {
     protected volatile long httpClientTimeoutMs = 5000;
 
     @Config(key = "httpclient.executor.mode", defaultValue = "VirtualThread",
-            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \n use CPU core + 1 when application is CPU bound\n"
+            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java)\n use CPU core + 1 when application is CPU bound\n"
                     + "use CPU core x 2 + 1 when application is I/O bound\n"
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
@@ -247,8 +247,10 @@ abstract public class HttpClientConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_RequestHeaders")
     protected final Map<String, String> httpClientDefaultRequestHeaders = new HashMap<>();
 
-    protected void generateTemplate_RequestHeaders(StringBuilder sb) {
-        sb.append("#").append(HEADER_CLIENT_REQUEST).append("request_header_name=request_header_value\n");
+    protected void generateTemplate_RequestHeaders(StringBuilder sb, Properties currentValues) {
+        if (!appendCurrentValue(HEADER_CLIENT_REQUEST, currentValues, sb)) {
+            sb.append("#").append(HEADER_CLIENT_REQUEST).append("request_header_name=request_header_value" + BootConstant.BR);
+        }
     }
 
     protected HTTPClientStatusListener listener = null;

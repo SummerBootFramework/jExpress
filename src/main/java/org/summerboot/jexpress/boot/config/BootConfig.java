@@ -56,12 +56,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.summerboot.jexpress.boot.config.ConfigUtil.ENCRYPTED_WARPER_PREFIX;
@@ -74,7 +76,7 @@ public abstract class BootConfig implements JExpressConfig {
 
     protected static final Map<Class, JExpressConfig> cache = new HashMap<>();
 
-    protected static final String DEFAULT_DEC_VALUE = "=DEC(changeit)";
+    protected static final String DEFAULT_DEC_VALUE = "DEC(changeit)";
 
     protected static final String DESC_KMF_SERVER = "Path to key store file. Required when TLS protocol is not blank or not empty";
     protected static final String DESC_TMF_SERVER = "Path to trust store file. Two-Way SSL (Client-Auth required) when specified, otherwise One-Way SSL (Client-Auth not required)";
@@ -400,10 +402,10 @@ public abstract class BootConfig implements JExpressConfig {
     }
 
     public static String generateTemplate(Class configClass) {
-        return generateTemplate(configClass, BootConstant.BR);
+        return generateTemplate(configClass, BootConstant.BR, null);
     }
 
-    public static String generateTemplate(Class configClass, String BR) {
+    public static String generateTemplate(Class configClass, String BR, Properties currentConfig) {
         Object objectInstance = null;
         if (JExpressConfig.class.isAssignableFrom(configClass)) {
             objectInstance = instance(configClass);
@@ -467,12 +469,12 @@ public abstract class BootConfig implements JExpressConfig {
                 if (objectInstance != null) {
                     String callbackFunc = header.callbackMethodName4Dump();
                     if (StringUtils.isNotBlank(callbackFunc)) {
-                        Class[] cArg = {StringBuilder.class};//new Class[1];
+                        Class[] cArg = {StringBuilder.class, Properties.class};//new Class[1];
                         try {
                             Method cbMethod = ReflectionUtil.getMethod(configClass, callbackFunc, cArg);//configClass.getDeclaredMethod(callbackFunc, cArg);
                             if (cbMethod != null) {
                                 cbMethod.setAccessible(true);
-                                cbMethod.invoke(objectInstance, sb);
+                                cbMethod.invoke(objectInstance, sb, currentConfig);
                             } else {
                                 sb.append("NoSuchMethodException: ").append(callbackFunc).append(BR);
                             }
@@ -525,7 +527,12 @@ public abstract class BootConfig implements JExpressConfig {
 
                 boolean isRequired = cfg.required();
                 boolean hasDefaultValue = false, hasPredefinedValue = false;
-                String dv = cfg.predefinedValue();
+                final String key = namespace + cfg.key();
+                String currentValue = currentConfig == null ? null : currentConfig.getProperty(key);
+                String dv = currentValue == null ? cfg.predefinedValue() : currentValue;
+                if (isEncrypted && currentValue != null) {
+                    isEncrypted = false;// do not warp with DEC()
+                }
                 if (!StringUtils.isBlank(dv)) {
                     hasPredefinedValue = true;
                 } else {
@@ -554,12 +561,12 @@ public abstract class BootConfig implements JExpressConfig {
                 if (objectInstance != null) {
                     String callbackFunc = cfg.callbackMethodName4Dump();
                     if (StringUtils.isNotBlank(callbackFunc)) {
-                        Class[] cArg = {StringBuilder.class};//new Class[1];
+                        Class[] cArg = {StringBuilder.class, Properties.class};//new Class[1];
                         try {
                             Method cbMethod = ReflectionUtil.getMethod(configClass, callbackFunc, cArg);//configClass.getDeclaredMethod(callbackFunc, cArg);
                             if (cbMethod != null) {
                                 cbMethod.setAccessible(true);
-                                cbMethod.invoke(objectInstance, sb);
+                                cbMethod.invoke(objectInstance, sb, currentConfig);
                                 dumpDefault = false;
                             } else {
                                 sb.append("NoSuchMethodException: ").append(callbackFunc).append(BR);
@@ -574,7 +581,6 @@ public abstract class BootConfig implements JExpressConfig {
                     if (!hasPredefinedValue && !isRequired || hasDefaultValue) {
                         sb.append("#");
                     }
-                    String key = namespace + cfg.key();
                     sb.append(key).append("=");
                     if (isEncrypted) {
                         sb.append("DEC(");
@@ -612,6 +618,34 @@ public abstract class BootConfig implements JExpressConfig {
         }
 
         return hasConfig ? sb.substring(BR.length() * 2) : sb.toString();
+    }
+
+    /*protected String getCurrentValue(String key, Properties currentValues, String defaultValue) {
+        String value = currentValues == null ? null : currentValues.getProperty(key);
+        return key + "=" + (value == null ? defaultValue : value) + BootConstant.BR;
+    }*/
+
+    protected String appendCurrentValue(String key, Properties currentValues, String defaultValue, StringBuilder sb) {
+        return appendCurrentValue(key, currentValues, defaultValue, sb, false);
+    }
+
+    protected String appendCurrentValue(String key, Properties currentValues, String defaultValue, StringBuilder sb, boolean disableByDefault) {
+        String value = currentValues == null ? null : currentValues.getProperty(key);
+        String line = (value == null && disableByDefault ? "#" : "") + key + "=" + (value == null ? defaultValue : value) + BootConstant.BR;
+        sb.append(line);
+        return line;
+    }
+
+    protected boolean appendCurrentValue(String keyPrefix, Properties currentValues, StringBuilder sb) {
+        Set<Object> keys = currentValues != null ? currentValues.keySet() : Set.of();
+        List<String> keyList = keys.stream()
+                .map(Object::toString)
+                .filter(k -> k.startsWith(keyPrefix))
+                .sorted()
+                .collect(Collectors.toList());
+        //keyList.forEach(key -> sb.append(key).append("=").append(getCurrentValue(key, currentValues, "")).append(BootConstant.BR));
+        keyList.forEach(key -> appendCurrentValue(key, currentValues, "", sb));
+        return !keyList.isEmpty();
     }
 
     protected static List<String> parse(ConfigHeader memo) {

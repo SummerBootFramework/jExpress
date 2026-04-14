@@ -52,7 +52,21 @@ import java.util.stream.Collectors;
 public class NioConfig extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(NioConfig.class);
+        Properties p = new Properties();
+        p.put("nio.server.bindings", "aaa");
+        p.put("nio.server.autostart", "bbb");
+        p.put("nio.server.ssl.KeyStore", "KeyStore111");
+        p.put("nio.server.ssl.KeyStorePwd", "KeyStorePwd222");
+        p.put("nio.server.ssl.KeyAlias", "KeyAlias333");
+        p.put("nio.server.ssl.KeyPwd", "KeyPwd444");
+        p.put("server.DefaultResponseHttpHeaders.X-Frame-Options3", "sameorigin333");
+        p.put("server.DefaultResponseHttpHeaders.X-Frame-Options1", "sameorigin111");
+        p.put("server.DefaultResponseHttpHeaders.X-Frame-Options2", "sameorigin222");
+        p.put("server.DefaultResponseHttpHeaders.X-Frame-Options", "");
+        p.put("server.1DefaultResponseHttpHeaders.Access-Control-Max-Age", "3600");
+        p.put("server.DefaultResponseHttpHeaders.Access-Control-Max-Age", "3600");
+        //p = null;
+        String t = generateTemplate(NioConfig.class, "\n", p);
         System.out.println(t);
     }
 
@@ -97,24 +111,23 @@ public class NioConfig extends BootConfig {
     protected volatile boolean pingSyncShowRootCause;
 
     //2. NIO Security
-    @ConfigHeader(title = "2.1 NIO Security - TLS")
-
     protected static final String KEY_kmf_key = "nio.server.ssl.KeyStore";
     protected static final String KEY_kmf_StorePwdKey = "nio.server.ssl.KeyStorePwd";
     protected static final String KEY_kmf_AliasKey = "nio.server.ssl.KeyAlias";
     protected static final String KEY_kmf_AliasPwdKey = "nio.server.ssl.KeyPwd";
 
     @JsonIgnore
+    @ConfigHeader(title = "2.1 NIO Security - TLS")
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
             desc = DESC_KMF_SERVER,
             callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf = null;
 
-    protected void generateTemplate_keystore(StringBuilder sb) {
-        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + BootConstant.BR);
-        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
-        sb.append(KEY_kmf_AliasKey + "=server1_2048.jexpress.org" + BootConstant.BR);
-        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
+    protected void generateTemplate_keystore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_kmf_key, currentValues, FILENAME_KEYSTORE, sb);
+        appendCurrentValue(KEY_kmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
+        appendCurrentValue(KEY_kmf_AliasKey, currentValues, "server1_2048.jexpress.org", sb);
+        appendCurrentValue(KEY_kmf_AliasPwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
         generateTemplate = true;
     }
 
@@ -222,7 +235,7 @@ public class NioConfig extends BootConfig {
     protected volatile int nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
 
     @Config(key = "nio.server.BizExecutor.mode", defaultValue = "VirtualThread",
-            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \nuse CPU core + 1 when application is CPU bound\n"
+            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java)\nuse CPU core + 1 when application is CPU bound\n"
                     + "use CPU core x 2 + 1 when application is I/O bound\n"
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
@@ -312,7 +325,7 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
-    @Config(key = "nio.default.response.Charset", desc = "Accept-Charset header is deprecated and no longer used by modern browsers, \nservers often default to a widely compatible encoding (like UTF-8) or the resource's default encoding for better user experience.", defaultValue = "UTF-8")
+    @Config(key = "nio.default.response.Charset", desc = "Accept-Charset header is deprecated and no longer used by modern browsers,\nservers often default to a widely compatible encoding (like UTF-8) or the resource's default encoding for better user experience.", defaultValue = "UTF-8")
     protected Charset defaultResponseCharset = StandardCharsets.UTF_8;
 
 
@@ -329,7 +342,7 @@ public class NioConfig extends BootConfig {
 
     protected static final String KEY_FILTER_USERTYPE_RANGE = "nio.verbose.filter.usertype.range";
     @Config(key = KEY_FILTER_USERTYPE_RANGE,
-            desc = "user range (when type=CallerId): N1 - N2 or N1, N2, ... , Nn \n"
+            desc = "user range (when type=CallerId): N1 - N2 or N1, N2, ... , Nn\n"
                     + "user range (when type=CallerName): johndoe, janedoe")
     protected volatile String filterUserVaue;
     protected volatile Set<String> filterCallerNameSet;
@@ -416,8 +429,11 @@ public class NioConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_ResponseHeaders")
     protected HttpHeaders serverDefaultResponseHeaders;
 
-    protected void generateTemplate_ResponseHeaders(StringBuilder sb) {
-        sb.append("#").append(HEADER_SERVER_RESPONSE).append("response_header_name=response_header_value" + BootConstant.BR);
+    protected void generateTemplate_ResponseHeaders(StringBuilder sb, Properties currentValues) {
+        if (!appendCurrentValue(HEADER_SERVER_RESPONSE, currentValues, sb)) {
+            sb.append("#").append(HEADER_SERVER_RESPONSE).append("response_header_name=response_header_value" + BootConstant.BR);
+        }
+        generateTemplate = true;
     }
 
     public HttpHeaders getServerDefaultResponseHeaders() {

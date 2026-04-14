@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 public class BackOffice extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(BackOffice.class, "\n");
+        String t = generateTemplate(BackOffice.class, "\n", null);
         System.out.println(t);
     }
 
@@ -153,7 +153,7 @@ public class BackOffice extends BootConfig {
     @Config(key = "errorcode.override")
     private volatile Map<Integer, Integer> bootErrorCodeMapping;
 
-    protected void generateTemplate_ErrorCodeList(StringBuilder sb) {
+    protected void generateTemplate_ErrorCodeList(StringBuilder sb, Properties currentValues) {
         sb.append(listBootErrorCode()).append(System.lineSeparator());
     }
 
@@ -340,6 +340,9 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "naming.cli.decrypt", defaultValue = "decrypt")
     private String cliName_decrypt = "decrypt";
+
+    @Config(key = "naming.cli.format", defaultValue = "format")
+    private String cliName_format = "format";
 
     @Config(key = "naming.cli.psv", defaultValue = "psv")
     private String cliName_psv = "psv";
@@ -584,6 +587,10 @@ public class BackOffice extends BootConfig {
 
     public String getCliName_decrypt() {
         return cliName_decrypt;
+    }
+
+    public String getCliName_format() {
+        return cliName_format;
     }
 
     public String getCliName_psv() {

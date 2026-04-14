@@ -156,8 +156,8 @@ public class AuthConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_privateKeyFile")
     protected volatile File privateKeyFile;
 
-    protected void generateTemplate_privateKeyFile(StringBuilder sb) {
-        sb.append(KEY_privateKeyFile + "=" + JWT_PRIVATE_KEY_FILE + BootConstant.BR);
+    protected void generateTemplate_privateKeyFile(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_privateKeyFile, currentValues, JWT_PRIVATE_KEY_FILE, sb);
         generateTemplate = true;
     }
 
@@ -167,8 +167,8 @@ public class AuthConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_privateKeyPwd")
     protected volatile String privateKeyPwd;
 
-    protected void generateTemplate_privateKeyPwd(StringBuilder sb) {
-        sb.append(KEY_privateKeyPwd + DEFAULT_DEC_VALUE + BootConstant.BR);
+    protected void generateTemplate_privateKeyPwd(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_privateKeyPwd, currentValues, DEFAULT_DEC_VALUE, sb);
     }
 
     @Config(key = KEY_publicKeyFile,
@@ -176,8 +176,8 @@ public class AuthConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_publicKeyFile")
     protected volatile File publicKeyFile;
 
-    protected void generateTemplate_publicKeyFile(StringBuilder sb) {
-        sb.append(KEY_publicKeyFile + "=" + JWT_PUBLIC_KEY_FILE + BootConstant.BR);
+    protected void generateTemplate_publicKeyFile(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_publicKeyFile, currentValues, JWT_PUBLIC_KEY_FILE, sb);
     }
 
     @JsonIgnore
@@ -223,10 +223,15 @@ public class AuthConfig extends BootConfig {
      *
      * @param sb
      */
-    protected void generateTemplate_DumpRoleMapping(StringBuilder sb) {
+    protected void generateTemplate_DumpRoleMapping(StringBuilder sb, Properties currentValues) {
+
         for (String role : declareRoles) {
-            sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>" + BootConstant.BR);
-            sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>" + BootConstant.BR);
+            if (!appendCurrentValue("roles." + role + ".groups", currentValues, sb)) {
+                sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>" + BootConstant.BR);
+            }
+            if (!appendCurrentValue("roles." + role + ".users", currentValues, sb)) {
+                sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>" + BootConstant.BR);
+            }
         }
     }
 

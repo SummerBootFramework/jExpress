@@ -33,8 +33,10 @@ import org.summerboot.jexpress.util.FormatterUtil;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -46,6 +48,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -78,7 +81,7 @@ public class ConfigUtil {
     }
 
     public static enum ConfigLoadMode {
-        cli_encrypt(true, true), cli_decrypt(false, true), app_run(true, false);
+        cli_encrypt(true, true), cli_decrypt(false, true), cli_format(true, true), app_run(true, false);
 
         private final boolean encryptMode;
         private final boolean cliMode;
@@ -103,6 +106,18 @@ public class ConfigUtil {
         Map<File, Runnable> cfgUpdateTasks = new HashMap();
         long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
         String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
+
+        if (ConfigLoadMode.cli_format == mode) {
+            for (String fileName : configs.keySet()) {
+                File configFile = Paths.get(configFolder.toString(), fileName).toFile();
+                try (var a = Timeout.watch("loading config file " + configFile, timeoutMs).withDesc(timeoutDesc)) {
+                    updated += formatConfig(cfgConfigDir, configFile, configs.get(fileName), log);
+                }
+            }
+            return updated;
+        }
+
+
         for (String fileName : configs.keySet()) {
             File configFile = Paths.get(configFolder.toString(), fileName).toFile();
             try (var a = Timeout.watch("loading config file " + configFile, timeoutMs).withDesc(timeoutDesc)) {
@@ -135,6 +150,23 @@ public class ConfigUtil {
         if (cliMode) {
             System.out.println(" done!");
         }
+    }
+
+    public static int formatConfig(File cfgConfigDir, File configFile, JExpressConfig cfg, Logger log) throws IOException {
+        String currentContent = Files.readString(configFile.toPath());
+        Properties currentSettings = new Properties();
+        try (InputStream input = new FileInputStream(configFile)) {
+            // Load the properties file
+            currentSettings.load(input);
+        }
+        String formattedContent = BootConfig.generateTemplate(cfg.getClass(), BootConstant.BR, currentSettings);
+        if (Objects.equals(currentContent, formattedContent)) {
+            return 0;
+        }
+        configFile.renameTo(Paths.get(configFile.getParent(), configFile.getName() + "_" + System.currentTimeMillis()).toFile());
+        Files.writeString(configFile.toPath(), formattedContent);
+        log.info("Config file has been formatted: " + configFile);
+        return 1;
     }
 
     public static int loadConfig(ConfigLoadMode mode, Logger log, Locale defaultRB, File configFile, JExpressConfig cfg, Map<File, Runnable> cfgUpdateTasks, File cfgConfigDir) throws Exception {

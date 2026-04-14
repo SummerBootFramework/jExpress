@@ -92,6 +92,7 @@ public interface BootConstant {
     String CLI_JWT = BackOffice.agent.getCliName_jwt();
     String CLI_ENCRYPT = BackOffice.agent.getCliName_encrypt();
     String CLI_DECRYPT = BackOffice.agent.getCliName_decrypt();
+    String CLI_FORMAT = BackOffice.agent.getCliName_format();
     String CLI_PSV = BackOffice.agent.getCliName_psv();
     String CLI_DEBUGMODE = BackOffice.agent.getCliName_debugMode();
     String MEMO_DELIMITER = BackOffice.agent.getMemoDelimiter();

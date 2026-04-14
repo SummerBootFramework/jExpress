@@ -23,7 +23,10 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+
+import java.util.Properties;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -41,15 +44,15 @@ abstract public class JPAHibernateConfig extends JPAConfig {
             callbackMethodName4Dump = "generateTemplate_JPAConnection")
     protected final String dummyfield4annotion1 = null;
 
-    protected void generateTemplate_JPAConnection(StringBuilder sb) {
-        sb.append(Environment.JAKARTA_JDBC_URL + "=\n");
-        sb.append(Environment.JAKARTA_JDBC_USER + "=\n");
-        sb.append(Environment.JAKARTA_JDBC_PASSWORD + "=DEC(" + DESC_PLAINPWD + ")\n");
-        sb.append(Environment.JAKARTA_JDBC_DRIVER + "=\n");
+    protected void generateTemplate_JPAConnection(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(Environment.JAKARTA_JDBC_URL, currentValues, "", sb);
+        appendCurrentValue(Environment.JAKARTA_JDBC_USER, currentValues, "", sb);
+        appendCurrentValue(Environment.JAKARTA_JDBC_PASSWORD, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb);
+        appendCurrentValue(Environment.JAKARTA_JDBC_DRIVER, currentValues, "", sb);
         sb.append("#" + Environment.DIALECT + "=\n");
-        sb.append(Environment.SHOW_SQL + "=false\n");
-        sb.append(Environment.HBM2DDL_AUTO + "=validate\n");
-        sb.append("#hibernate.proc.param_null_passing=true\n");
+        appendCurrentValue(Environment.SHOW_SQL, currentValues, "false", sb);
+        appendCurrentValue(Environment.HBM2DDL_AUTO, currentValues, "validate", sb);
+        appendCurrentValue("hibernate.proc.param_null_passing", currentValues, "true", sb);
         sb.append("#" + Environment.LOADED_CLASSES + "=\n");
     }
 
@@ -57,16 +60,23 @@ abstract public class JPAHibernateConfig extends JPAConfig {
             callbackMethodName4Dump = "generateTemplate_ConnectionPool")
     protected final String dummyfield4annotion2 = null;
 
-    protected void generateTemplate_ConnectionPool(StringBuilder sb) {
-        sb.append("# Maximum waiting time for a connection from the pool\n");
-        sb.append("hibernate.hikari.connectionTimeout=20000\n");
-        sb.append("# Minimum number of ideal connections in the pool\n");
-        sb.append("hibernate.hikari.minimumIdle=10\n");
-        sb.append("# Maximum number of actual connection in the pool\n");
-        sb.append("hibernate.hikari.maximumPoolSize=20\n");
-        sb.append("# Maximum time that a connection is allowed to sit ideal in the pool\n");
-        sb.append("hibernate.hikari.idleTimeout=300000\n");
-        sb.append("hibernate.hikari.registerMbeans=true\n");
+    protected void generateTemplate_ConnectionPool(StringBuilder sb, Properties currentValues) {
+        sb.append("# Note: Maximum waiting time for a connection from the pool" + BootConstant.BR);
+        appendCurrentValue("hibernate.hikari.connectionTimeout", currentValues, "20000", sb);
+
+        sb.append("# Note: Minimum number of ideal connections in the pool" + BootConstant.BR);
+        appendCurrentValue("hibernate.hikari.minimumIdle", currentValues, "10", sb);
+
+        sb.append("# Note: Maximum number of actual connection in the pool" + BootConstant.BR);
+        appendCurrentValue("hibernate.hikari.maximumPoolSize", currentValues, "20", sb);
+
+        sb.append("# Note: Maximum time that a connection is allowed to sit ideal in the pool" + BootConstant.BR);
+        appendCurrentValue("hibernate.hikari.idleTimeout", currentValues, "300000", sb);
+
+        sb.append("# Note: enables Java Management Extensions (JMX) MBeans for the HikariCP connection pool, " +
+                "allowing real-time monitoring of metrics like active/idle connections and pool usage. " +
+                "It is essential for tracking pool health but must be enabled explicitly as it defaults to false" + BootConstant.BR);
+        appendCurrentValue("hibernate.hikari.registerMbeans", currentValues, "true", sb);
     }
 
     //protected static volatile Logger log = null;
