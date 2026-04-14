@@ -49,11 +49,16 @@ abstract public class JPAHibernateConfig extends JPAConfig {
         appendCurrentValue(Environment.JAKARTA_JDBC_USER, currentValues, "", sb);
         appendCurrentValue(Environment.JAKARTA_JDBC_PASSWORD, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb);
         appendCurrentValue(Environment.JAKARTA_JDBC_DRIVER, currentValues, "", sb);
-        sb.append("#" + Environment.DIALECT + "=\n");
+
+        //sb.append("#" + Environment.DIALECT + "=\n");
+        appendCurrentValue(Environment.DIALECT, currentValues, "", sb, true);
+
         appendCurrentValue(Environment.SHOW_SQL, currentValues, "false", sb);
-        appendCurrentValue(Environment.HBM2DDL_AUTO, currentValues, "validate", sb);
-        appendCurrentValue("hibernate.proc.param_null_passing", currentValues, "true", sb);
-        sb.append("#" + Environment.LOADED_CLASSES + "=\n");
+        appendCurrentValue(Environment.HBM2DDL_AUTO, currentValues, "validate", sb, true);
+        appendCurrentValue("hibernate.proc.param_null_passing", currentValues, "true", sb, true);
+
+        //sb.append("#" + Environment.LOADED_CLASSES + "=\n");
+        appendCurrentValue(Environment.LOADED_CLASSES, currentValues, "", sb, true);
     }
 
     @ConfigHeader(title = "2. Connection Pool",

@@ -39,4 +39,6 @@ public @interface ImportResource {
     boolean thenLoadConfig() default false;
 
     String namespace() default "";
+
+    boolean generateTemplate() default true;
 }

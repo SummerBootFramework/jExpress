@@ -153,6 +153,10 @@ public class ConfigUtil {
     }
 
     public static int formatConfig(File cfgConfigDir, File configFile, JExpressConfig cfg, Logger log) throws IOException {
+        ImportResource ir = (ImportResource) cfg.getClass().getAnnotation(ImportResource.class);
+        if (ir != null && !ir.generateTemplate()) {
+            return 0;
+        }
         String currentContent = Files.readString(configFile.toPath());
         Properties currentSettings = new Properties();
         try (InputStream input = new FileInputStream(configFile)) {
