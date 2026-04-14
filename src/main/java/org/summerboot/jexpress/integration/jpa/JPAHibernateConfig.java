@@ -50,14 +50,11 @@ abstract public class JPAHibernateConfig extends JPAConfig {
         appendCurrentValue(Environment.JAKARTA_JDBC_PASSWORD, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb);
         appendCurrentValue(Environment.JAKARTA_JDBC_DRIVER, currentValues, "", sb);
 
-        //sb.append("#" + Environment.DIALECT + "=\n");
         appendCurrentValue(Environment.DIALECT, currentValues, "", sb, true);
+        appendCurrentValue(Environment.SHOW_SQL, currentValues, "false", sb, true);
+        appendCurrentValue(Environment.HBM2DDL_AUTO, currentValues, "validate", sb);
+        appendCurrentValue("hibernate.proc.param_null_passing", currentValues, "true", sb);
 
-        appendCurrentValue(Environment.SHOW_SQL, currentValues, "false", sb);
-        appendCurrentValue(Environment.HBM2DDL_AUTO, currentValues, "validate", sb, true);
-        appendCurrentValue("hibernate.proc.param_null_passing", currentValues, "true", sb, true);
-
-        //sb.append("#" + Environment.LOADED_CLASSES + "=\n");
         appendCurrentValue(Environment.LOADED_CLASSES, currentValues, "", sb, true);
     }
 
@@ -67,21 +64,21 @@ abstract public class JPAHibernateConfig extends JPAConfig {
 
     protected void generateTemplate_ConnectionPool(StringBuilder sb, Properties currentValues) {
         sb.append("# Note: Maximum waiting time for a connection from the pool" + BootConstant.BR);
-        appendCurrentValue("hibernate.hikari.connectionTimeout", currentValues, "20000", sb);
+        appendCurrentValue("hibernate.hikari.connectionTimeout", currentValues, "30000", sb);
 
         sb.append("# Note: Minimum number of ideal connections in the pool" + BootConstant.BR);
         appendCurrentValue("hibernate.hikari.minimumIdle", currentValues, "10", sb);
 
         sb.append("# Note: Maximum number of actual connection in the pool" + BootConstant.BR);
-        appendCurrentValue("hibernate.hikari.maximumPoolSize", currentValues, "20", sb);
+        appendCurrentValue("hibernate.hikari.maximumPoolSize", currentValues, "10", sb);
 
         sb.append("# Note: Maximum time that a connection is allowed to sit ideal in the pool" + BootConstant.BR);
-        appendCurrentValue("hibernate.hikari.idleTimeout", currentValues, "300000", sb);
+        appendCurrentValue("hibernate.hikari.idleTimeout", currentValues, "600000", sb);
 
         sb.append("# Note: enables Java Management Extensions (JMX) MBeans for the HikariCP connection pool, " +
                 "allowing real-time monitoring of metrics like active/idle connections and pool usage. " +
                 "It is essential for tracking pool health but must be enabled explicitly as it defaults to false" + BootConstant.BR);
-        appendCurrentValue("hibernate.hikari.registerMbeans", currentValues, "true", sb);
+        appendCurrentValue("hibernate.hikari.registerMbeans", currentValues, "false", sb);
     }
 
     //protected static volatile Logger log = null;

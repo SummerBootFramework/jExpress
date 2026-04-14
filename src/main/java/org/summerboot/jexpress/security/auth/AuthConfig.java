@@ -127,10 +127,10 @@ public class AuthConfig extends BootConfig {
     protected volatile KeyManagerFactory kmf;
 
     protected void generateTemplate_keystore(StringBuilder sb, Properties currentValues) {
-        appendCurrentValue(KEY_kmf_key, currentValues, FILENAME_KEYSTORE, sb);
-        appendCurrentValue(KEY_kmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
-        appendCurrentValue(KEY_kmf_AliasKey, currentValues, "server3_4096.jexpress.org", sb);
-        appendCurrentValue(KEY_kmf_AliasPwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
+        appendCurrentValue(KEY_kmf_key, currentValues, "", sb, true);
+        appendCurrentValue(KEY_kmf_StorePwdKey, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb, true);
+        appendCurrentValue(KEY_kmf_AliasKey, currentValues, "", sb, true);
+        appendCurrentValue(KEY_kmf_AliasPwdKey, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb, true);
         generateTemplate = true;
     }
 
@@ -150,8 +150,8 @@ public class AuthConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
     protected void generateTemplate_truststore(StringBuilder sb, Properties currentValues) {
-        appendCurrentValue(KEY_tmf_key, currentValues, "trustore_ldap.p12", sb, true);
-        appendCurrentValue(KEY_tmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb, true);
+        appendCurrentValue(KEY_tmf_key, currentValues, "", sb, true);
+        appendCurrentValue(KEY_tmf_StorePwdKey, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb, true);
         generateTemplate = true;
     }
 

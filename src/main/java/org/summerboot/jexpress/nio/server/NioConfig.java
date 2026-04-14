@@ -66,7 +66,7 @@ public class NioConfig extends BootConfig {
         p.put("server.1DefaultResponseHttpHeaders.Access-Control-Max-Age", "3600");
         p.put("server.DefaultResponseHttpHeaders.Access-Control-Max-Age", "3600");
         //p = null;
-        String t = generateTemplate(NioConfig.class, "\n", p);
+        String t = generateTemplate(NioConfig.class, p);
         System.out.println(t);
     }
 
@@ -157,16 +157,17 @@ public class NioConfig extends BootConfig {
     protected String[] tlsCipherSuites;
 
     @ConfigHeader(title = "2.2 NIO Security - Filter")
-    @Config(key = "filter.CallerAddress.option", defaultValue = "String", desc = "valid value = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")
+    @Config(key = "filter.CallerAddress.option", defaultValue = "String", desc = "Filters the caller's network address by type.\n" +
+            "Accepted values: String, HostString, HostName, AddressString, HostAddress, AddrHostName, or CanonicalHostName")
     protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
-    @Config(key = "filter.CallerAddress.Whitelist", desc = "Whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
+    @Config(key = "filter.CallerAddress.Whitelist", desc = "Caller network addr whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
     protected volatile Set<String> callerAddressFilterWhitelist;
-    @Config(key = "filter.CallerAddress.Blacklist", desc = "Blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
+    @Config(key = "filter.CallerAddress.Blacklist", desc = "Caller network addr blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
-    @Config(key = "filter.Request.Whitelist", desc = "Whitelist in CSV format, example: ^POST/myservice1/.* , /service1/action1/ , /service1/action2")
+    @Config(key = "filter.Request.Whitelist", desc = "Http Request whitelist in CSV format", format = "CSV of regex patterns targeting Method/Path", example = "^POST/myservice1/.* , /service1/action1/ , /service1/action2")
     protected volatile Set<String> requestFilterWhitelist;
-    @Config(key = "filter.Request.Blacklist", desc = "Blacklist in CSV format, example: ^POST/myservice2/.* , ^DELETE/service2/action1/ , /service2/action2")
+    @Config(key = "filter.Request.Blacklist", desc = "Http Request blacklist in CSV format", format = "CSV of regex patterns targeting Method/Path", example = "^POST/myservice2/.* , ^DELETE/service2/action1/ , /service2/action2")
     protected volatile Set<String> requestFilterBlacklist;
 
     //3.1 Socket controller
@@ -325,7 +326,7 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
-    @Config(key = "nio.default.response.Charset", desc = "Accept-Charset header is deprecated and no longer used by modern browsers,\nservers often default to a widely compatible encoding (like UTF-8) or the resource's default encoding for better user experience.", defaultValue = "UTF-8")
+    @Config(key = "nio.default.response.Charset", desc = "Accept-Charset header is deprecated and no longer used by modern browsers,\nservers often default to a widely compatible encoding UTF-8 (for English/French only, like Canada set it to ISO-8859-1) or the resource's default encoding for better user experience.", defaultValue = "UTF-8")
     protected Charset defaultResponseCharset = StandardCharsets.UTF_8;
 
 

@@ -85,7 +85,7 @@ public abstract class BootConfig implements JExpressConfig {
 
     protected static final String DESC_KMF_CLIENT = "Path to key store file. Use JDK default keystore when not specified";
     protected static final String DESC_TMF_CLIENT = "Path to trust store file. Use JDK default truststore when not specified";
-    public static final String DESC_PLAINPWD = "plain text inside DEC() will be automatically encrypted by app root password when the application starts or is running";
+    public static final String DESC_PLAINPWD = "plain text inside this DEC() will be automatically encrypted by app root password when the application starts or is running";
     protected static final String FILENAME_KEYSTORE = "keystore.p12";
     protected static final String FILENAME_SRC_TRUSTSTORE = "truststore.p12";
 
@@ -402,10 +402,18 @@ public abstract class BootConfig implements JExpressConfig {
     }
 
     public static String generateTemplate(Class configClass) {
-        return generateTemplate(configClass, BootConstant.BR, null);
+        return generateTemplate(configClass, null, BootConstant.BR);
     }
 
-    public static String generateTemplate(Class configClass, String BR, Properties currentConfig) {
+    public static String generateTemplate(Class configClass, Properties currentConfig) {
+        return generateTemplate(configClass, currentConfig, BootConstant.BR);
+    }
+
+    public static String generateTemplate(Class configClass, String BR) {
+        return generateTemplate(configClass, null, BR);
+    }
+
+    public static String generateTemplate(Class configClass, Properties currentConfig, String BR) {
         Object objectInstance = null;
         if (JExpressConfig.class.isAssignableFrom(configClass)) {
             objectInstance = instance(configClass);
@@ -629,9 +637,9 @@ public abstract class BootConfig implements JExpressConfig {
         return appendCurrentValue(key, currentValues, defaultValue, sb, false);
     }
 
-    protected String appendCurrentValue(String key, Properties currentValues, String defaultValue, StringBuilder sb, boolean disableByDefault) {
+    protected String appendCurrentValue(String key, Properties currentValues, String defaultValue, StringBuilder sb, boolean disableOnDefault) {
         String value = currentValues == null ? null : currentValues.getProperty(key);
-        String line = (value == null && disableByDefault ? "#" : "") + key + "=" + (value == null ? defaultValue : value) + BootConstant.BR;
+        String line = (value == null && disableOnDefault ? "#" : "") + key + "=" + (value == null ? defaultValue : value) + BootConstant.BR;
         sb.append(line);
         return line;
     }

@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 public class BackOffice extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(BackOffice.class, "\n", null);
+        String t = generateTemplate(BackOffice.class, "\n");
         System.out.println(t);
     }
 

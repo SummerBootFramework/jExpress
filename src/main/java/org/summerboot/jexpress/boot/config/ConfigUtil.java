@@ -163,7 +163,7 @@ public class ConfigUtil {
             // Load the properties file
             currentSettings.load(input);
         }
-        String formattedContent = BootConfig.generateTemplate(cfg.getClass(), BootConstant.BR, currentSettings);
+        String formattedContent = BootConfig.generateTemplate(cfg.getClass(), currentSettings, BootConstant.BR);
         if (Objects.equals(currentContent, formattedContent)) {
             return 0;
         }
