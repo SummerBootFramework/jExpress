@@ -108,10 +108,11 @@ public class ConfigUtil {
         String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
 
         if (ConfigLoadMode.cli_format == mode) {
+            updated += formatConfig(Path.of("etc", "boot.conf").toFile(), BackOffice.agent, log);
             for (String fileName : configs.keySet()) {
                 File configFile = Paths.get(configFolder.toString(), fileName).toFile();
                 try (var a = Timeout.watch("loading config file " + configFile, timeoutMs).withDesc(timeoutDesc)) {
-                    updated += formatConfig(cfgConfigDir, configFile, configs.get(fileName), log);
+                    updated += formatConfig(configFile, configs.get(fileName), log);
                 }
             }
             return updated;
@@ -152,7 +153,7 @@ public class ConfigUtil {
         }
     }
 
-    public static int formatConfig(File cfgConfigDir, File configFile, JExpressConfig cfg, Logger log) throws IOException {
+    public static int formatConfig(File configFile, JExpressConfig cfg, Logger log) throws IOException {
         ImportResource ir = (ImportResource) cfg.getClass().getAnnotation(ImportResource.class);
         if (ir != null && !ir.generateTemplate()) {
             return 0;
