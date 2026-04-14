@@ -32,6 +32,7 @@
   intended for a Linux system, you should set default.lineSeparator=Linux
 * REF269-7: Enhanced/refactoring cfg_nio.properties: added section "2.2 NIO Security - Filter", filter by caller address and request
 * REF269-8: New CLI: -format (format configuration files)
+* REF269-9: Error Code Offset - The new `errorCodeBase` in boot.conf defines the starting numeric range for error codes within this framework.
 
 ### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
 

@@ -34,19 +34,30 @@ public interface BootErrorCode {
     }
 
     private static int getErrorCode(int code) {
+        return getErrorCode(code, false);
+    }
+
+    private static int getErrorCode(int code, boolean wihtOffset) {
         Map<Integer, Integer> errorCodeMapping = BackOffice.agent.getBootErrorCodeMapping();
         if (errorCodeMapping == null) {
-            return code;
+            return applyOffset(code, wihtOffset);
         }
         Integer ret = errorCodeMapping.get(code);
-        return ret == null ? code : ret;
+        return ret == null ? applyOffset(code, wihtOffset) : ret;
+    }
+
+    private static int applyOffset(int code, boolean wihtOffset) {
+        if (code == 0 || !wihtOffset) {
+            return code;
+        }
+        return code + BackOffice.agent.getBootErrorCodeBase();
     }
 
 
-    int OK = getErrorCode(0);
+    int OK = getErrorCode(0, false);
 
     // NIO
-    int NIO_BASE = getErrorCode(1);
+    int NIO_BASE = getErrorCode(1, true);
     int NIO_TOO_MANY_REQUESTS = getErrorCode(NIO_BASE + 1);
     int NIO_UNEXPECTED_EXECUTOR_FAILURE = getErrorCode(NIO_BASE + 2);
     int NIO_UNEXPECTED_SERVICE_FAILURE = getErrorCode(NIO_BASE + 3);
@@ -63,7 +74,7 @@ public interface BootErrorCode {
     int SERVICE_PAUSED = getErrorCode(NIO_BASE + 14);
 
     //IO
-    int IO_BASE = getErrorCode(20);
+    int IO_BASE = getErrorCode(20, true);
     int APP_INTERRUPTED = getErrorCode(IO_BASE + 1);
     int HTTP_REQUEST_TIMEOUT = getErrorCode(IO_BASE + 2);// a context is not received within a specified time period.
     int HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT = getErrorCode(IO_BASE + 3);
@@ -75,7 +86,7 @@ public interface BootErrorCode {
     int FILE_NOT_FOUND = getErrorCode(IO_BASE + 9);
 
     // Auth
-    int AUTH_BASE = getErrorCode(40);
+    int AUTH_BASE = getErrorCode(40, true);
     int AUTH_REQUIRE_TOKEN = getErrorCode(AUTH_BASE + 1);
     int AUTH_INVALID_TOKEN = getErrorCode(AUTH_BASE + 2);
     int AUTH_EXPIRED_TOKEN = getErrorCode(AUTH_BASE + 3);
@@ -87,7 +98,7 @@ public interface BootErrorCode {
     int AUTH_FORBIDDEN_REQUST = getErrorCode(AUTH_BASE + 9);
 
     //Integration
-    int ACCESS_BASE = getErrorCode(50);
+    int ACCESS_BASE = getErrorCode(50, true);
     int ACCESS_ERROR_CACHE = getErrorCode(ACCESS_BASE + 1);
     int ACCESS_ERROR_LDAP = getErrorCode(ACCESS_BASE + 2);
     int ACCESS_ERROR_SMTP = getErrorCode(ACCESS_BASE + 3);
@@ -95,7 +106,7 @@ public interface BootErrorCode {
     int ACCESS_ERROR_RPC = getErrorCode(ACCESS_BASE + 5);
 
     // Bad Request
-    int BR_BASE = getErrorCode(60);
+    int BR_BASE = getErrorCode(60, true);
     int BAD_REQUEST_UNKNOWN_JSON_REQUEST_BODY = getErrorCode(BR_BASE + 1);
     int BAD_REQUEST_UNKNOWN_XML_REQUEST_BODY = getErrorCode(BR_BASE + 2);
     int BAD_REQUEST_MISSING_JSON_REQUEST_BODY = getErrorCode(BR_BASE + 3);
@@ -108,7 +119,7 @@ public interface BootErrorCode {
 
     //@UniqueIgnore
     //int RTO_CLS_EXIT = getErrorCode(0);
-    int RTO_CLS_EXIT = getErrorCode(80);
+    int RTO_CLS_EXIT = getErrorCode(80, true);
     int RTO_CLI_PARSER_ERROR = getErrorCode(RTO_CLS_EXIT + 1);
     int RTO_CLI_MISSING_ARG_ERROR = getErrorCode(RTO_CLS_EXIT + 2);
     int RTO_CLI_INVALID_ARG_ERROR = getErrorCode(RTO_CLS_EXIT + 3);

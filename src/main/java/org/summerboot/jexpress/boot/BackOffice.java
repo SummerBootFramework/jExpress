@@ -147,10 +147,10 @@ public class BackOffice extends BootConfig {
 
     // 1 Override error code
     @ConfigHeader(title = "1. Override default error codes with application defined ones", desc = "To verify: java -jar <app>.jar -list SystemErrorCode [-dmain <domain>]",
-            format = "CSV of <default error code>:<new error code>",
-            example = "1:1001, 20:1020, 40:1040, 50:1050",
             callbackMethodName4Dump = "generateTemplate_ErrorCodeList")
-    @Config(key = "errorcode.override")
+    @Config(key = "errorcode.base", desc = "Base offset for all error codes above, except OK always = 0", defaultValue = "0")
+    private volatile int bootErrorCodeBase = 0;
+    @Config(key = "errorcode.override", format = "CSV of <default error code + errorcode.base>:<new error code>", example = "1:1001, 20:1020, 40:1040, 50:1050")
     private volatile Map<Integer, Integer> bootErrorCodeMapping;
 
     protected void generateTemplate_ErrorCodeList(StringBuilder sb, Properties currentValues) {
@@ -412,6 +412,9 @@ public class BackOffice extends BootConfig {
             desc = "for symmetric key generation, algorithms may have different iteration requirements.")
     private int algorithmSecretKeyIterationCount = 310_000;
 
+    public int getBootErrorCodeBase() {
+        return bootErrorCodeBase;
+    }
 
     public Set<String> getRootPackageNames() {
         return rootPackageNames;
