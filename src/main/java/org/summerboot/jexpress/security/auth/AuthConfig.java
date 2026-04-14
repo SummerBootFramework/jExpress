@@ -114,12 +114,25 @@ public class AuthConfig extends BootConfig {
     protected volatile String ldapScheamTenantGroupOU;
 
     //1.2 LDAP Client keystore
+    protected final static String ID = "ldap";
+    protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    protected static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    protected static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    protected static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
     @ConfigHeader(title = "1.2 LDAP Client keystore")
     @JsonIgnore
-    @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
-            AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd",
-            desc = DESC_KMF_CLIENT)
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey,
+            AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = DESC_KMF_CLIENT, callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf;
+
+    protected void generateTemplate_keystore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_kmf_key, currentValues, FILENAME_KEYSTORE, sb);
+        appendCurrentValue(KEY_kmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
+        appendCurrentValue(KEY_kmf_AliasKey, currentValues, "server3_4096.jexpress.org", sb);
+        appendCurrentValue(KEY_kmf_AliasPwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
+        generateTemplate = true;
+    }
 
     @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
     protected volatile String ldapTLSProtocol;
@@ -128,11 +141,19 @@ public class AuthConfig extends BootConfig {
     protected volatile String ldapSSLConnectionFactoryClassName;
 
     //1.3 LDAP Client truststore
+    protected static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    protected static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "1.3 LDAP Client truststore")
-    @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd",
-            desc = DESC_TMF_CLIENT)
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey,
+            desc = DESC_TMF_CLIENT, callbackMethodName4Dump = "generateTemplate_truststore")
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
+
+    protected void generateTemplate_truststore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_tmf_key, currentValues, "trustore_ldap.p12", sb, true);
+        appendCurrentValue(KEY_tmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb, true);
+        generateTemplate = true;
+    }
 
     protected volatile Properties ldapConfig;
 
