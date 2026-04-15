@@ -43,6 +43,8 @@ public @interface Config {
     //String requiredWhen() default "";
     String defaultValue() default "";
 
+    boolean useInstanceDefaultValue() default true;
+
     String predefinedValue() default "";
 
     Validate validate() default Validate.None;

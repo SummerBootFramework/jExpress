@@ -562,7 +562,7 @@ public abstract class BootConfig implements JExpressConfig {
                     hasPredefinedValue = true;
                 } else {
                     dv = cfg.defaultValue();
-                    if (StringUtils.isBlank(dv) && objectInstance != null) {
+                    if (StringUtils.isBlank(dv) && cfg.useInstanceDefaultValue() && objectInstance != null) {
                         try {
                             field.setAccessible(true);
                             Object dfv = field.get(objectInstance);

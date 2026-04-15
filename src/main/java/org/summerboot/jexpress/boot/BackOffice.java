@@ -164,7 +164,7 @@ public class BackOffice extends BootConfig {
     @ConfigHeader(title = "2. Application Packages", desc = "Only for those applications which have more than one root package names",
             format = "CSV of string",
             example = "com.package1, com.package2")
-    @Config(key = "rootpackage.names")
+    @Config(key = "rootpackage.names", useInstanceDefaultValue = false)
     private Set<String> rootPackageNames;
 
     @ConfigHeader(title = "3. Default Settings")
