@@ -607,7 +607,7 @@ public abstract class BootConfig implements JExpressConfig {
                         sb.append("#");
                     } else {
                         // preserve commented-out configuration items
-                        preserveCommentedoutConfigurationItem(currentContentLines, "#" + key, sb, BR);
+                        preserveCommentedoutConfigurationItem(currentContentLines, key, sb, BR);
                     }
                     sb.append(key).append("=");
                     if (isEncrypted) {
@@ -659,7 +659,7 @@ public abstract class BootConfig implements JExpressConfig {
         }
         List<String> ret = new ArrayList<>();
         for (String line : lines) {
-            if (line.startsWith(target)) {
+            if (line.matches("^#\\s*" + java.util.regex.Pattern.quote(target) + "\\s*=.*")) {
                 sb.append(line).append(BR);
             }
         }

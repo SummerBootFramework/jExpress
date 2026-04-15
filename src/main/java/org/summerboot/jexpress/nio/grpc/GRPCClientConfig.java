@@ -96,7 +96,7 @@ abstract public class GRPCClientConfig extends BootConfig {
                     "    DNS: grpc-node1.mycompany.com       <- node 1\n" +
                     "    DNS: grpc-node2.mycompany.com       <- node 2\n" +
                     "    DNS: grpc-node3.mycompany.com       <- node 3\n\n" +
-                    "  gRpc.client.ssl.overrideAuthority is not required\n" +
+                    "  cfg> gRpc.client.ssl.overrideAuthority is not required\n" +
                     "\n" +
                     "Scenario 2 (overrideAuthority required): When nodes share a certificate that does not list each node's DNS name individually, set overrideAuthority to a shared SAN so TLS verification succeeds for all nodes.\n" +
                     "Example: N-node gRPC cluster, certificate SANs include a shared cluster DNS name in addition to per-node names:\n" +
@@ -104,7 +104,7 @@ abstract public class GRPCClientConfig extends BootConfig {
                     "  Subject Alternative Names:\n" +
                     "    DNS: grpc.cluster.mycompany.com     <- cluster VIP / load balancer, shared DNS name used for TLS verification across all nodes\n" +
                     "    DNS: grpc-node-n.mycompany.com      <- each node's own DNS name (not used for TLS verification)\n\n" +
-                    "  gRpc.client.ssl.overrideAuthority = grpc.cluster.mycompany.com"
+                    "  cfg> gRpc.client.ssl.overrideAuthority = grpc.cluster.mycompany.com"
     )
     @Config(key = ID + ".LoadBalancing.servers", predefinedValue = "0.0.0.0:8424, 0.0.0.0:8425",
             desc = "cluster target",
