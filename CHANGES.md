@@ -2,7 +2,7 @@
 
 ## Version 2.6.9 (2026-04-24)
 
-### 🔒 1. Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
+### 🔒 1. Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8) and Log4J CVE-2026-34480
 
 jExpress 2.6.9 includes two important security upgrades to address a vulnerability disclosed by the Netty and Log4J project.
 
@@ -10,7 +10,7 @@ jExpress 2.6.9 includes two important security upgrades to address a vulnerabili
 
 According to the official Netty advisory, the vulnerability affects:
 
-- Netty versions`<= 4.2.10.Final`
+- Netty versions`<= 4.2.9.Final`
 - Log4J version`<= 2.25.3`
 - jExpress versions`<= 2.6.8.Final`
 
