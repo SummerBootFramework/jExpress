@@ -414,6 +414,23 @@ public abstract class BootConfig implements JExpressConfig {
     }
 
     public static String generateTemplate(Class configClass, Properties currentConfig, String BR) {
+        return generateTemplate(configClass, currentConfig, null, BR);
+    }
+
+    public static String generateTemplate(Class configClass, Properties currentConfig, List<String> currentContentLines, String BR) {
+        /*final Map<String, String> configMap;
+        if (currentContentLines == null) {
+            configMap = Map.of();
+        } else {
+            configMap = currentContentLines.stream()
+                    .filter(line -> line.contains("="))
+                    .collect(Collectors.toMap(
+                            line -> line.split("=")[0].trim(), // Key
+                            line -> line.split("=")[1].trim(), // Value
+                            (existing, replacement) -> existing // 遇到重复Key保留第一个
+                    ));
+        }*/
+
         Object objectInstance = null;
         if (JExpressConfig.class.isAssignableFrom(configClass)) {
             objectInstance = instance(configClass);
@@ -588,6 +605,9 @@ public abstract class BootConfig implements JExpressConfig {
                 if (dumpDefault) {
                     if (!hasPredefinedValue && !isRequired || hasDefaultValue) {
                         sb.append("#");
+                    } else {
+                        // preserve commented-out configuration items
+                        preserveCommentedoutConfigurationItem(currentContentLines, "#" + key, sb, BR);
                     }
                     sb.append(key).append("=");
                     if (isEncrypted) {
@@ -632,6 +652,18 @@ public abstract class BootConfig implements JExpressConfig {
         String value = currentValues == null ? null : currentValues.getProperty(key);
         return key + "=" + (value == null ? defaultValue : value) + BootConstant.BR;
     }*/
+
+    protected static void preserveCommentedoutConfigurationItem(List<String> lines, String target, StringBuilder sb, String BR) {
+        if (lines == null || lines.size() == 0) {
+            return;
+        }
+        List<String> ret = new ArrayList<>();
+        for (String line : lines) {
+            if (line.startsWith(target)) {
+                sb.append(line).append(BR);
+            }
+        }
+    }
 
     protected String appendCurrentValue(String key, Properties currentValues, String defaultValue, StringBuilder sb) {
         return appendCurrentValue(key, currentValues, defaultValue, sb, false);

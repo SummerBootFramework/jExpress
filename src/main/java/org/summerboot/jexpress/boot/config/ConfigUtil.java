@@ -45,7 +45,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -158,13 +160,16 @@ public class ConfigUtil {
         if (ir != null && !ir.generateTemplate()) {
             return 0;
         }
-        String currentContent = Files.readString(configFile.toPath());
-        Properties currentSettings = new Properties();
+        // Maintains insertion order (line order). Used to preserve commented-out configuration items
+        final List<String> currentContentLines = Collections.unmodifiableList(Files.readAllLines(configFile.toPath()));
+        // used for verify content change
+        final String currentContent = Files.readString(configFile.toPath());
+        final Properties currentSettings = new Properties();
         try (InputStream input = new FileInputStream(configFile)) {
             // Load the properties file
             currentSettings.load(input);
         }
-        String formattedContent = BootConfig.generateTemplate(cfg.getClass(), currentSettings, BootConstant.BR);
+        String formattedContent = BootConfig.generateTemplate(cfg.getClass(), currentSettings, currentContentLines, BootConstant.BR);
         if (Objects.equals(currentContent, formattedContent)) {
             return 0;
         }

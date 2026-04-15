@@ -52,7 +52,7 @@ abstract public class JPAHibernateConfig extends JPAConfig {
 
         appendCurrentValue(Environment.DIALECT, currentValues, "", sb, true);
         appendCurrentValue(Environment.SHOW_SQL, currentValues, "false", sb, true);
-        appendCurrentValue(Environment.HBM2DDL_AUTO, currentValues, "validate", sb);
+        appendCurrentValue(Environment.HBM2DDL_AUTO, currentValues, "none", sb, true);
         appendCurrentValue("hibernate.proc.param_null_passing", currentValues, "true", sb);
 
         appendCurrentValue(Environment.LOADED_CLASSES, currentValues, "", sb, true);
