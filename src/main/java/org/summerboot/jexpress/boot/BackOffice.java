@@ -208,7 +208,7 @@ public class BackOffice extends BootConfig {
     private String portInUseAlertMessage = ALERT_MSG_PORT_IN_USE;
 
     @Config(key = "backoffice.executor.mode", defaultValue = "VirtualThread",
-            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \n use CPU core + 1 when application is CPU bound\n"
+            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \nuse CPU core + 1 when application is CPU bound\n"
                     + "use CPU core x 2 + 1 when application is I/O bound\n"
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
@@ -360,14 +360,14 @@ public class BackOffice extends BootConfig {
     private String keystoreType = "PKCS12";
     @Config(key = "keystore.provider",
             desc = "keystore provider for SSL/TLS, valid values: null=JDK default, BC (BouncyCastle), SunJSSE, BCFIPS, etc."
-                    + "\n  Note: BC will not verify the key password, so it is not recommended for production use."
-                    + "\n  Note: BCFIPS is a FIPS compliant provider, which is required by some government applications.")
+                    + "\nBC will not verify the key password, so it is not recommended for production use."
+                    + "\nBCFIPS is a FIPS compliant provider, which is required by some government applications.")
     private String keystoreSecurityProvider = null;
 
     @ConfigHeader(title = "5.2 Security Settings: message digest")
     @Config(key = "algorithm.Messagedigest", defaultValue = "SHA3-256",
             desc = "SHA3-224, SHA3-256 (default), SHA3-384, SHA3-512, SHA-256, SHA-384, SHA-512, etc. "
-                    + "\n  Note: MD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)")
+                    + "\nMD5 and SHA-1 is a broken or risky cryptographic algorithm, see https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)")
     private String algorithmMessagedigest = "SHA3-256";
 
     @ConfigHeader(title = "5.3 Security Settings: asymmetric key (public/private key pair)")
@@ -376,7 +376,7 @@ public class BackOffice extends BootConfig {
     private String algorithmAsymmetricKey = "RSA";
     @Config(key = "transformation.Asymmetric", defaultValue = "RSA/None/OAEPWithSHA-256AndMGF1Padding",
             desc = "Asymmetric cipher transformation, valid values: RSA/None/OAEPWithSHA-256AndMGF1Padding (default), RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc."
-                    + " \n  Note: ryptographic algorithm ECB is weak and should not be used： RSA/ECB/PKCS1Padding")
+                    + " \nryptographic algorithm ECB is weak and should not be used： RSA/ECB/PKCS1Padding")
     private String ciphersTransformationAsymmetric = "RSA/None/OAEPWithSHA-256AndMGF1Padding";
 
     @ConfigHeader(title = "5.4 Security Settings: symmetric key (no password)")
@@ -388,7 +388,7 @@ public class BackOffice extends BootConfig {
     private int algorithmSymmetricKeyBits = 256;
     @Config(key = "transformation.Symmetric", defaultValue = "AES/GCM/NoPadding",
             desc = "Symmetric cipher transformation, valid values: AES/GCM/NoPadding (default, for modern applications), AES/CBC/PKCS5Padding (more compatible with older systems), AES/CBC/NoPadding, AES/CTR/NoPadding, AES/CFB/NoPadding, DES/CBC/PKCS5Padding, DESede/CBC/PKCS5Padding, Blowfish/CBC/PKCS5Padding, etc."
-                    + " \n  Note: do not use AES/CBC, and AES/GCM/PKCS5Padding is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html")
+                    + "\ndo not use AES/CBC, and AES/GCM/PKCS5Padding is no longer supported in Java17 - https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/crypto/Cipher.html")
     private String ciphersTransformationSymmetric = "AES/GCM/NoPadding";
 
     @Config(key = "length.SymmetricKey.AuthenticationTag.Bits", defaultValue = "128",
