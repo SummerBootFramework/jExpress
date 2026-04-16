@@ -110,7 +110,7 @@ public class ConfigUtil {
         String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
 
         if (ConfigLoadMode.cli_format == mode) {
-            updated += formatConfig(Path.of("etc", "boot.conf").toFile(), BackOffice.agent, log);
+            updated += formatConfig(Path.of("etc", "boot.conf").toFile().getAbsoluteFile(), BackOffice.agent, log);
             for (String fileName : configs.keySet()) {
                 File configFile = Paths.get(configFolder.toString(), fileName).toFile();
                 try (var a = Timeout.watch("loading config file " + configFile, timeoutMs).withDesc(timeoutDesc)) {
