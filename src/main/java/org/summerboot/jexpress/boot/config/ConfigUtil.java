@@ -173,9 +173,9 @@ public class ConfigUtil {
         if (Objects.equals(currentContent, formattedContent)) {
             return 0;
         }
-        configFile.renameTo(Paths.get(configFile.getParent(), configFile.getName() + "_" + System.currentTimeMillis()).toFile());
+        configFile.renameTo(Paths.get(configFile.getParent(), configFile.getName() + "_" + System.currentTimeMillis() + ".bk").toFile());
         Files.writeString(configFile.toPath(), formattedContent);
-        log.info("Config file has been formatted: " + configFile);
+        System.out.println("Config file has been formatted: " + configFile);
         return 1;
     }
 

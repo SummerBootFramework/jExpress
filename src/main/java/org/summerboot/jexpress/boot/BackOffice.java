@@ -342,7 +342,7 @@ public class BackOffice extends BootConfig {
     private String cliName_decrypt = "decrypt";
 
     @Config(key = "naming.cli.format", defaultValue = "format")
-    private String cliName_format = "format";
+    private String cliName_formatCfgFile = "format";
 
     @Config(key = "naming.cli.psv", defaultValue = "psv")
     private String cliName_psv = "psv";
@@ -592,8 +592,8 @@ public class BackOffice extends BootConfig {
         return cliName_decrypt;
     }
 
-    public String getCliName_format() {
-        return cliName_format;
+    public String getCliName_formatCfgFile() {
+        return cliName_formatCfgFile;
     }
 
     public String getCliName_psv() {

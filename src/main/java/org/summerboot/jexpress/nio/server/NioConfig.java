@@ -306,21 +306,21 @@ public class NioConfig extends BootConfig {
 
     // 4.4. Request/Response
     @ConfigHeader(title = "4.4. Request/Response ")
-    @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive", defaultValue = "false")
-    protected volatile boolean fromJsonCaseInsensitive = false;
-    @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
-    protected volatile boolean fromJsonFailOnUnknownProperties = true;
+    @Config(key = "nio.JAX-RS.deserialization.CaseInsensitive", defaultValue = "false")
+    protected volatile boolean deserializationCaseInsensitive = false;
+    @Config(key = "nio.JAX-RS.deserialization.failOnUnknownProperties", defaultValue = "true")
+    protected volatile boolean deserializationFailOnUnknownProperties = true;
 
-    @Config(key = "nio.JAX-RS.fromJson.autoBeanValidation", defaultValue = "true")
-    protected volatile boolean fromJsonAutoBeanValidation = true;
+    @Config(key = "nio.JAX-RS.deserialization.autoBeanValidation", defaultValue = "true")
+    protected volatile boolean deserializationAutoBeanValidation = true;
 
-    @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
-    protected volatile boolean toJsonIgnoreNull = true;
-    @Config(key = "nio.JAX-RS.toJson.IgnoreEmptyArray", defaultValue = "false")
-    protected volatile boolean toJsonIgnoreEmptyArray = false;
-    @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
-    protected volatile boolean toJsonPretty = false;
-    @Config(key = "nio.JAX-RS.toJson.showRefInServiceError", defaultValue = "true")
+    @Config(key = "nio.JAX-RS.serialization.IgnoreNull", defaultValue = "true")
+    protected volatile boolean serializationIgnoreNull = true;
+    @Config(key = "nio.JAX-RS.serialization.IgnoreEmptyArray", defaultValue = "false")
+    protected volatile boolean serializationIgnoreEmptyArray = false;
+    @Config(key = "nio.JAX-RS.serialization.Pretty", defaultValue = "false")
+    protected volatile boolean serializationPretty = false;
+    @Config(key = "nio.JAX-RS.serialization.showRefInServiceError", defaultValue = "true")
     protected volatile boolean showRefInServiceError = true;
 
     @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
@@ -516,7 +516,7 @@ public class NioConfig extends BootConfig {
         tpe = buildThreadPoolExecutor(tpe, "Netty-HTTP.Biz", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
-        BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreEmptyArray, toJsonIgnoreNull, showRefInServiceError);
+        BeanUtil.init(jsonParserTimeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, serializationPretty, serializationIgnoreEmptyArray, serializationIgnoreNull, showRefInServiceError);
 
         //5.1 caller filter
         switch (filterUserType) {
@@ -777,16 +777,16 @@ public class NioConfig extends BootConfig {
         return healthInspectionIntervalSeconds;
     }
 
-    public boolean isFromJsonCaseInsensitive() {
-        return fromJsonCaseInsensitive;
+    public boolean isDeserializationCaseInsensitive() {
+        return deserializationCaseInsensitive;
     }
 
-    public boolean isFromJsonFailOnUnknownProperties() {
-        return fromJsonFailOnUnknownProperties;
+    public boolean isDeserializationFailOnUnknownProperties() {
+        return deserializationFailOnUnknownProperties;
     }
 
-    public boolean isFromJsonAutoBeanValidation() {
-        return fromJsonAutoBeanValidation;
+    public boolean isDeserializationAutoBeanValidation() {
+        return deserializationAutoBeanValidation;
     }
 
     public TimeZone getJsonParserTimeZone() {
@@ -797,12 +797,12 @@ public class NioConfig extends BootConfig {
         return defaultResponseCharset;
     }
 
-    public boolean isToJsonIgnoreNull() {
-        return toJsonIgnoreNull;
+    public boolean isSerializationIgnoreNull() {
+        return serializationIgnoreNull;
     }
 
-    public boolean isToJsonPretty() {
-        return toJsonPretty;
+    public boolean isSerializationPretty() {
+        return serializationPretty;
     }
 
     public boolean isShowRefInServiceError() {

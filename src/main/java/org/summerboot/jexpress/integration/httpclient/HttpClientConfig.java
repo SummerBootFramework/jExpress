@@ -178,11 +178,11 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "httpclient.redirectOption", defaultValue = "NEVER")
     protected volatile HttpClient.Redirect redirectOption = HttpClient.Redirect.NEVER;
 
-    @Config(key = "httpclient.fromJson.CaseInsensitive", defaultValue = "false")
-    protected volatile boolean fromJsonCaseInsensitive = false;
-    @Config(key = "httpclient.fromJson.failOnUnknownProperties", defaultValue = "true")
-    protected volatile boolean fromJsonFailOnUnknownProperties = true;
-    @Config(key = "httpclient.fromJson.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
+    @Config(key = "httpclient.deserialization.CaseInsensitive", defaultValue = "false")
+    protected volatile boolean deserializationCaseInsensitive = false;
+    @Config(key = "httpclient.deserialization.failOnUnknownProperties", defaultValue = "true")
+    protected volatile boolean deserializationFailOnUnknownProperties = true;
+    @Config(key = "httpclient.deserialization.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
     @JsonIgnore
@@ -286,8 +286,8 @@ abstract public class HttpClientConfig extends BootConfig {
             }
         });
 
-        jsonMapper = BeanUtil.buildJsonMapper(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, true, true).build();
-        xmlMapper = BeanUtil.buildXmlMapper(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, false, true, true).build();
+        jsonMapper = BeanUtil.buildJsonMapper(jsonParserTimeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, false, true, true).build();
+        xmlMapper = BeanUtil.buildXmlMapper(jsonParserTimeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, false, true, true).build();
 
         final SSLContext sslContext;
         if (StringUtils.isBlank(tlsProtocol)) {
@@ -459,12 +459,12 @@ abstract public class HttpClientConfig extends BootConfig {
         return proxyAuthorizationBasicValue;
     }
 
-    public boolean isFromJsonCaseInsensitive() {
-        return fromJsonCaseInsensitive;
+    public boolean isDeserializationCaseInsensitive() {
+        return deserializationCaseInsensitive;
     }
 
-    public boolean isFromJsonFailOnUnknownProperties() {
-        return fromJsonFailOnUnknownProperties;
+    public boolean isDeserializationFailOnUnknownProperties() {
+        return deserializationFailOnUnknownProperties;
     }
 
     public TimeZone getJsonParserTimeZone() {
