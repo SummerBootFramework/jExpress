@@ -49,8 +49,8 @@ All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to e
 * New cfg_nio.properties added: #nio.default.response.Charset=UTF-8: Accept-Charset header is deprecated and no longer used by modern browsers, servers often default to a widely compatible encoding (
   like UTF-8) or the resource's default encoding for better user experience.
 * Reformating config files
-* New Class: CustomizedJsonField, ServiceError and Err now both extend this new class, so that setAdditionalField(Object additionalFieldData, String additionalFieldName) can be use to set customized
-  JSON field
+* New Class: CustomizedJsonField and AdditionalFields, ServiceError and Err now both extend AdditionalFields class, so that adAdditionalField(String key, Object value) can be used to set customized
+  JSON fields
 * RFE269-1: Enhanced Security check - gRPC Client
 * REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml
 * REF269-3a: Enhanced CLI Security - implemented password masking and removed "-auth"

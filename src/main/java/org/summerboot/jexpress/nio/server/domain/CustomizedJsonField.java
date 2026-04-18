@@ -25,40 +25,36 @@ import java.util.Map;
 
 public class CustomizedJsonField {
     @JsonIgnore
-    protected Object additionalField;
+    protected Object customizedField;
 
     @JsonIgnore
-    private String additionalFieldName = "additionalField";
+    private String additionalFieldName = "customizedField";
 
     @JsonAnyGetter
-    @JsonProperty(index = 4)
-    public Map<String, Object> serializeAdditionalField() {
-        if (additionalField == null) {
+    @JsonProperty(index = 32767)
+    public Map<String, Object> serializeCustomizedField() {
+        if (customizedField == null) {
             return Collections.emptyMap();   // nothing written when additionalField is null
         }
-        return Collections.singletonMap(additionalFieldName, additionalField);
+        return Collections.singletonMap(additionalFieldName, customizedField);
     }
 
     @JsonAnySetter
-    public void deserializeAdditionalField(String name, Object value) {
+    public void deserializeCustomizedField(String name, Object value) {
         this.additionalFieldName = name;
-        this.additionalField = value;
+        this.customizedField = value;
     }
 
     public void setAdditionalFieldName(String additionalFieldName) {
         this.additionalFieldName = additionalFieldName;
     }
 
-    public Object getAdditionalField() {
-        return additionalField;
+    public Object getCustomizedField() {
+        return customizedField;
     }
 
-    public void setAdditionalField(Object additionalField) {
-        this.additionalField = additionalField;
-    }
-
-    public void setAdditionalField(Object additionalField, String additionalFieldName) {
-        this.additionalField = additionalField;
+    public void setCustomizedField(String additionalFieldName, Object additionalField) {
+        this.customizedField = additionalField;
         this.additionalFieldName = additionalFieldName;
     }
 }

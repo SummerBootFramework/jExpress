@@ -115,6 +115,10 @@ abstract public class BootController extends PingController {
     public static final String TAG_APP_ADMIN = "App Admin";
     public static final String TAG_USER_AUTH = "App Authentication";
 
+    public static final String HEADER_LOCATION = "Location";
+    public static final String SECURITY_BEARERAUTH = "BearerAuth";
+
+    public static final String DESC_308 = "The client should try again with the new server location in response header " + HEADER_LOCATION;
     public static final String DESC_4xx = "This class of status code is intended for situations in which the error seems to have been caused by the client. Client normally should not retransmit the same request again.";
     public static final String DESC_400 = "Bad Request. Client should not retransmit the same request again";
     public static final String DESC_401 = "Unauthorized. The client should sign-on again, but not retransmit the same request again";

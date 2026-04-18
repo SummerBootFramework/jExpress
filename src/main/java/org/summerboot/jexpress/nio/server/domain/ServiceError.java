@@ -31,7 +31,7 @@ import java.util.List;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @JsonFilter(BootConstant.JSONFILTER_NAME_SERVICEERROR)
-public class ServiceError extends CustomizedJsonField {
+public class ServiceError extends AdditionalJsonFields {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The index of requests received by current server since start")
     @JsonProperty(index = 1)
@@ -72,7 +72,7 @@ public class ServiceError extends CustomizedJsonField {
 //    }
     @Override
     public String toString() {
-        return "ServiceError{" + "ref=" + ref + ", attachedData=" + additionalField + ", errors=" + errors + '}';
+        return "ServiceError{" + "ref=" + ref + ", attachedData=" + additionalFields + ", errors=" + errors + '}';
     }
 
     public void toStringWithStackTrace(StringBuilder sb) {
