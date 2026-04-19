@@ -3,6 +3,7 @@ package org.summerboot.jexpress.nio.server.domain;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -28,6 +29,7 @@ public class AdditionalJsonFields {
     )*/
     //@JsonSerialize(typing = JsonSerialize.Typing.DYNAMIC)
     @JsonAnyGetter
+    @Schema(hidden = true)
     public Map<String, Object> getAdditionalFields() {
         return additionalFields;
     }

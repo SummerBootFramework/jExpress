@@ -82,13 +82,13 @@ public class ConfigUtil {
         cfgListener = listener;
     }
 
-    public static enum ConfigLoadMode {
+    public enum ConfigLoadMode {
         cli_encrypt(true, true), cli_decrypt(false, true), cli_format(true, true), app_run(true, false);
 
         private final boolean encryptMode;
         private final boolean cliMode;
 
-        private ConfigLoadMode(boolean encryptMode, boolean cliMode) {
+        ConfigLoadMode(boolean encryptMode, boolean cliMode) {
             this.encryptMode = encryptMode;
             this.cliMode = cliMode;
         }
@@ -105,16 +105,16 @@ public class ConfigUtil {
     public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, long userSpecifiedCfgMonitorThrottleMillis, File cfgConfigDir) throws Exception {
         // 1. load configs
         int updated = 0;
-        Map<File, Runnable> cfgUpdateTasks = new HashMap();
+        Map<File, Runnable> cfgUpdateTasks = new HashMap<>();
         long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
         String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
 
         if (ConfigLoadMode.cli_format == mode) {
-            updated += formatConfig(Path.of("etc", "boot.conf").toFile(), BackOffice.agent, log);
+            updated += formatConfig(Path.of("etc", "boot.conf").toFile(), BackOffice.agent);
             for (String fileName : configs.keySet()) {
                 File configFile = Paths.get(configFolder.toString(), fileName).toFile();
                 try (var a = Timeout.watch("loading config file " + configFile, timeoutMs).withDesc(timeoutDesc)) {
-                    updated += formatConfig(configFile, configs.get(fileName), log);
+                    updated += formatConfig(configFile, configs.get(fileName));
                 }
             }
             return updated;
@@ -139,7 +139,7 @@ public class ConfigUtil {
 //        if (StringUtils.isBlank(configContent)) {
 //            return;
 //        }
-        ImportResource ir = (ImportResource) c.getAnnotation(ImportResource.class);
+        ImportResource ir = c.getAnnotation(ImportResource.class);
         String fileName = ir == null ? cfgName : ir.value();
         if (cliMode) {
             fileName = fileName + ".sample";
@@ -147,7 +147,7 @@ public class ConfigUtil {
 
         File cfgFile = new File(cfgConfigDir, fileName).getAbsoluteFile();
         if (cliMode) {
-            System.out.print("saveing " + c.getName() + " to " + cfgFile);
+            System.out.print("saving " + c.getName() + " to " + cfgFile);
         }
         Files.writeString(cfgFile.toPath(), configContent);
         if (cliMode) {
@@ -155,7 +155,7 @@ public class ConfigUtil {
         }
     }
 
-    public static int formatConfig(File targetFile, JExpressConfig cfg, Logger log) throws IOException {
+    public static int formatConfig(File targetFile, JExpressConfig cfg) throws IOException {
         File configFile = targetFile.getAbsoluteFile();
         ImportResource ir = (ImportResource) cfg.getClass().getAnnotation(ImportResource.class);
         if (ir != null && !ir.generateTemplate()) {
@@ -182,7 +182,7 @@ public class ConfigUtil {
 
     public static int loadConfig(ConfigLoadMode mode, Logger log, Locale defaultRB, File configFile, JExpressConfig cfg, Map<File, Runnable> cfgUpdateTasks, File cfgConfigDir) throws Exception {
         if (cfg == null) {
-            log.warn("null instance for " + configFile);
+            log.warn("null instance for {}", configFile);
             return 0;
         }
         if (!configFile.exists()) {
@@ -497,7 +497,6 @@ public class ConfigUtil {
                 addError("invalid format, expected:  \"" + key + "\"=ENC(encrypted value)", null);
             }
         } catch (Throwable ex) {
-            pwd = null;
             addError("invalid \"" + key + "\"", ex);
         }
         return pwd;
@@ -527,7 +526,7 @@ public class ConfigUtil {
             if (destFile == null) {
                 destFile = configFile;
             }
-            try (FileOutputStream output = new FileOutputStream(destFile); FileChannel foc = output.getChannel();) {
+            try (FileOutputStream output = new FileOutputStream(destFile); FileChannel foc = output.getChannel()) {
                 foc.write(ByteBuffer.wrap(sb.toString().getBytes(StandardCharsets.UTF_8)));
             }
         }
@@ -565,7 +564,7 @@ public class ConfigUtil {
 
             kmf = SSLUtil.buildKeyManagerFactory(sslKeyStorePath, pwdStore, alias, pwdKey);
         } catch (Throwable ex) {
-            addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString(), ex);
+            addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex, ex);
         }
         return kmf;
     }
