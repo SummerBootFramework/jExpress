@@ -215,7 +215,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     public void onMessage(ReqT message) {
         applyLogContext("onMessage", true);
         Context previous = this.context.attach();
-        if (log.isInfoEnabled() && message != null) {
+        if (isBusinessRequest && message != null && log.isInfoEnabled()) {
             if (httpPostRequestBodyList == null) {
                 httpPostRequestBodyList = new ArrayList<>();
             }
