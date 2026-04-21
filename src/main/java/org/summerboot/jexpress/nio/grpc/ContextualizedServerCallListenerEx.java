@@ -165,7 +165,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     private final SessionContext sessionContext;
 
-    private List<String> httpPostRequestBodyList = new ArrayList<>();
+    private List<String> httpPostRequestBodyList; // null until first message
 
     private boolean isBusinessRequest;
 
@@ -216,6 +216,9 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         applyLogContext("onMessage", true, Level.TRACE);
         Context previous = this.context.attach();
         if (log.isInfoEnabled() && message != null) {
+            if (httpPostRequestBodyList == null) {
+                httpPostRequestBodyList = new ArrayList<>();
+            }
             httpPostRequestBodyList.add(message.toString());
         }
 
@@ -285,9 +288,9 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             if (hit != null) {
                 ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + hit);// REF269-2
             }
-            log.trace(actionName + " begin: " + this);// after ThreadContext.put
+            log.trace("{} begin: {}", actionName, this);// after ThreadContext.put
         } else {
-            log.trace(actionName + " end: " + this);// before ThreadContext.remove
+            log.trace("{} end: {}", actionName, this);// before ThreadContext.remove
             if (doReport) {
                 report(actionName);
             }
@@ -298,7 +301,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     }
 
     protected void report(String actionName) {
-        if (!isBusinessRequest || sessionContext == null) {
+        if (!isBusinessRequest || sessionContext == null || log.isEnabled(Level.INFO)) {
             return;
         }
         Level level = sessionContext.level();
@@ -340,14 +343,20 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         //line4
         sessionContext.reportPOI(null, sb);
         String sanitizedUserInput = null;
-        if (httpPostRequestBodyList.size() > 0) {
-            StringBuilder sb2 = new StringBuilder();
-            for (String httpPostRequestBody : httpPostRequestBodyList) {
-                String sanitizeed = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
-                sb2.append(sanitizeed).append(BootConstant.BR);
+        if (httpPostRequestBodyList != null) {
+            int size = httpPostRequestBodyList.size();
+            if (size == 1) {
+                sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBodyList.get(0));// CWE-117 False Positive prove
+            } else if (size > 1) {
+                StringBuilder sb2 = new StringBuilder();
+                for (String httpPostRequestBody : httpPostRequestBodyList) {
+                    String sanitizeed = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+                    sb2.append(sanitizeed).append(BootConstant.BR);
+                }
+                sanitizedUserInput = sb2.toString();
             }
-            sanitizedUserInput = sb2.toString();
         }
+
         long requestDataBytes = 0;
         long responseDataBytes = 0;
         NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, sessionContext, sb, isTraceAll);
