@@ -200,20 +200,20 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     @Override
     public void onReady() {
-        applyLogContext("onReady", true, Level.TRACE);
+        applyLogContext("onReady", true);
         Context previous = this.context.attach();
 
         try {
             super.onReady();
         } finally {
             this.context.detach(previous);
-            applyLogContext("onReady", false, Level.TRACE);
+            applyLogContext("onReady", false);
         }
     }
 
     @Override
     public void onMessage(ReqT message) {
-        applyLogContext("onMessage", true, Level.TRACE);
+        applyLogContext("onMessage", true);
         Context previous = this.context.attach();
         if (log.isInfoEnabled() && message != null) {
             if (httpPostRequestBodyList == null) {
@@ -226,26 +226,26 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             super.onMessage(message);
         } finally {
             this.context.detach(previous);
-            applyLogContext("onMessage", false, Level.TRACE);
+            applyLogContext("onMessage", false);
         }
     }
 
     @Override
     public void onHalfClose() {
-        applyLogContext("onHalfClose", true, Level.INFO);
+        applyLogContext("onHalfClose", true);
         Context previous = this.context.attach();
 
         try {
             super.onHalfClose();
         } finally {
             this.context.detach(previous);
-            applyLogContext("onHalfClose", false, Level.INFO);
+            applyLogContext("onHalfClose", false);
         }
     }
 
     @Override
     public void onCancel() {
-        applyLogContext("onCancel", true, Level.INFO);
+        applyLogContext("onCancel", true);
         if (isBusinessRequest) {
             GRPCServer.getServiceCounter().incrementCancelled();
             GRPCServer.getServiceCounter().incrementProcessed();
@@ -256,13 +256,13 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             super.onCancel();
         } finally {
             this.context.detach(previous);
-            applyLogContext("onCancel", false, true, Level.INFO);// log after sending the response
+            applyLogContext("onCancel", false, true);// log after sending the response
         }
     }
 
     @Override
     public void onComplete() {
-        applyLogContext("onComplete", true, Level.INFO);
+        applyLogContext("onComplete", true);
         if (isBusinessRequest) {
             GRPCServer.getServiceCounter().incrementProcessed();
         }
@@ -272,25 +272,29 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             super.onComplete();
         } finally {
             this.context.detach(previous);
-            applyLogContext("onComplete", false, true, Level.INFO);// log after sending the response
+            applyLogContext("onComplete", false, true);// log after sending the response
         }
     }
 
-    private void applyLogContext(String actionName, boolean isBegin, Level logLevel) {
-        this.applyLogContext(actionName, isBegin, false, logLevel);
+    private void applyLogContext(String actionName, boolean isBegin) {
+        this.applyLogContext(actionName, isBegin, false);
     }
 
-    private void applyLogContext(String actionName, boolean isBegin, boolean doReport, Level logLevel) {
-        if (!isBusinessRequest || !log.isEnabled(logLevel)) {
+    private void applyLogContext(String actionName, boolean isBegin, boolean doReport) {
+        if (!isBusinessRequest) {
             return;
         }
         if (isBegin) {
             if (hit != null) {
                 ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + hit);// REF269-2
             }
-            log.trace("{} begin: {}", actionName, this);// after ThreadContext.put
+            if (log.isTraceEnabled()) {
+                log.trace("{} begin: {}", actionName, this);// after ThreadContext.put
+            }
         } else {
-            log.trace("{} end: {}", actionName, this);// before ThreadContext.remove
+            if (log.isTraceEnabled()) {
+                log.trace("{} end: {}", actionName, this);// before ThreadContext.remove
+            }
             if (doReport) {
                 report(actionName);
             }
@@ -301,7 +305,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     }
 
     protected void report(String actionName) {
-        if (!isBusinessRequest || sessionContext == null || log.isEnabled(Level.INFO)) {
+        if (!isBusinessRequest || sessionContext == null) {
             return;
         }
         Level level = sessionContext.level();
