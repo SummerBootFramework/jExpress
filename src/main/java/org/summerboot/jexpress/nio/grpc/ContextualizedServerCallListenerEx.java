@@ -45,6 +45,7 @@ import org.summerboot.jexpress.util.TimeUtil;
 import java.net.SocketAddress;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -164,9 +165,11 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     private final SessionContext sessionContext;
 
-    private String httpPostRequestBody;
+    private List<String> httpPostRequestBodyList = new ArrayList<>();
 
     private boolean isBusinessRequest;
+
+    private final Long hit;
 
     /**
      * onReady()
@@ -175,7 +178,9 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
      * onMessage()   ← repeated for client-streaming / bidi-streaming
      * onMessage()   ← ...
      * ↓
-     * onHalfClose() ← always after ALL onMessage() calls are done
+     * onHalfClose() ← always after ALL onMessage() calls are done. Business logic is being executed within this callback and before the server sends response back to client. For unary / server-streaming, onHalfClose() is called immediately after the single onMessage() call. For client-streaming / bidi-streaming, onHalfClose() is called after the last onMessage() call.
+     * ↓
+     * Server calls call.close(Status.OK, ...) → status/trailers sent to client
      * ↓
      * onComplete() or onCancel()
      *
@@ -189,62 +194,55 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         this.context = context;
         this.sessionContext = sessionContext;
         this.isBusinessRequest = isBusinessRequest;
+        this.hit = sessionContext == null ? null : sessionContext.hit();
     }
 
 
     @Override
     public void onReady() {
-        if (isBusinessRequest) {
-            log.trace("onReady: " + this);
-        }
+        applyLogContext("onReady", true, Level.TRACE);
         Context previous = this.context.attach();
 
         try {
             super.onReady();
         } finally {
             this.context.detach(previous);
+            applyLogContext("onReady", false, Level.TRACE);
         }
     }
 
     @Override
     public void onMessage(ReqT message) {
-        if (isBusinessRequest) {
-            log.trace("onMessage: " + this);
-        }
+        applyLogContext("onMessage", true, Level.TRACE);
         Context previous = this.context.attach();
-        if (message != null) {
-            httpPostRequestBody = message.toString();
+        if (log.isInfoEnabled() && message != null) {
+            httpPostRequestBodyList.add(message.toString());
         }
 
         try {
             super.onMessage(message);
         } finally {
             this.context.detach(previous);
+            applyLogContext("onMessage", false, Level.TRACE);
         }
-
     }
 
     @Override
     public void onHalfClose() {
-        if (isBusinessRequest && sessionContext != null) {
-            log.trace("onHalfClose: " + this);
-            ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + sessionContext.hit());// REF269-2
-        }
+        applyLogContext("onHalfClose", true, Level.INFO);
         Context previous = this.context.attach();
 
         try {
             super.onHalfClose();
         } finally {
             this.context.detach(previous);
+            applyLogContext("onHalfClose", false, Level.INFO);
         }
     }
 
     @Override
     public void onCancel() {
-        if (isBusinessRequest && sessionContext != null) {
-            log.trace("onCancel: " + this);
-            ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + sessionContext.hit());// REF269-2
-        }
+        applyLogContext("onCancel", true, Level.INFO);
         if (isBusinessRequest) {
             GRPCServer.getServiceCounter().incrementCancelled();
             GRPCServer.getServiceCounter().incrementProcessed();
@@ -255,24 +253,13 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             super.onCancel();
         } finally {
             this.context.detach(previous);
-            try {
-                report();
-            } finally {
-                if (isBusinessRequest) {
-                    ThreadContext.remove(BootConstant.SYS_PROP_HITINDEX);// REF269-2
-                }
-            }
+            applyLogContext("onCancel", false, true, Level.INFO);// log after sending the response
         }
-
-
     }
 
     @Override
     public void onComplete() {
-        if (isBusinessRequest && sessionContext != null) {
-            log.trace("onComplete: " + this);
-            ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + sessionContext.hit());// REF269-2
-        }
+        applyLogContext("onComplete", true, Level.INFO);
         if (isBusinessRequest) {
             GRPCServer.getServiceCounter().incrementProcessed();
         }
@@ -282,17 +269,35 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             super.onComplete();
         } finally {
             this.context.detach(previous);
-            try {
-                report();
-            } finally {
-                if (isBusinessRequest) {
-                    ThreadContext.remove(BootConstant.SYS_PROP_HITINDEX);// REF269-2
-                }
+            applyLogContext("onComplete", false, true, Level.INFO);// log after sending the response
+        }
+    }
+
+    private void applyLogContext(String actionName, boolean isBegin, Level logLevel) {
+        this.applyLogContext(actionName, isBegin, false, logLevel);
+    }
+
+    private void applyLogContext(String actionName, boolean isBegin, boolean doReport, Level logLevel) {
+        if (!isBusinessRequest || !log.isEnabled(logLevel)) {
+            return;
+        }
+        if (isBegin) {
+            if (hit != null) {
+                ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + hit);// REF269-2
+            }
+            log.trace(actionName + " begin: " + this);// after ThreadContext.put
+        } else {
+            log.trace(actionName + " end: " + this);// before ThreadContext.remove
+            if (doReport) {
+                report(actionName);
+            }
+            if (hit != null) {
+                ThreadContext.remove(BootConstant.SYS_PROP_HITINDEX);// REF269-2
             }
         }
     }
 
-    protected void report() {
+    protected void report(String actionName) {
         if (!isBusinessRequest || sessionContext == null) {
             return;
         }
@@ -321,7 +326,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         //line1
         String txId = sessionContext.txId();
         String methodType = sessionContext.sessionAttribute("MethodType");
-        sb.append("request_").append(txId).append(".caller=").append(caller == null ? sessionContext.callerId() : caller);
+        sb.append(actionName).append(" report: request_").append(txId).append(".caller=").append(caller == null ? sessionContext.callerId() : caller);
         //line2,3
         sb.append("\n\t")
                 .append("gRPC")
@@ -334,7 +339,15 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 .append(", response=").append(responseTime).append("ms");
         //line4
         sessionContext.reportPOI(null, sb);
-        String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+        String sanitizedUserInput = null;
+        if (httpPostRequestBodyList.size() > 0) {
+            StringBuilder sb2 = new StringBuilder();
+            for (String httpPostRequestBody : httpPostRequestBodyList) {
+                String sanitizeed = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+                sb2.append(sanitizeed).append(BootConstant.BR);
+            }
+            sanitizedUserInput = sb2.toString();
+        }
         long requestDataBytes = 0;
         long responseDataBytes = 0;
         NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, sessionContext, sb, isTraceAll);
