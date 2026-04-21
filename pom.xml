@@ -164,7 +164,7 @@
         <jakarta-mail.version>2.0.2</jakarta-mail.version>
         <jakarta-activation.version>2.0.1</jakarta-activation.version>
         <!-- Security -->
-        <bouncycastle.version>1.83</bouncycastle.version>
+        <bouncycastle.version>1.84</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.13.0</jwt.version>
 

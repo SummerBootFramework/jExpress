@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
@@ -136,6 +137,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         //ScopedValue.where(SessionContext.SESSION_CONTEXT, context).run(() -> {
         Runnable asyncTask = () -> {
             long queuingTime = System.currentTimeMillis() - start;
+            ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + hitIndex);// REF269-2
             NioServer.IDLE_EVENT_MONITOR.onCall(txId);
             String acceptCharset = requestHeaders.get(HttpHeaderNames.ACCEPT_CHARSET);
             if (StringUtils.isNotBlank(acceptCharset)) {
@@ -198,56 +200,60 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
                 responseDataBytes = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
             } finally {
-                NioCounter.COUNTER_SENT.incrementAndGet();
-                long responseTime = System.currentTimeMillis() - start;
-                this.afterService(requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
-                String report = null;
                 try {
-                    boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThresholdMs();
-                    HttpResponseStatus status = context.status();
-                    Level level = context.level();
-                    if ((overtime || status.code() >= 400) && level.isLessSpecificThan(Level.WARN)) {
-                        level = Level.WARN;
-                    }
-                    if (log.isEnabled(level)) {
-                        boolean isTraceAll = BootConstant.isDebugMode();
-                        if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
-                            requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
+                    NioCounter.COUNTER_SENT.incrementAndGet();
+                    long responseTime = System.currentTimeMillis() - start;
+                    this.afterService(requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
+                    String report = null;
+                    try {
+                        boolean overtime = responseTime > nioCfg.getBizTimeoutWarnThresholdMs();
+                        HttpResponseStatus status = context.status();
+                        Level level = context.level();
+                        if ((overtime || status.code() >= 400) && level.isLessSpecificThan(Level.WARN)) {
+                            level = Level.WARN;
                         }
-                        StringBuilder sb = new StringBuilder();
-                        context.reportOverall(queuingTime, processTime, responseTime, sb);
-                        context.reportPOI(nioCfg, sb);
-                        String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
-                        verboseClientServerCommunication(nioCfg, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, context, sb, isTraceAll);
-                        context.reportMemo(sb, log.getLevel());
-                        context.reportError(sb);
-                        sb.append(BootConstant.BR);
-                        report = sb.toString();
-                        if (!isTraceAll && processorSettings != null) {
-                            //isSendRequestParsingErrorToClient
-                            ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
-                            if (logSettings != null) {
-                                List<String> protectedDataFields = logSettings.getProtectDataFieldsFromLogging();
-                                if (protectedDataFields != null) {
-                                    for (String protectedDataField : protectedDataFields) {
-                                        report = FormatterUtil.replaceDataField(report, protectedDataField, protectedContectReplaceWith);
+                        if (log.isEnabled(level)) {
+                            boolean isTraceAll = BootConstant.isDebugMode();
+                            if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
+                                requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
+                            }
+                            StringBuilder sb = new StringBuilder();
+                            context.reportOverall(queuingTime, processTime, responseTime, sb);
+                            context.reportPOI(nioCfg, sb);
+                            String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+                            verboseClientServerCommunication(nioCfg, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, context, sb, isTraceAll);
+                            context.reportMemo(sb, log.getLevel());
+                            context.reportError(sb);
+                            sb.append(BootConstant.BR);
+                            report = sb.toString();
+                            if (!isTraceAll && processorSettings != null) {
+                                //isSendRequestParsingErrorToClient
+                                ProcessorSettings.LogSettings logSettings = processorSettings.getLogSettings();
+                                if (logSettings != null) {
+                                    List<String> protectedDataFields = logSettings.getProtectDataFieldsFromLogging();
+                                    if (protectedDataFields != null) {
+                                        for (String protectedDataField : protectedDataFields) {
+                                            report = FormatterUtil.replaceDataField(report, protectedDataField, protectedContectReplaceWith);
+                                        }
                                     }
                                 }
                             }
+                            report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRaw, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseDataBytes, ioEx);
+                            // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
+                            log.log(level, "{}", report);// CWE-117 False Positive
                         }
-                        report = beforeLogging(report, requestHeaders, httpMethod, httpRequestUriRaw, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseDataBytes, ioEx);
-                        // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
-                        log.log(level, "{}", report);// CWE-117 False Positive
+                    } catch (Throwable ex) {
+                        log.fatal("logging failed \n{}", report, ex);// CWE-117 False Positive
                     }
-                } catch (Throwable ex) {
-                    log.fatal("logging failed \n{}", report, ex);// CWE-117 False Positive
+                    try {
+                        afterLogging(report, requestHeaders, httpMethod, httpRequestUriRaw, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseDataBytes, ioEx);
+                    } catch (Throwable ex) {
+                        log.error("afterLogging failed", ex);
+                    }
+                } finally {
+                    ThreadContext.remove(BootConstant.SYS_PROP_HITINDEX);// REF269-2
+                    //context.clear();
                 }
-                try {
-                    afterLogging(report, requestHeaders, httpMethod, httpRequestUriRaw, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseDataBytes, ioEx);
-                } catch (Throwable ex) {
-                    log.error("afterLogging failed", ex);
-                }
-                //context.clear();
             }
         };
         try {

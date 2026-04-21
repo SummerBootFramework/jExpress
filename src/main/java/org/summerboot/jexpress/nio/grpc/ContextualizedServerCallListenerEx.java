@@ -30,6 +30,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.NioServerHttpRequestHandler;
@@ -51,7 +52,7 @@ import java.util.Set;
 public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
 
 
-    protected final Logger log = LogManager.getLogger(this);
+    protected final static Logger log = LogManager.getLogger(ContextualizedServerCallListenerEx.class);
 
     protected static ZoneId zoneId = ZoneId.systemDefault();
 
@@ -148,6 +149,9 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
         try {
             listener = new ContextualizedServerCallListenerEx<>(next.startCall(serverCall, headers), context, sessionContext, !isPing);
+            if (!isPing) {
+                log.trace("interceptCall: {}", listener);
+            }
         } finally {
             context.detach(previous);
         }
@@ -164,6 +168,22 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     private boolean isBusinessRequest;
 
+    /**
+     * onReady()
+     * ↓
+     * onMessage()   ← called once per message
+     * onMessage()   ← repeated for client-streaming / bidi-streaming
+     * onMessage()   ← ...
+     * ↓
+     * onHalfClose() ← always after ALL onMessage() calls are done
+     * ↓
+     * onComplete() or onCancel()
+     *
+     * @param delegate
+     * @param context
+     * @param sessionContext
+     * @param isBusinessRequest
+     */
     public ContextualizedServerCallListenerEx(ServerCall.Listener<ReqT> delegate, Context context, SessionContext sessionContext, boolean isBusinessRequest) {
         super(delegate);
         this.context = context;
@@ -171,7 +191,12 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         this.isBusinessRequest = isBusinessRequest;
     }
 
+
+    @Override
     public void onReady() {
+        if (isBusinessRequest) {
+            log.trace("onReady: " + this);
+        }
         Context previous = this.context.attach();
 
         try {
@@ -181,7 +206,11 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         }
     }
 
+    @Override
     public void onMessage(ReqT message) {
+        if (isBusinessRequest) {
+            log.trace("onMessage: " + this);
+        }
         Context previous = this.context.attach();
         if (message != null) {
             httpPostRequestBody = message.toString();
@@ -195,7 +224,12 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     }
 
+    @Override
     public void onHalfClose() {
+        if (isBusinessRequest && sessionContext != null) {
+            log.trace("onHalfClose: " + this);
+            ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + sessionContext.hit());// REF269-2
+        }
         Context previous = this.context.attach();
 
         try {
@@ -205,7 +239,12 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         }
     }
 
+    @Override
     public void onCancel() {
+        if (isBusinessRequest && sessionContext != null) {
+            log.trace("onCancel: " + this);
+            ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + sessionContext.hit());// REF269-2
+        }
         if (isBusinessRequest) {
             GRPCServer.getServiceCounter().incrementCancelled();
             GRPCServer.getServiceCounter().incrementProcessed();
@@ -216,12 +255,24 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             super.onCancel();
         } finally {
             this.context.detach(previous);
+            try {
+                report();
+            } finally {
+                if (isBusinessRequest) {
+                    ThreadContext.remove(BootConstant.SYS_PROP_HITINDEX);// REF269-2
+                }
+            }
         }
-        report();
+
 
     }
 
+    @Override
     public void onComplete() {
+        if (isBusinessRequest && sessionContext != null) {
+            log.trace("onComplete: " + this);
+            ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + sessionContext.hit());// REF269-2
+        }
         if (isBusinessRequest) {
             GRPCServer.getServiceCounter().incrementProcessed();
         }
@@ -231,13 +282,18 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             super.onComplete();
         } finally {
             this.context.detach(previous);
+            try {
+                report();
+            } finally {
+                if (isBusinessRequest) {
+                    ThreadContext.remove(BootConstant.SYS_PROP_HITINDEX);// REF269-2
+                }
+            }
         }
-        report();
     }
 
-
     protected void report() {
-        if (sessionContext == null) {
+        if (!isBusinessRequest || sessionContext == null) {
             return;
         }
         Level level = sessionContext.level();

@@ -52,7 +52,7 @@ All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to e
 * New Class: CustomizedJsonField and AdditionalFields, ServiceError and Err now both extend AdditionalFields class, so that adAdditionalField(String key, Object value) can be used to set customized
   JSON fields
 * RFE269-1: Enhanced Security check - gRPC Client
-* REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml
+* REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml, enabled logging with hitId.
 * REF269-3a: Enhanced CLI Security - implemented password masking and removed "-auth"
 * REF269-3b: New API SecurityUtil.promptPassword();
 * REF269-4: Enhanced gRPC client config description (GRPCClientConfig.java)
