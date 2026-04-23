@@ -24,11 +24,13 @@ import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.util.BackoffStrategy;
 
 import java.io.File;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Volatile Bean　Pattern
@@ -107,8 +109,12 @@ public class SMTPClientConfig extends BootConfig {
     protected volatile Set<String> emailToReportViewer;
 
     public static final String KEY_DEBOUCING_INTERVAL = "debouncing.emailalert_minute";
-    @Config(key = KEY_DEBOUCING_INTERVAL, defaultValue = "30", desc = "Alert message with the same subject will not be sent out within this minutes")
+    @Config(key = KEY_DEBOUCING_INTERVAL, defaultValue = "30", desc = "Alert message with the same subject will not be sent out within this minutes (default 30)")
     protected volatile int emailAlertDebouncingIntervalMinutes = 30;
+
+    @Config(key = "debouncing.emailalert.BackoffStrategy", defaultValue = "{\"strategy\":\"LINEAR\",\"timeUnit\":\"MINUTES\",\"initialInterval\":30,\"factor\":5.0,\"maxInterval\":60,\"maxAttempts\":0,\"jitterFactor\":0.05}",
+            desc = "Backoff strategy, unit = millisecond), strategy = {LINEAR, EXPONENTIAL}, In exponential mode, factor is growth multiplier; in linear mode, factor is step. Unlimited attempts when maxAttempts <= 0")
+    protected volatile BackoffStrategy backoffStrategy = new BackoffStrategy(BackoffStrategy.Strategy.LINEAR, TimeUnit.MINUTES, 30, 5, 60, 0, 0.05);
 
     //3. mail session for Json display only
     protected Properties mailSessionProp;
@@ -181,5 +187,9 @@ public class SMTPClientConfig extends BootConfig {
 
     public int getEmailAlertDebouncingIntervalMinutes() {
         return emailAlertDebouncingIntervalMinutes;
+    }
+
+    public BackoffStrategy getBackoffStrategy() {
+        return backoffStrategy;
     }
 }

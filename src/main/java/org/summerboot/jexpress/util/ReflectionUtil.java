@@ -502,6 +502,10 @@ public class ReflectionUtil {
                      InvocationTargetException ex) {
                 //failed to crate instance
             }
+            try {
+                return BeanUtil.fromJson(targetClass, value);
+            } catch (Exception ex) {
+            }
         }
         return null;
     }

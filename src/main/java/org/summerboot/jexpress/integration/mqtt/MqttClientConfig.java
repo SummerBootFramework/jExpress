@@ -22,7 +22,6 @@ import org.eclipse.paho.mqttv5.client.MqttClientPersistence;
 import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.MqttPingSender;
 import org.eclipse.paho.mqttv5.common.MqttException;
-import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.annotation.Config;
@@ -80,11 +79,11 @@ abstract public class MqttClientConfig extends BootConfig {
     //@JsonIgnore
     protected volatile KeyManagerFactory kmf;
 
-    protected void generateTemplate_keystore(StringBuilder sb) {
-        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + BootConstant.BR);
-        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
-        sb.append(KEY_kmf_AliasKey + "=server1_2048.jexpress.org" + BootConstant.BR);
-        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
+    protected void generateTemplate_keystore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_kmf_key, currentValues, FILENAME_KEYSTORE, sb);
+        appendCurrentValue(KEY_kmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
+        appendCurrentValue(KEY_kmf_AliasKey, currentValues, "server1_2048.jexpress.org", sb);
+        appendCurrentValue(KEY_kmf_AliasPwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
         generateTemplate = true;
     }
 
@@ -97,9 +96,9 @@ abstract public class MqttClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
 
-    protected void generateTemplate_truststore(StringBuilder sb) {
-        sb.append(KEY_tmf_key + "=" + FILENAME_TRUSTSTORE_4CLIENT + BootConstant.BR);
-        sb.append(KEY_tmf_StorePwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
+    protected void generateTemplate_truststore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_tmf_key, currentValues, FILENAME_TRUSTSTORE_4CLIENT, sb);
+        appendCurrentValue(KEY_tmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
         generateTemplate = true;
     }
 

@@ -52,7 +52,21 @@ import java.util.stream.Collectors;
 public class NioConfig extends BootConfig {
 
     public static void main(String[] args) {
-        String t = generateTemplate(NioConfig.class);
+        Properties p = new Properties();
+        p.put("nio.server.bindings", "aaa");
+        p.put("nio.server.autostart", "bbb");
+        p.put("nio.server.ssl.KeyStore", "KeyStore111");
+        p.put("nio.server.ssl.KeyStorePwd", "KeyStorePwd222");
+        p.put("nio.server.ssl.KeyAlias", "KeyAlias333");
+        p.put("nio.server.ssl.KeyPwd", "KeyPwd444");
+        p.put("server.DefaultResponseHttpHeaders.X-Frame-Options3", "sameorigin333");
+        p.put("server.DefaultResponseHttpHeaders.X-Frame-Options1", "sameorigin111");
+        p.put("server.DefaultResponseHttpHeaders.X-Frame-Options2", "sameorigin222");
+        p.put("server.DefaultResponseHttpHeaders.X-Frame-Options", "");
+        p.put("server.1DefaultResponseHttpHeaders.Access-Control-Max-Age", "3600");
+        p.put("server.DefaultResponseHttpHeaders.Access-Control-Max-Age", "3600");
+        //p = null;
+        String t = generateTemplate(NioConfig.class, p);
         System.out.println(t);
     }
 
@@ -97,24 +111,23 @@ public class NioConfig extends BootConfig {
     protected volatile boolean pingSyncShowRootCause;
 
     //2. NIO Security
-    @ConfigHeader(title = "2.1 NIO Security - TLS")
-
     protected static final String KEY_kmf_key = "nio.server.ssl.KeyStore";
     protected static final String KEY_kmf_StorePwdKey = "nio.server.ssl.KeyStorePwd";
     protected static final String KEY_kmf_AliasKey = "nio.server.ssl.KeyAlias";
     protected static final String KEY_kmf_AliasPwdKey = "nio.server.ssl.KeyPwd";
 
     @JsonIgnore
+    @ConfigHeader(title = "2.1 NIO Security - TLS")
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
             desc = DESC_KMF_SERVER,
             callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf = null;
 
-    protected void generateTemplate_keystore(StringBuilder sb) {
-        sb.append(KEY_kmf_key + "=" + FILENAME_KEYSTORE + BootConstant.BR);
-        sb.append(KEY_kmf_StorePwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
-        sb.append(KEY_kmf_AliasKey + "=server1_2048.jexpress.org" + BootConstant.BR);
-        sb.append(KEY_kmf_AliasPwdKey + DEFAULT_DEC_VALUE + BootConstant.BR);
+    protected void generateTemplate_keystore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_kmf_key, currentValues, FILENAME_KEYSTORE, sb);
+        appendCurrentValue(KEY_kmf_StorePwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
+        appendCurrentValue(KEY_kmf_AliasKey, currentValues, "server1_2048.jexpress.org", sb);
+        appendCurrentValue(KEY_kmf_AliasPwdKey, currentValues, DEFAULT_DEC_VALUE, sb);
         generateTemplate = true;
     }
 
@@ -144,16 +157,17 @@ public class NioConfig extends BootConfig {
     protected String[] tlsCipherSuites;
 
     @ConfigHeader(title = "2.2 NIO Security - Filter")
-    @Config(key = "filter.CallerAddress.option", defaultValue = "String", desc = "valid value = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")
+    @Config(key = "filter.CallerAddress.option", defaultValue = "String", desc = "Filters the caller's network address by type.\n" +
+            "Accepted values: String, HostString, HostName, AddressString, HostAddress, AddrHostName, or CanonicalHostName")
     protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
-    @Config(key = "filter.CallerAddress.Whitelist", desc = "Whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
+    @Config(key = "filter.CallerAddress.Whitelist", desc = "Caller network addr whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
     protected volatile Set<String> callerAddressFilterWhitelist;
-    @Config(key = "filter.CallerAddress.Blacklist", desc = "Blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
+    @Config(key = "filter.CallerAddress.Blacklist", desc = "Caller network addr blacklist in CSV format, example: 10.1.1.40, 192\\\\.168\\\\.2\\\\.")
     protected volatile Set<String> callerAddressFilterBlacklist;
 
-    @Config(key = "filter.Request.Whitelist", desc = "Whitelist in CSV format, example: ^POST/myservice1/.* , /service1/action1/ , /service1/action2")
+    @Config(key = "filter.Request.Whitelist", desc = "Http Request whitelist in CSV format", format = "CSV of regex patterns targeting Method/Path", example = "^POST/myservice1/.* , /service1/action1/ , /service1/action2")
     protected volatile Set<String> requestFilterWhitelist;
-    @Config(key = "filter.Request.Blacklist", desc = "Blacklist in CSV format, example: ^POST/myservice2/.* , ^DELETE/service2/action1/ , /service2/action2")
+    @Config(key = "filter.Request.Blacklist", desc = "Http Request blacklist in CSV format", format = "CSV of regex patterns targeting Method/Path", example = "^POST/myservice2/.* , ^DELETE/service2/action1/ , /service2/action2")
     protected volatile Set<String> requestFilterBlacklist;
 
     //3.1 Socket controller
@@ -222,7 +236,7 @@ public class NioConfig extends BootConfig {
     protected volatile int nioEventLoopGroupWorkerSize = BootConstant.CPU_CORE * 2 + 1;
 
     @Config(key = "nio.server.BizExecutor.mode", defaultValue = "VirtualThread",
-            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java) \nuse CPU core + 1 when application is CPU bound\n"
+            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java)\nuse CPU core + 1 when application is CPU bound\n"
                     + "use CPU core x 2 + 1 when application is I/O bound\n"
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
@@ -292,27 +306,27 @@ public class NioConfig extends BootConfig {
 
     // 4.4. Request/Response
     @ConfigHeader(title = "4.4. Request/Response ")
-    @Config(key = "nio.JAX-RS.fromJson.CaseInsensitive", defaultValue = "false")
-    protected volatile boolean fromJsonCaseInsensitive = false;
-    @Config(key = "nio.JAX-RS.fromJson.failOnUnknownProperties", defaultValue = "true")
-    protected volatile boolean fromJsonFailOnUnknownProperties = true;
+    @Config(key = "nio.JAX-RS.deserialization.CaseInsensitive", defaultValue = "false")
+    protected volatile boolean deserializationCaseInsensitive = false;
+    @Config(key = "nio.JAX-RS.deserialization.failOnUnknownProperties", defaultValue = "true")
+    protected volatile boolean deserializationFailOnUnknownProperties = true;
 
-    @Config(key = "nio.JAX-RS.fromJson.autoBeanValidation", defaultValue = "true")
-    protected volatile boolean fromJsonAutoBeanValidation = true;
+    @Config(key = "nio.JAX-RS.deserialization.autoBeanValidation", defaultValue = "true")
+    protected volatile boolean deserializationAutoBeanValidation = true;
 
-    @Config(key = "nio.JAX-RS.toJson.IgnoreNull", defaultValue = "true")
-    protected volatile boolean toJsonIgnoreNull = true;
-    @Config(key = "nio.JAX-RS.toJson.IgnoreEmptyArray", defaultValue = "false")
-    protected volatile boolean toJsonIgnoreEmptyArray = false;
-    @Config(key = "nio.JAX-RS.toJson.Pretty", defaultValue = "false")
-    protected volatile boolean toJsonPretty = false;
-    @Config(key = "nio.JAX-RS.toJson.showRefInServiceError", defaultValue = "true")
+    @Config(key = "nio.JAX-RS.serialization.IgnoreNull", defaultValue = "true")
+    protected volatile boolean serializationIgnoreNull = true;
+    @Config(key = "nio.JAX-RS.serialization.IgnoreEmptyArray", defaultValue = "false")
+    protected volatile boolean serializationIgnoreEmptyArray = false;
+    @Config(key = "nio.JAX-RS.serialization.Pretty", defaultValue = "false")
+    protected volatile boolean serializationPretty = false;
+    @Config(key = "nio.JAX-RS.serialization.showRefInServiceError", defaultValue = "true")
     protected volatile boolean showRefInServiceError = true;
 
     @Config(key = "nio.JAX-RS.jsonParser.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
-    @Config(key = "nio.default.response.Charset", desc = "Accept-Charset header is deprecated and no longer used by modern browsers, \nservers often default to a widely compatible encoding (like UTF-8) or the resource's default encoding for better user experience.", defaultValue = "UTF-8")
+    @Config(key = "nio.default.response.Charset", desc = "Accept-Charset header is deprecated and no longer used by modern browsers,\nservers often default to a widely compatible encoding UTF-8 (for English/French only, like Canada set it to ISO-8859-1) or the resource's default encoding for better user experience.", defaultValue = "UTF-8")
     protected Charset defaultResponseCharset = StandardCharsets.UTF_8;
 
 
@@ -329,7 +343,7 @@ public class NioConfig extends BootConfig {
 
     protected static final String KEY_FILTER_USERTYPE_RANGE = "nio.verbose.filter.usertype.range";
     @Config(key = KEY_FILTER_USERTYPE_RANGE,
-            desc = "user range (when type=CallerId): N1 - N2 or N1, N2, ... , Nn \n"
+            desc = "user range (when type=CallerId): N1 - N2 or N1, N2, ... , Nn\n"
                     + "user range (when type=CallerName): johndoe, janedoe")
     protected volatile String filterUserVaue;
     protected volatile Set<String> filterCallerNameSet;
@@ -416,8 +430,11 @@ public class NioConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_ResponseHeaders")
     protected HttpHeaders serverDefaultResponseHeaders;
 
-    protected void generateTemplate_ResponseHeaders(StringBuilder sb) {
-        sb.append("#").append(HEADER_SERVER_RESPONSE).append("response_header_name=response_header_value" + BootConstant.BR);
+    protected void generateTemplate_ResponseHeaders(StringBuilder sb, Properties currentValues) {
+        if (!appendCurrentValue(HEADER_SERVER_RESPONSE, currentValues, sb)) {
+            sb.append("#").append(HEADER_SERVER_RESPONSE).append("response_header_name=response_header_value" + BootConstant.BR);
+        }
+        generateTemplate = true;
     }
 
     public HttpHeaders getServerDefaultResponseHeaders() {
@@ -499,7 +516,7 @@ public class NioConfig extends BootConfig {
         tpe = buildThreadPoolExecutor(tpe, "Netty-HTTP.Biz", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, false);
-        BeanUtil.init(jsonParserTimeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonPretty, toJsonIgnoreEmptyArray, toJsonIgnoreNull, showRefInServiceError);
+        BeanUtil.init(jsonParserTimeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, serializationPretty, serializationIgnoreEmptyArray, serializationIgnoreNull, showRefInServiceError);
 
         //5.1 caller filter
         switch (filterUserType) {
@@ -760,16 +777,16 @@ public class NioConfig extends BootConfig {
         return healthInspectionIntervalSeconds;
     }
 
-    public boolean isFromJsonCaseInsensitive() {
-        return fromJsonCaseInsensitive;
+    public boolean isDeserializationCaseInsensitive() {
+        return deserializationCaseInsensitive;
     }
 
-    public boolean isFromJsonFailOnUnknownProperties() {
-        return fromJsonFailOnUnknownProperties;
+    public boolean isDeserializationFailOnUnknownProperties() {
+        return deserializationFailOnUnknownProperties;
     }
 
-    public boolean isFromJsonAutoBeanValidation() {
-        return fromJsonAutoBeanValidation;
+    public boolean isDeserializationAutoBeanValidation() {
+        return deserializationAutoBeanValidation;
     }
 
     public TimeZone getJsonParserTimeZone() {
@@ -780,12 +797,12 @@ public class NioConfig extends BootConfig {
         return defaultResponseCharset;
     }
 
-    public boolean isToJsonIgnoreNull() {
-        return toJsonIgnoreNull;
+    public boolean isSerializationIgnoreNull() {
+        return serializationIgnoreNull;
     }
 
-    public boolean isToJsonPretty() {
-        return toJsonPretty;
+    public boolean isSerializationPretty() {
+        return serializationPretty;
     }
 
     public boolean isShowRefInServiceError() {

@@ -26,5 +26,58 @@ public interface SimpleLocalCache<K, V> {
 
     V get(K key);
 
+    void putAndKeepEvicted(K key, V value, Long ttlMilliseconds);
+
+    CacheEntity<V> getWithEvicted(K key);
+
     V delete(K key);
+
+    class CacheEntity<V> {
+
+        protected final V value;
+        protected long expiredTs;
+        protected boolean keepEvicted;
+        protected boolean evicted;
+
+        public CacheEntity(V value, Long ttlMilliseconds, boolean keepEvicted) {
+            this.value = value;
+            this.expiredTs = ttlMilliseconds == null || ttlMilliseconds < 0
+                    ? Long.MAX_VALUE
+                    : System.currentTimeMillis() + ttlMilliseconds;
+            this.keepEvicted = keepEvicted;
+            this.evicted = false;
+        }
+
+        public V getValue() {
+            return value;
+        }
+
+        public long getExpiredTs() {
+            return expiredTs;
+        }
+
+        public void setExpiredTs(long ttlMilliseconds) {
+            this.expiredTs = System.currentTimeMillis() + ttlMilliseconds;
+        }
+
+        public boolean isExpiredWhen(long targetTs) {
+            return expiredTs <= targetTs;
+        }
+
+        public boolean isKeepEvicted() {
+            return keepEvicted;
+        }
+
+        public void setKeepEvicted(boolean keepEvicted) {
+            this.keepEvicted = keepEvicted;
+        }
+
+        public boolean isEvicted() {
+            return evicted;
+        }
+
+        public void setEvicted(boolean evicted) {
+            this.evicted = evicted;
+        }
+    }
 }

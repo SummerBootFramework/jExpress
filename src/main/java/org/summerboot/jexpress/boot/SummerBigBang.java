@@ -247,6 +247,12 @@ abstract public class SummerBigBang extends SummerSingularity {
                 .get();
         cliOptions.addOption(arg);
 
+        arg = Option.builder(BootConstant.CLI_FORMAT_CONFIG_FILE)
+                .desc("Format config file"
+                        + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_FORMAT_CONFIG_FILE + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> ")// REF269-3
+                .get();
+        cliOptions.addOption(arg);
+
         summerInitializers.addAll(scanImplementation_SummerInitializer());
         for (SummerInitializer summerInitializer : summerInitializers) {
             summerInitializer.initCLI(cliOptions);
@@ -432,9 +438,13 @@ abstract public class SummerBigBang extends SummerSingularity {
             // REF269-3
             masterPassword = SecurityUtil.promptPassword("Enter current application root password: ", null);
             EncryptorUtil.setMasterPassword(masterPassword);
-            
+
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
             String msg = BootConstant.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath();
+            ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
+        } else if (cli.hasOption(BootConstant.CLI_FORMAT_CONFIG_FILE)) {
+            int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_format);
+            String msg = BootConstant.BR + "\t " + updated + " config files have been formated in " + userSpecifiedConfigDir.getAbsolutePath();
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
         }
 

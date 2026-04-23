@@ -2,7 +2,37 @@
 
 ## Version 2.6.9 (2026-04-24)
 
-#### ✨ Features and Enhancements
+### 🔒 1. Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8) and Log4J CVE-2026-34480
+
+jExpress 2.6.9 includes two important security upgrades to address a vulnerability disclosed by the Netty and Log4J project.
+
+#### 📌 Impacted Versions
+
+According to the official Netty advisory, the vulnerability affects:
+
+- Netty versions`<= 4.2.9.Final`
+- Log4J version`<= 2.25.3`
+- jExpress versions`<= 2.6.8.Final`
+
+#### 🛠 Fix Included in This Release
+
+jExpress v2.6.9 has upgraded
+
+* Netty to: 4.2.12.Final
+* Log4J to : 2.25.4
+
+This version contains the complete upstream fix for the vulnerability and additional stability improvements.
+
+#### ✔ Is jExpress Affected?
+
+jExpress relies entirely on Netty’s official HTTP decoders and Log4J, and does **not** implement any custom HTTP parsing or logging logic.  
+Therefore, upgrading Netty to a patched version fully mitigates the vulnerability.
+
+#### 🔧 Recommendation
+
+All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to ensure their applications remain secure.
+
+### ✨ 2. Features and Enhancements
 
 * return Application session ID when admin request version
 * new Annotation: @ParamCollectionDelimiter - to be used if developer need to override the default delimiter: comma (",")
@@ -19,10 +49,10 @@
 * New cfg_nio.properties added: #nio.default.response.Charset=UTF-8: Accept-Charset header is deprecated and no longer used by modern browsers, servers often default to a widely compatible encoding (
   like UTF-8) or the resource's default encoding for better user experience.
 * Reformating config files
-* New Class: CustomizedJsonField, ServiceError and Err now both extend this new class, so that setAdditionalField(Object additionalFieldData, String additionalFieldName) can be use to set customized
-  JSON field
+* New Class: CustomizedJsonField and AdditionalFields, ServiceError and Err now both extend AdditionalFields class, so that adAdditionalField(String key, Object value) can be used to set customized
+  JSON fields
 * RFE269-1: Enhanced Security check - gRPC Client
-* REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml
+* REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml, enabled logging with hitId.
 * REF269-3a: Enhanced CLI Security - implemented password masking and removed "-auth"
 * REF269-3b: New API SecurityUtil.promptPassword();
 * REF269-4: Enhanced gRPC client config description (GRPCClientConfig.java)
@@ -31,32 +61,8 @@
 * REF269-6: default lineSeparator is now configurable in etc/boot.ini (default.lineSeparator=system). Use case: If your Java application is running on Windows but specifically generating config files
   intended for a Linux system, you should set default.lineSeparator=Linux
 * REF269-7: Enhanced/refactoring cfg_nio.properties: added section "2.2 NIO Security - Filter", filter by caller address and request
-
-### 🔒 Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8)
-
-jExpress 2.6.9 includes an important security upgrade to address a vulnerability disclosed by the Netty project.
-
-#### 📌 Impacted Versions
-
-According to the official Netty advisory, the vulnerability affects:
-
-- Netty versions`<= 4.2.10.Final`
-- jExpress versions`<= 2.6.8.Final`
-
-#### 🛠 Fix Included in This Release
-
-jExpress v2.6.9 has upgraded Netty to: 4.2.12.Final
-
-This version contains the complete upstream fix for the vulnerability and additional stability improvements.
-
-#### ✔ Is jExpress Affected?
-
-jExpress relies entirely on Netty’s official HTTP decoders and does **not** implement any custom HTTP parsing logic.  
-Therefore, upgrading Netty to a patched version fully mitigates the vulnerability.
-
-#### 🔧 Recommendation
-
-All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to ensure their applications remain secure.
+* REF269-8: New CLI: -format (format configuration files)
+* REF269-9: Error Code Offset - The new `errorCodeBase` in boot.conf defines the starting numeric range for error codes within this framework.
 
 ## Version 2.6.8 (2026-03-11)
 

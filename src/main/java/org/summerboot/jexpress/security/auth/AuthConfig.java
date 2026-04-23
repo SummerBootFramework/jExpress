@@ -114,12 +114,25 @@ public class AuthConfig extends BootConfig {
     protected volatile String ldapScheamTenantGroupOU;
 
     //1.2 LDAP Client keystore
+    protected final static String ID = "ldap";
+    protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    protected static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    protected static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    protected static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
     @ConfigHeader(title = "1.2 LDAP Client keystore")
     @JsonIgnore
-    @Config(key = "ldap.ssl.KeyStore", StorePwdKey = "ldap.ssl.KeyStorePwd",
-            AliasKey = "ldap.ssl.KeyAlias", AliasPwdKey = "ldap.ssl.KeyPwd",
-            desc = DESC_KMF_CLIENT)
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey,
+            AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = DESC_KMF_CLIENT, callbackMethodName4Dump = "generateTemplate_keystore")
     protected volatile KeyManagerFactory kmf;
+
+    protected void generateTemplate_keystore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_kmf_key, currentValues, "", sb, true);
+        appendCurrentValue(KEY_kmf_StorePwdKey, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb, true);
+        appendCurrentValue(KEY_kmf_AliasKey, currentValues, "", sb, true);
+        appendCurrentValue(KEY_kmf_AliasPwdKey, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb, true);
+        generateTemplate = true;
+    }
 
     @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
     protected volatile String ldapTLSProtocol;
@@ -128,11 +141,19 @@ public class AuthConfig extends BootConfig {
     protected volatile String ldapSSLConnectionFactoryClassName;
 
     //1.3 LDAP Client truststore
+    protected static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    protected static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "1.3 LDAP Client truststore")
-    @Config(key = "ldap.ssl.TrustStore", StorePwdKey = "ldap.ssl.TrustStorePwd",
-            desc = DESC_TMF_CLIENT)
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey,
+            desc = DESC_TMF_CLIENT, callbackMethodName4Dump = "generateTemplate_truststore")
     @JsonIgnore
     protected volatile TrustManagerFactory tmf;
+
+    protected void generateTemplate_truststore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_tmf_key, currentValues, "", sb, true);
+        appendCurrentValue(KEY_tmf_StorePwdKey, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb, true);
+        generateTemplate = true;
+    }
 
     protected volatile Properties ldapConfig;
 
@@ -156,8 +177,8 @@ public class AuthConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_privateKeyFile")
     protected volatile File privateKeyFile;
 
-    protected void generateTemplate_privateKeyFile(StringBuilder sb) {
-        sb.append(KEY_privateKeyFile + "=" + JWT_PRIVATE_KEY_FILE + BootConstant.BR);
+    protected void generateTemplate_privateKeyFile(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_privateKeyFile, currentValues, JWT_PRIVATE_KEY_FILE, sb);
         generateTemplate = true;
     }
 
@@ -167,8 +188,8 @@ public class AuthConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_privateKeyPwd")
     protected volatile String privateKeyPwd;
 
-    protected void generateTemplate_privateKeyPwd(StringBuilder sb) {
-        sb.append(KEY_privateKeyPwd + DEFAULT_DEC_VALUE + BootConstant.BR);
+    protected void generateTemplate_privateKeyPwd(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_privateKeyPwd, currentValues, DEFAULT_DEC_VALUE, sb);
     }
 
     @Config(key = KEY_publicKeyFile,
@@ -176,8 +197,8 @@ public class AuthConfig extends BootConfig {
             callbackMethodName4Dump = "generateTemplate_publicKeyFile")
     protected volatile File publicKeyFile;
 
-    protected void generateTemplate_publicKeyFile(StringBuilder sb) {
-        sb.append(KEY_publicKeyFile + "=" + JWT_PUBLIC_KEY_FILE + BootConstant.BR);
+    protected void generateTemplate_publicKeyFile(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_publicKeyFile, currentValues, JWT_PUBLIC_KEY_FILE, sb);
     }
 
     @JsonIgnore
@@ -223,10 +244,15 @@ public class AuthConfig extends BootConfig {
      *
      * @param sb
      */
-    protected void generateTemplate_DumpRoleMapping(StringBuilder sb) {
+    protected void generateTemplate_DumpRoleMapping(StringBuilder sb, Properties currentValues) {
+
         for (String role : declareRoles) {
-            sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>" + BootConstant.BR);
-            sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>" + BootConstant.BR);
+            if (!appendCurrentValue("roles." + role + ".groups", currentValues, sb)) {
+                sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>" + BootConstant.BR);
+            }
+            if (!appendCurrentValue("roles." + role + ".users", currentValues, sb)) {
+                sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>" + BootConstant.BR);
+            }
         }
     }
 

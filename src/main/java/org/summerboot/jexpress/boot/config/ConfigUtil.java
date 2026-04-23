@@ -33,8 +33,10 @@ import org.summerboot.jexpress.util.FormatterUtil;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -43,9 +45,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -77,13 +82,13 @@ public class ConfigUtil {
         cfgListener = listener;
     }
 
-    public static enum ConfigLoadMode {
-        cli_encrypt(true, true), cli_decrypt(false, true), app_run(true, false);
+    public enum ConfigLoadMode {
+        cli_encrypt(true, true), cli_decrypt(false, true), cli_format(true, true), app_run(true, false);
 
         private final boolean encryptMode;
         private final boolean cliMode;
 
-        private ConfigLoadMode(boolean encryptMode, boolean cliMode) {
+        ConfigLoadMode(boolean encryptMode, boolean cliMode) {
             this.encryptMode = encryptMode;
             this.cliMode = cliMode;
         }
@@ -100,9 +105,22 @@ public class ConfigUtil {
     public static int loadConfigs(ConfigLoadMode mode, Logger log, Locale defaultRB, Path configFolder, Map<String, JExpressConfig> configs, long userSpecifiedCfgMonitorThrottleMillis, File cfgConfigDir) throws Exception {
         // 1. load configs
         int updated = 0;
-        Map<File, Runnable> cfgUpdateTasks = new HashMap();
+        Map<File, Runnable> cfgUpdateTasks = new HashMap<>();
         long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
         String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
+
+        if (ConfigLoadMode.cli_format == mode) {
+            updated += formatConfig(Path.of("etc", "boot.conf").toFile(), BackOffice.agent);
+            for (String fileName : configs.keySet()) {
+                File configFile = Paths.get(configFolder.toString(), fileName).toFile();
+                try (var a = Timeout.watch("loading config file " + configFile, timeoutMs).withDesc(timeoutDesc)) {
+                    updated += formatConfig(configFile, configs.get(fileName));
+                }
+            }
+            return updated;
+        }
+
+
         for (String fileName : configs.keySet()) {
             File configFile = Paths.get(configFolder.toString(), fileName).toFile();
             try (var a = Timeout.watch("loading config file " + configFile, timeoutMs).withDesc(timeoutDesc)) {
@@ -121,7 +139,7 @@ public class ConfigUtil {
 //        if (StringUtils.isBlank(configContent)) {
 //            return;
 //        }
-        ImportResource ir = (ImportResource) c.getAnnotation(ImportResource.class);
+        ImportResource ir = c.getAnnotation(ImportResource.class);
         String fileName = ir == null ? cfgName : ir.value();
         if (cliMode) {
             fileName = fileName + ".sample";
@@ -129,7 +147,7 @@ public class ConfigUtil {
 
         File cfgFile = new File(cfgConfigDir, fileName).getAbsoluteFile();
         if (cliMode) {
-            System.out.print("saveing " + c.getName() + " to " + cfgFile);
+            System.out.print("saving " + c.getName() + " to " + cfgFile);
         }
         Files.writeString(cfgFile.toPath(), configContent);
         if (cliMode) {
@@ -137,9 +155,34 @@ public class ConfigUtil {
         }
     }
 
+    public static int formatConfig(File targetFile, JExpressConfig cfg) throws IOException {
+        File configFile = targetFile.getAbsoluteFile();
+        ImportResource ir = (ImportResource) cfg.getClass().getAnnotation(ImportResource.class);
+        if (ir != null && !ir.generateTemplate()) {
+            return 0;
+        }
+        // Maintains insertion order (line order). Used to preserve commented-out configuration items
+        final List<String> currentContentLines = Collections.unmodifiableList(Files.readAllLines(configFile.toPath()));
+        // used for verify content change
+        final String currentContent = Files.readString(configFile.toPath());
+        final Properties currentSettings = new Properties();
+        try (InputStream input = new FileInputStream(configFile)) {
+            // Load the properties file
+            currentSettings.load(input);
+        }
+        String formattedContent = BootConfig.generateTemplate(cfg.getClass(), currentSettings, currentContentLines, BootConstant.BR);
+        if (Objects.equals(currentContent, formattedContent)) {
+            return 0;
+        }
+        configFile.renameTo(Paths.get(configFile.getParent(), configFile.getName() + "_" + System.currentTimeMillis() + ".bk").toFile());
+        Files.writeString(configFile.toPath(), formattedContent);
+        System.out.println("Config file has been formatted: " + configFile);
+        return 1;
+    }
+
     public static int loadConfig(ConfigLoadMode mode, Logger log, Locale defaultRB, File configFile, JExpressConfig cfg, Map<File, Runnable> cfgUpdateTasks, File cfgConfigDir) throws Exception {
         if (cfg == null) {
-            log.warn("null instance for " + configFile);
+            log.warn("null instance for {}", configFile);
             return 0;
         }
         if (!configFile.exists()) {
@@ -454,7 +497,6 @@ public class ConfigUtil {
                 addError("invalid format, expected:  \"" + key + "\"=ENC(encrypted value)", null);
             }
         } catch (Throwable ex) {
-            pwd = null;
             addError("invalid \"" + key + "\"", ex);
         }
         return pwd;
@@ -484,7 +526,7 @@ public class ConfigUtil {
             if (destFile == null) {
                 destFile = configFile;
             }
-            try (FileOutputStream output = new FileOutputStream(destFile); FileChannel foc = output.getChannel();) {
+            try (FileOutputStream output = new FileOutputStream(destFile); FileChannel foc = output.getChannel()) {
                 foc.write(ByteBuffer.wrap(sb.toString().getBytes(StandardCharsets.UTF_8)));
             }
         }
@@ -522,7 +564,7 @@ public class ConfigUtil {
 
             kmf = SSLUtil.buildKeyManagerFactory(sslKeyStorePath, pwdStore, alias, pwdKey);
         } catch (Throwable ex) {
-            addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString(), ex);
+            addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex, ex);
         }
         return kmf;
     }

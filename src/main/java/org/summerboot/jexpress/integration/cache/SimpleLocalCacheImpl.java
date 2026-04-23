@@ -30,11 +30,19 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
 
     protected final Map<Object, CacheEntity<V>> debouncingData = new ConcurrentHashMap<>();
 
-    protected void clean(long now) {
+    protected void evict() {
+        evict(System.currentTimeMillis());
+    }
+
+    protected void evict(long targetTime) {
         debouncingData.keySet().forEach(key -> {
             CacheEntity<V> ce = debouncingData.get(key);
-            if (ce == null || ce.getTtlMillis() < now) {
-                debouncingData.remove(key);
+            if (ce != null && ce.isExpiredWhen(targetTime)) {
+                if (ce.isKeepEvicted()) {
+                    ce.setEvicted(true);
+                } else {
+                    debouncingData.remove(key);
+                }
             }
         });
     }
@@ -46,7 +54,12 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
      */
     @Override
     public void put(K key, V value, Long ttlMilliseconds) {
-        debouncingData.put(key, new CacheEntity<>(value, ttlMilliseconds));
+        debouncingData.put(key, new CacheEntity<>(value, ttlMilliseconds, false));
+    }
+
+    @Override
+    public void putAndKeepEvicted(K key, V value, Long ttlMilliseconds) {
+        debouncingData.put(key, new CacheEntity<>(value, ttlMilliseconds, true));
     }
 
     /**
@@ -55,20 +68,24 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
      */
     @Override
     public V get(K key) {
-        if (key == null) {
-            return null;
-        }
-        long now = System.currentTimeMillis();
-        clean(now);
-        CacheEntity<V> e = debouncingData.get(key);
-        if (e == null) {
+        CacheEntity<V> ce = getWithEvicted(key);
+        if (ce == null) {
             return null;
         }
         //System.out.println("ttl left=" + (e.getTtlSec() - now));
-        if (e.getTtlMillis() < now) {
+        if (ce.isExpiredWhen(System.currentTimeMillis())) {
             return null;
         }
-        return e.getValue();
+        return ce.getValue();
+    }
+
+    @Override
+    public CacheEntity<V> getWithEvicted(K key) {
+        if (key == null) {
+            return null;
+        }
+        evict();
+        return debouncingData.get(key);
     }
 
     /**
@@ -81,27 +98,4 @@ public class SimpleLocalCacheImpl<K, V> implements SimpleLocalCache<K, V> {
         debouncingData.remove(key);
         return ret;
     }
-
-
-    public static class CacheEntity<V> {
-
-        protected final V value;
-        protected final long ttlMillis;
-
-        public CacheEntity(V value, Long ttlMilliseconds) {
-            this.value = value;
-            this.ttlMillis = ttlMilliseconds == null || ttlMilliseconds < 0
-                    ? Long.MAX_VALUE
-                    : System.currentTimeMillis() + ttlMilliseconds;
-        }
-
-        public V getValue() {
-            return value;
-        }
-
-        public long getTtlMillis() {
-            return ttlMillis;
-        }
-    }
-
 }

@@ -160,7 +160,7 @@ class JaxRsRequestParameter {
                 if (targetClass.equals(String.class)) {
                     type = ParamType.Body_STRING;
                 } else {
-                    if (NioConfig.cfg.isFromJsonAutoBeanValidation() || param.getAnnotation(Valid.class) != null) {
+                    if (NioConfig.cfg.isDeserializationAutoBeanValidation() || param.getAnnotation(Valid.class) != null) {
                         autoBeanValidation = true;
                     }
                     if (consumes == null) {//default

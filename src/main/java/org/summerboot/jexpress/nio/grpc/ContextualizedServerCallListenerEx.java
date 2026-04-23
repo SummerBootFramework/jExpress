@@ -30,6 +30,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.NioServerHttpRequestHandler;
@@ -44,6 +45,7 @@ import org.summerboot.jexpress.util.TimeUtil;
 import java.net.SocketAddress;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,7 +53,7 @@ import java.util.Set;
 public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
 
 
-    protected final Logger log = LogManager.getLogger(this);
+    protected final static Logger log = LogManager.getLogger(ContextualizedServerCallListenerEx.class);
 
     protected static ZoneId zoneId = ZoneId.systemDefault();
 
@@ -148,6 +150,9 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
         try {
             listener = new ContextualizedServerCallListenerEx<>(next.startCall(serverCall, headers), context, sessionContext, !isPing);
+            if (!isPing) {
+                log.trace("interceptCall: {}", listener);
+            }
         } finally {
             context.detach(previous);
         }
@@ -160,52 +165,87 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     private final SessionContext sessionContext;
 
-    private String httpPostRequestBody;
+    private List<String> httpPostRequestBodyList; // null until first message
 
     private boolean isBusinessRequest;
 
+    private final Long hit;
+
+    /**
+     * onReady()
+     * ↓
+     * onMessage()   ← called once per message
+     * onMessage()   ← repeated for client-streaming / bidi-streaming
+     * onMessage()   ← ...
+     * ↓
+     * onHalfClose() ← always after ALL onMessage() calls are done. Business logic is being executed within this callback and before the server sends response back to client. For unary / server-streaming, onHalfClose() is called immediately after the single onMessage() call. For client-streaming / bidi-streaming, onHalfClose() is called after the last onMessage() call.
+     * ↓
+     * Server calls call.close(Status.OK, ...) → status/trailers sent to client
+     * ↓
+     * onComplete() or onCancel()
+     *
+     * @param delegate
+     * @param context
+     * @param sessionContext
+     * @param isBusinessRequest
+     */
     public ContextualizedServerCallListenerEx(ServerCall.Listener<ReqT> delegate, Context context, SessionContext sessionContext, boolean isBusinessRequest) {
         super(delegate);
         this.context = context;
         this.sessionContext = sessionContext;
         this.isBusinessRequest = isBusinessRequest;
+        this.hit = sessionContext == null ? null : sessionContext.hit();
     }
 
+
+    @Override
     public void onReady() {
+        applyLogContext("onReady", true);
         Context previous = this.context.attach();
 
         try {
             super.onReady();
         } finally {
             this.context.detach(previous);
+            applyLogContext("onReady", false);
         }
     }
 
+    @Override
     public void onMessage(ReqT message) {
+        applyLogContext("onMessage", true);
         Context previous = this.context.attach();
-        if (message != null) {
-            httpPostRequestBody = message.toString();
+        if (isBusinessRequest && message != null && log.isInfoEnabled()) {
+            if (httpPostRequestBodyList == null) {
+                httpPostRequestBodyList = new ArrayList<>();
+            }
+            httpPostRequestBodyList.add(message.toString());
         }
 
         try {
             super.onMessage(message);
         } finally {
             this.context.detach(previous);
+            applyLogContext("onMessage", false);
         }
-
     }
 
+    @Override
     public void onHalfClose() {
+        applyLogContext("onHalfClose", true);
         Context previous = this.context.attach();
 
         try {
             super.onHalfClose();
         } finally {
             this.context.detach(previous);
+            applyLogContext("onHalfClose", false);
         }
     }
 
+    @Override
     public void onCancel() {
+        applyLogContext("onCancel", true);
         if (isBusinessRequest) {
             GRPCServer.getServiceCounter().incrementCancelled();
             GRPCServer.getServiceCounter().incrementProcessed();
@@ -216,12 +256,13 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             super.onCancel();
         } finally {
             this.context.detach(previous);
+            applyLogContext("onCancel", false, true);// log after sending the response
         }
-        report();
-
     }
 
+    @Override
     public void onComplete() {
+        applyLogContext("onComplete", true);
         if (isBusinessRequest) {
             GRPCServer.getServiceCounter().incrementProcessed();
         }
@@ -231,13 +272,40 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
             super.onComplete();
         } finally {
             this.context.detach(previous);
+            applyLogContext("onComplete", false, true);// log after sending the response
         }
-        report();
     }
 
+    private void applyLogContext(String actionName, boolean isBegin) {
+        this.applyLogContext(actionName, isBegin, false);
+    }
 
-    protected void report() {
-        if (sessionContext == null) {
+    private void applyLogContext(String actionName, boolean isBegin, boolean doReport) {
+        if (!isBusinessRequest) {
+            return;
+        }
+        if (isBegin) {
+            if (hit != null) {
+                ThreadContext.put(BootConstant.SYS_PROP_HITINDEX, "-" + hit);// REF269-2
+            }
+            if (log.isTraceEnabled()) {
+                log.trace("{} begin: {}", actionName, this);// after ThreadContext.put
+            }
+        } else {
+            if (log.isTraceEnabled()) {
+                log.trace("{} end: {}", actionName, this);// before ThreadContext.remove
+            }
+            if (doReport) {
+                report(actionName);
+            }
+            if (hit != null) {
+                ThreadContext.remove(BootConstant.SYS_PROP_HITINDEX);// REF269-2
+            }
+        }
+    }
+
+    protected void report(String actionName) {
+        if (!isBusinessRequest || sessionContext == null) {
             return;
         }
         Level level = sessionContext.level();
@@ -265,7 +333,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         //line1
         String txId = sessionContext.txId();
         String methodType = sessionContext.sessionAttribute("MethodType");
-        sb.append("request_").append(txId).append(".caller=").append(caller == null ? sessionContext.callerId() : caller);
+        sb.append(actionName).append(" report: request_").append(txId).append(".caller=").append(caller == null ? sessionContext.callerId() : caller);
         //line2,3
         sb.append("\n\t")
                 .append("gRPC")
@@ -278,7 +346,21 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 .append(", response=").append(responseTime).append("ms");
         //line4
         sessionContext.reportPOI(null, sb);
-        String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+        String sanitizedUserInput = null;
+        if (httpPostRequestBodyList != null) {
+            int size = httpPostRequestBodyList.size();
+            if (size == 1) {
+                sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBodyList.get(0));// CWE-117 False Positive prove
+            } else if (size > 1) {
+                StringBuilder sb2 = new StringBuilder();
+                for (String httpPostRequestBody : httpPostRequestBodyList) {
+                    String sanitizeed = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
+                    sb2.append(sanitizeed).append(BootConstant.BR);
+                }
+                sanitizedUserInput = sb2.toString();
+            }
+        }
+
         long requestDataBytes = 0;
         long responseDataBytes = 0;
         NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, sessionContext, sb, isTraceAll);

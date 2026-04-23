@@ -51,8 +51,8 @@ public class BeanUtil {
             .addFilter(BootConstant.JSONFILTER_NAME_SERVICEERROR, SimpleBeanPropertyFilter.serializeAll());
 
 
-    protected static boolean isToJsonIgnoreNull;
-    protected static boolean isToJsonPretty;
+    protected static boolean isSerializationIgnoreNull;
+    protected static boolean isSerializationPretty;
 
     public static JsonMapper JSONMapperIncludeNull;
     public static JsonMapper JSONMapper;
@@ -62,30 +62,30 @@ public class BeanUtil {
         init(TimeZone.getDefault(), true, false, false, false, true, true);
     }
 
-    public static void init(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties, boolean fromJsonCaseInsensitive, boolean toJsonPretty, boolean toJsonIgnoreEmptyArray, boolean toJsonIgnoreNull, boolean showRefInServiceError) {
-        isToJsonPretty = toJsonPretty;
-        isToJsonIgnoreNull = toJsonIgnoreNull;
+    public static void init(TimeZone timeZone, boolean deserializationFailOnUnknownProperties, boolean deserializationCaseInsensitive, boolean serializationPretty, boolean serializationIgnoreEmptyArray, boolean serializationIgnoreNull, boolean showRefInServiceError) {
+        isSerializationPretty = serializationPretty;
+        isSerializationIgnoreNull = serializationIgnoreNull;
 
-        JSONMapperIncludeNull = buildJsonMapper(timeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonIgnoreEmptyArray, false, showRefInServiceError).build();
-        JSONMapper = buildJsonMapper(timeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonIgnoreEmptyArray, true, showRefInServiceError).build();
-        XMLMapper = buildXmlMapper(timeZone, fromJsonFailOnUnknownProperties, fromJsonCaseInsensitive, toJsonIgnoreEmptyArray, true, showRefInServiceError).build();
+        JSONMapperIncludeNull = buildJsonMapper(timeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, serializationIgnoreEmptyArray, false, showRefInServiceError).build();
+        JSONMapper = buildJsonMapper(timeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, serializationIgnoreEmptyArray, true, showRefInServiceError).build();
+        XMLMapper = buildXmlMapper(timeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, serializationIgnoreEmptyArray, true, showRefInServiceError).build();
     }
 
-    public static JsonMapper.Builder buildJsonMapper(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties,
-                                                     boolean fromJsonCaseInsensitive, boolean ignoreEmptyArray, boolean ignoreNull, boolean showRefInServiceError) {
+    public static JsonMapper.Builder buildJsonMapper(TimeZone timeZone, boolean deserializationFailOnUnknownProperties,
+                                                     boolean deserializationCaseInsensitive, boolean ignoreEmptyArray, boolean ignoreNull, boolean showRefInServiceError) {
         JsonMapper.Builder builder = JsonMapper.builder()
                 .defaultTimeZone(timeZone)
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
                 .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
                 .enable(MapperFeature.SORT_CREATOR_PROPERTIES_FIRST);
 
-        if (fromJsonFailOnUnknownProperties) {
+        if (deserializationFailOnUnknownProperties) {
             builder.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         } else {
             builder.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         }
 
-        if (fromJsonCaseInsensitive) {
+        if (deserializationCaseInsensitive) {
             builder.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);
         } else {
             builder.disable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);
@@ -109,21 +109,21 @@ public class BeanUtil {
         return builder;
     }
 
-    public static XmlMapper.Builder buildXmlMapper(TimeZone timeZone, boolean fromJsonFailOnUnknownProperties,
-                                                   boolean fromJsonCaseInsensitive, boolean ignoreEmptyArray, boolean ignoreNull, boolean showRefInServiceError) {
+    public static XmlMapper.Builder buildXmlMapper(TimeZone timeZone, boolean deserializationFailOnUnknownProperties,
+                                                   boolean deserializationCaseInsensitive, boolean ignoreEmptyArray, boolean ignoreNull, boolean showRefInServiceError) {
         XmlMapper.Builder builder = XmlMapper.builder()
                 .defaultTimeZone(timeZone)
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
                 .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
                 .enable(MapperFeature.SORT_CREATOR_PROPERTIES_FIRST);
 
-        if (fromJsonFailOnUnknownProperties) {
+        if (deserializationFailOnUnknownProperties) {
             builder.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         } else {
             builder.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         }
 
-        if (fromJsonCaseInsensitive) {
+        if (deserializationCaseInsensitive) {
             builder.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES);
         }
 
@@ -153,11 +153,11 @@ public class BeanUtil {
      * @return
      */
     public static <T extends Object> String toJson(T obj) {
-        return toJson(obj, isToJsonPretty, isToJsonIgnoreNull);
+        return toJson(obj, isSerializationPretty, isSerializationIgnoreNull);
     }
 
     public static <T extends Object> String toJson(T obj, boolean pretty) {
-        return toJson(obj, pretty, isToJsonIgnoreNull);
+        return toJson(obj, pretty, isSerializationIgnoreNull);
     }
 
     /**
@@ -182,7 +182,7 @@ public class BeanUtil {
     }
 
     public static String toXML(Object obj) {
-        return toXML(obj, isToJsonPretty);
+        return toXML(obj, isSerializationPretty);
     }
 
     public static <T extends Object> String toXML(T obj, boolean pretty) {

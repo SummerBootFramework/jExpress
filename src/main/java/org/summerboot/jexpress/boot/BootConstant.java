@@ -92,6 +92,7 @@ public interface BootConstant {
     String CLI_JWT = BackOffice.agent.getCliName_jwt();
     String CLI_ENCRYPT = BackOffice.agent.getCliName_encrypt();
     String CLI_DECRYPT = BackOffice.agent.getCliName_decrypt();
+    String CLI_FORMAT_CONFIG_FILE = BackOffice.agent.getCliName_formatCfgFile();
     String CLI_PSV = BackOffice.agent.getCliName_psv();
     String CLI_DEBUGMODE = BackOffice.agent.getCliName_debugMode();
     String MEMO_DELIMITER = BackOffice.agent.getMemoDelimiter();
@@ -105,6 +106,7 @@ public interface BootConstant {
      * It means only one thread can invoke the ‘java.util.Hashtable.get()’ method at any given time.
      */
     String SYS_PROP_LOGID = BackOffice.agent.getLog4J2LogId();// "logid" // used by log4j2.xml ${sys:logid}
+    String SYS_PROP_HITINDEX = BackOffice.agent.getLog4j2HitIndex();// "hitIndex" // used by log4j2.xml %X{hitIndex}
     String SYS_PROP_LOGFILEPATH = BackOffice.agent.getLog4j2LogFilePath();//"logPath"; // used by log4j2.xml ${sys:loggingPath}
     String SYS_PROP_LOGFILENAME = BackOffice.agent.getLog4j2LogFileName();//"appName"; // used by log4j2.xml ${sys:appappName} as log file name
     String SYS_PROP_SERVER_NAME = BackOffice.agent.getLog4j2ServerName();//"serverName"; // used by log4j2.xml ${hostName}

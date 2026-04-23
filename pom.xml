@@ -164,7 +164,7 @@
         <jakarta-mail.version>2.0.2</jakarta-mail.version>
         <jakarta-activation.version>2.0.1</jakarta-activation.version>
         <!-- Security -->
-        <bouncycastle.version>1.83</bouncycastle.version>
+        <bouncycastle.version>1.84</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.13.0</jwt.version>
 
@@ -173,10 +173,10 @@
         <netty-tcnative.version>2.0.75.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.80.0</grpc.version>
-        <guava.version>33.5.0-jre</guava.version>
+        <guava.version>33.6.0-jre</guava.version>
         <protobuf.version>4.34.1</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.47</swagger.core.version>
+        <swagger.core.version>2.2.48</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -188,7 +188,7 @@
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>3.1.1</jackson.version>
+        <jackson.version>3.1.2</jackson.version>
         <jackson.annotations.version>2.21</jackson.annotations.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
@@ -199,7 +199,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.3.0.Final</hibernate.version>
+        <hibernate.version>7.3.2.Final</hibernate.version>
         <hikari-cp.version>7.0.2</hikari-cp.version>
 
         <!-- Cache -->
@@ -226,7 +226,7 @@
         <!-- Testing  -->
         <testng.version>7.12.0</testng.version>
         <jsonassert.version>2.0-rc1</jsonassert.version>
-        <jdbc.version>9.6.0</jdbc.version>
+        <jdbc.version>9.7.0</jdbc.version>
     </properties>
 
     <dependencies>
