@@ -30,6 +30,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Volatile Bean　Pattern
@@ -111,9 +112,9 @@ public class SMTPClientConfig extends BootConfig {
     @Config(key = KEY_DEBOUCING_INTERVAL, defaultValue = "30", desc = "Alert message with the same subject will not be sent out within this minutes (default 30)")
     protected volatile int emailAlertDebouncingIntervalMinutes = 30;
 
-    @Config(key = "debouncing.emailalert.BackoffStrategy", defaultValue = "{\"strategy\":\"LINEAR\",\"initialInterval\":1800000,\"factor\":300000.0,\"maxInterval\":3600000,\"maxAttempts\":0,\"jitterFactor\":0.1}",
+    @Config(key = "debouncing.emailalert.BackoffStrategy", defaultValue = "{\"strategy\":\"LINEAR\",\"timeUnit\":\"MINUTES\",\"initialInterval\":30,\"factor\":5.0,\"maxInterval\":60,\"maxAttempts\":0,\"jitterFactor\":0.05}",
             desc = "Backoff strategy, unit = millisecond), strategy = {LINEAR, EXPONENTIAL}, In exponential mode, factor is growth multiplier; in linear mode, factor is step. Unlimited attempts when maxAttempts <= 0")
-    protected volatile BackoffStrategy backoffStrategy = new BackoffStrategy(BackoffStrategy.Strategy.LINEAR, 1_800_000, 300000, 3_600_000, 0, 0.1);
+    protected volatile BackoffStrategy backoffStrategy = new BackoffStrategy(BackoffStrategy.Strategy.LINEAR, TimeUnit.MINUTES, 30, 5, 60, 0, 0.05);
 
     //3. mail session for Json display only
     protected Properties mailSessionProp;
