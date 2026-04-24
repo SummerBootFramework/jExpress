@@ -63,6 +63,7 @@ All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to e
 * REF269-7: Enhanced/refactoring cfg_nio.properties: added section "2.2 NIO Security - Filter", filter by caller address and request
 * REF269-8: New CLI: -format (format configuration files)
 * REF269-9: Error Code Offset - The new `errorCodeBase` in boot.conf defines the starting numeric range for error codes within this framework.
+* REF269-10: New API BackoffStrategy
 
 ## Version 2.6.8 (2026-03-11)
 

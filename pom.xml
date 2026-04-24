@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.6.9-SNAPSHOT</version>
+    <version>2.6.9</version>
     <packaging>jar</packaging>
     <name>jExpress ${project.version}</name>
     <description>jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>
@@ -170,7 +170,7 @@
 
         <!-- NIO Netty -->
         <netty.version>4.2.12.Final</netty.version>
-        <netty-tcnative.version>2.0.75.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.76.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.80.0</grpc.version>
         <guava.version>33.6.0-jre</guava.version>
