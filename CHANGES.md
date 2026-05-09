@@ -1,5 +1,10 @@
 ## 📅 CHANGES
 
+## Version 2.6.10 (2026-05-01)
+
+* fixed jjwt-jackson's dependency 5 security issues caused by old Jackson2 lib
+* REF2610-1: support application without package specified
+
 ## Version 2.6.9 (2026-04-24)
 
 ### 🔒 1. Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8) and Log4J CVE-2026-34480

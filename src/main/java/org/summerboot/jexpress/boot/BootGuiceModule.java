@@ -72,7 +72,7 @@ public class BootGuiceModule extends AbstractModule {
     public BootGuiceModule(Object caller, Class callerClass, Set<String> userSpecifiedImplTags, StringBuilder memo) {
         this.caller = caller;
         this.callerClass = callerClass == null ? caller.getClass() : callerClass;
-        this.callerRootPackageName = ReflectionUtil.getRootPackageName(this.callerClass, BootConstant.PACKAGE_LEVEL);
+        this.callerRootPackageName = "";//REF2610-1 removed: ReflectionUtil.getRootPackageName(this.callerClass, BootConstant.PACKAGE_LEVEL);
         this.userSpecifiedImplTags = userSpecifiedImplTags;
         this.memo = memo;
     }

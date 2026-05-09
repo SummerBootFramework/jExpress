@@ -20,6 +20,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableSortedSet;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
@@ -75,11 +78,54 @@ public class ReflectionUtil {
 
     protected static final Set<Class<?>> PluginClasses = new HashSet();
 
+
     public static void setPluginClasses(Set<Class<?>> pluginClasses) {
         PluginClasses.clear();
         if (pluginClasses != null && !pluginClasses.isEmpty()) {
             PluginClasses.addAll(pluginClasses);
         }
+    }
+
+    /**
+     * REF2610-1: support application without package specified.
+     * Creates a Reflections instance for the given package name.
+     * Passing {@code ""} (empty string) scans the default (no-package) classes across the full classpath.
+     * Passing {@code null} or whitespace-only strings is not allowed and will throw IllegalArgumentException.
+     *
+     * @param rootPackageName the package name, or {@code ""} for the default package
+     * @param ignoredPackages the package names to be ingored, can be null or empty; null/blank entries will be ignored
+     * @return a configured {@link Reflections} instance
+     */
+    private static Reflections buildReflections(String rootPackageName, String... ignoredPackages) {
+        if (rootPackageName == null || !rootPackageName.trim().isEmpty()) {
+            // normal named package (non-blank)
+            return new Reflections(rootPackageName);
+        }
+        // rootPackageName is "" — scan full classpath for default-package classes
+        ConfigurationBuilder cb = new ConfigurationBuilder().setUrls(ClasspathHelper.forJavaClassPath());
+        FilterBuilder filter = new FilterBuilder();
+        boolean hasRule = false;
+        if (StringUtils.isNotBlank(rootPackageName)) {
+            filter.includePackage(rootPackageName);
+            hasRule = true;
+        }
+        if (ignoredPackages != null) {
+            for (String p : ignoredPackages) {
+                if (StringUtils.isNotBlank(p)) {
+                    filter.excludePackage(p);
+                    hasRule = true;
+                }
+            }
+        }
+        if (hasRule) {
+            cb.filterInputsBy(filter);
+        }
+        return new Reflections(cb);
+    }
+
+    public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, Collection<String> rootPackageNames) {
+        String[] sa = rootPackageNames.toArray(String[]::new);
+        return getAllImplementationsByInterface(interfaceClass, sa);
     }
 
     /**
@@ -91,10 +137,10 @@ public class ReflectionUtil {
     public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, String... rootPackageNames) {
         Set<Class<? extends T>> classes = new HashSet();
         for (String rootPackageName : rootPackageNames) {
-            if (StringUtils.isBlank(rootPackageName)) {
-                continue;
+            if (rootPackageName == null || (!rootPackageName.isEmpty() && rootPackageName.isBlank())) {
+                continue;// skip null and whitespace-only; allow "" to scan default (no-package) classes
             }
-            Reflections reflections = new Reflections(rootPackageName);
+            Reflections reflections = buildReflections(rootPackageName);//REF2610-1
             Set<Class<? extends T>> cs = reflections.getSubTypesOf(interfaceClass);
             if (cs.isEmpty()) {
                 continue;
@@ -109,11 +155,6 @@ public class ReflectionUtil {
         return classes;
     }
 
-    public static <T extends Object> Set<Class<? extends T>> getAllImplementationsByInterface(Class<T> interfaceClass, Collection<String> rootPackageNames) {
-        String[] sa = rootPackageNames.toArray(String[]::new);
-        return getAllImplementationsByInterface(interfaceClass, sa);
-    }
-
     /**
      * @param annotation
      * @param rootPackageNames
@@ -123,10 +164,10 @@ public class ReflectionUtil {
     public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, boolean honorInherited, String... rootPackageNames) {
         Set<Class<?>> classes = new HashSet();
         for (String rootPackageName : rootPackageNames) {
-            if (StringUtils.isBlank(rootPackageName)) {
-                continue;
+            if (rootPackageName == null || (!rootPackageName.isEmpty() && rootPackageName.isBlank())) {
+                continue;// skip null and whitespace-only; allow "" to scan default (no-package) classes
             }
-            Reflections reflections = new Reflections(rootPackageName);
+            Reflections reflections = buildReflections(rootPackageName);//REF2610-1
             Set<Class<?>> cs = reflections.getTypesAnnotatedWith(annotation, honorInherited);
             if (cs.isEmpty()) {
                 continue;

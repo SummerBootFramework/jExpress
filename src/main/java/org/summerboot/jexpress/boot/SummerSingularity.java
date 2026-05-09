@@ -217,7 +217,8 @@ abstract public class SummerSingularity {
         String rootPackageName = ReflectionUtil.getRootPackageName(primaryClass, BootConstant.PACKAGE_LEVEL);
         packageSet.add(rootPackageName);
         BackOffice.agent.setRootPackageNames(packageSet);
-        callerRootPackageNames = packageSet.toArray(String[]::new);
+        //REF2610-1 removed: callerRootPackageNames = packageSet.toArray(String[]::new);
+        callerRootPackageNames = new String[]{""};
         memo.append(BootConstant.BR).append("\t- callerRootPackageName=").append(packageSet);
 
         if (BackOffice.agent.isTraceWithSystemOut()) {
@@ -508,22 +509,22 @@ abstract public class SummerSingularity {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, false, rootPackageNames);
         //classesAll.addAll(classes);
         //}
-        List<String> tags = new ArrayList<>();
+        List<String> alternativeNames = new ArrayList<>();
         for (Class c : classes) {
             Controller a = (Controller) c.getAnnotation(Controller.class);
             if (a == null) {
                 continue;
             }
-            String implTag = a.AlternativeName();
-            tags.add(implTag);
+            String alternativeName = a.AlternativeName();
+            alternativeNames.add(alternativeName);
         }
-        List<String> serviceImplTags = tags.stream()
+        List<String> distinctAlternativeNames = alternativeNames.stream()
                 .distinct()
                 .collect(Collectors.toList());
-        serviceImplTags.removeAll(Collections.singleton(null));
-        serviceImplTags.removeAll(Collections.singleton(""));
-        serviceImplTags.removeAll(Collections.singleton(Controller.NOT_TAGGED));
-        availableImplTagOptions.addAll(serviceImplTags);
+        distinctAlternativeNames.removeAll(Collections.singleton(null));
+        distinctAlternativeNames.removeAll(Collections.singleton(""));
+        distinctAlternativeNames.removeAll(Collections.singleton(Controller.NOT_TAGGED));
+        availableImplTagOptions.addAll(distinctAlternativeNames);
     }
 
     protected List<String> scanAnnotation_Service(String... rootPackageNames) {

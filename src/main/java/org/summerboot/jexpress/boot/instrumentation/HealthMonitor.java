@@ -427,12 +427,12 @@ public class HealthMonitor {
         return isRequiredHealthChecksFailed(set, mode, failedHealthChecks);
     }
 
-    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy mode, final Set<String> failedHealthChecks) {
+    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy policy, final Set<String> failedHealthChecks) {
         if (failedHealthChecks != null) {
             failedHealthChecks.clear();
         }
         if (requiredHealthChecks == null || requiredHealthChecks.isEmpty()) {
-            switch (mode) {
+            switch (policy) {
                 case REQUIRE_ALL -> {
                     // if criticalHealthChecks is empty (default), that means requrie ALL HealthChecks, so return true if healthCheckFailedList is NOT empty
                     if (failedHealthChecks == null) {
@@ -442,7 +442,7 @@ public class HealthMonitor {
                     }
                 }
                 case REQUIRE_NONE -> {
-                    // if criticalHealthChecks is empty (default), that means no requried HealthChecks, so return false
+                    // if criticalHealthChecks is empty (default), that means no required HealthChecks, so return false
                     return false;
                 }
             }

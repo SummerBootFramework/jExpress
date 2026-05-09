@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  * @param initialInterval Initial delay (milliseconds)
  * @param factor          In exponential mode, it is growth multiplier; in linear mode, it is step.
  * @param maxInterval     Maximum delay limit (milliseconds)
- * @param maxAttempts     Maximum number of attempts, unlimited attempts when maxAttempts <= 0
+ * @param maxAttempts     Maximum number of attempts, unlimited attempts when {@code maxAttempts <= 0 }
  * @param jitterFactor    Jitter factor (e.g., 0.1 represents ±10% random fluctuation)
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
