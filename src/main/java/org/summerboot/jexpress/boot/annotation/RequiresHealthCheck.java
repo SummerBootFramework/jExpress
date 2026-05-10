@@ -31,7 +31,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @BindingAnnotation
-public @interface Daemon {
-
-    boolean value() default true;
+public @interface RequiresHealthCheck {
+    String[] value();
 }

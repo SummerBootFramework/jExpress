@@ -34,6 +34,7 @@ import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Daemon;
 import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.annotation.ParamCollectionDelimiter;
+import org.summerboot.jexpress.boot.annotation.RequiresHealthCheck;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.SessionContext;
@@ -109,24 +110,28 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (drs != null) {
             declareRoles.addAll(Arrays.asList(drs.value()));
         }
-        // Reject ASAP
+        // Reject ASAP: pause
         Daemon classLevelDaemon = (Daemon) controllerClass.getAnnotation(Daemon.class);
         Daemon methodLevelDaemon = javaMethod.getAnnotation(Daemon.class);
         if (methodLevelDaemon != null) {
-            rejectWhenPaused = !methodLevelDaemon.ignorePause();
-            //rejectWhenHealthCheckFailed = !methodLevelDaemon.ignoreHealthCheck();
-            requiredHealthChecks = methodLevelDaemon.requiredHealthChecks();
-            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
+            rejectWhenPaused = !methodLevelDaemon.value();
         } else if (classLevelDaemon != null) {
-            rejectWhenPaused = !classLevelDaemon.ignorePause();
-            //rejectWhenHealthCheckFailed = !classLevelDaemon.ignoreHealthCheck();
-            requiredHealthChecks = classLevelDaemon.requiredHealthChecks();
-            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
+            rejectWhenPaused = !classLevelDaemon.value();
         } else {
             rejectWhenPaused = true;
-            //rejectWhenHealthCheckFailed = true;
-            requiredHealthChecks = null;
+        }
+        // Reject ASAP: HealthCheck
+        RequiresHealthCheck classLevelRequiresHealthCheck = (RequiresHealthCheck) controllerClass.getAnnotation(RequiresHealthCheck.class);
+        RequiresHealthCheck methodLevelRequiresHealthCheck = javaMethod.getAnnotation(RequiresHealthCheck.class);
+        if (methodLevelRequiresHealthCheck != null) {
+            requiredHealthChecks = methodLevelRequiresHealthCheck.value();
             emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
+        } else if (classLevelRequiresHealthCheck != null) {
+            requiredHealthChecks = classLevelRequiresHealthCheck.value();
+            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
+        } else {
+            requiredHealthChecks = null;
+            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
         }
 
         //2. Parse @RolesAllowed, @PermitAll and @DenyAll - Method level preprocess - Authoritarian - Role based 

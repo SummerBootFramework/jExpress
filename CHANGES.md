@@ -1,9 +1,10 @@
 ## 📅 CHANGES
 
-## Version 2.6.10 (2026-05-01)
+## Version 2.6.10 (2026-05-09)
 
-* fixed jjwt-jackson's dependency 5 security issues caused by old Jackson2 lib
-* REF2610-1: support application without package specified
+* 🔒 Security Patch: jjwt-jackson's dependency has 5 security issues caused by old Jackson2 lib
+* 🛠 REF2610-1: support application without package specified
+* ✨ New API: @RequiresHealthCheck for @Controller class/method
 
 ## Version 2.6.9 (2026-04-24)
 

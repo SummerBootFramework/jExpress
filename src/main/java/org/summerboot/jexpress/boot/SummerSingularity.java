@@ -233,7 +233,7 @@ abstract public class SummerSingularity {
         }
         scanAnnotation_Version(primaryClass);
         System.setProperty(BootConstant.SYS_PROP_LOGFILENAME, logFileName);// used by log4j2.xml as log file name
-        System.setProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME, rootPackageName);// used by log4j2.xml
+        System.setProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME, StringUtils.isBlank(rootPackageName) ? "Root" : rootPackageName);// REF2610-1: used by log4j2.xml
         BackOffice.agent.setVersion(appVersion);
         scanArgsToInitializeLogging(args);
         /*
