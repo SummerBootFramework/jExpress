@@ -764,8 +764,19 @@
                 <configuration>
                     <filesets>
                         <fileset>
+                            <directory>.</directory>
+                            <includes>
+                                <include>gc.*</include>
+                            </includes>
+                            <excludes>
+                                <exclude>plugin/*.jar</exclude>
+                            </excludes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                        <fileset>
                             <directory>run</directory>
                             <includes>
+                                <include>gc.*</include>
                                 <include>*.jar</include>
                                 <include>lib/**</include>
                                 <include>lib</include>

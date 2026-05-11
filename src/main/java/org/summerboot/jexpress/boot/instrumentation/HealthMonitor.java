@@ -23,7 +23,7 @@ import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.SummerApplication;
-import org.summerboot.jexpress.boot.annotation.Inspector;
+import org.summerboot.jexpress.boot.annotation.HealthCheck;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.event.AppLifecycleListener;
 import org.summerboot.jexpress.nio.server.NioConfig;
@@ -56,8 +56,8 @@ public class HealthMonitor {
      */
     protected static volatile AppLifecycleListener appLifecycleListener;
     protected static final ExecutorService tpe = Executors.newSingleThreadExecutor();
-    protected static final LinkedBlockingQueue<HealthInspector> healthInspectorQueue = new LinkedBlockingQueue<>();
-    protected static final Set<HealthInspector> registeredHealthInspectors = new HashSet<>();
+    protected static final LinkedBlockingQueue<HealthChecker> HEALTH_CHECKER_QUEUE = new LinkedBlockingQueue<>();
+    protected static final Set<HealthChecker> REGISTERED_HEALTH_CHECKERS = new HashSet<>();
     private static boolean keepRunning = false;
     private static volatile boolean started = false;
 
@@ -77,10 +77,10 @@ public class HealthMonitor {
         appLifecycleListener = listener;
     }
 
-    private static final String ANNOTATION = HealthInspector.class.getSimpleName();
+    private static final String ANNOTATION = HealthChecker.class.getSimpleName();
 
     public static void registerDefaultHealthInspectors(Map<String, Object> defaultHealthInspectors, StringBuilder memo) {
-        registeredHealthInspectors.clear();
+        REGISTERED_HEALTH_CHECKERS.clear();
         if (defaultHealthInspectors == null || defaultHealthInspectors.isEmpty()) {
             memo.append(BootConstant.BR).append("\t- @" + ANNOTATION + " registered: none");
             return;
@@ -90,12 +90,12 @@ public class HealthMonitor {
         for (Map.Entry<String, Object> entry : defaultHealthInspectors.entrySet()) {
             String name = entry.getKey();
             Object healthInspector = entry.getValue();
-            if (healthInspector instanceof HealthInspector) {
-                registeredHealthInspectors.add((HealthInspector) healthInspector);
+            if (healthInspector instanceof HealthChecker) {
+                REGISTERED_HEALTH_CHECKERS.add((HealthChecker) healthInspector);
                 memo.append(BootConstant.BR).append("\t- @Inspector registered: ").append(name).append("=").append(healthInspector.getClass().getName());
             } else {
                 error = true;
-                sb.append(BootConstant.BR).append("\tCoding Error: class ").append(healthInspector.getClass().getName()).append(" has annotation @").append(Inspector.class.getSimpleName()).append(", should implement ").append(HealthInspector.class.getName());
+                sb.append(BootConstant.BR).append("\tCoding Error: class ").append(healthInspector.getClass().getName()).append(" has annotation @").append(HealthCheck.class.getSimpleName()).append(", should implement ").append(HealthChecker.class.getName());
             }
         }
         if (error) {
@@ -108,23 +108,23 @@ public class HealthMonitor {
      * use default inspectors
      */
     public static int inspect() {
-        registeredHealthInspectors.forEach(healthInspectorQueue::offer);
-        return registeredHealthInspectors.size();
+        REGISTERED_HEALTH_CHECKERS.forEach(HEALTH_CHECKER_QUEUE::offer);
+        return REGISTERED_HEALTH_CHECKERS.size();
     }
 
     /**
-     * @param healthInspectors use specified inspectors, if null or empty, use default inspectors
+     * @param healthCheckers use specified inspectors, if null or empty, use default inspectors
      */
-    public static void inspect(HealthInspector... healthInspectors) {
-        if (healthInspectors == null || healthInspectors.length == 0) {// use specified inspectors
+    public static void inspect(HealthChecker... healthCheckers) {
+        if (healthCheckers == null || healthCheckers.length == 0) {// use specified inspectors
             inspect();
             return;
         }
-        for (HealthInspector healthInspector : healthInspectors) {// use specified inspectors
-            if (healthInspector == null) {
+        for (HealthChecker healthChecker : healthCheckers) {// use specified inspectors
+            if (healthChecker == null) {
                 continue;
             }
-            healthInspectorQueue.add(healthInspector);
+            HEALTH_CHECKER_QUEUE.add(healthChecker);
         }
     }
 
@@ -139,12 +139,12 @@ public class HealthMonitor {
         StringBuilder memo = new StringBuilder();
         boolean hasUnregistered = false;
         // 1. remove unused (via -use <implTag>) inspectors with @Service annotation
-        Iterator<HealthInspector> iterator = registeredHealthInspectors.iterator();
+        Iterator<HealthChecker> iterator = REGISTERED_HEALTH_CHECKERS.iterator();
         while (iterator.hasNext()) {
-            HealthInspector healthInspector = iterator.next();
-            Service serviceAnnotation = healthInspector.getClass().getAnnotation(Service.class);
+            HealthChecker healthChecker = iterator.next();
+            Service serviceAnnotation = healthChecker.getClass().getAnnotation(Service.class);
             if (serviceAnnotation != null) {
-                Class c = healthInspector.getClass();
+                Class c = healthChecker.getClass();
                 boolean usedByTag = false;
                 Class[] bindingClasses = serviceAnnotation.binding();
                 if (bindingClasses == null || bindingClasses.length < 1) {
@@ -209,7 +209,7 @@ public class HealthMonitor {
         int inspectionIntervalSeconds = NioConfig.cfg.getHealthInspectionIntervalSeconds();
         long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
         String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
-        final Set<HealthInspector> batchInspectors = new TreeSet<>();
+        final Set<HealthChecker> batchInspectors = new TreeSet<>();
         do {
             ServiceError healthCheckFailedReport = new ServiceError(BootConstant.APP_ID + "-HealthMonitor");
             batchInspectors.clear();
@@ -217,30 +217,30 @@ public class HealthMonitor {
             try {
                 // take all health inspectors from the queue, remove duplicated
                 do {
-                    HealthInspector healthInspector = healthInspectorQueue.take();// block/wait here for health inspectors
-                    batchInspectors.add(healthInspector);
-                } while (!healthInspectorQueue.isEmpty());
+                    HealthChecker healthChecker = HEALTH_CHECKER_QUEUE.take();// block/wait here for health inspectors
+                    batchInspectors.add(healthChecker);
+                } while (!HEALTH_CHECKER_QUEUE.isEmpty());
                 // inspect
-                for (HealthInspector healthInspector : batchInspectors) {
-                    String inspectorClassName = healthInspector.getClass().getName();
-                    Inspector inspectorAnnotation = healthInspector.getClass().getAnnotation(Inspector.class);
+                for (HealthChecker healthChecker : batchInspectors) {
+                    String inspectorClassName = healthChecker.getClass().getName();
+                    HealthCheck healthCheckAnnotation = healthChecker.getClass().getAnnotation(HealthCheck.class);
                     final String inspectorName;
-                    if (inspectorAnnotation != null && StringUtils.isNoneBlank(inspectorAnnotation.name())) {
-                        inspectorName = inspectorAnnotation.name();
+                    if (healthCheckAnnotation != null && StringUtils.isNoneBlank(healthCheckAnnotation.name())) {
+                        inspectorName = healthCheckAnnotation.name();
                     } else {
                         inspectorName = inspectorClassName;
                     }
 
                     try (var a = Timeout.watch(inspectorName + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
-                        HealthInspector.InspectionType inspectionType = healthInspector.inspectionType();
-                        List<Err> errs = healthInspector.ping();
+                        HealthChecker.InspectionType inspectionType = healthChecker.inspectionType();
+                        List<Err> errs = healthChecker.ping();
                         boolean currentInspectionPassed = errs == null || errs.isEmpty();
                         if (!currentInspectionPassed) {
-                            healthInspectorQueue.offer(healthInspector);
+                            HEALTH_CHECKER_QUEUE.offer(healthChecker);
                         }
                         switch (inspectionType) {
                             case PauseCheck -> {
-                                String lockCode = healthInspector.pauseLockCode();
+                                String lockCode = healthChecker.pauseLockCode();
                                 String reason;
                                 if (currentInspectionPassed) {
                                     reason = inspectorName + " success";
@@ -274,14 +274,14 @@ public class HealthMonitor {
                             }
                         }
                     } catch (Throwable ex) {
-                        healthInspectorQueue.offer(healthInspector);
-                        log.error("HealthInspector error: " + inspectorName, ex);
+                        HEALTH_CHECKER_QUEUE.offer(healthChecker);
+                        log.error("Health check error: " + inspectorName, ex);
                     }
                 }
                 if (healthCheckAllPassed != null) {
                     String inspectionReport;
                     if (healthCheckAllPassed) {
-                        inspectionReport = "Current all health inspectors passed";
+                        inspectionReport = "Current all health check passed";
                         setHealthStatus(healthCheckAllPassed, inspectionReport);
                     } else {
                         try {
@@ -291,7 +291,7 @@ public class HealthMonitor {
                             inspectionReport = " toJson failed " + ex;
                         }
                         setHealthStatus(healthCheckAllPassed, inspectionReport);
-                        long retryIndex = HealthInspector.retryIndex.get();// not being set yet
+                        long retryIndex = HealthChecker.retryIndex.get();// not being set yet
                         if (appLifecycleListener != null && started) {
                             try {
                                 appLifecycleListener.onHealthInspectionFailed(appContext, isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
