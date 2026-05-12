@@ -838,9 +838,10 @@ public void dynamicJob() { ...}
 Annotate your gRPC service implementation with `@GrpcService`:
 
 ```java
+import org.summerboot.jexpress.boot.annotation.GrpcController;
 import org.summerboot.jexpress.boot.annotation.GrpcService;
 
-@GrpcService
+@GrpcController
 public class MyGrpcServiceImpl extends MyGrpcService.MyGrpcServiceImplBase {
     // implement gRPC methods
 }

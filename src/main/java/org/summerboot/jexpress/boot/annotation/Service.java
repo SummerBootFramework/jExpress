@@ -41,9 +41,9 @@ public @interface Service {
 
     String named() default NOT_NAMED;
 
-    ChannelHandlerType type() default ChannelHandlerType.nptspecified;
+    ChannelHandlerType type() default ChannelHandlerType.unknown;
 
     enum ChannelHandlerType {
-        ReadIdle, WriteIdle, FileUpload, Websocket, Ping, Business, nptspecified
+        ReadIdle, WriteIdle, FileUpload, Websocket, Ping, Business, unknown
     }
 }

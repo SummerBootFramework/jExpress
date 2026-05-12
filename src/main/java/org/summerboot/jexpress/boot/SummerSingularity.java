@@ -27,7 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.GrpcService;
+import org.summerboot.jexpress.boot.annotation.GrpcController;
 import org.summerboot.jexpress.boot.annotation.Service;
 import org.summerboot.jexpress.boot.annotation.Service.ChannelHandlerType;
 import org.summerboot.jexpress.boot.annotation.Unique;
@@ -490,7 +490,7 @@ abstract public class SummerSingularity {
         log.trace("");
         //gRPCBindableServiceImplClasses.addAll(ReflectionUtil.getAllImplementationsByInterface(BindableService.class, callerRootPackageNames));
         //for (String rootPackageName : pakcages) {
-        Set<Class<?>> gRPCServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcService.class, false, pakcages);
+        Set<Class<?>> gRPCServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcController.class, false, pakcages);
         for (Class gRPCServerClass : gRPCServerClasses) {
             if (BindableService.class.isAssignableFrom(gRPCServerClass)) {
                 gRPCBindableServiceImplClasses.add(gRPCServerClass);
@@ -616,7 +616,7 @@ abstract public class SummerSingularity {
         }
         if (bindingClass.equals(ChannelHandler.class)) {
             ChannelHandlerType channelHandlerType = service.getChannelHandlerType();
-            if (channelHandlerType == null || channelHandlerType == ChannelHandlerType.nptspecified) {
+            if (channelHandlerType == null || channelHandlerType == ChannelHandlerType.unknown) {
                 sb.append(BootConstant.BR).append("\t").append(service.getServiceImplClass()).append(" needs to specify type @").append(Service.class.getSimpleName()).append("(binding=ChannelHandler.class, type=?), when binding=ChannelHandler.class");
             }
         }
