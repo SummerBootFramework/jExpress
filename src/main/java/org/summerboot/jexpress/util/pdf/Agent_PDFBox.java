@@ -20,19 +20,15 @@ import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.render.Box;
 import com.openhtmltopdf.render.PageBox;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
-import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.ProtectionPolicy;
-import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.rendering.RenderDestination;
-import org.summerboot.jexpress.security.SecurityUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -48,7 +44,7 @@ import java.util.Map;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class PDFBox {
+public class Agent_PDFBox {
 
     public static final float POINTS_PER_MM = 75f;
     protected static final Map<String, PDFont> FONTS = new HashMap();
@@ -127,34 +123,9 @@ public class PDFBox {
         return fontFiles.length;
     }
 
-    protected static final AccessPermission DEFAULT_AP = buildDefaultAccessPermission();
-    protected static final int DEFAULT_KEY_LENGTH = 256;
 
-    public static AccessPermission buildDefaultAccessPermission() {
-        AccessPermission ap = new AccessPermission();
-        ap.setCanAssembleDocument(false);
-        ap.setCanExtractContent(false);
-        ap.setCanExtractForAccessibility(true);
-        ap.setCanFillInForm(true);
-        ap.setCanModify(false);
-        ap.setCanModifyAnnotations(true);
-        ap.setCanPrint(true);
-        ap.setCanPrintFaithful(true);
-        ap.setReadOnly();
-        return ap;
-    }
-
-    public static StandardProtectionPolicy buildStandardProtectionPolicy(String userPwd, String ownerPwd) {
-        return buildStandardProtectionPolicy(userPwd, ownerPwd, DEFAULT_AP, DEFAULT_KEY_LENGTH);
-    }
-
-    public static StandardProtectionPolicy buildStandardProtectionPolicy(String userPwd, String ownerPwd, AccessPermission ap, int keyLenth) {
-        if (StringUtils.isBlank(ownerPwd)) {
-            ownerPwd = SecurityUtil.randomAlphanumeric(10);
-        }
-        StandardProtectionPolicy spp = new StandardProtectionPolicy(ownerPwd, userPwd, ap);
-        spp.setEncryptionKeyLength(keyLenth);
-        return spp;
+    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
+        return html2PDF(html, baseDir, protectionPolicy, info, pdfVersion, 0, 0, null);
     }
 
     public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion,
@@ -175,7 +146,7 @@ public class PDFBox {
             try (PdfBoxRenderer renderer = builder.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {
                 //security
                 if (protectionPolicy == null) {
-                    protectionPolicy = buildStandardProtectionPolicy(null, null);
+                    protectionPolicy = ProtectionSpec.defaultProtectionPolicy();
                 }
                 doc.protect(protectionPolicy);
                 doc.setVersion(pdfVersion);
@@ -259,38 +230,6 @@ public class PDFBox {
             ret = new LayoutInfo(pageList.size(), box.getWidth(), box.getHeight());
         }
         return ret;
-    }
-
-    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
-        PdfRendererBuilder builder = new PdfRendererBuilder();
-        useFonts(builder, null);
-        builder.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
-        if (info != null) {
-            builder.withProducer(info.getProducer());
-        }
-        //builder.useFastMode();
-
-        //builder.useDefaultPageSize(pageWidth, pageHeight, units);
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
-            builder.toStream(baos);
-            try (PdfBoxRenderer renderer = builder.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {
-                //security
-                if (protectionPolicy == null) {
-                    protectionPolicy = buildStandardProtectionPolicy(null, null);
-                }
-                doc.protect(protectionPolicy);
-                doc.setVersion(pdfVersion);
-//                //info
-//                if (info != null) {
-//                    doc.setDocumentInformation(info);
-//                }
-                //build PDF
-                renderer.layout();//com.openhtmltopdf.load INFO:: Loading font(ArialUnicodeMS) from PDFont supplier now.
-                renderer.createPDF();//com.openhtmltopdf.general INFO:: Using fast-mode renderer. Prepare to fly.
-            }
-
-            return baos.toByteArray();
-        }
     }
 
     protected static String buildBaseDocumentUri1(File baseDirectory) throws IOException {
@@ -408,7 +347,7 @@ public class PDFBox {
     public static byte[] writePDF(Writer writer, Object dto, float pdfVersion) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             useFonts(null, doc);
-            doc.protect(buildStandardProtectionPolicy(null, null));
+            doc.protect(ProtectionSpec.defaultProtectionPolicy());
             doc.setVersion(pdfVersion);
             writer.write(doc, dto);
             doc.save(baos);

@@ -39,7 +39,7 @@ import java.util.Map;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class IText {
+public class Agent_IText {
 
     //    public static IText build(String baseDir, String fontDir) throws IOException {
 //        return new IText(baseDir, fontDir);

@@ -366,7 +366,7 @@ public class HealthMonitor {
     public static String buildMessage() {
         StringBuilder sb = new StringBuilder();
         sb.append(BootConstant.BR)
-                .append("Self Inspection Result: ").append(isHealthCheckSuccess ? "passed" : "failed: ").append(healthCheckFailedList).append(BootConstant.BR);
+                .append("Health Check: ").append(isHealthCheckSuccess ? "passed" : "failed: ").append(healthCheckFailedList).append(BootConstant.BR);
         if (!isHealthCheckSuccess) {
             sb.append("\t cause: ").append(statusReasonHealthCheck).append(BootConstant.BR);
         }
