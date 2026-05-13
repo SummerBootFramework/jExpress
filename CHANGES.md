@@ -8,6 +8,7 @@
 * Refactoring: @Inspector renamed to @HealthCheck
 * Refactoring: HealthInspector.java renamed to HealthChecker.java
 * Refactoring: @GrpcService renamed to @GrpcController
+* ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
 
 ## Version 2.6.9 (2026-04-24)
 

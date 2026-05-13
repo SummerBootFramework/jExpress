@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.RenderDestination;
+import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
@@ -77,13 +78,13 @@ public class PDFBuilder {
         Agent_IText.loadFonts(fontDir);
     }
 
-    public static byte[] html2PDF(String txId, String htmlContent, PDFRequirement requirement, PostOffice po, SessionContext context) throws IOException {
-        return html2PDF(txId, htmlContent, false, 0, requirement, po, context);
+    public static byte[] html2PDF(String txId, String htmlContent, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
+        return html2PDF(txId, htmlContent, false, 0, "1mm;", cfg, po, context);
     }
 
-    public static byte[] html2PDF(String txId, String htmlContent, boolean isSinglePage, int extraSpace, PDFRequirement requirement, PostOffice po, SessionContext context) throws IOException {
+    public static byte[] html2PDF(String txId, String htmlContent, boolean isSinglePage, int extraSpace, String heightPlaceholder, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
         context.poi(BootPOI.PDF_BEGIN);
-        PDFRequirement.Agnet agnet = requirement.getAgnet();
+        PDFBuilderConfig.Agnet agnet = cfg.getAgnet();
         final String sessionName = txId + "_" + agnet + "_" + isSinglePage + "_" + extraSpace;
         byte[] pdf = null;
         try {
@@ -97,7 +98,7 @@ public class PDFBuilder {
                 int retry = 0;
                 while (pageCount > 1) {
                     pageHeightMillimeters += extraSpace;//add extra space
-                    htmlTemplate = htmlContent.replaceFirst("1mm;", pageHeightMillimeters + "mm;");
+                    htmlTemplate = htmlContent.replaceFirst(heightPlaceholder, pageHeightMillimeters + "mm;");
                     layoutInfo = Agent_PDFBox.layoutThenGetInfo(htmlTemplate, TEMPLATE_DIR);
                     context.poi(BootPOI.PDF_HV);
                     pageCount = layoutInfo.getPageCount();
@@ -125,11 +126,11 @@ public class PDFBuilder {
             //4. generate PDF from HTML
             switch (agnet) {
                 case PDFBox -> {
-                    pdf = Agent_PDFBox.html2PDF(htmlContent, TEMPLATE_DIR, requirement.buildProtectionPolicy(), requirement.getDocInfo(), requirement.getPdfVersion());
+                    pdf = Agent_PDFBox.html2PDF(htmlContent, TEMPLATE_DIR, cfg.buildProtectionPolicy(), cfg.getDocInfo(), cfg.getPdfVersion());
                     context.poi(BootPOI.PDF_H2PPE);
                 }
                 case iText -> {
-                    pdf = Agent_IText.html2PDF(htmlContent, TEMPLATE_DIR, requirement.buildWriterProperties());
+                    pdf = Agent_IText.html2PDF(htmlContent, TEMPLATE_DIR, cfg.buildWriterProperties());
                     context.poi(BootPOI.PDF_H2PIE);
                 }
             }

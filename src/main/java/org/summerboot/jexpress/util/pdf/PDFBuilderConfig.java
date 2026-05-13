@@ -23,12 +23,12 @@ import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class PDFRequirement {
+public class PDFBuilderConfig {
     public enum Agnet {
         iText, PDFBox
     }
 
-    public static final PDFRequirement DefaultRequirement = new PDFRequirement();
+    public static final PDFBuilderConfig DefaultConfig = new PDFBuilderConfig();
 
 
     private PDDocumentInformation docInfo;
@@ -42,11 +42,11 @@ public class PDFRequirement {
     private int encryptionKeyLength = ProtectionSpec.EncryptionKeyLength; // PDFBox
     private int encryptionAlgorithm = ProtectionSpec.EncryptionAlgorithm; // iText
 
-    public PDFRequirement() {
+    public PDFBuilderConfig() {
         this(null);
     }
 
-    public PDFRequirement(PDDocumentInformation docInfo) {
+    public PDFBuilderConfig(PDDocumentInformation docInfo) {
         if (docInfo == null) {
             this.docInfo = new PDDocumentInformation();
             this.docInfo.setProducer("jExpress");
