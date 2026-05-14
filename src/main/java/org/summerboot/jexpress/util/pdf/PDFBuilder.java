@@ -51,56 +51,87 @@ public class PDFBuilder {
 
     private static final Logger log = LogManager.getLogger(PDFBuilder.class.getName());
 
-
-    public static final File dumpDir = new File("dump").getAbsoluteFile();
-
-    public static boolean isDumpEnabled() {
-        return BootConstant.isDebugMode() && dumpDir.exists();
+    public static PDFBuilder init(File templateDir, File fontDir) throws IOException {
+        return init(templateDir, fontDir, null);
     }
 
-    private static File TEMPLATE_DIR;
+    public static PDFBuilder init(File templateDir, File fontDir, File fontCacheDir) throws IOException {
+        return init(templateDir, fontDir, fontCacheDir, new File("dump").getAbsoluteFile());
+    }
+
+    public static PDFBuilder init(File templateDir, File fontDir, File fontCacheDir, File dumpDir) throws IOException {
+        PDFBuilder pdfBuilder = new PDFBuilder(templateDir, fontDir, fontCacheDir, dumpDir);
+        return pdfBuilder;
+    }
+
+    public final File dumpDir;
+
+    public boolean isDumpEnabled() {
+        return true || BootConstant.isDebugMode() && dumpDir.exists();
+    }
+
+    private File htmlTemplateDir;
 
     //private static final WriterProperties WRITER_PROPS = IText.buildDefaultAccessPermission(null, null, true, PdfVersion.PDF_1_7);
 
-    private static final Map<String, Template> FreeMarkerTemplates = new HashMap<>();
+    private final Map<String, Template> FreeMarkerTemplates = new HashMap<>();
 
-    public static void init(File fontDir, File fontCacheDir, File templateDir) throws IOException {
-        TEMPLATE_DIR = templateDir;
+    protected Agent_PDFBox agentPDFBox;
+    protected Agent_IText agentIText;
 
+
+    /**
+     * Initializes the PDF builder with template and font directories.
+     *
+     * <p><strong>Note on Chinese Characters:</strong> To render PDFs containing Chinese characters,
+     * add the following CSS rule to your templates:
+     * <pre>{@code
+     * * {
+     *   font-family: "ArialUnicodeMS";
+     * }
+     * }</pre>
+     *
+     * <p>Cache directory can also be specified using:
+     * {@code java -Dpdfbox.fontcache=<path to cache dir>}
+     *
+     * <p>Fonts can also be added using a font-face at-rule in the CSS, but this is NOT recommended for performance.
+     *
+     * @param htmlTemplateDir the directory containing HTML templates
+     * @param fontDir         the directory containing font files (.ttf, .ttc)
+     * @param fontCacheDir    the directory for PDFBox font cache (optional)
+     * @param dumpDir         the directory for temp (optional)
+     * @throws IOException if I/O errors occur during font loading
+     */
+    protected PDFBuilder(File htmlTemplateDir, File fontDir, File fontCacheDir, File dumpDir) throws IOException {
+        XRLog.setLoggingEnabled(false);//XRLog.setLevel(XRLog.CSS_PARSE, Level.SEVERE);
+        this.htmlTemplateDir = htmlTemplateDir;
         // cache dir can also be specified using java -Dpdfbox.fontcache=<path to cache dir>
         //Fonts can also be added using a font-face at-rule in the CSS, but NOT good for performance
-        XRLog.setLoggingEnabled(false);//XRLog.setLevel(XRLog.CSS_PARSE, Level.SEVERE);
-
-        /*
-        Rendering a pdf that contains Chinese characters: add the following into css
-            * {
-              font-family: "ArialUnicodeMS";
-            }
-         */
-        Agent_PDFBox.loadFonts(fontCacheDir, fontDir);
-        Agent_IText.loadFonts(fontDir);
+        this.agentPDFBox = new Agent_PDFBox(fontDir, fontCacheDir);
+        this.agentIText = new Agent_IText(fontDir);
+        this.dumpDir = dumpDir;
     }
 
-    public static byte[] html2PDF(String txId, String htmlContent, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
-        return html2PDF(txId, htmlContent, false, cfg, po, context);
+    public byte[] html2PDF(String requesterTxId, String htmlContent, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
+        return html2PDF(requesterTxId, htmlContent, false, cfg, po, context);
     }
 
-    public static byte[] html2PDF(String txId, String htmlContent, boolean isSinglePage, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
-        return html2PDF(txId, htmlContent, isSinglePage, 5, cfg, po, context);
+    public byte[] html2PDF(String requesterTxId, String htmlContent, boolean isSinglePage, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
+        return html2PDF(requesterTxId, htmlContent, isSinglePage, 5, cfg, po, context);
     }
 
-    public static byte[] html2PDF(String txId, String htmlContent, boolean isSinglePage, int extraSpace, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
+    public byte[] html2PDF(String requesterTxId, String htmlContent, boolean isSinglePage, int extraSpace, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
         context.poi(BootPOI.PDF_BEGIN);
         PDFBuilderConfig.Agnet agnet = cfg.getAgnet();
         if (extraSpace < 1) {
             extraSpace = 5;
         }
-        final String sessionName = txId + "_" + agnet + "_" + isSinglePage + "_" + extraSpace;
+        final String sessionName = requesterTxId + "_" + agnet + "_" + isSinglePage + "_" + extraSpace;
         byte[] pdf = null;
         try {
             if (isSinglePage) {
                 htmlContent = PageCssUtil.setHeight(htmlContent, "1mm");
-                Agent_PDFBox.LayoutInfo layoutInfo = Agent_PDFBox.layoutThenGetInfo(htmlContent, TEMPLATE_DIR);
+                Agent_PDFBox.LayoutInfo layoutInfo = agentPDFBox.layoutThenGetInfo(htmlContent, htmlTemplateDir);
                 context.poi(BootPOI.PDF_HC);
 
                 int pageCount = layoutInfo.getPageCount();
@@ -110,7 +141,7 @@ public class PDFBuilder {
                 while (pageCount > 1 && retry < 2) {
                     pageHeightMillimeters += extraSpace;//add extra space
                     htmlTemplate = PageCssUtil.setHeight(htmlContent, pageHeightMillimeters + "mm;");
-                    layoutInfo = Agent_PDFBox.layoutThenGetInfo(htmlTemplate, TEMPLATE_DIR);
+                    layoutInfo = agentPDFBox.layoutThenGetInfo(htmlTemplate, htmlTemplateDir);
                     context.poi(BootPOI.PDF_HV);
                     pageCount = layoutInfo.getPageCount();
                     retry++;
@@ -137,11 +168,11 @@ public class PDFBuilder {
             //4. generate PDF from HTML
             switch (agnet) {
                 case PDFBox -> {
-                    pdf = Agent_PDFBox.html2PDF(htmlContent, TEMPLATE_DIR, cfg.buildProtectionPolicy(), cfg.getDocInfo(), cfg.getPdfVersion());
+                    pdf = agentPDFBox.html2PDF(htmlContent, htmlTemplateDir, cfg.buildProtectionPolicy(), cfg.getDocInfo(), cfg.getPdfVersion());
                     context.poi(BootPOI.PDF_H2PPE);
                 }
                 case iText -> {
-                    pdf = Agent_IText.html2PDF(htmlContent, TEMPLATE_DIR, cfg.buildWriterProperties());
+                    pdf = agentIText.html2PDF(htmlContent, htmlTemplateDir, cfg.buildWriterProperties());
                     context.poi(BootPOI.PDF_H2PIE);
                 }
             }
@@ -161,9 +192,9 @@ public class PDFBuilder {
     }
 
 
-    public static List<byte[]> pdf2Images(String txId, byte[] pdf, String password, ImageType imageType, float imageDPI, String imageFormat, RenderDestination renderDestination, SessionContext context) throws IOException {
+    public List<byte[]> pdf2Images(String requesterTxId, byte[] pdf, String password, ImageType imageType, float imageDPI, String imageFormat, RenderDestination renderDestination, SessionContext context) throws IOException {
         context.poi(BootPOI.PDF2IMG_BEGIN);
-        String sessionName = txId + "_" + imageType + "_" + renderDestination + "_" + imageDPI + "_" + imageFormat;
+        String sessionName = requesterTxId + "_" + imageType + "_" + renderDestination + "_" + imageDPI + "_" + imageFormat;
         List<byte[]> imagePages = Agent_PDFBox.pdf2Images(pdf, password, imageDPI, imageType, imageFormat, renderDestination);
         context.poi(BootPOI.PDF2IMG_END).memo("imagePages", "" + imagePages.size());
         if (isDumpEnabled()) {

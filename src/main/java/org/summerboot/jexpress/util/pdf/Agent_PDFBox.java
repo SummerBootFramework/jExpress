@@ -47,24 +47,28 @@ import java.util.Map;
 public class Agent_PDFBox {
 
     public static final float POINTS_PER_MM = 75f;
-    protected static final Map<String, PDFont> FONTS = new HashMap();
+    protected final Map<String, PDFont> FONTS = new HashMap();
 
-    public static PDFont getFont(String name) {
+    public PDFont getFont(String name) {
         return FONTS.get(name);
     }
 
-    protected static File[] fontFiles = null;
+    protected File[] fontFiles = null;
 
-    protected static Map<File, String> fonts = null;
+    protected Map<File, String> fonts = null;
 
-    public static int loadFonts(File fontCacheDir, File fontDir) throws IOException {
+    public Agent_PDFBox(File fontDir) throws IOException {
+        this(fontDir, null);
+    }
+
+    public Agent_PDFBox(File fontDir, File fontCacheDir) throws IOException {
         if (fontCacheDir != null) {
             //java -Dpdfbox.fontcache=/tmp
             fontCacheDir.mkdirs();
             System.setProperty("pdfbox.fontcache", fontCacheDir.getAbsolutePath());
         }
         if (fontDir == null) {
-            return 0;
+            return;
         }
         if (!fontDir.isDirectory()) {
             throw new IOException("Not a directory: " + fontDir);
@@ -85,21 +89,20 @@ public class Agent_PDFBox {
 //        if (fontFiles == null || fontFiles.length < 1) {
 //            throw new IOException("No font files found: " + fontDir);
 //        }
-        return fontFiles == null ? 0 : fontFiles.length;
     }
 
-    public static File[] getFontFiles() {
+    public File[] getFontFiles() {
         return fontFiles;
     }
 
     /**
      * @return {@code <font file, fontFamily>}
      */
-    public static Map<File, String> getFonts() {
+    public Map<File, String> getFonts() {
         return Map.copyOf(fonts);
     }
 
-    public static int useFonts(PdfRendererBuilder builder, PDDocument doc) throws IOException {
+    public int useFonts(PdfRendererBuilder builder, PDDocument doc) throws IOException {
         if (fonts == null || fonts.isEmpty()) {
             //throw new IOException("No font loaded: call PDFBoxUtil.loadFonts(File fontDir) first");
             return 0;
@@ -124,12 +127,12 @@ public class Agent_PDFBox {
     }
 
 
-    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
+    public byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
         return html2PDF(html, baseDir, protectionPolicy, info, pdfVersion, 0, 0, null);
     }
 
-    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion,
-                                  float pageWidth, float pageHeight, BaseRendererBuilder.PageSizeUnits units) throws IOException {
+    public byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion,
+                           float pageWidth, float pageHeight, BaseRendererBuilder.PageSizeUnits units) throws IOException {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         useFonts(builder, null);
         builder.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
@@ -216,7 +219,7 @@ public class Agent_PDFBox {
      * @return
      * @throws IOException
      */
-    public static LayoutInfo layoutThenGetInfo(String html, File baseDir) throws IOException {
+    public LayoutInfo layoutThenGetInfo(String html, File baseDir) throws IOException {
         LayoutInfo ret;
         PdfRendererBuilder builderTemp = new PdfRendererBuilder();
         useFonts(builderTemp, null);
@@ -339,12 +342,12 @@ public class Agent_PDFBox {
         return imageDataList;
     }
 
-    public static interface Writer<T> {
+    public interface Writer<T> {
 
         void write(PDDocument doc, T dto) throws IOException;
     }
 
-    public static byte[] writePDF(Writer writer, Object dto, float pdfVersion) throws IOException {
+    public byte[] writePDF(Writer writer, Object dto, float pdfVersion) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             useFonts(null, doc);
             doc.protect(ProtectionSpec.defaultProtectionPolicy());
