@@ -37,11 +37,11 @@ public class FreeMarker {
 
     protected static Map<String, FreeMarker> POOL = new ConcurrentHashMap();
 
-    public static FreeMarker inti(File directoryForTemplateLoading) throws IOException {
-        return inti(directoryForTemplateLoading, Configuration.VERSION_2_3_34);
+    public static FreeMarker init(File directoryForTemplateLoading) throws IOException {
+        return init(directoryForTemplateLoading, Configuration.VERSION_2_3_34);
     }
 
-    public static FreeMarker inti(File directoryForTemplateLoading, Version version) throws IOException {
+    public static FreeMarker init(File directoryForTemplateLoading, Version version) throws IOException {
         String key = directoryForTemplateLoading.getAbsolutePath();
         FreeMarker fm = POOL.get(key);
         if (fm == null) {
