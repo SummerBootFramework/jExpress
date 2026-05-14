@@ -9,6 +9,7 @@
 * Refactoring: HealthInspector.java renamed to HealthChecker.java
 * Refactoring: @GrpcService renamed to @GrpcController
 * ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
+* ✨ New feature: org.summerboot.jexpress.util.FileUtil
 
 ## Version 2.6.9 (2026-04-24)
 
