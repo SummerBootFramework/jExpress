@@ -33,8 +33,8 @@ public class PDFBuilderConfig {
 
     private PDDocumentInformation docInfo;
     private Agnet agnet = Agnet.PDFBox;
-    private float pdfVersion = 1.7f; // PDFBox
-    private PdfVersion version = PdfVersion.PDF_1_7; // iText
+    private float pdfVersion = 2.0f; // PDFBox
+    private PdfVersion version = PdfVersion.PDF_2_0; // iText
     private boolean isFullCompressionMode = true; // iText
     private ProtectionSpec protectionSpec = ProtectionSpec.UNPROTECTED;
     private String ownerPwd = null;
@@ -56,7 +56,7 @@ public class PDFBuilderConfig {
     }
 
     public StandardProtectionPolicy buildProtectionPolicy() {
-        return protectionSpec.buildProtectionPolicy(ownerPwd, ownerPwd, encryptionKeyLength);
+        return protectionSpec.buildProtectionPolicy(ownerPwd, userPwd, encryptionKeyLength);
     }
 
     public WriterProperties buildWriterProperties() {

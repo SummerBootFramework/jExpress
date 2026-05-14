@@ -30,6 +30,7 @@ import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.util.templateengine.PageCssUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,9 +38,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.CRC32;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -79,26 +82,34 @@ public class PDFBuilder {
     }
 
     public static byte[] html2PDF(String txId, String htmlContent, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
-        return html2PDF(txId, htmlContent, false, 0, "1mm;", cfg, po, context);
+        return html2PDF(txId, htmlContent, false, cfg, po, context);
     }
 
-    public static byte[] html2PDF(String txId, String htmlContent, boolean isSinglePage, int extraSpace, String heightPlaceholder, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
+    public static byte[] html2PDF(String txId, String htmlContent, boolean isSinglePage, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
+        return html2PDF(txId, htmlContent, isSinglePage, 5, cfg, po, context);
+    }
+
+    public static byte[] html2PDF(String txId, String htmlContent, boolean isSinglePage, int extraSpace, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
         context.poi(BootPOI.PDF_BEGIN);
         PDFBuilderConfig.Agnet agnet = cfg.getAgnet();
+        if (extraSpace < 1) {
+            extraSpace = 5;
+        }
         final String sessionName = txId + "_" + agnet + "_" + isSinglePage + "_" + extraSpace;
         byte[] pdf = null;
         try {
             if (isSinglePage) {
+                htmlContent = PageCssUtil.setHeight(htmlContent, "1mm");
                 Agent_PDFBox.LayoutInfo layoutInfo = Agent_PDFBox.layoutThenGetInfo(htmlContent, TEMPLATE_DIR);
                 context.poi(BootPOI.PDF_HC);
 
-                float pageHeightMillimeters = layoutInfo.getPageHeight() * layoutInfo.getPageCount() / Agent_PDFBox.POINTS_PER_MM;
                 int pageCount = layoutInfo.getPageCount();
+                float pageHeightMillimeters = layoutInfo.getPageHeight() * pageCount / Agent_PDFBox.POINTS_PER_MM;
                 String htmlTemplate = htmlContent;
                 int retry = 0;
-                while (pageCount > 1) {
+                while (pageCount > 1 && retry < 2) {
                     pageHeightMillimeters += extraSpace;//add extra space
-                    htmlTemplate = htmlContent.replaceFirst(heightPlaceholder, pageHeightMillimeters + "mm;");
+                    htmlTemplate = PageCssUtil.setHeight(htmlContent, pageHeightMillimeters + "mm;");
                     layoutInfo = Agent_PDFBox.layoutThenGetInfo(htmlTemplate, TEMPLATE_DIR);
                     context.poi(BootPOI.PDF_HV);
                     pageCount = layoutInfo.getPageCount();
@@ -150,10 +161,10 @@ public class PDFBuilder {
     }
 
 
-    public static List<byte[]> pdf2Images(String txId, byte[] pdf, ImageType imageType, float imageDPI, String imageFormat, RenderDestination renderDestination, SessionContext context) throws IOException {
+    public static List<byte[]> pdf2Images(String txId, byte[] pdf, String password, ImageType imageType, float imageDPI, String imageFormat, RenderDestination renderDestination, SessionContext context) throws IOException {
         context.poi(BootPOI.PDF2IMG_BEGIN);
         String sessionName = txId + "_" + imageType + "_" + renderDestination + "_" + imageDPI + "_" + imageFormat;
-        List<byte[]> imagePages = Agent_PDFBox.pdf2Images(pdf, imageDPI, imageType, imageFormat, renderDestination);
+        List<byte[]> imagePages = Agent_PDFBox.pdf2Images(pdf, password, imageDPI, imageType, imageFormat, renderDestination);
         context.poi(BootPOI.PDF2IMG_END).memo("imagePages", "" + imagePages.size());
         if (isDumpEnabled()) {
             int page = 0, total = imagePages.size();
@@ -177,15 +188,25 @@ public class PDFBuilder {
         return imagePages;
     }
 
-    public ByteString toProtobufData(byte[] byteData) {
+    public static ByteString toProtobufData(byte[] byteData) {
         return ByteString.copyFrom(byteData);
     }
 
-    public List<ByteString> toProtobufData(List<byte[]> byteDataList) {
+    public static List<ByteString> toProtobufData(List<byte[]> byteDataList) {
         List<ByteString> protobufData = new ArrayList<>();
         for (byte[] byteData : byteDataList) {
             protobufData.add(toProtobufData(byteData));
         }
         return protobufData;
+    }
+
+    public static long crc(byte[] byteData) {
+        CRC32 crc32 = new CRC32();
+        crc32.update(byteData);
+        return crc32.getValue();
+    }
+
+    public static String base64Encode(byte[] byteData) {
+        return Base64.getEncoder().encodeToString(byteData);
     }
 }

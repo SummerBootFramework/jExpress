@@ -250,8 +250,8 @@ public class Agent_PDFBox {
      * @return
      * @throws IOException
      */
-    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, String formatName, RenderDestination destination) throws IOException {
-        return pdf2Images(pdfData, dpi, ImageType.RGB, formatName, destination);
+    public static List<byte[]> pdf2Images(byte[] pdfData, String password, float dpi, String formatName, RenderDestination destination) throws IOException {
+        return pdf2Images(pdfData, password, dpi, ImageType.RGB, formatName, destination);
     }
 
     /**
@@ -264,8 +264,8 @@ public class Agent_PDFBox {
      * @return
      * @throws IOException
      */
-    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
-        List<BufferedImage> images = pdf2Images(pdfData, dpi, imageType, destination);
+    public static List<byte[]> pdf2Images(byte[] pdfData, String password, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
+        List<BufferedImage> images = pdf2Images(pdfData, password, dpi, imageType, destination);
         List<byte[]> imageDatas = images2Bytes(images, formatName);
         return imageDatas;
 
@@ -281,22 +281,22 @@ public class Agent_PDFBox {
      * @return
      * @throws IOException
      */
-    public static List<byte[]> pdf2Images(File pdfFile, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
-        List<BufferedImage> images = pdf2Images(pdfFile, dpi, imageType, destination);
+    public static List<byte[]> pdf2Images(File pdfFile, String password, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
+        List<BufferedImage> images = pdf2Images(pdfFile, password, dpi, imageType, destination);
         List<byte[]> imageDatas = images2Bytes(images, formatName);
         return imageDatas;
     }
 
-    public static List<BufferedImage> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
+    public static List<BufferedImage> pdf2Images(byte[] pdfData, String password, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = Loader.loadPDF(pdfData);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
+        try (PDDocument document = Loader.loadPDF(pdfData, password);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
             return pdf2Images(document, dpi, imageType, destination);
         }
     }
 
-    public static List<BufferedImage> pdf2Images(File pdfFile, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
+    public static List<BufferedImage> pdf2Images(File pdfFile, String password, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = Loader.loadPDF(pdfFile);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
+        try (PDDocument document = Loader.loadPDF(pdfFile, password);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
             return pdf2Images(document, dpi, imageType, destination);
         }
     }

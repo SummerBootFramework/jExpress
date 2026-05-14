@@ -211,6 +211,7 @@
 
         <!-- Template Engine -->
         <freemarker.version>2.3.34</freemarker.version>
+        <jsoup.version>1.22.2</jsoup.version>
         <!-- Barcode -->
         <zxing.version>3.5.4</zxing.version>
         <!-- PDF - PDFBox -->
@@ -605,6 +606,11 @@
             <artifactId>freemarker</artifactId>
             <version>${freemarker.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
+        </dependency>
 
         <!-- Barcode -->
         <!-- ZXing (“zebra crossing”) is an open-source, multi-format 1D/2D barcode image processing library implemented in Java, with ports to other languages. This is the main library that supports QR codes in Java. -->
@@ -641,7 +647,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- PDF - com.openhtmltopdf -->
+        <!-- PDF - io.github.openhtmltopdf -->
         <!-- https://mvnrepository.com/artifact/io.github.openhtmltopdf/openhtmltopdf-pdfbox LGPL 2.1-->
         <dependency>
             <!-- ALWAYS required, usually included transitively. -->
