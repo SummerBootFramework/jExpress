@@ -660,7 +660,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     @Inject
-    protected void onGuiceInjectorCreated_DefaultHealthInspectorInjected(@HealthCheck(name = "") Map<String, Object> defaultHealthInspectors) {
+    protected void onGuiceInjectorCreated_DefaultHealthInspectorInjected(@HealthCheck() Map<String, Object> defaultHealthInspectors) {
         log.trace("");
         HealthMonitor.registerDefaultHealthInspectors(defaultHealthInspectors, memo);
     }

@@ -222,13 +222,12 @@ public class HealthMonitor {
                 } while (!HEALTH_CHECKER_QUEUE.isEmpty());
                 // inspect
                 for (HealthChecker healthChecker : batchInspectors) {
-                    String inspectorClassName = healthChecker.getClass().getName();
                     HealthCheck healthCheckAnnotation = healthChecker.getClass().getAnnotation(HealthCheck.class);
                     final String inspectorName;
                     if (healthCheckAnnotation != null && StringUtils.isNoneBlank(healthCheckAnnotation.name())) {
                         inspectorName = healthCheckAnnotation.name();
                     } else {
-                        inspectorName = inspectorClassName;
+                        inspectorName = healthChecker.getClass().getSimpleName();
                     }
 
                     try (var a = Timeout.watch(inspectorName + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
