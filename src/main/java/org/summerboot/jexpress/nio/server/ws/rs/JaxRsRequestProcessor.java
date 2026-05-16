@@ -465,7 +465,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         //3. process return object
         if (ret != null) {
             if (ret instanceof File) {
-                context.response((File) ret, true);
+                context.response((File) ret);
             } else {
                 //1. calculate responseContentType
                 String responseContentType = produce_ExplicitType;

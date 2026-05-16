@@ -40,6 +40,8 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
 import java.net.URLEncoder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -491,6 +493,11 @@ public class SessionContext {
         targetFileName = targetFileName.replace('/', File.separatorChar);
         File targetFile = new File(targetFileName).getAbsoluteFile();
         return this.response(targetFile, isDownloadMode);
+    }
+
+    public SessionContext response(File file) {
+        Path path = Paths.get(NioConfig.cfg.getDocrootDir(), file.getPath());
+        return response(path.toFile(), downloadMode);
     }
 
     public SessionContext response(File file, boolean isDownloadMode) {
