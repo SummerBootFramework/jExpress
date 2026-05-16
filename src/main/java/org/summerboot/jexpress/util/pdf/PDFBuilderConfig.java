@@ -28,8 +28,15 @@ public class PDFBuilderConfig {
         iText, PDFBox
     }
 
-    public static final PDFBuilderConfig DefaultConfig = new PDFBuilderConfig();
+    public static final PDFBuilderConfig buildProtectedConfig() {
+        return new PDFBuilderConfig();
+    }
 
+    public static final PDFBuilderConfig buildUnprotectedConfig() {
+        PDFBuilderConfig cfg = new PDFBuilderConfig();
+        cfg.setProtectionSpec(ProtectionSpec.UNPROTECTED);
+        return cfg;
+    }
 
     private PDDocumentInformation docInfo;
     private Agnet agnet = Agnet.PDFBox;
