@@ -50,6 +50,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -466,6 +467,10 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (ret != null) {
             if (ret instanceof File) {
                 context.response((File) ret);
+            } else if (ret instanceof Path) {
+                context.response((Path) ret);
+            } else if (ret instanceof byte[]) {
+                context.data((byte[]) ret);
             } else {
                 //1. calculate responseContentType
                 String responseContentType = produce_ExplicitType;

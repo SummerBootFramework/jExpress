@@ -86,6 +86,7 @@ public class SessionContext {
     protected ResponseEncoder responseEncoder = null;
     // 1.3 content type    
     protected String contentType;// = MediaType.APPLICATION_JSON;
+    protected String contentDescription;
     protected String clientAcceptContentType;
     protected String charsetName;
     // 1.4 data
@@ -251,20 +252,6 @@ public class SessionContext {
         return startDateTime;
     }
 
-    public synchronized SessionContext resetResponseData() {
-        // 1. data
-        txt = "";
-        file = null;
-        redirect = null;
-        data = null;
-
-        // 2. error
-        serviceError = null;
-        cause = null;
-        status = HttpResponseStatus.OK;
-        level(Level.INFO);
-        return this;
-    }
 
     //@JsonInclude(JsonInclude.Include.NON_NULL)
     public String txId() {
@@ -411,6 +398,27 @@ public class SessionContext {
         return this;
     }
 
+    public String contentDescription() {
+        return contentDescription;
+    }
+
+    public SessionContext contentDescription(String contentDescription) {
+        this.contentDescription = contentDescription;
+        return this;
+    }
+
+    public SessionContext downloadFleName(String fileName) {
+        if (downloadMode) {
+            try {
+                fileName = URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
+            } catch (UnsupportedEncodingException ex) {
+            }
+            //responseHeaders.set(HttpHeaderNames.CONTENT_DISPOSITION, "attachment;filename=" + fileName + ";filename*=UTF-8''" + fileName);
+            contentDescription = "attachment;filename=" + fileName + ";filename*=UTF-8''" + fileName;
+        }
+        return this;
+    }
+
     public String clientAcceptContentType() {
         return clientAcceptContentType;
     }
@@ -460,6 +468,7 @@ public class SessionContext {
 
 
     public SessionContext response(String txt) {
+        resetResponse(false);
         this.txt = txt;
         return this;
     }
@@ -488,6 +497,27 @@ public class SessionContext {
         return this;
     }
 
+
+    public synchronized SessionContext resetResponse(boolean resetError) {
+        // 1. data
+        data = null;
+        txt = "";
+        file = null;
+        downloadMode = true;
+        redirect = null;
+        contentDescription = null;
+        contentType = null;
+
+        // 2. error
+        if (resetError) {
+            serviceError = null;
+            cause = null;
+            status = HttpResponseStatus.OK;
+            level(Level.INFO);
+        }
+        return this;
+    }
+
     public SessionContext response(String fileName, boolean isDownloadMode) {
         String targetFileName = NioConfig.cfg.getDocrootDir() + File.separator + fileName;
         targetFileName = targetFileName.replace('/', File.separatorChar);
@@ -495,20 +525,55 @@ public class SessionContext {
         return this.response(targetFile, isDownloadMode);
     }
 
+    public SessionContext response(Path path) {
+        return response(path.toFile());
+    }
+
     public SessionContext response(File file) {
+        if (file == null) {
+            return this;
+        }
         Path path = Paths.get(NioConfig.cfg.getDocrootDir(), file.getPath());
         return response(path.toFile(), downloadMode);
     }
 
+    public SessionContext response(byte[] data) {
+        resetResponse(false);
+        this.data = data;
+        if (responseHeaders == null) {
+            responseHeaders = new DefaultHttpHeaders();
+        }
+        long dataSize = data.length;
+        memo("data." + (downloadMode ? "download" : "view"), "" + dataSize + " bytes, contentDescription=" + contentDescription);
+        if (responseHeaders == null) {
+            responseHeaders = new DefaultHttpHeaders();
+        }
+        if (dataSize > Integer.MAX_VALUE) {
+            responseHeaders.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(dataSize));
+        } else {
+            responseHeaders.setInt(HttpHeaderNames.CONTENT_LENGTH, (int) dataSize);
+        }
+        responseHeaders.set(HttpHeaderNames.CONTENT_TYPE, contentType);
+        if (downloadMode) {
+            responseHeaders.set(HttpHeaderNames.CONTENT_DISPOSITION, contentDescription);
+        }
+        return this;
+    }
+
+    public SessionContext response(Path path, boolean isDownloadMode) {
+        return response(path.toFile(), isDownloadMode);
+    }
+
     public SessionContext response(File file, boolean isDownloadMode) {
+        if (file == null) {
+            return this;
+        }
+        resetResponse(false);
         this.downloadMode = isDownloadMode;
-        this.file = null;
         memo("file." + (isDownloadMode ? "download" : "view"), file.getAbsolutePath());
         if (!SecurityUtil.precheckFile(file, this)) {
             file = NioHttpUtil.buildErrorFile(this);
         }
-        this.txt = null;
-        this.redirect = null;
         this.file = file;
         this.contentType = NioHttpUtil.getFileContentType(file);
 //        if (!downloadMode) {
@@ -527,11 +592,8 @@ public class SessionContext {
         responseHeaders.set(HttpHeaderNames.CONTENT_TYPE, contentType);
         if (downloadMode) {
             String fileName = file.getName();
-            try {
-                fileName = URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
-            } catch (UnsupportedEncodingException ex) {
-            }
-            responseHeaders.set(HttpHeaderNames.CONTENT_DISPOSITION, "attachment;filename=" + fileName + ";filename*=UTF-8''" + fileName);
+            this.downloadFleName(fileName);
+            responseHeaders.set(HttpHeaderNames.CONTENT_DISPOSITION, this.contentDescription);
         }
         return this;
     }
