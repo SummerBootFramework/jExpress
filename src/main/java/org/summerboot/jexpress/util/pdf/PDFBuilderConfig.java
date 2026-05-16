@@ -91,7 +91,25 @@ public class PDFBuilderConfig {
     }
 
     public void setPdfVersion(float pdfVersion) {
-        this.pdfVersion = pdfVersion;
+        // Allowed discrete PDF versions
+        float[] allowed = new float[]{1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 2.0f};
+        if (Float.isNaN(pdfVersion)) {
+            // ignore invalid input
+            return;
+        }
+
+        // Find the allowed version closest to the requested value
+        float closest = allowed[0];
+        float minDiff = Math.abs(pdfVersion - closest);
+        for (int i = 1; i < allowed.length; i++) {
+            float d = Math.abs(pdfVersion - allowed[i]);
+            if (d < minDiff) {
+                minDiff = d;
+                closest = allowed[i];
+            }
+        }
+
+        this.pdfVersion = closest;
     }
 
     public PdfVersion getVersion() {
