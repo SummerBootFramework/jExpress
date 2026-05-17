@@ -67,7 +67,7 @@ public class PDFBuilder {
     public final File dumpDir;
 
     public boolean isDumpEnabled() {
-        return true || BootConstant.isDebugMode() && dumpDir.exists();
+        return BootConstant.isDebugMode() && dumpDir.exists();
     }
 
     private File htmlTemplateDir;
