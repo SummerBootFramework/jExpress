@@ -11,6 +11,7 @@
 * ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
 * ✨ New feature: org.summerboot.jexpress.util.FileUtil
 * ✨ New feature: @Controller now handles Web methods as file downloads if the return type is: java.io.File, java.nio.file.Path, or byte[]
+* ✨ New API: FormatterUtil.formatCurrency(BigDecimal amount, RoundingMode roundingMode)
 
 ## Version 2.6.9 (2026-04-24)
 
