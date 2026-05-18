@@ -17,6 +17,7 @@ package org.summerboot.jexpress.nio.server.ws.rs;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import org.summerboot.jexpress.boot.annotation.Daemon;
 import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
@@ -38,6 +39,7 @@ abstract public class WebResourceController {
      */
     @GET
     @Path("/{path: .*}")
+    @Daemon
     public void requestWebResource(final ServiceRequest request, final SessionContext response) throws IOException {
         NioHttpUtil.sendWebResource(request, response);
     }
