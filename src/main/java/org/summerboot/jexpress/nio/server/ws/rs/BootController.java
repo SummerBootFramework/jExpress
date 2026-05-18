@@ -142,127 +142,6 @@ abstract public class BootController extends PingController {
     protected Authenticator auth;
     //abstract protected Authenticator getAuthenticator();
 
-    @Operation(
-            tags = {TAG_APP_ADMIN},
-            summary = "Check application version",
-            description = "get running application version information",
-            //                        parameters = {
-            //                            @Parameter(name = "", in = ParameterIn.HEADER, required = true, description = "")},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "running application version"),
-                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    )
-            },
-            security = {
-                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
-    )
-    @GET
-    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_VERSION)
-    @Produces(MediaType.TEXT_HTML)
-    @RolesAllowed({BootURI.ROLE_ADMIN})
-    @Daemon
-    @RequiresHealthCheck("")
-    //@CaptureTransaction("admin.version")
-    public void version(@Parameter(hidden = true) final SessionContext context) {
-        context.response(getVersion()).status(HttpResponseStatus.OK);
-    }
-
-    protected String version;
-
-    protected String getVersion() {
-        if (version == null) {
-            version = "[" + BootConstant.APP_ID + "] " + BackOffice.agent.getVersion();
-        }
-        return version;
-    }
-
-    @Operation(
-            tags = {TAG_APP_ADMIN},
-            summary = "Run application self inspection",
-            description = "get running application health information",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "inspection success with current version"),
-                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    )
-            },
-            security = {
-                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
-    )
-    @GET
-    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_HEALTHCHECK)
-    @Produces(MediaType.TEXT_HTML)
-    @RolesAllowed({BootURI.ROLE_ADMIN})
-    @Daemon
-    @RequiresHealthCheck("")
-    //@CaptureTransaction("admin.inspect")
-    public void inspect(@Parameter(hidden = true) final SessionContext context) {
-        HealthMonitor.inspect();
-    }
-
-    @Operation(
-            tags = {TAG_APP_ADMIN},
-            summary = "Put server into graceful shutdown mode",
-            description = "pause service",
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "success"),
-                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    )
-            },
-            security = {
-                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
-    )
-    @PUT
-    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_GracefulShutdown)
-    @RolesAllowed({BootURI.ROLE_ADMIN})
-    @Daemon
-    @RequiresHealthCheck("")
-    //@CaptureTransaction("admin.changeStatus")
-    public void gracefulShutdownOn(@Parameter(hidden = true) final SessionContext context) throws IOException {
-        gracefulShutdown(true, context);
-    }
-
-    @Operation(
-            tags = {TAG_APP_ADMIN},
-            summary = "Resume the server from graceful shutdown mode",
-            description = "resume service",
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "success"),
-                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    )
-            },
-            security = {
-                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
-    )
-    @DELETE
-    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_GracefulShutdown)
-    @RolesAllowed({BootURI.ROLE_ADMIN})
-    @Daemon
-    @RequiresHealthCheck("")
-    //@CaptureTransaction("admin.changeStatus")
-    public void gracefulShutdownOff(@Parameter(hidden = true) final SessionContext context) throws IOException {
-        gracefulShutdown(false, context);
-    }
-
-    protected void gracefulShutdown(boolean isSet, SessionContext context) throws IOException {
-        HealthMonitor.pauseService(isSet, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
-        context.status(HttpResponseStatus.NO_CONTENT);
-    }
 
     @Operation(
             tags = {TAG_USER_AUTH},
@@ -382,6 +261,128 @@ abstract public class BootController extends PingController {
         }
         //AuthTokenCache authTokenCache = getAuthTokenCache();
         auth.logoutToken(request.getHttpHeaders(), authTokenCache, context);
+        context.status(HttpResponseStatus.NO_CONTENT);
+    }
+
+    @Operation(
+            tags = {TAG_APP_ADMIN},
+            summary = "Check application version",
+            description = "get running application version information",
+            //                        parameters = {
+            //                            @Parameter(name = "", in = ParameterIn.HEADER, required = true, description = "")},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "running application version"),
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
+    )
+    @GET
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_VERSION)
+    @Produces(MediaType.TEXT_HTML)
+    @RolesAllowed({BootURI.ROLE_ADMIN})
+    @Daemon
+    @RequiresHealthCheck("")
+    //@CaptureTransaction("admin.version")
+    public void version(@Parameter(hidden = true) final SessionContext context) {
+        context.response(getVersion()).status(HttpResponseStatus.OK);
+    }
+
+    protected String version;
+
+    protected String getVersion() {
+        if (version == null) {
+            version = "[" + BootConstant.APP_ID + "] " + BackOffice.agent.getVersion();
+        }
+        return version;
+    }
+
+    @Operation(
+            tags = {TAG_APP_ADMIN},
+            summary = "Run application self inspection",
+            description = "get running application health information",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "inspection success with current version"),
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
+    )
+    @GET
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_CheckHealth)
+    @Produces(MediaType.TEXT_HTML)
+    @RolesAllowed({BootURI.ROLE_ADMIN})
+    @Daemon
+    @RequiresHealthCheck("")
+    //@CaptureTransaction("admin.inspect")
+    public void checkHealth(@Parameter(hidden = true) final SessionContext context) {
+        HealthMonitor.inspect();
+    }
+
+    @Operation(
+            tags = {TAG_APP_ADMIN},
+            summary = "Put server into graceful shutdown mode",
+            description = "pause service",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "success"),
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
+    )
+    @PUT
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_GracefulShutdown)
+    @RolesAllowed({BootURI.ROLE_ADMIN})
+    @Daemon
+    @RequiresHealthCheck("")
+    //@CaptureTransaction("admin.changeStatus")
+    public void gracefulShutdownOn(@Parameter(hidden = true) final SessionContext context) throws IOException {
+        gracefulShutdown(true, context);
+    }
+
+    @Operation(
+            tags = {TAG_APP_ADMIN},
+            summary = "Resume the server from graceful shutdown mode",
+            description = "resume service",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "success"),
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
+    )
+    @DELETE
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_GracefulShutdown)
+    @RolesAllowed({BootURI.ROLE_ADMIN})
+    @Daemon
+    @RequiresHealthCheck("")
+    //@CaptureTransaction("admin.changeStatus")
+    public void gracefulShutdownOff(@Parameter(hidden = true) final SessionContext context) throws IOException {
+        gracefulShutdown(false, context);
+    }
+
+    protected void gracefulShutdown(boolean isSet, SessionContext context) throws IOException {
+        HealthMonitor.pauseService(isSet, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 

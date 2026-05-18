@@ -26,7 +26,7 @@ public interface BootURI {
     String ROLE_ADMIN = "AppAdmin";
 
     // Header
-    String X_AUTH_TOKEN = "X-Auth-Token";
+    String X_AUTH_TOKEN = "X-AuthToken";
 
     // Anonymous Non-Functional API
     String LOAD_BALANCER_PING = "/ping";
@@ -36,6 +36,6 @@ public interface BootURI {
 
     // Admin role based Non-Functional API
     String API_ADMIN_VERSION = "/version";
+    String API_ADMIN_CheckHealth = "/checkhealth";
     String API_ADMIN_GracefulShutdown = "/gracefulshutdown";
-    String API_ADMIN_HEALTHCHECK = "/healthcheck";
 }
