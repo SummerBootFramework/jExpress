@@ -13,25 +13,29 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.summerboot.jexpress.boot.annotation;
-
-
-import com.google.inject.BindingAnnotation;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package org.summerboot.jexpress.nio.server.ws.rs;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@BindingAnnotation
-public @interface Daemon {
+public interface BootURI {
 
-    boolean value() default true;
+    String CURRENT_VERSION = "";// "/admin";
+
+    // Role
+    String ROLE_ADMIN = "AppAdmin";
+
+    // Header
+    String X_AUTH_TOKEN = "X-AuthToken";
+
+    // Anonymous Non-Functional API
+    String LOAD_BALANCER_PING = "/ping";
+    String API_NF_JSECURITYCHECK = "/j_security_check";
+    String API_NF_LOGIN = "/login";
+    String API_NF_LOADTEST = "/loadtest";
+
+    // Admin role based Non-Functional API
+    String API_ADMIN_VERSION = "/version";
+    String API_ADMIN_CheckHealth = "/checkhealth";
+    String API_ADMIN_GracefulShutdown = "/gracefulshutdown";
 }

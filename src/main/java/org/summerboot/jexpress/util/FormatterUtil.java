@@ -27,10 +27,13 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
@@ -60,10 +63,51 @@ public class FormatterUtil {
     public static final short BYTE_MASK = 0xFF;
     public static final short NIBBLE_MASK = 0x0F;
 
+    public static final ThreadLocal<DecimalFormat> MONEY_FORMATTER =
+            ThreadLocal.withInitial(() -> {
+                DecimalFormat df = new DecimalFormat("$#,##0.00"); // In financial microservices, you must use $#,##0.00 (or #,##0.00 without a sign).
+                df.setParseBigDecimal(true);
+                return df;
+            });
+
     public static final String[] EMPTY_STR_ARRAY = {};
     public static final String REGEX_EMAIL = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     public static final Pattern REGEX_EMAIL_PATTERN = Pattern.compile(REGEX_EMAIL);
 
+    /**
+     * 基础格式化方法 (默认不改变原对象的缩放)
+     * Basic formatting methods (by default, they do not change the scaling of the original object).
+     */
+    public static String formatCurrency(BigDecimal amount) {
+        if (amount == null) {
+            return "0.00";
+        }
+        return MONEY_FORMATTER.get().format(amount);
+    }
+
+    public static String formatCurrencyRetail(BigDecimal amount) {
+        return formatCurrency(amount, RoundingMode.HALF_UP);
+    }
+
+    public static String formatCurrencyBanker(BigDecimal amount) {
+        return formatCurrency(amount, RoundingMode.HALF_EVEN);
+    }
+
+    /**
+     * 极致性能优化版：先强制高精度舍入，再送入格式化（推荐在高并发下使用）
+     * Ultimate performance optimized version: Forces high-precision rounding first, then sends the data for formatting (recommended for use under high concurrency).
+     *
+     * @param amount       金额
+     * @param roundingMode For retail RoundingMode.HALF_UP (四舍五入), For Banker RoundingMode.HALF_EVEN（银行家舍入）
+     */
+    public static String formatCurrency(BigDecimal amount, RoundingMode roundingMode) {
+        if (amount == null) {
+            return "0.00";
+        }
+        // 关键性能点：先截断，让 DecimalFormat 只做字符串拼接，不做数学运算
+        BigDecimal scaledAmount = amount.setScale(2, roundingMode);
+        return MONEY_FORMATTER.get().format(scaledAmount);
+    }
 
     public static String[] parseLines(String txt) {
         return StringUtils.isBlank(txt) ? EMPTY_STR_ARRAY : txt.split("\\r?\\n");

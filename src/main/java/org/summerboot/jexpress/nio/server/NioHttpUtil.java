@@ -28,12 +28,14 @@ import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedFile;
+import io.netty.handler.stream.ChunkedStream;
 import io.netty.util.AsciiString;
 import jakarta.activation.MimetypesFileTypeMap;
 import jakarta.ws.rs.core.MediaType;
@@ -57,6 +59,7 @@ import org.summerboot.jexpress.util.GeoIpUtil;
 import org.summerboot.jexpress.util.TimeUtil;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,6 +137,9 @@ public class NioHttpUtil {
 
         if (sessionContext.file() != null) {
             return sendFile(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings, sessionContext.responseHeaders());
+        }
+        if (sessionContext.data() != null) {
+            return sendData(ctx, isKeepAlive, sessionContext, errorAuditor, processorSettings, sessionContext.responseHeaders());
         }
         if (sessionContext.redirect() != null) {
             sendRedirect(ctx, sessionContext.redirect(), status, sessionContext.responseHeaders());
@@ -233,6 +239,62 @@ public class NioHttpUtil {
         return responseDataBytes;
     }
 
+    private static long sendData(ChannelHandlerContext ctx, boolean isKeepAlive, final SessionContext context, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings, HttpHeaders responseHeaders) {
+        byte[] data = context.data();
+        long dataSize = data.length;
+        // 1. 创建 HTTP 响应对象
+        /*FullHttpResponse response = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK,
+                Unpooled.wrappedBuffer(data) // 包装 byte[] 为 ByteBuf
+        );
+        long dataSize = response.content().readableBytes();*/
+        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+
+        // 2. 设置 HTTP 头信息（让浏览器识别为文件下载）
+        HttpHeaders headers = response.headers();
+        headers.set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM); // 二进制流
+        headers.set(HttpHeaderNames.CONTENT_LENGTH, dataSize);
+        // 设置附件下载的文件名
+        String cd = context.contentDescription(); //String.format("attachment; filename=\"%s\"", fileName);
+        if (StringUtils.isBlank(cd)) {
+            context.downloadFleName(context.txId);
+            cd = context.contentDescription();
+        }
+        final String contentDisposition = cd;
+        headers.set(HttpHeaderNames.CONTENT_DISPOSITION, contentDisposition);
+
+        // 3.1. 只 write，不 flush
+        ctx.write(response); // 只 write，不 flush
+        // 3.2. 将 byte[] 包装成输入流，并转为 Netty 的 ChunkedStream
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+        // 这里的 8192 是每块的大小（8KB），可根据需要调整
+        ChunkedStream chunkedStream = new ChunkedStream(inputStream, 8192);
+        // 3.3. 写入分块数据，并获取 ChannelFuture
+        // ChunkedWriteHandler 会捕获这个对象并分批 flush
+        ChannelFuture downloadFuture = ctx.writeAndFlush(chunkedStream, ctx.newProgressivePromise());
+        // 3.4. 绑定监听器记录详细过程
+        downloadFuture.addListener(new ChannelProgressiveFutureListener() {
+            @Override
+            public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
+                // total 会自动对应 fileBytes.length
+                double percent = ((double) progress / total) * 100;
+                log.debug(() -> contentDisposition + " -> Transfer progress: " + percent + "% " + progress + " / " + total);
+            }
+
+            @Override
+            public void operationComplete(ChannelProgressiveFuture future) {
+                if (future.isSuccess()) {
+                    log.debug(() -> contentDisposition + " -> Transfer complete: " + dataSize);
+                    ctx.close(); // 如果不是 keep-alive 可以选择关闭连接
+                } else {
+                    log.error(() -> contentDisposition + " -> Transfer failed:" + future.cause().getMessage());
+                }
+            }
+        });
+        return dataSize;
+    }
+
     private static long sendFile(ChannelHandlerContext ctx, boolean isKeepAlive, final SessionContext context, final ErrorAuditor errorAuditor, final ProcessorSettings processorSettings, HttpHeaders responseHeaders) {
         HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, context.status());
         HttpHeaders h = response.headers();
@@ -243,6 +305,7 @@ public class NioHttpUtil {
         long fileLength = -1;
         RandomAccessFile randomAccessFile = null;
         File file = context.file();
+        long dataSize = file.length();
         String filePathRequested = file.getAbsolutePath();
         context.memo("sendFile.requested", filePathRequested);
         String filePathChecked = SecurityUtil.escape4Filename(filePathRequested);
@@ -267,21 +330,23 @@ public class NioHttpUtil {
             }
             ctx.write(response);
             // the sending progress
-            ChannelFuture sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
-            sendFileFuture.addListener(new ChannelProgressiveFutureListener() { // CWE-404 False Positive prove
+            ChannelFuture downloadFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
+            downloadFuture.addListener(new ChannelProgressiveFutureListener() { // CWE-404 False Positive prove
                 @Override
                 public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
-                    if (total < 0) { // total unknown
-                        log.error(filePath + " -> Transfer progress: " + progress);
-                    } else {
-                        log.debug(() -> filePath + " -> Transfer progress: " + progress + " / " + total);
-                    }
+                    // total 会自动对应 fileBytes.length
+                    double percent = ((double) progress / total) * 100;
+                    log.debug(() -> filePath + " -> Transfer progress: " + percent + "% " + progress + " / " + total);
                 }
 
                 @Override
-                public void operationComplete(ChannelProgressiveFuture future) throws Exception {
-                    log.debug(() -> filePath + " -> Transfer complete.");
-                    raf.close();
+                public void operationComplete(ChannelProgressiveFuture future) {
+                    if (future.isSuccess()) {
+                        log.debug(() -> filePath + " -> Transfer complete: " + dataSize);
+                        ctx.close(); // 如果不是 keep-alive 可以选择关闭连接
+                    } else {
+                        log.error(() -> filePath + " -> Transfer failed:" + future.cause().getMessage());
+                    }
                 }
             });
             ChannelFuture lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);

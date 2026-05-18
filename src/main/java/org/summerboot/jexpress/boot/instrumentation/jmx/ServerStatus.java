@@ -18,7 +18,7 @@ package org.summerboot.jexpress.boot.instrumentation.jmx;
 import com.google.inject.Singleton;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
+import org.summerboot.jexpress.boot.instrumentation.HealthChecker;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
 import org.summerboot.jexpress.util.BeanUtil;
@@ -131,7 +131,7 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NIOS
 
     @Override
     public long getHealthInspector() {
-        return HealthInspector.retryIndex.get();
+        return HealthChecker.retryIndex.get();
     }
 
     @Override

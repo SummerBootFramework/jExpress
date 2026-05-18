@@ -53,6 +53,7 @@ import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.annotation.Daemon;
 import org.summerboot.jexpress.boot.annotation.Log;
+import org.summerboot.jexpress.boot.annotation.RequiresHealthCheck;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.server.SessionContext;
@@ -116,7 +117,6 @@ abstract public class BootController extends PingController {
     public static final String TAG_USER_AUTH = "App Authentication";
 
     public static final String HEADER_LOCATION = "Location";
-    public static final String SECURITY_BEARERAUTH = "BearerAuth";
 
     public static final String DESC_308 = "The client should try again with the new server location in response header " + HEADER_LOCATION;
     public static final String DESC_4xx = "This class of status code is intended for situations in which the error seems to have been caused by the client. Client normally should not retransmit the same request again.";
@@ -142,6 +142,128 @@ abstract public class BootController extends PingController {
     protected Authenticator auth;
     //abstract protected Authenticator getAuthenticator();
 
+
+    @Operation(
+            tags = {TAG_USER_AUTH},
+            summary = "User login",
+            description = "Accept Form based parameters for login",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + BootURI.X_AUTH_TOKEN,
+                            headers = {
+                                    @Header(name = BootURI.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
+                            },
+                            content = @Content(schema = @Schema(implementation = Caller.class))
+                    ),
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            }
+    )
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_JSECURITYCHECK)
+    @Daemon
+    @RequiresHealthCheck("")
+    //@CaptureTransaction("user.signJWT")
+    @Log(requestBody = false, maskDataFields = BootURI.X_AUTH_TOKEN)
+    public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
+                                        @FormParam("j_password") String password,
+                                        @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
+        return login(auth, userId, password, context);
+    }
+
+    @Operation(
+            tags = {TAG_USER_AUTH},
+            summary = "User login",
+            description = "Accept JSON based parameters for login",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + BootURI.X_AUTH_TOKEN,
+                            headers = {
+                                    @Header(name = BootURI.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
+                            },
+                            content = @Content(schema = @Schema(implementation = Caller.class))
+                    ),
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            }
+    )
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOGIN)
+    @Daemon
+    @RequiresHealthCheck("")
+    //@CaptureTransaction("user.signJWT")
+    @Log(requestBody = false, maskDataFields = BootURI.X_AUTH_TOKEN)
+    public Caller longin_JSON(@Valid @Nonnull LoginVo loginVo,
+                              @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
+        return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
+    }
+
+    public Caller login(Authenticator auth, String userId, String password, SessionContext context) throws NamingException {
+        if (auth == null) {
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            return null;
+        }
+        if (!preLogin(userId, password, context)) {
+            return null;
+        }
+        String jwt = auth.signJWT(userId, password, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
+        if (jwt == null) {
+            context.status(HttpResponseStatus.UNAUTHORIZED);
+        } else {
+            context.responseHeader(BootURI.X_AUTH_TOKEN, jwt).status(HttpResponseStatus.CREATED);
+        }
+        postLogin(context);
+        return context.caller();
+    }
+
+    protected boolean preLogin(String userId, String password, SessionContext context) {
+        return true;
+    }
+
+    protected void postLogin(SessionContext context) {
+    }
+
+    @Operation(
+            tags = {TAG_USER_AUTH},
+            summary = "User logout",
+            description = "User logout",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "success"),
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
+    )
+    @DELETE
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOGIN)
+    @Daemon
+    @RequiresHealthCheck("")
+    //@PermitAll
+    //@CaptureTransaction("user.logoutToken")
+    public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final SessionContext context) {
+        //Authenticator auth = getAuthenticator();
+        if (auth == null) {
+            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
+            return;
+        }
+        //AuthTokenCache authTokenCache = getAuthTokenCache();
+        auth.logoutToken(request.getHttpHeaders(), authTokenCache, context);
+        context.status(HttpResponseStatus.NO_CONTENT);
+    }
+
     @Operation(
             tags = {TAG_APP_ADMIN},
             summary = "Check application version",
@@ -161,10 +283,11 @@ abstract public class BootController extends PingController {
                     @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @GET
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_VERSION)
     @Produces(MediaType.TEXT_HTML)
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
+    @RequiresHealthCheck("")
     //@CaptureTransaction("admin.version")
     public void version(@Parameter(hidden = true) final SessionContext context) {
         context.response(getVersion()).status(HttpResponseStatus.OK);
@@ -196,19 +319,20 @@ abstract public class BootController extends PingController {
                     @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @GET
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_CheckHealth)
     @Produces(MediaType.TEXT_HTML)
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
+    @RequiresHealthCheck("")
     //@CaptureTransaction("admin.inspect")
-    public void inspect(@Parameter(hidden = true) final SessionContext context) {
+    public void checkHealth(@Parameter(hidden = true) final SessionContext context) {
         HealthMonitor.inspect();
     }
 
     @Operation(
             tags = {TAG_APP_ADMIN},
-            summary = "Graceful shutdown by changing service status",
-            description = "pause service if pause param is true, otherwise resume service",
+            summary = "Put server into graceful shutdown mode",
+            description = "pause service",
             responses = {
                     @ApiResponse(responseCode = "204", description = "success"),
                     @ApiResponse(responseCode = "4xx", description = DESC_4xx,
@@ -222,105 +346,19 @@ abstract public class BootController extends PingController {
                     @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @PUT
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_GracefulShutdown)
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
+    @RequiresHealthCheck("")
     //@CaptureTransaction("admin.changeStatus")
-    public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final SessionContext context) throws IOException {
-        HealthMonitor.pauseService(pause, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
-        context.status(HttpResponseStatus.NO_CONTENT);
+    public void gracefulShutdownOn(@Parameter(hidden = true) final SessionContext context) throws IOException {
+        gracefulShutdown(true, context);
     }
 
     @Operation(
-            tags = {TAG_USER_AUTH},
-            summary = "User login",
-            description = "Accept Form based parameters for login",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
-                            headers = {
-                                    @Header(name = Config.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
-                            },
-                            content = @Content(schema = @Schema(implementation = Caller.class))
-                    ),
-                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    )
-            }
-    )
-    @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Path(Config.CURRENT_VERSION + Config.API_NF_JSECURITYCHECK)
-    @Daemon
-    //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
-    public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
-                                        @FormParam("j_password") String password,
-                                        @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
-        return login(auth, userId, password, context);
-    }
-
-    @Operation(
-            tags = {TAG_USER_AUTH},
-            summary = "User login",
-            description = "Accept JSON based parameters for login",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
-                            headers = {
-                                    @Header(name = Config.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
-                            },
-                            content = @Content(schema = @Schema(implementation = Caller.class))
-                    ),
-                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    ),
-                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
-                            content = @Content(schema = @Schema(implementation = ServiceError.class))
-                    )
-            }
-    )
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
-    @Daemon
-    //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
-    public Caller longin_JSON(@Valid @Nonnull LoginVo loginVo,
-                              @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
-        return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
-    }
-
-    public Caller login(Authenticator auth, String userId, String password, SessionContext context) throws NamingException {
-        if (auth == null) {
-            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
-            return null;
-        }
-        if (!preLogin(userId, password, context)) {
-            return null;
-        }
-        String jwt = auth.signJWT(userId, password, null, AuthConfig.cfg.getJwtTTLMinutes(), context);
-        if (jwt == null) {
-            context.status(HttpResponseStatus.UNAUTHORIZED);
-        } else {
-            context.responseHeader(Config.X_AUTH_TOKEN, jwt).status(HttpResponseStatus.CREATED);
-        }
-        postLogin(context);
-        return context.caller();
-    }
-
-    protected boolean preLogin(String userId, String password, SessionContext context) {
-        return true;
-    }
-
-    protected void postLogin(SessionContext context) {
-    }
-
-    @Operation(
-            tags = {TAG_USER_AUTH},
-            summary = "User logout",
-            description = "User logout",
+            tags = {TAG_APP_ADMIN},
+            summary = "Resume the server from graceful shutdown mode",
+            description = "resume service",
             responses = {
                     @ApiResponse(responseCode = "204", description = "success"),
                     @ApiResponse(responseCode = "4xx", description = DESC_4xx,
@@ -334,26 +372,26 @@ abstract public class BootController extends PingController {
                     @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @DELETE
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_GracefulShutdown)
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
-    //@PermitAll
-    //@CaptureTransaction("user.logoutToken")
-    public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final SessionContext context) {
-        //Authenticator auth = getAuthenticator();
-        if (auth == null) {
-            context.error(new Err(BootErrorCode.ACCESS_BASE, null, null, null, "Authenticator not provided")).status(HttpResponseStatus.NOT_IMPLEMENTED);
-            return;
-        }
-        //AuthTokenCache authTokenCache = getAuthTokenCache();
-        auth.logoutToken(request.getHttpHeaders(), authTokenCache, context);
+    @RequiresHealthCheck("")
+    //@CaptureTransaction("admin.changeStatus")
+    public void gracefulShutdownOff(@Parameter(hidden = true) final SessionContext context) throws IOException {
+        gracefulShutdown(false, context);
+    }
+
+    protected void gracefulShutdown(boolean isSet, SessionContext context) throws IOException {
+        HealthMonitor.pauseService(isSet, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
     @Operation(hidden = true)
     @POST
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
+    @RequiresHealthCheck("")
     public void loadTestBenchmarkPost1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -367,8 +405,9 @@ abstract public class BootController extends PingController {
 
     @Operation(hidden = true)
     @POST
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOADTEST + "/{delayMilsec}")
     @Daemon
+    @RequiresHealthCheck("")
     public void loadTestBenchmarkPost2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -382,9 +421,10 @@ abstract public class BootController extends PingController {
 
     @Operation(hidden = true)
     @GET
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
+    @RequiresHealthCheck("")
     public void loadTestBenchmarkGet1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -398,8 +438,9 @@ abstract public class BootController extends PingController {
 
     @Operation(hidden = true)
     @GET
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOADTEST + "/{delayMilsec}")
     @Daemon
+    @RequiresHealthCheck("")
     public void loadTestBenchmarkGet2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -409,26 +450,5 @@ abstract public class BootController extends PingController {
             }
         }
         context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath());
-    }
-
-    public interface Config {
-
-        String ROLE_ADMIN = "AppAdmin";
-
-        String CURRENT_VERSION = "";// "/admin";
-
-        //Anonymous Non-Functional API
-        String LOAD_BALANCER_HEALTH_CHECK = "/ping";
-        String API_NF_LOADTEST = "/loadtest";
-        String API_NF_JSECURITYCHECK = "/j_security_check";
-
-        String API_NF_LOGIN = "/login";
-
-        //Role based Non-Functional API
-        String API_ADMIN_VERSION = "/version";
-        String API_ADMIN_STATUS = "/status";
-        String API_ADMIN_INSPECTION = "/inspection";
-
-        String X_AUTH_TOKEN = "X-AuthToken";// Response: JWT from Auth Center
     }
 }

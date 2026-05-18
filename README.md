@@ -598,16 +598,17 @@ ping.sync.showRootCause=
 ### 6.2 Sample Code
 
 ```java
-import org.summerboot.jexpress.boot.annotation.Inspector;
+
+import org.summerboot.jexpress.boot.annotation.HealthCheck;
 import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
+import org.summerboot.jexpress.boot.instrumentation.HealthChecker;
 import org.summerboot.jexpress.nio.server.domain.Err;
 
 import java.util.List;
 
-@Inspector(name = "myDB")
-@Service(binding = HealthInspector.class)
-public class MyHealthInspector implements HealthInspector<Void> {
+@org.summerboot.jexpress.boot.annotation.HealthCheck(name = "myDB")
+@Service(binding = HealthChecker.class)
+public class MyHealthInspector implements HealthChecker<Void> {
 
     @Override
     public List<Err> ping(Void... param) {
@@ -837,9 +838,10 @@ public void dynamicJob() { ...}
 Annotate your gRPC service implementation with `@GrpcService`:
 
 ```java
+import org.summerboot.jexpress.boot.annotation.GrpcController;
 import org.summerboot.jexpress.boot.annotation.GrpcService;
 
-@GrpcService
+@GrpcController
 public class MyGrpcServiceImpl extends MyGrpcService.MyGrpcServiceImplBase {
     // implement gRPC methods
 }

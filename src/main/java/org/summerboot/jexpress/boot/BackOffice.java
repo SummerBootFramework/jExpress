@@ -268,12 +268,11 @@ public class BackOffice extends BootConfig {
     @Config(key = "naming.file.pause", defaultValue = "pause")
     private String pauseFileName = "pause";
 
-    @Config(key = "naming.responseHeader.X-Reference", defaultValue = "X-Reference")
+    @Config(key = "naming.responseHeader.X-Reference", defaultValue = "X-Reference", desc = "Response Header: Server generated transaction id")
     private String responseHeaderRefName = "X-Reference";
 
-    @Config(key = "naming.responseHeader.X-ServerTs", defaultValue = "X-ServerTs")
+    @Config(key = "naming.responseHeader.X-ServerTs", defaultValue = "X-ServerTs", desc = "Response Header: Server response timestamp")
     private String responseHeaderServerTsName = "X-ServerTs";
-
 
     @Config(key = "HealthMonitor.PauseLockCode.viaFile", defaultValue = "PauseLockCode.file")
     private String pauseLockCodeViaFile = "PauseLockCode.file";

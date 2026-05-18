@@ -15,6 +15,7 @@
  */
 package org.summerboot.jexpress.boot.annotation;
 
+
 import com.google.inject.BindingAnnotation;
 
 import java.lang.annotation.Documented;
@@ -26,11 +27,10 @@ import java.lang.annotation.Target;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-@Target(value = {ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
-@Retention(value = RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
 @Documented
 @BindingAnnotation
-public @interface Inspector {
-
-    String name() default "";
+public @interface RequiresHealthCheck {
+    String[] value();
 }

@@ -19,6 +19,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
+import freemarker.template.Version;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -36,22 +37,27 @@ public class FreeMarker {
 
     protected static Map<String, FreeMarker> POOL = new ConcurrentHashMap();
 
-    public static FreeMarker get(File directoryForTemplateLoading) throws IOException {
+    public static FreeMarker init(File directoryForTemplateLoading) throws IOException {
+        return init(directoryForTemplateLoading, Configuration.VERSION_2_3_34);
+    }
+
+    public static FreeMarker init(File directoryForTemplateLoading, Version version) throws IOException {
         String key = directoryForTemplateLoading.getAbsolutePath();
         FreeMarker fm = POOL.get(key);
         if (fm == null) {
-            fm = new FreeMarker(directoryForTemplateLoading);
+            fm = new FreeMarker(directoryForTemplateLoading, version);
             POOL.put(key, fm);
         }
         return fm;
     }
 
     // Create your Configuration instance, and specify if up to what FreeMarker
-    // version (here 2.3.31) do you want to apply the fixes that are not 100%
+    // version (here 2.3.34) do you want to apply the fixes that are not 100%
     // backward-compatible. See the Configuration JavaDoc for details.
-    protected final Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
+    protected final Configuration cfg;// = new Configuration(Configuration.VERSION_2_3_34);
 
-    protected FreeMarker(File directoryForTemplateLoading) throws IOException {
+    protected FreeMarker(File directoryForTemplateLoading, Version version) throws IOException {
+        cfg = new Configuration(version);
         // Specify the source where the template files come from. Here I set a
         // plain directory for it, but non-file-system sources are possible too:
         cfg.setDirectoryForTemplateLoading(directoryForTemplateLoading);
@@ -84,7 +90,7 @@ public class FreeMarker {
         return cfg.getTemplate(templateName, null, "UTF-8");
     }
 
-    public static interface Converter<R, T> {
+    public interface Converter<R, T> {
 
         R toDataModel(T dto) throws IOException;
     }

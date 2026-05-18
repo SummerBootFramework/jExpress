@@ -20,19 +20,15 @@ import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.render.Box;
 import com.openhtmltopdf.render.PageBox;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
-import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.ProtectionPolicy;
-import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.rendering.RenderDestination;
-import org.summerboot.jexpress.security.SecurityUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -48,27 +44,31 @@ import java.util.Map;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class PDFBox {
+public class Agent_PDFBox {
 
     public static final float POINTS_PER_MM = 75f;
-    protected static final Map<String, PDFont> FONTS = new HashMap();
+    protected final Map<String, PDFont> FONTS = new HashMap();
 
-    public static PDFont getFont(String name) {
+    public PDFont getFont(String name) {
         return FONTS.get(name);
     }
 
-    protected static File[] fontFiles = null;
+    protected File[] fontFiles = null;
 
-    protected static Map<File, String> fonts = null;
+    protected Map<File, String> fonts = null;
 
-    public static int loadFonts(File fontCacheDir, File fontDir) throws IOException {
+    public Agent_PDFBox(File fontDir) throws IOException {
+        this(fontDir, null);
+    }
+
+    public Agent_PDFBox(File fontDir, File fontCacheDir) throws IOException {
         if (fontCacheDir != null) {
             //java -Dpdfbox.fontcache=/tmp
             fontCacheDir.mkdirs();
             System.setProperty("pdfbox.fontcache", fontCacheDir.getAbsolutePath());
         }
         if (fontDir == null) {
-            return 0;
+            return;
         }
         if (!fontDir.isDirectory()) {
             throw new IOException("Not a directory: " + fontDir);
@@ -89,21 +89,20 @@ public class PDFBox {
 //        if (fontFiles == null || fontFiles.length < 1) {
 //            throw new IOException("No font files found: " + fontDir);
 //        }
-        return fontFiles == null ? 0 : fontFiles.length;
     }
 
-    public static File[] getFontFiles() {
+    public File[] getFontFiles() {
         return fontFiles;
     }
 
     /**
      * @return {@code <font file, fontFamily>}
      */
-    public static Map<File, String> getFonts() {
+    public Map<File, String> getFonts() {
         return Map.copyOf(fonts);
     }
 
-    public static int useFonts(PdfRendererBuilder builder, PDDocument doc) throws IOException {
+    public int useFonts(PdfRendererBuilder builder, PDDocument doc) throws IOException {
         if (fonts == null || fonts.isEmpty()) {
             //throw new IOException("No font loaded: call PDFBoxUtil.loadFonts(File fontDir) first");
             return 0;
@@ -127,38 +126,13 @@ public class PDFBox {
         return fontFiles.length;
     }
 
-    protected static final AccessPermission DEFAULT_AP = buildDefaultAccessPermission();
-    protected static final int DEFAULT_KEY_LENGTH = 256;
 
-    public static AccessPermission buildDefaultAccessPermission() {
-        AccessPermission ap = new AccessPermission();
-        ap.setCanAssembleDocument(false);
-        ap.setCanExtractContent(false);
-        ap.setCanExtractForAccessibility(true);
-        ap.setCanFillInForm(true);
-        ap.setCanModify(false);
-        ap.setCanModifyAnnotations(true);
-        ap.setCanPrint(true);
-        ap.setCanPrintFaithful(true);
-        ap.setReadOnly();
-        return ap;
+    public byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
+        return html2PDF(html, baseDir, protectionPolicy, info, pdfVersion, 0, 0, null);
     }
 
-    public static StandardProtectionPolicy buildStandardProtectionPolicy(String userPwd, String ownerPwd) {
-        return buildStandardProtectionPolicy(userPwd, ownerPwd, DEFAULT_AP, DEFAULT_KEY_LENGTH);
-    }
-
-    public static StandardProtectionPolicy buildStandardProtectionPolicy(String userPwd, String ownerPwd, AccessPermission ap, int keyLenth) {
-        if (StringUtils.isBlank(ownerPwd)) {
-            ownerPwd = SecurityUtil.randomAlphanumeric(10);
-        }
-        StandardProtectionPolicy spp = new StandardProtectionPolicy(ownerPwd, userPwd, ap);
-        spp.setEncryptionKeyLength(keyLenth);
-        return spp;
-    }
-
-    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion,
-                                  float pageWidth, float pageHeight, BaseRendererBuilder.PageSizeUnits units) throws IOException {
+    public byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion,
+                           float pageWidth, float pageHeight, BaseRendererBuilder.PageSizeUnits units) throws IOException {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         useFonts(builder, null);
         builder.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
@@ -175,7 +149,7 @@ public class PDFBox {
             try (PdfBoxRenderer renderer = builder.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {
                 //security
                 if (protectionPolicy == null) {
-                    protectionPolicy = buildStandardProtectionPolicy(null, null);
+                    protectionPolicy = ProtectionSpec.defaultProtectionPolicy();
                 }
                 doc.protect(protectionPolicy);
                 doc.setVersion(pdfVersion);
@@ -245,7 +219,7 @@ public class PDFBox {
      * @return
      * @throws IOException
      */
-    public static LayoutInfo layoutThenGetInfo(String html, File baseDir) throws IOException {
+    public LayoutInfo layoutThenGetInfo(String html, File baseDir) throws IOException {
         LayoutInfo ret;
         PdfRendererBuilder builderTemp = new PdfRendererBuilder();
         useFonts(builderTemp, null);
@@ -259,38 +233,6 @@ public class PDFBox {
             ret = new LayoutInfo(pageList.size(), box.getWidth(), box.getHeight());
         }
         return ret;
-    }
-
-    public static byte[] html2PDF(String html, File baseDir, ProtectionPolicy protectionPolicy, PDDocumentInformation info, float pdfVersion) throws IOException {
-        PdfRendererBuilder builder = new PdfRendererBuilder();
-        useFonts(builder, null);
-        builder.withHtmlContent(html, buildBaseDocumentUri1(baseDir));
-        if (info != null) {
-            builder.withProducer(info.getProducer());
-        }
-        //builder.useFastMode();
-
-        //builder.useDefaultPageSize(pageWidth, pageHeight, units);
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
-            builder.toStream(baos);
-            try (PdfBoxRenderer renderer = builder.buildPdfRenderer(); PDDocument doc = renderer.getPdfDocument();) {
-                //security
-                if (protectionPolicy == null) {
-                    protectionPolicy = buildStandardProtectionPolicy(null, null);
-                }
-                doc.protect(protectionPolicy);
-                doc.setVersion(pdfVersion);
-//                //info
-//                if (info != null) {
-//                    doc.setDocumentInformation(info);
-//                }
-                //build PDF
-                renderer.layout();//com.openhtmltopdf.load INFO:: Loading font(ArialUnicodeMS) from PDFont supplier now.
-                renderer.createPDF();//com.openhtmltopdf.general INFO:: Using fast-mode renderer. Prepare to fly.
-            }
-
-            return baos.toByteArray();
-        }
     }
 
     protected static String buildBaseDocumentUri1(File baseDirectory) throws IOException {
@@ -311,8 +253,8 @@ public class PDFBox {
      * @return
      * @throws IOException
      */
-    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, String formatName, RenderDestination destination) throws IOException {
-        return pdf2Images(pdfData, dpi, ImageType.RGB, formatName, destination);
+    public static List<byte[]> pdf2Images(byte[] pdfData, String password, float dpi, String formatName, RenderDestination destination) throws IOException {
+        return pdf2Images(pdfData, password, dpi, ImageType.RGB, formatName, destination);
     }
 
     /**
@@ -325,8 +267,8 @@ public class PDFBox {
      * @return
      * @throws IOException
      */
-    public static List<byte[]> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
-        List<BufferedImage> images = pdf2Images(pdfData, dpi, imageType, destination);
+    public static List<byte[]> pdf2Images(byte[] pdfData, String password, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
+        List<BufferedImage> images = pdf2Images(pdfData, password, dpi, imageType, destination);
         List<byte[]> imageDatas = images2Bytes(images, formatName);
         return imageDatas;
 
@@ -342,22 +284,22 @@ public class PDFBox {
      * @return
      * @throws IOException
      */
-    public static List<byte[]> pdf2Images(File pdfFile, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
-        List<BufferedImage> images = pdf2Images(pdfFile, dpi, imageType, destination);
+    public static List<byte[]> pdf2Images(File pdfFile, String password, float dpi, ImageType imageType, String formatName, RenderDestination destination) throws IOException {
+        List<BufferedImage> images = pdf2Images(pdfFile, password, dpi, imageType, destination);
         List<byte[]> imageDatas = images2Bytes(images, formatName);
         return imageDatas;
     }
 
-    public static List<BufferedImage> pdf2Images(byte[] pdfData, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
+    public static List<BufferedImage> pdf2Images(byte[] pdfData, String password, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = Loader.loadPDF(pdfData);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
+        try (PDDocument document = Loader.loadPDF(pdfData, password);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
             return pdf2Images(document, dpi, imageType, destination);
         }
     }
 
-    public static List<BufferedImage> pdf2Images(File pdfFile, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
+    public static List<BufferedImage> pdf2Images(File pdfFile, String password, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         //1: Loading an Existing PDF Document
-        try (PDDocument document = Loader.loadPDF(pdfFile);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
+        try (PDDocument document = Loader.loadPDF(pdfFile, password);) {// upgrade to pdfbox v3 by Sam Li 黎韦辰
             return pdf2Images(document, dpi, imageType, destination);
         }
     }
@@ -400,15 +342,15 @@ public class PDFBox {
         return imageDataList;
     }
 
-    public static interface Writer<T> {
+    public interface Writer<T> {
 
         void write(PDDocument doc, T dto) throws IOException;
     }
 
-    public static byte[] writePDF(Writer writer, Object dto, float pdfVersion) throws IOException {
+    public byte[] writePDF(Writer writer, Object dto, float pdfVersion) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             useFonts(null, doc);
-            doc.protect(buildStandardProtectionPolicy(null, null));
+            doc.protect(ProtectionSpec.defaultProtectionPolicy());
             doc.setVersion(pdfVersion);
             writer.write(doc, dto);
             doc.save(baos);

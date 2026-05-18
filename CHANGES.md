@@ -1,5 +1,20 @@
 ## 📅 CHANGES
 
+## Version 2.6.10 (2026-05-09)
+
+* 🔒 Security Patch: jjwt-jackson's dependency has 5 security issues caused by old Jackson2 lib
+* 🛠 REF2610-1: support application without package specified
+* ✨ New API: @RequiresHealthCheck for @Controller class/method
+* Refactoring: @Inspector renamed to @HealthCheck
+* Refactoring: HealthInspector.java renamed to HealthChecker.java
+* Refactoring: @GrpcService renamed to @GrpcController
+* ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
+* ✨ New feature: org.summerboot.jexpress.util.FileUtil
+* ✨ New feature: @Controller now handles Web methods as file downloads if the return type is: java.io.File, java.nio.file.Path, or byte[]
+* ✨ New API: FormatterUtil.formatCurrency(BigDecimal amount, RoundingMode roundingMode)
+* WebResourceController.requestWebResource with @Daemon to serve web resources with enhanced reliability.
+* Refactoring: predefined URI constants inside BootURI
+
 ## Version 2.6.9 (2026-04-24)
 
 ### 🔒 1. Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8) and Log4J CVE-2026-34480

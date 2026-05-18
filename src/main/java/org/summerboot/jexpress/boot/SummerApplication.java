@@ -314,7 +314,7 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 4. health inspection
-            log.trace("4. health inspection");
+            log.trace("4. health check");
             String serviceStatus = HealthMonitor.start(appContext, true, guiceInjector);
 
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();

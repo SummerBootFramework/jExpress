@@ -16,7 +16,7 @@
 package org.summerboot.jexpress.integration.cache;
 
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
+import org.summerboot.jexpress.boot.instrumentation.HealthChecker;
 import org.summerboot.jexpress.nio.server.domain.Err;
 
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface AuthTokenCache extends HealthInspector {
+public interface AuthTokenCache extends HealthChecker {
 
     @Override
     default List<Err> ping(Object... params) {

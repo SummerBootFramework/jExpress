@@ -39,7 +39,7 @@ import java.util.Map;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class IText {
+public class Agent_IText {
 
     //    public static IText build(String baseDir, String fontDir) throws IOException {
 //        return new IText(baseDir, fontDir);
@@ -50,15 +50,15 @@ public class IText {
 //    protected IText(String baseDir, String fontDir) throws IOException {
 //        cfg = new ITextConfig(baseDir, fontDir);
 //    }
-    protected static final Map<String, PdfFont> FONTS = new HashMap<>();
+    protected final Map<String, PdfFont> FONTS = new HashMap<>();
 
-    public static PdfFont getFont(String name) {
+    public PdfFont getFont(String name) {
         return FONTS.get(name);
     }
 
-    protected static FontSet fontSet = null;
+    protected FontSet fontSet = null;
 
-    public static FontSet loadFonts(File fontDir) throws IOException {
+    public Agent_IText(File fontDir) throws IOException {
         if (!fontDir.isDirectory()) {
             throw new IOException(fontDir.getAbsolutePath() + " is not a directory");
         }
@@ -69,7 +69,7 @@ public class IText {
         });
 
         if (files == null || files.length < 1) {
-            return null;
+            return;
         }
         for (File file : files) {
             String fileName = file.getName();
@@ -79,6 +79,9 @@ public class IText {
         }
         fontSet = new FontSet();
         fontSet.addDirectory(fontDir.getAbsolutePath(), true);
+    }
+
+    public FontSet getFontSet() {
         return fontSet;
     }
 
@@ -108,7 +111,7 @@ public class IText {
         return writerProperties;
     }
 
-    public static byte[] html2PDF(String html, File baseDir, WriterProperties writerProperties) throws IOException {
+    public byte[] html2PDF(String html, File baseDir, WriterProperties writerProperties) throws IOException {
         ConverterProperties prop = new ConverterProperties();
         if (fontSet != null) {
             prop.setFontProvider(new FontProvider(fontSet));

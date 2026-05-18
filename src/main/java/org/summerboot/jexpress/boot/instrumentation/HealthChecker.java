@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @param <T> parameter
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public interface HealthInspector<T extends Object> extends Comparable<Object> {
+public interface HealthChecker<T extends Object> extends Comparable<Object> {
 
     AtomicLong retryIndex = new AtomicLong(0);
 

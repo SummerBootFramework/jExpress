@@ -39,6 +39,17 @@ public interface BootPOI {
     String DB_END = "db.end";
     String CACHE_BEGIN = "cache.begin";
     String CACHE_END = "cache.end";
+    String PDF_BEGIN = "pdf.begin";
+    String PDF_END = "pdf.end";
+    String PDF_HC = "height calculation.end";
+    String PDF_HV = "height verification.end";
+    String PDF_DH = "dump.html";
+    String PDF_DP = "dump.pdf";
+    String PDF_DI = "dump.img";
+    String PDF_H2PPE = "html2PDF.PDFBoxEnd";
+    String PDF_H2PIE = "html2PDF.iTextEnd";
+    String PDF2IMG_BEGIN = "pdf2img.begin";
+    String PDF2IMG_END = "pdf2img.end";
 
     String RPC_BEGIN = "rpc.begin";
     String RPC_END = "rpc.end";

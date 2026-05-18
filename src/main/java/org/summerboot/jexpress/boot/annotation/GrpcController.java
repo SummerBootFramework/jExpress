@@ -30,6 +30,6 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.RUNTIME)
 @Documented
 @BindingAnnotation
-public @interface GrpcService {
+public @interface GrpcController {
 
 }

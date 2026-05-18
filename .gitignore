@@ -27,6 +27,7 @@
 hs_err_pid*
 gc.*
 /target/
+/dump/
 etc/
 tree.text
 
