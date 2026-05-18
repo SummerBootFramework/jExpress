@@ -28,7 +28,9 @@ import java.util.regex.Pattern;
  */
 public class PageCssUtil {
     /**
-     * Returns updated HTML:     * 1) If @page size exists, replaces only height token.     * 2) Otherwise appends a new @page block under <head>.
+     * Returns updated HTML:
+     * 1) If @page size exists, replaces only height token.
+     * 2) Otherwise appends a new @page block under {@code <head>}.
      */
     public static String setHeight(String html, String newHeight) {
         if (html == null) {
