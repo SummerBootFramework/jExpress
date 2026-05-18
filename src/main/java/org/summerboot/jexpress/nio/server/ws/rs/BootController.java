@@ -161,9 +161,9 @@ abstract public class BootController extends PingController {
                     @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @GET
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_VERSION)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_VERSION)
     @Produces(MediaType.TEXT_HTML)
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
     @RequiresHealthCheck("")
     //@CaptureTransaction("admin.version")
@@ -197,9 +197,9 @@ abstract public class BootController extends PingController {
                     @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @GET
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_INSPECTION)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_HEALTHCHECK)
     @Produces(MediaType.TEXT_HTML)
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
     @RequiresHealthCheck("")
     //@CaptureTransaction("admin.inspect")
@@ -209,8 +209,8 @@ abstract public class BootController extends PingController {
 
     @Operation(
             tags = {TAG_APP_ADMIN},
-            summary = "Graceful shutdown by changing service status",
-            description = "pause service if pause param is true, otherwise resume service",
+            summary = "Put server into graceful shutdown mode",
+            description = "pause service",
             responses = {
                     @ApiResponse(responseCode = "204", description = "success"),
                     @ApiResponse(responseCode = "4xx", description = DESC_4xx,
@@ -224,13 +224,43 @@ abstract public class BootController extends PingController {
                     @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @PUT
-    @Path(Config.CURRENT_VERSION + Config.API_ADMIN_STATUS)
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_GracefulShutdown)
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
     @RequiresHealthCheck("")
     //@CaptureTransaction("admin.changeStatus")
-    public void pause(@QueryParam("pause") boolean pause, @Parameter(hidden = true) final SessionContext context) throws IOException {
-        HealthMonitor.pauseService(pause, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
+    public void gracefulShutdownOn(@Parameter(hidden = true) final SessionContext context) throws IOException {
+        gracefulShutdown(true, context);
+    }
+
+    @Operation(
+            tags = {TAG_APP_ADMIN},
+            summary = "Resume the server from graceful shutdown mode",
+            description = "resume service",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "success"),
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
+    )
+    @DELETE
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_ADMIN_GracefulShutdown)
+    @RolesAllowed({BootURI.ROLE_ADMIN})
+    @Daemon
+    @RequiresHealthCheck("")
+    //@CaptureTransaction("admin.changeStatus")
+    public void gracefulShutdownOff(@Parameter(hidden = true) final SessionContext context) throws IOException {
+        gracefulShutdown(false, context);
+    }
+
+    protected void gracefulShutdown(boolean isSet, SessionContext context) throws IOException {
+        HealthMonitor.pauseService(isSet, BootConstant.PAUSE_LOCK_CODE_VIAWEB, "request by " + context.caller());
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
@@ -239,9 +269,9 @@ abstract public class BootController extends PingController {
             summary = "User login",
             description = "Accept Form based parameters for login",
             responses = {
-                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
+                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + BootURI.X_AUTH_TOKEN,
                             headers = {
-                                    @Header(name = Config.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
+                                    @Header(name = BootURI.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
                             },
                             content = @Content(schema = @Schema(implementation = Caller.class))
                     ),
@@ -255,11 +285,11 @@ abstract public class BootController extends PingController {
     )
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Path(Config.CURRENT_VERSION + Config.API_NF_JSECURITYCHECK)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_JSECURITYCHECK)
     @Daemon
     @RequiresHealthCheck("")
     //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
+    @Log(requestBody = false, maskDataFields = BootURI.X_AUTH_TOKEN)
     public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
                                         @FormParam("j_password") String password,
                                         @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
@@ -271,9 +301,9 @@ abstract public class BootController extends PingController {
             summary = "User login",
             description = "Accept JSON based parameters for login",
             responses = {
-                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + Config.X_AUTH_TOKEN,
+                    @ApiResponse(responseCode = "201", description = "success and return JWT token in header " + BootURI.X_AUTH_TOKEN,
                             headers = {
-                                    @Header(name = Config.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
+                                    @Header(name = BootURI.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
                             },
                             content = @Content(schema = @Schema(implementation = Caller.class))
                     ),
@@ -287,11 +317,11 @@ abstract public class BootController extends PingController {
     )
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOGIN)
     @Daemon
     @RequiresHealthCheck("")
     //@CaptureTransaction("user.signJWT")
-    @Log(requestBody = false, maskDataFields = Config.X_AUTH_TOKEN)
+    @Log(requestBody = false, maskDataFields = BootURI.X_AUTH_TOKEN)
     public Caller longin_JSON(@Valid @Nonnull LoginVo loginVo,
                               @Parameter(hidden = true) final SessionContext context) throws IOException, NamingException {
         return login(auth, loginVo.getUsername(), loginVo.getPassword(), context);
@@ -309,7 +339,7 @@ abstract public class BootController extends PingController {
         if (jwt == null) {
             context.status(HttpResponseStatus.UNAUTHORIZED);
         } else {
-            context.responseHeader(Config.X_AUTH_TOKEN, jwt).status(HttpResponseStatus.CREATED);
+            context.responseHeader(BootURI.X_AUTH_TOKEN, jwt).status(HttpResponseStatus.CREATED);
         }
         postLogin(context);
         return context.caller();
@@ -339,7 +369,7 @@ abstract public class BootController extends PingController {
                     @SecurityRequirement(name = SecuritySchemeName_BearerAuth)}
     )
     @DELETE
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOGIN)
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOGIN)
     @Daemon
     @RequiresHealthCheck("")
     //@PermitAll
@@ -357,8 +387,8 @@ abstract public class BootController extends PingController {
 
     @Operation(hidden = true)
     @POST
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
     @RequiresHealthCheck("")
     public void loadTestBenchmarkPost1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
@@ -374,7 +404,7 @@ abstract public class BootController extends PingController {
 
     @Operation(hidden = true)
     @POST
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOADTEST + "/{delayMilsec}")
     @Daemon
     @RequiresHealthCheck("")
     public void loadTestBenchmarkPost2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
@@ -390,8 +420,8 @@ abstract public class BootController extends PingController {
 
     @Operation(hidden = true)
     @GET
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
-    @RolesAllowed({Config.ROLE_ADMIN})
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
+    @RolesAllowed({BootURI.ROLE_ADMIN})
     @Daemon
     @RequiresHealthCheck("")
     public void loadTestBenchmarkGet1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
@@ -407,7 +437,7 @@ abstract public class BootController extends PingController {
 
     @Operation(hidden = true)
     @GET
-    @Path(Config.CURRENT_VERSION + Config.API_NF_LOADTEST + "/{delayMilsec}")
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_LOADTEST + "/{delayMilsec}")
     @Daemon
     @RequiresHealthCheck("")
     public void loadTestBenchmarkGet2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
@@ -419,26 +449,5 @@ abstract public class BootController extends PingController {
             }
         }
         context.status(HttpResponseStatus.OK).response(request.getHttpRequestPath());
-    }
-
-    public interface Config {
-
-        String ROLE_ADMIN = "AppAdmin";
-
-        String CURRENT_VERSION = "";// "/admin";
-
-        //Anonymous Non-Functional API
-        String LOAD_BALANCER_HEALTH_CHECK = "/ping";
-        String API_NF_LOADTEST = "/loadtest";
-        String API_NF_JSECURITYCHECK = "/j_security_check";
-
-        String API_NF_LOGIN = "/login";
-
-        //Role based Non-Functional API
-        String API_ADMIN_VERSION = "/version";
-        String API_ADMIN_STATUS = "/status";
-        String API_ADMIN_INSPECTION = "/inspection";
-
-        String X_AUTH_TOKEN = "X-AuthToken";// Response: JWT from Auth Center
     }
 }

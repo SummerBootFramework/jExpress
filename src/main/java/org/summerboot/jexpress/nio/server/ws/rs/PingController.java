@@ -36,7 +36,7 @@ abstract public class PingController {
     @Ping
     @Daemon
     @GET
-    @Path(BootController.Config.CURRENT_VERSION + BootController.Config.LOAD_BALANCER_HEALTH_CHECK)
+    @Path(BootURI.CURRENT_VERSION + BootURI.LOAD_BALANCER_PING)
     @Operation(
             tags = {"Load Balancing"},
             summary = "ping service status",
