@@ -14,6 +14,7 @@
 * ✨ New API: FormatterUtil.formatCurrency(BigDecimal amount, RoundingMode roundingMode)
 * WebResourceController.requestWebResource with @Daemon to serve web resources with enhanced reliability.
 * Refactoring: predefined URI constants inside BootURI
+* Performance improvement: Agent_PDFBox - Serial graphics processing converted to parallel processing
 
 ## Version 2.6.9 (2026-04-24)
 
