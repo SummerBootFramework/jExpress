@@ -1,17 +1,18 @@
 /*
- * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
- * "License"); you may not use this file except in compliance with the License and you have no
- * policy prohibiting employee contributions back to this file (unless the contributor to this
- * file is your current or retired employee). You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *     https://apache.org
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 package org.summerboot.jexpress.nio.server.ws.rs;
 
@@ -41,6 +42,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -56,6 +58,7 @@ import org.summerboot.jexpress.boot.annotation.Log;
 import org.summerboot.jexpress.boot.annotation.RequiresHealthCheck;
 import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
 import org.summerboot.jexpress.nio.server.domain.LoginVo;
@@ -63,6 +66,7 @@ import org.summerboot.jexpress.nio.server.domain.ServiceError;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 import org.summerboot.jexpress.security.auth.AuthConfig;
 import org.summerboot.jexpress.security.auth.Authenticator;
+import org.summerboot.jexpress.security.auth.BootAuthenticator;
 import org.summerboot.jexpress.security.auth.Caller;
 
 import javax.naming.NamingException;
@@ -262,6 +266,34 @@ abstract public class BootController extends PingController {
         //AuthTokenCache authTokenCache = getAuthTokenCache();
         auth.logoutToken(request.getHttpHeaders(), authTokenCache, context);
         context.status(HttpResponseStatus.NO_CONTENT);
+    }
+
+    @Operation(
+            tags = {TAG_USER_AUTH},
+            summary = "WebSocket One Time Ticket Authentication",
+            description = "Requires Bearer auth header",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "success and return OTT",
+                            headers = {
+                                    @Header(name = BootURI.X_AUTH_TOKEN, schema = @Schema(type = "string"), description = "Generated JWT")
+                            },
+                            content = @Content(schema = @Schema(implementation = Caller.class))
+                    ),
+                    @ApiResponse(responseCode = "4xx", description = DESC_4xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    ),
+                    @ApiResponse(responseCode = "5xx", description = DESC_5xx,
+                            content = @Content(schema = @Schema(implementation = ServiceError.class))
+                    )
+            }
+    )
+    @GET
+    @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_OTT)
+    @Daemon
+    @RequiresHealthCheck("")
+    public String oneTimeTicketAuthenticate(@HeaderParam(NioHttpUtil.HTTP_HEADER_AUTH_TOKEN) String authHeader, @Parameter(hidden = true) final SessionContext context) {
+        String jwt = BootAuthenticator.getBearerToken(authHeader);
+        return auth.oneTimeTicketAuthenticate(jwt, context);
     }
 
     @Operation(

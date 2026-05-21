@@ -1,19 +1,20 @@
 /*
- * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
- * "License"); you may not use this file except in compliance with the License and you have no
- * policy prohibiting employee contributions back to this file (unless the contributor to this
- * file is your current or retired employee). You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *     https://apache.org
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
-package org.summerboot.jexpress.nio.server;
+package org.summerboot.jexpress.nio.server.websocket;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -22,20 +23,17 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.nio.server.NioConfig;
+import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.security.auth.Caller;
-
-import java.util.List;
 
 /**
  * usage example:
@@ -67,12 +65,11 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
 
     protected Logger log = LogManager.getLogger(this.getClass());
     protected static final TextWebSocketFrame MSG_AUTH_FAILED = new TextWebSocketFrame("401 Unauthorized");
-
-    protected static final ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-
     protected static final AttributeKey KEY_CALLER = AttributeKey.valueOf("caller");
 
-    @Override
+    protected final ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+
+    /*@Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
             WebSocketServerProtocolHandler.HandshakeComplete event = (WebSocketServerProtocolHandler.HandshakeComplete) evt;
@@ -87,8 +84,7 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
                 System.out.println("requestedSubprotocols=" + requestedSubprotocol);
             }
         }
-    }
-
+    }*/
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -100,15 +96,15 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame msg) throws Exception {
         if (msg instanceof TextWebSocketFrame) {
-            channelRead0(ctx, (TextWebSocketFrame) msg);
+            onTextWebSocketFrame(ctx, (TextWebSocketFrame) msg);
         } else if (msg instanceof BinaryWebSocketFrame) {
-            channelRead0(ctx, (BinaryWebSocketFrame) msg);
+            onBinaryWebSocketFrame(ctx, (BinaryWebSocketFrame) msg);
         } else if (msg instanceof ContinuationWebSocketFrame) {
-            channelRead0(ctx, (ContinuationWebSocketFrame) msg);
+            onContinuationWebSocketFrame(ctx, (ContinuationWebSocketFrame) msg);
         }
     }
 
-    protected void channelRead0(ChannelHandlerContext ctx, BinaryWebSocketFrame msg) throws Exception {
+    protected void onBinaryWebSocketFrame(ChannelHandlerContext ctx, BinaryWebSocketFrame msg) throws Exception {
         ByteBuf bb = msg.content();
         byte[] data = ByteBufUtil.getBytes(bb);
         Runnable asyncTask = () -> {
@@ -117,7 +113,7 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
                 clients.remove(ctx.channel());
                 ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
                 ctx.close();
-                log.warn("Binary auth failed " + ctx.channel().remoteAddress());
+                log.warn("OTT auth failed " + ctx.channel().remoteAddress());
                 return;
             }
             String responseText = onMessage(ctx, caller, data);
@@ -128,40 +124,42 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
         NioConfig.cfg.getBizExecutor().execute(asyncTask);
     }
 
-    protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
+    protected void onTextWebSocketFrame(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
         String txt = msg.text();
         Runnable asyncTask = () -> {
             Caller caller = (Caller) ctx.channel().attr(KEY_CALLER).get();
             if (caller == null) {
-                caller = auth(txt);//use the first message as token to auth
+                /*caller = auth(ctx.channel().attr(WebSocketAuthHandler_OTT.USER_ID_KEY).get());//use the first message as token to auth
                 if (caller == null) {
                     clients.remove(ctx.channel());
                     ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
                     ctx.close();
-                    log.warn("Text auth failed " + ctx.channel().remoteAddress() + ": " + txt);
+                    log.warn("OTT auth failed " + ctx.channel().remoteAddress() + ": " + txt);
                     return;
                 }
                 ctx.channel().attr(KEY_CALLER).set(caller);
                 String message = onCallerConnected(ctx, caller);
                 if (message != null) {
                     sendToAllChannels(message, true);
-                }
-                return;
+                }*/
             }
 
             String responseText = onMessage(ctx, caller, txt);
             if (responseText != null) {
-                sendToChannel(ctx, responseText);
+                //sendToChannel(ctx, responseText);
+                sendToAllChannels(responseText, true);
             }
         };
         NioConfig.cfg.getBizExecutor().execute(asyncTask);
     }
 
-    protected void channelRead0(ChannelHandlerContext ctx, ContinuationWebSocketFrame msg) throws Exception {
+    protected void onContinuationWebSocketFrame(ChannelHandlerContext ctx, ContinuationWebSocketFrame msg) throws Exception {
 
     }
 
-    abstract protected Caller auth(String token);
+    protected Caller auth(Caller caller) {
+        return caller;
+    }
 
     abstract protected String onCallerConnected(ChannelHandlerContext ctx, Caller caller);
 
@@ -175,25 +173,25 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
 
     abstract protected String onMessage(ChannelHandlerContext ctx, Caller caller, byte[] data);
 
-    public static void sendToChannel(ChannelHandlerContext ctx, String message) {
+    public void sendToChannel(ChannelHandlerContext ctx, String message) {
         ctx.writeAndFlush(new TextWebSocketFrame(message));
     }
 
-    public static void sendToChannel(ChannelHandlerContext ctx, byte[] data) {
+    public void sendToChannel(ChannelHandlerContext ctx, byte[] data) {
         ctx.writeAndFlush(new BinaryWebSocketFrame(Unpooled.copiedBuffer(data)));
     }
 
-    public static void sendToAllChannels(String text, boolean auth) {
+    public void sendToAllChannels(String text, boolean auth) {
         TextWebSocketFrame message = new TextWebSocketFrame(text);
         sendToAllChannels(message, auth);
     }
 
-    public static void sendToAllChannels(byte[] data, boolean auth) {
+    public void sendToAllChannels(byte[] data, boolean auth) {
         BinaryWebSocketFrame message = new BinaryWebSocketFrame(Unpooled.copiedBuffer(data));
         sendToAllChannels(message, auth);
     }
 
-    public static void sendToAllChannels(WebSocketFrame message, boolean auth) {
+    public void sendToAllChannels(WebSocketFrame message, boolean auth) {
         if (auth) {
             clients.stream()
                     .filter(channel -> channel.attr(KEY_CALLER).get() != null)
@@ -206,8 +204,30 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
-        clients.add(ctx.channel());
-        log.trace(() -> "handlerAdded: " + ctx.channel().remoteAddress());
+        Runnable asyncTask = () -> {
+            Caller caller = (Caller) ctx.channel().attr(KEY_CALLER).get();
+            if (caller == null) {
+                caller = auth(ctx.channel().attr(WebSocketAuthHandler_OTT.USER_ID_KEY).get());//use the first message as token to auth
+                if (caller == null) {
+                    clients.remove(ctx.channel());
+                    ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
+                    ctx.close();
+                    log.warn("OTT " + ctx.channel().remoteAddress() + ": " + ctx);
+                    ctx.close();
+                    return;
+                }
+
+                ctx.channel().attr(KEY_CALLER).set(caller);
+                clients.add(ctx.channel());
+                log.trace(() -> "handlerAdded: " + ctx.channel().remoteAddress());
+
+                String message = onCallerConnected(ctx, caller);
+                if (message != null) {
+                    sendToAllChannels(message, true);
+                }
+            }
+        };
+        NioConfig.cfg.getBizExecutor().execute(asyncTask);
     }
 
     @Override

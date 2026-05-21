@@ -1,17 +1,18 @@
 /*
- * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
- * "License"); you may not use this file except in compliance with the License and you have no
- * policy prohibiting employee contributions back to this file (unless the contributor to this
- * file is your current or retired employee). You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *     https://apache.org
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 package org.summerboot.jexpress.security.auth;
 
@@ -42,6 +43,7 @@ import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.nio.grpc.BearerAuthCredential;
 import org.summerboot.jexpress.nio.grpc.ContextualizedServerCallListenerEx;
 import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
+import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.nio.server.RequestProcessor;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.Err;
@@ -182,7 +184,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         return builder;
     }
 
-    protected Claims parseJWT(String jwt) {
+    public static Claims parseJWT(String jwt) {
         JwtParser jwtParser = AuthConfig.cfg.getJwtParser();
         if (jwtParser == null) {
             throw new UnsupportedOperationException(ERROR_NO_CFG);
@@ -201,7 +203,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param claims
      * @return Caller
      */
-    protected Caller fromJwt(Claims claims) {
+    public static Caller fromJwt(Claims claims) {
         //String issuer = claims.getIssuer();
         String userName = claims.getSubject();
         Set<String> audience = claims.getAudience();
@@ -286,7 +288,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      */
     public static String getBearerToken(String authHeaderValue) {
         // return authHeaderValue.substring(BearerAuthCredential.BEARER_TYPE.length()).trim();
-        if (StringUtils.isBlank(authHeaderValue) || !authHeaderValue.startsWith("Bearer ")) {
+        if (StringUtils.isBlank(authHeaderValue) || !authHeaderValue.startsWith(NioHttpUtil.HTTP_HEADER_AUTH_TYPE + " ")) {
             return null;
         }
         String[] a = authHeaderValue.split(" ");
@@ -500,6 +502,26 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
         };
     }
 
+    @Override
+    public String oneTimeTicketAuthenticate(String jwt, SessionContext context) {
+        //Claims claims = BootAuthenticator.parseJWT(jwt);
+        //Caller caller = BootAuthenticator.fromJwt(claims);
+        Caller caller = context.caller();
+        if (caller == null) {
+            caller = verifyToken(jwt, authTokenCache, null, context);
+        }
+        if (caller == null) {
+            return null;
+        }
+        String ott = SecurityUtil.generateOneTimeTicket();
+        authTokenCache.oneTimeTicketPut(ott, caller, Duration.ofSeconds(AuthConfig.cfg.getOttTtlSeconds()).toMillis());
+        return ott;
+    }
+
+    @Override
+    public Caller oneTimeTicketVerifyAndDestroy(String oneTimeTicket) {
+        return authTokenCache.oneTimeTicketVerifyAndDestroy(oneTimeTicket);
+    }
 
 }
 
