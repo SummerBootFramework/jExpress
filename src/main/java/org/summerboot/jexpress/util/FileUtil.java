@@ -113,10 +113,10 @@ public class FileUtil {
             if (ext != null && ext.startsWith(".")) {
                 ext = ext.substring(1); // 返回 "png" 或 "jpg"
             }
-            String[] ret = {type, ext};
+            String[] ret = {mimeTypeStr, type, ext};
             return ret;
         } catch (Exception e) {
-            String[] ret = {"", ""};
+            String[] ret = {"", "", ""};
             return ret;
         }
     }

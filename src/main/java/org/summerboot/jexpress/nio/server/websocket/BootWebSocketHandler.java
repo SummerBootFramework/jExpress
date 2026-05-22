@@ -171,7 +171,7 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
             } else if (data != null) {
                 String[] mimeType = FileUtil.getMIMEShortExtension(data);
                 StringBuilder sb = new StringBuilder();
-                byte[] processedData = onMessage(ctx, caller, data, mimeType[0], mimeType[1], sb);
+                byte[] processedData = onMessage(ctx, caller, data, mimeType[0], mimeType[1], mimeType[2], sb);
                 if (processedData != null) {
                     sendToAllChannels(processedData, true);
                 }
@@ -199,7 +199,7 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
      */
     abstract protected String onMessage(ChannelHandlerContext ctx, Caller caller, String txt);
 
-    abstract protected byte[] onMessage(ChannelHandlerContext ctx, Caller caller, byte[] data, String mimeType, String fileExtension, StringBuilder builder);
+    abstract protected byte[] onMessage(ChannelHandlerContext ctx, Caller caller, byte[] data, String mimeType, String fileType, String fileExtension, StringBuilder builder);
 
     public void sendToChannel(ChannelHandlerContext ctx, String message) {
         ctx.writeAndFlush(new TextWebSocketFrame(message));
