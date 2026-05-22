@@ -23,9 +23,12 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AttributeKey;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.Caller;
@@ -40,7 +43,8 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
     public static final AttributeKey<Caller> USER_ID_KEY = AttributeKey.valueOf("userId");
     public static final String CHANNEL_NAME = "WebSocketAuthHandler_OTT";
     public static final String CHANNEL_CHANNEL_NAME_NEXT = "BootWebSocketServerProtocolHandler";
-    public static final String WS_PATH_PREFIX = "/ws";
+    public static final String WS_PATH = "/ws";
+    public static final String WS_PATH_PREFIX = WS_PATH + "/";
 
 
     protected final Injector injector;
@@ -76,6 +80,7 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
                     String oneTimeTicket = uriRequested.substring(uriPredefinedOTT.length());
                     Caller caller = verifyAndDestroyTicket(oneTimeTicket); // 校验并销毁 Ticket
                     if (caller == null) {
+                        sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FORBIDDEN));
                         break;
                     }
                     // save OTT result to channel attr
@@ -94,24 +99,6 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
                     ctx.fireChannelRead(msg);
                     return;
                 }
-            /*if (uriRequested.startsWith(CHAT_PATH_PREFIX)) {
-                String oneTimeTicket = uriRequested.substring(CHAT_PATH_PREFIX.length());
-                Caller caller = verifyAndDestroyTicket(oneTimeTicket); // 校验并销毁 Ticket
-
-                if (caller != null) {
-                    ctx.channel().attr(USER_ID_KEY).set(caller);
-
-                    // 【核心点】动态向管道末尾添加聊天专属业务 Handler
-                    //ctx.pipeline().addLast("businessHandler", new ChatModuleHandler());
-                    ChannelHandler ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named("/ws/chat")));
-                    //ch = new ChatModuleHandler();
-                    ctx.pipeline().addAfter(CHANNEL_CHANNEL_NAME_NEXT, "wsChatModuleHandler", ch);
-
-                    // 重写 URI，让下游的 WebSocketServerProtocolHandler 能够精准匹配升级
-                    request.setUri("/ws/chat");
-                    ctx.fireChannelRead(msg);
-                    return;
-                }*/
             }
 
             // 3. 认证失败或路径不匹配：直接拒绝连接
@@ -123,14 +110,14 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
         ctx.fireChannelRead(msg);
     }
 
-    private Caller verifyAndDestroyTicket(String oneTimeTicket) {
+    protected Caller verifyAndDestroyTicket(String oneTimeTicket) {
         if (authenticator == null) {
             return null;
         }
         return authenticator.oneTimeTicketVerifyAndDestroy(oneTimeTicket);
     }
 
-    private void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {
+    protected void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {
         HttpUtil.setContentLength(res, 0);
         ctx.channel().writeAndFlush(res).addListener(ChannelFutureListener.CLOSE);
     }

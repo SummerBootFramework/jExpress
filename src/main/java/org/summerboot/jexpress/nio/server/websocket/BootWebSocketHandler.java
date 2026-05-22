@@ -27,13 +27,15 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tika.Tika;
+import org.apache.tika.mime.MimeTypes;
 import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.util.FileUtil;
 
 /**
  * usage example:
@@ -65,9 +67,12 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
 
     protected Logger log = LogManager.getLogger(this.getClass());
     protected static final TextWebSocketFrame MSG_AUTH_FAILED = new TextWebSocketFrame("401 Unauthorized");
-    protected static final AttributeKey KEY_CALLER = AttributeKey.valueOf("caller");
 
     protected final ChannelGroup clients = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+
+
+    protected static final Tika TIKA = new Tika();
+    protected static final MimeTypes REGISTRY = MimeTypes.getDefaultMimeTypes();
 
     /*@Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
@@ -85,6 +90,42 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
             }
         }
     }*/
+
+
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) {
+        Runnable asyncTask = () -> {
+            Caller caller = ctx.channel().attr(WebSocketAuthHandler_OTT.USER_ID_KEY).get();
+            if (caller == null) {
+                clients.remove(ctx.channel());
+                ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
+                ctx.close();
+                log.warn("OTT auth failed - " + ctx.channel().remoteAddress() + ": " + ctx);
+                ctx.close();
+                return;
+            }
+
+            clients.add(ctx.channel());
+            log.trace(() -> "handlerAdded: " + ctx.channel().remoteAddress());
+
+            String message = onCallerConnected(ctx, caller);
+            if (message != null) {
+                sendToAllChannels(message, true);
+            }
+        };
+        NioConfig.cfg.getBizExecutor().execute(asyncTask);
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        log.trace(() -> "channelActive: " + ctx.channel().remoteAddress());
+    }
+
+    @Override
+    public void handlerRemoved(ChannelHandlerContext ctx) {
+        clients.remove(ctx.channel());
+        log.trace(() -> "handlerRemoved: " + ctx.channel().remoteAddress());
+    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -107,53 +148,40 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
     protected void onBinaryWebSocketFrame(ChannelHandlerContext ctx, BinaryWebSocketFrame msg) throws Exception {
         ByteBuf bb = msg.content();
         byte[] data = ByteBufUtil.getBytes(bb);
-        Runnable asyncTask = () -> {
-            Caller caller = (Caller) ctx.channel().attr(KEY_CALLER).get();
-            if (caller == null) {
-                clients.remove(ctx.channel());
-                ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
-                ctx.close();
-                log.warn("OTT auth failed " + ctx.channel().remoteAddress());
-                return;
-            }
-            String responseText = onMessage(ctx, caller, data);
-            if (responseText != null) {
-                sendToChannel(ctx, responseText);
-            }
-        };
-        NioConfig.cfg.getBizExecutor().execute(asyncTask);
+        processMessage(ctx, null, data);
     }
 
     protected void onTextWebSocketFrame(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
         String txt = msg.text();
-        Runnable asyncTask = () -> {
-            Caller caller = (Caller) ctx.channel().attr(KEY_CALLER).get();
-            if (caller == null) {
-                /*caller = auth(ctx.channel().attr(WebSocketAuthHandler_OTT.USER_ID_KEY).get());//use the first message as token to auth
-                if (caller == null) {
-                    clients.remove(ctx.channel());
-                    ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
-                    ctx.close();
-                    log.warn("OTT auth failed " + ctx.channel().remoteAddress() + ": " + txt);
-                    return;
-                }
-                ctx.channel().attr(KEY_CALLER).set(caller);
-                String message = onCallerConnected(ctx, caller);
-                if (message != null) {
-                    sendToAllChannels(message, true);
-                }*/
-            }
-
-            String responseText = onMessage(ctx, caller, txt);
-            if (responseText != null) {
-                //sendToChannel(ctx, responseText);
-                sendToAllChannels(responseText, true);
-            }
-        };
-        NioConfig.cfg.getBizExecutor().execute(asyncTask);
+        processMessage(ctx, txt, null);
     }
 
     protected void onContinuationWebSocketFrame(ChannelHandlerContext ctx, ContinuationWebSocketFrame msg) throws Exception {
+
+    }
+
+    protected void processMessage(ChannelHandlerContext ctx, String text, byte[] data) {
+        Runnable asyncTask = () -> {
+            Caller caller = (Caller) ctx.channel().attr(WebSocketAuthHandler_OTT.USER_ID_KEY).get();
+            if (text != null) {
+                String responseText = onMessage(ctx, caller, text);
+                if (responseText != null) {
+                    sendToAllChannels(responseText, true);
+                }
+            } else if (data != null) {
+                String[] mimeType = FileUtil.getMIMEShortExtension(data);
+                StringBuilder sb = new StringBuilder();
+                byte[] processedData = onMessage(ctx, caller, data, mimeType[0], mimeType[1], sb);
+                if (processedData != null) {
+                    sendToAllChannels(processedData, true);
+                }
+                if (!sb.isEmpty()) {
+                    sendToAllChannels(sb.toString(), true);
+                }
+            }
+
+        };
+        NioConfig.cfg.getBizExecutor().execute(asyncTask);
 
     }
 
@@ -171,7 +199,7 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
      */
     abstract protected String onMessage(ChannelHandlerContext ctx, Caller caller, String txt);
 
-    abstract protected String onMessage(ChannelHandlerContext ctx, Caller caller, byte[] data);
+    abstract protected byte[] onMessage(ChannelHandlerContext ctx, Caller caller, byte[] data, String mimeType, String fileExtension, StringBuilder builder);
 
     public void sendToChannel(ChannelHandlerContext ctx, String message) {
         ctx.writeAndFlush(new TextWebSocketFrame(message));
@@ -194,51 +222,16 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
     public void sendToAllChannels(WebSocketFrame message, boolean auth) {
         if (auth) {
             clients.stream()
-                    .filter(channel -> channel.attr(KEY_CALLER).get() != null)
+                    /*.filter(channel -> {
+                        Caller caller = channel.attr(WebSocketAuthHandler_OTT.USER_ID_KEY).get();
+                        return caller != null;
+                    })*/
+                    .filter(channel -> channel.attr(WebSocketAuthHandler_OTT.USER_ID_KEY).get() != null)
                     .forEach(channel -> channel.writeAndFlush(message.retainedDuplicate()));
         } else {
             clients.stream()
                     .forEach(channel -> channel.writeAndFlush(message.retainedDuplicate()));
         }
-    }
-
-    @Override
-    public void handlerAdded(ChannelHandlerContext ctx) {
-        Runnable asyncTask = () -> {
-            Caller caller = (Caller) ctx.channel().attr(KEY_CALLER).get();
-            if (caller == null) {
-                caller = auth(ctx.channel().attr(WebSocketAuthHandler_OTT.USER_ID_KEY).get());//use the first message as token to auth
-                if (caller == null) {
-                    clients.remove(ctx.channel());
-                    ctx.writeAndFlush(MSG_AUTH_FAILED.retainedDuplicate());
-                    ctx.close();
-                    log.warn("OTT " + ctx.channel().remoteAddress() + ": " + ctx);
-                    ctx.close();
-                    return;
-                }
-
-                ctx.channel().attr(KEY_CALLER).set(caller);
-                clients.add(ctx.channel());
-                log.trace(() -> "handlerAdded: " + ctx.channel().remoteAddress());
-
-                String message = onCallerConnected(ctx, caller);
-                if (message != null) {
-                    sendToAllChannels(message, true);
-                }
-            }
-        };
-        NioConfig.cfg.getBizExecutor().execute(asyncTask);
-    }
-
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        log.trace(() -> "channelActive: " + ctx.channel().remoteAddress());
-    }
-
-    @Override
-    public void handlerRemoved(ChannelHandlerContext ctx) {
-        clients.remove(ctx.channel());
-        log.trace(() -> "handlerRemoved: " + ctx.channel().remoteAddress());
     }
 
 }

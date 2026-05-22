@@ -143,8 +143,8 @@ public class ScanedGuiceModule extends AbstractModule {
         Set<String> namedWebsocket = channelHandlerNames.get(Service.ChannelHandlerType.Websocket);
         if (namedWebsocket != null) {
             for (String s : namedWebsocket) {
-                if (s == null || !s.startsWith(WebSocketAuthHandler_OTT.WS_PATH_PREFIX + "/")) {
-                    String errorMessage = "@Service(binding = ChannelHandler.class, named = \"" + s + "\", type = Service.ChannelHandlerType.Websocket): named field value must start with " + WebSocketAuthHandler_OTT.WS_PATH_PREFIX + "/, but found: " + s;
+                if (s == null || !s.startsWith(WebSocketAuthHandler_OTT.WS_PATH_PREFIX)) {
+                    String errorMessage = "@Service(binding = ChannelHandler.class, named = \"" + s + "\", type = Service.ChannelHandlerType.Websocket): named field value must start with " + WebSocketAuthHandler_OTT.WS_PATH_PREFIX + ", but found: " + s;
                     throw new IllegalArgumentException(errorMessage);
                 }
             }

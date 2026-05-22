@@ -16,6 +16,11 @@
  */
 package org.summerboot.jexpress.util;
 
+import org.apache.tika.Tika;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeType;
+import org.apache.tika.mime.MimeTypes;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -85,6 +90,34 @@ public class FileUtil {
                 break;
             }
             Files.delete(partFile.toPath());
+        }
+    }
+
+    public static final Tika TIKA = new Tika();
+    public static final MimeTypes TIKA_REGISTRY = MimeTypes.getDefaultMimeTypes();
+
+    public static String[] getMIMEShortExtension(byte[] fileData) {
+        try {
+            // 1. 先通过字节码识别出长 MIME 类型（例如 "image/png" 或 "image/jpeg"）
+            String mimeTypeStr = TIKA.detect(fileData);
+
+            // 2. 从 Tika 注册表中找到该类型对应的 MimeType 对象
+            MimeType mimeType = TIKA_REGISTRY.getRegisteredMimeType(mimeTypeStr);
+
+            // 3. 获取短扩展名（注意：Tika 返回的带有 "."，例如 ".png" 或 ".jpg"）
+            MediaType mediaType = mimeType.getType();
+            String type = mediaType.getType();
+            String ext = mimeType.getExtension();
+
+            // 如果你想去掉前面的点，可以做个简单处理
+            if (ext != null && ext.startsWith(".")) {
+                ext = ext.substring(1); // 返回 "png" 或 "jpg"
+            }
+            String[] ret = {type, ext};
+            return ret;
+        } catch (Exception e) {
+            String[] ret = {"", ""};
+            return ret;
         }
     }
 
