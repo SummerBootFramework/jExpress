@@ -405,8 +405,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             boolean isAuthorized = false;
             Caller caller = context.caller();
             if (caller == null) {
-                context.status(HttpResponseStatus.UNAUTHORIZED)
-                        .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Authentication Required - Unknown caller", null));
+                context.error(Err.UNAUTHORIZED_401).status(HttpResponseStatus.UNAUTHORIZED);
                 return false;
             }
 

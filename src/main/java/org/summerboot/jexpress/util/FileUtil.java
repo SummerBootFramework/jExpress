@@ -121,4 +121,27 @@ public class FileUtil {
         }
     }
 
+    public static String formatFileSize(long sizeOfBytes) {
+        double size = sizeOfBytes / 1024.0d; // Start from KB so sub-1KB values become 0.xxKB
+        String[] units = {"KB", "MB", "GB", "TB", "PB"};
+        int unitIndex = 0;
+
+        while (size >= 1024.0d && unitIndex < units.length - 1) {
+            size /= 1024.0d;
+            unitIndex++;
+        }
+
+        // Manual two-decimal formatting avoids String.format(Locale, ...) overhead.
+        long scaled = Math.round(size * 100.0d);
+        long integerPart = scaled / 100;
+        int fractionalPart = (int) (scaled % 100);
+
+        StringBuilder sb = new StringBuilder(16);
+        sb.append(integerPart).append('.');
+        if (fractionalPart < 10) {
+            sb.append('0');
+        }
+        sb.append(fractionalPart).append(units[unitIndex]);
+        return sb.toString();
+    }
 }

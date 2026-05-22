@@ -100,7 +100,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     @Override
     public String signJWT(Caller caller, int validForMinutes, final SessionContext context) {
         if (caller == null) {
-            context.status(HttpResponseStatus.UNAUTHORIZED);
+            context.error(Err.UNAUTHORIZED_401).status(HttpResponseStatus.UNAUTHORIZED);
             return null;
         }
 
@@ -363,7 +363,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                     if (error == null) {
                         caller = fromJwt(claims);
                     } else {
-                        Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_JWT, null, "Forbidden JWT", null, "Forbidden JWT: " + error);
+                        Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_JWT, null, "Blocked JWT", null, "Blocked JWT: " + error);
                         context.error(err).status(HttpResponseStatus.FORBIDDEN);
                     }
                 }
@@ -503,7 +503,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     @Override
-    public String oneTimeTicketAuthenticate(String jwt, SessionContext context) {
+    public String oneTimeTicketAuthenticate(String wsURI, String jwt, SessionContext context) {
         //Claims claims = BootAuthenticator.parseJWT(jwt);
         //Caller caller = BootAuthenticator.fromJwt(claims);
         Caller caller = context.caller();
@@ -511,11 +511,30 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
             caller = verifyToken(jwt, authTokenCache, null, context);
         }
         if (caller == null) {
+            context.error(Err.UNAUTHORIZED_401).status(HttpResponseStatus.UNAUTHORIZED);
             return null;
+        }
+
+        String errorMsg = oneTimeTicketAuthorize(wsURI, caller, context);
+        if (errorMsg != null) {
+            context.status(HttpResponseStatus.FORBIDDEN)
+                    .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, errorMsg, null));
         }
         String ott = SecurityUtil.generateOneTimeTicket();
         authTokenCache.oneTimeTicketPut(ott, caller, Duration.ofSeconds(AuthConfig.cfg.getOttTtlSeconds()).toMillis());
         return ott;
+    }
+
+    /**
+     * Authorize caller
+     *
+     * @param wsURI
+     * @param caller
+     * @param context
+     * @return null if caller is authorized, otherwise error message
+     */
+    protected String oneTimeTicketAuthorize(String wsURI, Caller caller, SessionContext context) {
+        return null;
     }
 
     @Override

@@ -80,7 +80,7 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
                     String oneTimeTicket = uriRequested.substring(uriPredefinedOTT.length());
                     Caller caller = verifyAndDestroyTicket(oneTimeTicket); // 校验并销毁 Ticket
                     if (caller == null) {
-                        sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FORBIDDEN));
+                        sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED));
                         break;
                     }
                     // save OTT result to channel attr

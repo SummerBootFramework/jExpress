@@ -171,13 +171,13 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 } else {
                     String error = GeoIpUtil.callerAddressFilter(context.remoteIP(), nioCfg.getCallerAddressFilterWhitelist(), nioCfg.getCallerAddressFilterBlacklist(), nioCfg.getCallerAddressFilterOption());
                     if (error != null) {
-                        Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_IP, null, "Forbidden caller IP", null, "Forbidden caller IP: " + error);
+                        Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_IP, null, "Blocked caller IP", null, "Blocked caller IP: " + error);
                         context.error(err).status(HttpResponseStatus.FORBIDDEN);
                     } else {
                         String request = httpMethod + httpRequestUri;
                         error = SecurityUtil.whitelistbalcklistilter("request", request, nioCfg.getRequestFilterWhitelist(), nioCfg.getRequestFilterBlacklist());
                         if (error != null) {
-                            Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_REQUST, null, "Forbidden caller request", null, "Forbidden caller request: " + error);
+                            Err err = new Err(BootErrorCode.AUTH_FORBIDDEN_REQUEST, null, "Blocked URL", null, "Blocked URL: " + error);
                             context.error(err).status(HttpResponseStatus.FORBIDDEN);
                         } else {
                             processorSettings = service(ctx, requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);

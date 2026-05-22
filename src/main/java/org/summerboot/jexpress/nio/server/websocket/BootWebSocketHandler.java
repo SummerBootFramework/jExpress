@@ -145,15 +145,15 @@ abstract public class BootWebSocketHandler extends SimpleChannelInboundHandler<W
         }
     }
 
+    protected void onTextWebSocketFrame(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
+        String txt = msg.text();
+        processMessage(ctx, txt, null);
+    }
+
     protected void onBinaryWebSocketFrame(ChannelHandlerContext ctx, BinaryWebSocketFrame msg) throws Exception {
         ByteBuf bb = msg.content();
         byte[] data = ByteBufUtil.getBytes(bb);
         processMessage(ctx, null, data);
-    }
-
-    protected void onTextWebSocketFrame(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
-        String txt = msg.text();
-        processMessage(ctx, txt, null);
     }
 
     protected void onContinuationWebSocketFrame(ChannelHandlerContext ctx, ContinuationWebSocketFrame msg) throws Exception {

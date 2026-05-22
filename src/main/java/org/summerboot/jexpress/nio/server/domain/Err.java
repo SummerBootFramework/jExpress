@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.util.BeanUtil;
 
 /**
@@ -45,6 +46,8 @@ public class Err extends AdditionalJsonFields {
 
     @JsonIgnore
     protected Object internalInfo;
+
+    public static final Err UNAUTHORIZED_401 = new Err(BootErrorCode.AUTH_LOGIN_FAILED, null, "Authentication Required - Unknown caller", null);
 
     public Err() {
     }

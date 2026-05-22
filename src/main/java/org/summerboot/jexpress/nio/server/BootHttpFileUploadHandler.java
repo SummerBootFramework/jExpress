@@ -279,8 +279,7 @@ public abstract class BootHttpFileUploadHandler<T extends Object> extends Simple
 
         caller = authenticate(httpHeaders, context);
         if (caller == null) {
-            Err err = new Err(BootErrorCode.AUTH_NO_PERMISSION, null, "Unauthorized Caller", null);
-            context.error(err).status(HttpResponseStatus.UNAUTHORIZED);
+            context.error(Err.UNAUTHORIZED_401).status(HttpResponseStatus.UNAUTHORIZED);
             NioHttpUtil.sendResponse(ctx, true, context, null, null);
             return 0;
         }
