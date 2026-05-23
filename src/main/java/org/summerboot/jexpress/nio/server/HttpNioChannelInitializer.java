@@ -126,7 +126,7 @@ public class HttpNioChannelInitializer extends NioChannelInitializer {
             // 关键点：我们将路径设置为 null。设置为 null 意味着它不会主动去拦截并匹配固定 URL，
             // 而是只要看到带有符合标准的 WebSocket Upgrade 请求头，它就会自动在原地执行握手升级！
             // 这样无论我们前面把 URI 改成 /ws/chat 还是 /ws/game，它都能兼容升级。
-            String webSocketURI = WebSocketAuthHandler_OTT.WS_PATH_PREFIX;
+            String webSocketURI = WebSocketAuthHandler_OTT.WS_PATH;
             channelPipeline.addLast(WebSocketAuthHandler_OTT.CHANNEL_CHANNEL_NAME_NEXT, new WebSocketServerProtocolHandler(webSocketURI, null, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
 
             // 3. 注意：这里【不要】像之前一样 addLast(new BusinessHandler) 了。

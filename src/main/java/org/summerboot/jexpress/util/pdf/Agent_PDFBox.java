@@ -30,6 +30,7 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.rendering.RenderDestination;
+import org.summerboot.jexpress.util.ApplicationUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -41,6 +42,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -316,10 +319,24 @@ public class Agent_PDFBox {
     public static List<BufferedImage> pdf2Images(PDDocument document, float dpi, ImageType imageType, RenderDestination destination) throws IOException {
         PDFRenderer renderer = new PDFRenderer(document);
         int totalPages = document.getNumberOfPages();
-        List<BufferedImage> images = new ArrayList();
-        for (int currentPage = 0; currentPage < totalPages; currentPage++) {
+        List<BufferedImage> images = new ArrayList(totalPages);
+        /*for (int currentPage = 0; currentPage < totalPages; currentPage++) {
             BufferedImage image = renderer.renderImage(currentPage, dpi / 72f, imageType, destination);
             images.add(image);
+        }*/
+        List<Callable<BufferedImage>> tasks = new ArrayList<>(totalPages);
+        for (int currentPage = 0; currentPage < totalPages; currentPage++) {
+            final int index = currentPage;
+            Callable<BufferedImage> task = () -> {
+                BufferedImage image = renderer.renderImage(index, dpi / 72f, imageType, destination);
+                return image;
+            };
+            tasks.add(task);
+        }
+        try {
+            ApplicationUtil.runAndWaitForAllResults(tasks, images);
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
         return images;
     }
@@ -332,13 +349,29 @@ public class Agent_PDFBox {
      * @throws IOException
      */
     public static List<byte[]> images2Bytes(List<BufferedImage> images, String formatName) throws IOException {
-        List<byte[]> imageDataList = new ArrayList(images.size());
+        int totalPages = images.size();
+        List<byte[]> imageDataList = new ArrayList(totalPages);
+        List<Callable<byte[]>> tasks = new ArrayList<>(totalPages);
+        /*for (BufferedImage image : images) {
+                try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
+                    ImageIO.write(image, formatName, baos);
+                    byte[] imageData = baos.toByteArray();
+                    imageDataList.add(imageData);
+                }
+        }*/
         for (BufferedImage image : images) {
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
-                ImageIO.write(image, formatName, baos);
-                byte[] imageData = baos.toByteArray();
-                imageDataList.add(imageData);
-            }
+            Callable<byte[]> task = () -> {
+                try (ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
+                    ImageIO.write(image, formatName, baos);
+                    return baos.toByteArray();
+                }
+            };
+            tasks.add(task);
+        }
+        try {
+            ApplicationUtil.runAndWaitForAllResults(tasks, imageDataList);
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
         return imageDataList;
     }

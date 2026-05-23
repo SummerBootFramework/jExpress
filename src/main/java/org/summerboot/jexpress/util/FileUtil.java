@@ -16,6 +16,11 @@
  */
 package org.summerboot.jexpress.util;
 
+import org.apache.tika.Tika;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeType;
+import org.apache.tika.mime.MimeTypes;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -88,4 +93,55 @@ public class FileUtil {
         }
     }
 
+    public static final Tika TIKA = new Tika();
+    public static final MimeTypes TIKA_REGISTRY = MimeTypes.getDefaultMimeTypes();
+
+    public static String[] getMIMEShortExtension(byte[] fileData) {
+        try {
+            // 1. 先通过字节码识别出长 MIME 类型（例如 "image/png" 或 "image/jpeg"）
+            String mimeTypeStr = TIKA.detect(fileData);
+
+            // 2. 从 Tika 注册表中找到该类型对应的 MimeType 对象
+            MimeType mimeType = TIKA_REGISTRY.getRegisteredMimeType(mimeTypeStr);
+
+            // 3. 获取短扩展名（注意：Tika 返回的带有 "."，例如 ".png" 或 ".jpg"）
+            MediaType mediaType = mimeType.getType();
+            String type = mediaType.getType();
+            String ext = mimeType.getExtension();
+
+            // 如果你想去掉前面的点，可以做个简单处理
+            if (ext != null && ext.startsWith(".")) {
+                ext = ext.substring(1); // 返回 "png" 或 "jpg"
+            }
+            String[] ret = {mimeTypeStr, type, ext};
+            return ret;
+        } catch (Exception e) {
+            String[] ret = {"", "", ""};
+            return ret;
+        }
+    }
+
+    public static String formatFileSize(long sizeOfBytes) {
+        double size = sizeOfBytes / 1024.0d; // Start from KB so sub-1KB values become 0.xxKB
+        String[] units = {"KB", "MB", "GB", "TB", "PB"};
+        int unitIndex = 0;
+
+        while (size >= 1024.0d && unitIndex < units.length - 1) {
+            size /= 1024.0d;
+            unitIndex++;
+        }
+
+        // Manual two-decimal formatting avoids String.format(Locale, ...) overhead.
+        long scaled = Math.round(size * 100.0d);
+        long integerPart = scaled / 100;
+        int fractionalPart = (int) (scaled % 100);
+
+        StringBuilder sb = new StringBuilder(16);
+        sb.append(integerPart).append('.');
+        if (fractionalPart < 10) {
+            sb.append('0');
+        }
+        sb.append(fractionalPart).append(units[unitIndex]);
+        return sb.toString();
+    }
 }

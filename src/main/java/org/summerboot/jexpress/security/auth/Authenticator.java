@@ -137,11 +137,12 @@ public interface Authenticator<T> {
      * in production, generate a random string as one-time ticket, store it in redis with key "ws:ticket:" + oneTimeTicket, value = caller (or json string),
      * and set expire time to 10 seconds. return the one-time ticket string to caller.
      *
-     * @param jwt
+     * @param wsURI   WebSocket URI
+     * @param jwt     caller's JWT, can be used to verify caller's identity and generate one-time ticket for specific user
      * @param context contains caller info, e.g. caller.getUid() can be used to generate one-time ticket for specific user
      * @return (32 to 64 chars + prefix) random string as one-time ticket, e.g. t_f87yfs7shfash7kk7a877asdf
      */
-    String oneTimeTicketAuthenticate(String jwt, SessionContext context);
+    String oneTimeTicketAuthenticate(String wsURI, String jwt, SessionContext context);
 
     /**
      * in production, call redis.getdel("ws:ticket:" + oneTimeTicket)

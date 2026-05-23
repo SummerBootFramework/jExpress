@@ -291,9 +291,10 @@ abstract public class BootController extends PingController {
     @Path(BootURI.CURRENT_VERSION + BootURI.API_NF_OTT)
     @Daemon
     @RequiresHealthCheck("")
-    public String oneTimeTicketAuthenticate(@HeaderParam(NioHttpUtil.HTTP_HEADER_AUTH_TOKEN) String authHeader, @Parameter(hidden = true) final SessionContext context) {
+    @Log(responseBody = false)
+    public String oneTimeTicketAuthenticate(@QueryParam("wsURI") String wsURI, @HeaderParam(NioHttpUtil.HTTP_HEADER_AUTH_TOKEN) String authHeader, @Parameter(hidden = true) final SessionContext context) {
         String jwt = BootAuthenticator.getBearerToken(authHeader);
-        return auth.oneTimeTicketAuthenticate(jwt, context);
+        return auth.oneTimeTicketAuthenticate(wsURI, jwt, context);
     }
 
     @Operation(
