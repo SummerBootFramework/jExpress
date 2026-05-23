@@ -27,6 +27,7 @@ import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.AttributeKey;
+import org.summerboot.jexpress.nio.server.NioConfig;
 import org.summerboot.jexpress.security.auth.Caller;
 
 import java.io.File;
@@ -66,7 +67,7 @@ public abstract class LargeFileStreamHandler extends SimpleChannelInboundHandler
 
             // Initialize on first frame only
             if (fileChannel == null) {
-                Path targetPath = Paths.get("data", "uploads", "huge_file_" + userId + "_" + System.currentTimeMillis() + ".dat").toAbsolutePath();
+                Path targetPath = Paths.get(NioConfig.instance(NioConfig.class).getTempUoloadDir(), String.valueOf(caller.getId()), System.currentTimeMillis() + ".dat").toAbsolutePath();
                 Path parent = targetPath.getParent();
                 if (parent != null) {
                     Files.createDirectories(parent);
