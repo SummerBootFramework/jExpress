@@ -220,8 +220,8 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.httpServerCodec.MaxHeaderSize", defaultValue = "8192")
     protected volatile int httpServerCodec_MaxHeaderSize = 8192;
 
-    @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "8192")
-    protected volatile int httpServerCodec_MaxChunkSize = 8192;
+    @Config(key = "nio.server.httpServerCodec.MaxChunkSize", defaultValue = "5242880")
+    protected volatile int httpServerCodec_MaxChunkSize = 5242880;
 
     @ConfigHeader(title = "4.2 Netty Performance - NIO and Biz Executor Pool")
     @Config(key = "nio.server.EventLoopGroup.Acceptor.useVirtualThread", defaultValue = "false")

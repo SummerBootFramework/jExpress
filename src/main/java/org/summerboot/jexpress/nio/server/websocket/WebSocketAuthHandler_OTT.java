@@ -89,7 +89,6 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
                     // 【核心点】动态向管道末尾添加聊天专属业务 Handler
                     //ctx.pipeline().addLast("businessHandler", new ChatModuleHandler());
                     ChannelHandler ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(uriPredefined))); // "/ws/chat"
-                    //ch = new ChatModuleHandler();
                     ctx.pipeline().addAfter(CHANNEL_CHANNEL_NAME_NEXT, "ScannedWebSocketHandler", ch);
 
                     // 重写 URI，让下游的 WebSocketServerProtocolHandler 能够精准匹配升级

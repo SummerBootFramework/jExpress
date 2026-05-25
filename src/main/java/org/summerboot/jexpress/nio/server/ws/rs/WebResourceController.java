@@ -19,10 +19,12 @@ package org.summerboot.jexpress.nio.server.ws.rs;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import org.summerboot.jexpress.boot.annotation.Daemon;
+import org.summerboot.jexpress.boot.annotation.RequiresHealthCheck;
 import org.summerboot.jexpress.nio.server.NioHttpUtil;
 import org.summerboot.jexpress.nio.server.SessionContext;
 import org.summerboot.jexpress.nio.server.domain.ServiceRequest;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -31,6 +33,16 @@ import java.io.IOException;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 abstract public class WebResourceController {
+
+    @GET
+    @Path("/favicon.ico")
+    @Daemon
+    @RequiresHealthCheck("")
+    public File favicon() {
+        return new File(getFaviconPath());
+    }
+
+    protected abstract String getFaviconPath();
 
     /**
      * send web resource images, css, js, etc. to browser
@@ -41,6 +53,7 @@ abstract public class WebResourceController {
     @GET
     @Path("/{path: .*}")
     @Daemon
+    @RequiresHealthCheck("")
     public void requestWebResource(final ServiceRequest request, final SessionContext response) throws IOException {
         NioHttpUtil.sendWebResource(request, response);
     }
