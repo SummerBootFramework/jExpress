@@ -18,8 +18,8 @@ package org.summerboot.jexpress.integration.httpclient;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
+import org.summerboot.jexpress.controller.Err;
+import org.summerboot.jexpress.webserver.domain.ServiceErrorConvertible;
 
 import java.util.List;
 

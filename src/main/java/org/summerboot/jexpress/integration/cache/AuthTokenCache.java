@@ -17,9 +17,9 @@
 package org.summerboot.jexpress.integration.cache;
 
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.instrumentation.HealthChecker;
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.controller.Err;
+import org.summerboot.jexpress.controller.authenticate.Caller;
+import org.summerboot.jexpress.integration.healthcheck.HealthChecker;
 
 import java.util.ArrayList;
 import java.util.List;

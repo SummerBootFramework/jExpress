@@ -24,7 +24,7 @@ import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.SummerApplication;
-import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.controller.Err;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;

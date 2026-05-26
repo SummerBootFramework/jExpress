@@ -19,9 +19,9 @@ package org.summerboot.jexpress.boot.instrumentation.jmx;
 import com.google.inject.Singleton;
 import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
-import org.summerboot.jexpress.boot.instrumentation.HealthChecker;
-import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
+import org.summerboot.jexpress.integration.healthcheck.HealthChecker;
+import org.summerboot.jexpress.integration.healthcheck.HealthMonitor;
 import org.summerboot.jexpress.util.BeanUtil;
 
 import javax.management.AttributeChangeNotification;

@@ -19,8 +19,8 @@ package org.summerboot.jexpress.integration.httpclient;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
-import org.summerboot.jexpress.nio.server.SessionContext;
-import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.controller.Err;
+import org.summerboot.jexpress.controller.SessionContext;
 
 import java.io.IOException;
 import java.net.http.HttpRequest;

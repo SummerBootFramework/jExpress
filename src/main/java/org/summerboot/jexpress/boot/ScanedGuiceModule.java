@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import io.netty.channel.ChannelHandler;
 import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.nio.server.websocket.WebSocketAuthHandler_OTT;
 import org.summerboot.jexpress.util.BeanUtil;
 
 import java.util.HashMap;
@@ -140,15 +139,15 @@ public class ScanedGuiceModule extends AbstractModule {
             memo.append(BootConstant.BR).append("\t- Ioc.userdefined.ChannelHandlers: ").append(c);
         } catch (RuntimeException ex) {
         }
-        Set<String> namedWebsocket = channelHandlerNames.get(Service.ChannelHandlerType.Websocket);
+        /*Set<String> namedWebsocket = channelHandlerNames.get(Service.ChannelHandlerType.Websocket);
         if (namedWebsocket != null) {
             for (String s : namedWebsocket) {
-                if (s == null || !s.startsWith(WebSocketAuthHandler_OTT.WS_PATH_PREFIX)) {
+                if (s == null || !s.startsWith("/ws/")) {
                     String errorMessage = "@Service(binding = ChannelHandler.class, named = \"" + s + "\", type = Service.ChannelHandlerType.Websocket): named field value must start with " + WebSocketAuthHandler_OTT.WS_PATH_PREFIX + ", but found: " + s;
                     throw new IllegalArgumentException(errorMessage);
                 }
             }
-        }
+        }*/
     }
 
 }

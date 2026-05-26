@@ -24,12 +24,12 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
-import org.summerboot.jexpress.boot.event.AppLifecycleListener;
-import org.summerboot.jexpress.boot.instrumentation.Timeout;
-import org.summerboot.jexpress.i18n.I18n;
+import org.summerboot.jexpress.boot.lifecycle.AppLifecycleListener;
+import org.summerboot.jexpress.integration.healthcheck.Timeout;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.SSLUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.util.i18n.I18n;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;

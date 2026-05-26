@@ -19,10 +19,10 @@ package org.summerboot.jexpress.integration.httpclient;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.nio.server.SessionContext;
-import org.summerboot.jexpress.nio.server.domain.Err;
-import org.summerboot.jexpress.nio.server.domain.ServiceErrorConvertible;
+import org.summerboot.jexpress.controller.Err;
 import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.webserver.domain.ServiceErrorConvertible;
+import org.summerboot.jexpress.controller.SessionContext;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.ObjectMapper;
 
