@@ -4,18 +4,21 @@
 
 * 🔒 Security Patch: jjwt-jackson's dependency has 5 security issues caused by old Jackson2 lib
 * 🛠 REF2610-1: support application without package specified
-* ✨ New API: @RequiresHealthCheck for @Controller class/method
 * Refactoring: @Inspector renamed to @HealthCheck
 * Refactoring: HealthInspector.java renamed to HealthChecker.java
 * Refactoring: @GrpcService renamed to @GrpcController
 * Refactoring: @ImportResource renamed to @ConfigFilename
 * Refactoring: ApplicationUtil.runAndWaitForAllResults() renamed to ConcurrentUtil.runAndWaitForAllResults()
+* Refactoring: predefined URI constants inside BootURI
+* Refactoring: package names are re-organized, migration guide: IntelliJ > Editor > General > Auto Import, check the following two options, then delete the broken imports:
+    * Add unambiguous imports on the fly
+    * Optimize imports on the flycd..
+* ✨ New API: @RequiresHealthCheck for @Controller class/method
 * ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
 * ✨ New feature: org.summerboot.jexpress.util.FileUtil
 * ✨ New feature: @Controller now handles Web methods as file downloads if the return type is: java.io.File, java.nio.file.Path, or byte[]
 * ✨ New API: FormatterUtil.formatCurrency(BigDecimal amount, RoundingMode roundingMode)
 * WebResourceController.requestWebResource with @Daemon to serve web resources with enhanced reliability.
-* Refactoring: predefined URI constants inside BootURI
 * Performance improvement: Agent_PDFBox - Serial graphics processing converted to parallel processing
 * New API: LargeFileStreamHandler for streaming large file response with low memory usage, and support for WebSocket for partial content delivery.
 
