@@ -8,6 +8,8 @@
 * Refactoring: @Inspector renamed to @HealthCheck
 * Refactoring: HealthInspector.java renamed to HealthChecker.java
 * Refactoring: @GrpcService renamed to @GrpcController
+* Refactoring: @ImportResource renamed to @ConfigFilename
+* Refactoring: ApplicationUtil.runAndWaitForAllResults() renamed to ConcurrentUtil.runAndWaitForAllResults()
 * ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
 * ✨ New feature: org.summerboot.jexpress.util.FileUtil
 * ✨ New feature: @Controller now handles Web methods as file downloads if the return type is: java.io.File, java.nio.file.Path, or byte[]
