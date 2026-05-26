@@ -20,11 +20,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.security.SecurityUtil;
-import org.summerboot.jexpress.security.auth.AuthConfig;
-import org.summerboot.jexpress.security.auth.Authenticator;
-import org.summerboot.jexpress.security.auth.AuthenticatorListener;
-import org.summerboot.jexpress.security.auth.BootAuthenticator;
-import org.summerboot.jexpress.security.auth.User;
+import org.summerboot.jexpress.controller.authenticate.AuthConfig;
+import org.summerboot.jexpress.controller.authenticate.Authenticator;
+import org.summerboot.jexpress.controller.authenticate.AuthenticatorListener;
+import org.summerboot.jexpress.controller.authenticate.BootAuthenticator;
+import org.summerboot.jexpress.controller.authenticate.User;
 
 import javax.naming.AuthenticationException;
 import javax.naming.Context;

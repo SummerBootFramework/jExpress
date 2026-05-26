@@ -101,7 +101,7 @@ import com.google.inject.Singleton;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.SummerInitializer;
 import org.summerboot.jexpress.boot.annotation.Order;
-import org.summerboot.jexpress.boot.event.AppLifecycleHandler;
+import org.summerboot.jexpress.boot.lifecycle.AppLifecycleHandler;
 import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -143,7 +143,6 @@ public class MainLifecycle extends AppLifecycleHandler implements SummerInitiali
 
 ```java
 import com.google.inject.Singleton;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -152,7 +151,7 @@ import java.util.List;
 
 import org.summerboot.jexpress.boot.annotation.Controller;
 import org.summerboot.jexpress.boot.annotation.Log;
-import org.summerboot.jexpress.nio.server.SessionContext;
+import org.summerboot.jexpress.controller.SessionContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 @Singleton
@@ -224,7 +223,7 @@ The controller is only activated when the app is launched with `-use RoleBased`:
 ### 1.5 PING endpoint
 
 ```java
-import org.summerboot.jexpress.nio.server.ws.rs.PingController;
+import org.summerboot.jexpress.webserver.netty.PingController;
 
 @Controller
 @Path("/hellosummer")
@@ -256,7 +255,7 @@ public class MyController {
 ```java
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
-import org.summerboot.jexpress.nio.server.ws.rs.BootController;
+import org.summerboot.jexpress.controller.restful.BootController;
 
 @Controller
 @Path("/hellosummer")
@@ -296,9 +295,13 @@ import io.netty.handler.codec.http.HttpHeaders;
 import javax.naming.NamingException;
 
 import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.nio.server.RequestProcessor;
-import org.summerboot.jexpress.nio.server.SessionContext;
-import org.summerboot.jexpress.security.auth.*;
+import org.summerboot.jexpress.controller.SessionContext;
+import org.summerboot.jexpress.controller.authenticate.Authenticator;
+import org.summerboot.jexpress.controller.authenticate.AuthenticatorListener;
+import org.summerboot.jexpress.controller.authenticate.BootAuthenticator;
+import org.summerboot.jexpress.controller.authenticate.Caller;
+import org.summerboot.jexpress.controller.authenticate.User;
+import org.summerboot.jexpress.webserver.netty.RequestProcessor;
 
 @Singleton
 @Service(binding = Authenticator.class)
@@ -341,7 +344,7 @@ roles.Employee.groups=EmployeeGroup
 ### 1.7 Request Log Sample (v2.6.6)
 
 ```
-[411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1]
+[411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.controller.restful.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1]
 [411043-2 /127.0.0.1:8311] [200 OK, error=0, queuing=1ms, process=5798ms, response=5801ms]
 HTTP/1.1 GET /hellosummer/services/appname/v1/aaa/111
 POI.t0=2025-08-17T11:50:52.627-04:00 service.begin=0ms, process.begin=1ms, biz.begin=6ms, biz.end=5795ms, process.end=5798ms, service.end=5801ms,
@@ -559,7 +562,7 @@ import org.summerboot.jexpress.boot.annotation.Ping;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.nio.server.ws.rs.BootController;
+import org.summerboot.jexpress.controller.restful.BootController;
 
 @Controller
 @Path("/hellosummer")
@@ -599,10 +602,9 @@ ping.sync.showRootCause=
 
 ```java
 
-import org.summerboot.jexpress.boot.annotation.HealthCheck;
 import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.boot.instrumentation.HealthChecker;
-import org.summerboot.jexpress.nio.server.domain.Err;
+import org.summerboot.jexpress.integration.healthcheck.HealthChecker;
+import domain.org.summerboot.jexpress.webserver.netty.Err;
 
 import java.util.List;
 
@@ -852,8 +854,8 @@ Configure in **cfg_grpc.properties**.
 ### 13.2 Client-side
 
 ```java
-import org.summerboot.jexpress.nio.grpc.GRPCClient;
-import org.summerboot.jexpress.nio.grpc.GRPCClientConfig;
+import org.summerboot.jexpress.controller.grpc.GRPCClient;
+import org.summerboot.jexpress.controller.grpc.GRPCClientConfig;
 
 GRPCClient client = new GRPCClient(GRPCClientConfig.cfg);
 ```
@@ -868,7 +870,7 @@ Supports:
 ### 13.3 gRPC Test Helper
 
 ```java
-import org.summerboot.jexpress.nio.grpc.GRPCTestHelper;
+
 // see https://github.com/SummerBootFramework/jExpressDemo-HelloSummer
 ```
 

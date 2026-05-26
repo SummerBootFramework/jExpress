@@ -26,8 +26,8 @@ import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
 import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.nio.server.ws.rs.EnumConvert;
 import org.summerboot.jexpress.security.EncryptorUtil;
+import org.summerboot.jexpress.webserver.ws.rs.EnumConvert;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
@@ -753,5 +753,134 @@ public class ReflectionUtil {
             }
         }
         return false;
+    }
+
+
+    /**
+     * Core entry point: resolves the Nth generic type argument declared on a target
+     * superclass/interface for a given instance.
+     *
+     * @param handler
+     * @param index
+     * @return
+     */
+
+    public static Class<?> getInboundType(Object handler, int index) {
+        Class<?> c = handler.getClass();
+        while (c != null && c != Object.class) {
+            // 1. Check superclass
+            Type gs = c.getGenericSuperclass();
+
+            // 1. checks if gs is a ParameterizedType AND binds it to pt, then checks if the raw type of pt is a Class<?> AND binds it to rawClass
+            // 2. checks if the raw type is a Class AND binds it to rawClass
+            if (gs instanceof ParameterizedType pt && pt.getRawType() instanceof Class<?> rawClass) {
+                Class<?> result = resolveGenericType(handler, rawClass, index);
+                if (result != null) return result;
+            }
+
+            // 2. Check interfaces
+            Type[] interfaces = c.getGenericInterfaces();
+            for (Type iface : interfaces) {
+                if (iface instanceof ParameterizedType pt && pt.getRawType() instanceof Class<?> rawClass) {
+                    Class<?> result = resolveGenericType(handler, rawClass, index);
+                    if (result != null) return result;
+                }
+            }
+            c = c.getSuperclass();
+        }
+        return null;
+    }
+
+    /**
+     * 2nd level entry point: resolves the Nth generic type argument declared on a target
+     * superclass/interface for a given instance.
+     *
+     * <p>Typical scenarios:</p>
+     * <ol>
+     *   <li><b>Netty async handler (class inheritance)</b><br>
+     *   {@code Class<?> type = ReflectionUtil.resolveGenericType(myObj, SimpleChannelInboundHandler.class, 0);}<br>
+     *   Result: {@code FullStompFrame.class} or {@code WebSocketFrame.class}.
+     *   </li>
+     *   <li><b>Custom generic interface implementation</b><br>
+     *   {@code interface Repository<T, ID> {}}<br>
+     *   {@code class UserRepository implements Repository<User, Long> {}}<br>
+     *   {@code resolveGenericType(new UserRepository(), Repository.class, 0)} => {@code User.class}<br>
+     *   {@code resolveGenericType(new UserRepository(), Repository.class, 1)} => {@code Long.class}
+     *   </li>
+     *   <li><b>Multi-level inheritance + anonymous subclass</b><br>
+     *   {@code class BaseService<T> {}}<br>
+     *   {@code class OrderService extends BaseService<Order> {}}<br>
+     *   {@code OrderService sub = new OrderService() {}; }<br>
+     *   {@code resolveGenericType(sub, BaseService.class, 0)} still resolves {@code Order.class}.
+     *   </li>
+     *   <li><b>Direct instantiation of generic classes (cannot resolve)</b><br>
+     *   {@code ArrayList<String> list = new ArrayList<>();}<br>
+     *   For this case, generic information exists only at compile time and is not retained
+     *   on {@code list.getClass()} (runtime class is only {@code ArrayList.class}), so result is {@code null}.
+     *   </li>
+     *   <li><b>Nested generics (inner type is not extracted by current implementation)</b><br>
+     *   If subclass is {@code class MyHandler extends Base<List<String>>}, this method only
+     *   resolves outer {@code List.class}. To resolve inner {@code String.class},
+     *   {@code ParameterizedType} needs deeper parsing in {@code extractType(...)}.
+     *   </li>
+     * </ol>
+     *
+     * @param instance    the object instance to analyze
+     * @param targetClass the target superclass or interface class (for example,
+     *                    {@code SimpleChannelInboundHandler.class})
+     * @param index       generic argument index (0-based)
+     * @return resolved generic {@link Class}, or {@code null} when not found
+     */
+    private static Class<?> resolveGenericType(Object instance, Class<?> targetClass, int index) {
+        if (instance == null || targetClass == null) return null;
+        return resolveGenericType(instance.getClass(), targetClass, index);
+    }
+
+    /**
+     * 递归解析类及接口
+     */
+    private static Class<?> resolveGenericType(Class<?> clazz, Class<?> targetClass, int index) {
+        if (clazz == null || clazz == Object.class) return null;
+
+        // 1. 检查当前类的【直接父类】是否符合目标
+        Type superclass = clazz.getGenericSuperclass();
+        Class<?> result = extractType(superclass, targetClass, index);
+        if (result != null) return result;
+
+        // 2. 检查当前类【直接实现的所有接口】是否符合目标
+        Type[] interfaces = clazz.getGenericInterfaces();
+        for (Type iface : interfaces) {
+            result = extractType(iface, targetClass, index);
+            if (result != null) return result;
+        }
+
+        // 3. 递归：沿着继承树往上一层父类查找
+        result = resolveGenericType(clazz.getSuperclass(), targetClass, index);
+        if (result != null) return result;
+
+        // 4. 递归：沿着接口继承树往上查找
+        for (Class<?> ifaceClass : clazz.getInterfaces()) {
+            result = resolveGenericType(ifaceClass, targetClass, index);
+            if (result != null) return result;
+        }
+
+        return null;
+    }
+
+    /**
+     * 辅助方法：从 Type 中判断并提取泛型
+     */
+    private static Class<?> extractType(Type type, Class<?> targetClass, int index) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType paramType = (ParameterizedType) type;
+            // 判断当前参数化类型的原始类型（RawType）是否是目标类
+            if (paramType.getRawType() == targetClass) {
+                Type[] args = paramType.getActualTypeArguments();
+                if (index >= 0 && index < args.length && args[index] instanceof Class) {
+                    return (Class<?>) args[index];
+                }
+            }
+        }
+        return null;
     }
 }

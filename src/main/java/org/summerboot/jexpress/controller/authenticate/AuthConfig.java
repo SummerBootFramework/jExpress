@@ -1,0 +1,487 @@
+/*
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://apache.org
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+package org.summerboot.jexpress.controller.authenticate;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
+import org.apache.tika.utils.StringUtils;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.boot.config.BootConfig;
+import org.summerboot.jexpress.boot.config.ConfigUtil;
+import org.summerboot.jexpress.boot.config.annotation.Config;
+import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
+import org.summerboot.jexpress.integration.ldap.LdapAgent;
+import org.summerboot.jexpress.integration.ldap.LdapSSLConnectionFactory1;
+import org.summerboot.jexpress.security.EncryptorUtil;
+import org.summerboot.jexpress.security.JwtUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
+
+import javax.crypto.SecretKey;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.security.GeneralSecurityException;
+import java.security.Key;
+import java.security.PublicKey;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
+
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
+//@ImportResource(BootConstant.FILE_CFG_AUTH)
+public class AuthConfig extends BootConfig {
+
+    public static void main(String[] args) {
+        String t = generateTemplate(AuthConfig.class);
+        System.out.println(t);
+    }
+
+    public static final AuthConfig cfg = new AuthConfig();
+
+    protected AuthConfig() {
+        reset();
+    }
+
+    @Override
+    protected void reset() {
+        ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+    }
+
+    @Override
+    public AuthConfig temp() {
+        AuthConfig temp = (AuthConfig) super.temp();
+        AuthConfig current = cfg;//AuthConfig.instance(AuthConfig.class);
+        temp.addDeclareRoles(current.getDeclareRoles());
+        return temp;
+    }
+
+    @Override
+    public void shutdown() {
+    }
+
+    //1.1 LDAP settings
+    @ConfigHeader(title = "1.1 LDAP connection settings")
+    @Config(key = "ldap.type.AD", defaultValue = "false",
+            desc = "set it true only when LDAP is implemented by Microsoft Active Directory (AD)\n"
+                    + "false when use others like Open LDAP, IBM Tivoli, Apache")
+    protected volatile boolean typeAD;
+
+    @Config(key = "ldap.host",
+            desc = "LDAP will be disabled when host is not provided")
+    protected volatile String ldapHost;
+
+    @Config(key = "ldap.port",
+            desc = "LDAP 389, LDAP over SSL 636, AD global 3268, AD global over SSL 3269")
+    protected volatile int ldapPort;
+
+    @Config(key = "ldap.baseDN")
+    protected volatile String ldapBaseDN;
+
+    @Config(key = "ldap.bindingUserDN")
+    protected volatile String bindingUserDN;
+
+    @JsonIgnore
+    @Config(key = "ldap.bindingPassword", validate = Config.Validate.Encrypted)
+    protected volatile String bindingPassword;
+
+    @Config(key = "ldap.PasswordAlgorithm", defaultValue = "SHA3-256")
+    protected volatile String passwordAlgorithm;
+
+    @Config(key = "ldap.schema.TenantGroup.ou")
+    protected volatile String ldapScheamTenantGroupOU;
+
+    //1.2 LDAP Client keystore
+    protected final static String ID = "ldap";
+    protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    protected static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    protected static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    protected static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
+    @ConfigHeader(title = "1.2 LDAP Client keystore")
+    @JsonIgnore
+    @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey,
+            AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
+            desc = DESC_KMF_CLIENT, callbackMethodName4Dump = "generateTemplate_keystore")
+    protected volatile KeyManagerFactory kmf;
+
+    protected void generateTemplate_keystore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_kmf_key, currentValues, "", sb, true);
+        appendCurrentValue(KEY_kmf_StorePwdKey, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb, true);
+        appendCurrentValue(KEY_kmf_AliasKey, currentValues, "", sb, true);
+        appendCurrentValue(KEY_kmf_AliasPwdKey, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb, true);
+        generateTemplate = true;
+    }
+
+    @Config(key = "ldap.ssl.protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
+    protected volatile String ldapTLSProtocol;
+
+    @Config(key = "ldap.SSLConnectionFactoryClass")
+    protected volatile String ldapSSLConnectionFactoryClassName;
+
+    //1.3 LDAP Client truststore
+    protected static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    protected static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
+    @ConfigHeader(title = "1.3 LDAP Client truststore")
+    @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey,
+            desc = DESC_TMF_CLIENT, callbackMethodName4Dump = "generateTemplate_truststore")
+    @JsonIgnore
+    protected volatile TrustManagerFactory tmf;
+
+    protected void generateTemplate_truststore(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_tmf_key, currentValues, "", sb, true);
+        appendCurrentValue(KEY_tmf_StorePwdKey, currentValues, "DEC(" + DESC_PLAINPWD + ")", sb, true);
+        generateTemplate = true;
+    }
+
+    protected volatile Properties ldapConfig;
+
+    //2. JWT
+    protected static final String KEY_privateKeyFile = "jwt.asymmetric.SigningKeyFile";
+    protected static final String KEY_privateKeyPwd = "jwt.asymmetric.SigningKeyPwd";
+    protected static final String KEY_publicKeyFile = "jwt.asymmetric.ParsingKeyFile";
+
+    protected static final String JWT_PRIVATE_KEY_FILE = "jwt_private.key";
+    protected static final String JWT_PUBLIC_KEY_FILE = "jwt_public.key";
+
+    @ConfigHeader(title = "2. JWT",
+            example = "To generate the keypair manually:\n"
+                    + "step1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096 \n"
+                    + "step2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out " + JWT_PUBLIC_KEY_FILE + "\n"
+                    + "step3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM " + "\n"
+                    + "step4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out " + JWT_PRIVATE_KEY_FILE + "\n"
+                    + "In case need to re-encrypt: openssl pkcs8 -topk8 -v2 aes256 -in " + JWT_PRIVATE_KEY_FILE + " -out new.key")
+    @Config(key = KEY_privateKeyFile,
+            desc = "Path to an encrypted RSA private key file in PKCS#8 format with minimal 2048 key size",
+            callbackMethodName4Dump = "generateTemplate_privateKeyFile")
+    protected volatile File privateKeyFile;
+
+    protected void generateTemplate_privateKeyFile(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_privateKeyFile, currentValues, JWT_PRIVATE_KEY_FILE, sb);
+        generateTemplate = true;
+    }
+
+    @JsonIgnore
+    @Config(key = KEY_privateKeyPwd, validate = Config.Validate.Encrypted,
+            desc = "The password of this private key",
+            callbackMethodName4Dump = "generateTemplate_privateKeyPwd")
+    protected volatile String privateKeyPwd;
+
+    protected void generateTemplate_privateKeyPwd(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_privateKeyPwd, currentValues, DEFAULT_DEC_VALUE, sb);
+    }
+
+    @Config(key = KEY_publicKeyFile,
+            desc = "Path to the public key file corresponding to this private key",
+            callbackMethodName4Dump = "generateTemplate_publicKeyFile")
+    protected volatile File publicKeyFile;
+
+    protected void generateTemplate_publicKeyFile(StringBuilder sb, Properties currentValues) {
+        appendCurrentValue(KEY_publicKeyFile, currentValues, JWT_PUBLIC_KEY_FILE, sb);
+    }
+
+    @JsonIgnore
+    @Config(key = "jwt.symmetric.key", validate = Config.Validate.Encrypted,
+            desc = "HMAC-SHA key for bothe signing and parsing, it will be ignored when asymmetric one is specified.\n"
+                    + "Use this command to generate this key: java -jar <app>.jar -jwt <HS256, HS384, HS512>")
+    protected volatile String symmetricKey;
+
+    @JsonIgnore
+    protected volatile Key jwtSigningKey;
+
+    @JsonIgnore
+    protected volatile JwtParser jwtParser;
+
+    @Config(key = "jwt.ttl.minutes", defaultValue = "1440")
+    protected volatile int jwtTTLMinutes;
+
+    @Config(key = "jwt.issuer")
+    protected volatile String jwtIssuer;
+
+    @Config(key = "jwt.filter.by", desc = "filter JWT by attribute key name: " +
+            Claims.ID + ", " + Claims.ISSUER + ", " + Claims.SUBJECT + ", " + Claims.AUDIENCE + ", " + Claims.ISSUED_AT + ", " + Claims.EXPIRATION + ", " + Claims.NOT_BEFORE +
+            ", and customized fields")
+    protected volatile String jwtFilterKey;
+    @Config(key = "jwt.filter.Whitelist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")
+    protected volatile Set<String> jwtFilterWhitelist;
+    @Config(key = "jwt.filter.Blacklist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")
+    protected volatile Set<String> jwtFilterBlacklist;
+
+    @Config(key = "OneTimeKey.ttl.seconds", defaultValue = "10", desc = "WebSocket One-Time Token TTL in seconds")
+    protected volatile int ottTtlSeconds;
+
+    //3. Role mapping
+    @ConfigHeader(title = "3. Role mapping",
+            desc = "Map the role (defined as @RolesAllowed({\"AppAdmin\"})) with user group (no matter the group is defined in LDAP or DB)",
+            format = "roles.<role name>.groups=csv list of groups\n"
+                    + "roles.<role name>.users=csv list of users",
+            example = "the following example maps one group(AppAdmin_Group) and two users(johndoe, janejoe) to a role(AppAdmin)\n"
+                    + "roles.AppAdmin.groups=AppAdmin_Group\n"
+                    + "roles.AppAdmin.users=johndoe, janejoe",
+            callbackMethodName4Dump = "generateTemplate_DumpRoleMapping")
+    protected Map<String, RoleMapping> roles = new HashMap<>();
+
+    /**
+     * called by @ConfigHeader.callbackMethodName4Dump value
+     *
+     * @param sb
+     */
+    protected void generateTemplate_DumpRoleMapping(StringBuilder sb, Properties currentValues) {
+
+        for (String role : declareRoles) {
+            if (!appendCurrentValue("roles." + role + ".groups", currentValues, sb)) {
+                sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>" + BootConstant.BR);
+            }
+            if (!appendCurrentValue("roles." + role + ".users", currentValues, sb)) {
+                sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>" + BootConstant.BR);
+            }
+        }
+    }
+
+    @Override
+    protected void loadCustomizedConfigs(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) throws IOException, OperatorCreationException, GeneralSecurityException {
+        // 1. LDAP Client keystore
+        if (ldapHost != null) {
+            // 1.1 LDAP Client keystore
+            boolean isSSLEnabled = !StringUtils.isBlank(ldapTLSProtocol);
+            if (isSSLEnabled) {
+                //LdapSSLConnectionFactory1.init(kmf == null ? null : kmf.getKeyManagers(), tmf == null ? null : tmf.getTrustManagers(), ldapTLSProtocol);
+                //ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+                String key = "ldap.SSLConnectionFactoryClass";
+                try {
+                    Class<?> sslFactoryClass = Class.forName(ldapSSLConnectionFactoryClassName);
+                    Method method = sslFactoryClass.getMethod("init", KeyManagerFactory.class, TrustManagerFactory.class, String.class);
+                    method.invoke(null, kmf, tmf, ldapTLSProtocol);
+                } catch (ClassNotFoundException ex) {
+                    helper.addError("invalid \"" + key + ", error=" + ex, ex);
+                } catch (NoSuchMethodException ex) {
+                    helper.addError("invalid \"" + key + "missing method: public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol), error=" + ex, ex);
+                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                    helper.addError("invalid \"" + key + "failed to invoke method: public static void init(KeyManagerFactory kmf, TrustManagerFactory tmf, String protocol), error=" + ex, ex);
+                }
+            }
+            //1.2 LDAP info
+            ldapConfig = LdapAgent.buildCfg(ldapHost, ldapPort, isSSLEnabled, ldapSSLConnectionFactoryClassName, ldapTLSProtocol, bindingUserDN, bindingPassword);
+        }
+        // 2. JWT        
+        if (symmetricKey != null) {
+            //jwtSigningKey = EncryptorUtil.keyFromString(jwtSigningKeyString, jwtSignatureAlgorithm.getJcaName());
+            jwtSigningKey = JwtUtil.parseSigningKey(symmetricKey);
+            jwtParser = Jwts.parser() // (1)
+                    .verifyWith((SecretKey) jwtSigningKey) // (2)
+                    .build(); // (3)
+        }
+        //File rootFolder = cfgFile.getParentFile().getParentFile();
+        if (privateKeyFile != null) {
+            createIfNotExist(JWT_PRIVATE_KEY_FILE, JWT_PRIVATE_KEY_FILE);
+            jwtSigningKey = EncryptorUtil.loadPrivateKey(privateKeyFile, privateKeyPwd.toCharArray());
+        }
+        if (publicKeyFile != null) {
+            createIfNotExist(JWT_PUBLIC_KEY_FILE, JWT_PUBLIC_KEY_FILE);
+            PublicKey publicKey = EncryptorUtil.loadPublicKey(EncryptorUtil.KeyFileType.PKCS12, publicKeyFile);
+            jwtParser = Jwts.parser() // (1)
+                    .verifyWith(publicKey) // (2)
+                    .build(); // (3)
+        }
+        // pre-compile regexes for whitelist and blacklist
+        if (jwtFilterWhitelist != null) {
+            for (String regex : jwtFilterWhitelist) {
+                SecurityUtil.matches("", regex);
+            }
+        }
+        if (jwtFilterBlacklist != null) {
+            for (String regex : jwtFilterBlacklist) {
+                SecurityUtil.matches("", regex);
+            }
+        }
+
+        // 3. Cache TTL
+        //jwtTTL = TimeUnit.MINUTES.toMillis(jwtTTLMinutes);
+        //userTTL = TimeUnit.MINUTES.toMillis(userTTL);
+        // 4. Role mapping
+        Set<Object> keys = props.keySet();
+        Map<String, RoleMapping> rolesTemp = new HashMap<>();
+        keys.forEach((key) -> {
+            String name = key.toString();
+            if (name.startsWith("roles.")) {
+                String[] names = name.split("\\.");
+                String roleName = names[1];
+                if (!declareRoles.contains(roleName)) {
+                    helper.addError("Undefined role: (\"" + roleName + "\") is not defined in any @Controller @RolesAllowed(" + declareRoles + ") - line: " + key + "=" + props.getProperty(key.toString()), null);
+                }
+                RoleMapping.Type type = RoleMapping.Type.valueOf(names[2]);
+                RoleMapping rm = rolesTemp.get(roleName);
+                if (rm == null) {
+                    rm = new RoleMapping(roleName);
+                    rolesTemp.put(roleName, rm);
+                }
+                rm.add(type, props.getProperty(key.toString()));
+            }
+        });
+        roles = Map.copyOf(rolesTemp);
+
+        String error = helper.getError();
+        if (error != null) {
+            throw new IllegalArgumentException(error);
+        }
+    }
+
+    public String getLdapHost() {
+        return ldapHost;
+    }
+
+    public int getLdapPort() {
+        return ldapPort;
+    }
+
+    public String getLdapBaseDN() {
+        return ldapBaseDN;
+    }
+
+    public String getBindingUserDN() {
+        return bindingUserDN;
+    }
+
+    public String getLdapScheamTenantGroupOU() {
+        return ldapScheamTenantGroupOU;
+    }
+
+    public String getPasswordAlgorithm() {
+        return passwordAlgorithm;
+    }
+
+    public void setPasswordAlgorithm(String passwordAlgorithm) {
+        this.passwordAlgorithm = passwordAlgorithm;
+    }
+
+    public String getLdapSSLConnectionFactoryClassName() {
+        return ldapSSLConnectionFactoryClassName;
+    }
+
+    public String getLdapTLSProtocol() {
+        return ldapTLSProtocol;
+    }
+
+    public boolean isTypeAD() {
+        return typeAD;
+    }
+
+    @JsonIgnore
+    public Properties getLdapConfig() {
+        return ldapConfig;
+    }
+
+    @JsonIgnore
+    public Key getJwtSigningKey() {
+        return jwtSigningKey;
+    }
+
+    @JsonIgnore
+    public JwtParser getJwtParser() {
+        return jwtParser;
+    }
+
+    public String getJwtIssuer() {
+        return jwtIssuer;
+    }
+
+    public int getJwtTTLMinutes() {
+        return jwtTTLMinutes;
+    }
+
+    public String getJwtFilterKey() {
+        return jwtFilterKey;
+    }
+
+    public Set<String> getJwtFilterWhitelist() {
+        return jwtFilterWhitelist;
+    }
+
+    public Set<String> getJwtFilterBlacklist() {
+        return jwtFilterBlacklist;
+    }
+
+    public int getOttTtlSeconds() {
+        return ottTtlSeconds;
+    }
+
+    public RoleMapping getRole(String role) {
+        return roles.get(role);
+    }
+
+    public Map<String, RoleMapping> getRoles() {
+        return roles;
+    }
+
+    @JsonIgnore
+    public String getBindingPassword() {
+        return bindingPassword;
+    }
+
+    @JsonIgnore
+    public KeyManagerFactory getKmf() {
+        return kmf;
+    }
+
+    @JsonIgnore
+    public TrustManagerFactory getTmf() {
+        return tmf;
+    }
+
+    @JsonIgnore
+    public File getPrivateKeyFile() {
+        return privateKeyFile;
+    }
+
+    @JsonIgnore
+    public String getPrivateKeyPwd() {
+        return privateKeyPwd;
+    }
+
+    @JsonIgnore
+    public File getPublicKeyFile() {
+        return publicKeyFile;
+    }
+
+    @JsonIgnore
+    public String getSymmetricKey() {
+        return symmetricKey;
+    }
+
+    //@Deprecated - should use annotation jakarta.annotation.security.DeclareRoles
+//    public Set<String> getRoleNames() {
+//        return Set.copyOf(roles.keySet());
+//    }
+    protected final Set<String> declareRoles = new TreeSet<>();
+
+    public void addDeclareRoles(Set<String> scanedDeclareRoles) {
+        this.declareRoles.addAll(Set.copyOf(scanedDeclareRoles));
+    }
+
+    public Set<String> getDeclareRoles() {
+        return Set.copyOf(declareRoles);
+    }
+
+}

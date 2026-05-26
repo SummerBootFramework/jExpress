@@ -26,7 +26,7 @@ import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.annotation.Config;
 import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.config.annotation.ImportResource;
-import org.summerboot.jexpress.nio.server.AbortPolicyWithReport;
+import org.summerboot.jexpress.webserver.netty.AbortPolicyWithReport;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;

@@ -23,7 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
+import org.summerboot.jexpress.integration.healthcheck.HealthMonitor;
 
 import java.io.File;
 import java.io.IOException;

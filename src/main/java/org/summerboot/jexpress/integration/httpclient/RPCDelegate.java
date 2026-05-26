@@ -17,7 +17,7 @@
 package org.summerboot.jexpress.integration.httpclient;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.summerboot.jexpress.nio.server.SessionContext;
+import org.summerboot.jexpress.controller.SessionContext;
 
 import java.io.IOException;
 import java.net.URLEncoder;
