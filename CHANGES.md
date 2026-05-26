@@ -470,7 +470,7 @@ New configuration items have been added to set the server-specific idle connecti
 
 * Enabled `@jakarta.validation.constraints.Pattern` for RESTFul api parameters: `PathParam`, `MatrixParam`, `QueryParam`, `FormParam`, `HeaderParam`, and `CookieParam`.
 * Fixed: cli `-decrypt` generates `cfg_grpc.properties` even if there is no gRPC impl.
-* Log trace enable on `org.summerboot.jexpress.controller.restful.BootHttpRequestHandler` will override `@org.summerboot.jexpress.boot.annotation.Log` settings to log all requests and responses.
+* Log trace enable on `org.summerboot.jexpress.controller.restful.BootHttpRequestHandler` will override `@org.summerboot.jexpress.annotation.restful.Log` settings to log all requests and responses.
 * Reformatted Java source code via IDEA default formatter.
 
 ## Version 2.3.13

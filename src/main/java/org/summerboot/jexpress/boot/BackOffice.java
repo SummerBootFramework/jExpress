@@ -18,10 +18,10 @@ package org.summerboot.jexpress.boot;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
+import org.summerboot.jexpress.annotation.config.Config;
+import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.util.ReflectionUtil;
 
 import java.io.File;

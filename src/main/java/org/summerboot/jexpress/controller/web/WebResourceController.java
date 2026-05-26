@@ -18,11 +18,11 @@ package org.summerboot.jexpress.controller.web;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import org.summerboot.jexpress.boot.annotation.Daemon;
-import org.summerboot.jexpress.boot.annotation.RequiresHealthCheck;
+import org.summerboot.jexpress.annotation.restful.Daemon;
+import org.summerboot.jexpress.annotation.restful.RequiresHealthCheck;
+import org.summerboot.jexpress.controller.SessionContext;
 import org.summerboot.jexpress.webserver.domain.ServiceRequest;
 import org.summerboot.jexpress.webserver.netty.NioHttpUtil;
-import org.summerboot.jexpress.controller.SessionContext;
 
 import java.io.File;
 import java.io.IOException;

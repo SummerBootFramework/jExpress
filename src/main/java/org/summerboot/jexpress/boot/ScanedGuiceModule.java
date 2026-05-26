@@ -19,7 +19,7 @@ package org.summerboot.jexpress.boot;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import io.netty.channel.ChannelHandler;
-import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.annotation.Service;
 import org.summerboot.jexpress.util.BeanUtil;
 
 import java.util.HashMap;

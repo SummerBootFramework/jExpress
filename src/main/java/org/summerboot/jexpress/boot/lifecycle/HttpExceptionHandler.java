@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.controller.Err;
 import org.summerboot.jexpress.controller.SessionContext;
-import org.summerboot.jexpress.integration.healthcheck.HealthMonitor;
+import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.webserver.netty.RequestProcessor;

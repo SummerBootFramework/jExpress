@@ -17,12 +17,12 @@
 package org.summerboot.jexpress.boot.instrumentation.jmx;
 
 import com.google.inject.Singleton;
-import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
 import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
-import org.summerboot.jexpress.integration.healthcheck.HealthChecker;
-import org.summerboot.jexpress.integration.healthcheck.HealthMonitor;
+import org.summerboot.jexpress.integration.HealthChecker;
+import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.concurrent.NamedDefaultThreadFactory;
 
 import javax.management.AttributeChangeNotification;
 import javax.management.MBeanNotificationInfo;

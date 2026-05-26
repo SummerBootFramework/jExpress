@@ -17,7 +17,7 @@
 package org.summerboot.jexpress.boot;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.summerboot.jexpress.boot.annotation.Unique;
+import org.summerboot.jexpress.annotation.validation.Unique;
 
 import java.util.Map;
 

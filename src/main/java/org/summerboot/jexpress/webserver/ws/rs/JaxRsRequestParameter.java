@@ -34,6 +34,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.annotation.validation.EnumConvert;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.controller.Err;
 import org.summerboot.jexpress.controller.SessionContext;

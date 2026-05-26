@@ -24,8 +24,8 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
+import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 
 import java.util.Properties;
 
