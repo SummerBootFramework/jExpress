@@ -19,6 +19,7 @@ package org.summerboot.jexpress.controller.websocket;
 
 import io.netty.handler.codec.stomp.StompCommand;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class WsControl {
@@ -44,6 +45,20 @@ public class WsControl {
     private String body;
 
     public WsControl() {
+    }
+
+    public WsControl(StompCommand stomp) {
+        this.stomp = stomp;
+    }
+
+    public WsControl(StompCommand stomp, String body) {
+        this.stomp = stomp;
+        this.body = body;
+    }
+
+
+    public Map<String, String> headers() {
+        return headers == null ? new HashMap<>() : headers;
     }
 
     public WsControl(Status status) {

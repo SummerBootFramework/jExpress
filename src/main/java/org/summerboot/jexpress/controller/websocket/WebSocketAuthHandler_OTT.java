@@ -29,6 +29,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.stomp.StompFrame;
 import io.netty.handler.codec.stomp.StompSubframeAggregator;
@@ -126,11 +127,24 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
 
                 // 4) STOMP business logic
                 ctx.pipeline().addAfter("stomp-agg", "stomp-biz", ch); // Extends SimpleChannelInboundHandler<FullStompFrame>
-            } else {
+            } else if (type == WebSocketFrame.class) {
                 // 1) Upgrade to websocket with STOMP subprotocol
                 ctx.pipeline().addAfter(BASENAME, "ws-protocol", new WebSocketServerProtocolHandler(uriRequested, null, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
                 // 2) STOMP business logic
                 ctx.pipeline().addAfter("ws-protocol", "ws-biz", ch); // Extends SimpleChannelInboundHandler<WebSocketFrame>
+            } else {
+                WebSocketPipelinesInitializer initializer = null;
+                try {
+                    initializer = injector.getInstance(WebSocketPipelinesInitializer.class);
+                } catch (Throwable ex) {
+                    // No WebSocketPipelinesInitializer defined, skip pipeline initialization
+                }
+                if (initializer == null) {
+                    sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_IMPLEMENTED));
+                    ctx.close();
+                    return;
+                }
+                initializer.initCustomizedPipelines(ctx, BASENAME, type, uriRequested, caller);
             }
 
             ctx.fireChannelRead(msg);
@@ -138,6 +152,9 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
         }
 
         ctx.fireChannelRead(msg);
+    }
+
+    public void initCustomizedPipelines(ChannelHandlerContext ctx, String basename, Class<?> type, String uriRequested, Caller caller) {
     }
 
     protected Caller verifyAndDestroyTicket(String oneTimeTicket) {
