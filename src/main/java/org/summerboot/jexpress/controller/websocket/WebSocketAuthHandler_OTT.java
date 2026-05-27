@@ -123,7 +123,9 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
                 // 3) STOMP codec
                 ctx.pipeline().addAfter("ws2buf", "stomp-decoder", new StompSubframeDecoder());
                 ctx.pipeline().addAfter("stomp-decoder", "stomp-encoder", new StompSubframeEncoder());
-                ctx.pipeline().addAfter("stomp-encoder", "stomp-agg", new StompSubframeAggregator(maxFrameSize)); // 5MB for small images/videos/files
+                ctx.pipeline().addAfter("stomp-encoder", "stomp2ws-text", new StompFrameToWebSocketTextOutboundHandler());
+                ctx.pipeline().addAfter("stomp2ws-text", "stomp-agg", new StompSubframeAggregator(maxFrameSize)); // 5MB for small images/videos/files
+                //ctx.pipeline().addAfter("stomp-encoder", "stomp-agg", new StompSubframeAggregator(maxFrameSize)); // 5MB for small images/videos/files
 
                 // 4) STOMP business logic
                 ctx.pipeline().addAfter("stomp-agg", "stomp-biz", ch); // Extends SimpleChannelInboundHandler<FullStompFrame>
