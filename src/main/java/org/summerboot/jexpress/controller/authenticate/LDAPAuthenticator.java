@@ -16,8 +16,8 @@
  */
 package org.summerboot.jexpress.controller.authenticate;
 
-import org.summerboot.jexpress.integration.ldap.LdapAgent;
 import org.summerboot.jexpress.controller.SessionContext;
+import org.summerboot.jexpress.integration.ldap.LdapAgent;
 
 import javax.naming.NamingException;
 

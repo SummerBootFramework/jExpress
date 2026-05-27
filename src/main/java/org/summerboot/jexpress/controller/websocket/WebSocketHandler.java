@@ -33,10 +33,10 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.webserver.netty.NioConfig;
 import org.summerboot.jexpress.controller.authenticate.Caller;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.FileUtil;
+import org.summerboot.jexpress.webserver.netty.NioConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
