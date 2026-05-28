@@ -17,13 +17,9 @@
 
 package org.summerboot.jexpress.controller.websocket;
 
-
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
@@ -32,17 +28,14 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class WebSocketFrameToByteBufHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
+public class WebSocketFrameToByteBufDecoder extends SimpleChannelInboundHandler<WebSocketFrame> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) {
-        if (frame instanceof TextWebSocketFrame text) {
-            ctx.fireChannelRead(text.content().retain());
-        } else if (frame instanceof BinaryWebSocketFrame bin) {
-            ctx.fireChannelRead(bin.content().retain());
-        } else if (frame instanceof PingWebSocketFrame ping) {
-            ctx.writeAndFlush(new PongWebSocketFrame(ping.content().retain()));
-        } else if (frame instanceof CloseWebSocketFrame) {
-            ctx.close();
+        // Process only data frames. Ping/Pong/Close are handled by upstream protocol handlers.
+        // Extract and forward the inner ByteBuf to downstream STOMP decoder.
+        if (frame instanceof TextWebSocketFrame || frame instanceof BinaryWebSocketFrame) {
+            ctx.fireChannelRead(frame.content().retain());
         }
+        // Note: non-data websocket control frames are intentionally ignored here.
     }
 }
