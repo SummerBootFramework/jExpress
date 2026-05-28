@@ -32,6 +32,19 @@ import java.lang.annotation.Target;
 @Documented
 @BindingAnnotation
 public @interface Log {
+    enum Bool {
+        True(true), False(false), Default(null);
+
+        private Boolean value;
+
+        private Bool(final Boolean value) {
+            this.value = value;
+        }
+
+        public Boolean value() {
+            return this.value;
+        }
+    }
 
     boolean requestHeader() default true;
 
@@ -42,4 +55,6 @@ public @interface Log {
     boolean responseBody() default true;
 
     String[] maskDataFields() default {};
+
+    Bool pretty() default Bool.Default;
 }

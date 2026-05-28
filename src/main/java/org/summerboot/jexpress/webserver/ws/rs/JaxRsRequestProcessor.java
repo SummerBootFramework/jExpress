@@ -93,6 +93,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     protected final Pattern regexPattern;
     protected final int parameterSize;
     public static final List<String> SupportedProducesWithReturnType = Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON_PATCH_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML);
+    protected final Boolean pretty;
 
     //logging info
     protected final ProcessorSettings processorSettings;
@@ -112,6 +113,17 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (drs != null) {
             declareRoles.addAll(Arrays.asList(drs.value()));
         }
+        Log classLeveLog = (Log) controllerClass.getAnnotation(Log.class);
+        Log methodLevelLog = javaMethod.getAnnotation(Log.class);
+        if (methodLevelLog != null) {
+            pretty = methodLevelLog.pretty().value();
+        } else if (classLeveLog != null) {
+            pretty = !classLeveLog.pretty().value();
+        } else {
+            pretty = null;
+        }
+
+
         // Reject ASAP: pause
         Daemon classLevelDaemon = (Daemon) controllerClass.getAnnotation(Daemon.class);
         Daemon methodLevelDaemon = javaMethod.getAnnotation(Daemon.class);
@@ -502,9 +514,9 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                             }
                         }
                     }
-                    if (responseContentType == null) {// finally client not match
-                        responseContentType = MediaType.APPLICATION_JSON;
-                    }
+                }
+                if (responseContentType == null) {// finally client not match
+                    responseContentType = MediaType.APPLICATION_JSON;
                 }
                 //2. set content and contentType
                 if (ret instanceof String) {
@@ -512,15 +524,17 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 } else {
                     switch (responseContentType) {
                         case MediaType.APPLICATION_JSON -> {
-                            if (context.forcePrettyResponse()) {
-                                context.response(BeanUtil.toJson(ret, true));
+                            Boolean isPretty = isPretty(context.pretty(), pretty);
+                            if (isPretty != null) {
+                                context.response(BeanUtil.toJson(ret, isPretty));
                             } else {
                                 context.response(BeanUtil.toJson(ret));
                             }
                         }
                         case MediaType.APPLICATION_XML, MediaType.TEXT_XML -> {
-                            if (context.forcePrettyResponse()) {
-                                context.response(BeanUtil.toXML(ret, true));
+                            Boolean isPretty = isPretty(context.pretty(), pretty);
+                            if (isPretty != null) {
+                                context.response(BeanUtil.toXML(ret, isPretty));
                             } else {
                                 context.response(BeanUtil.toXML(ret));
                             }
@@ -595,5 +609,18 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             });
         }
         return req;
+    }
+
+    /**
+     *
+     * @param pretty1
+     * @param pretty2
+     * @return pretty1 value override pretty2 value
+     */
+    private static Boolean isPretty(Boolean pretty1, Boolean pretty2) {
+        if (pretty1 != null) {
+            return pretty1;
+        }
+        return pretty2;
     }
 }
