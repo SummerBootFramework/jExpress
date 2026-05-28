@@ -88,7 +88,7 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
             }
 
 
-            Caller caller = verifyAndDestroyTicket(oneTimeTicket); // 校验并销毁 Ticket
+            Caller caller = verifyAndDestroyTicket(oneTimeTicket); // verify and consume one-time ticket
             if (caller == null) {
                 sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED));
                 ctx.close();
@@ -97,7 +97,7 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
             // save OTT result to channel attr
             ctx.channel().attr(USER_ID_KEY).set(caller);
 
-            // 重写 URI，让 downstream 的 WebSocketServerProtocolHandler 能够精准匹配升级
+            // rewrite URI so downstream WebSocketServerProtocolHandler can match upgrade path exactly
             request.setUri(uriRequested); // "/ws/chat"
 
             // load settings for WebSocketServerProtocolHandler
@@ -120,17 +120,17 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
                 // ==========================================
                 // 1) Upgraded to the WebSocket protocol (responsible for: unpacking inbound WS frames and packaging outbound WS frames).
                 pipeline.addAfter(BASENAME, "ws-protocol-handler", new WebSocketServerProtocolHandler(uriRequested, webSocketStompSubprotocol, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
-                // 2. 【出站】STOMP 转换为 WebSocket 文本帧编码器
+                // 2) [outbound] STOMP -> WebSocket text frame encoder
                 pipeline.addAfter("ws-protocol-handler", "stomp-to-ws-encoder", new StompToWebSocketTextFrameEncoder());
-                // 3. 【入站】WebSocket 帧转换为 ByteBuf 解码器
+                // 3) [inbound] WebSocket frame -> ByteBuf decoder
                 pipeline.addAfter("stomp-to-ws-encoder", "ws-to-bytebuf-decoder", new WebSocketFrameToByteBufDecoder());
 
                 // ==========================================
                 // Layer 2: STOMP Protocol Parsing Layer
                 // ==========================================
-                // 4. 【入站】STOMP 帧片段解码器
+                // 4) [inbound] STOMP subframe decoder
                 pipeline.addAfter("ws-to-bytebuf-decoder", "stomp-subframe-decoder", new StompSubframeDecoder());
-                // 5. 【入站】STOMP 帧片段聚合器
+                // 5) [inbound] STOMP subframe aggregator
                 pipeline.addAfter("stomp-subframe-decoder", "stomp-subframe-aggregator", new StompSubframeAggregator(maxFrameSize));
 
                 // ==========================================
