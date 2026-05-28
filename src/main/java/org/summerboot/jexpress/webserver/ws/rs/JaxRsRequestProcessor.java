@@ -118,7 +118,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (methodLevelLog != null) {
             pretty = methodLevelLog.pretty().value();
         } else if (classLeveLog != null) {
-            pretty = !classLeveLog.pretty().value();
+            pretty = classLeveLog.pretty().value();
         } else {
             pretty = null;
         }
