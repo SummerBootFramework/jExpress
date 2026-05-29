@@ -36,8 +36,8 @@ import io.netty.handler.codec.stomp.StompFrame;
 import io.netty.handler.codec.stomp.StompSubframeAggregator;
 import io.netty.handler.codec.stomp.StompSubframeDecoder;
 import io.netty.util.AttributeKey;
-import org.summerboot.jexpress.controller.authenticate.Authenticator;
-import org.summerboot.jexpress.controller.authenticate.Caller;
+import org.summerboot.jexpress.security.authenticate.Authenticator;
+import org.summerboot.jexpress.security.authenticate.Caller;
 import org.summerboot.jexpress.util.ReflectionUtil;
 import org.summerboot.jexpress.webserver.netty.NioConfig;
 
@@ -48,7 +48,7 @@ import java.util.Set;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
+public class WebSocketAuthHandlerOtt extends ChannelInboundHandlerAdapter {
 
     public static final AttributeKey<Caller> USER_ID_KEY = AttributeKey.valueOf("userId");
     public static final String BASENAME = "ws-ott";
@@ -57,7 +57,7 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
     protected final List<String> orderedNamedWebsocket;
     protected Authenticator authenticator;
 
-    public WebSocketAuthHandler_OTT(Injector injector, Set<String> namedWebsocket) {
+    public WebSocketAuthHandlerOtt(Injector injector, Set<String> namedWebsocket) {
         this.injector = injector;
         this.authenticator = injector.getInstance(Authenticator.class);
         orderedNamedWebsocket = new ArrayList<>(namedWebsocket);

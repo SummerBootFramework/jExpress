@@ -26,10 +26,10 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.controller.SessionContext;
-import org.summerboot.jexpress.controller.authenticate.AuthenticatorListener;
-import org.summerboot.jexpress.controller.authenticate.BootAuthenticator;
-import org.summerboot.jexpress.controller.authenticate.Caller;
 import org.summerboot.jexpress.security.SSLUtil;
+import org.summerboot.jexpress.security.authenticate.AuthenticatorListener;
+import org.summerboot.jexpress.security.authenticate.BootAuthenticator;
+import org.summerboot.jexpress.security.authenticate.Caller;
 import org.summerboot.jexpress.util.ApplicationUtil;
 
 import javax.naming.NamingException;

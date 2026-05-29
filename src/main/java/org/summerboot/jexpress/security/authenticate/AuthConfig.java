@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.summerboot.jexpress.controller.authenticate;
+package org.summerboot.jexpress.security.authenticate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.jsonwebtoken.Claims;
@@ -112,7 +112,7 @@ public class AuthConfig extends BootConfig {
     protected volatile String passwordAlgorithm;
 
     @Config(key = "ldap.schema.TenantGroup.ou")
-    protected volatile String ldapScheamTenantGroupOU;
+    protected volatile String ldapSchemaTenantGroupOU;
 
     //1.2 LDAP Client keystore
     protected final static String ID = "ldap";
@@ -364,8 +364,8 @@ public class AuthConfig extends BootConfig {
         return bindingUserDN;
     }
 
-    public String getLdapScheamTenantGroupOU() {
-        return ldapScheamTenantGroupOU;
+    public String getLdapSchemaTenantGroupOU() {
+        return ldapSchemaTenantGroupOU;
     }
 
     public String getPasswordAlgorithm() {

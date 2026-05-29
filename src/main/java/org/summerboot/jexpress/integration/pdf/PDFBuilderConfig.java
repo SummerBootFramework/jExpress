@@ -25,7 +25,7 @@ import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class PDFBuilderConfig {
-    public enum Agnet {
+    public enum Agent {
         iText, PDFBox
     }
 
@@ -40,7 +40,7 @@ public class PDFBuilderConfig {
     }
 
     private PDDocumentInformation docInfo;
-    private Agnet agnet = Agnet.PDFBox;
+    private Agent agent = Agent.PDFBox;
     private float pdfVersion = 2.0f; // PDFBox
     private PdfVersion version = PdfVersion.PDF_2_0; // iText
     private boolean isFullCompressionMode = true; // iText
@@ -79,12 +79,12 @@ public class PDFBuilderConfig {
         this.docInfo = docInfo;
     }
 
-    public Agnet getAgnet() {
-        return agnet;
+    public Agent getAgent() {
+        return agent;
     }
 
-    public void setAgnet(Agnet agnet) {
-        this.agnet = agnet;
+    public void setAgent(Agent agent) {
+        this.agent = agent;
     }
 
     public float getPdfVersion() {

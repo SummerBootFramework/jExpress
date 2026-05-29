@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.summerboot.jexpress.controller.authenticate;
+package org.summerboot.jexpress.security.authenticate;
 
 import org.summerboot.jexpress.controller.SessionContext;
 import org.summerboot.jexpress.integration.ldap.LdapAgent;

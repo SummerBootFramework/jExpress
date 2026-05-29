@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.summerboot.jexpress.controller.authenticate;
+package org.summerboot.jexpress.security.authenticate;
 
 import io.grpc.Context;
 import io.jsonwebtoken.JwtBuilder;

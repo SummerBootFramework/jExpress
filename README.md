@@ -4,11 +4,11 @@
 * **[Maven Central Repository][2]**
 * **[mvnrepository.com][3]**
 
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.10
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.11
 
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.10
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.11
 
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.10
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.11
 
 [View Changelog (CHANGES)](CHANGES.md)
 
@@ -296,11 +296,11 @@ import javax.naming.NamingException;
 
 import org.summerboot.jexpress.annotation.Service;
 import org.summerboot.jexpress.controller.SessionContext;
-import org.summerboot.jexpress.controller.authenticate.Authenticator;
-import org.summerboot.jexpress.controller.authenticate.AuthenticatorListener;
-import org.summerboot.jexpress.controller.authenticate.BootAuthenticator;
-import org.summerboot.jexpress.controller.authenticate.Caller;
-import org.summerboot.jexpress.controller.authenticate.User;
+import org.summerboot.jexpress.security.authenticate.Authenticator;
+import org.summerboot.jexpress.security.authenticate.AuthenticatorListener;
+import org.summerboot.jexpress.security.authenticate.BootAuthenticator;
+import org.summerboot.jexpress.security.authenticate.Caller;
+import org.summerboot.jexpress.security.authenticate.User;
 import org.summerboot.jexpress.webserver.netty.RequestProcessor;
 
 @Singleton

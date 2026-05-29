@@ -18,7 +18,7 @@
 package org.summerboot.jexpress.controller.websocket;
 
 import io.netty.channel.ChannelHandlerContext;
-import org.summerboot.jexpress.controller.authenticate.Caller;
+import org.summerboot.jexpress.security.authenticate.Caller;
 
 public interface WebSocketPipelinesInitializer {
     void initCustomizedPipelines(ChannelHandlerContext ctx, String basename, Class<?> type, String uriRequested, Caller caller);

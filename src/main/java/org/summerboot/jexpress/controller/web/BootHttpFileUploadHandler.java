@@ -44,7 +44,7 @@ import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.controller.Err;
 import org.summerboot.jexpress.controller.SessionContext;
-import org.summerboot.jexpress.controller.authenticate.Caller;
+import org.summerboot.jexpress.security.authenticate.Caller;
 import org.summerboot.jexpress.webserver.multipart.MultipartUtil;
 import org.summerboot.jexpress.webserver.netty.NioConfig;
 import org.summerboot.jexpress.webserver.netty.NioHttpUtil;

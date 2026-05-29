@@ -30,7 +30,7 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.controller.websocket.WebSocketAuthHandler_OTT;
+import org.summerboot.jexpress.controller.websocket.WebSocketAuthHandlerOtt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -112,7 +112,7 @@ public class HttpNioChannelInitializer extends NioChannelInitializer {
 
             // A dynamic route authentication handler is added. After the handler finishes execution,
             // it will dynamically add a WebSocketServerProtocolHandler and either ChatModuleHandler or GameModuleHandler to the end of the pipeline based on the path.
-            channelPipeline.addLast(WebSocketAuthHandler_OTT.BASENAME, new WebSocketAuthHandler_OTT(injector, namedWebsocket));
+            channelPipeline.addLast(WebSocketAuthHandlerOtt.BASENAME, new WebSocketAuthHandlerOtt(injector, namedWebsocket));
         }
 
         // 6*. Ping

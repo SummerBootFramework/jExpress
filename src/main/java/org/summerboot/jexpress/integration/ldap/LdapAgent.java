@@ -19,12 +19,12 @@ package org.summerboot.jexpress.integration.ldap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.controller.authenticate.AuthConfig;
-import org.summerboot.jexpress.controller.authenticate.Authenticator;
-import org.summerboot.jexpress.controller.authenticate.AuthenticatorListener;
-import org.summerboot.jexpress.controller.authenticate.BootAuthenticator;
-import org.summerboot.jexpress.controller.authenticate.User;
 import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.authenticate.AuthConfig;
+import org.summerboot.jexpress.security.authenticate.Authenticator;
+import org.summerboot.jexpress.security.authenticate.AuthenticatorListener;
+import org.summerboot.jexpress.security.authenticate.BootAuthenticator;
+import org.summerboot.jexpress.security.authenticate.User;
 
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
@@ -81,7 +81,7 @@ public class LdapAgent implements Closeable {
     }
 
     public static LdapAgent build() throws NamingException {
-        return new LdapAgent(AuthConfig.cfg.getLdapConfig(), AuthConfig.cfg.getLdapBaseDN(), AuthConfig.cfg.isTypeAD(), AuthConfig.cfg.getLdapScheamTenantGroupOU());
+        return new LdapAgent(AuthConfig.cfg.getLdapConfig(), AuthConfig.cfg.getLdapBaseDN(), AuthConfig.cfg.isTypeAD(), AuthConfig.cfg.getLdapSchemaTenantGroupOU());
     }
 
     public static Properties buildCfg(String host, int port, boolean isSSLEnabled, String ldapSSLConnectionFactoryClassName, String sslProtocol, String bindingUserDN, String bindingPassword) {

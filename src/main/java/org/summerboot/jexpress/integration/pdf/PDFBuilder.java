@@ -123,11 +123,11 @@ public class PDFBuilder {
 
     public byte[] html2PDF(String requesterTxId, String htmlContent, boolean isSinglePage, int extraSpace, PDFBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
         context.poi(BootPOI.PDF_BEGIN);
-        PDFBuilderConfig.Agnet agnet = cfg.getAgnet();
+        PDFBuilderConfig.Agent agent = cfg.getAgent();
         if (extraSpace < 1) {
             extraSpace = 5;
         }
-        final String sessionName = requesterTxId + "_" + agnet + "_" + isSinglePage + "_" + extraSpace;
+        final String sessionName = requesterTxId + "_" + agent + "_" + isSinglePage + "_" + extraSpace;
         byte[] pdf = null;
         try {
             if (isSinglePage) {
@@ -167,7 +167,7 @@ public class PDFBuilder {
             }
 
             //4. generate PDF from HTML
-            switch (agnet) {
+            switch (agent) {
                 case PDFBox -> {
                     pdf = agentPDFBox.html2PDF(htmlContent, htmlTemplateDir, cfg.buildProtectionPolicy(), cfg.getDocInfo(), cfg.getPdfVersion());
                     context.poi(BootPOI.PDF_H2PPE);

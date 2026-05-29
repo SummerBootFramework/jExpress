@@ -32,9 +32,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
@@ -376,6 +378,42 @@ public class FormatterUtil {
 
     public static byte[] base64Decode(String encodedMime) {
         return Base64.getDecoder().decode(encodedMime);
+    }
+
+    public static ByteBuffer getByteBufferFromString(String str, final int position, final int limit, final int capacity, ByteOrder byteOrder) {
+        if (StringUtils.isBlank(str)) {
+            return ByteBuffer.allocate(Math.max(0, capacity));
+        }
+
+        Pattern hexPattern = Pattern.compile("0x([0-9A-Fa-f]{2})");
+        Matcher hexMatcher = hexPattern.matcher(str);
+
+        List<Byte> byteList = new ArrayList<>();
+        while (hexMatcher.find()) {
+            byteList.add((byte) Integer.parseInt(hexMatcher.group(1), 16));
+        }
+
+        int byteCount = byteList.size();
+        int safeCapacityInput = Math.max(0, capacity);
+        int safeLimitInput = Math.max(0, limit);
+        int safePositionInput = Math.max(0, position);
+
+        int effectiveCapacity = Math.max(safeCapacityInput, Math.max(byteCount, Math.max(safeLimitInput, safePositionInput)));
+        ByteBuffer buffer = ByteBuffer.allocate(effectiveCapacity);
+
+        for (Byte b : byteList) {
+            buffer.put(b);
+        }
+
+        int effectiveLimit = Math.max(byteCount, safeLimitInput);
+        effectiveLimit = Math.min(effectiveLimit, effectiveCapacity);
+
+        int effectivePosition = Math.min(safePositionInput, effectiveLimit);
+
+        buffer.limit(effectiveLimit);
+        buffer.position(effectivePosition);
+        buffer.order(byteOrder);
+        return buffer;
     }
 
     /**

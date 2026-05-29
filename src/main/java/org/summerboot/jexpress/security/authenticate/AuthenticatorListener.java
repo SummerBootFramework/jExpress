@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.summerboot.jexpress.controller.authenticate;
+package org.summerboot.jexpress.security.authenticate;
 
 import io.jsonwebtoken.Claims;
 
