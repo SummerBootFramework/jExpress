@@ -68,19 +68,19 @@ public class WebSocketAuthHandlerOtt extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
-            String uriRequestedWithOTT = request.uri(); // "/ws/chat/oneTimeTicket"
-            String oneTimeTicket = null;
+            String uriRequestedWithOTT = request.uri(); // "/ws/chat/oneTimeToken"
+            String oneTimeToken = null;
             String uriRequested = null;
 
             for (String name : orderedNamedWebsocket) { // uriPredefined = "/ws/chat"
                 String uriFormated = name.endsWith("/") ? name : name + "/";
                 if (uriRequestedWithOTT.startsWith(uriFormated)) {
-                    oneTimeTicket = uriRequestedWithOTT.substring(uriFormated.length());
+                    oneTimeToken = uriRequestedWithOTT.substring(uriFormated.length());
                     uriRequested = name;
                     break;
                 }
             }
-            if (oneTimeTicket == null) {
+            if (oneTimeToken == null) {
                 //sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND));
                 //ctx.close();
                 ctx.fireChannelRead(msg);
@@ -88,7 +88,7 @@ public class WebSocketAuthHandlerOtt extends ChannelInboundHandlerAdapter {
             }
 
 
-            Caller caller = verifyAndDestroyTicket(oneTimeTicket); // verify and consume one-time ticket
+            Caller caller = verifyAndDestroyTicket(oneTimeToken); // verify and consume one-time ticket
             if (caller == null) {
                 sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED));
                 ctx.close();
@@ -168,11 +168,11 @@ public class WebSocketAuthHandlerOtt extends ChannelInboundHandlerAdapter {
     public void initCustomizedPipelines(ChannelHandlerContext ctx, String basename, Class<?> type, String uriRequested, Caller caller) {
     }
 
-    protected Caller verifyAndDestroyTicket(String oneTimeTicket) {
+    protected Caller verifyAndDestroyTicket(String oneTimeToken) {
         if (authenticator == null) {
             return null;
         }
-        return authenticator.oneTimeTokenVerifyAndDestroy(oneTimeTicket);
+        return authenticator.oneTimeTokenVerifyAndDestroy(oneTimeToken);
     }
 
     protected void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {

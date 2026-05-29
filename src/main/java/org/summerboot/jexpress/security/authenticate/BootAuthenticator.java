@@ -515,12 +515,12 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
             return null;
         }
 
-        String errorMsg = oneTimeTicketAuthorize(wsURI, caller, context);
+        String errorMsg = oneTimeTokenAuthorize(wsURI, caller, context);
         if (errorMsg != null) {
             context.status(HttpResponseStatus.FORBIDDEN)
                     .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, errorMsg, null));
         }
-        String ott = SecurityUtil.generateOneTimeTicket();
+        String ott = SecurityUtil.generateOneTimeToken();
         authTokenCache.oneTimeTokenPut(ott, caller, Duration.ofSeconds(AuthConfig.cfg.getOttTtlSeconds()).toMillis());
         return ott;
     }
@@ -533,13 +533,13 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
      * @param context
      * @return null if caller is authorized, otherwise error message
      */
-    protected String oneTimeTicketAuthorize(String wsURI, Caller caller, SessionContext context) {
+    protected String oneTimeTokenAuthorize(String wsURI, Caller caller, SessionContext context) {
         return null;
     }
 
     @Override
-    public Caller oneTimeTokenVerifyAndDestroy(String oneTimeTicket) {
-        return authTokenCache.oneTimeTokenVerifyAndDestroy(oneTimeTicket);
+    public Caller oneTimeTokenVerifyAndDestroy(String oneTimeToken) {
+        return authTokenCache.oneTimeTokenVerifyAndDestroy(oneTimeToken);
     }
 
 }

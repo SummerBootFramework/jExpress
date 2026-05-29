@@ -612,11 +612,11 @@ public class SecurityUtil {
         return null;
     }
 
-    public static String generateOneTimeTicket() {
-        return generateOneTimeTicket("t_", 32, 64);
+    public static String generateOneTimeToken() {
+        return generateOneTimeToken("t_", 32, 64);
     }
 
-    public static String generateOneTimeTicket(String prefix, int minLen, int maxLen) {
+    public static String generateOneTimeToken(String prefix, int minLen, int maxLen) {
         if (minLen < 1) {
             throw new IllegalArgumentException("minLen must be >= 1");
         }

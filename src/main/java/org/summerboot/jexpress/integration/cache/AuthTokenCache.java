@@ -61,7 +61,7 @@ public interface AuthTokenCache extends HealthChecker {
     boolean isBlacklist(String key);
 
     /**
-     * store it in redis with key "ws:ticket:" + oneTimeTicket, value = caller (or json string),
+     * store it in redis with key "ws:token:" + oneTimeToken, value = caller (or JSON string)
      *
      * @param key
      * @param caller
