@@ -229,7 +229,7 @@ public class AuthConfig extends BootConfig {
     @Config(key = "jwt.filter.Blacklist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")
     protected volatile Set<String> jwtFilterBlacklist;
 
-    @Config(key = "OneTimeKey.ttl.seconds", defaultValue = "10", desc = "WebSocket One-Time Token TTL in seconds")
+    @Config(key = "OneTimeToken.ttl.seconds", defaultValue = "10", desc = "WebSocket One-Time Token TTL in seconds")
     protected volatile int ottTtlSeconds;
 
     //3. Role mapping

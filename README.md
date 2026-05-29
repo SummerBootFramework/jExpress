@@ -36,7 +36,7 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
 <dependency>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.6.6</version>
+    <version>2.6.11</version>
 </dependency>
 ```
 
