@@ -476,8 +476,8 @@ public class AuthConfig extends BootConfig {
 //    }
     protected final Set<String> declareRoles = new TreeSet<>();
 
-    public void addDeclareRoles(Set<String> scanedDeclareRoles) {
-        this.declareRoles.addAll(Set.copyOf(scanedDeclareRoles));
+    public void addDeclareRoles(Set<String> scannedDeclareRoles) {
+        this.declareRoles.addAll(Set.copyOf(scannedDeclareRoles));
     }
 
     public Set<String> getDeclareRoles() {

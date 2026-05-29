@@ -193,8 +193,8 @@ abstract public class SummerBigBang extends SummerSingularity {
                 .get();
         cliOptions.addOption(arg);
 
-        if (scanedJExpressConfigs != null && !scanedJExpressConfigs.isEmpty()) {
-            String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+        if (scannedJExpressConfigs != null && !scannedJExpressConfigs.isEmpty()) {
+            String validOptions = FormatterUtil.toCSV(scannedJExpressConfigs.keySet());
             arg = Option.builder(BootConstant.CLI_CONFIG_DEMO)
                     .desc("Show specified configuration template (" + validOptions + "), or when specified with -" + BootConstant.CLI_CONFIG_DOMAIN + " just dump all available configuration templates to the specified folder")
                     .hasArgs().argName("config").optionalArg(true)
@@ -403,13 +403,13 @@ abstract public class SummerBigBang extends SummerSingularity {
         if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO) && !cli.hasOption(BootConstant.CLI_CONFIG_DIR)) {
             String cfgName = cli.getOptionValue(BootConstant.CLI_CONFIG_DEMO);
             if (cfgName == null) {
-                String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+                String validOptions = FormatterUtil.toCSV(scannedJExpressConfigs.keySet());
                 String msg = "Missing config option, valid values <" + validOptions + ">";
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_MISSING_ARG_ERROR, msg, null);
             }
-            Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
+            Class c = scannedJExpressConfigs.get(cfgName).cfgClass;
             if (c == null) {
-                String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+                String validOptions = FormatterUtil.toCSV(scannedJExpressConfigs.keySet());
                 String msg = cfgName + "is an invalid config option, valid values <" + validOptions + ">";
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ARG_ERROR, msg, null);
             }
@@ -512,8 +512,8 @@ abstract public class SummerBigBang extends SummerSingularity {
          */
         if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO)) {
             int i = 0;
-            for (String cfgName : scanedJExpressConfigs.keySet()) {
-                Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
+            for (String cfgName : scannedJExpressConfigs.keySet()) {
+                Class c = scannedJExpressConfigs.get(cfgName).cfgClass;
                 try {
                     ConfigUtil.createConfigFile(c, userSpecifiedConfigDir, cfgName, true);
                 } catch (IOException ex) {
@@ -555,21 +555,21 @@ abstract public class SummerBigBang extends SummerSingularity {
             case app_run:
                 if (!hasControllers) {
                     memo.append(BootConstant.BR).append("\t- cfg.loading.skip: no @Controller found, skip=").append(NioConfig.class.getSimpleName());
-                    scanedJExpressConfigs.remove(NioConfig.class.getSimpleName());
+                    scannedJExpressConfigs.remove(NioConfig.class.getSimpleName());
                 }
                 if (!hasGRPCImpl) {
                     memo.append(BootConstant.BR).append("\t- cfg.loading.skip: no gRPC Server stub found, skip=").append(GRPCServerConfig.class.getSimpleName());
-                    scanedJExpressConfigs.remove(GRPCServerConfig.class.getSimpleName());
+                    scannedJExpressConfigs.remove(GRPCServerConfig.class.getSimpleName());
                 }
 //                if (!hasAuthImpl) {
 //                    memo.append("\n\t- agent.loading.skip: no @DeclareRoles or @RolesAllowed found in any @Controller, skip=").append(AuthConfig.class.getSimpleName());
-//                    scanedJExpressConfigs.remove(AuthConfig.class.getSimpleName());
+//                    scannedJExpressConfigs.remove(AuthConfig.class.getSimpleName());
 //                }
                 break;
         }*/
         try {
             //1. get main configurations
-            for (ConfigMetadata registeredAppConfig : scanedJExpressConfigs.values()) {
+            for (ConfigMetadata registeredAppConfig : scannedJExpressConfigs.values()) {
                 if (isUserSpecifieduserSpecifiedalternativeNames(registeredAppConfig.whenUseAlternative) ^ registeredAppConfig.thenLoadConfig) {
                     continue;
                 }
@@ -615,8 +615,8 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void genesis(Class primaryClass, Set<String> userSpecifiedalternativeNames) {
         log.trace("");
         BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedalternativeNames, memo);
-        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedalternativeNames, channelHandlerNames, memo);
-        Module bootModule = Modules.override(defaultModule).with(scanedModule);
+        ScannedGuiceModule scannedModule = new ScannedGuiceModule(scannedServiceBindingMap, userSpecifiedalternativeNames, channelHandlerNames, memo);
+        Module bootModule = Modules.override(defaultModule).with(scannedModule);
         Module applicationModule = userOverrideModule == null
                 ? bootModule
                 : Modules.override(bootModule).with(userOverrideModule);
