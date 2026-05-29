@@ -284,7 +284,7 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
     }
 
     /**
-     * store it in redis with key "ws:ticket:" + oneTimeToken, value = caller (or JSON string)
+     * store it in redis with key "ws:token:" + oneTimeToken, value = caller (or JSON string)
      *
      * @param key
      * @param caller

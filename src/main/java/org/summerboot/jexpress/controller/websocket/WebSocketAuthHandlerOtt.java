@@ -88,7 +88,7 @@ public class WebSocketAuthHandlerOtt extends ChannelInboundHandlerAdapter {
             }
 
 
-            Caller caller = verifyAndDestroyTicket(oneTimeToken); // verify and consume one-time ticket
+            Caller caller = verifyAndDestroyOneTimeToken(oneTimeToken); // verify and consume one-time token
             if (caller == null) {
                 sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED));
                 ctx.close();
@@ -168,7 +168,7 @@ public class WebSocketAuthHandlerOtt extends ChannelInboundHandlerAdapter {
     public void initCustomizedPipelines(ChannelHandlerContext ctx, String basename, Class<?> type, String uriRequested, Caller caller) {
     }
 
-    protected Caller verifyAndDestroyTicket(String oneTimeToken) {
+    protected Caller verifyAndDestroyOneTimeToken(String oneTimeToken) {
         if (authenticator == null) {
             return null;
         }

@@ -39,7 +39,7 @@ public class AuthTokenCacheLocalImpl extends SimpleLocalCacheImpl<String, String
         return v != null;
     }
 
-    private static final String OTT_KEY_PREFIX = "ws:ticket:";
+    private static final String OTT_KEY_PREFIX = "ws:token:";
 
     @Override
     public void oneTimeTokenPut(String key, Caller caller, long ttlMilliseconds) {

@@ -135,7 +135,7 @@ public interface Authenticator<T> {
     /**
      * Generate a one-time token for WebSocket authentication, the token will be stored in Redis with a short TTL (e.g., 10 seconds)
      * in production, generate a random string as one-time token, store it in redis with key "ws:token:" + oneTimeToken, value = caller (or json string),
-     * and set expire time to 10 seconds. return the one-time ticket string to caller.
+     * and set expire time to 10 seconds. return the one-time token string to caller.
      *
      * @param wsURI   WebSocket URI
      * @param jwt     caller's JWT, can be used to verify caller's identity and generate one-time token for specific user
