@@ -10,9 +10,10 @@
 * Refactoring: @ImportResource renamed to @ConfigFilename
 * Refactoring: ApplicationUtil.runAndWaitForAllResults() renamed to ConcurrentUtil.runAndWaitForAllResults()
 * Refactoring: predefined URI constants inside BootURI
+* Refactoring: SessionContext.forcePrettyResponse(boolean) -> SessionContext.pretty(Boolean), it will override @Log(pretty = ?)
 * Refactoring: package names are re-organized, migration guide: IntelliJ > Editor > General > Auto Import, check the following two options, then delete the broken imports:
     * Add unambiguous imports on the fly
-    * Optimize imports on the flycd..
+    * Optimize imports on the fly
 * ✨ New API: @RequiresHealthCheck for @Controller class/method
 * ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
 * ✨ New feature: org.summerboot.jexpress.util.FileUtil
