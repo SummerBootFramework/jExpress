@@ -4,11 +4,11 @@
 * **[Maven Central Repository][2]**
 * **[mvnrepository.com][3]**
 
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.9
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.10
 
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.10
 
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.10
 
 [View Changelog (CHANGES)](CHANGES.md)
 
