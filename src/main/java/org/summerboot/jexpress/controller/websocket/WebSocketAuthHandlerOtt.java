@@ -172,7 +172,7 @@ public class WebSocketAuthHandlerOtt extends ChannelInboundHandlerAdapter {
         if (authenticator == null) {
             return null;
         }
-        return authenticator.oneTimeTicketVerifyAndDestroy(oneTimeTicket);
+        return authenticator.oneTimeTokenVerifyAndDestroy(oneTimeTicket);
     }
 
     protected void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {

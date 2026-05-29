@@ -291,7 +291,7 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
      * @param ttlMilliseconds
      */
     @Override
-    public void oneTimeTicketPut(String key, Caller caller, long ttlMilliseconds) {
+    public void oneTimeTokenPut(String key, Caller caller, long ttlMilliseconds) {
     }
 
     /**
@@ -301,7 +301,7 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
      * @return
      */
     @Override
-    public Caller oneTimeTicketVerifyAndDestroy(String key) {
+    public Caller oneTimeTokenVerifyAndDestroy(String key) {
         return null;
     }
 

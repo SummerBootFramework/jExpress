@@ -42,12 +42,12 @@ public class AuthTokenCacheLocalImpl extends SimpleLocalCacheImpl<String, String
     private static final String OTT_KEY_PREFIX = "ws:ticket:";
 
     @Override
-    public void oneTimeTicketPut(String key, Caller caller, long ttlMilliseconds) {
+    public void oneTimeTokenPut(String key, Caller caller, long ttlMilliseconds) {
         put(OTT_KEY_PREFIX + key, BeanUtil.toJson(caller, false, true), ttlMilliseconds);
     }
 
     @Override
-    public Caller oneTimeTicketVerifyAndDestroy(String key) {
+    public Caller oneTimeTokenVerifyAndDestroy(String key) {
         String json = get(OTT_KEY_PREFIX + key);
         if (json != null) {
             delete(OTT_KEY_PREFIX + key);

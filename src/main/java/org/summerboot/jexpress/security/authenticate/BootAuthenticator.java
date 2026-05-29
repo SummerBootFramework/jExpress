@@ -503,7 +503,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     @Override
-    public String oneTimeTicketAuthenticate(String wsURI, String jwt, SessionContext context) {
+    public String oneTimeTokenAuthenticate(String wsURI, String jwt, SessionContext context) {
         //Claims claims = BootAuthenticator.parseJWT(jwt);
         //Caller caller = BootAuthenticator.fromJwt(claims);
         Caller caller = context.caller();
@@ -521,7 +521,7 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
                     .error(new Err(BootErrorCode.AUTH_NO_PERMISSION, null, errorMsg, null));
         }
         String ott = SecurityUtil.generateOneTimeTicket();
-        authTokenCache.oneTimeTicketPut(ott, caller, Duration.ofSeconds(AuthConfig.cfg.getOttTtlSeconds()).toMillis());
+        authTokenCache.oneTimeTokenPut(ott, caller, Duration.ofSeconds(AuthConfig.cfg.getOttTtlSeconds()).toMillis());
         return ott;
     }
 
@@ -538,8 +538,8 @@ public abstract class BootAuthenticator<E> implements Authenticator<E>, ServerIn
     }
 
     @Override
-    public Caller oneTimeTicketVerifyAndDestroy(String oneTimeTicket) {
-        return authTokenCache.oneTimeTicketVerifyAndDestroy(oneTimeTicket);
+    public Caller oneTimeTokenVerifyAndDestroy(String oneTimeTicket) {
+        return authTokenCache.oneTimeTokenVerifyAndDestroy(oneTimeTicket);
     }
 
 }

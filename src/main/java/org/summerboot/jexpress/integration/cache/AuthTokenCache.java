@@ -67,13 +67,13 @@ public interface AuthTokenCache extends HealthChecker {
      * @param caller
      * @param ttlMilliseconds
      */
-    void oneTimeTicketPut(String key, Caller caller, long ttlMilliseconds);
+    void oneTimeTokenPut(String key, Caller caller, long ttlMilliseconds);
 
     /**
-     * call redis.getdel("ws:ticket:" + oneTimeTicket)
+     * call redis.getdel("ws:token:" + oneTimeToken)
      *
      * @param key
      * @return
      */
-    Caller oneTimeTicketVerifyAndDestroy(String key);
+    Caller oneTimeTokenVerifyAndDestroy(String key);
 }
