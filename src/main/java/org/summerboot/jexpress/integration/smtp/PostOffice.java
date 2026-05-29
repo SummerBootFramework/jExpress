@@ -16,7 +16,7 @@
  */
 package org.summerboot.jexpress.integration.smtp;
 
-import org.summerboot.jexpress.integration.healthcheck.HealthChecker;
+import org.summerboot.jexpress.integration.HealthChecker;
 
 import java.util.Collection;
 

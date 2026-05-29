@@ -99,7 +99,7 @@ public class SessionContext {
     protected String redirect;
     protected final List<POI> poi = new ArrayList<>();
     protected final List<Memo> memo = new ArrayList<>();
-    protected boolean forcePrettyResponse = false;
+    protected Boolean pretty = null;
 
     // Session attributes
     protected Map<Object, Object> sessionAttributes;
@@ -865,12 +865,12 @@ public class SessionContext {
         return this;
     }
 
-    public boolean forcePrettyResponse() {
-        return forcePrettyResponse;
+    public Boolean pretty() {
+        return pretty;
     }
 
-    public SessionContext forcePrettyResponse(boolean forcePrettyResponse) {
-        this.forcePrettyResponse = forcePrettyResponse;
+    public SessionContext pretty(Boolean pretty) {
+        this.pretty = pretty;
         return this;
     }
 

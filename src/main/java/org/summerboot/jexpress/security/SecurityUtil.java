@@ -24,8 +24,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.controller.Err;
-import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.controller.SessionContext;
+import org.summerboot.jexpress.util.ApplicationUtil;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;

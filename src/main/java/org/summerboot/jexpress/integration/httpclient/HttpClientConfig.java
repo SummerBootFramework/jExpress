@@ -18,15 +18,15 @@ package org.summerboot.jexpress.integration.httpclient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.annotation.config.Config;
+import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.NamedDefaultThreadFactory;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.boot.instrumentation.HTTPClientStatusListener;
 import org.summerboot.jexpress.security.SSLUtil;
 import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.util.concurrent.NamedDefaultThreadFactory;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.dataformat.xml.XmlMapper;
 

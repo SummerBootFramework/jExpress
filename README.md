@@ -100,7 +100,7 @@ Implement `AppLifecycleListener` or extend `AppLifecycleHandler` (recommended):
 import com.google.inject.Singleton;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.SummerInitializer;
-import org.summerboot.jexpress.boot.annotation.Order;
+import org.summerboot.jexpress.annotation.Order;
 import org.summerboot.jexpress.boot.lifecycle.AppLifecycleHandler;
 import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
@@ -149,8 +149,8 @@ import jakarta.ws.rs.core.MediaType;
 
 import java.util.List;
 
-import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.Log;
+import org.summerboot.jexpress.annotation.Controller;
+import org.summerboot.jexpress.annotation.restful.Log;
 import org.summerboot.jexpress.controller.SessionContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -223,7 +223,7 @@ The controller is only activated when the app is launched with `-use RoleBased`:
 ### 1.5 PING endpoint
 
 ```java
-import org.summerboot.jexpress.webserver.netty.PingController;
+import org.summerboot.jexpress.controller.restful.PingController;
 
 @Controller
 @Path("/hellosummer")
@@ -235,7 +235,7 @@ public class MyController extends PingController {
 or use `@Ping` directly:
 
 ```java
-import org.summerboot.jexpress.boot.annotation.Ping;
+import org.summerboot.jexpress.annotation.restful.Ping;
 
 @Controller
 @Path("/hellosummer")
@@ -294,7 +294,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 
 import javax.naming.NamingException;
 
-import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.annotation.Service;
 import org.summerboot.jexpress.controller.SessionContext;
 import org.summerboot.jexpress.controller.authenticate.Authenticator;
 import org.summerboot.jexpress.controller.authenticate.AuthenticatorListener;
@@ -443,13 +443,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.util.Properties;
 
+import org.summerboot.jexpress.annotation.config.ConfigFilename;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.annotation.config.Config;
+import org.summerboot.jexpress.annotation.config.ConfigHeader;
 
-@ImportResource("cfg_app.properties")
+@ConfigFilename("cfg_app.properties")
 public class MyConfig extends BootConfig {
 
     public static final MyConfig cfg = new MyConfig();
@@ -558,10 +558,10 @@ java -jar my-service.jar -cfgdir <config folder> -decrypt
 Enable `GET /hellosummer/ping` without polluting your application log:
 
 ```java
-import org.summerboot.jexpress.boot.annotation.Ping;
+import org.summerboot.jexpress.annotation.restful.Ping;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import org.summerboot.jexpress.boot.annotation.Controller;
+import org.summerboot.jexpress.annotation.Controller;
 import org.summerboot.jexpress.controller.restful.BootController;
 
 @Controller
@@ -602,13 +602,13 @@ ping.sync.showRootCause=
 
 ```java
 
-import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.integration.healthcheck.HealthChecker;
+import org.summerboot.jexpress.annotation.Service;
+import org.summerboot.jexpress.integration.HealthChecker;
 import domain.org.summerboot.jexpress.webserver.netty.Err;
 
 import java.util.List;
 
-@org.summerboot.jexpress.boot.annotation.HealthCheck(name = "myDB")
+@org.summerboot.jexpress.annotation.integration.HealthCheck(name = "myDB")
 @Service(binding = HealthChecker.class)
 public class MyHealthInspector implements HealthChecker<Void> {
 
@@ -772,8 +772,8 @@ java -jar my-service.jar -use impl1
 
 ```java
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.annotation.Unique;
-import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
+import org.summerboot.jexpress.annotation.validation.Unique;
+import org.summerboot.jexpress.annotation.validation.UniqueIgnore;
 
 @Unique(name = "ErrorCode", type = int.class)
 public interface AppErrorCode extends BootErrorCode {
@@ -804,7 +804,7 @@ java -jar my-service.jar -unique POI
 ## 12. Scheduled Tasks — `@Scheduled`
 
 ```java
-import org.summerboot.jexpress.boot.annotation.Scheduled;
+import org.summerboot.jexpress.annotation.Scheduled;
 
 public class MyJob {
 
@@ -840,7 +840,7 @@ public void dynamicJob() { ...}
 Annotate your gRPC service implementation with `@GrpcService`:
 
 ```java
-import org.summerboot.jexpress.boot.annotation.GrpcController;
+import org.summerboot.jexpress.annotation.GrpcController;
 import org.summerboot.jexpress.boot.annotation.GrpcService;
 
 @GrpcController

@@ -19,9 +19,9 @@ package org.summerboot.jexpress.controller.authenticate;
 import io.grpc.Context;
 import io.jsonwebtoken.JwtBuilder;
 import io.netty.handler.codec.http.HttpHeaders;
+import org.summerboot.jexpress.controller.SessionContext;
 import org.summerboot.jexpress.integration.cache.AuthTokenCache;
 import org.summerboot.jexpress.webserver.netty.RequestProcessor;
-import org.summerboot.jexpress.controller.SessionContext;
 
 import javax.naming.NamingException;
 import java.net.SocketAddress;

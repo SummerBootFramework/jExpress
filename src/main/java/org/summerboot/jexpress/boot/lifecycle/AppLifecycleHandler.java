@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.integration.healthcheck.HealthMonitor;
+import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 

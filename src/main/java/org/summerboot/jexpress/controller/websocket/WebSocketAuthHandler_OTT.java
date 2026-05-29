@@ -23,6 +23,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -34,7 +35,6 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.stomp.StompFrame;
 import io.netty.handler.codec.stomp.StompSubframeAggregator;
 import io.netty.handler.codec.stomp.StompSubframeDecoder;
-import io.netty.handler.codec.stomp.StompSubframeEncoder;
 import io.netty.util.AttributeKey;
 import org.summerboot.jexpress.controller.authenticate.Authenticator;
 import org.summerboot.jexpress.controller.authenticate.Caller;
@@ -88,7 +88,7 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
             }
 
 
-            Caller caller = verifyAndDestroyTicket(oneTimeTicket); // 校验并销毁 Ticket
+            Caller caller = verifyAndDestroyTicket(oneTimeTicket); // verify and consume one-time ticket
             if (caller == null) {
                 sendHttpResponse(ctx, request, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED));
                 ctx.close();
@@ -97,7 +97,7 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
             // save OTT result to channel attr
             ctx.channel().attr(USER_ID_KEY).set(caller);
 
-            // 重写 URI，让 downstream 的 WebSocketServerProtocolHandler 能够精准匹配升级
+            // rewrite URI so downstream WebSocketServerProtocolHandler can match upgrade path exactly
             request.setUri(uriRequested); // "/ws/chat"
 
             // load settings for WebSocketServerProtocolHandler
@@ -111,27 +111,38 @@ public class WebSocketAuthHandler_OTT extends ChannelInboundHandlerAdapter {
 
             // [Key Point] Dynamically adding chat-specific services to the end of the pipeline (Handler)
             ChannelHandler ch = injector.getInstance(Key.get(ChannelHandler.class, Names.named(uriRequested))); // "/ws/chat"
+            ChannelPipeline pipeline = ctx.pipeline();
             Class<?> type = ReflectionUtil.getInboundType(ch, 0);
             if (type == StompFrame.class) {
                 final String webSocketStompSubprotocol = nioCfg.getWebSocketStompSubprotocol();
-                // 1) Upgrade to websocket at /ws-stomp
-                ctx.pipeline().addAfter(BASENAME, "ws-protocol", new WebSocketServerProtocolHandler(uriRequested, webSocketStompSubprotocol, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
+                // ==========================================
+                // Layer 1: WebSocket Protocol and Conversion Layer
+                // ==========================================
+                // 1) Upgraded to the WebSocket protocol (responsible for: unpacking inbound WS frames and packaging outbound WS frames).
+                pipeline.addAfter(BASENAME, "ws-protocol-handler", new WebSocketServerProtocolHandler(uriRequested, webSocketStompSubprotocol, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
+                // 2) [outbound] STOMP -> WebSocket text frame encoder
+                pipeline.addAfter("ws-protocol-handler", "stomp-to-ws-encoder", new StompToWebSocketTextFrameEncoder());
+                // 3) [inbound] WebSocket frame -> ByteBuf decoder
+                pipeline.addAfter("stomp-to-ws-encoder", "ws-to-bytebuf-decoder", new WebSocketFrameToByteBufDecoder());
 
-                // 2) Convert WS binary/text frames to ByteBuf for STOMP
-                ctx.pipeline().addAfter("ws-protocol", "ws2buf", new WebSocketFrameToByteBufHandler());
+                // ==========================================
+                // Layer 2: STOMP Protocol Parsing Layer
+                // ==========================================
+                // 4) [inbound] STOMP subframe decoder
+                pipeline.addAfter("ws-to-bytebuf-decoder", "stomp-subframe-decoder", new StompSubframeDecoder());
+                // 5) [inbound] STOMP subframe aggregator
+                pipeline.addAfter("stomp-subframe-decoder", "stomp-subframe-aggregator", new StompSubframeAggregator(maxFrameSize));
 
-                // 3) STOMP codec
-                ctx.pipeline().addAfter("ws2buf", "stomp-decoder", new StompSubframeDecoder());
-                ctx.pipeline().addAfter("stomp-decoder", "stomp-encoder", new StompSubframeEncoder());
-                ctx.pipeline().addAfter("stomp-encoder", "stomp-agg", new StompSubframeAggregator(maxFrameSize)); // 5MB for small images/videos/files
-
-                // 4) STOMP business logic
-                ctx.pipeline().addAfter("stomp-agg", "stomp-biz", ch); // Extends SimpleChannelInboundHandler<FullStompFrame>
+                // ==========================================
+                // Layer 3: Application Business Logic Layer
+                // ==========================================
+                // 6. STOMP business logic
+                pipeline.addAfter("stomp-subframe-aggregator", "stomp-biz-handler", ch); // Extends SimpleChannelInboundHandler<FullStompFrame>
             } else if (type == WebSocketFrame.class) {
                 // 1) Upgrade to websocket with STOMP subprotocol
-                ctx.pipeline().addAfter(BASENAME, "ws-protocol", new WebSocketServerProtocolHandler(uriRequested, null, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
+                pipeline.addAfter(BASENAME, "ws-protocol", new WebSocketServerProtocolHandler(uriRequested, null, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, dropPongFrames, handshakeTimeoutMillis));
                 // 2) STOMP business logic
-                ctx.pipeline().addAfter("ws-protocol", "ws-biz", ch); // Extends SimpleChannelInboundHandler<WebSocketFrame>
+                pipeline.addAfter("ws-protocol", "ws-biz", ch); // Extends SimpleChannelInboundHandler<WebSocketFrame>
             } else {
                 WebSocketPipelinesInitializer initializer = null;
                 try {

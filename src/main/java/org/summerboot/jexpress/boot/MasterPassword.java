@@ -17,10 +17,10 @@
 package org.summerboot.jexpress.boot;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.summerboot.jexpress.annotation.config.Config;
+import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.security.EncryptorUtil;
 
 import java.io.File;

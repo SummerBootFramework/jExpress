@@ -24,7 +24,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.annotation.Service;
+import org.summerboot.jexpress.annotation.Service;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;

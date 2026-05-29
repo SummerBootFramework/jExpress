@@ -34,7 +34,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.lifecycle.HttpLifecycleListener;
-import org.summerboot.jexpress.integration.healthcheck.HealthMonitor;
+import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.util.TimeUtil;
 
 import java.time.OffsetDateTime;

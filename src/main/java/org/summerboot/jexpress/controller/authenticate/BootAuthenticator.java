@@ -40,6 +40,7 @@ import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.BootPOI;
 import org.summerboot.jexpress.controller.Err;
+import org.summerboot.jexpress.controller.SessionContext;
 import org.summerboot.jexpress.controller.grpc.BearerAuthCredential;
 import org.summerboot.jexpress.controller.grpc.ContextualizedServerCallListenerEx;
 import org.summerboot.jexpress.controller.grpc.GRPCServerConfig;
@@ -50,7 +51,6 @@ import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.GeoIpUtil;
 import org.summerboot.jexpress.webserver.netty.NioHttpUtil;
 import org.summerboot.jexpress.webserver.netty.RequestProcessor;
-import org.summerboot.jexpress.controller.SessionContext;
 
 import javax.naming.NamingException;
 import java.net.SocketAddress;

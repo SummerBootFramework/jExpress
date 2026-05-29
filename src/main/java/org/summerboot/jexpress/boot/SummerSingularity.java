@@ -27,24 +27,24 @@ import org.apache.commons.cli.help.HelpFormatter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.GrpcController;
-import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.boot.annotation.Service.ChannelHandlerType;
-import org.summerboot.jexpress.boot.annotation.Unique;
-import org.summerboot.jexpress.boot.annotation.Version;
+import org.summerboot.jexpress.annotation.Controller;
+import org.summerboot.jexpress.annotation.GrpcController;
+import org.summerboot.jexpress.annotation.Service;
+import org.summerboot.jexpress.annotation.Service.ChannelHandlerType;
+import org.summerboot.jexpress.annotation.Version;
+import org.summerboot.jexpress.annotation.config.ConfigFilename;
+import org.summerboot.jexpress.annotation.validation.Unique;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
-import org.summerboot.jexpress.util.i18n.I18n;
-import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.controller.grpc.GRPCServerConfig;
-import org.summerboot.jexpress.webserver.netty.NioConfig;
 import org.summerboot.jexpress.controller.authenticate.AuthConfig;
+import org.summerboot.jexpress.controller.grpc.GRPCServerConfig;
+import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
 import org.summerboot.jexpress.util.ApplicationUtil;
 import org.summerboot.jexpress.util.BeanUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
 import org.summerboot.jexpress.util.ReflectionUtil;
+import org.summerboot.jexpress.util.i18n.I18n;
+import org.summerboot.jexpress.webserver.netty.NioConfig;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -461,7 +461,7 @@ abstract public class SummerSingularity {
             String[] checkImplTagUsed = {};
             boolean loadWhenImplTagUsed = false;
 
-            ImportResource ir = (ImportResource) jExpressConfigClass.getAnnotation(ImportResource.class);
+            ConfigFilename ir = (ConfigFilename) jExpressConfigClass.getAnnotation(ConfigFilename.class);
             if (ir != null) {
                 configFileName = ir.value();
                 checkImplTagUsed = ir.whenUseAlternative();

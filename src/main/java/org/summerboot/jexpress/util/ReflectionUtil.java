@@ -24,10 +24,10 @@ import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
-import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
-import org.summerboot.jexpress.boot.config.annotation.Config;
+import org.summerboot.jexpress.annotation.config.Config;
+import org.summerboot.jexpress.annotation.validation.EnumConvert;
+import org.summerboot.jexpress.annotation.validation.UniqueIgnore;
 import org.summerboot.jexpress.security.EncryptorUtil;
-import org.summerboot.jexpress.webserver.ws.rs.EnumConvert;
 
 import java.io.File;
 import java.lang.annotation.Annotation;

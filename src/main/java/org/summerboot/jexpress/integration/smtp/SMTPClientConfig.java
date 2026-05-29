@@ -20,11 +20,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
+import org.summerboot.jexpress.annotation.config.Config;
+import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.util.BackoffStrategy;
 
 import java.io.File;

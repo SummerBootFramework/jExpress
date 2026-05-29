@@ -30,7 +30,7 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.rendering.RenderDestination;
-import org.summerboot.jexpress.util.ApplicationUtil;
+import org.summerboot.jexpress.util.concurrent.ConcurrentUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -334,7 +334,7 @@ public class Agent_PDFBox {
             tasks.add(task);
         }
         try {
-            ApplicationUtil.runAndWaitForAllResults(tasks, images);
+            ConcurrentUtil.runAndWaitForAllResults(tasks, images);
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
@@ -369,7 +369,7 @@ public class Agent_PDFBox {
             tasks.add(task);
         }
         try {
-            ApplicationUtil.runAndWaitForAllResults(tasks, imageDataList);
+            ConcurrentUtil.runAndWaitForAllResults(tasks, imageDataList);
         } catch (ExecutionException e) {
             e.printStackTrace();
         }

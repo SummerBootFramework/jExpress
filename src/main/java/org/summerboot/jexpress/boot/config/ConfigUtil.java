@@ -21,14 +21,14 @@ import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.annotation.config.ConfigFilename;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
 import org.summerboot.jexpress.boot.lifecycle.AppLifecycleListener;
-import org.summerboot.jexpress.integration.healthcheck.Timeout;
 import org.summerboot.jexpress.security.EncryptorUtil;
 import org.summerboot.jexpress.security.SSLUtil;
 import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.util.concurrent.Timeout;
 import org.summerboot.jexpress.util.i18n.I18n;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -140,7 +140,7 @@ public class ConfigUtil {
 //        if (StringUtils.isBlank(configContent)) {
 //            return;
 //        }
-        ImportResource ir = c.getAnnotation(ImportResource.class);
+        ConfigFilename ir = c.getAnnotation(ConfigFilename.class);
         String fileName = ir == null ? cfgName : ir.value();
         if (cliMode) {
             fileName = fileName + ".sample";
@@ -158,7 +158,7 @@ public class ConfigUtil {
 
     public static int formatConfig(File targetFile, JExpressConfig cfg) throws IOException {
         File configFile = targetFile.getAbsoluteFile();
-        ImportResource ir = (ImportResource) cfg.getClass().getAnnotation(ImportResource.class);
+        ConfigFilename ir = (ConfigFilename) cfg.getClass().getAnnotation(ConfigFilename.class);
         if (ir != null && !ir.generateTemplate()) {
             return 0;
         }
