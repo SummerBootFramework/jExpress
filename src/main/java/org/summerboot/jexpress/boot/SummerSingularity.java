@@ -34,17 +34,17 @@ import org.summerboot.jexpress.annotation.Service.ChannelHandlerType;
 import org.summerboot.jexpress.annotation.Version;
 import org.summerboot.jexpress.annotation.config.ConfigFilename;
 import org.summerboot.jexpress.annotation.validation.Unique;
+import org.summerboot.jexpress.api.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.controller.authenticate.AuthConfig;
-import org.summerboot.jexpress.controller.grpc.GRPCServerConfig;
+import org.summerboot.jexpress.common.util.ApplicationUtil;
+import org.summerboot.jexpress.common.util.BeanUtil;
+import org.summerboot.jexpress.common.util.FormatterUtil;
+import org.summerboot.jexpress.common.util.ReflectionUtil;
+import org.summerboot.jexpress.common.util.i18n.I18n;
+import org.summerboot.jexpress.infra.netty.NioConfig;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.BeanUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
-import org.summerboot.jexpress.util.i18n.I18n;
-import org.summerboot.jexpress.webserver.netty.NioConfig;
+import org.summerboot.jexpress.security.auth.AuthConfig;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -144,7 +144,7 @@ abstract public class SummerSingularity {
      * Annotation scan results as CLI inputs
      */
     protected final List<String> availableUniqueTagOptions = new ArrayList();
-    protected final Map<String, ConfigMetadata> scanedJExpressConfigs = new LinkedHashMap<>();
+    protected final Map<String, ConfigMetadata> scannedJExpressConfigs = new LinkedHashMap<>();
     protected final Set<String> availableImplTagOptions = new HashSet();
     protected final Set<Class<? extends BindableService>> gRPCBindableServiceImplClasses = new HashSet();
     protected final Set<Class<ServerServiceDefinition>> gRPCServerServiceDefinitionImplClasses = new HashSet();
@@ -156,7 +156,7 @@ abstract public class SummerSingularity {
      * Annotation scan results as BootGuiceModule input
      * Format: bindingClass <--> {key=(ImplTag+named) <--> [@Service impl classes list]}
      */
-    protected final Map<Class, Map<String, List<ServiceMetadata>>> scanedServiceBindingMap = new HashMap();
+    protected final Map<Class, Map<String, List<ServiceMetadata>>> scannedServiceBindingMap = new HashMap();
     protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames = new HashMap();
 
     protected SummerSingularity(Class callerClass, String... args) {
@@ -187,16 +187,16 @@ abstract public class SummerSingularity {
         userSpecifiedCfgMonitorThrottleMillis = BootConstant.CFG_CHANGE_MONITOR_THROTTLE_MS;
         userSpecifiedalternativeNames.clear();
 
-        // reset Scan Results
+        // rest Scan Results
         jvmStartCommand = null;
         jmxRequired = false;
         callerRootPackageNames = null;
         appVersion = BootConstant.VERSION;
         logFileName = BootConstant.VERSION;
 
-        //reset Annotation scan results as CLI inputs
+        //rest Annotation scan results as CLI inputs
         availableUniqueTagOptions.clear();
-        scanedJExpressConfigs.clear();
+        scannedJExpressConfigs.clear();
         availableImplTagOptions.clear();
         gRPCBindableServiceImplClasses.clear();
         gRPCServerServiceDefinitionImplClasses.clear();
@@ -454,7 +454,7 @@ abstract public class SummerSingularity {
                 continue;
             }
             String key = jExpressConfigClass.getSimpleName();
-            if (scanedJExpressConfigs.containsKey(key)) {
+            if (scannedJExpressConfigs.containsKey(key)) {
                 continue;
             }
             String configFileName = null;
@@ -480,10 +480,10 @@ abstract public class SummerSingularity {
 
             ConfigMetadata metadata = new ConfigMetadata(configFileName, jExpressConfigClass, null, checkImplTagUsed, loadWhenImplTagUsed);
             //availableAppConfigs.add(rc);
-            scanedJExpressConfigs.put(key, metadata);
+            scannedJExpressConfigs.put(key, metadata);
             memo.append(BootConstant.BR).append("\t- scan.JExpressConfig.ImportResource:").append(key).append("=").append(metadata);
 
-            memo.append(BootConstant.BR).append("\t- cfg.scaned=").append(jExpressConfigClass.getName()).append(", file=").append(configFileName);
+            memo.append(BootConstant.BR).append("\t- cfg.scanned=").append(jExpressConfigClass.getName()).append(", file=").append(configFileName);
         }
     }
 
@@ -605,16 +605,8 @@ abstract public class SummerSingularity {
     protected void scanAnnotation_Service_Add2BindingMap(Class bindingClass, String uniqueKey, ServiceMetadata service, StringBuilder sb) {
         log.trace("");
         memo.append(BootConstant.BR).append("\t- scan.taggedservice.add to guiceModule.bind(").append(bindingClass.getName()).append(").to(").append(service).append("), uniqueKey=").append(uniqueKey);
-        Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(bindingClass);
-        if (taggeServicedMap == null) {
-            taggeServicedMap = new HashMap<>();
-            scanedServiceBindingMap.put(bindingClass, taggeServicedMap);
-        }
-        List<ServiceMetadata> serviceImplList = taggeServicedMap.get(uniqueKey);
-        if (serviceImplList == null) {
-            serviceImplList = new ArrayList<>();
-            taggeServicedMap.put(uniqueKey, serviceImplList);
-        }
+        Map<String, List<ServiceMetadata>> taggedServiceMap = scannedServiceBindingMap.computeIfAbsent(bindingClass, k -> new HashMap<>());
+        List<ServiceMetadata> serviceImplList = taggedServiceMap.computeIfAbsent(uniqueKey, k -> new ArrayList<>());
         if (bindingClass.equals(ChannelHandler.class)) {
             ChannelHandlerType channelHandlerType = service.getChannelHandlerType();
             if (channelHandlerType == null || channelHandlerType == ChannelHandlerType.unknown) {
@@ -626,10 +618,10 @@ abstract public class SummerSingularity {
 
     protected void scanAnnotation_Service_ValidateBindingMap(StringBuilder sb) {
         log.trace("");
-        for (Class keyBindingClass : scanedServiceBindingMap.keySet()) {
-            Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(keyBindingClass);
-            for (String keyImplTag : taggeServicedMap.keySet()) {
-                List<ServiceMetadata> serviceImplList = taggeServicedMap.get(keyImplTag);
+        for (Class keyBindingClass : scannedServiceBindingMap.keySet()) {
+            Map<String, List<ServiceMetadata>> taggedServiceMap = scannedServiceBindingMap.get(keyBindingClass);
+            for (String keyImplTag : taggedServiceMap.keySet()) {
+                List<ServiceMetadata> serviceImplList = taggedServiceMap.get(keyImplTag);
                 int size = serviceImplList.size();
                 if (size != 1) {
                     sb.append(BootConstant.BR).append("IOC ").append(keyBindingClass).append(" required a single bean, but ").append(size).append(" were found with the same named+implTag(").append(keyImplTag).append("): ").append(serviceImplList);

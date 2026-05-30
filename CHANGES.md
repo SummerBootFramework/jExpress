@@ -1,6 +1,6 @@
 ## 📅 CHANGES
 
-## Version 2.6.10 (2026-05-28)
+## Version 2.6.11 (2026-05-29)
 
 * 🔒 Security Patch: jjwt-jackson's dependency has 5 security issues caused by old Jackson2 lib
 * 🛠 REF2610-1: support application without package specified
@@ -11,12 +11,12 @@
 * Refactoring: ApplicationUtil.runAndWaitForAllResults() renamed to ConcurrentUtil.runAndWaitForAllResults()
 * Refactoring: predefined URI constants inside BootURI
 * Refactoring: SessionContext.forcePrettyResponse(boolean) -> SessionContext.pretty(Boolean), it will override @Log(pretty = ?)
-* Refactoring: package names are re-organized, migration guide: IntelliJ > Editor > General > Auto Import, check the following two options, then delete the broken imports:
+* Refactoring: Architecture-Oriented package names are re-organized, migration guide: IntelliJ > Editor > General > Auto Import, check the following two options, then delete the broken imports:
     * Add unambiguous imports on the fly
     * Optimize imports on the fly
 * ✨ New API: @RequiresHealthCheck for @Controller class/method
 * ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
-* ✨ New feature: org.summerboot.jexpress.util.FileUtil
+* ✨ New feature: org.summerboot.jexpress.common.util.FileUtil
 * ✨ New feature: @Controller now handles Web methods as file downloads if the return type is: java.io.File, java.nio.file.Path, or byte[]
 * ✨ New API: FormatterUtil.formatCurrency(BigDecimal amount, RoundingMode roundingMode)
 * WebResourceController.requestWebResource with @Daemon to serve web resources with enhanced reliability.
@@ -251,7 +251,7 @@ New configuration items have been added to set the server-specific idle connecti
     * `@Controller.implTag` renamed to `@Controller.AlternativeName`.
     * `@Service.implTag` renamed to with `@Service.AlternativeName`.
     * `@Log.hideJsonStringFields`, `hideJsonNumberFields` and `hideJsonArrayFields` all renamed to with `@Log.maskDataFields`.
-    * `org.summerboot.jexpress.nio.server.domain.ServiceContext` renamed to `org.summerboot.jexpress.controller.SessionContext`.
+    * `org.summerboot.jexpress.nio.server.domain.ServiceContext` renamed to `org.summerboot.jexpress.api.common.SessionContext`.
     * `@ImportResource.checkImplTagUsed` renamed to `@ImportResource.whenUseAlternative`.
     * `@ImportResource.loadWhenImplTagUsed` renamed to `@ImportResource.thenLoadConfig`.
 
@@ -458,7 +458,7 @@ New configuration items have been added to set the server-specific idle connecti
 
 * **Fixed:** Version updated.
 * **Enhancement:** `generateTemplate` follows parent first order.
-* **Refactoring:** HTTP Client classes moved to `org.summerboot.jexpress.integration.httpclient`.
+* **Refactoring:** HTTP Client classes moved to `org.summerboot.jexpress.integration.http`.
 * **New:** Released MQTT client to public.
 
 ## Version 2.4.2
@@ -476,7 +476,7 @@ New configuration items have been added to set the server-specific idle connecti
 
 * Enabled `@jakarta.validation.constraints.Pattern` for RESTFul api parameters: `PathParam`, `MatrixParam`, `QueryParam`, `FormParam`, `HeaderParam`, and `CookieParam`.
 * Fixed: cli `-decrypt` generates `cfg_grpc.properties` even if there is no gRPC impl.
-* Log trace enable on `org.summerboot.jexpress.controller.restful.BootHttpRequestHandler` will override `@org.summerboot.jexpress.annotation.restful.Log` settings to log all requests and responses.
+* Log trace enable on `org.summerboot.jexpress.api.rest.BootHttpRequestHandler` will override `@org.summerboot.jexpress.annotation.rest.Log` settings to log all requests and responses.
 * Reformatted Java source code via IDEA default formatter.
 
 ## Version 2.3.13

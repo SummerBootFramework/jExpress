@@ -29,8 +29,8 @@ import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.common.util.ApplicationUtil;
+import org.summerboot.jexpress.common.util.FormatterUtil;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -255,7 +255,7 @@ public class EncryptorUtil {
      */
     public static byte[] md5(byte[] data) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance(ALGORITHM_MESSAGEDIGEST);
-        //md.reset();
+        //md.rest();
         md.update(data);
         byte[] digest = md.digest();
         return digest;
@@ -271,7 +271,7 @@ public class EncryptorUtil {
      */
     public static byte[] md5(byte[] data, String algorithm) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance(algorithm);
-        //md.reset();
+        //md.rest();
         md.update(data);
         byte[] digest = md.digest();
         return digest;

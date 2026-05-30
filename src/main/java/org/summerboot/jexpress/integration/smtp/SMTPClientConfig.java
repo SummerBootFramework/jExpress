@@ -25,7 +25,7 @@ import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.util.BackoffStrategy;
+import org.summerboot.jexpress.common.util.BackoffStrategy;
 
 import java.io.File;
 import java.util.HashSet;
@@ -71,7 +71,7 @@ public class SMTPClientConfig extends BootConfig {
     protected volatile int smtpPort = 25;
 
     @JsonIgnore
-    @Config(key = "mail.smtp.auth", desc = "Whether to attempt to authenticate the user using the AUTH command")
+    @Config(key = "mail.smtp.auth", desc = "Whether to attempt to auth the user using the AUTH command")
     protected volatile Boolean smtpAuth;
 
     @JsonIgnore

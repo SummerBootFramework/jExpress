@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
 import org.summerboot.jexpress.security.EncryptorUtil;
-import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.common.util.BeanUtil;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;

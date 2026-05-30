@@ -19,7 +19,7 @@ package org.summerboot.jexpress.boot.lifecycle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
-import org.summerboot.jexpress.util.TimeUtil;
+import org.summerboot.jexpress.common.util.TimeUtil;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

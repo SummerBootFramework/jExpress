@@ -35,13 +35,13 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.annotation.validation.EnumConvert;
+import org.summerboot.jexpress.api.common.Err;
+import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.controller.Err;
-import org.summerboot.jexpress.controller.SessionContext;
-import org.summerboot.jexpress.util.BeanUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
+import org.summerboot.jexpress.common.util.BeanUtil;
+import org.summerboot.jexpress.common.util.ReflectionUtil;
+import org.summerboot.jexpress.infra.netty.NioConfig;
 import org.summerboot.jexpress.webserver.domain.ServiceRequest;
-import org.summerboot.jexpress.webserver.netty.NioConfig;
 
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;

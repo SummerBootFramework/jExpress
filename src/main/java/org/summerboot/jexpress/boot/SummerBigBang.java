@@ -38,16 +38,19 @@ import org.summerboot.jexpress.annotation.integration.HealthCheck;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
+import org.summerboot.jexpress.boot.ioc.BootGuiceModule;
+import org.summerboot.jexpress.boot.ioc.ScannedGuiceModule;
+import org.summerboot.jexpress.boot.lifecycle.AppInitializer;
+import org.summerboot.jexpress.common.util.ApplicationUtil;
+import org.summerboot.jexpress.common.util.FormatterUtil;
+import org.summerboot.jexpress.common.util.PropertiesFile;
+import org.summerboot.jexpress.common.util.ReflectionUtil;
+import org.summerboot.jexpress.common.util.i18n.I18n;
 import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.integration.quartz.QuartzUtil;
 import org.summerboot.jexpress.security.EncryptorUtil;
-import org.summerboot.jexpress.security.JwtUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.PropertiesFile;
-import org.summerboot.jexpress.util.ReflectionUtil;
-import org.summerboot.jexpress.util.i18n.I18n;
+import org.summerboot.jexpress.security.token.jwt.JwtUtil;
 import org.summerboot.jexpress.webserver.ws.rs.JaxRsRequestProcessorManager;
 
 import java.io.File;
@@ -75,7 +78,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
     protected final Module userOverrideModule;
     protected Injector guiceInjector;
-    protected List<SummerInitializer> summerInitializers = new ArrayList<>();
+    protected List<AppInitializer> appInitializers = new ArrayList<>();
     //protected List<SummerRunner> summerRunners = new ArrayList<>();
     protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
     protected int schedulerTriggers = 0;
@@ -94,7 +97,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void bang() {
         log.trace("");
         guiceInjector = null;
-        summerInitializers.clear();
+        appInitializers.clear();
         //summerRunners.clear();
         schedulerTriggers = 0;
     }
@@ -127,9 +130,9 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * 3. let caller to init app
          */
-        for (SummerInitializer summerInitializer : summerInitializers) {
-            log.trace("initApp.before.guiceInjector: {}", summerInitializer);
-            summerInitializer.initAppBeforeIoC(userSpecifiedConfigDir);
+        for (AppInitializer appInitializer : appInitializers) {
+            log.trace("initApp.before.guiceInjector: {}", appInitializer);
+            appInitializer.initAppBeforeIoC(userSpecifiedConfigDir);
         }
 
         /*
@@ -141,9 +144,9 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * 5. let caller to init app
          */
-        for (SummerInitializer summerInitializer : summerInitializers) {
-            log.trace("initApp.after.guiceInjector: {}", summerInitializer);
-            summerInitializer.initAppAfterIoC(userSpecifiedConfigDir, guiceInjector);
+        for (AppInitializer appInitializer : appInitializers) {
+            log.trace("initApp.after.guiceInjector: {}", appInitializer);
+            appInitializer.initAppAfterIoC(userSpecifiedConfigDir, guiceInjector);
         }
 
         return (T) this;
@@ -193,8 +196,8 @@ abstract public class SummerBigBang extends SummerSingularity {
                 .get();
         cliOptions.addOption(arg);
 
-        if (scanedJExpressConfigs != null && !scanedJExpressConfigs.isEmpty()) {
-            String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+        if (scannedJExpressConfigs != null && !scannedJExpressConfigs.isEmpty()) {
+            String validOptions = FormatterUtil.toCSV(scannedJExpressConfigs.keySet());
             arg = Option.builder(BootConstant.CLI_CONFIG_DEMO)
                     .desc("Show specified configuration template (" + validOptions + "), or when specified with -" + BootConstant.CLI_CONFIG_DOMAIN + " just dump all available configuration templates to the specified folder")
                     .hasArgs().argName("config").optionalArg(true)
@@ -254,9 +257,9 @@ abstract public class SummerBigBang extends SummerSingularity {
                 .get();
         cliOptions.addOption(arg);
 
-        summerInitializers.addAll(scanImplementation_SummerInitializer());
-        for (SummerInitializer summerInitializer : summerInitializers) {
-            summerInitializer.initCLI(cliOptions);
+        appInitializers.addAll(scanImplementation_SummerInitializer());
+        for (AppInitializer appInitializer : appInitializers) {
+            appInitializer.initCLI(cliOptions);
         }
 
         try {
@@ -268,16 +271,16 @@ abstract public class SummerBigBang extends SummerSingularity {
         }
     }
 
-    protected List<SummerInitializer> scanImplementation_SummerInitializer() {
+    protected List<AppInitializer> scanImplementation_SummerInitializer() {
         log.trace("");
-        List<SummerInitializer> summerCLIs = new ArrayList<>();
-        Set<Class<? extends SummerInitializer>> summerCLI_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerInitializer.class, callerRootPackageNames);
+        List<AppInitializer> summerCLIs = new ArrayList<>();
+        Set<Class<? extends AppInitializer>> summerCLI_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(AppInitializer.class, callerRootPackageNames);
         summerCLI_ImplClasses = ReflectionUtil.retainSubclasses(summerCLI_ImplClasses);
         //prepare ordering
         Set<Integer> orderSet = new TreeSet<>();
-        Map<Integer, List<SummerInitializer>> orderMapping = new HashMap<>();
+        Map<Integer, List<AppInitializer>> orderMapping = new HashMap<>();
         //process scan result
-        for (Class<? extends SummerInitializer> c : summerCLI_ImplClasses) {
+        for (Class<? extends AppInitializer> c : summerCLI_ImplClasses) {
             //get order
             int order = 0;
             Order o = c.getAnnotation(Order.class);
@@ -285,12 +288,12 @@ abstract public class SummerBigBang extends SummerSingularity {
                 order = o.value();
             }
             //get data, cannot inject due to injector is not initialized yet
-            final SummerInitializer instance;
+            final AppInitializer instance;
             try {
                 if (ReflectionUtil.isAbstract(c)) {
                     continue;
                 }
-                Constructor<? extends SummerInitializer> cc = c.getConstructor();
+                Constructor<? extends AppInitializer> cc = c.getConstructor();
                 cc.setAccessible(true);
                 instance = cc.newInstance();
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException
@@ -300,7 +303,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
             //sort data by order
             orderSet.add(order);
-            List<SummerInitializer> sameOoderCLIs = orderMapping.get(order);
+            List<AppInitializer> sameOoderCLIs = orderMapping.get(order);
             if (sameOoderCLIs == null) {
                 sameOoderCLIs = new ArrayList<>();
                 orderMapping.put(order, sameOoderCLIs);
@@ -403,13 +406,13 @@ abstract public class SummerBigBang extends SummerSingularity {
         if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO) && !cli.hasOption(BootConstant.CLI_CONFIG_DIR)) {
             String cfgName = cli.getOptionValue(BootConstant.CLI_CONFIG_DEMO);
             if (cfgName == null) {
-                String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+                String validOptions = FormatterUtil.toCSV(scannedJExpressConfigs.keySet());
                 String msg = "Missing config option, valid values <" + validOptions + ">";
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_MISSING_ARG_ERROR, msg, null);
             }
-            Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
+            Class c = scannedJExpressConfigs.get(cfgName).cfgClass;
             if (c == null) {
-                String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+                String validOptions = FormatterUtil.toCSV(scannedJExpressConfigs.keySet());
                 String msg = cfgName + "is an invalid config option, valid values <" + validOptions + ">";
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ARG_ERROR, msg, null);
             }
@@ -512,8 +515,8 @@ abstract public class SummerBigBang extends SummerSingularity {
          */
         if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO)) {
             int i = 0;
-            for (String cfgName : scanedJExpressConfigs.keySet()) {
-                Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
+            for (String cfgName : scannedJExpressConfigs.keySet()) {
+                Class c = scannedJExpressConfigs.get(cfgName).cfgClass;
                 try {
                     ConfigUtil.createConfigFile(c, userSpecifiedConfigDir, cfgName, true);
                 } catch (IOException ex) {
@@ -555,21 +558,21 @@ abstract public class SummerBigBang extends SummerSingularity {
             case app_run:
                 if (!hasControllers) {
                     memo.append(BootConstant.BR).append("\t- cfg.loading.skip: no @Controller found, skip=").append(NioConfig.class.getSimpleName());
-                    scanedJExpressConfigs.remove(NioConfig.class.getSimpleName());
+                    scannedJExpressConfigs.remove(NioConfig.class.getSimpleName());
                 }
                 if (!hasGRPCImpl) {
                     memo.append(BootConstant.BR).append("\t- cfg.loading.skip: no gRPC Server stub found, skip=").append(GRPCServerConfig.class.getSimpleName());
-                    scanedJExpressConfigs.remove(GRPCServerConfig.class.getSimpleName());
+                    scannedJExpressConfigs.remove(GRPCServerConfig.class.getSimpleName());
                 }
 //                if (!hasAuthImpl) {
 //                    memo.append("\n\t- agent.loading.skip: no @DeclareRoles or @RolesAllowed found in any @Controller, skip=").append(AuthConfig.class.getSimpleName());
-//                    scanedJExpressConfigs.remove(AuthConfig.class.getSimpleName());
+//                    scannedJExpressConfigs.remove(AuthConfig.class.getSimpleName());
 //                }
                 break;
         }*/
         try {
             //1. get main configurations
-            for (ConfigMetadata registeredAppConfig : scanedJExpressConfigs.values()) {
+            for (ConfigMetadata registeredAppConfig : scannedJExpressConfigs.values()) {
                 if (isUserSpecifieduserSpecifiedalternativeNames(registeredAppConfig.whenUseAlternative) ^ registeredAppConfig.thenLoadConfig) {
                     continue;
                 }
@@ -615,8 +618,8 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void genesis(Class primaryClass, Set<String> userSpecifiedalternativeNames) {
         log.trace("");
         BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedalternativeNames, memo);
-        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedalternativeNames, channelHandlerNames, memo);
-        Module bootModule = Modules.override(defaultModule).with(scanedModule);
+        ScannedGuiceModule scannedModule = new ScannedGuiceModule(scannedServiceBindingMap, userSpecifiedalternativeNames, channelHandlerNames, memo);
+        Module bootModule = Modules.override(defaultModule).with(scannedModule);
         Module applicationModule = userOverrideModule == null
                 ? bootModule
                 : Modules.override(bootModule).with(userOverrideModule);

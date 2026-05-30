@@ -22,17 +22,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.annotation.Service;
 import org.summerboot.jexpress.annotation.integration.HealthCheck;
+import org.summerboot.jexpress.api.common.Err;
+import org.summerboot.jexpress.api.common.ServiceError;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstant;
 import org.summerboot.jexpress.boot.BootErrorCode;
 import org.summerboot.jexpress.boot.SummerApplication;
 import org.summerboot.jexpress.boot.lifecycle.AppLifecycleListener;
-import org.summerboot.jexpress.controller.Err;
-import org.summerboot.jexpress.controller.ServiceError;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.BeanUtil;
-import org.summerboot.jexpress.util.concurrent.Timeout;
-import org.summerboot.jexpress.webserver.netty.NioConfig;
+import org.summerboot.jexpress.common.util.ApplicationUtil;
+import org.summerboot.jexpress.common.util.BeanUtil;
+import org.summerboot.jexpress.common.util.concurrent.Timeout;
+import org.summerboot.jexpress.infra.netty.NioConfig;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -54,7 +54,7 @@ public class HealthMonitor {
     protected static final Logger log = LogManager.getLogger(HealthMonitor.class.getName());
 
     /*
-     * controller variables
+     * api variables
      */
     protected static volatile AppLifecycleListener appLifecycleListener;
     protected static final ExecutorService tpe = Executors.newSingleThreadExecutor();

@@ -16,10 +16,10 @@
  */
 package org.summerboot.jexpress.integration.cache;
 
+import org.summerboot.jexpress.api.common.Err;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.controller.Err;
-import org.summerboot.jexpress.controller.authenticate.Caller;
 import org.summerboot.jexpress.integration.HealthChecker;
+import org.summerboot.jexpress.security.auth.Caller;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,19 +61,19 @@ public interface AuthTokenCache extends HealthChecker {
     boolean isBlacklist(String key);
 
     /**
-     * store it in redis with key "ws:ticket:" + oneTimeTicket, value = caller (or json string),
+     * store it in redis with key "ws:token:" + oneTimeToken, value = caller (or JSON string)
      *
      * @param key
      * @param caller
      * @param ttlMilliseconds
      */
-    void oneTimeTicketPut(String key, Caller caller, long ttlMilliseconds);
+    void oneTimeTokenPut(String key, Caller caller, long ttlMilliseconds);
 
     /**
-     * call redis.getdel("ws:ticket:" + oneTimeTicket)
+     * call redis.getdel("ws:token:" + oneTimeToken)
      *
      * @param key
      * @return
      */
-    Caller oneTimeTicketVerifyAndDestroy(String key);
+    Caller oneTimeTokenVerifyAndDestroy(String key);
 }

@@ -21,10 +21,10 @@ import com.google.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.config.BootConfig;
-import org.summerboot.jexpress.controller.authenticate.Caller;
 import org.summerboot.jexpress.integration.cache.domain.FlashSale;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
+import org.summerboot.jexpress.security.auth.Caller;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -284,24 +284,24 @@ public class BootCache_RedisImple implements AuthTokenCache, BootCache {
     }
 
     /**
-     * store it in redis with key "ws:ticket:" + oneTimeTicket, value = caller (or json string),
+     * store it in redis with key "ws:token:" + oneTimeToken, value = caller (or JSON string)
      *
      * @param key
      * @param caller
      * @param ttlMilliseconds
      */
     @Override
-    public void oneTimeTicketPut(String key, Caller caller, long ttlMilliseconds) {
+    public void oneTimeTokenPut(String key, Caller caller, long ttlMilliseconds) {
     }
 
     /**
-     * call redis.getdel("ws:ticket:" + oneTimeTicket)
+     * call redis.getdel("ws:token:" + oneTimeToken)
      *
      * @param key
      * @return
      */
     @Override
-    public Caller oneTimeTicketVerifyAndDestroy(String key) {
+    public Caller oneTimeTokenVerifyAndDestroy(String key) {
         return null;
     }
 

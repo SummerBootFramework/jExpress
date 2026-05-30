@@ -105,11 +105,11 @@ abstract public class JPAHibernateConfig extends JPAConfig {
             sessionFactory = metadata.getSessionFactoryBuilder().build();
 
             if (old != null) {
-                logger.warn("close current db connection due to config changed");
+                logger.warn("close current jpa connection due to config changed");
                 try {
                     old.close();
                 } catch (Throwable ex) {
-                    logger.warn("failed to close current db connection", ex);
+                    logger.warn("failed to close current jpa connection", ex);
                 }
             }
         } finally {

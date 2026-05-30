@@ -17,9 +17,9 @@
 package org.summerboot.jexpress.integration.cache;
 
 import com.google.inject.Singleton;
-import org.summerboot.jexpress.controller.authenticate.Caller;
-import org.summerboot.jexpress.controller.authenticate.User;
-import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.security.auth.User;
+import org.summerboot.jexpress.common.util.BeanUtil;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -39,15 +39,15 @@ public class AuthTokenCacheLocalImpl extends SimpleLocalCacheImpl<String, String
         return v != null;
     }
 
-    private static final String OTT_KEY_PREFIX = "ws:ticket:";
+    private static final String OTT_KEY_PREFIX = "ws:token:";
 
     @Override
-    public void oneTimeTicketPut(String key, Caller caller, long ttlMilliseconds) {
+    public void oneTimeTokenPut(String key, Caller caller, long ttlMilliseconds) {
         put(OTT_KEY_PREFIX + key, BeanUtil.toJson(caller, false, true), ttlMilliseconds);
     }
 
     @Override
-    public Caller oneTimeTicketVerifyAndDestroy(String key) {
+    public Caller oneTimeTokenVerifyAndDestroy(String key) {
         String json = get(OTT_KEY_PREFIX + key);
         if (json != null) {
             delete(OTT_KEY_PREFIX + key);

@@ -1,0 +1,194 @@
+/*
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://apache.org
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+package org.summerboot.jexpress.common.util;
+
+import org.summerboot.jexpress.security.SecurityUtil;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
+import java.util.Set;
+
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
+public class GeoIpUtil {
+
+    public static final String CHECKIP_URL_AWS = "http://checkip.amazonaws.com";
+
+    public static String getExternalIp() throws IOException, URISyntaxException {
+        return getExternalIp(CHECKIP_URL_AWS);
+    }
+
+    public static String getExternalIp(String url) throws IOException, URISyntaxException {
+        URL whatismyip = new URI(url).toURL();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));) {
+            return in.readLine();
+        }
+    }
+
+    public static String[] getMyIP() {
+        String[] ret = {"", "", ""};
+        StringBuilder sb0 = new StringBuilder();
+        StringBuilder sb1 = new StringBuilder();
+        try {
+            sb0.append(getExternalIp()).append(" - ");
+            ret[0] = InetAddress.getLocalHost().getHostAddress();
+            Enumeration e = NetworkInterface.getNetworkInterfaces();
+            while (e.hasMoreElements()) {
+                NetworkInterface n = (NetworkInterface) e.nextElement();
+                Enumeration ee = n.getInetAddresses();
+                while (ee.hasMoreElements()) {
+                    InetAddress i = (InetAddress) ee.nextElement();
+                    if (i.isAnyLocalAddress()) {
+                        sb0.append(i.getHostAddress()).append(", ");
+                        sb1.append("LocalAddress: ").append(i.toString()).append("<br>");
+                    }
+                    if (i.isLinkLocalAddress()) {
+                        sb1.append("LinkLocalAddress: ").append(i.toString()).append("<br>");
+                    }
+                    if (i.isLoopbackAddress()) {
+                        sb1.append("LoopbackAddress: ").append(i.toString()).append("<br>");
+                    }
+                    if (i.isSiteLocalAddress()) {
+                        sb0.append(i.getHostAddress()).append(", ");
+                        sb1.append("SiteLocalAddress: ").append(i.toString()).append("<br>");
+                    }
+                    if (i.isMCGlobal()) {
+                        sb1.append("MCGlobal: ").append(i.toString()).append("<br>");
+                    }
+                    if (i.isMCLinkLocal()) {
+                        sb1.append("MCLinkLocal: ").append(i.toString()).append("<br>");
+                    }
+                    if (i.isMCNodeLocal()) {
+                        sb1.append("MCNodeLocal: ").append(i.toString()).append("<br>");
+                    }
+                    if (i.isMCOrgLocal()) {
+                        sb1.append("MCOrgLocal: ").append(i.toString()).append("<br>");
+                    }
+                    if (i.isMCSiteLocal()) {
+                        sb1.append("MCSiteLocal: ").append(i.toString()).append("<br>");
+                    }
+                }
+            }
+        } catch (Throwable ex) {
+            sb1.append(ex);
+        }
+        String systemInfo = "<br>Pid#" + java.lang.management.ManagementFactory.getRuntimeMXBean().getName()
+                + "<br>user.name=" + System.getProperty("user.name")
+                + "<br>user=" + System.getProperty("user.name")
+                + "<br>home=" + System.getProperty("user.home")
+                + "<br>dir=" + System.getProperty("user.dir")
+                + "<br>os=" + System.getProperty("os.arch")
+                + " " + System.getProperty("os.name")
+                + " " + System.getProperty("os.version")
+                + "<br>Java=" + System.getProperty("java.vendor")
+                + " " + System.getProperty("java.version");
+        ret[0] = sb0.toString();
+        ret[1] = sb1.toString();
+        ret[2] = systemInfo;
+        return ret;
+    }
+
+    public static void showAddress(String host, int port) throws UnknownHostException {
+        InetSocketAddress socketAddress = new InetSocketAddress(host, port);
+        //InetAddress address = InetAddress.getByName(host);
+        //InetSocketAddress socketAddress = new InetSocketAddress(address, port);
+        String info = showAddress(socketAddress);
+        System.out.println(info);
+    }
+
+    public static String showAddress(InetSocketAddress address) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n isUnresolved=").append(address.isUnresolved());
+        sb.append("\n port=").append(address.getPort());
+        sb.append("\n toString=").append(address.toString());
+        sb.append("\n getHostString=").append(address.getHostString());
+        sb.append("\n getHostName=").append(address.getHostName());
+        sb.append("\n getAddress=").append(address.getAddress());
+        sb.append("\n getHostAddress=").append(address.getAddress() == null ? null : address.getAddress().getHostAddress());
+        sb.append("\n getHostName=").append(address.getAddress() == null ? null : address.getAddress().getHostName());
+        sb.append("\n getCanonicalHostName=").append(address.getAddress() == null ? null : address.getAddress().getCanonicalHostName());
+        return sb.toString();
+    }
+
+    public static enum CallerAddressFilterOption {
+        String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName
+    }
+
+    public static String getAddress(SocketAddress callerAddr, CallerAddressFilterOption option) {
+        if (callerAddr == null) {
+            return "";
+        }
+        final String host;
+        if (callerAddr instanceof InetSocketAddress) {
+            InetSocketAddress address = (InetSocketAddress) callerAddr;
+            if (address.isUnresolved()) {
+                return "caller address (" + address + ") is unresolved";
+            }
+            switch (option) {
+                case String -> host = address.toString();
+                case HostString -> host = address.getHostString();
+                case HostName -> host = address.getHostName();
+                case AddressString -> host = address.getAddress() == null ? address.toString() : address.getAddress().toString();
+                case HostAddress -> host = address.getAddress() == null ? address.toString() : address.getAddress().getHostAddress();
+                case AddrHostName -> host = address.getAddress() == null ? address.toString() : address.getAddress().getHostName();
+                case CanonicalHostName -> host = address.getAddress() == null ? address.toString() : address.getAddress().getCanonicalHostName();
+                default -> host = address.getHostName();
+            }
+        } else {
+            host = callerAddr.toString();
+        }
+        return host;
+    }
+
+    /**
+     * Simple filter for caller address
+     *
+     * @param callerAddr
+     * @param whiteList
+     * @param blackList
+     * @param option
+     * @return null if OK, otherwise return the reason
+     */
+    public static String callerAddressFilter(SocketAddress callerAddr, Set<String> whiteList, Set<String> blackList, CallerAddressFilterOption option) {
+        String host = getAddress(callerAddr, option);
+        return callerAddressFilter(host, whiteList, blackList);
+    }
+
+    /**
+     * Simple filter for caller address
+     *
+     * @param host
+     * @param whiteList
+     * @param blackList
+     * @return null if OK, otherwise return the reason
+     */
+    public static String callerAddressFilter(String host, Set<String> whiteList, Set<String> blackList) {
+        return SecurityUtil.whitelistbalcklistilter("caller address", host, whiteList, blackList);
+    }
+
+}
