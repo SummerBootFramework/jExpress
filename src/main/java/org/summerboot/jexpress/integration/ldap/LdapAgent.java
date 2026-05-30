@@ -20,11 +20,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.security.SecurityUtil;
-import org.summerboot.jexpress.security.authenticate.AuthConfig;
-import org.summerboot.jexpress.security.authenticate.Authenticator;
-import org.summerboot.jexpress.security.authenticate.AuthenticatorListener;
-import org.summerboot.jexpress.security.authenticate.BootAuthenticator;
-import org.summerboot.jexpress.security.authenticate.User;
+import org.summerboot.jexpress.security.auth.AuthConfig;
+import org.summerboot.jexpress.security.auth.Authenticator;
+import org.summerboot.jexpress.security.auth.AuthenticatorListener;
+import org.summerboot.jexpress.security.auth.BootAuthenticator;
+import org.summerboot.jexpress.security.auth.User;
 
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
@@ -61,12 +61,12 @@ import java.util.Set;
 public class LdapAgent implements Closeable {
 
     protected static String escapeDN(String value) {
-        return SecurityUtil.escapeDN(value);// let controller layer to handle
+        return SecurityUtil.escapeDN(value);// let api layer to handle
         //return value;
     }
 
     protected static String escapeQuery(String value) {
-        return SecurityUtil.escapeLDAPSearchFilter(value);// let controller layer to handle
+        return SecurityUtil.escapeLDAPSearchFilter(value);// let api layer to handle
         //return value;
     }
 

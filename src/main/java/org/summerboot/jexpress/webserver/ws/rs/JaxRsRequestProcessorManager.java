@@ -27,12 +27,12 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.annotation.Controller;
-import org.summerboot.jexpress.annotation.restful.Ping;
+import org.summerboot.jexpress.annotation.rest.Ping;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
-import org.summerboot.jexpress.webserver.netty.RequestProcessor;
+import org.summerboot.jexpress.common.util.ApplicationUtil;
+import org.summerboot.jexpress.common.util.ReflectionUtil;
+import org.summerboot.jexpress.infra.netty.RequestProcessor;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

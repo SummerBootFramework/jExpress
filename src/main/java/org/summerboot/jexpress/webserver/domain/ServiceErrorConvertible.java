@@ -17,7 +17,7 @@
 package org.summerboot.jexpress.webserver.domain;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.summerboot.jexpress.controller.Err;
+import org.summerboot.jexpress.api.common.Err;
 
 import java.util.List;
 

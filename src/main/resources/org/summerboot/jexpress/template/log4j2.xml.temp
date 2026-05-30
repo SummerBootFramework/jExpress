@@ -79,11 +79,11 @@
         <Logger level="warn" name="io.grpc" includeLocation="true"/>
         <!-- Note: "java.lang.UnsupportedOperationException: sun.misc.Unsafe unavailable" can be seen, also can be ignored, when -Dio.netty.noUnsafe=true and io.netty.util.internal.CleanerJava9 log level is below INFO (either TRACE or DEBUG) -->
         <Logger level="info" name="io.netty.util.internal.CleanerJava9" includeLocation="true"/>
-        <Logger level="info" name="org.summerboot.jexpress.integration.httpclient.HttpClientConfig" includeLocation="true"/>
+        <Logger level="info" name="org.summerboot.jexpress.integration.http.HttpClientConfig" includeLocation="true"/>
         <Logger level="warn" name="org.summerboot.jexpress.boot.lifecycle.IdleEventMonitor" includeLocation="true"/>
-        <Logger level="info" name="org.summerboot.jexpress.webserver.netty.HttpNioChannelInitializer" includeLocation="true"/>
-        <Logger level="debug" name="org.summerboot.jexpress.webserver.netty.NioServer" includeLocation="true"/>
-        <Logger level="debug" name="org.summerboot.jexpress.controller.grpc.GRPCServer" includeLocation="true"/>
+        <Logger level="info" name="org.summerboot.jexpress.infra.netty.HttpNioChannelInitializer" includeLocation="true"/>
+        <Logger level="debug" name="org.summerboot.jexpress.infra.netty.NioServer" includeLocation="true"/>
+        <Logger level="debug" name="org.summerboot.jexpress.api.grpc.GRPCServer" includeLocation="true"/>
 
 
         <Logger level="debug" name="org.summerboot.jexpress.boot" includeLocation="true" additivity="false">
@@ -101,11 +101,11 @@
             <AppenderRef ref="Console"/>
         </Logger>
 
-        <Logger level="info" name="org.summerboot.jexpress.controller.restful.BootHttpRequestHandler" includeLocation="false" additivity="false">
+        <Logger level="info" name="org.summerboot.jexpress.api.rest.BootHttpRequestHandler" includeLocation="false" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger level="info" name="org.summerboot.jexpress.controller.grpc.ContextualizedServerCallListenerEx" includeLocation="false" additivity="false">
+        <Logger level="info" name="org.summerboot.jexpress.api.grpc.ContextualizedServerCallListenerEx" includeLocation="false" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
             <AppenderRef ref="Console"/>
         </Logger>

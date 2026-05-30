@@ -17,9 +17,9 @@
 package org.summerboot.jexpress.integration.cache;
 
 import com.google.inject.Singleton;
-import org.summerboot.jexpress.security.authenticate.Caller;
-import org.summerboot.jexpress.security.authenticate.User;
-import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.security.auth.User;
+import org.summerboot.jexpress.common.util.BeanUtil;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵

@@ -30,7 +30,7 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.rendering.RenderDestination;
-import org.summerboot.jexpress.util.concurrent.ConcurrentUtil;
+import org.summerboot.jexpress.common.util.concurrent.ConcurrentUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

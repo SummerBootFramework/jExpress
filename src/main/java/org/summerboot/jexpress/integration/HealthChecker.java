@@ -17,7 +17,7 @@
 package org.summerboot.jexpress.integration;
 
 import org.apache.logging.log4j.Level;
-import org.summerboot.jexpress.controller.Err;
+import org.summerboot.jexpress.api.common.Err;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;

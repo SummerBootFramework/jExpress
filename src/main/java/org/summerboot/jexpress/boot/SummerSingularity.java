@@ -34,17 +34,17 @@ import org.summerboot.jexpress.annotation.Service.ChannelHandlerType;
 import org.summerboot.jexpress.annotation.Version;
 import org.summerboot.jexpress.annotation.config.ConfigFilename;
 import org.summerboot.jexpress.annotation.validation.Unique;
+import org.summerboot.jexpress.api.grpc.GRPCServerConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.controller.grpc.GRPCServerConfig;
+import org.summerboot.jexpress.common.util.ApplicationUtil;
+import org.summerboot.jexpress.common.util.BeanUtil;
+import org.summerboot.jexpress.common.util.FormatterUtil;
+import org.summerboot.jexpress.common.util.ReflectionUtil;
+import org.summerboot.jexpress.common.util.i18n.I18n;
+import org.summerboot.jexpress.infra.netty.NioConfig;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.security.authenticate.AuthConfig;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.BeanUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
-import org.summerboot.jexpress.util.i18n.I18n;
-import org.summerboot.jexpress.webserver.netty.NioConfig;
+import org.summerboot.jexpress.security.auth.AuthConfig;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -187,14 +187,14 @@ abstract public class SummerSingularity {
         userSpecifiedCfgMonitorThrottleMillis = BootConstant.CFG_CHANGE_MONITOR_THROTTLE_MS;
         userSpecifiedalternativeNames.clear();
 
-        // reset Scan Results
+        // rest Scan Results
         jvmStartCommand = null;
         jmxRequired = false;
         callerRootPackageNames = null;
         appVersion = BootConstant.VERSION;
         logFileName = BootConstant.VERSION;
 
-        //reset Annotation scan results as CLI inputs
+        //rest Annotation scan results as CLI inputs
         availableUniqueTagOptions.clear();
         scannedJExpressConfigs.clear();
         availableImplTagOptions.clear();

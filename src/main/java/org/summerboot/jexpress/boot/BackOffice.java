@@ -22,7 +22,7 @@ import org.summerboot.jexpress.annotation.config.Config;
 import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
+import org.summerboot.jexpress.common.util.ReflectionUtil;
 
 import java.io.File;
 import java.util.HashMap;

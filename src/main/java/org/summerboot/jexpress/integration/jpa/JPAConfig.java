@@ -22,8 +22,8 @@ import org.hibernate.cfg.Environment;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
+import org.summerboot.jexpress.common.util.FormatterUtil;
+import org.summerboot.jexpress.common.util.ReflectionUtil;
 
 import java.io.File;
 import java.io.FileInputStream;

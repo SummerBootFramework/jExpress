@@ -24,7 +24,7 @@ import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.integration.cache.domain.FlashSale;
 import org.summerboot.jexpress.integration.smtp.PostOffice;
 import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.security.authenticate.Caller;
+import org.summerboot.jexpress.security.auth.Caller;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;

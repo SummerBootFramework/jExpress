@@ -20,8 +20,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import jakarta.persistence.PersistenceException;
-import org.summerboot.jexpress.controller.SessionContext;
-import org.summerboot.jexpress.webserver.netty.RequestProcessor;
+import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.infra.netty.RequestProcessor;
 
 import javax.naming.NamingException;
 import java.net.http.HttpConnectTimeoutException;

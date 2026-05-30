@@ -22,7 +22,7 @@ import com.itextpdf.kernel.pdf.WriterProperties;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.summerboot.jexpress.security.SecurityUtil;
-import org.summerboot.jexpress.util.BeanUtil;
+import org.summerboot.jexpress.common.util.BeanUtil;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵

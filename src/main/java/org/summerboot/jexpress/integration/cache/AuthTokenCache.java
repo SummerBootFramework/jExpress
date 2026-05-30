@@ -16,10 +16,10 @@
  */
 package org.summerboot.jexpress.integration.cache;
 
+import org.summerboot.jexpress.api.common.Err;
 import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.controller.Err;
 import org.summerboot.jexpress.integration.HealthChecker;
-import org.summerboot.jexpress.security.authenticate.Caller;
+import org.summerboot.jexpress.security.auth.Caller;
 
 import java.util.ArrayList;
 import java.util.List;
