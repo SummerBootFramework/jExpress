@@ -390,7 +390,7 @@ public class NioConfig extends BootConfig {
         filter, all, ignore
     }
 
-    @Config(key = "nio.verbose.ServiceTimePOI.filter", defaultValue = "auth.begin, auth.end, jpa.begin, jpa.end",
+    @Config(key = "nio.verbose.ServiceTimePOI.filter", defaultValue = "auth.begin, auth.end, db.begin, db.end",
             desc = "CSV format")
     protected volatile Set<String> filterPOISet;
 

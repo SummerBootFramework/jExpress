@@ -36,8 +36,8 @@ public interface BootPOI {
     //Integrations
     String LDAP_BEGIN = "ldap.begin";
     String LDAP_END = "ldap.end";
-    String DB_BEGIN = "jpa.begin";
-    String DB_END = "jpa.end";
+    String DB_BEGIN = "db.begin";
+    String DB_END = "db.end";
     String CACHE_BEGIN = "cache.begin";
     String CACHE_END = "cache.end";
     String PDF_BEGIN = "pdf.begin";

@@ -71,7 +71,7 @@ public class SMTPClientConfig extends BootConfig {
     protected volatile int smtpPort = 25;
 
     @JsonIgnore
-    @Config(key = "mail.smtp.auth", desc = "Whether to attempt to auth the user using the AUTH command")
+    @Config(key = "mail.smtp.auth", desc = "Whether to attempt to authenticate the user using the AUTH command")
     protected volatile Boolean smtpAuth;
 
     @JsonIgnore
