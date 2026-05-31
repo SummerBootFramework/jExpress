@@ -62,7 +62,6 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @param <E> auth(T metaData)
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
