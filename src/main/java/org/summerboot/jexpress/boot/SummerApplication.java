@@ -1,17 +1,18 @@
 /*
- * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
- * "License"); you may not use this file except in compliance with the License and you have no
- * policy prohibiting employee contributions back to this file (unless the contributor to this
- * file is your current or retired employee). You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *     https://apache.org
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 package org.summerboot.jexpress.boot;
 
@@ -31,21 +32,22 @@ import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 import org.quartz.SchedulerException;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.event.AppLifecycleListener;
-import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
-import org.summerboot.jexpress.boot.instrumentation.NIOStatusListener;
-import org.summerboot.jexpress.boot.instrumentation.Timeout;
-import org.summerboot.jexpress.boot.instrumentation.jmx.InstrumentationMgr;
-import org.summerboot.jexpress.i18n.I18n;
-import org.summerboot.jexpress.integration.quartz.QuartzUtil;
-import org.summerboot.jexpress.integration.smtp.PostOffice;
-import org.summerboot.jexpress.nio.IdleEventMonitor;
-import org.summerboot.jexpress.nio.grpc.GRPCServer;
-import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
-import org.summerboot.jexpress.nio.server.NioChannelInitializer;
-import org.summerboot.jexpress.nio.server.NioConfig;
-import org.summerboot.jexpress.nio.server.NioServer;
-import org.summerboot.jexpress.util.ApplicationUtil;
+import org.summerboot.jexpress.boot.lifecycle.AppLifecycleListener;
+import org.summerboot.jexpress.boot.lifecycle.IdleEventMonitor;
+import org.summerboot.jexpress.core.error.BootErrorCode;
+import org.summerboot.jexpress.grpc.server.GrpcServer;
+import org.summerboot.jexpress.grpc.server.GrpcServerConfig;
+import org.summerboot.jexpress.integration.mail.PostOffice;
+import org.summerboot.jexpress.integration.scheduling.quartz.QuartzUtil;
+import org.summerboot.jexpress.observability.health.HealthMonitor;
+import org.summerboot.jexpress.observability.jmx.InstrumentationMgr;
+import org.summerboot.jexpress.observability.metrics.NioStatusListener;
+import org.summerboot.jexpress.util.concurrent.Timeout;
+import org.summerboot.jexpress.util.i18n.I18n;
+import org.summerboot.jexpress.util.runtime.ApplicationUtil;
+import org.summerboot.jexpress.web.netty.server.NioChannelInitializer;
+import org.summerboot.jexpress.web.netty.server.NioConfig;
+import org.summerboot.jexpress.web.netty.server.NioServer;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -63,7 +65,7 @@ abstract public class SummerApplication extends SummerBigBang {
     @Inject
     protected InstrumentationMgr instrumentationMgr;
     protected NioServer httpServer;
-    protected List<GRPCServer> gRPCServerList = new ArrayList<>();
+    protected List<GrpcServer> grpcServerList = new ArrayList<>();
     @Inject
     protected PostOffice postOffice;
     @Inject
@@ -216,8 +218,8 @@ abstract public class SummerApplication extends SummerBigBang {
         return (T) app;
     }
 
-    public List<GRPCServer> getgRPCServers() {
-        return gRPCServerList;
+    public List<GrpcServer> getGrpcServers() {
+        return grpcServerList;
     }
 
     public NioServer getHTTPServers() {
@@ -232,15 +234,15 @@ abstract public class SummerApplication extends SummerBigBang {
     protected void traceConfig() {
         log.trace("");
         if (!memoLogged) {
-            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGID).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGID));
-            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILEPATH).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILEPATH));
-            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_LOGFILENAME));
-            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_SERVER_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_SERVER_NAME));
-            memo.append(BootConstant.BR).append("\t- sys.prop.").append(BootConstant.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME));
+            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_LOGID).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_LOGID));
+            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_LOGFILEPATH).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_LOGFILEPATH));
+            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_LOGFILENAME));
+            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_SERVER_NAME).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_SERVER_NAME));
+            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_APP_PACKAGE_NAME));
 
-            memo.append(BootConstant.BR).append("\t- start: PostOffice=").append(postOffice.getClass().getName());
+            memo.append(BootConstants.BR).append("\t- start: PostOffice=").append(postOffice.getClass().getName());
             //memo.append(BootConstant.BR).append("\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
-            memo.append(BootConstant.BR).append("\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
+            memo.append(BootConstants.BR).append("\t- start: InstrumentationMgr=").append(instrumentationMgr.getClass().getName());
             memoLogged = true;
         }
         log.trace(() -> memo.toString());
@@ -291,7 +293,7 @@ abstract public class SummerApplication extends SummerBigBang {
             // 2. initialize JMX instrumentation
             log.trace("2. initialize JMX instrumentation");
             if (instrumentationMgr != null/* && isJMXRequired()*/) {
-                instrumentationMgr.start(BootConstant.VERSION);
+                instrumentationMgr.start(BootConstants.VERSION);
             }
 
             // 3a. runner.run
@@ -314,47 +316,47 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 4. health inspection
-            log.trace("4. health inspection");
+            log.trace("4. health check");
             String serviceStatus = HealthMonitor.start(appContext, true, guiceInjector);
 
             long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
             String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
             StringBuilder startingMemo = new StringBuilder();
             // 5a. start server: gRPC
-            if (hasGRPCImpl) {
-                log.trace("5a. start server: gRPC hasGRPCImpl.bs={}", gRPCBindableServiceImplClasses);
-                log.trace("5a. start server: gRPC hasGRPCImpl.ssd={}", gRPCServerServiceDefinitionImplClasses);
+            if (hasGrpcImpl) {
+                log.trace("5a. start server: gRPC hasGrpcImpl.bs={}", grpcBindableServiceImplClasses);
+                log.trace("5a. start server: gRPC hasGrpcImpl.ssd={}", grpcServerServiceDefinitionImplClasses);
                 ServerInterceptor serverInterceptor = super.guiceInjector.getInstance(ServerInterceptor.class);
                 //2. init gRPC server
-                GRPCServerConfig gRPCCfg = GRPCServerConfig.cfg;
-                List<InetSocketAddress> bindingAddresses = gRPCCfg.getBindingAddresses();
-                NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
+                GrpcServerConfig grpcServerConfig = GrpcServerConfig.cfg;
+                List<InetSocketAddress> bindingAddresses = grpcServerConfig.getBindingAddresses();
+                NioStatusListener nioListener = super.guiceInjector.getInstance(NioStatusListener.class);
                 boolean doReport = true;
                 for (InetSocketAddress bindingAddress : bindingAddresses) {
                     String host = bindingAddress.getAddress().getHostAddress();
                     int port = bindingAddress.getPort();
                     log.trace("5a. binding gRPC on {}:{}", host, port);
-                    try (var a = Timeout.watch("starting gRPCServer at " + host + ":" + port, timeoutMs).withDesc(timeoutDesc)) {
-                        boolean useVirtualThread = gRPCCfg.getTpeThreadingMode().equals(GRPCServerConfig.ThreadingMode.VirtualThread);
-                        GRPCServer gRPCServer = new GRPCServer(host, port, gRPCCfg.getKmf(), gRPCCfg.getTmf(), gRPCCfg.getTpe(), useVirtualThread, doReport, nioListener, serverInterceptor);
+                    try (var a = Timeout.watch("starting gRPC Server at " + host + ":" + port, timeoutMs).withDesc(timeoutDesc)) {
+                        boolean useVirtualThread = grpcServerConfig.getTpeThreadingMode().equals(GrpcServerConfig.ThreadingMode.VirtualThread);
+                        GrpcServer grpcServer = new GrpcServer(host, port, grpcServerConfig.getKmf(), grpcServerConfig.getTmf(), grpcServerConfig.getTpe(), useVirtualThread, doReport, nioListener, serverInterceptor);
                         doReport = false;
-                        ServerBuilder serverBuilder = gRPCServer.getServerBuilder();
-                        for (Class<? extends BindableService> c : gRPCBindableServiceImplClasses) {
+                        ServerBuilder serverBuilder = grpcServer.getServerBuilder();
+                        for (Class<? extends BindableService> c : grpcBindableServiceImplClasses) {
                             BindableService impl = guiceInjector.getInstance(c);
                             serverBuilder.addService(impl);
                         }
-                        for (Class<ServerServiceDefinition> c : gRPCServerServiceDefinitionImplClasses) {
+                        for (Class<ServerServiceDefinition> c : grpcServerServiceDefinitionImplClasses) {
                             ServerServiceDefinition impl = guiceInjector.getInstance(c);
                             serverBuilder.addService(impl);
                         }
-                        if (gRPCCfg.isAutoStart()) {
-                            gRPCServer.start(startingMemo);
+                        if (grpcServerConfig.isAutoStart()) {
+                            grpcServer.start(startingMemo);
                         }
-                        gRPCServerList.add(gRPCServer);
+                        grpcServerList.add(grpcServer);
                     }
                 }
                 if (appLifecycleListener != null) {
-                    IdleEventMonitor.start(GRPCServer.IDLE_EVENT_MONITOR, appLifecycleListener);
+                    IdleEventMonitor.start(GrpcServer.IDLE_EVENT_MONITOR, appLifecycleListener);
                 }
             }
 
@@ -363,7 +365,7 @@ abstract public class SummerApplication extends SummerBigBang {
             if (hasControllers && NioConfig.cfg.isAutoStart()) {
                 try (var a = Timeout.watch("starting Web Server", timeoutMs).withDesc(timeoutDesc)) {
                     NioChannelInitializer channelInitializer = super.guiceInjector.getInstance(NioChannelInitializer.class);
-                    NIOStatusListener nioListener = super.guiceInjector.getInstance(NIOStatusListener.class);
+                    NioStatusListener nioListener = super.guiceInjector.getInstance(NioStatusListener.class);
                     httpServer = new NioServer(channelInitializer.init(guiceInjector, channelHandlerNames), nioListener);
                     httpServer.bind(NioConfig.cfg, startingMemo);
                     if (appLifecycleListener != null) {
@@ -373,19 +375,19 @@ abstract public class SummerApplication extends SummerBigBang {
             }
 
             // 6. announcement
-            startingMemo.append(BootConstant.BR).append(serviceStatus);
-            startingMemo.append(BootConstant.BR).append("pid#" + BootConstant.PID);
-            log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstant.PID) + serviceStatus); // REF269-2
+            startingMemo.append(BootConstants.BR).append(serviceStatus);
+            startingMemo.append(BootConstants.BR).append("pid#" + BootConstants.PID);
+            log.info(() -> I18n.info.launched.format(userSpecifiedResourceBundle, appVersion + " pid#" + BootConstants.PID) + serviceStatus); // REF269-2
             if (appLifecycleListener != null) {
                 appLifecycleListener.onApplicationStart(appContext, super.appVersion, startingMemo.toString());
             }
         } catch (java.net.BindException ex) {// from NioServer
-            log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
+            log.fatal(ex + BootConstants.BR + BackOffice.agent.getPortInUseAlertMessage());
             ApplicationUtil.RTO(BootErrorCode.RTO_BINDING_ERROR, null, null);
         } catch (Throwable ex) {
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause instanceof java.net.BindException) {// from gRPC server
-                log.fatal(ex + BootConstant.BR + BackOffice.agent.getPortInUseAlertMessage());
+                log.fatal(ex + BootConstants.BR + BackOffice.agent.getPortInUseAlertMessage());
             } else {
                 log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle, appVersion), ex); // REF269-2
             }
@@ -429,9 +431,9 @@ abstract public class SummerApplication extends SummerBigBang {
 
     public void shutdown() {
         log.trace("");
-        if (gRPCServerList != null && !gRPCServerList.isEmpty()) {
-            for (GRPCServer gRPCServer : gRPCServerList) {
-                gRPCServer.shutdown();
+        if (grpcServerList != null && !grpcServerList.isEmpty()) {
+            for (GrpcServer grpcServer : grpcServerList) {
+                grpcServer.shutdown();
             }
         }
         if (httpServer != null) {

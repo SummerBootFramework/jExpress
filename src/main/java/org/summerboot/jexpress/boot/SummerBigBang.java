@@ -1,17 +1,18 @@
 /*
- * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
- * "License"); you may not use this file except in compliance with the License and you have no
- * policy prohibiting employee contributions back to this file (unless the contributor to this
- * file is your current or retired employee). You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *     https://apache.org
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 package org.summerboot.jexpress.boot;
 
@@ -31,23 +32,27 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.quartz.Job;
 import org.quartz.Scheduler;
-import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.Inspector;
-import org.summerboot.jexpress.boot.annotation.Order;
+import org.summerboot.jexpress.annotation.Controller;
+import org.summerboot.jexpress.annotation.HealthCheck;
+import org.summerboot.jexpress.annotation.Order;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
-import org.summerboot.jexpress.i18n.I18n;
-import org.summerboot.jexpress.integration.quartz.QuartzUtil;
-import org.summerboot.jexpress.nio.server.ws.rs.JaxRsRequestProcessorManager;
-import org.summerboot.jexpress.security.EncryptorUtil;
-import org.summerboot.jexpress.security.JwtUtil;
-import org.summerboot.jexpress.security.SecurityUtil;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.PropertiesFile;
-import org.summerboot.jexpress.util.ReflectionUtil;
+import org.summerboot.jexpress.boot.context.BootGuiceModule;
+import org.summerboot.jexpress.boot.context.ScannedGuiceModule;
+import org.summerboot.jexpress.boot.lifecycle.AppInitializer;
+import org.summerboot.jexpress.core.error.BootErrorCode;
+import org.summerboot.jexpress.web.jaxrs.JaxRsRequestProcessorManager;
+import org.summerboot.jexpress.integration.scheduling.quartz.QuartzUtil;
+import org.summerboot.jexpress.observability.health.HealthMonitor;
+import org.summerboot.jexpress.security.crypto.EncryptorUtil;
+import org.summerboot.jexpress.security.crypto.SecurityUtil;
+import org.summerboot.jexpress.security.token.jwt.JwtUtil;
+import org.summerboot.jexpress.util.runtime.ApplicationUtil;
+import org.summerboot.jexpress.util.format.FormatterUtil;
+import org.summerboot.jexpress.util.io.PropertiesFile;
+import org.summerboot.jexpress.util.reflect.ReflectionUtil;
+import org.summerboot.jexpress.util.i18n.I18n;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +79,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
     protected final Module userOverrideModule;
     protected Injector guiceInjector;
-    protected List<SummerInitializer> summerInitializers = new ArrayList<>();
+    protected List<AppInitializer> appInitializers = new ArrayList<>();
     //protected List<SummerRunner> summerRunners = new ArrayList<>();
     protected Scheduler scheduler;//scheduler = new StdSchedulerFactory().getScheduler();
     protected int schedulerTriggers = 0;
@@ -93,7 +98,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void bang() {
         log.trace("");
         guiceInjector = null;
-        summerInitializers.clear();
+        appInitializers.clear();
         //summerRunners.clear();
         schedulerTriggers = 0;
     }
@@ -126,9 +131,9 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * 3. let caller to init app
          */
-        for (SummerInitializer summerInitializer : summerInitializers) {
-            log.trace("initApp.before.guiceInjector: {}", summerInitializer);
-            summerInitializer.initAppBeforeIoC(userSpecifiedConfigDir);
+        for (AppInitializer appInitializer : appInitializers) {
+            log.trace("initApp.before.guiceInjector: {}", appInitializer);
+            appInitializer.initAppBeforeIoC(userSpecifiedConfigDir);
         }
 
         /*
@@ -140,9 +145,9 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * 5. let caller to init app
          */
-        for (SummerInitializer summerInitializer : summerInitializers) {
-            log.trace("initApp.after.guiceInjector: {}", summerInitializer);
-            summerInitializer.initAppAfterIoC(userSpecifiedConfigDir, guiceInjector);
+        for (AppInitializer appInitializer : appInitializers) {
+            log.trace("initApp.after.guiceInjector: {}", appInitializer);
+            appInitializer.initAppAfterIoC(userSpecifiedConfigDir, guiceInjector);
         }
 
         return (T) this;
@@ -150,30 +155,30 @@ abstract public class SummerBigBang extends SummerSingularity {
 
     protected void bigBang_LetThereBeCLI(String[] args) throws IOException {
         log.trace("");
-        memo.append(BootConstant.BR).append("\t- CLI.init: args=").append(Arrays.asList(args));
-        Option arg = Option.builder(BootConstant.CLI_USAGE)
+        memo.append(BootConstants.BR).append("\t- CLI.init: args=").append(Arrays.asList(args));
+        Option arg = Option.builder(BootConstants.CLI_USAGE)
                 .desc("Usage/Help")
                 .get();
         cliOptions.addOption(arg);
 
-        arg = Option.builder(BootConstant.CLI_VERSION)
+        arg = Option.builder(BootConstants.CLI_VERSION)
                 .desc("check application version")
                 .get();
         cliOptions.addOption(arg);
 
-        arg = Option.builder(BootConstant.CLI_CONFIG_MONITOR_INTERVAL)
+        arg = Option.builder(BootConstants.CLI_CONFIG_MONITOR_INTERVAL)
                 .desc("configuration monitoring interval in second (default " + userSpecifiedCfgMonitorThrottleMillis + " seconds)")
                 .hasArg().argName("second")
                 .get();
         cliOptions.addOption(arg);
 
-        arg = new Option(BootConstant.CLI_I8N, true, "language <en | fr-CA>");
+        arg = new Option(BootConstants.CLI_I8N, true, "language <en | fr-CA>");
         arg.setRequired(false);
         cliOptions.addOption(arg);
 
         if (availableImplTagOptions != null && !availableImplTagOptions.isEmpty()) {
             String validOptions = FormatterUtil.toCSV(availableImplTagOptions);
-            arg = Option.builder(BootConstant.CLI_USE_ALTERNATIVE).desc("launch application with selected implementations, valid values <" + validOptions + ">")
+            arg = Option.builder(BootConstants.CLI_USE_ALTERNATIVE).desc("launch application with selected implementations, valid values <" + validOptions + ">")
                     .hasArgs().argName("items")
                     .get();
             arg.setArgs(Option.UNLIMITED_VALUES);
@@ -181,81 +186,81 @@ abstract public class SummerBigBang extends SummerSingularity {
             cliOptions.addOption(arg);
         }
 
-        arg = Option.builder(BootConstant.CLI_CONFIG_DOMAIN)
-                .desc("Start the program using the configuration in the ../" + BootConstant.DIR_STANDALONE + "_<domain_name> directory. For example, if you specify -" + BootConstant.CLI_CONFIG_DOMAIN + " foo, the program will load the configuration files from the ../" + BootConstant.DIR_STANDALONE + "_foo directory. If this option is not specified, the program will start using the default configuration files.")
+        arg = Option.builder(BootConstants.CLI_CONFIG_DOMAIN)
+                .desc("Start the program using the configuration in the ../" + BootConstants.DIR_STANDALONE + "_<domain_name> directory. For example, if you specify -" + BootConstants.CLI_CONFIG_DOMAIN + " foo, the program will load the configuration files from the ../" + BootConstants.DIR_STANDALONE + "_foo directory. If this option is not specified, the program will start using the default configuration files.")
                 .hasArg().argName("domain suffix")
                 .get();
         cliOptions.addOption(arg);
-        arg = Option.builder(BootConstant.CLI_CONFIG_DIR)
+        arg = Option.builder(BootConstants.CLI_CONFIG_DIR)
                 .desc("the path to load the configuration files, or load from current folder when not specified")
                 .hasArg().argName("path")
                 .get();
         cliOptions.addOption(arg);
 
-        if (scanedJExpressConfigs != null && !scanedJExpressConfigs.isEmpty()) {
-            String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
-            arg = Option.builder(BootConstant.CLI_CONFIG_DEMO)
-                    .desc("Show specified configuration template (" + validOptions + "), or when specified with -" + BootConstant.CLI_CONFIG_DOMAIN + " just dump all available configuration templates to the specified folder")
+        if (scannedJExpressConfigs != null && !scannedJExpressConfigs.isEmpty()) {
+            String validOptions = FormatterUtil.toCSV(scannedJExpressConfigs.keySet());
+            arg = Option.builder(BootConstants.CLI_CONFIG_DEMO)
+                    .desc("Show specified configuration template (" + validOptions + "), or when specified with -" + BootConstants.CLI_CONFIG_DOMAIN + " just dump all available configuration templates to the specified folder")
                     .hasArgs().argName("config").optionalArg(true)
                     .get();
             cliOptions.addOption(arg);
         }
 
         if (!availableUniqueTagOptions.isEmpty()) {
-            arg = Option.builder(BootConstant.CLI_LIST_UNIQUE)
+            arg = Option.builder(BootConstants.CLI_LIST_UNIQUE)
                     .desc("Show list of: " + availableUniqueTagOptions)
                     .hasArg().argName("item")
                     .get();
             cliOptions.addOption(arg);
         }
 
-        arg = Option.builder(BootConstant.CLI_ADMIN_PWD_FILE)
+        arg = Option.builder(BootConstants.CLI_ADMIN_PWD_FILE)
                 .desc("Specify an application configuration password in a file which contains a line: APP_ROOT_PASSWORD=<base64 encoded password>"
-                        + BootConstant.BR + "Note: This option not only avoids prompting for a password in the console, but also prevents the application configuration password from being leaked via the ps command.")
+                        + BootConstants.BR + "Note: This option not only avoids prompting for a password in the console, but also prevents the application configuration password from being leaked via the ps command.")
                 .hasArg().argName("file")
                 .get();
         cliOptions.addOption(arg);
 
-        arg = Option.builder(BootConstant.CLI_JWT)
+        arg = Option.builder(BootConstants.CLI_JWT)
                 .desc("generate JWT root signing key with the specified algorithm <HS256, HS384, HS512>")
                 .hasArg().argName("algorithm")
                 .get();
         cliOptions.addOption(arg);
 
-        arg = Option.builder(BootConstant.CLI_ENCRYPT)
+        arg = Option.builder(BootConstants.CLI_ENCRYPT)
                 .desc("Encrypt config file content with all \"DEC(plain text)\":"
-                        + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_ENCRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain> [-" + BootConstant.CLI_ADMIN_PWD_FILE + " <path>]")// REF269-3
+                        + BootConstants.BR + BootConstants.BR + "\t -" + BootConstants.CLI_ENCRYPT + " -" + BootConstants.CLI_CONFIG_DOMAIN + " <domain> [-" + BootConstants.CLI_ADMIN_PWD_FILE + " <path>]")// REF269-3
                 .get();
         cliOptions.addOption(arg);
 
-        arg = Option.builder(BootConstant.CLI_PSV)
+        arg = Option.builder(BootConstants.CLI_PSV)
                 .hasArg().argName("envId")
                 .desc("Generate configuration list in PSV format with the specified environment id"
-                        + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_PSV + " <envId> -" + BootConstant.CLI_CONFIG_DOMAIN + " <domain>")
+                        + BootConstants.BR + BootConstants.BR + "\t -" + BootConstants.CLI_PSV + " <envId> -" + BootConstants.CLI_CONFIG_DOMAIN + " <domain>")
                 .get();
         cliOptions.addOption(arg);
 
-        arg = Option.builder(BootConstant.CLI_DEBUGMODE)
+        arg = Option.builder(BootConstants.CLI_DEBUGMODE)
                 .hasArg(false)
                 .desc("this will ignore @Log settings and not mask any sensitive data in logs")
                 .get();
         cliOptions.addOption(arg);
 
-        arg = Option.builder(BootConstant.CLI_DECRYPT)
+        arg = Option.builder(BootConstants.CLI_DECRYPT)
                 .desc("Decrypt config file content with all \"ENC(encrypted text)\" using password:"
-                        + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_DECRYPT + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> ")// REF269-3
+                        + BootConstants.BR + BootConstants.BR + BootConstants.BR + "\t -" + BootConstants.CLI_DECRYPT + " -" + BootConstants.CLI_CONFIG_DOMAIN + " <path> ")// REF269-3
                 .get();
         cliOptions.addOption(arg);
 
-        arg = Option.builder(BootConstant.CLI_FORMAT_CONFIG_FILE)
+        arg = Option.builder(BootConstants.CLI_FORMAT_CONFIG_FILE)
                 .desc("Format config file"
-                        + BootConstant.BR + BootConstant.BR + BootConstant.BR + "\t -" + BootConstant.CLI_FORMAT_CONFIG_FILE + " -" + BootConstant.CLI_CONFIG_DOMAIN + " <path> ")// REF269-3
+                        + BootConstants.BR + BootConstants.BR + BootConstants.BR + "\t -" + BootConstants.CLI_FORMAT_CONFIG_FILE + " -" + BootConstants.CLI_CONFIG_DOMAIN + " <path> ")// REF269-3
                 .get();
         cliOptions.addOption(arg);
 
-        summerInitializers.addAll(scanImplementation_SummerInitializer());
-        for (SummerInitializer summerInitializer : summerInitializers) {
-            summerInitializer.initCLI(cliOptions);
+        appInitializers.addAll(scanImplementation_SummerInitializer());
+        for (AppInitializer appInitializer : appInitializers) {
+            appInitializer.initCLI(cliOptions);
         }
 
         try {
@@ -267,16 +272,16 @@ abstract public class SummerBigBang extends SummerSingularity {
         }
     }
 
-    protected List<SummerInitializer> scanImplementation_SummerInitializer() {
+    protected List<AppInitializer> scanImplementation_SummerInitializer() {
         log.trace("");
-        List<SummerInitializer> summerCLIs = new ArrayList<>();
-        Set<Class<? extends SummerInitializer>> summerCLI_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(SummerInitializer.class, callerRootPackageNames);
+        List<AppInitializer> summerCLIs = new ArrayList<>();
+        Set<Class<? extends AppInitializer>> summerCLI_ImplClasses = ReflectionUtil.getAllImplementationsByInterface(AppInitializer.class, callerRootPackageNames);
         summerCLI_ImplClasses = ReflectionUtil.retainSubclasses(summerCLI_ImplClasses);
         //prepare ordering
         Set<Integer> orderSet = new TreeSet<>();
-        Map<Integer, List<SummerInitializer>> orderMapping = new HashMap<>();
+        Map<Integer, List<AppInitializer>> orderMapping = new HashMap<>();
         //process scan result
-        for (Class<? extends SummerInitializer> c : summerCLI_ImplClasses) {
+        for (Class<? extends AppInitializer> c : summerCLI_ImplClasses) {
             //get order
             int order = 0;
             Order o = c.getAnnotation(Order.class);
@@ -284,12 +289,12 @@ abstract public class SummerBigBang extends SummerSingularity {
                 order = o.value();
             }
             //get data, cannot inject due to injector is not initialized yet
-            final SummerInitializer instance;
+            final AppInitializer instance;
             try {
                 if (ReflectionUtil.isAbstract(c)) {
                     continue;
                 }
-                Constructor<? extends SummerInitializer> cc = c.getConstructor();
+                Constructor<? extends AppInitializer> cc = c.getConstructor();
                 cc.setAccessible(true);
                 instance = cc.newInstance();
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException
@@ -299,7 +304,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
             //sort data by order
             orderSet.add(order);
-            List<SummerInitializer> sameOoderCLIs = orderMapping.get(order);
+            List<AppInitializer> sameOoderCLIs = orderMapping.get(order);
             if (sameOoderCLIs == null) {
                 sameOoderCLIs = new ArrayList<>();
                 orderMapping.put(order, sameOoderCLIs);
@@ -316,26 +321,26 @@ abstract public class SummerBigBang extends SummerSingularity {
         log.trace("");
         boolean continueCLI = true;
         // usage
-        if (cli.hasOption(BootConstant.CLI_USAGE)) {
+        if (cli.hasOption(BootConstants.CLI_USAGE)) {
             continueCLI = false;
             cliHelpFormatter.printHelp(appVersion, "-------------------", cliOptions, "", true);
         }
         // callerVersion
-        if (cli.hasOption(BootConstant.CLI_VERSION)) {
+        if (cli.hasOption(BootConstants.CLI_VERSION)) {
             continueCLI = false;
             System.out.println(appVersion);
         }
         // generate CLI_JWT root signing key
-        if (cli.hasOption(BootConstant.CLI_JWT)) {
+        if (cli.hasOption(BootConstants.CLI_JWT)) {
             continueCLI = false;
-            String algorithm = cli.getOptionValue(BootConstant.CLI_JWT);// <HS256, HS384, HS512>
+            String algorithm = cli.getOptionValue(BootConstants.CLI_JWT);// <HS256, HS384, HS512>
             MacAlgorithm signatureAlgorithm;
             switch (algorithm) {
                 case "HS256" -> signatureAlgorithm = Jwts.SIG.HS256;
                 case "HS384" -> signatureAlgorithm = Jwts.SIG.HS384;
                 case "HS512" -> signatureAlgorithm = Jwts.SIG.HS512;
                 default -> {
-                    System.out.println("invalid -" + BootConstant.CLI_JWT + " value: " + algorithm + ", valid -" + BootConstant.CLI_JWT + " values: <HS256, HS384, HS512>");
+                    System.out.println("invalid -" + BootConstants.CLI_JWT + " value: " + algorithm + ", valid -" + BootConstants.CLI_JWT + " values: <HS256, HS384, HS512>");
                     return false;
                 }
             }
@@ -343,9 +348,9 @@ abstract public class SummerBigBang extends SummerSingularity {
             System.out.println(jwt);
         }
         // check unique
-        if (cli.hasOption(BootConstant.CLI_LIST_UNIQUE)) {
+        if (cli.hasOption(BootConstants.CLI_LIST_UNIQUE)) {
             continueCLI = false;
-            String tag = cli.getOptionValue(BootConstant.CLI_LIST_UNIQUE);
+            String tag = cli.getOptionValue(BootConstants.CLI_LIST_UNIQUE);
             StringBuilder sb = new StringBuilder();
             String error = scanAnnotation_Unique(callerRootPackageNames, sb, tag);
             if (error != null) {
@@ -367,14 +372,14 @@ abstract public class SummerBigBang extends SummerSingularity {
          */
         String masterPassword = "";
         final String masterPasswordFileName;
-        if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
-            masterPasswordFileName = cli.getOptionValue(BootConstant.CLI_ADMIN_PWD_FILE);
+        if (cli.hasOption(BootConstants.CLI_ADMIN_PWD_FILE)) {
+            masterPasswordFileName = cli.getOptionValue(BootConstants.CLI_ADMIN_PWD_FILE);
         } /*else if (cli.hasOption(BootConstant.CLI_ADMIN_PWD)) {// "else" = only one option, cannot both
             masterPasswordFileName = null;
             // REF269-3
             masterPassword = SecurityUtil.promptPassword("Enter password: ");
         }*/ else {
-            masterPasswordFileName = BootConstant.DEFAULT_MASTER_PASSWORD_FILE;
+            masterPasswordFileName = BootConstants.DEFAULT_MASTER_PASSWORD_FILE;
         }
         try {
             if (masterPasswordFileName != null) {
@@ -391,24 +396,24 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * [Config File] Monitoring - set configuration Change Monitor Interval
          */
-        if (cli.hasOption(BootConstant.CLI_CONFIG_MONITOR_INTERVAL)) {
-            String cmi = cli.getOptionValue(BootConstant.CLI_CONFIG_MONITOR_INTERVAL);
+        if (cli.hasOption(BootConstants.CLI_CONFIG_MONITOR_INTERVAL)) {
+            String cmi = cli.getOptionValue(BootConstants.CLI_CONFIG_MONITOR_INTERVAL);
             userSpecifiedCfgMonitorThrottleMillis = Integer.parseInt(cmi);
         }
 
         /*
          * show config on demand
          */
-        if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO) && !cli.hasOption(BootConstant.CLI_CONFIG_DIR)) {
-            String cfgName = cli.getOptionValue(BootConstant.CLI_CONFIG_DEMO);
+        if (cli.hasOption(BootConstants.CLI_CONFIG_DEMO) && !cli.hasOption(BootConstants.CLI_CONFIG_DIR)) {
+            String cfgName = cli.getOptionValue(BootConstants.CLI_CONFIG_DEMO);
             if (cfgName == null) {
-                String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+                String validOptions = FormatterUtil.toCSV(scannedJExpressConfigs.keySet());
                 String msg = "Missing config option, valid values <" + validOptions + ">";
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_MISSING_ARG_ERROR, msg, null);
             }
-            Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
+            Class c = scannedJExpressConfigs.get(cfgName).cfgClass;
             if (c == null) {
-                String validOptions = FormatterUtil.toCSV(scanedJExpressConfigs.keySet());
+                String validOptions = FormatterUtil.toCSV(scannedJExpressConfigs.keySet());
                 String msg = cfgName + "is an invalid config option, valid values <" + validOptions + ">";
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ARG_ERROR, msg, null);
             }
@@ -421,18 +426,18 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * [Config File] - encrypt/decrypt
          */
-        if (cli.hasOption(BootConstant.CLI_ENCRYPT)) {
+        if (cli.hasOption(BootConstants.CLI_ENCRYPT)) {
             // REF269-3
-            if (!cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
+            if (!cli.hasOption(BootConstants.CLI_ADMIN_PWD_FILE)) {
                 masterPassword = SecurityUtil.promptPassword("Enter new application root password: ", "Enter again to confirm: ");
                 EncryptorUtil.setMasterPassword(masterPassword);
             }
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_encrypt);
-            String msg = BootConstant.BR + "\t " + updated + " config items have been encrypted in " + userSpecifiedConfigDir.getAbsolutePath();
+            String msg = BootConstants.BR + "\t " + updated + " config items have been encrypted in " + userSpecifiedConfigDir.getAbsolutePath();
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
-        } else if (cli.hasOption(BootConstant.CLI_DECRYPT)) {
-            if (cli.hasOption(BootConstant.CLI_ADMIN_PWD_FILE)) {
-                String msg = BootConstant.BR + "\t error: -" + BootConstant.CLI_ADMIN_PWD_FILE + " is not allowed for decryption";
+        } else if (cli.hasOption(BootConstants.CLI_DECRYPT)) {
+            if (cli.hasOption(BootConstants.CLI_ADMIN_PWD_FILE)) {
+                String msg = BootConstants.BR + "\t error: -" + BootConstants.CLI_ADMIN_PWD_FILE + " is not allowed for decryption";
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ARG_ERROR, msg, null);
             }
             // REF269-3
@@ -440,19 +445,19 @@ abstract public class SummerBigBang extends SummerSingularity {
             EncryptorUtil.setMasterPassword(masterPassword);
 
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_decrypt);
-            String msg = BootConstant.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath();
+            String msg = BootConstants.BR + "\t " + updated + " config items have been decrypted in " + userSpecifiedConfigDir.getAbsolutePath();
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
-        } else if (cli.hasOption(BootConstant.CLI_FORMAT_CONFIG_FILE)) {
+        } else if (cli.hasOption(BootConstants.CLI_FORMAT_CONFIG_FILE)) {
             int updated = loadBootConfigFiles(ConfigUtil.ConfigLoadMode.cli_format);
-            String msg = BootConstant.BR + "\t " + updated + " config files have been formated in " + userSpecifiedConfigDir.getAbsolutePath();
+            String msg = BootConstants.BR + "\t " + updated + " config files have been formatted in " + userSpecifiedConfigDir.getAbsolutePath();
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, msg, null);
         }
 
         /*
          * [generate configuration list in PSV format]
          */
-        if (cli.hasOption(BootConstant.CLI_PSV)) {
-            String envId = cli.getOptionValue(BootConstant.CLI_PSV);
+        if (cli.hasOption(BootConstants.CLI_PSV)) {
+            String envId = cli.getOptionValue(BootConstants.CLI_PSV);
             StringBuilder sb = new StringBuilder();
             //File path = Paths.get(userSpecifiedConfigDir.getAbsolutePath(), BootConstant.DIR_CONFIGURATION).toFile();
             System.out.println("loading from " + userSpecifiedConfigDir.getAbsolutePath());
@@ -472,17 +477,17 @@ abstract public class SummerBigBang extends SummerSingularity {
                     for (ImmutablePair<String, String> pair : pairs) {
                         String key = pair.getKey();
                         String value = pair.getValue();
-                        sb.append(key).append("|").append(value).append("|").append(envId).append("|").append(fileName).append(BootConstant.BR);
+                        sb.append(key).append("|").append(value).append("|").append(envId).append("|").append(fileName).append(BootConstants.BR);
                     }
                 } catch (IOException ex) {
-                    sb.append("Failed to generate configurations list in PSV format: " + configFile.getAbsolutePath()).append(BootConstant.BR);
-                    sb.append(ExceptionUtils.getRootCauseMessage(ex)).append(BootConstant.BR);
+                    sb.append("Failed to generate configurations list in PSV format: " + configFile.getAbsolutePath()).append(BootConstants.BR);
+                    sb.append(ExceptionUtils.getRootCauseMessage(ex)).append(BootConstants.BR);
                 }
             }
             ApplicationUtil.RTO(BootErrorCode.RTO_CLS_EXIT, "\n\n" + sb, null);
         }
 
-        if (cli.hasOption(BootConstant.CLI_DEBUGMODE)) {
+        if (cli.hasOption(BootConstants.CLI_DEBUGMODE)) {
             BackOffice.agent.isDebugMode = true;
         }
 
@@ -490,9 +495,9 @@ abstract public class SummerBigBang extends SummerSingularity {
          * [IoC] - set user selected implementations to override the default
          * should be invoked before genesis was initialezed to avoid caller invoks LogManager.static{}
          */
-        if (cli.hasOption(BootConstant.CLI_USE_ALTERNATIVE)) {
+        if (cli.hasOption(BootConstants.CLI_USE_ALTERNATIVE)) {
             userSpecifiedalternativeNames.clear();
-            String[] mockItemList = cli.getOptionValues(BootConstant.CLI_USE_ALTERNATIVE);
+            String[] mockItemList = cli.getOptionValues(BootConstants.CLI_USE_ALTERNATIVE);
 
             Set<String> mockInputValues = new HashSet<>(Arrays.asList(mockItemList));
             mockInputValues.remove("");
@@ -501,7 +506,7 @@ abstract public class SummerBigBang extends SummerSingularity {
             } else {
                 Set<String> invalidOptions = new HashSet<>(mockInputValues);
                 invalidOptions.removeAll(availableImplTagOptions);
-                String msg = "invalid -" + BootConstant.CLI_USE_ALTERNATIVE + " value: " + FormatterUtil.toCSV(invalidOptions) + ", valid -" + BootConstant.CLI_USE_ALTERNATIVE + " values: " + FormatterUtil.toCSV(availableImplTagOptions);
+                String msg = "invalid -" + BootConstants.CLI_USE_ALTERNATIVE + " value: " + FormatterUtil.toCSV(invalidOptions) + ", valid -" + BootConstants.CLI_USE_ALTERNATIVE + " values: " + FormatterUtil.toCSV(availableImplTagOptions);
                 ApplicationUtil.RTO(BootErrorCode.RTO_CLI_INVALID_ALTERNATIVE_NAME_ERROR, msg, null);
             }
         }
@@ -509,14 +514,14 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * [Config File] - generate template
          */
-        if (cli.hasOption(BootConstant.CLI_CONFIG_DEMO)) {
+        if (cli.hasOption(BootConstants.CLI_CONFIG_DEMO)) {
             int i = 0;
-            for (String cfgName : scanedJExpressConfigs.keySet()) {
-                Class c = scanedJExpressConfigs.get(cfgName).cfgClass;
+            for (String cfgName : scannedJExpressConfigs.keySet()) {
+                Class c = scannedJExpressConfigs.get(cfgName).cfgClass;
                 try {
                     ConfigUtil.createConfigFile(c, userSpecifiedConfigDir, cfgName, true);
                 } catch (IOException ex) {
-                    String msg = ex + BootConstant.BR + "\tFailed to generate config file (" + cfgName + ") in " + userSpecifiedConfigDir.getAbsolutePath();
+                    String msg = ex + BootConstants.BR + "\tFailed to generate config file (" + cfgName + ") in " + userSpecifiedConfigDir.getAbsolutePath();
                     ApplicationUtil.RTO(BootErrorCode.RTO_CFG_GENERATE_ERROR, msg, ex);
                 }
                 i++;
@@ -528,8 +533,8 @@ abstract public class SummerBigBang extends SummerSingularity {
         /*
          * [i8n] - determine Resourc eBundle
          */
-        if (cli.hasOption(BootConstant.CLI_I8N)) {
-            String language = cli.getOptionValue(BootConstant.CLI_I8N);
+        if (cli.hasOption(BootConstants.CLI_I8N)) {
+            String language = cli.getOptionValue(BootConstants.CLI_I8N);
             userSpecifiedResourceBundle = Locale.forLanguageTag(language);
         } else {
             userSpecifiedResourceBundle = null;
@@ -554,21 +559,21 @@ abstract public class SummerBigBang extends SummerSingularity {
             case app_run:
                 if (!hasControllers) {
                     memo.append(BootConstant.BR).append("\t- cfg.loading.skip: no @Controller found, skip=").append(NioConfig.class.getSimpleName());
-                    scanedJExpressConfigs.remove(NioConfig.class.getSimpleName());
+                    scannedJExpressConfigs.remove(NioConfig.class.getSimpleName());
                 }
-                if (!hasGRPCImpl) {
-                    memo.append(BootConstant.BR).append("\t- cfg.loading.skip: no gRPC Server stub found, skip=").append(GRPCServerConfig.class.getSimpleName());
-                    scanedJExpressConfigs.remove(GRPCServerConfig.class.getSimpleName());
+                if (!hasGrpcImpl) {
+                    memo.append(BootConstant.BR).append("\t- cfg.loading.skip: no gRPC Server stub found, skip=").append(GrpcServerConfig.class.getSimpleName());
+                    scannedJExpressConfigs.remove(GrpcServerConfig.class.getSimpleName());
                 }
 //                if (!hasAuthImpl) {
 //                    memo.append("\n\t- agent.loading.skip: no @DeclareRoles or @RolesAllowed found in any @Controller, skip=").append(AuthConfig.class.getSimpleName());
-//                    scanedJExpressConfigs.remove(AuthConfig.class.getSimpleName());
+//                    scannedJExpressConfigs.remove(AuthConfig.class.getSimpleName());
 //                }
                 break;
         }*/
         try {
             //1. get main configurations
-            for (ConfigMetadata registeredAppConfig : scanedJExpressConfigs.values()) {
+            for (ConfigMetadata registeredAppConfig : scannedJExpressConfigs.values()) {
                 if (isUserSpecifieduserSpecifiedalternativeNames(registeredAppConfig.whenUseAlternative) ^ registeredAppConfig.thenLoadConfig) {
                     continue;
                 }
@@ -576,7 +581,7 @@ abstract public class SummerBigBang extends SummerSingularity {
                 if (instance == null) {
                     instance = BootConfig.instance(registeredAppConfig.cfgClass);
                 }
-                memo.append(BootConstant.BR).append("\t- cfg.loading=").append(instance).append(", info=").append(registeredAppConfig);
+                memo.append(BootConstants.BR).append("\t- cfg.loading=").append(instance).append(", info=").append(registeredAppConfig);
                 if (instance == null) {
                     continue;
                 }
@@ -614,8 +619,8 @@ abstract public class SummerBigBang extends SummerSingularity {
     protected void genesis(Class primaryClass, Set<String> userSpecifiedalternativeNames) {
         log.trace("");
         BootGuiceModule defaultModule = new BootGuiceModule(this, primaryClass, userSpecifiedalternativeNames, memo);
-        ScanedGuiceModule scanedModule = new ScanedGuiceModule(scanedServiceBindingMap, userSpecifiedalternativeNames, channelHandlerNames, memo);
-        Module bootModule = Modules.override(defaultModule).with(scanedModule);
+        ScannedGuiceModule scannedModule = new ScannedGuiceModule(scannedServiceBindingMap, userSpecifiedalternativeNames, channelHandlerNames, memo);
+        Module bootModule = Modules.override(defaultModule).with(scannedModule);
         Module applicationModule = userOverrideModule == null
                 ? bootModule
                 : Modules.override(bootModule).with(userOverrideModule);
@@ -631,9 +636,9 @@ abstract public class SummerBigBang extends SummerSingularity {
 //            guiceModule = Modules.override(guiceModule).with(enabledModule);
 //        }
         if (userOverrideModule == null) {
-            memo.append(BootConstant.BR).append("\t- init default Ioc @Conponent");
+            memo.append(BootConstants.BR).append("\t- init default Ioc @Conponent");
         } else {
-            memo.append(BootConstant.BR).append("\t- init user overridden Ioc @Conponent via").append(userOverrideModule.getClass().getName());
+            memo.append(BootConstants.BR).append("\t- init user overridden Ioc @Conponent via").append(userOverrideModule.getClass().getName());
         }
 
         // Guice.createInjector(module) --> ScanedGuiceModule.configure() --> this will trigger SummerBigBang.onGuiceInjectorCreated_ControllersInjected
@@ -660,7 +665,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     @Inject
-    protected void onGuiceInjectorCreated_DefaultHealthInspectorInjected(@Inspector Map<String, Object> defaultHealthInspectors) {
+    protected void onGuiceInjectorCreated_DefaultHealthInspectorInjected(@HealthCheck() Map<String, Object> defaultHealthInspectors) {
         log.trace("");
         HealthMonitor.registerDefaultHealthInspectors(defaultHealthInspectors, memo);
     }

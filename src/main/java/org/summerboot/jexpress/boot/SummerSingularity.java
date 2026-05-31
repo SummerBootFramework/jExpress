@@ -1,17 +1,18 @@
 /*
- * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
- * "License"); you may not use this file except in compliance with the License and you have no
- * policy prohibiting employee contributions back to this file (unless the contributor to this
- * file is your current or retired employee). You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *     https://apache.org
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 package org.summerboot.jexpress.boot;
 
@@ -26,24 +27,25 @@ import org.apache.commons.cli.help.HelpFormatter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.GrpcService;
-import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.boot.annotation.Service.ChannelHandlerType;
-import org.summerboot.jexpress.boot.annotation.Unique;
-import org.summerboot.jexpress.boot.annotation.Version;
+import org.summerboot.jexpress.annotation.Controller;
+import org.summerboot.jexpress.annotation.GrpcController;
+import org.summerboot.jexpress.annotation.Service;
+import org.summerboot.jexpress.annotation.Service.ChannelHandlerType;
+import org.summerboot.jexpress.annotation.Version;
+import org.summerboot.jexpress.annotation.config.ConfigFilename;
+import org.summerboot.jexpress.annotation.validation.Unique;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
-import org.summerboot.jexpress.i18n.I18n;
-import org.summerboot.jexpress.integration.smtp.SMTPClientConfig;
-import org.summerboot.jexpress.nio.grpc.GRPCServerConfig;
-import org.summerboot.jexpress.nio.server.NioConfig;
+import org.summerboot.jexpress.core.error.BootErrorCode;
+import org.summerboot.jexpress.grpc.server.GrpcServerConfig;
+import org.summerboot.jexpress.integration.mail.SmtpClientConfig;
 import org.summerboot.jexpress.security.auth.AuthConfig;
-import org.summerboot.jexpress.util.ApplicationUtil;
-import org.summerboot.jexpress.util.BeanUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
-import org.summerboot.jexpress.util.ReflectionUtil;
+import org.summerboot.jexpress.util.format.FormatterUtil;
+import org.summerboot.jexpress.util.i18n.I18n;
+import org.summerboot.jexpress.util.lang.BeanUtil;
+import org.summerboot.jexpress.util.reflect.ReflectionUtil;
+import org.summerboot.jexpress.util.runtime.ApplicationUtil;
+import org.summerboot.jexpress.web.netty.server.NioConfig;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -107,7 +109,7 @@ abstract public class SummerSingularity {
 
 
     protected static Logger log;
-    protected static final File DEFAULT_CFG_DIR = new File(BootConstant.DIR_CONFIGURATION).getAbsoluteFile();
+    protected static final File DEFAULT_CFG_DIR = new File(BootConstants.DIR_CONFIGURATION).getAbsoluteFile();
     protected static final File CURRENT_DIR = new File("").getAbsoluteFile();
     protected File userSpecifiedConfigDir;
     protected File pluginDir;
@@ -135,32 +137,32 @@ abstract public class SummerSingularity {
      */
     protected String jvmStartCommand;
     protected boolean jmxRequired;
-    protected String[] callerRootPackageNames;//also used by JPAHibernateConfig access to scan @Entity
-    protected String appVersion = BootConstant.VERSION;
-    protected String logFileName = BootConstant.VERSION;
+    protected String[] callerRootPackageNames;//also used by JpaHibernateConfig access to scan @Entity
+    protected String appVersion = BootConstants.VERSION;
+    protected String logFileName = BootConstants.VERSION;
 
     /*
      * Annotation scan results as CLI inputs
      */
     protected final List<String> availableUniqueTagOptions = new ArrayList();
-    protected final Map<String, ConfigMetadata> scanedJExpressConfigs = new LinkedHashMap<>();
+    protected final Map<String, ConfigMetadata> scannedJExpressConfigs = new LinkedHashMap<>();
     protected final Set<String> availableImplTagOptions = new HashSet();
-    protected final Set<Class<? extends BindableService>> gRPCBindableServiceImplClasses = new HashSet();
-    protected final Set<Class<ServerServiceDefinition>> gRPCServerServiceDefinitionImplClasses = new HashSet();
+    protected final Set<Class<? extends BindableService>> grpcBindableServiceImplClasses = new HashSet();
+    protected final Set<Class<ServerServiceDefinition>> grpcServerServiceDefinitionImplClasses = new HashSet();
     protected boolean hasControllers = false;
-    protected boolean hasGRPCImpl = false;
+    protected boolean hasGrpcImpl = false;
     protected boolean hasAuthImpl = false;
 
     /*
      * Annotation scan results as BootGuiceModule input
      * Format: bindingClass <--> {key=(ImplTag+named) <--> [@Service impl classes list]}
      */
-    protected final Map<Class, Map<String, List<ServiceMetadata>>> scanedServiceBindingMap = new HashMap();
+    protected final Map<Class, Map<String, List<ServiceMetadata>>> scannedServiceBindingMap = new HashMap();
     protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames = new HashMap();
 
     protected SummerSingularity(Class callerClass, String... args) {
         System.out.println("jExpress loading from " + HOST);
-        System.setProperty(BootConstant.SYS_PROP_SERVER_NAME, HOST);// used by log4j2.xml
+        System.setProperty(BootConstants.SYS_PROP_SERVER_NAME, HOST);// used by log4j2.xml
         primaryClass = callerClass == null
                 ? this.getClass()
                 : callerClass;
@@ -175,32 +177,32 @@ abstract public class SummerSingularity {
         memo.setLength(0);
         userSpecifiedConfigDir = null;
         pluginDir = null;
-        System.getProperties().remove(BootConstant.LOG4J2_KEY);
-        System.getProperties().remove(BootConstant.LOG4J2_JDKADAPTER_KEY);
-        System.getProperties().remove(BootConstant.SYS_PROP_APP_PACKAGE_NAME, "");// used by log4j2.xml
-        System.getProperties().remove(BootConstant.SYS_PROP_LOGFILENAME, "");// used by log4j2.xml
-        System.setProperty(BootConstant.LOG4J2_KEY, "");
+        System.getProperties().remove(BootConstants.LOG4J2_KEY);
+        System.getProperties().remove(BootConstants.LOG4J2_JDKADAPTER_KEY);
+        System.getProperties().remove(BootConstants.SYS_PROP_APP_PACKAGE_NAME, "");// used by log4j2.xml
+        System.getProperties().remove(BootConstants.SYS_PROP_LOGFILENAME, "");// used by log4j2.xml
+        System.setProperty(BootConstants.LOG4J2_KEY, "");
 
         // CLI        
         userSpecifiedResourceBundle = null;
-        userSpecifiedCfgMonitorThrottleMillis = BootConstant.CFG_CHANGE_MONITOR_THROTTLE_MS;
+        userSpecifiedCfgMonitorThrottleMillis = BootConstants.CFG_CHANGE_MONITOR_THROTTLE_MS;
         userSpecifiedalternativeNames.clear();
 
-        // reset Scan Results
+        // rest Scan Results
         jvmStartCommand = null;
         jmxRequired = false;
         callerRootPackageNames = null;
-        appVersion = BootConstant.VERSION;
-        logFileName = BootConstant.VERSION;
+        appVersion = BootConstants.VERSION;
+        logFileName = BootConstants.VERSION;
 
-        //reset Annotation scan results as CLI inputs
+        //rest Annotation scan results as CLI inputs
         availableUniqueTagOptions.clear();
-        scanedJExpressConfigs.clear();
+        scannedJExpressConfigs.clear();
         availableImplTagOptions.clear();
-        gRPCBindableServiceImplClasses.clear();
-        gRPCServerServiceDefinitionImplClasses.clear();
+        grpcBindableServiceImplClasses.clear();
+        grpcServerServiceDefinitionImplClasses.clear();
         hasControllers = false;
-        hasGRPCImpl = false;
+        hasGrpcImpl = false;
         hasAuthImpl = false;
     }
 
@@ -208,17 +210,18 @@ abstract public class SummerSingularity {
         if (BackOffice.agent.isTraceWithSystemOut()) {
             System.out.println("jExpress init.1");
         }
-        memo.append(BootConstant.BR).append("\t- deployee callerClass=").append(primaryClass.getName());
+        memo.append(BootConstants.BR).append("\t- deployee callerClass=").append(primaryClass.getName());
         Set<String> packageSet = new HashSet();
         Set<String> configuredPackageSet = BackOffice.agent.getRootPackageNames();
         if (configuredPackageSet != null && !configuredPackageSet.isEmpty()) {
             packageSet.addAll(configuredPackageSet);
         }
-        String rootPackageName = ReflectionUtil.getRootPackageName(primaryClass, BootConstant.PACKAGE_LEVEL);
+        String rootPackageName = ReflectionUtil.getRootPackageName(primaryClass, BootConstants.PACKAGE_LEVEL);
         packageSet.add(rootPackageName);
         BackOffice.agent.setRootPackageNames(packageSet);
-        callerRootPackageNames = packageSet.toArray(String[]::new);
-        memo.append(BootConstant.BR).append("\t- callerRootPackageName=").append(packageSet);
+        //REF2610-1 removed: callerRootPackageNames = packageSet.toArray(String[]::new);
+        callerRootPackageNames = new String[]{""};
+        memo.append(BootConstants.BR).append("\t- callerRootPackageName=").append(packageSet);
 
         if (BackOffice.agent.isTraceWithSystemOut()) {
             System.out.println("jExpress init.2");
@@ -231,8 +234,8 @@ abstract public class SummerSingularity {
             System.out.println("jExpress init.3");
         }
         scanAnnotation_Version(primaryClass);
-        System.setProperty(BootConstant.SYS_PROP_LOGFILENAME, logFileName);// used by log4j2.xml as log file name
-        System.setProperty(BootConstant.SYS_PROP_APP_PACKAGE_NAME, rootPackageName);// used by log4j2.xml
+        System.setProperty(BootConstants.SYS_PROP_LOGFILENAME, logFileName);// used by log4j2.xml as log file name
+        System.setProperty(BootConstants.SYS_PROP_APP_PACKAGE_NAME, StringUtils.isBlank(rootPackageName) ? "Root" : rootPackageName);// REF2610-1: used by log4j2.xml
         BackOffice.agent.setVersion(appVersion);
         scanArgsToInitializeLogging(args);
         /*
@@ -241,7 +244,7 @@ abstract public class SummerSingularity {
         try {
             scanPluginJars(pluginDir, true);// depends -domain or -cfgdir
         } catch (IOException ex) {
-            String msg = ex + BootConstant.BR + "\tFailed to load plugin jar files from " + pluginDir;
+            String msg = ex + BootConstants.BR + "\tFailed to load plugin jar files from " + pluginDir;
             ApplicationUtil.RTO(BootErrorCode.RTO_PLUGIN_ERROR, msg, ex);
         }
 
@@ -249,7 +252,7 @@ abstract public class SummerSingularity {
         if (error != null) {
             ApplicationUtil.RTO(BootErrorCode.RTO_CODE_ERROR_UNIQUE, error, null);
         }
-        String[] packages = FormatterUtil.arrayAdd(callerRootPackageNames, BootConstant.JEXPRESS_PACKAGE_NAME);
+        String[] packages = FormatterUtil.arrayAdd(callerRootPackageNames, BootConstants.JEXPRESS_PACKAGE_NAME);
         scanImplementation_gRPC(callerRootPackageNames);
         scanAnnotation_Controller(callerRootPackageNames);
         scanAnnotation_Service(callerRootPackageNames);
@@ -266,7 +269,7 @@ abstract public class SummerSingularity {
         if (version != null) {
             String logManager = version.LogManager();
             if (StringUtils.isNotBlank(logManager)) {
-                System.setProperty(BootConstant.LOG4J2_JDKADAPTER_KEY, logManager);// https://logging.apache.org/log4j/log4j-2.3.2/log4j-jul/index.html
+                System.setProperty(BootConstants.LOG4J2_JDKADAPTER_KEY, logManager);// https://logging.apache.org/log4j/log4j-2.3.2/log4j-jul/index.html
             }
             logFileName = version.logFileName();
             if (StringUtils.isBlank(logFileName)) {
@@ -286,7 +289,7 @@ abstract public class SummerSingularity {
         } else {
             logFileName = "app";
         }
-        memo.append(BootConstant.BR).append("\t- callerVersion=").append(appVersion);
+        memo.append(BootConstants.BR).append("\t- callerVersion=").append(appVersion);
     }
 
     protected void scanArgsToInitializeLogging(String[] args) {
@@ -300,13 +303,13 @@ abstract public class SummerSingularity {
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 String cli = args[i];
-                if (("-" + BootConstant.CLI_CONFIG_DIR).equals(cli)) {
+                if (("-" + BootConstants.CLI_CONFIG_DIR).equals(cli)) {
                     String cfgDir = args[++i];
                     userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
                     break;
-                } else if (("-" + BootConstant.CLI_CONFIG_DOMAIN).equals(cli)) {
+                } else if (("-" + BootConstants.CLI_CONFIG_DOMAIN).equals(cli)) {
                     String envTag = args[++i];
-                    String cfgDir = /*unittestWorkingDir +*/ BootConstant.DIR_STANDALONE + "_" + envTag + File.separator + BootConstant.DIR_CONFIGURATION;
+                    String cfgDir = /*unittestWorkingDir +*/ BootConstants.DIR_STANDALONE + "_" + envTag + File.separator + BootConstants.DIR_CONFIGURATION;
                     userSpecifiedConfigDir = new File(cfgDir).getAbsoluteFile();
                     System.setProperty("domainName", envTag);
                     break;
@@ -342,9 +345,9 @@ abstract public class SummerSingularity {
         }
         //set log folder outside user specified config folder
         // this will convert any number sequence into 6 character.
-        System.setProperty(BootConstant.SYS_PROP_LOGID, BootConstant.APP_ID);
-        System.setProperty(BootConstant.SYS_PROP_LOGFILEPATH, userSpecifiedConfigDir.getParent() + File.separator + BootConstant.DIR_LOG);//used by log4j2.xml
-        pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstant.DIR_PLUGIN).getAbsoluteFile();
+        System.setProperty(BootConstants.SYS_PROP_LOGID, BootConstants.APP_ID);
+        System.setProperty(BootConstants.SYS_PROP_LOGFILEPATH, userSpecifiedConfigDir.getParent() + File.separator + BootConstants.DIR_LOG);//used by log4j2.xml
+        pluginDir = new File(userSpecifiedConfigDir.getParentFile(), BootConstants.DIR_PLUGIN).getAbsoluteFile();
 //        }
 
         /*
@@ -357,35 +360,35 @@ abstract public class SummerSingularity {
         ClassLoader classLoader = this.getClass().getClassLoader();
         Path logFilePath = ApplicationUtil.createIfNotExist(location, classLoader, "log4j2.xml.temp", "log4j2.xml");
         String log4j2ConfigFile = logFilePath.toString();
-        System.setProperty(BootConstant.LOG4J2_KEY, log4j2ConfigFile);
+        System.setProperty(BootConstants.LOG4J2_KEY, log4j2ConfigFile);
         log = LogManager.getLogger(SummerApplication.class);// init log
         log.info("Logging initialized from {}", userSpecifiedConfigDir);
         Locale userSpecifiedResourceBundle = null;
-        memo.append(BootConstant.BR).append("\t- ").append(I18n.info.launchingLog.format(userSpecifiedResourceBundle, System.getProperty(BootConstant.LOG4J2_KEY)));
+        memo.append(BootConstants.BR).append("\t- ").append(I18n.info.launchingLog.format(userSpecifiedResourceBundle, System.getProperty(BootConstants.LOG4J2_KEY)));
     }
 
     protected void scanPluginJars(File pluginDir, boolean failOnUndefinedClasses) throws IOException {
         log.trace("{}, {}", pluginDir, failOnUndefinedClasses);
         pluginDir.mkdirs();
         if (!pluginDir.canRead() || !pluginDir.isDirectory()) {
-            memo.append(BootConstant.BR).append("\t- loadPluginJars: invalid dir ").append(pluginDir);
+            memo.append(BootConstants.BR).append("\t- loadPluginJars: invalid dir ").append(pluginDir);
             return;
         }
         FileFilter fileFilter = file -> !file.isDirectory() && file.getName().endsWith(".jar");
         File[] jarFiles = pluginDir.listFiles(fileFilter);
         if (jarFiles == null || jarFiles.length < 1) {
-            memo.append(BootConstant.BR).append("\t- loadPluginJars: no jar files found at ").append(pluginDir);
+            memo.append(BootConstants.BR).append("\t- loadPluginJars: no jar files found at ").append(pluginDir);
             return;
         }
         Set<Class<?>> pluginClasses = new HashSet<>();
         for (File jarFile : jarFiles) {
-            memo.append(BootConstant.BR).append("\t- loadPluginJars: loading jar file ").append(jarFile.getAbsolutePath());
+            memo.append(BootConstants.BR).append("\t- loadPluginJars: loading jar file ").append(jarFile.getAbsolutePath());
             Set<Class<?>> classes = ApplicationUtil.loadClassFromJarFile(jarFile, failOnUndefinedClasses);
-            memo.append(BootConstant.BR).append("\t- loadPluginJars: loaded ").append(classes.size()).append(" classes from jar file ").append(jarFile.getAbsolutePath());
+            memo.append(BootConstants.BR).append("\t- loadPluginJars: loaded ").append(classes.size()).append(" classes from jar file ").append(jarFile.getAbsolutePath());
             pluginClasses.addAll(classes);
         }
         ReflectionUtil.setPluginClasses(pluginClasses);
-        memo.append(BootConstant.BR).append("\t- loadPluginJars: loaded ").append(pluginClasses.size()).append(" classes from ").append(jarFiles.length).append(" jar files in ").append(pluginDir);
+        memo.append(BootConstants.BR).append("\t- loadPluginJars: loaded ").append(pluginClasses.size()).append(" classes from ").append(jarFiles.length).append(" jar files in ").append(pluginDir);
     }
 
     /**
@@ -402,7 +405,7 @@ abstract public class SummerSingularity {
         for (Class classWithUniqueValues : classes) {
             if (!classWithUniqueValues.isInterface()) {
                 error = true;
-                errors.append(BootConstant.BR).append("\t @Unique can only apply on interfaces, ").append(classWithUniqueValues).append(" is not an interface");
+                errors.append(BootConstants.BR).append("\t @Unique can only apply on interfaces, ").append(classWithUniqueValues).append(" is not an interface");
                 continue;
             }
             Unique u = (Unique) classWithUniqueValues.getAnnotation(Unique.class);
@@ -424,7 +427,7 @@ abstract public class SummerSingularity {
                             .sorted(Map.Entry.comparingByValue())
                             .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (e1, e2) -> e1, LinkedHashMap::new));
                     String json = BeanUtil.toJson(sorted, true, false);
-                    sb.append(BootConstant.BR).append(tag).append("=").append(json);
+                    sb.append(BootConstants.BR).append(tag).append("=").append(json);
                 }
             } catch (Throwable ex) {
                 throw new RuntimeException("check unique failed on " + classWithUniqueValues.getName(), ex);
@@ -439,10 +442,10 @@ abstract public class SummerSingularity {
 
     protected void scanAnnotation_JExpressConfigImportResource(String... rootPackageNames) {
         log.trace("");
-        Set<String> pakcages = Set.copyOf(List.of(rootPackageNames));
+        Set<String> packages = Set.copyOf(List.of(rootPackageNames));
         //Set<Class<? extends JExpressConfig>> classesAll = new HashSet();//to remove duplicated
-        //for (String rootPackageName : pakcages) {
-        Set<Class<? extends JExpressConfig>> jExpressConfigClasses = ReflectionUtil.getAllImplementationsByInterface(JExpressConfig.class, pakcages);
+        //for (String rootPackageName : packages) {
+        Set<Class<? extends JExpressConfig>> jExpressConfigClasses = ReflectionUtil.getAllImplementationsByInterface(JExpressConfig.class, packages);
         //    classesAll.addAll(jExpressConfigClasses);
         //}
 
@@ -452,53 +455,53 @@ abstract public class SummerSingularity {
                 continue;
             }
             String key = jExpressConfigClass.getSimpleName();
-            if (scanedJExpressConfigs.containsKey(key)) {
+            if (scannedJExpressConfigs.containsKey(key)) {
                 continue;
             }
             String configFileName = null;
             String[] checkImplTagUsed = {};
             boolean loadWhenImplTagUsed = false;
 
-            ImportResource ir = (ImportResource) jExpressConfigClass.getAnnotation(ImportResource.class);
+            ConfigFilename ir = (ConfigFilename) jExpressConfigClass.getAnnotation(ConfigFilename.class);
             if (ir != null) {
                 configFileName = ir.value();
                 checkImplTagUsed = ir.whenUseAlternative();
                 loadWhenImplTagUsed = ir.thenLoadConfig();
             } else if (/*hasAuthImpl && */jExpressConfigClass.equals(AuthConfig.class)) {
-                configFileName = BootConstant.FILE_CFG_AUTH;
+                configFileName = BootConstants.FILE_CFG_AUTH;
             } else if (hasControllers && jExpressConfigClass.equals(NioConfig.class)) {
-                configFileName = BootConstant.FILE_CFG_NIO;
-            } else if (hasGRPCImpl && jExpressConfigClass.equals(GRPCServerConfig.class)) {
-                configFileName = BootConstant.FILE_CFG_GRPC;
-            } else if (jExpressConfigClass.equals(SMTPClientConfig.class)) {
-                configFileName = BootConstant.FILE_CFG_SMTP;
+                configFileName = BootConstants.FILE_CFG_NIO;
+            } else if (hasGrpcImpl && jExpressConfigClass.equals(GrpcServerConfig.class)) {
+                configFileName = BootConstants.FILE_CFG_GRPC;
+            } else if (jExpressConfigClass.equals(SmtpClientConfig.class)) {
+                configFileName = BootConstants.FILE_CFG_SMTP;
             } else {
                 continue;
             }
 
             ConfigMetadata metadata = new ConfigMetadata(configFileName, jExpressConfigClass, null, checkImplTagUsed, loadWhenImplTagUsed);
             //availableAppConfigs.add(rc);
-            scanedJExpressConfigs.put(key, metadata);
-            memo.append(BootConstant.BR).append("\t- scan.JExpressConfig.ImportResource:").append(key).append("=").append(metadata);
+            scannedJExpressConfigs.put(key, metadata);
+            memo.append(BootConstants.BR).append("\t- scan.JExpressConfig.ImportResource:").append(key).append("=").append(metadata);
 
-            memo.append(BootConstant.BR).append("\t- cfg.scaned=").append(jExpressConfigClass.getName()).append(", file=").append(configFileName);
+            memo.append(BootConstants.BR).append("\t- cfg.scanned=").append(jExpressConfigClass.getName()).append(", file=").append(configFileName);
         }
     }
 
-    protected void scanImplementation_gRPC(String... pakcages) {
+    protected void scanImplementation_gRPC(String... packages) {
         log.trace("");
-        //gRPCBindableServiceImplClasses.addAll(ReflectionUtil.getAllImplementationsByInterface(BindableService.class, callerRootPackageNames));
-        //for (String rootPackageName : pakcages) {
-        Set<Class<?>> gRPCServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcService.class, false, pakcages);
-        for (Class gRPCServerClass : gRPCServerClasses) {
-            if (BindableService.class.isAssignableFrom(gRPCServerClass)) {
-                gRPCBindableServiceImplClasses.add(gRPCServerClass);
-            } else if (ServerServiceDefinition.class.equals(gRPCServerClass)) {
-                gRPCServerServiceDefinitionImplClasses.add(gRPCServerClass);
+        //grpcBindableServiceImplClasses.addAll(ReflectionUtil.getAllImplementationsByInterface(BindableService.class, callerRootPackageNames));
+        //for (String rootPackageName : packages) {
+        Set<Class<?>> grpcServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcController.class, false, packages);
+        for (Class grpcServerClass : grpcServerClasses) {
+            if (BindableService.class.isAssignableFrom(grpcServerClass)) {
+                grpcBindableServiceImplClasses.add(grpcServerClass);
+            } else if (ServerServiceDefinition.class.equals(grpcServerClass)) {
+                grpcServerServiceDefinitionImplClasses.add(grpcServerClass);
             }
         }
         //}
-        hasGRPCImpl = !gRPCServerServiceDefinitionImplClasses.isEmpty() || !gRPCBindableServiceImplClasses.isEmpty();
+        hasGrpcImpl = !grpcServerServiceDefinitionImplClasses.isEmpty() || !grpcBindableServiceImplClasses.isEmpty();
     }
 
     protected void scanAnnotation_Controller(String... rootPackageNames) {
@@ -508,22 +511,22 @@ abstract public class SummerSingularity {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Controller.class, false, rootPackageNames);
         //classesAll.addAll(classes);
         //}
-        List<String> tags = new ArrayList<>();
+        List<String> alternativeNames = new ArrayList<>();
         for (Class c : classes) {
             Controller a = (Controller) c.getAnnotation(Controller.class);
             if (a == null) {
                 continue;
             }
-            String implTag = a.AlternativeName();
-            tags.add(implTag);
+            String alternativeName = a.AlternativeName();
+            alternativeNames.add(alternativeName);
         }
-        List<String> serviceImplTags = tags.stream()
+        List<String> distinctAlternativeNames = alternativeNames.stream()
                 .distinct()
                 .collect(Collectors.toList());
-        serviceImplTags.removeAll(Collections.singleton(null));
-        serviceImplTags.removeAll(Collections.singleton(""));
-        serviceImplTags.removeAll(Collections.singleton(Controller.NOT_TAGGED));
-        availableImplTagOptions.addAll(serviceImplTags);
+        distinctAlternativeNames.removeAll(Collections.singleton(null));
+        distinctAlternativeNames.removeAll(Collections.singleton(""));
+        distinctAlternativeNames.removeAll(Collections.singleton(Controller.NOT_TAGGED));
+        availableImplTagOptions.addAll(distinctAlternativeNames);
     }
 
     protected List<String> scanAnnotation_Service(String... rootPackageNames) {
@@ -559,22 +562,22 @@ abstract public class SummerSingularity {
                         List<Class> superclasses = ReflectionUtil.getAllSuperClasses(serviceImplClass);
                         interfaces.addAll(superclasses);
                         interfaces.remove(Object.class);
-                        sb.append(BootConstant.BR).append("\t").append(serviceImplClass).append(" specifies @").append(Service.class.getSimpleName()).append("(binding=").append(bindingClass.getSimpleName()).append(".class), which is not in its Interfaces:").append(interfaces);
+                        sb.append(BootConstants.BR).append("\t").append(serviceImplClass).append(" specifies @").append(Service.class.getSimpleName()).append("(binding=").append(bindingClass.getSimpleName()).append(".class), which is not in its Interfaces:").append(interfaces);
                         continue;
                     }
                     scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, new ServiceMetadata(serviceImplClass, named, implTag, ChannelHandlerType), sb);
                 }
-            } else {//bindingClass not specified by developer, use its declaired interfaces by default
+            } else {//bindingClass not specified by developer, use its declared interfaces by default
                 List<Class> declaredInterfaces = ReflectionUtil.getAllInterfaces(serviceImplClass, false);
                 if (declaredInterfaces.isEmpty()) {
                     List<Class> superInterfaces = ReflectionUtil.getAllInterfaces(serviceImplClass.getSuperclass(), true);
                     if (superInterfaces.isEmpty()) {
-                        sb.append(BootConstant.BR).append("\t").append(serviceImplClass).append(" does not implement any interfaces.");
+                        sb.append(BootConstants.BR).append("\t").append(serviceImplClass).append(" does not implement any interfaces.");
                     } /*else if (superInterfaces.size() == 1) {
                         Class bindingClass = superInterfaces.get(0);
                         scanAnnotation_Service_Add2BindingMap(bindingClass, uniqueKey, serviceImplClass, named);
                     } */ else {
-                        sb.append(BootConstant.BR).append("\t").append(serviceImplClass).append(" needs to specify the binding interface @").append(Service.class.getSimpleName()).append("(binding=TheMissingInterface.class), which implemented by supper class: ").append(superInterfaces);
+                        sb.append(BootConstants.BR).append("\t").append(serviceImplClass).append(" needs to specify the binding interface @").append(Service.class.getSimpleName()).append("(binding=TheMissingInterface.class), which implemented by super class: ").append(superInterfaces);
                     }
                     continue;
                 }
@@ -602,21 +605,13 @@ abstract public class SummerSingularity {
 
     protected void scanAnnotation_Service_Add2BindingMap(Class bindingClass, String uniqueKey, ServiceMetadata service, StringBuilder sb) {
         log.trace("");
-        memo.append(BootConstant.BR).append("\t- scan.taggedservice.add to guiceModule.bind(").append(bindingClass.getName()).append(").to(").append(service).append("), uniqueKey=").append(uniqueKey);
-        Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(bindingClass);
-        if (taggeServicedMap == null) {
-            taggeServicedMap = new HashMap<>();
-            scanedServiceBindingMap.put(bindingClass, taggeServicedMap);
-        }
-        List<ServiceMetadata> serviceImplList = taggeServicedMap.get(uniqueKey);
-        if (serviceImplList == null) {
-            serviceImplList = new ArrayList<>();
-            taggeServicedMap.put(uniqueKey, serviceImplList);
-        }
+        memo.append(BootConstants.BR).append("\t- scan.taggedservice.add to guiceModule.bind(").append(bindingClass.getName()).append(").to(").append(service).append("), uniqueKey=").append(uniqueKey);
+        Map<String, List<ServiceMetadata>> taggedServiceMap = scannedServiceBindingMap.computeIfAbsent(bindingClass, k -> new HashMap<>());
+        List<ServiceMetadata> serviceImplList = taggedServiceMap.computeIfAbsent(uniqueKey, k -> new ArrayList<>());
         if (bindingClass.equals(ChannelHandler.class)) {
             ChannelHandlerType channelHandlerType = service.getChannelHandlerType();
-            if (channelHandlerType == null || channelHandlerType == ChannelHandlerType.nptspecified) {
-                sb.append(BootConstant.BR).append("\t").append(service.getServiceImplClass()).append(" needs to specify type @").append(Service.class.getSimpleName()).append("(binding=ChannelHandler.class, type=?), when binding=ChannelHandler.class");
+            if (channelHandlerType == null || channelHandlerType == ChannelHandlerType.unknown) {
+                sb.append(BootConstants.BR).append("\t").append(service.getServiceImplClass()).append(" needs to specify type @").append(Service.class.getSimpleName()).append("(binding=ChannelHandler.class, type=?), when binding=ChannelHandler.class");
             }
         }
         serviceImplList.add(service);
@@ -624,13 +619,13 @@ abstract public class SummerSingularity {
 
     protected void scanAnnotation_Service_ValidateBindingMap(StringBuilder sb) {
         log.trace("");
-        for (Class keyBindingClass : scanedServiceBindingMap.keySet()) {
-            Map<String, List<ServiceMetadata>> taggeServicedMap = scanedServiceBindingMap.get(keyBindingClass);
-            for (String keyImplTag : taggeServicedMap.keySet()) {
-                List<ServiceMetadata> serviceImplList = taggeServicedMap.get(keyImplTag);
+        for (Class keyBindingClass : scannedServiceBindingMap.keySet()) {
+            Map<String, List<ServiceMetadata>> taggedServiceMap = scannedServiceBindingMap.get(keyBindingClass);
+            for (String keyImplTag : taggedServiceMap.keySet()) {
+                List<ServiceMetadata> serviceImplList = taggedServiceMap.get(keyImplTag);
                 int size = serviceImplList.size();
                 if (size != 1) {
-                    sb.append(BootConstant.BR).append("IOC ").append(keyBindingClass).append(" required a single bean, but ").append(size).append(" were found with the same named+implTag(").append(keyImplTag).append("): ").append(serviceImplList);
+                    sb.append(BootConstants.BR).append("IOC ").append(keyBindingClass).append(" required a single bean, but ").append(size).append(" were found with the same named+implTag(").append(keyImplTag).append("): ").append(serviceImplList);
                 }
             }
         }
@@ -665,7 +660,7 @@ abstract public class SummerSingularity {
         }
         final AuthConfig authCfg = AuthConfig.cfg;
         authCfg.addDeclareRoles(declareRoles);
-        memo.append(BootConstant.BR).append("\t- scan.DeclareRoles=").append(declareRoles);
+        memo.append(BootConstants.BR).append("\t- scan.DeclareRoles=").append(declareRoles);
 
         //2. check is there any declared roles so that the auth config should be used
         hasAuthImpl = !authCfg.getDeclareRoles().isEmpty();

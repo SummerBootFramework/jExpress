@@ -1,5 +1,58 @@
 ## 📅 CHANGES
 
+## Version 2.7.0 (2026-05-30)
+
+* 🔒 Security Patch: jjwt-jackson's dependency has 5 security issues caused by old Jackson2 lib
+* 🛠 REF2610-1: support application without package specified
+* Refactoring: BootConstant -> BootConstants
+* Refactoring: RPC*.java -> Rpc*.java
+* Refactoring: @Inspector renamed to @HealthCheck
+* Refactoring: HealthInspector.java renamed to HealthChecker.java
+* Refactoring: @GrpcService renamed to @GrpcController
+* Refactoring: @ImportResource renamed to @ConfigFilename
+* Refactoring: ApplicationUtil.runAndWaitForAllResults() renamed to ConcurrentUtil.runAndWaitForAllResults()
+* Refactoring: predefined URI constants inside BootURI
+* Refactoring: SessionContext.forcePrettyResponse(boolean) -> SessionContext.pretty(Boolean), it will override @Log(pretty = ?)
+* Refactoring: Architecture-Oriented package names are re-organized, migration guide via IntelliJ > Editor > General > Auto Import, check the following two options, then delete the broken imports:
+    * Add unambiguous imports on the fly
+    * Optimize imports on the fly
+* ✨ New API: @RequiresHealthCheck for @Controller class/method
+* ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
+* ✨ New feature: org.summerboot.jexpress.util.io.FileUtil
+* ✨ New feature: @Controller now handles Web methods as file downloads if the return type is: java.io.File, java.nio.file.Path, or byte[]
+* ✨ New API: FormatterUtil.formatCurrency(BigDecimal amount, RoundingMode roundingMode)
+* ✨ New API: LargeFileStreamHandler for streaming large file response with low memory usage, and support for WebSocket for partial content delivery.
+* WebResourceController.requestWebResource with @Daemon to serve web resources with enhanced reliability.
+* Performance improvement: AgentPdfBox - Serial graphics processing converted to parallel processing
+
+#### Architecture-Oriented packaging layering Rules
+
+```text
+
+┌──────────────────────────────────────────────┐
+│                    boot                      │ wires everything (only)
+└───────┬──────────────────────┬───────────────┘
+        ▼                      ▼
+┌────────────────────┐  ┌──────────────────────────┐
+│ web | grpc | ws    │  │ observability | security │
+│                    │  │ annotation               │
+└────┬────────┬──────┘  └──────────────┬───────────┘
+     ▼        ▼                        ▼
+┌──────────────────────────────────────────────┐
+│                   core                       │ models, errors, session
+└──────────────────────────────────────────────┘
+                    ▲
+                    │
+┌──────────────────────────────────────────────┐
+│                integration                   │ optional adapters
+└──────────────────────────────────────────────┘
+                    ▲
+                    │
+┌──────────────────────────────────────────────┐
+│                   util                       │ pure helpers, no fw deps
+└──────────────────────────────────────────────┘
+```
+
 ## Version 2.6.9 (2026-04-24)
 
 ### 🔒 1. Security Update: Netty HTTP Request Smuggling Vulnerability (GHSA‑pwqr‑wmgm‑9rr8) and Log4J CVE-2026-34480
@@ -150,7 +203,7 @@ New configuration items have been added to set the server-specific idle connecti
 
 * Fixed all legacy GitHub Codacy Security Scan reported issues.
 
-* Improved security - configuration behavior changed as below of HttpClientConfig, GRPCClientConfig, MqttClientConfig and AuthConfig (cfg_auth.propertie)
+* Improved security - configuration behavior changed as below of HttpClientConfig, GRPCClientConfig, MqttClientConfig and AuthConfig (cfg_auth.properties)
     1. TLS protocol: Use plaintext no SSL/TLS if TLS protocol is configured as blank or empty string.
     2. Keystore: Use JDK default keystore if not specified, behavior of using 'plaintext no SSL/TLS' has been removed.
     3. Truststore: Use JDK default truststore if not specified, behavior of using `TrustManager` that accepts all certificates has been removed.
@@ -228,7 +281,7 @@ New configuration items have been added to set the server-specific idle connecti
     * `@Controller.implTag` renamed to `@Controller.AlternativeName`.
     * `@Service.implTag` renamed to with `@Service.AlternativeName`.
     * `@Log.hideJsonStringFields`, `hideJsonNumberFields` and `hideJsonArrayFields` all renamed to with `@Log.maskDataFields`.
-    * `org.summerboot.jexpress.nio.server.domain.ServiceContext` renamed to `org.summerboot.jexpress.nio.server.SessionContext`.
+    * `org.summerboot.jexpress.nio.server.domain.ServiceContext` renamed to `org.summerboot.jexpress.core.session.SessionContext`.
     * `@ImportResource.checkImplTagUsed` renamed to `@ImportResource.whenUseAlternative`.
     * `@ImportResource.loadWhenImplTagUsed` renamed to `@ImportResource.thenLoadConfig`.
 
@@ -435,7 +488,7 @@ New configuration items have been added to set the server-specific idle connecti
 
 * **Fixed:** Version updated.
 * **Enhancement:** `generateTemplate` follows parent first order.
-* **Refactoring:** HTTP Client classes moved to `org.summerboot.jexpress.integration.httpclient`.
+* **Refactoring:** HTTP Client classes moved to `org.summerboot.jexpress.integration.http`.
 * **New:** Released MQTT client to public.
 
 ## Version 2.4.2
@@ -447,13 +500,13 @@ New configuration items have been added to set the server-specific idle connecti
 * Other than `j_security_check`, also supported `POST ${context-root}/login` with JSON request in `BootController {"username" : "value", "password" : "value"}`.
 * Let the controller layer handle LDAP escape.
 * Logged both raw and decoded uri.
-* Refactored lifecycle/exception listeners/handlers to `org.summerboot.jexpress.boot.event`.
+* Refactored lifecycle/exception listeners/handlers to `org.summerboot.jexpress.boot.lifecycle`.
 
 ## Version 2.4.1
 
 * Enabled `@jakarta.validation.constraints.Pattern` for RESTFul api parameters: `PathParam`, `MatrixParam`, `QueryParam`, `FormParam`, `HeaderParam`, and `CookieParam`.
 * Fixed: cli `-decrypt` generates `cfg_grpc.properties` even if there is no gRPC impl.
-* Log trace enable on `org.summerboot.jexpress.nio.server.BootHttpRequestHandler` will override `@org.summerboot.jexpress.boot.annotation.Log` settings to log all requests and responses.
+* Log trace enable on `org.summerboot.jexpress.web.handler.BootHttpRequestHandler` will override `@org.summerboot.jexpress.annotation.Log` settings to log all requests and responses.
 * Reformatted Java source code via IDEA default formatter.
 
 ## Version 2.3.13

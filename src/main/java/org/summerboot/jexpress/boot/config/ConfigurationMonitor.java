@@ -1,17 +1,18 @@
 /*
- * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
- * "License"); you may not use this file except in compliance with the License and you have no
- * policy prohibiting employee contributions back to this file (unless the contributor to this
- * file is your current or retired employee). You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *     https://apache.org
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 package org.summerboot.jexpress.boot.config;
 
@@ -21,8 +22,8 @@ import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.instrumentation.HealthMonitor;
+import org.summerboot.jexpress.boot.BootConstants;
+import org.summerboot.jexpress.observability.health.HealthMonitor;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +58,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
     protected ConfigurationMonitor() {
     }
 
-    private static final String PAUSE_LOCK_CODE = BootConstant.PAUSE_LOCK_CODE_VIAFILE;
+    private static final String PAUSE_LOCK_CODE = BootConstants.PAUSE_LOCK_CODE_VIAFILE;
 
     public void start() throws Exception {
         if (monitor != null) {
@@ -148,7 +149,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
 
     protected void initPauseStatus(Path folderPath) {
         File folder = folderPath.toFile();
-        File pauseFile = Paths.get(folder.getAbsolutePath(), BootConstant.FILE_PAUSE).toFile();
+        File pauseFile = Paths.get(folder.getAbsolutePath(), BootConstants.FILE_PAUSE).toFile();
         boolean pause = pauseFile.exists();
         String cause;
         if (pause) {
@@ -160,7 +161,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
     }
 
     private boolean isPauseFile(File file) {
-        return BootConstant.FILE_PAUSE.equals(file.getName());
+        return BootConstants.FILE_PAUSE.equals(file.getName());
     }
 
 

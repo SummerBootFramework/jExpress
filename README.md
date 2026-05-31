@@ -4,11 +4,11 @@
 * **[Maven Central Repository][2]**
 * **[mvnrepository.com][3]**
 
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.9
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.7.0
 
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.9
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.7.0
 
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.9
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.7.0
 
 [View Changelog (CHANGES)](CHANGES.md)
 
@@ -36,7 +36,7 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
 <dependency>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.6.6</version>
+    <version>2.7.0</version>
 </dependency>
 ```
 
@@ -58,10 +58,6 @@ SNAPSHOT repository:
     </repository>
 </repositories>
 ```
-
-- **Apache Central:** https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.6.6
-- **Sonatype Central:** https://central.sonatype.com/artifact/org.summerboot/jexpress/2.6.6
-- **mvnrepository.com:** https://mvnrepository.com/artifact/org.summerboot/jexpress/2.6.6
 
 ---
 
@@ -99,9 +95,9 @@ Implement `AppLifecycleListener` or extend `AppLifecycleHandler` (recommended):
 ```java
 import com.google.inject.Singleton;
 import org.summerboot.jexpress.boot.SummerApplication;
-import org.summerboot.jexpress.boot.SummerInitializer;
-import org.summerboot.jexpress.boot.annotation.Order;
-import org.summerboot.jexpress.boot.event.AppLifecycleHandler;
+import org.summerboot.jexpress.boot.lifecycle.AppInitializer;
+import org.summerboot.jexpress.annotation.Order;
+import org.summerboot.jexpress.boot.lifecycle.AppLifecycleHandler;
 import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -110,7 +106,7 @@ import java.io.File;
 
 @Singleton
 @Order(1)
-public class MainLifecycle extends AppLifecycleHandler implements SummerInitializer {
+public class MainLifecycle extends AppLifecycleHandler implements AppInitializer {
 
     private static final Logger log = LogManager.getLogger(MainLifecycle.class);
 
@@ -143,16 +139,15 @@ public class MainLifecycle extends AppLifecycleHandler implements SummerInitiali
 
 ```java
 import com.google.inject.Singleton;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
 import java.util.List;
 
-import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.boot.annotation.Log;
-import org.summerboot.jexpress.nio.server.SessionContext;
+import org.summerboot.jexpress.annotation.Controller;
+import org.summerboot.jexpress.annotation.Log;
+import org.summerboot.jexpress.core.session.SessionContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 @Singleton
@@ -224,7 +219,7 @@ The controller is only activated when the app is launched with `-use RoleBased`:
 ### 1.5 PING endpoint
 
 ```java
-import org.summerboot.jexpress.nio.server.ws.rs.PingController;
+import org.summerboot.jexpress.web.controller.PingController;
 
 @Controller
 @Path("/hellosummer")
@@ -236,7 +231,7 @@ public class MyController extends PingController {
 or use `@Ping` directly:
 
 ```java
-import org.summerboot.jexpress.boot.annotation.Ping;
+import org.summerboot.jexpress.annotation.Ping;
 
 @Controller
 @Path("/hellosummer")
@@ -256,7 +251,7 @@ public class MyController {
 ```java
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
-import org.summerboot.jexpress.nio.server.ws.rs.BootController;
+import org.summerboot.jexpress.web.controller.BootController;
 
 @Controller
 @Path("/hellosummer")
@@ -295,10 +290,14 @@ import io.netty.handler.codec.http.HttpHeaders;
 
 import javax.naming.NamingException;
 
-import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.nio.server.RequestProcessor;
-import org.summerboot.jexpress.nio.server.SessionContext;
-import org.summerboot.jexpress.security.auth.*;
+import org.summerboot.jexpress.annotation.Service;
+import org.summerboot.jexpress.core.session.SessionContext;
+import org.summerboot.jexpress.security.auth.Authenticator;
+import org.summerboot.jexpress.boot.lifecycle.AuthenticatorListener;
+import org.summerboot.jexpress.security.auth.BootAuthenticator;
+import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.security.auth.User;
+import handler.org.summerboot.jexpress.web.netty.RequestProcessor;
 
 @Singleton
 @Service(binding = Authenticator.class)
@@ -341,7 +340,7 @@ roles.Employee.groups=EmployeeGroup
 ### 1.7 Request Log Sample (v2.6.6)
 
 ```
-[411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.nio.server.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1]
+[411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.web.handler.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1]
 [411043-2 /127.0.0.1:8311] [200 OK, error=0, queuing=1ms, process=5798ms, response=5801ms]
 HTTP/1.1 GET /hellosummer/services/appname/v1/aaa/111
 POI.t0=2025-08-17T11:50:52.627-04:00 service.begin=0ms, process.begin=1ms, biz.begin=6ms, biz.end=5795ms, process.end=5798ms, service.end=5801ms,
@@ -440,13 +439,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.util.Properties;
 
+import org.summerboot.jexpress.annotation.config.ConfigFilename;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
+import org.summerboot.jexpress.annotation.config.Config;
+import org.summerboot.jexpress.annotation.config.ConfigHeader;
 
-@ImportResource("cfg_app.properties")
+@ConfigFilename("cfg_app.properties")
 public class MyConfig extends BootConfig {
 
     public static final MyConfig cfg = new MyConfig();
@@ -555,11 +554,11 @@ java -jar my-service.jar -cfgdir <config folder> -decrypt
 Enable `GET /hellosummer/ping` without polluting your application log:
 
 ```java
-import org.summerboot.jexpress.boot.annotation.Ping;
+import org.summerboot.jexpress.annotation.Ping;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import org.summerboot.jexpress.boot.annotation.Controller;
-import org.summerboot.jexpress.nio.server.ws.rs.BootController;
+import org.summerboot.jexpress.annotation.Controller;
+import org.summerboot.jexpress.web.controller.BootController;
 
 @Controller
 @Path("/hellosummer")
@@ -598,16 +597,16 @@ ping.sync.showRootCause=
 ### 6.2 Sample Code
 
 ```java
-import org.summerboot.jexpress.boot.annotation.Inspector;
-import org.summerboot.jexpress.boot.annotation.Service;
-import org.summerboot.jexpress.boot.instrumentation.HealthInspector;
-import org.summerboot.jexpress.nio.server.domain.Err;
+
+import org.summerboot.jexpress.annotation.Service;
+import org.summerboot.jexpress.observability.health.HealthChecker;
+import domain.org.summerboot.jexpress.webserver.netty.Err;
 
 import java.util.List;
 
-@Inspector(name = "myDB")
-@Service(binding = HealthInspector.class)
-public class MyHealthInspector implements HealthInspector<Void> {
+@org.summerboot.jexpress.annotation.HealthCheck(name = "myDB")
+@Service(binding = HealthChecker.class)
+public class MyHealthInspector implements HealthChecker<Void> {
 
     @Override
     public List<Err> ping(Void... param) {
@@ -768,9 +767,9 @@ java -jar my-service.jar -use impl1
 ### 11.1 Sample Code
 
 ```java
-import org.summerboot.jexpress.boot.BootErrorCode;
-import org.summerboot.jexpress.boot.annotation.Unique;
-import org.summerboot.jexpress.boot.annotation.UniqueIgnore;
+import org.summerboot.jexpress.core.error.BootErrorCode;
+import org.summerboot.jexpress.annotation.validation.Unique;
+import org.summerboot.jexpress.annotation.validation.UniqueIgnore;
 
 @Unique(name = "ErrorCode", type = int.class)
 public interface AppErrorCode extends BootErrorCode {
@@ -801,7 +800,7 @@ java -jar my-service.jar -unique POI
 ## 12. Scheduled Tasks — `@Scheduled`
 
 ```java
-import org.summerboot.jexpress.boot.annotation.Scheduled;
+import org.summerboot.jexpress.annotation.Scheduled;
 
 public class MyJob {
 
@@ -837,9 +836,10 @@ public void dynamicJob() { ...}
 Annotate your gRPC service implementation with `@GrpcService`:
 
 ```java
+import org.summerboot.jexpress.annotation.GrpcController;
 import org.summerboot.jexpress.boot.annotation.GrpcService;
 
-@GrpcService
+@GrpcController
 public class MyGrpcServiceImpl extends MyGrpcService.MyGrpcServiceImplBase {
     // implement gRPC methods
 }
@@ -850,10 +850,10 @@ Configure in **cfg_grpc.properties**.
 ### 13.2 Client-side
 
 ```java
-import org.summerboot.jexpress.nio.grpc.GRPCClient;
-import org.summerboot.jexpress.nio.grpc.GRPCClientConfig;
+import org.summerboot.jexpress.grpc.client.GrpcClientConfig;
+import org.summerboot.jexpress.grpc.client.GrpcClient;
 
-GRPCClient client = new GRPCClient(GRPCClientConfig.cfg);
+GrpcClient client = new GrpcClient(GrpcClientConfig.cfg);
 ```
 
 Supports:
@@ -866,7 +866,7 @@ Supports:
 ### 13.3 gRPC Test Helper
 
 ```java
-import org.summerboot.jexpress.nio.grpc.GRPCTestHelper;
+
 // see https://github.com/SummerBootFramework/jExpressDemo-HelloSummer
 ```
 
@@ -875,11 +875,11 @@ import org.summerboot.jexpress.nio.grpc.GRPCTestHelper;
 ## 14. HTTP Client
 
 ```java
-import org.summerboot.jexpress.integration.httpclient.RPCDelegate;
-import org.summerboot.jexpress.integration.httpclient.RPCResult;
+
+import org.summerboot.jexpress.integration.http.rpc.RpcResult;
 
 // inject or create an RPCDelegate instance
-RPCResult<MyResponseDto> result = rpcDelegate.get(url, MyResponseDto.class, context);
+RpcResult<MyResponseDto> result = rpcDelegate.get(url, MyResponseDto.class, context);
 if(result.
 
         hasError()){
@@ -895,8 +895,8 @@ Configure in **cfg_httpclient.properties** (proxy, TLS, timeout, thread pool mod
 ## 15. JPA / Database
 
 ```java
-import org.summerboot.jexpress.integration.jpa.JPAHibernateConfig;
-import org.summerboot.jexpress.integration.jpa.AbstractEntity;
+
+
 ```
 
 Configure in a JPA config file that extends `JPAHibernateConfig`. DB credentials use `DEC()`/`ENC()`:
@@ -913,7 +913,7 @@ jakarta.persistence.jdbc.driver=com.mysql.jdbc.Driver
 ## 16. MQTT Client
 
 ```java
-import org.summerboot.jexpress.integration.mqtt.MqttClientConfig;
+
 ```
 
 Configure in a MQTT config file. TLS settings follow the same pattern as HTTP/gRPC clients.
@@ -923,7 +923,7 @@ Configure in a MQTT config file. TLS settings follow the same pattern as HTTP/gR
 ## 17. Cache (Redis)
 
 ```java
-import org.summerboot.jexpress.integration.cache.AuthTokenCache;
+
 ```
 
 Jedis (Redis) is a provided dependency. Add it to your app's dependencies if needed:
@@ -971,7 +971,7 @@ gRpc.server.CallerAddressFilter.option=String
 ### 18.3 File Download Security
 
 ```java
-import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.crypto.SecurityUtil;
 
 String safeFilename = SecurityUtil.escape4Filename(userInput);
 ```

@@ -1,17 +1,18 @@
 /*
- * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
- * "License"); you may not use this file except in compliance with the License and you have no
- * policy prohibiting employee contributions back to this file (unless the contributor to this
- * file is your current or retired employee). You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *     https://apache.org
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 package org.summerboot.jexpress.boot.config;
 
@@ -20,15 +21,15 @@ import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.annotation.config.ConfigFilename;
 import org.summerboot.jexpress.boot.BackOffice;
-import org.summerboot.jexpress.boot.BootConstant;
-import org.summerboot.jexpress.boot.config.annotation.ImportResource;
-import org.summerboot.jexpress.boot.event.AppLifecycleListener;
-import org.summerboot.jexpress.boot.instrumentation.Timeout;
-import org.summerboot.jexpress.i18n.I18n;
-import org.summerboot.jexpress.security.EncryptorUtil;
-import org.summerboot.jexpress.security.SSLUtil;
-import org.summerboot.jexpress.util.FormatterUtil;
+import org.summerboot.jexpress.boot.BootConstants;
+import org.summerboot.jexpress.boot.lifecycle.AppLifecycleListener;
+import org.summerboot.jexpress.util.format.FormatterUtil;
+import org.summerboot.jexpress.util.concurrent.Timeout;
+import org.summerboot.jexpress.util.i18n.I18n;
+import org.summerboot.jexpress.security.crypto.EncryptorUtil;
+import org.summerboot.jexpress.security.ssl.SslUtil;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -139,7 +140,7 @@ public class ConfigUtil {
 //        if (StringUtils.isBlank(configContent)) {
 //            return;
 //        }
-        ImportResource ir = c.getAnnotation(ImportResource.class);
+        ConfigFilename ir = c.getAnnotation(ConfigFilename.class);
         String fileName = ir == null ? cfgName : ir.value();
         if (cliMode) {
             fileName = fileName + ".sample";
@@ -157,7 +158,7 @@ public class ConfigUtil {
 
     public static int formatConfig(File targetFile, JExpressConfig cfg) throws IOException {
         File configFile = targetFile.getAbsoluteFile();
-        ImportResource ir = (ImportResource) cfg.getClass().getAnnotation(ImportResource.class);
+        ConfigFilename ir = (ConfigFilename) cfg.getClass().getAnnotation(ConfigFilename.class);
         if (ir != null && !ir.generateTemplate()) {
             return 0;
         }
@@ -170,7 +171,7 @@ public class ConfigUtil {
             // Load the properties file
             currentSettings.load(input);
         }
-        String formattedContent = BootConfig.generateTemplate(cfg.getClass(), currentSettings, currentContentLines, BootConstant.BR);
+        String formattedContent = BootConfig.generateTemplate(cfg.getClass(), currentSettings, currentContentLines, BootConstants.BR);
         if (Objects.equals(currentContent, formattedContent)) {
             return 0;
         }
@@ -245,10 +246,10 @@ public class ConfigUtil {
             sb = new StringBuilder();
             sb.append("config file = ").append(cfgFile);
         }
-        sb.append(BootConstant.BR).append("\t").append(e);
+        sb.append(BootConstants.BR).append("\t").append(e);
         if (ex != null) {
             String trace = ExceptionUtils.getStackTrace(ex);
-            sb.append(BootConstant.BR).append("\t").append(trace);
+            sb.append(BootConstants.BR).append("\t").append(trace);
         }
     }
 
@@ -519,7 +520,7 @@ public class ConfigUtil {
                     updated++;
                 }
             }
-            sb.append(line).append(BootConstant.BR);
+            sb.append(line).append(BootConstants.BR);
         }
 
         if (updated > 0) {
@@ -562,7 +563,7 @@ public class ConfigUtil {
             pwd = getAsPassword(props, keyPwd);
             char[] pwdKey = StringUtils.isBlank(alias) || pwd == null ? null : pwd.toCharArray();
 
-            kmf = SSLUtil.buildKeyManagerFactory(sslKeyStorePath, pwdStore, alias, pwdKey);
+            kmf = SslUtil.buildKeyManagerFactory(sslKeyStorePath, pwdStore, alias, pwdKey);
         } catch (Throwable ex) {
             addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex, ex);
         }
@@ -580,7 +581,7 @@ public class ConfigUtil {
         try {
             String pwd = getAsPassword(props, storePwd);
             char[] pwdStore = pwd == null ? null : pwd.toCharArray();
-            tmf = SSLUtil.buildTrustManagerFactory(sslKeyStorePath, pwdStore);
+            tmf = SslUtil.buildTrustManagerFactory(sslKeyStorePath, pwdStore);
         } catch (Throwable ex) {
             addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString(), ex);
         }

@@ -1,17 +1,18 @@
 /*
- * Copyright 2005-2022 Du Law Office - The Summer Boot Framework Project
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
  *
- * The Summer Boot Project licenses this file to you under the Apache License, version 2.0 (the
- * "License"); you may not use this file except in compliance with the License and you have no
- * policy prohibiting employee contributions back to this file (unless the contributor to this
- * file is your current or retired employee). You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *     https://apache.org
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 package org.summerboot.jexpress.security.auth;
 
@@ -21,16 +22,16 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import org.apache.tika.utils.StringUtils;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.summerboot.jexpress.boot.BootConstant;
+import org.summerboot.jexpress.annotation.config.Config;
+import org.summerboot.jexpress.annotation.config.ConfigHeader;
+import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.boot.config.annotation.Config;
-import org.summerboot.jexpress.boot.config.annotation.ConfigHeader;
 import org.summerboot.jexpress.integration.ldap.LdapAgent;
-import org.summerboot.jexpress.integration.ldap.LdapSSLConnectionFactory1;
-import org.summerboot.jexpress.security.EncryptorUtil;
-import org.summerboot.jexpress.security.JwtUtil;
-import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.integration.ldap.ssl.LdapSslConnectionFactory1;
+import org.summerboot.jexpress.security.crypto.EncryptorUtil;
+import org.summerboot.jexpress.security.crypto.SecurityUtil;
+import org.summerboot.jexpress.security.token.jwt.JwtUtil;
 
 import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
@@ -67,7 +68,7 @@ public class AuthConfig extends BootConfig {
 
     @Override
     protected void reset() {
-        ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+        ldapSSLConnectionFactoryClassName = LdapSslConnectionFactory1.class.getName();
     }
 
     @Override
@@ -111,7 +112,7 @@ public class AuthConfig extends BootConfig {
     protected volatile String passwordAlgorithm;
 
     @Config(key = "ldap.schema.TenantGroup.ou")
-    protected volatile String ldapScheamTenantGroupOU;
+    protected volatile String ldapSchemaTenantGroupOU;
 
     //1.2 LDAP Client keystore
     protected final static String ID = "ldap";
@@ -228,6 +229,9 @@ public class AuthConfig extends BootConfig {
     @Config(key = "jwt.filter.Blacklist", desc = "Whitelist in CSV format", format = "fixedvalue1, fixedvalue2, regex1, regex2", example = "abcd.1234.efg, .*1234.*")
     protected volatile Set<String> jwtFilterBlacklist;
 
+    @Config(key = "OneTimeToken.ttl.seconds", defaultValue = "10", desc = "WebSocket One-Time Token TTL in seconds")
+    protected volatile int ottTtlSeconds;
+
     //3. Role mapping
     @ConfigHeader(title = "3. Role mapping",
             desc = "Map the role (defined as @RolesAllowed({\"AppAdmin\"})) with user group (no matter the group is defined in LDAP or DB)",
@@ -248,10 +252,10 @@ public class AuthConfig extends BootConfig {
 
         for (String role : declareRoles) {
             if (!appendCurrentValue("roles." + role + ".groups", currentValues, sb)) {
-                sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>" + BootConstant.BR);
+                sb.append("roles.").append(role).append(".groups=<LDAP.").append(role).append("GroupName>" + BootConstants.BR);
             }
             if (!appendCurrentValue("roles." + role + ".users", currentValues, sb)) {
-                sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>" + BootConstant.BR);
+                sb.append("#roles.").append(role).append(".users=<LDAP.").append(role).append("UserName>" + BootConstants.BR);
             }
         }
     }
@@ -263,8 +267,8 @@ public class AuthConfig extends BootConfig {
             // 1.1 LDAP Client keystore
             boolean isSSLEnabled = !StringUtils.isBlank(ldapTLSProtocol);
             if (isSSLEnabled) {
-                //LdapSSLConnectionFactory1.init(kmf == null ? null : kmf.getKeyManagers(), tmf == null ? null : tmf.getTrustManagers(), ldapTLSProtocol);
-                //ldapSSLConnectionFactoryClassName = LdapSSLConnectionFactory1.class.getName();
+                //LdapSslConnectionFactory1.init(kmf == null ? null : kmf.getKeyManagers(), tmf == null ? null : tmf.getTrustManagers(), ldapTLSProtocol);
+                //ldapSSLConnectionFactoryClassName = LdapSslConnectionFactory1.class.getName();
                 String key = "ldap.SSLConnectionFactoryClass";
                 try {
                     Class<?> sslFactoryClass = Class.forName(ldapSSLConnectionFactoryClassName);
@@ -360,8 +364,8 @@ public class AuthConfig extends BootConfig {
         return bindingUserDN;
     }
 
-    public String getLdapScheamTenantGroupOU() {
-        return ldapScheamTenantGroupOU;
+    public String getLdapSchemaTenantGroupOU() {
+        return ldapSchemaTenantGroupOU;
     }
 
     public String getPasswordAlgorithm() {
@@ -419,6 +423,10 @@ public class AuthConfig extends BootConfig {
         return jwtFilterBlacklist;
     }
 
+    public int getOttTtlSeconds() {
+        return ottTtlSeconds;
+    }
+
     public RoleMapping getRole(String role) {
         return roles.get(role);
     }
@@ -468,8 +476,8 @@ public class AuthConfig extends BootConfig {
 //    }
     protected final Set<String> declareRoles = new TreeSet<>();
 
-    public void addDeclareRoles(Set<String> scanedDeclareRoles) {
-        this.declareRoles.addAll(Set.copyOf(scanedDeclareRoles));
+    public void addDeclareRoles(Set<String> scannedDeclareRoles) {
+        this.declareRoles.addAll(Set.copyOf(scannedDeclareRoles));
     }
 
     public Set<String> getDeclareRoles() {
