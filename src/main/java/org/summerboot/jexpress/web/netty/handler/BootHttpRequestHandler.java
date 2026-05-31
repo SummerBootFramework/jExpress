@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.summerboot.jexpress.web.handler;
+package org.summerboot.jexpress.web.netty.handler;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -34,7 +34,7 @@ import org.summerboot.jexpress.core.session.SessionContext;
 import org.summerboot.jexpress.integration.cache.api.AuthTokenCache;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.BootAuthenticator;
-import org.summerboot.jexpress.web.netty.handler.RequestProcessor;
+import org.summerboot.jexpress.security.auth.Caller;
 import org.summerboot.jexpress.web.netty.server.NioServerHttpRequestHandler;
 
 import javax.naming.NamingException;
@@ -183,7 +183,13 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             return true;//ignore token when authenticator is not implemented
         }
         authenticator.verifyToken(httpRequestHeaders, authTokenCache, null, context);
-        return context.caller() != null;
+        Caller caller = context.caller();
+        if (caller != null) {
+            Thread currentThread = Thread.currentThread();
+            String id = currentThread.getName() + "-" + caller.getTenantId() + "." + caller.getUid();
+            currentThread.setName(id);
+        }
+        return caller != null;
     }
 
     @Override

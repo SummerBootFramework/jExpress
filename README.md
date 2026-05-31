@@ -340,7 +340,7 @@ roles.Employee.groups=EmployeeGroup
 ### 1.7 Request Log Sample (v2.6.6)
 
 ```
-[411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.web.handler.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1]
+[411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.web.netty.handler.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1]
 [411043-2 /127.0.0.1:8311] [200 OK, error=0, queuing=1ms, process=5798ms, response=5801ms]
 HTTP/1.1 GET /hellosummer/services/appname/v1/aaa/111
 POI.t0=2025-08-17T11:50:52.627-04:00 service.begin=0ms, process.begin=1ms, biz.begin=6ms, biz.end=5795ms, process.end=5798ms, service.end=5801ms,

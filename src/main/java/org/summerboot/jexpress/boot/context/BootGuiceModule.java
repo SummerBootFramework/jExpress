@@ -48,7 +48,7 @@ import org.summerboot.jexpress.observability.metrics.NioStatusListener;
 import org.summerboot.jexpress.security.auth.Authenticator;
 import org.summerboot.jexpress.security.auth.LdapAuthenticator;
 import org.summerboot.jexpress.util.reflect.ReflectionUtil;
-import org.summerboot.jexpress.web.handler.BootHttpRequestHandler;
+import org.summerboot.jexpress.web.netty.handler.BootHttpRequestHandler;
 import org.summerboot.jexpress.web.netty.server.BootHttpPingHandler;
 import org.summerboot.jexpress.web.netty.server.HttpNioChannelInitializer;
 import org.summerboot.jexpress.web.netty.server.NioChannelInitializer;

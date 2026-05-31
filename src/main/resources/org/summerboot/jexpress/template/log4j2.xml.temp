@@ -101,7 +101,7 @@
             <AppenderRef ref="Console"/>
         </Logger>
 
-        <Logger level="info" name="org.summerboot.jexpress.web.handler.BootHttpRequestHandler" includeLocation="false" additivity="false">
+        <Logger level="info" name="org.summerboot.jexpress.web.netty.handler.BootHttpRequestHandler" includeLocation="false" additivity="false">
             <AppenderRef ref="RequestLogFile"/>
             <AppenderRef ref="Console"/>
         </Logger>
