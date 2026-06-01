@@ -21,6 +21,9 @@ import io.grpc.Context;
 import io.grpc.Metadata;
 import org.summerboot.jexpress.api.common.SessionContext;
 
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
 public interface GrpcConstants {
     Context.Key<SessionContext> SessionContext = Context.key("SessionContext");
 

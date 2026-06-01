@@ -50,6 +50,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 /**
  * For testing gRPC with two-way TLS.
  * (usage and example see https://github.com/SummerBootFramework/jExpressDemo-HelloSummer/blob/main/HelloSummer-demo02/src/test/java/test/integration/grpc/GrpcTest.java)
+ *
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public abstract class GrpcTestHelper {
 

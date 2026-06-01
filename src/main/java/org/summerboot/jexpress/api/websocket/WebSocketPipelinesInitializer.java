@@ -20,6 +20,9 @@ package org.summerboot.jexpress.api.websocket;
 import io.netty.channel.ChannelHandlerContext;
 import org.summerboot.jexpress.api.auth.Caller;
 
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
 public interface WebSocketPipelinesInitializer {
     void initCustomizedPipelines(ChannelHandlerContext ctx, String basename, Class<?> type, String uriRequested, Caller caller);
 }

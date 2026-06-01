@@ -32,6 +32,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * IdleEventMonitor is a utility class to track the last request timestamp and loose transaction ID.
  * It can be used to monitor idle states and trigger events when a request has not been received within a specified threshold.
  * This class is thread-safe and can be used in a multi-threaded environment.
+ *
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public abstract class IdleEventMonitor {
 

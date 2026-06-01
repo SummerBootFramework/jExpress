@@ -26,6 +26,9 @@ import org.summerboot.jexpress.security.EncryptorUtil;
 import java.io.File;
 import java.util.Properties;
 
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
 class MasterPassword extends BootConfig {
     public static void main(String[] args) {
         String t = generateTemplate(MasterPassword.class);

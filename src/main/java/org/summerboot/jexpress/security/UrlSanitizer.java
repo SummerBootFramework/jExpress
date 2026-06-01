@@ -23,6 +23,9 @@ import org.owasp.encoder.Encode;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
 public class UrlSanitizer {
     public record UrlSanitized(String cleanPath, String cleanQuery, String cleanedURL, boolean isPathTraversal) {
 

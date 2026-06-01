@@ -19,6 +19,9 @@ package org.summerboot.jexpress.webserver.domain;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
 public class LoginVo {
     @NotNull
     @NotEmpty

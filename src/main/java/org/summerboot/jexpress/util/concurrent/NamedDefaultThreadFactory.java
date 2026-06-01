@@ -19,6 +19,9 @@ package org.summerboot.jexpress.util.concurrent;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
 public class NamedDefaultThreadFactory implements ThreadFactory {
 
     protected static final AtomicInteger poolNumber = new AtomicInteger(1);

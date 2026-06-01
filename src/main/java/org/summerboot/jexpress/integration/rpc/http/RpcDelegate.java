@@ -28,6 +28,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
 public interface RpcDelegate {
     /**
      * Convert form data in key-pairs (Map) to form request body (string), also

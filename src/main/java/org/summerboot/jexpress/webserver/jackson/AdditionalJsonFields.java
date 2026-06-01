@@ -25,6 +25,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
 public class AdditionalJsonFields {
 
     @JsonProperty(index = 32767)

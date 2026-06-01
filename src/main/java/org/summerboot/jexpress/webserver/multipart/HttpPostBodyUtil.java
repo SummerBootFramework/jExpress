@@ -21,6 +21,8 @@ import io.netty.buffer.ByteBuf;
 /**
  * Shared Static object between HttpMessageDecoder, HttpPostRequestDecoder and
  * HttpPostRequestEncoder
+ *
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 final class HttpPostBodyUtil {
 
