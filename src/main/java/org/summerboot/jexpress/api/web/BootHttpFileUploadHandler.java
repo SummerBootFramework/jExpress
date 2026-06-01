@@ -77,13 +77,13 @@ public abstract class BootHttpFileUploadHandler<T> extends SimpleChannelInboundH
     protected static final NioConfig uploadCfg = NioConfig.cfg;
 
     static {
-        String tempUoloadDir = uploadCfg.getTempUoloadDir();
+        String tempUploadDir = uploadCfg.getTempUploadDir();
         try {
-            Files.createDirectories(Path.of(tempUoloadDir));
+            Files.createDirectories(Path.of(tempUploadDir));
             DiskFileUpload.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
-            DiskFileUpload.baseDirectory = tempUoloadDir; // system temp directory
+            DiskFileUpload.baseDirectory = tempUploadDir; // system temp directory
             DiskAttribute.deleteOnExitTemporaryFile = true; // should delete file on exit (in normal exit)
-            DiskAttribute.baseDirectory = tempUoloadDir; // system temp directory
+            DiskAttribute.baseDirectory = tempUploadDir; // system temp directory
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

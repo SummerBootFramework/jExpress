@@ -110,7 +110,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 SocketAddress localAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_LOCAL_ADDR);
                 sessionContext = new SessionContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, "gRPC HTTP/2", HttpMethod.POST, methodName, null);
                 sessionContext.caller(caller).callerId(jti).sessionAttribute("MethodType", methodType);
-                context = context.withValue(GrpcConstants.Key_SessionContext, sessionContext);
+                context = context.withValue(GrpcConstants.SessionContext, sessionContext);
                 serverCall = new ForwardingServerCall.SimpleForwardingServerCall<>(call) {
                     @Override
                     public void sendHeaders(Metadata responseHeaders) {

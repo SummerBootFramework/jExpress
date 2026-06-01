@@ -22,9 +22,9 @@ import io.grpc.Metadata;
 import org.summerboot.jexpress.api.common.SessionContext;
 
 public interface GrpcConstants {
-    Context.Key<SessionContext> Key_SessionContext = Context.key("SessionContext");
+    Context.Key<SessionContext> SessionContext = Context.key("SessionContext");
 
-    Metadata.Key<String> Key_Authorization = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
+    Metadata.Key<String> Authorization = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
     String BEARER_TYPE = "Bearer";
 

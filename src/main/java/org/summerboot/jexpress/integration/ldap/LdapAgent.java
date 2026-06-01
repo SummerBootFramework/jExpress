@@ -61,12 +61,12 @@ import java.util.Set;
 public class LdapAgent implements Closeable {
 
     protected static String escapeDN(String value) {
-        return SecurityUtil.escapeDN(value);// let api layer to handler
+        return SecurityUtil.escapeDN(value);// let api layer to handle
         //return value;
     }
 
     protected static String escapeQuery(String value) {
-        return SecurityUtil.escapeLDAPSearchFilter(value);// let api layer to handler
+        return SecurityUtil.escapeLDAPSearchFilter(value);// let api layer to handle
         //return value;
     }
 

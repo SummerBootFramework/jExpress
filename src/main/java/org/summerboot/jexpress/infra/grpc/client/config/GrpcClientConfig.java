@@ -115,7 +115,7 @@ abstract public class GrpcClientConfig extends BootConfig {
             example = "grpc-node1.mycompany.com:8424, grpc-node2.mycompany.com:8424, grpc-node3.mycompany.com:8424"
     )
     protected volatile List<InetSocketAddress> loadBalancingServers;
-    @Config(key = ID + ".LoadBalancing.scheme", defaultValue = "grpc", desc = "In case you have more than one gRPC client needs to connect to different gRPC services, you can set this to distinguish them")
+    @Config(key = ID + ".LoadBalancing.scheme", defaultValue = "grpc", desc = "In case you have more than one gRPC clients needs to connect to different gRPC services, you can set this to distinguish them")
     protected volatile String loadBalancingTargetScheme = "grpc";
 
     @Config(key = ID + ".LoadBalancing.policy", defaultValue = "ROUND_ROBIN", desc = "available options: ROUND_ROBIN, PICK_FIRST")
@@ -368,14 +368,14 @@ abstract public class GrpcClientConfig extends BootConfig {
         } else {
             final SslContextBuilder sslBuilder = GrpcSslContexts
                     .forClient()
-                    .sslProvider(sslProvider) // RFE269-1 preferred because it let Netty handler this config internally
+                    .sslProvider(sslProvider) // RFE269-1 preferred because it let Netty to handle this config internally
                     .keyManager(keyManagerFactory)
                     .trustManager(trustManagerFactory);
             if (overrideAuthority != null) {
                 channelBuilder.overrideAuthority(overrideAuthority);
             }
 
-            // set sslProvider in a way also works but not preferred, better let Netty handler this config internally.
+            // set sslProvider in a way also works but not preferred, better let Netty to handle this config internally.
             //RFE269-1 GrpcSslContexts.configure(sslBuilder, sslProvider).sslContextProvider(null);
             if (tlsProtocols != null) {
                 sslBuilder.protocols(tlsProtocols);

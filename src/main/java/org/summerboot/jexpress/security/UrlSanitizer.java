@@ -65,7 +65,7 @@ public class UrlSanitizer {
             return "";
         }
 
-        // URL decode multiple times (handler %2e%2e, %2f, etc.)
+        // URL decode multiple times (handle %2e%2e, %2f, etc.)
         String decoded = path;
         for (int i = 0; i < 5; i++) {
             try {

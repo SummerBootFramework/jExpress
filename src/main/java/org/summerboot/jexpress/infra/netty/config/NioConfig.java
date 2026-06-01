@@ -399,17 +399,17 @@ public class NioConfig extends BootConfig {
 
     //7. Web Server Mode
     @ConfigHeader(title = "7. Web Server Mode")
-    @Config(key = "server.http.web.docroot", defaultValue = "docroot")
+    @Config(key = "server.http.webserver.docroot", defaultValue = "docroot")
     protected volatile String docroot = "docroot";
 
-    @Config(key = "server.http.web.docroot.errorPageFolderName", defaultValue = "errorpages")
+    @Config(key = "server.http.webserver.docroot.errorPageFolderName", defaultValue = "errorpages")
     protected volatile String errorPageFolderName = "errorpages";
 
-    @Config(key = "server.http.web.welcomePage", defaultValue = "index.html")
+    @Config(key = "server.http.webserver.welcomePage", defaultValue = "index.html")
     protected volatile String welcomePage = "index.html";
 
-    @Config(key = "server.http.web-server.tempupload", defaultValue = "temp/upload")
-    protected volatile String tempUoload = "temp/upload";
+    @Config(key = "server.http.webserver.tempupload", defaultValue = "temp/upload")
+    protected volatile String tempUpload = "temp/upload";
 
     protected volatile boolean downloadMode;
     protected volatile File rootFolder;
@@ -446,7 +446,7 @@ public class NioConfig extends BootConfig {
     }
 
     protected String docrootDir;
-    protected String tempUoloadDir;
+    protected String tempUploadDir;
 
     @Override
     protected void preLoad(File cfgFile, boolean isReal, ConfigUtil helper, Properties props) {
@@ -487,8 +487,8 @@ public class NioConfig extends BootConfig {
         docrootDir = null;
         docrootDir = rootFolder.getCanonicalPath() + File.separator + docroot;
         downloadMode = StringUtils.isBlank(welcomePage);
-        tempUoloadDir = null;
-        tempUoloadDir = rootFolder.getCanonicalPath() + File.separator + tempUoload;
+        tempUploadDir = null;
+        tempUploadDir = rootFolder.getCanonicalPath() + File.separator + tempUpload;
 
         //8. Default NIO Response HTTP Headers
         serverDefaultResponseHeaders = new DefaultHttpHeaders();
@@ -897,7 +897,7 @@ public class NioConfig extends BootConfig {
         return downloadMode;
     }
 
-    public String getTempUoloadDir() {
-        return tempUoloadDir;
+    public String getTempUploadDir() {
+        return tempUploadDir;
     }
 }

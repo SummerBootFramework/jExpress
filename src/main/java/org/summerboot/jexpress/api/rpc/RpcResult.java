@@ -149,7 +149,7 @@ public class RpcResult<T> {
      * If the deserialized response is invalid or indicates error, set error in ioc and return null for successResponse.
      * <p>
      * This is a convenience method for the common case where you do ONLY need to deserialize success response and leave the error in the log for receiving error response,
-     * so it does not require caller to check remoteSuccess before calling this method, and it will handler both deserialization error and error response indicated by the deserialized response.
+     * so it does not require caller to check remoteSuccess before calling this method, and it will handle both deserialization error and error response indicated by the deserialized response.
      * <p>
      * <p>
      * If you need more control, you can call the deserialize method directly, or simply leave the error response handling to the framework (by implementing ServiceErrorConvertible in the successResponseClass).
@@ -172,7 +172,7 @@ public class RpcResult<T> {
      * If the deserialized response is invalid or indicates error, set error in ioc and return null for successResponse.
      * <p>
      * This is a convenience method for the common case where you do ONLY need to deserialize success response and leave the error in the log for receiving error response,
-     * so it does not require caller to check remoteSuccess before calling this method, and it will handler both deserialization error and error response indicated by the deserialized response.
+     * so it does not require caller to check remoteSuccess before calling this method, and it will handle both deserialization error and error response indicated by the deserialized response.
      * <p>
      * <p>
      * If you need more control, you can call the deserialize method directly, or simply leave the error response handling to the framework (by implementing ServiceErrorConvertible in the successResponseClass).

@@ -461,7 +461,7 @@ public abstract class BootAuthenticator implements Authenticator, ServerIntercep
                 status = Status.PERMISSION_DENIED.withDescription(ERROR + "Invalid IP address: " + error);
             } else {
                 ctx = ctx.withValue(GrpcCallerAddr, remoteAddr);
-                String headerValueAuthorization = metadata.get(GrpcConstants.Key_Authorization);
+                String headerValueAuthorization = metadata.get(GrpcConstants.Authorization);
                 if (headerValueAuthorization == null) {
                     //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");
                     //return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
