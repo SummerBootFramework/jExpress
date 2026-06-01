@@ -21,7 +21,7 @@ import com.itextpdf.kernel.pdf.PdfVersion;
 import com.itextpdf.kernel.pdf.WriterProperties;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
-import org.summerboot.jexpress.security.crypto.SecurityUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.lang.BeanUtil;
 
 /**

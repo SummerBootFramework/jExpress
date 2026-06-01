@@ -17,8 +17,8 @@
 package org.summerboot.jexpress.integration.cache.local;
 
 import com.google.inject.Singleton;
-import org.summerboot.jexpress.integration.cache.api.AuthTokenCache;
-import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.api.auth.Caller;
+import org.summerboot.jexpress.api.cache.AuthTokenCache;
 import org.summerboot.jexpress.security.auth.User;
 import org.summerboot.jexpress.util.lang.BeanUtil;
 

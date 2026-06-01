@@ -27,6 +27,7 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 import jakarta.mail.util.ByteArrayDataSource;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.integration.mail.config.SmtpClientConfig;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,0 +1,69 @@
+/*
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://apache.org
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+package org.summerboot.jexpress.integration.rpc.http;
+
+import java.net.http.HttpResponse.BodySubscriber;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.concurrent.Flow;
+
+/**
+ * @author daniel, Changski Tie Zheng Zhang, Du Xiao
+ */
+public class HttpClientStringSubscriber implements Flow.Subscriber<ByteBuffer> {
+
+    protected final BodySubscriber<String> wrapped;
+
+    public HttpClientStringSubscriber(BodySubscriber<String> wrapped) {
+        this.wrapped = wrapped;
+    }
+
+    @Override
+    public void onSubscribe(Flow.Subscription subscription) {
+        wrapped.onSubscribe(subscription);
+    }
+
+    @Override
+    public void onNext(ByteBuffer item) {
+        wrapped.onNext(List.of(item));
+    }
+
+    @Override
+    public void onError(Throwable throwable) {
+        wrapped.onError(throwable);
+    }
+
+    @Override
+    public void onComplete() {
+        wrapped.onComplete();
+    }
+}
+
+/* usage
+        // one of the subscribers is likely to fail if concurrently subscribed to the body publisher when executing this code,
+        String reqbody = null;
+        Optional<HttpRequest.BodyPublisher> pub = req.bodyPublisher();
+        if (pub.isPresent()) {
+            reqbody = pub.map(p -> {
+                var bodySubscriber = BodySubscribers.ofString(StandardCharsets.UTF_8);
+                var flowSubscriber = new HttpClientStringSubscriber(bodySubscriber);
+                p.subscribe(flowSubscriber);
+                return bodySubscriber.getBody().toCompletableFuture().join();
+            }).get();
+        }
+        System.out.println(reqbody);
+ */

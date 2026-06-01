@@ -17,7 +17,7 @@
 package org.summerboot.jexpress.integration.cache.local;
 
 import com.google.inject.Singleton;
-import org.summerboot.jexpress.integration.cache.api.SimpleLocalCache;
+import org.summerboot.jexpress.api.cache.SimpleLocalCache;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

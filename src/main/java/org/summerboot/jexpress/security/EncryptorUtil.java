@@ -1,0 +1,1252 @@
+/*
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://apache.org
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+package org.summerboot.jexpress.security;
+
+import jakarta.annotation.Nullable;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.bouncycastle.pkcs.PKCSException;
+import org.summerboot.jexpress.api.common.BootErrorCode;
+import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.util.format.FormatterUtil;
+import org.summerboot.jexpress.util.runtime.ApplicationUtil;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.ProviderException;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.ECGenParameterSpec;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.time.LocalDateTime;
+import java.util.Base64;
+
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
+public class EncryptorUtil {
+    // security keystore type and provider
+    public static final String KEYSTORE_TYPE = BackOffice.agent.getKeystoreType(); // PKCS12
+    public static final String KEYSTORE_PROVIDER = BackOffice.agent.getKeystoreSecurityProvider(); // null - default provider
+
+    // security - message digest
+    public static final String ALGORITHM_MESSAGEDIGEST = BackOffice.agent.getAlgorithmMessagedigest(); // "SHA3-256";
+
+    // security - asymmetric key (public/private key pair)
+    public static final String ALGORITHM_ASYMMETRIC_KEY = BackOffice.agent.getAlgorithmAsymmetricKey(); // "RSA";
+    public static final String CIPHERS_TRANSFORMATION_ASYMMETRIC = BackOffice.agent.getCiphersTransformationAsymmetric(); // "RSA/None/OAEPWithSHA-256AndMGF1Padding";
+
+    // security - symmetric key (no password)
+    public static final String ALGORITHM_SYMMETRIC_KEY = BackOffice.agent.getAlgorithmSymmetricKey(); // "AES";
+    public static final int ALGORITHM_SYMMETRIC_KEY_BITS = BackOffice.agent.getAlgorithmSymmetricKeyBits(); // 256; the keysize. This is an algorithm-specific metric, specified in number of bits.
+    public static final String CIPHERS_TRANSFORMATION_SYMMETRIC = BackOffice.agent.getCiphersTransformationSymmetric(); // "AES/GCM/NoPadding";
+    public static final int SYMMETRIC_KEY_AUTHENTICATION_TAG_BITS = BackOffice.agent.getSymmetricKeyAuthenticationTagBits(); // 128 the authentication tag length (in bits)
+    public static final int SYMMETRIC_KEY_IV_BYTES = BackOffice.agent.getSymmetricKeyInitializationVectorBytes(); // 12;
+
+    // security - secret key (with password)
+    public static final String ALGORITHM_SECRET_KEY = BackOffice.agent.getAlgorithmSecretKey(); // "PBKDF2WithHmacSHA256";
+    public static final int ALGORITHM_SECRET_KEY_BITS = BackOffice.agent.getAlgorithmSecretKeyBits(); // 256;
+    public static final int ALGORITHM_SECRET_KEY_SALT_BYTES = BackOffice.agent.getAlgorithmSecretKeySaltBytes(); // 16;
+    public static final int ALGORITHM_SECRET_KEY_ITERATION_COUNT = BackOffice.agent.getAlgorithmSecretKeyIterationCount(); // 310_000;
+
+
+    // security provider
+    public static final BouncyCastleProvider PROVIDER = new BouncyCastleProvider();
+
+    public enum KeyFileType {
+        X509, Certificate, PKCS12, JKS, PKCS8
+    }
+
+    static {
+        try {
+            Security.addProvider(PROVIDER);
+            System.setProperty("hostName", InetAddress.getLocalHost().getHostName());
+        } catch (UnknownHostException ex) {
+            ApplicationUtil.RTO(BootErrorCode.RTO_UNKNOWN_HOST_ERROR, null, ex);
+        }
+    }
+
+    public static KeyStore getKeystoreInstance() throws KeyStoreException, NoSuchProviderException {
+        if (KEYSTORE_PROVIDER == null) {
+            return KeyStore.getInstance(KEYSTORE_TYPE);
+        }
+        return KeyStore.getInstance(KEYSTORE_TYPE, KEYSTORE_PROVIDER);
+    }
+
+    public static String base64Decode(String base64Text) {
+        // Decode base64 to get bytes
+        //byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
+        //byte[] dec = Base64.decode(base64Text);
+        byte[] dec = Base64.getDecoder().decode(base64Text);
+        // Decode using utf-8
+        return new String(dec, StandardCharsets.UTF_8);
+    }
+
+    public static String base64Encode(String plain) {
+        //return Base64.encode(plain.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(plain.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static String keyToString(Key signingKey) {
+        final byte[] secretBytes = signingKey.getEncoded();
+        return Base64.getEncoder().encodeToString(secretBytes);
+    }
+
+    /**
+     * HmacSHA256, HmacSHA384, HmacSHA512, AES, etc.
+     *
+     * @param encodedKey
+     * @param algorithm
+     * @return
+     */
+    public static Key keyFromString(String encodedKey, String algorithm) {
+        byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
+        return new SecretKeySpec(decodedKey, algorithm);
+    }
+
+    private static char[] MASTER_PASSWORD = "".toCharArray();
+
+    public static void setMasterPassword(String masterPassword) {
+        MASTER_PASSWORD = masterPassword.toCharArray();
+    }
+
+    private static char[] getMasterPassword() {
+        return MASTER_PASSWORD;
+    }
+
+    public static byte[] randomBytes(int len) {
+        byte[] b = new byte[len];
+        RANDOM.nextBytes(b);
+        return b;
+    }
+
+    public static SecretKey buildSecretKey(String password, byte[] salt) {
+        return buildSecretKey(password.toCharArray(), salt);
+    }
+
+    public static SecretKey buildSecretKey(char[] password, byte[] salt) {
+        // salt = randomBytes(SALT_LEN); // CWE-327 False Positive prove: flaw alert will be off when the same salt is generated inside this method, 327 will be flagged if the same salt is generated outside this method.
+        try {
+            PBEKeySpec spec = new PBEKeySpec(password, salt, ALGORITHM_SECRET_KEY_ITERATION_COUNT, ALGORITHM_SECRET_KEY_BITS);// CWE-327 False Positive due to salt is passed in as parameter
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITHM_SECRET_KEY);
+            byte[] keyBytes = factory.generateSecret(spec).getEncoded();
+            return new SecretKeySpec(keyBytes, "AES");
+        } catch (Throwable ex) {
+            throw new RuntimeException("Failed to build secret key", ex);
+        }
+    }
+
+    /**
+     * @param filename
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     */
+    public static byte[] md5(File filename) throws NoSuchAlgorithmException, IOException {
+        return md5(filename, ALGORITHM_MESSAGEDIGEST);
+    }
+
+    /**
+     * @param filename
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                  https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     */
+    public static byte[] md5(File filename, String algorithm) throws NoSuchAlgorithmException, IOException {
+        MessageDigest complete = MessageDigest.getInstance(algorithm);
+        try (InputStream fis = new FileInputStream(filename);) {
+            byte[] buffer = new byte[1024];
+            int numRead;
+            do {
+                numRead = fis.read(buffer);
+                if (numRead > 0) {
+                    complete.update(buffer, 0, numRead);
+                }
+            } while (numRead != -1);
+        }
+        return complete.digest();
+    }
+
+    /**
+     * @param text
+     * @return
+     * @throws UnsupportedEncodingException
+     * @throws NoSuchAlgorithmException
+     */
+    public static byte[] md5(String text) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        return md5(text.getBytes(StandardCharsets.UTF_8), ALGORITHM_MESSAGEDIGEST);
+    }
+
+    /**
+     * @param data
+     * @return
+     * @throws NoSuchAlgorithmException
+     */
+    public static byte[] md5(byte[] data) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance(ALGORITHM_MESSAGEDIGEST);
+        //md.rest();
+        md.update(data);
+        byte[] digest = md.digest();
+        return digest;
+    }
+
+    /**
+     * @param data
+     * @param algorithm MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                  https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     *                  (128-bit)
+     * @return
+     * @throws NoSuchAlgorithmException
+     */
+    public static byte[] md5(byte[] data, String algorithm) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance(algorithm);
+        //md.rest();
+        md.update(data);
+        byte[] digest = md.digest();
+        return digest;
+    }
+
+    public static String md5ToString(byte[] md5) {
+        StringBuilder sb = new StringBuilder();
+        if (md5 != null) {
+            for (byte b : md5) {
+                sb.append(String.format("%02X", b));
+            }
+        }
+        return sb.toString();
+    }
+
+    protected static SecureRandom RANDOM = new SecureRandom();
+
+    public static SecretKey generateSymmetricKey() throws NoSuchAlgorithmException {
+        KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITHM_SYMMETRIC_KEY);
+        keyGen.init(ALGORITHM_SYMMETRIC_KEY_BITS, SecureRandom.getInstanceStrong());
+        return keyGen.generateKey();
+    }
+
+    public static SecretKey loadSymmetricKey(String symmetricKeyFile, String symmetricKeyAlgorithm) throws IOException {
+        byte[] symmetricKeyBytes = Files.readAllBytes(Paths.get(symmetricKeyFile));
+        return loadSymmetricKey(symmetricKeyBytes, symmetricKeyAlgorithm);
+    }
+
+    public static SecretKey loadSymmetricKey(byte[] symmetricKeyBytes, String symmetricKeyAlgorithm) throws IOException {
+        //int keyBytes = symmetricKeyBytes.length;
+        //System.out.println("keySize=" + keySize);
+        if (symmetricKeyAlgorithm == null) {
+            symmetricKeyAlgorithm = ALGORITHM_SYMMETRIC_KEY;
+        }
+        SecretKey symmetricKey = new SecretKeySpec(symmetricKeyBytes, symmetricKeyAlgorithm);
+        return symmetricKey;
+    }
+
+    public static byte[] encrypt(SecretKey symmetricKey, byte[] iv, byte[] plainData) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
+        byte[] encryptedData = cipher.doFinal(plainData);
+        return encryptedData;
+    }
+
+    public static byte[] decrypt(SecretKey symmetricKey, byte[] iv, byte[] encryptedData) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
+        byte[] plainData = cipher.doFinal(encryptedData);
+        return plainData;
+    }
+
+    public static Cipher buildCypher_GCM(boolean encrypt, SecretKey symmetricKey, byte[] iv) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+        //iv = randomBytes(IV_LENGTH_BYTE); // CWE-327 False Positive prove: flaw alert will be off when the same iv is generated inside this method, 327 will be flagged if the same iv is generated outside this method.
+        Cipher cipher = Cipher.getInstance(CIPHERS_TRANSFORMATION_SYMMETRIC);
+        if (encrypt) {
+            cipher.init(Cipher.ENCRYPT_MODE, symmetricKey, new GCMParameterSpec(SYMMETRIC_KEY_AUTHENTICATION_TAG_BITS, iv));// CWE-327 False Positive due to iv is passed in as parameter
+        } else {
+            cipher.init(Cipher.DECRYPT_MODE, symmetricKey, new GCMParameterSpec(SYMMETRIC_KEY_AUTHENTICATION_TAG_BITS, iv));// CWE-327 False Positive due to iv is passed in as parameter
+        }
+        return cipher;
+    }
+
+    /**
+     * @param plainData
+     * @param warped    true if the encrypted value is in a warper like
+     *                  password=DEC(encrypted password)
+     * @return
+     * @throws GeneralSecurityException
+     */
+    public static String encrypt(String plainData, boolean warped) throws GeneralSecurityException {
+        if (warped) {
+            plainData = FormatterUtil.getInsideParenthesesValue(plainData);
+        }
+        char[] password = getMasterPassword();
+        byte[] utf8 = plainData.getBytes(StandardCharsets.UTF_8);
+        byte[] encryptedDataPackage = encrypt(password, utf8);
+        return Base64.getEncoder().encodeToString(encryptedDataPackage);
+    }
+
+    public static byte[] encrypt(String password, byte[] plainData) throws GeneralSecurityException {
+        return encrypt(password.toCharArray(), plainData);
+    }
+
+    public static byte[] encrypt(char[] password, byte[] plainData) throws GeneralSecurityException {
+        // build cipher
+        byte[] salt = randomBytes(ALGORITHM_SECRET_KEY_SALT_BYTES);
+        SecretKey key = buildSecretKey(password, salt);
+        byte[] iv = randomBytes(SYMMETRIC_KEY_IV_BYTES);
+        Cipher cipher = buildCypher_GCM(true, key, iv);
+
+        // encrypt data
+        //byte[] plainData = plainDataString.getBytes(StandardCharsets.UTF_8);
+        byte[] encryptedData = cipher.doFinal(plainData);
+
+        // 🔒 Store: salt + iv + ciphertext
+        ByteBuffer buffer = ByteBuffer.allocate(salt.length + iv.length + encryptedData.length);
+        buffer.put(salt).put(iv).put(encryptedData);
+        byte[] encryptedDataPackage = buffer.array();
+        //String encodedData = Base64.getEncoder().encodeToString(buffer.array());
+
+        // clear sensitive data
+        for (int i = 0; i < plainData.length; i++) {
+            plainData[i] = 0;
+        }
+        for (int i = 0; i < encryptedData.length; i++) {
+            encryptedData[i] = 0;
+        }
+        return encryptedDataPackage;
+    }
+
+    /**
+     * decrypt encrypted value with prefix to plain text
+     *
+     * @param encodedData
+     * @param warped      true if the encrypted value is in a warper like
+     *                    password=ENC(encrypted password)
+     * @return
+     * @throws GeneralSecurityException
+     */
+    public static String decrypt(String encodedData, boolean warped) throws GeneralSecurityException {
+        if (warped) {
+            encodedData = FormatterUtil.getInsideParenthesesValue(encodedData);
+        }
+        char[] password = getMasterPassword();
+        byte[] encryptedDataPackage = Base64.getDecoder().decode(encodedData);
+        byte[] decryptedData = decrypt(password, encryptedDataPackage);
+        return new String(decryptedData, StandardCharsets.UTF_8);
+    }
+
+    public static byte[] decrypt(String password, byte[] encryptedDataPackage) throws GeneralSecurityException {
+        return decrypt(password.toCharArray(), encryptedDataPackage);
+    }
+
+    public static byte[] decrypt(char[] password, byte[] encryptedDataPackage) throws GeneralSecurityException {
+        // 🔒 Retrieve: salt + iv + ciphertext
+        //byte[] encryptedDataPackage = Base64.getDecoder().decode(String encodedData);
+        byte[] salt = new byte[ALGORITHM_SECRET_KEY_SALT_BYTES];
+        byte[] iv = new byte[SYMMETRIC_KEY_IV_BYTES];
+        byte[] encryptedData = new byte[encryptedDataPackage.length - ALGORITHM_SECRET_KEY_SALT_BYTES - SYMMETRIC_KEY_IV_BYTES];
+        ByteBuffer buffer = ByteBuffer.wrap(encryptedDataPackage);
+        buffer.get(salt);
+        buffer.get(iv);
+        buffer.get(encryptedData);
+
+        // build cipher
+        SecretKey key = buildSecretKey(password, salt);
+        Cipher cipher = buildCypher_GCM(false, key, iv);
+        //byte[] decodedData = Base64.getDecoder().decode(encryptedData);
+        //byte[] plaintext = cipher.doFinal(decodedData);
+        byte[] decryptedData = cipher.doFinal(encryptedData);
+        return decryptedData;
+        //return new String(decryptedData, StandardCharsets.UTF_8);
+    }
+
+    public static void encrypt(SecretKey symmetricKey, String plainDataFileName, String encryptedFileName) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        //1. create cipher wtiht this key
+        byte[] iv = randomBytes(SYMMETRIC_KEY_IV_BYTES);
+        Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
+
+        //3. streaming
+        try (InputStream plainDataInputStream = new FileInputStream(plainDataFileName); FileOutputStream fos = new FileOutputStream(encryptedFileName); DataOutputStream output = new DataOutputStream(fos); CipherOutputStream cos = new CipherOutputStream(output, cipher);) {
+            output.write(iv);
+            //3.4 encrypte
+            int byteRead;
+            final int BUFF_SIZE = 102400;
+            final byte[] buffer = new byte[BUFF_SIZE];
+            while ((byteRead = plainDataInputStream.read(buffer)) != -1) {
+                cos.write(buffer, 0, byteRead);
+            }
+        }
+    }
+
+    public static byte[] decrypt(SecretKey symmetricKey, byte[] encryptedLibraryBytes) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+        try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedLibraryBytes));) {
+            //2. read iv
+            byte[] iv = new byte[SYMMETRIC_KEY_IV_BYTES];
+            dis.readFully(iv);
+            Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
+            //4. decrypt streaming
+            try (CipherInputStream cis = new CipherInputStream(dis, cipher); ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
+                final int BUFF_SIZE = 102400;
+                final byte[] buffer = new byte[BUFF_SIZE];
+                int byteRead;
+                // Read through the file, decrypting each byte.
+                while ((byteRead = cis.read(buffer)) != -1) {
+                    bos.write(buffer, 0, byteRead);
+                }
+                return bos.toByteArray();
+            }
+        }
+    }
+
+    public static KeyPair generateKeyPairRSA() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException, NoSuchProviderException {
+        return generateKeyPair("RSA", 4096);
+    }
+
+    public static KeyPair generateKeyPairEC() throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException, NoSuchProviderException {
+        return generateKeyPair("EC", 256);// secp256r1 , secp384r1, secp521r1
+    }
+
+    /**
+     * <code>1. generate keypair: openssl genrsa -des3 -out keypair.pem 4096</code>
+     * <code>2. export public key: openssl rsa -in keypair.pem -outform PEM -pubout -out public.pem</code>
+     * <code>3. export private key: openssl rsa -in keypair.pem -out private_unencrypted.pem -outform PEM</code>
+     * <code>4. encrypt and convert private key from PKCS#1 to PKCS#8: openssl pkcs8 -topk8 -inform PEM -outform PEM -in private_unencrypted.pem -out private.pem</code>
+     *
+     * @param keyfactoryAlgorithm - RSA(2048), EC(571)
+     * @param size
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     */
+    public static KeyPair generateKeyPair(String keyfactoryAlgorithm, int size) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException, NoSuchProviderException {
+        if (keyfactoryAlgorithm == null) {
+            keyfactoryAlgorithm = "EC";
+            size = 256; // default to EC with 256 bits
+        }
+        keyfactoryAlgorithm = keyfactoryAlgorithm.toUpperCase();
+        KeyPairGenerator kpg;
+        switch (keyfactoryAlgorithm) {
+            case "RSA", "DSA", "DH" -> {
+                if (size < 2048) {
+                    throw new InvalidAlgorithmParameterException("RSA key size must be at least 2048 bits.");
+                }
+                kpg = KeyPairGenerator.getInstance(keyfactoryAlgorithm);
+                kpg.initialize(size);
+            }
+            case "EDSA" -> {
+                kpg = KeyPairGenerator.getInstance(keyfactoryAlgorithm, "BC");
+            }
+            case "EC" -> {
+                if (size < 256) {
+                    throw new InvalidAlgorithmParameterException("EC key size must be at least 256 bits.");
+                }
+                kpg = KeyPairGenerator.getInstance(keyfactoryAlgorithm);
+                ECGenParameterSpec spec = getECCurveName(size);
+                kpg.initialize(spec);
+            }
+            default -> throw new NoSuchAlgorithmException(keyfactoryAlgorithm);
+        }
+
+        return kpg.generateKeyPair();
+    }
+
+    private static ECGenParameterSpec getECCurveName(int size) {
+        return new ECGenParameterSpec(switch (size) {
+            case 256 -> "secp256r1"; // NIST P-256
+            case 384 -> "secp384r1";
+            case 521 -> "secp521r1";
+            default -> "secp256r1";// use 256 by default
+        });
+    }
+
+    public static void secureMem(char[] pwd) {
+        if (pwd == null) {
+            return;
+        }
+        for (int i = 0; i < pwd.length; i++) {
+            pwd[i] = 0;
+        }
+    }
+
+    /**
+     * @param fileType
+     * @param keystoreFile
+     * @param keyStorePwd
+     * @param alias
+     * @param privateKeyPwd
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws KeyStoreException
+     * @throws IOException
+     * @throws CertificateException
+     * @throws UnrecoverableKeyException
+     */
+    public static KeyPair loadKeyPair(KeyFileType fileType, File keystoreFile, char[] keyStorePwd, String alias, char[] privateKeyPwd) throws NoSuchAlgorithmException, KeyStoreException, IOException, CertificateException, UnrecoverableKeyException {
+        String keyStoreType;
+        switch (fileType) {
+            case PKCS12:
+                keyStoreType = "PKCS12";
+                break;
+            case JKS:
+                keyStoreType = KeyStore.getDefaultType();
+                break;
+            default:
+                throw new NoSuchAlgorithmException(fileType.name());
+        }
+        KeyStore keystore = KeyStore.getInstance(keyStoreType);
+        try (FileInputStream is = new FileInputStream(keystoreFile);) {
+            keystore.load(is, keyStorePwd);
+        }
+        secureMem(keyStorePwd);
+
+        // Get private key
+        PrivateKey privateKey = (PrivateKey) keystore.getKey(alias, privateKeyPwd);
+        secureMem(keyStorePwd);
+        if (privateKey == null) {
+            throw new KeyStoreException("private key of alias(" + alias + ") not found");
+        }
+        X509Certificate cert = (X509Certificate) keystore.getCertificate(alias);
+        if (cert == null) {
+            throw new KeyStoreException("certificate of alias(" + alias + ") not found");
+        }
+        // Get public key
+        PublicKey publicKey = cert.getPublicKey();
+        // Return a key pair
+        KeyPair keyPair = new KeyPair(publicKey, privateKey);
+        return keyPair;
+    }
+
+    // to be continued
+//    public static KeyPair createKeyPair(KeyFileType fileType, File keystoreFile, char[] keyStorePwd, String alias, char[] privateKeyPwd,
+//            String newAlias, String newPwd) throws NoSuchAlgorithmException, KeyStoreException, IOException, CertificateException, UnrecoverableKeyException, InvalidKeySpecException {
+//        String keyStoreType;
+//        switch (fileType) {
+//            case PKCS12:
+//                keyStoreType = "PKCS12";
+//                break;
+//            case JKS:
+//                keyStoreType = KeyStore.getDefaultType();
+//                break;
+//            default:
+//                throw new NoSuchAlgorithmException(fileType.name());
+//        }
+//        FileInputStream is = new FileInputStream(keystoreFile);
+//        KeyStore keystore = KeyStore.getInstance(keyStoreType);
+//        keystore.load(is, keyStorePwd);
+//        secureMem(keyStorePwd);
+//        
+//        if(keystore.containsAlias(newAlias)) {
+//            throw new KeyStoreException("alias " + newAlias+" already exists");
+//        }        
+//        KeyPair newKeyPair = generateKeyPair(null, 2048);
+//        keystore.
+//        
+//        return newKeyPair;
+//    }
+    public static PublicKey loadPublicKey(KeyFileType fileType, File publicKeyFile) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, CertificateException {
+        return loadPublicKey(fileType, publicKeyFile, ALGORITHM_ASYMMETRIC_KEY);
+    }
+
+    /**
+     * @param fileType
+     * @param publicKeyFile
+     * @param algorithm
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     * @throws CertificateException
+     */
+    public static PublicKey loadPublicKey(KeyFileType fileType, File publicKeyFile, String algorithm) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, CertificateException {
+        PublicKey publicKey;
+        switch (fileType) {
+            case X509:
+            case PKCS12:
+            case JKS:
+            case PKCS8:
+                // Load the public key bytes
+//                byte[] keyBytes = Files.readAllBytes(Paths.get(publicKeyFile.getAbsolutePath()));
+//                String keyPEM = new String(keyBytes, Charset.defaultCharset());
+//                int begin = keyPEM.indexOf("-----");
+//                keyPEM = keyPEM.substring(begin);
+//                keyPEM = keyPEM
+//                        .replace("-----BEGIN PUBLIC KEY-----", "")
+//                        .replaceAll(BootConstant.BR, "")
+//                        .replace("-----END PUBLIC KEY-----", "")
+//                        //                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+//                        //                .replace("-----END RSA PRIVATE KEY-----", "")
+//                        //                .replace("-----BEGIN EC PRIVATE KEY-----", "")
+//                        //                .replace("-----END EC PRIVATE KEY-----", "")
+//                        //.replaceAll(BootConstant.BR, "");
+//                        .replaceAll("\\s+", "");
+                byte[] encoded = loadPermKey(publicKeyFile);
+                // Turn the encoded key into a real RSA public key.
+                // Public keys are encoded in X.509.
+
+                publicKey = loadX509EncodedPublicKey(encoded, algorithm);
+                break;
+            case Certificate:
+                try (FileInputStream fin = new FileInputStream(publicKeyFile);) {
+                    CertificateFactory f = CertificateFactory.getInstance("X.509");
+                    X509Certificate certificate = (X509Certificate) f.generateCertificate(fin);
+                    publicKey = certificate.getPublicKey();
+                }
+                break;
+            default:
+                throw new NoSuchAlgorithmException(fileType.name());
+        }
+        return publicKey;
+    }
+
+    public static PublicKey loadX509EncodedPublicKey(byte[] permData, String algorithm) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        // Turn the encoded key into a real RSA public key.
+        // Public keys are encoded in X.509.
+        EncodedKeySpec keySpec = new X509EncodedKeySpec(permData);
+        KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+        return keyFactory.generatePublic(keySpec);
+    }
+
+    public static PrivateKey loadPrivateKey(File pemFile) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+        return loadPrivateKey(pemFile, ALGORITHM_ASYMMETRIC_KEY);
+    }
+
+    public static PrivateKey loadPrivateKey(File pemFile, String algorithm) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+        byte[] pkcs8Data = loadPermKey(pemFile);
+        return loadPrivateKey(pkcs8Data, algorithm);
+    }
+
+    public static PrivateKey loadPrivateKey(byte[] pkcs8Data, String algorithm) throws InvalidKeySpecException, NoSuchAlgorithmException {
+        // Turn the encoded key into a real RSA private key.
+        // Private keys are encoded in PKCS#8.
+        KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Data);
+        PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+
+        return privateKey;
+    }
+
+    public static PrivateKey loadPrivateKey(File pemFile, char... password) throws IOException, OperatorCreationException, GeneralSecurityException {
+        if (password == null || password.length < 1) {
+            return loadPrivateKey(pemFile);
+        }
+//        Provider[] ps = Security.getProviders();
+//        for (Provider p : ps) {
+//            System.out.println("Provider.before=" + p);
+//        }
+//        ps = Security.getProviders();
+//        for (Provider p : ps) {
+//            System.out.println("Provider.after=" + p);
+//        }
+
+//        Provider provider = Security.getProvider(providerName);
+//        if (provider == null) {
+//            System.out.println(providerName + " provider not installed");
+//            return null;
+//        }
+//        System.out.println("Provider Name :" + provider.getName());
+//        System.out.println("Provider Version :" + provider.getVersion());
+//        System.out.println("Provider Info:" + provider.getInfo());
+        byte[] pkcs8Data = loadPermKey(pemFile);
+
+        ASN1Sequence derseq = ASN1Sequence.getInstance(pkcs8Data);
+        PKCS8EncryptedPrivateKeyInfo encobj = new PKCS8EncryptedPrivateKeyInfo(EncryptedPrivateKeyInfo.getInstance(derseq));
+        // decrypt and convert key
+        JceOpenSSLPKCS8DecryptorProviderBuilder jce = new JceOpenSSLPKCS8DecryptorProviderBuilder();
+//        String providerName = "BC";//BouncyCastle
+//        jce.setProvider(providerName);
+        InputDecryptorProvider decryptionProv = jce.build(password);
+        PrivateKeyInfo privateKeyInfo;
+        try {
+            privateKeyInfo = encobj.decryptPrivateKeyInfo(decryptionProv);
+        } catch (PKCSException ex) {
+            throw new GeneralSecurityException("Invalid private key password", ex);
+        } finally {
+            for (int i = 0; i < password.length; i++) {
+                password[i] = 0;
+            }
+        }
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        PrivateKey privateKey = converter.getPrivateKey(privateKeyInfo);
+        return privateKey;
+    }
+
+    public static byte[] loadPermKey(File pemFile) throws InvalidKeySpecException, IOException {
+        // Load the private key bytes
+        byte[] keyBytes = Files.readAllBytes(Paths.get(pemFile.getAbsolutePath()));
+        String pemFileContent = new String(keyBytes, Charset.defaultCharset());
+        return loadPermKey(pemFileContent);
+    }
+
+    public static byte[] loadPermKey(String pemFileContent) throws InvalidKeySpecException {
+        // Load the private key bytes
+//        byte[] keyBytes = Files.readAllBytes(Paths.get(pemFile.getAbsolutePath()));
+//        String pemFileContent = new String(keyBytes, Charset.defaultCharset());
+        int begin = pemFileContent.indexOf("-----");
+        if (begin < 0) {
+            throw new InvalidKeySpecException("missing key header");
+        }
+        pemFileContent = pemFileContent.substring(begin);
+        pemFileContent = pemFileContent
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replace("-----BEGIN ENCRYPTED PRIVATE KEY-----", "")
+                .replace("-----END ENCRYPTED PRIVATE KEY-----", "")
+                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                .replace("-----END RSA PRIVATE KEY-----", "")
+                .replace("-----BEGIN EC PRIVATE KEY-----", "")
+                .replace("-----END EC PRIVATE KEY-----", "")
+                //.replaceAll(BootConstant.BR, "");
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replaceAll("\\s+", "");
+        //byte[] encoded = java.util.Base64.getDecoder().decode(privateKeyContent);
+        //byte[] header = Hex.decode("30 81bf 020100 301006072a8648ce3d020106052b81040022 0481a7");
+        byte[] pkcs8Data = Base64.getDecoder().decode(pemFileContent);
+        return pkcs8Data;
+    }
+
+    /**
+     * @param cipherMode    Cipher.ENCRYPT_MODE(1) or Cipher.DECRYPT_MODE(2)
+     * @param asymmetricKey
+     * @param in
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     * @throws NoSuchPaddingException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    protected static byte[] asymmetric(int cipherMode, Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+        Cipher rsaCipher = Cipher.getInstance(CIPHERS_TRANSFORMATION_ASYMMETRIC);
+        rsaCipher.init(cipherMode, asymmetricKey);
+        // Encrypt the Rijndael key with the RSA cipher
+        // and write it to the beginning of the file.
+        byte[] out = rsaCipher.doFinal(in);
+        return out;
+    }
+
+    public static byte[] encrypt(Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+        return asymmetric(Cipher.ENCRYPT_MODE, asymmetricKey, in);
+    }
+
+    public static byte[] decrypt(Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+        return asymmetric(Cipher.DECRYPT_MODE, asymmetricKey, in);
+    }
+
+    /**
+     * encrypt large file
+     *
+     * @param asymmetricKey       symmetric encryption will be used if null
+     * @param symmetricKey        encrypt with random session key if null
+     * @param plainDataFileName
+     * @param encryptedFileName
+     * @param digitalSignatureKey - to sign the digital signature if not null
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static void encrypt(Key asymmetricKey, SecretKey symmetricKey, String plainDataFileName, String encryptedFileName, Key digitalSignatureKey) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        encrypt(asymmetricKey, symmetricKey, plainDataFileName, encryptedFileName, digitalSignatureKey, ALGORITHM_MESSAGEDIGEST);
+    }
+
+    /**
+     * @param asymmetricKey
+     * @param symmetricKey
+     * @param plainDataFileName
+     * @param encryptedFileName
+     * @param digitalSignatureKey
+     * @param md5Algorithm        MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                            https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static void encrypt(Key asymmetricKey, SecretKey symmetricKey, String plainDataFileName, String encryptedFileName, Key digitalSignatureKey, String md5Algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        //0. metadata        
+        String metaInfo = System.currentTimeMillis() + ", " + System.getProperty("hostName");
+        byte[] metadata = metaInfo.getBytes(StandardCharsets.UTF_8);
+        if (digitalSignatureKey != null) {
+            metadata = encrypt(digitalSignatureKey, metadata);
+        }
+        boolean randomSymmetricKey = symmetricKey == null;
+        //1. create cipher wtiht this key
+        if (randomSymmetricKey) {
+            symmetricKey = generateSymmetricKey();
+        }
+        byte[] iv = randomBytes(SYMMETRIC_KEY_IV_BYTES);
+        Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
+
+        //2. asymmetric encrypt file header
+        byte[] asymmetricEncryptedMD5 = null, asymmetricEncryptedIV = iv, asymmetricEncryptedSessionKey = null, asymmetricEncryptedSymmetricKeyAlgorithm = null;
+        if (asymmetricKey != null) {
+            byte[] md5 = md5(new File(plainDataFileName), md5Algorithm);
+            asymmetricEncryptedMD5 = encrypt(asymmetricKey, md5);
+            asymmetricEncryptedIV = encrypt(asymmetricKey, iv);
+            if (randomSymmetricKey) {
+                asymmetricEncryptedSymmetricKeyAlgorithm = symmetricKey.getAlgorithm().getBytes(StandardCharsets.ISO_8859_1);
+                asymmetricEncryptedSymmetricKeyAlgorithm = encrypt(asymmetricKey, asymmetricEncryptedSymmetricKeyAlgorithm);
+                asymmetricEncryptedSessionKey = encrypt(asymmetricKey, symmetricKey.getEncoded());
+            }
+        }
+
+        //3. streaming
+        try (InputStream plainDataInputStream = new FileInputStream(plainDataFileName); FileOutputStream fos = new FileOutputStream(encryptedFileName); DataOutputStream output = new DataOutputStream(fos); CipherOutputStream cos = new CipherOutputStream(output, cipher);) {
+            //3.0 write metadata
+            output.writeInt(metadata.length);
+            output.write(metadata);
+            //3.1 write asymmetric encrypted md5.length and md5 data
+            if (asymmetricEncryptedMD5 != null) {
+                output.writeInt(asymmetricEncryptedMD5.length);
+                output.write(asymmetricEncryptedMD5);
+            }
+            //3.2 write asymmetric encrypted randome iv.length and iv data
+            output.writeInt(asymmetricEncryptedIV.length);
+            output.write(asymmetricEncryptedIV);
+            //3.3 write asymmetric encrypted randome session key
+            if (asymmetricEncryptedSymmetricKeyAlgorithm != null) {
+                output.writeInt(asymmetricEncryptedSymmetricKeyAlgorithm.length);
+                output.write(asymmetricEncryptedSymmetricKeyAlgorithm);
+            }
+            if (asymmetricEncryptedSessionKey != null) {
+                output.writeInt(asymmetricEncryptedSessionKey.length);
+                output.write(asymmetricEncryptedSessionKey);
+            }
+            //3.4 encrypte
+            int byteRead;
+            final int BUFF_SIZE = 102400;
+            final byte[] buffer = new byte[BUFF_SIZE];
+            while ((byteRead = plainDataInputStream.read(buffer)) != -1) {
+                cos.write(buffer, 0, byteRead);
+            }
+        }
+    }
+
+    /**
+     * encrypt data in RAM
+     *
+     * @param asymmetricKey       symmetric encryption will be used if null
+     * @param symmetricKey        encrypt with random session key if null
+     * @param plainData
+     * @param digitalSignatureKey - to sign the digital signature if not null
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static byte[] encrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] plainData, Key digitalSignatureKey) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        return encrypt(asymmetricKey, symmetricKey, plainData, digitalSignatureKey, ALGORITHM_MESSAGEDIGEST);
+    }
+
+    /**
+     * @param asymmetricKey
+     * @param symmetricKey
+     * @param plainData
+     * @param digitalSignatureKey
+     * @param md5Algorithm        MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                            https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static byte[] encrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] plainData, Key digitalSignatureKey, String md5Algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        //0. metadata        
+        String metaInfo = LocalDateTime.now() + ", " + System.getProperty("hostName");
+        byte[] metadata = metaInfo.getBytes(StandardCharsets.UTF_8);
+        if (digitalSignatureKey != null) {
+            metadata = encrypt(digitalSignatureKey, metadata);
+        }
+        //1. create cipher wtiht this key
+        boolean randomSymmetricKey = symmetricKey == null;
+        if (randomSymmetricKey) {
+            symmetricKey = generateSymmetricKey();
+        }
+        byte[] iv = randomBytes(SYMMETRIC_KEY_IV_BYTES);
+        Cipher cipher = buildCypher_GCM(true, symmetricKey, iv);
+
+        //2. asymmetric encrypt file header
+        byte[] asymmetricEncryptedMD5 = null, asymmetricEncryptedIV = iv, asymmetricEncryptedSessionKey = null, asymmetricEncryptedSymmetricKeyAlgorithm = null;
+        if (asymmetricKey != null) {
+            byte[] md5 = md5(plainData, md5Algorithm);
+            asymmetricEncryptedMD5 = encrypt(asymmetricKey, md5);
+            asymmetricEncryptedIV = encrypt(asymmetricKey, iv);
+            if (randomSymmetricKey) {
+                asymmetricEncryptedSymmetricKeyAlgorithm = symmetricKey.getAlgorithm().getBytes(StandardCharsets.ISO_8859_1);
+                asymmetricEncryptedSymmetricKeyAlgorithm = encrypt(asymmetricKey, asymmetricEncryptedSymmetricKeyAlgorithm);
+                asymmetricEncryptedSessionKey = encrypt(asymmetricKey, symmetricKey.getEncoded());
+            }
+        }
+
+        //3. streaming
+        byte[] ret;
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream output = new DataOutputStream(bos);) {
+            //3.0 write metadata
+            output.writeInt(metadata.length);
+            output.write(metadata);
+            //3.1 write asymmetric encrypted md5.length and md5 data
+            if (asymmetricEncryptedMD5 != null) {
+                output.writeInt(asymmetricEncryptedMD5.length);
+                output.write(asymmetricEncryptedMD5);
+            }
+            //3.2 write asymmetric encrypted randome iv.length and iv data
+            output.writeInt(asymmetricEncryptedIV.length);
+            output.write(asymmetricEncryptedIV);
+            //3.3 write asymmetric encrypted randome session key
+            if (asymmetricEncryptedSymmetricKeyAlgorithm != null) {
+                output.writeInt(asymmetricEncryptedSymmetricKeyAlgorithm.length);
+                output.write(asymmetricEncryptedSymmetricKeyAlgorithm);
+            }
+            if (asymmetricEncryptedSessionKey != null) {
+                output.writeInt(asymmetricEncryptedSessionKey.length);
+                output.write(asymmetricEncryptedSessionKey);
+            }
+            //3.4 encrypte
+            byte[] encryptedData = cipher.doFinal(plainData);
+            output.write(encryptedData);
+            ret = bos.toByteArray();
+        }
+        return ret;
+    }
+
+    public static class EncryptionMeta {
+
+        protected String info;
+        protected String md5;
+
+        public String getInfo() {
+            return info;
+        }
+
+        public void setInfo(String info) {
+            this.info = info;
+        }
+
+        public String getMd5() {
+            return md5;
+        }
+
+        public void setMd5(String md5) {
+            this.md5 = md5;
+        }
+
+        @Override
+        public String toString() {
+            return info + " (md5: " + md5 + ")";
+        }
+    }
+
+    /**
+     * decrypt large file
+     *
+     * @param asymmetricKey       symmetric decryption if null
+     * @param symmetricKey        decrypt with asymmetric encrypted random session key
+     *                            if null
+     * @param encryptedFileName
+     * @param plainDataFileName
+     * @param digitalSignatureKey - to verify the digital signature if not null
+     * @param meta
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws javax.crypto.IllegalBlockSizeException
+     * @throws javax.crypto.BadPaddingException
+     */
+    public static void decrypt(Key asymmetricKey, SecretKey symmetricKey, String encryptedFileName, String plainDataFileName, Key digitalSignatureKey, @Nullable EncryptionMeta meta) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        decrypt(asymmetricKey, symmetricKey, encryptedFileName, plainDataFileName, digitalSignatureKey, meta, ALGORITHM_MESSAGEDIGEST);
+    }
+
+    /**
+     * @param asymmetricKey
+     * @param symmetricKey
+     * @param encryptedFileName
+     * @param plainDataFileName
+     * @param digitalSignatureKey
+     * @param meta
+     * @param md5Algorithm        MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                            https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static void decrypt(Key asymmetricKey, SecretKey symmetricKey, String encryptedFileName, String plainDataFileName, Key digitalSignatureKey, @Nullable EncryptionMeta meta, String md5Algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(encryptedFileName));) {
+            //0. metadata
+            byte[] metadata = new byte[dis.readInt()];
+            dis.readFully(metadata);
+            if (digitalSignatureKey != null) {
+                try {
+                    metadata = decrypt(digitalSignatureKey, metadata);
+                    if (meta != null) {
+                        meta.setInfo(new String(metadata, StandardCharsets.UTF_8));
+                    }
+                } catch (Throwable ex) {
+                    throw new ProviderException("Digital Signature verification failed", ex);
+                }
+//                String metaInfo = new String(metadata, StandardCharsets.UTF_8);
+//                System.out.println(metaInfo);
+            }
+            //1. read md5
+            byte[] decryptedMD5 = null;
+            if (asymmetricKey != null) {
+                byte[] encryptedMD5 = new byte[dis.readInt()];
+                dis.readFully(encryptedMD5);
+                decryptedMD5 = decrypt(asymmetricKey, encryptedMD5);
+            }
+            //2. read iv
+            byte[] asymmetricEncryptedIV = new byte[dis.readInt()];
+            dis.readFully(asymmetricEncryptedIV);
+            byte[] iv;
+            if (asymmetricKey == null) {
+                iv = asymmetricEncryptedIV;
+            } else {
+                //3. read session key
+                iv = decrypt(asymmetricKey, asymmetricEncryptedIV);
+                if (symmetricKey == null) {//decrypt with asymmetric encrypted random session
+                    byte[] asymmetricEncryptedSymmetricKeyAlgorithm = new byte[dis.readInt()];
+                    dis.readFully(asymmetricEncryptedSymmetricKeyAlgorithm);
+                    byte[] symmetricKeyAlgorithm = decrypt(asymmetricKey, asymmetricEncryptedSymmetricKeyAlgorithm);
+                    String keyAlgorithm = new String(symmetricKeyAlgorithm, StandardCharsets.ISO_8859_1);
+                    byte[] asymmetricEncryptedSessionKey = new byte[dis.readInt()];
+                    dis.readFully(asymmetricEncryptedSessionKey);
+                    byte[] sessionKey = decrypt(asymmetricKey, asymmetricEncryptedSessionKey);
+                    symmetricKey = loadSymmetricKey(sessionKey, keyAlgorithm);
+                }
+            }
+            Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
+            //4. decrypt streaming
+            try (CipherInputStream cis = new CipherInputStream(dis, cipher); FileOutputStream fos = new FileOutputStream(plainDataFileName);) {
+                final int BUFF_SIZE = 102400;
+                final byte[] buffer = new byte[BUFF_SIZE];
+                int byteRead;
+                // Read through the file, decrypting each byte.
+                while ((byteRead = cis.read(buffer)) != -1) {
+                    fos.write(buffer, 0, byteRead);
+                }
+            }
+            byte[] md5 = md5(new File(plainDataFileName), md5Algorithm);
+            if (meta != null) {
+                meta.setMd5(md5ToString(md5));
+            }
+            if (decryptedMD5 != null) {
+                boolean isMatch = md5 != null && decryptedMD5.length == md5.length;
+                if (isMatch) {
+                    for (int i = 0; i < md5.length; i++) {
+                        if (md5[i] != decryptedMD5[i]) {
+                            isMatch = false;
+                            break;
+                        }
+                    }
+                }
+                if (!isMatch) {
+                    throw new IOException("MD5 verification failed");
+                }
+            }
+        }
+    }
+
+    /**
+     * decrypt data in RAM
+     *
+     * @param asymmetricKey       symmetric decryption if null
+     * @param symmetricKey        decrypt with asymmetric encrypted random session key
+     *                            if null
+     * @param encryptedData
+     * @param digitalSignatureKey - to verify the digital signature if not null
+     * @param meta
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws javax.crypto.IllegalBlockSizeException
+     * @throws javax.crypto.BadPaddingException
+     */
+    public static byte[] decrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] encryptedData, Key digitalSignatureKey, @Nullable EncryptionMeta meta) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        return decrypt(asymmetricKey, symmetricKey, encryptedData, digitalSignatureKey, meta, ALGORITHM_MESSAGEDIGEST);
+    }
+
+    /**
+     * @param asymmetricKey
+     * @param symmetricKey
+     * @param encryptedData
+     * @param digitalSignatureKey
+     * @param meta
+     * @param md5Algorithm        MD5, SHA-1, SHA-256 or SHA3-256 see
+     *                            https://en.wikipedia.org/wiki/SHA-3 (section Comparison of SHA functions)
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public static byte[] decrypt(Key asymmetricKey, SecretKey symmetricKey, byte[] encryptedData, Key digitalSignatureKey, @Nullable EncryptionMeta meta, String md5Algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        byte[] ret;
+        try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(encryptedData));) {
+            //0. metadata
+            byte[] metadata = new byte[dis.readInt()];
+            dis.readFully(metadata);
+            if (digitalSignatureKey != null) {
+                try {
+                    metadata = decrypt(digitalSignatureKey, metadata);
+                    if (meta != null) {
+                        meta.setInfo(new String(metadata, StandardCharsets.UTF_8));
+                    }
+                } catch (Throwable ex) {
+                    throw new ProviderException("Digital Signature verification failed", ex);
+                }
+//                String metaInfo = new String(metadata, StandardCharsets.UTF_8);
+//                System.out.println(metaInfo);
+            }
+            //1. read md5
+            byte[] decryptedMD5 = null;
+            if (asymmetricKey != null) {
+                byte[] encryptedMD5 = new byte[dis.readInt()];
+                dis.readFully(encryptedMD5);
+                decryptedMD5 = decrypt(asymmetricKey, encryptedMD5);
+            }
+            //2. read iv
+            byte[] asymmetricEncryptedIV = new byte[dis.readInt()];
+            dis.readFully(asymmetricEncryptedIV);
+            byte[] iv;
+            if (asymmetricKey == null) {
+                iv = asymmetricEncryptedIV;
+            } else {
+                //3. read session key
+                iv = decrypt(asymmetricKey, asymmetricEncryptedIV);
+                if (symmetricKey == null) {//decrypt with asymmetric encrypted random session
+                    byte[] asymmetricEncryptedSymmetricKeyAlgorithm = new byte[dis.readInt()];
+                    dis.readFully(asymmetricEncryptedSymmetricKeyAlgorithm);
+                    byte[] symmetricKeyAlgorithm = decrypt(asymmetricKey, asymmetricEncryptedSymmetricKeyAlgorithm);
+                    String keyAlgorithm = new String(symmetricKeyAlgorithm, StandardCharsets.ISO_8859_1);
+                    byte[] asymmetricEncryptedSessionKey = new byte[dis.readInt()];
+                    dis.readFully(asymmetricEncryptedSessionKey);
+                    byte[] sessionKey = decrypt(asymmetricKey, asymmetricEncryptedSessionKey);
+                    symmetricKey = loadSymmetricKey(sessionKey, keyAlgorithm);
+                }
+            }
+            Cipher cipher = buildCypher_GCM(false, symmetricKey, iv);
+            //4. decrypt streaming
+            try (CipherInputStream cis = new CipherInputStream(dis, cipher); ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
+                final int BUFF_SIZE = 102400;
+                final byte[] buffer = new byte[BUFF_SIZE];
+                int byteRead;
+                // Read through the file, decrypting each byte.
+                while ((byteRead = cis.read(buffer)) != -1) {
+                    bos.write(buffer, 0, byteRead);
+                }
+                ret = bos.toByteArray();
+            }
+
+            byte[] md5 = md5(ret, md5Algorithm);
+            if (meta != null) {
+                meta.setMd5(md5ToString(md5));
+            }
+            if (decryptedMD5 != null) {
+                boolean isMatch = md5 != null && decryptedMD5.length == md5.length;
+                if (isMatch) {
+                    for (int i = 0; i < md5.length; i++) {
+                        if (md5[i] != decryptedMD5[i]) {
+                            isMatch = false;
+                            break;
+                        }
+                    }
+                }
+                if (!isMatch) {
+                    throw new IOException("MD5 verification failed");
+                }
+            }
+        }
+        return ret;
+    }
+}

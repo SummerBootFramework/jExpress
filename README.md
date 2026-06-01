@@ -95,9 +95,9 @@ Implement `AppLifecycleListener` or extend `AppLifecycleHandler` (recommended):
 ```java
 import com.google.inject.Singleton;
 import org.summerboot.jexpress.boot.SummerApplication;
-import org.summerboot.jexpress.boot.lifecycle.AppInitializer;
+import org.summerboot.jexpress.boot.lifecycle.app.AppInitializer;
 import org.summerboot.jexpress.annotation.Order;
-import org.summerboot.jexpress.boot.lifecycle.AppLifecycleHandler;
+import org.summerboot.jexpress.boot.lifecycle.app.AppLifecycleHandler;
 import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -146,8 +146,8 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 
 import org.summerboot.jexpress.annotation.Controller;
-import org.summerboot.jexpress.annotation.Log;
-import org.summerboot.jexpress.core.session.SessionContext;
+import org.summerboot.jexpress.annotation.rest.Log;
+import org.summerboot.jexpress.api.common.SessionContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 @Singleton
@@ -174,7 +174,7 @@ public class MyController {
      * Three features:
      * 1. auto-validate JSON request via Bean Validation (enabled by default in v2.6+, no @Valid needed)
      * 2. mask sensitive fields in log via @Log(maskDataFields)
-     * 3. mark performance POI via context.poi(key)
+     * 3. mark performance POI via ioc.poi(key)
      */
     @POST
     @Path("/hello/{name}")
@@ -219,7 +219,7 @@ The controller is only activated when the app is launched with `-use RoleBased`:
 ### 1.5 PING endpoint
 
 ```java
-import org.summerboot.jexpress.web.controller.PingController;
+import org.summerboot.jexpress.api.rest.PingController;
 
 @Controller
 @Path("/hellosummer")
@@ -231,7 +231,7 @@ public class MyController extends PingController {
 or use `@Ping` directly:
 
 ```java
-import org.summerboot.jexpress.annotation.Ping;
+import org.summerboot.jexpress.annotation.rest.Ping;
 
 @Controller
 @Path("/hellosummer")
@@ -251,7 +251,7 @@ public class MyController {
 ```java
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
-import org.summerboot.jexpress.web.controller.BootController;
+import org.summerboot.jexpress.api.rest.BootController;
 
 @Controller
 @Path("/hellosummer")
@@ -291,11 +291,11 @@ import io.netty.handler.codec.http.HttpHeaders;
 import javax.naming.NamingException;
 
 import org.summerboot.jexpress.annotation.Service;
-import org.summerboot.jexpress.core.session.SessionContext;
-import org.summerboot.jexpress.security.auth.Authenticator;
-import org.summerboot.jexpress.boot.lifecycle.AuthenticatorListener;
+import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.api.auth.Authenticator;
+import org.summerboot.jexpress.boot.lifecycle.auth.AuthenticatorListener;
 import org.summerboot.jexpress.security.auth.BootAuthenticator;
-import org.summerboot.jexpress.security.auth.Caller;
+import org.summerboot.jexpress.api.auth.Caller;
 import org.summerboot.jexpress.security.auth.User;
 import handler.org.summerboot.jexpress.web.netty.RequestProcessor;
 
@@ -340,7 +340,7 @@ roles.Employee.groups=EmployeeGroup
 ### 1.7 Request Log Sample (v2.6.6)
 
 ```
-[411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.web.netty.handler.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1]
+[411043] 2025-08-17T11:50:58,429 WARN org.summerboot.jexpress.api.rest.BootHttpRequestHandler.() [Netty-HTTP.Biz-5-vt-1]
 [411043-2 /127.0.0.1:8311] [200 OK, error=0, queuing=1ms, process=5798ms, response=5801ms]
 HTTP/1.1 GET /hellosummer/services/appname/v1/aaa/111
 POI.t0=2025-08-17T11:50:52.627-04:00 service.begin=0ms, process.begin=1ms, biz.begin=6ms, biz.end=5795ms, process.end=5798ms, service.end=5801ms,
@@ -554,11 +554,11 @@ java -jar my-service.jar -cfgdir <config folder> -decrypt
 Enable `GET /hellosummer/ping` without polluting your application log:
 
 ```java
-import org.summerboot.jexpress.annotation.Ping;
+import org.summerboot.jexpress.annotation.rest.Ping;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import org.summerboot.jexpress.annotation.Controller;
-import org.summerboot.jexpress.web.controller.BootController;
+import org.summerboot.jexpress.api.rest.BootController;
 
 @Controller
 @Path("/hellosummer")
@@ -599,12 +599,12 @@ ping.sync.showRootCause=
 ```java
 
 import org.summerboot.jexpress.annotation.Service;
-import org.summerboot.jexpress.observability.health.HealthChecker;
+import org.summerboot.jexpress.api.health.HealthChecker;
 import domain.org.summerboot.jexpress.webserver.netty.Err;
 
 import java.util.List;
 
-@org.summerboot.jexpress.annotation.HealthCheck(name = "myDB")
+@org.summerboot.jexpress.annotation.health.HealthCheck(name = "myDB")
 @Service(binding = HealthChecker.class)
 public class MyHealthInspector implements HealthChecker<Void> {
 
@@ -767,7 +767,7 @@ java -jar my-service.jar -use impl1
 ### 11.1 Sample Code
 
 ```java
-import org.summerboot.jexpress.core.error.BootErrorCode;
+import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.annotation.validation.Unique;
 import org.summerboot.jexpress.annotation.validation.UniqueIgnore;
 
@@ -850,8 +850,8 @@ Configure in **cfg_grpc.properties**.
 ### 13.2 Client-side
 
 ```java
-import org.summerboot.jexpress.grpc.client.GrpcClientConfig;
-import org.summerboot.jexpress.grpc.client.GrpcClient;
+import org.summerboot.jexpress.infra.grpc.client.config.GrpcClientConfig;
+import org.summerboot.jexpress.infra.grpc.client.GrpcClient;
 
 GrpcClient client = new GrpcClient(GrpcClientConfig.cfg);
 ```
@@ -876,14 +876,14 @@ Supports:
 
 ```java
 
-import org.summerboot.jexpress.integration.http.rpc.RpcResult;
+import org.summerboot.jexpress.api.rpc.RpcResult;
 
 // inject or create an RPCDelegate instance
 RpcResult<MyResponseDto> result = rpcDelegate.get(url, MyResponseDto.class, context);
 if(result.
 
         hasError()){
-        // handle errors
+        // handler errors
         }
         MyResponseDto dto = result.getResult();
 ```
@@ -971,7 +971,7 @@ gRpc.server.CallerAddressFilter.option=String
 ### 18.3 File Download Security
 
 ```java
-import org.summerboot.jexpress.security.crypto.SecurityUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
 
 String safeFilename = SecurityUtil.escape4Filename(userInput);
 ```

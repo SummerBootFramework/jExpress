@@ -23,7 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstants;
-import org.summerboot.jexpress.observability.health.HealthMonitor;
+import org.summerboot.jexpress.integration.HealthMonitor;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,7 +58,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
     protected ConfigurationMonitor() {
     }
 
-    private static final String PAUSE_LOCK_CODE = BootConstants.PAUSE_LOCK_CODE_VIAFILE;
+    private static final String PAUSE_LOCK_CODE = BootConstants.PAUSE_LOCK_CODE_VIA_FILE;
 
     public void start() throws Exception {
         if (monitor != null) {

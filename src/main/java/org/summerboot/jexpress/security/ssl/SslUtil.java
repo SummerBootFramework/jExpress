@@ -17,7 +17,7 @@
 package org.summerboot.jexpress.security.ssl;
 
 import org.apache.commons.lang3.StringUtils;
-import org.summerboot.jexpress.security.crypto.EncryptorUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;

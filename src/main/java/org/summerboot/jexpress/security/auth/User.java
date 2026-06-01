@@ -18,6 +18,8 @@ package org.summerboot.jexpress.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.summerboot.jexpress.api.auth.Caller;
+import org.summerboot.jexpress.security.auth.config.AuthConfig;
 import org.summerboot.jexpress.util.lang.BeanUtil;
 
 import java.io.Serializable;

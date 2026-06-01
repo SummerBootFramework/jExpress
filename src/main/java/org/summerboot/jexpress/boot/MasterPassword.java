@@ -21,7 +21,7 @@ import org.summerboot.jexpress.annotation.config.Config;
 import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.security.crypto.EncryptorUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 
 import java.io.File;
 import java.util.Properties;

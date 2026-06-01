@@ -16,7 +16,7 @@
  */
 package org.summerboot.jexpress.util.net;
 
-import org.summerboot.jexpress.security.crypto.SecurityUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;

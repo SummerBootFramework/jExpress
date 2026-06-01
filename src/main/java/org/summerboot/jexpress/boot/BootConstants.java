@@ -73,8 +73,8 @@ public interface BootConstants {
     String RESPONSE_HEADER_KEY_REF = BackOffice.agent.getResponseHeaderRefName();
     String RESPONSE_HEADER_KEY_TS = BackOffice.agent.getResponseHeaderServerTsName();
 
-    String PAUSE_LOCK_CODE_VIAFILE = BackOffice.agent.getPauseLockCodeViaFile();
-    String PAUSE_LOCK_CODE_VIAWEB = BackOffice.agent.getPauseLockCodeViaWeb();
+    String PAUSE_LOCK_CODE_VIA_FILE = BackOffice.agent.getPauseLockCodeViaFile();
+    String PAUSE_LOCK_CODE_VIA_API = BackOffice.agent.getPauseLockCodeViaApi();
 
 
     /*

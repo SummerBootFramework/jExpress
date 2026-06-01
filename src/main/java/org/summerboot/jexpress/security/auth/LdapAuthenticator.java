@@ -16,8 +16,9 @@
  */
 package org.summerboot.jexpress.security.auth;
 
-import org.summerboot.jexpress.boot.lifecycle.AuthenticatorListener;
-import org.summerboot.jexpress.core.session.SessionContext;
+import org.summerboot.jexpress.api.auth.Caller;
+import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.boot.lifecycle.auth.AuthenticatorListener;
 import org.summerboot.jexpress.integration.ldap.LdapAgent;
 
 import javax.naming.NamingException;
