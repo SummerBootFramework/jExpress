@@ -296,7 +296,7 @@ import org.summerboot.jexpress.api.auth.Authenticator;
 import org.summerboot.jexpress.boot.lifecycle.auth.AuthenticatorListener;
 import org.summerboot.jexpress.security.auth.BootAuthenticator;
 import org.summerboot.jexpress.api.auth.Caller;
-import org.summerboot.jexpress.security.auth.User;
+import org.summerboot.jexpress.api.auth.User;
 import handler.org.summerboot.jexpress.web.netty.RequestProcessor;
 
 @Singleton

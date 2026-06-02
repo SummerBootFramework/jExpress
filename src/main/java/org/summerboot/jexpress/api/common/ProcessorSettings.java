@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.summerboot.jexpress.webserver.domain;
+package org.summerboot.jexpress.api.common;
 
 import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootConstants;

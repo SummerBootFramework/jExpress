@@ -14,12 +14,10 @@
  * limitations under the License.
  *
  */
-package org.summerboot.jexpress.webserver.jaxrs;
+package org.summerboot.jexpress.api.common;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
-import org.summerboot.jexpress.api.common.SessionContext;
-import org.summerboot.jexpress.webserver.domain.ProcessorSettings;
 
 import java.lang.annotation.Annotation;
 import java.util.List;

@@ -20,8 +20,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.api.common.SessionContext;
-import org.summerboot.jexpress.webserver.jaxrs.RequestProcessor;
 
 import java.util.List;
 import java.util.Map;

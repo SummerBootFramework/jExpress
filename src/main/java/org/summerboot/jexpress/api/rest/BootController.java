@@ -54,6 +54,7 @@ import org.summerboot.jexpress.annotation.rest.Log;
 import org.summerboot.jexpress.annotation.rest.RequiresHealthCheck;
 import org.summerboot.jexpress.api.auth.Authenticator;
 import org.summerboot.jexpress.api.auth.Caller;
+import org.summerboot.jexpress.api.auth.LoginVo;
 import org.summerboot.jexpress.api.cache.AuthTokenCache;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.Err;
@@ -66,7 +67,6 @@ import org.summerboot.jexpress.infra.netty.util.NioHttpUtil;
 import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.security.auth.BootAuthenticator;
 import org.summerboot.jexpress.security.auth.config.AuthConfig;
-import org.summerboot.jexpress.webserver.domain.LoginVo;
 
 import javax.naming.NamingException;
 import java.io.IOException;

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.summerboot.jexpress.webserver.domain;
+package org.summerboot.jexpress.api.auth;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

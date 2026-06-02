@@ -15,7 +15,7 @@
  *
  */
 
-package org.summerboot.jexpress.infra.grpc.server;
+package org.summerboot.jexpress.api.grpc;
 
 import io.grpc.Context;
 import io.grpc.Metadata;

@@ -20,8 +20,8 @@ import io.grpc.Context;
 import io.jsonwebtoken.JwtBuilder;
 import io.netty.handler.codec.http.HttpHeaders;
 import org.summerboot.jexpress.api.cache.AuthTokenCache;
+import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.api.common.SessionContext;
-import org.summerboot.jexpress.webserver.jaxrs.RequestProcessor;
 
 import javax.naming.NamingException;
 import java.net.SocketAddress;

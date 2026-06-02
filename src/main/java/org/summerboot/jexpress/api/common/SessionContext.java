@@ -34,7 +34,6 @@ import org.summerboot.jexpress.infra.netty.config.NioConfig;
 import org.summerboot.jexpress.infra.netty.util.NioHttpUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.lang.BeanUtil;
-import org.summerboot.jexpress.webserver.domain.ProcessorSettings;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;

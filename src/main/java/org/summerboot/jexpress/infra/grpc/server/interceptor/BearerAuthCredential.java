@@ -19,7 +19,7 @@ package org.summerboot.jexpress.infra.grpc.server.interceptor;
 import io.grpc.CallCredentials;
 import io.grpc.Metadata;
 import io.grpc.Status;
-import org.summerboot.jexpress.infra.grpc.server.GrpcConstants;
+import org.summerboot.jexpress.api.grpc.GrpcConstants;
 
 import java.util.concurrent.Executor;
 

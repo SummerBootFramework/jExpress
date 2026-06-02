@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.annotation.Controller;
 import org.summerboot.jexpress.annotation.rest.Ping;
 import org.summerboot.jexpress.api.common.BootErrorCode;
+import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.util.reflect.ReflectionUtil;
 import org.summerboot.jexpress.util.runtime.ApplicationUtil;

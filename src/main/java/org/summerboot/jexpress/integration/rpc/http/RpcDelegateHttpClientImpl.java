@@ -21,6 +21,7 @@ import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.BootPoi;
 import org.summerboot.jexpress.api.common.Err;
 import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.api.rpc.RpcDelegate;
 import org.summerboot.jexpress.api.rpc.RpcMemo;
 import org.summerboot.jexpress.api.rpc.RpcResult;
 import org.summerboot.jexpress.integration.rpc.http.config.HttpClientConfig;

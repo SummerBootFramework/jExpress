@@ -36,6 +36,8 @@ import org.summerboot.jexpress.api.auth.Caller;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.BootPoi;
 import org.summerboot.jexpress.api.common.Err;
+import org.summerboot.jexpress.api.common.ProcessorSettings;
+import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.api.common.ServiceError;
 import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.boot.BootConstants;
@@ -45,9 +47,7 @@ import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.UrlSanitizer;
 import org.summerboot.jexpress.util.format.FormatterUtil;
 import org.summerboot.jexpress.util.net.GeoIpUtil;
-import org.summerboot.jexpress.webserver.domain.ProcessorSettings;
 import org.summerboot.jexpress.webserver.jaxrs.JaxRsRequestProcessorManager;
-import org.summerboot.jexpress.webserver.jaxrs.RequestProcessor;
 
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;

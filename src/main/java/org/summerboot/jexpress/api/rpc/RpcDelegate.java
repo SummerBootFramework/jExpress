@@ -14,11 +14,11 @@
  * limitations under the License.
  *
  */
-package org.summerboot.jexpress.integration.rpc.http;
+package org.summerboot.jexpress.api.rpc;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.summerboot.jexpress.api.common.SessionContext;
-import org.summerboot.jexpress.api.rpc.RpcResult;
+import org.summerboot.jexpress.integration.rpc.http.HttpClientStringSubscriber;
 
 import java.io.IOException;
 import java.net.URLEncoder;

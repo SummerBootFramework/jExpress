@@ -27,11 +27,11 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.Err;
+import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.api.mail.PostOffice;
 import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.integration.mail.config.SmtpClientConfig;
-import org.summerboot.jexpress.webserver.jaxrs.RequestProcessor;
 
 import javax.naming.AuthenticationException;
 import javax.naming.NamingException;

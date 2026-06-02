@@ -430,6 +430,13 @@ public class FormatterUtil {
         }
     }
 
+    public static String toString(byte[] byteArray) {
+        ByteBuffer buffer = ByteBuffer.allocate(byteArray.length);
+        buffer.put(byteArray);
+        buffer.flip();
+        return toString(buffer, true, true, 10, "\t");
+    }
+
     public static String toString(ByteBuffer buffer) {
         return toString(buffer, true, true, 10, "\t");
     }

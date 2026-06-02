@@ -30,13 +30,13 @@ import org.summerboot.jexpress.api.auth.Caller;
 import org.summerboot.jexpress.api.cache.AuthTokenCache;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.BootPoi;
+import org.summerboot.jexpress.api.common.ProcessorSettings;
+import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.boot.lifecycle.http.HttpExceptionListener;
 import org.summerboot.jexpress.boot.lifecycle.http.HttpLifecycleListener;
 import org.summerboot.jexpress.infra.netty.NioServerHttpRequestHandler;
 import org.summerboot.jexpress.security.auth.BootAuthenticator;
-import org.summerboot.jexpress.webserver.domain.ProcessorSettings;
-import org.summerboot.jexpress.webserver.jaxrs.RequestProcessor;
 
 import javax.naming.NamingException;
 import java.io.IOException;
