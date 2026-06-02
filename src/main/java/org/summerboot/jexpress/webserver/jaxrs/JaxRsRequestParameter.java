@@ -37,11 +37,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.annotation.validation.EnumConvert;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.Err;
+import org.summerboot.jexpress.api.common.ServiceRequest;
 import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.infra.netty.config.NioConfig;
 import org.summerboot.jexpress.util.lang.BeanUtil;
 import org.summerboot.jexpress.util.reflect.ReflectionUtil;
-import org.summerboot.jexpress.webserver.domain.ServiceRequest;
 
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;

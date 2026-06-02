@@ -50,6 +50,7 @@ import org.summerboot.jexpress.api.cache.SimpleLocalCache;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.Err;
 import org.summerboot.jexpress.api.common.ResponseEncoder;
+import org.summerboot.jexpress.api.common.ServiceRequest;
 import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstants;
@@ -61,7 +62,6 @@ import org.summerboot.jexpress.util.net.GeoIpUtil;
 import org.summerboot.jexpress.util.runtime.ApplicationUtil;
 import org.summerboot.jexpress.util.time.TimeUtil;
 import org.summerboot.jexpress.webserver.domain.ProcessorSettings;
-import org.summerboot.jexpress.webserver.domain.ServiceRequest;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

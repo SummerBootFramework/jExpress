@@ -58,6 +58,7 @@ import org.summerboot.jexpress.api.cache.AuthTokenCache;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.Err;
 import org.summerboot.jexpress.api.common.ServiceError;
+import org.summerboot.jexpress.api.common.ServiceRequest;
 import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstants;
@@ -66,7 +67,6 @@ import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.security.auth.BootAuthenticator;
 import org.summerboot.jexpress.security.auth.config.AuthConfig;
 import org.summerboot.jexpress.webserver.domain.LoginVo;
-import org.summerboot.jexpress.webserver.domain.ServiceRequest;
 
 import javax.naming.NamingException;
 import java.io.IOException;

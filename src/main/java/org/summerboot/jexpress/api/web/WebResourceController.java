@@ -20,9 +20,9 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import org.summerboot.jexpress.annotation.rest.Daemon;
 import org.summerboot.jexpress.annotation.rest.RequiresHealthCheck;
+import org.summerboot.jexpress.api.common.ServiceRequest;
 import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.infra.netty.util.NioHttpUtil;
-import org.summerboot.jexpress.webserver.domain.ServiceRequest;
 
 import java.io.File;
 import java.io.IOException;
