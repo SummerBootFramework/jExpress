@@ -40,6 +40,7 @@ import org.summerboot.jexpress.api.common.ProcessorSettings;
 import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.api.common.ServiceError;
 import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.api.rest.ErrorAuditor;
 import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.infra.netty.config.NioConfig;
 import org.summerboot.jexpress.infra.netty.util.NioHttpUtil;
