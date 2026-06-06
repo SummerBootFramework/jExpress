@@ -73,11 +73,13 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                 long hit = NioCounter.COUNTER_PING_HIT.incrementAndGet();
                 try {
                     HttpResponseStatus status = HttpResponseStatus.OK;
-                    String internalReason = null;// Do NOT expose it to external caller!
+                    String internalReason = null;// Do NOT expose internal information to external caller!
                     //if (NioConfig.cfg.isPingSyncHealthStatus() && !HealthMonitor.isHealthCheckSuccess()) {
                     //Set<String> failedHealthChecks = new HashSet<>();
-                    if (!HealthMonitor.isHealthCheckSuccess() && HealthMonitor.isRequiredHealthChecksFailed(NioConfig.cfg.getPingSyncHealthStatus_requiredHealthChecks(), HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL, null)) {
-                        status = HttpResponseStatus.BAD_GATEWAY;
+                    if (!HealthMonitor.isHealthCheckSuccess()) {
+                        if (HealthMonitor.isRequiredHealthChecksFailed(NioConfig.cfg.getPingSyncHealthStatus_requiredHealthChecks(), NioConfig.cfg.getEmptyHealthCheckPolicy())) {
+                            status = HttpResponseStatus.BAD_GATEWAY;
+                        }
                         internalReason = HealthMonitor.getStatusReasonHealthCheck();
                     }
                     if (NioConfig.cfg.isPingSyncPauseStatus() && HealthMonitor.isServicePaused()) {

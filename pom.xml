@@ -186,8 +186,8 @@
         <jwt.version>0.13.0</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.2.14.Final</netty.version>
-        <netty-tcnative.version>2.0.77.Final</netty-tcnative.version>
+        <netty.version>4.2.15.Final</netty.version>
+        <netty-tcnative.version>2.0.78.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.81.0</grpc.version>
         <guava.version>33.6.0-jre</guava.version>
@@ -206,7 +206,7 @@
 
         <!-- JSON/XML/Bean Validation -->
         <jackson.version>3.1.4</jackson.version>
-        <jackson.annotations.version>2.21</jackson.annotations.version>
+        <jackson.annotations.version>2.22</jackson.annotations.version>
         <jackson2.version>2.21.3</jackson2.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>

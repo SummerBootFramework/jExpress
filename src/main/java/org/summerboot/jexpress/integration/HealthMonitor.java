@@ -17,6 +17,7 @@
 package org.summerboot.jexpress.integration;
 
 import com.google.inject.Injector;
+import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,13 +36,16 @@ import org.summerboot.jexpress.util.concurrent.Timeout;
 import org.summerboot.jexpress.util.lang.BeanUtil;
 import org.summerboot.jexpress.util.runtime.ApplicationUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -74,7 +78,7 @@ public class HealthMonitor {
     protected static volatile String statusReasonPausedForExternalCaller;
     protected static volatile String statusReasonLastKnown;
     protected static final Set<String> pauseReleaseCodes = new HashSet<>();
-    protected static final Set<String> healthCheckFailedList = new HashSet<>();
+    protected static final Set<String> failedHealthCheckList = new HashSet<>();
 
     public static void setAppLifecycleListener(AppLifecycleListener listener) {
         appLifecycleListener = listener;
@@ -263,11 +267,11 @@ public class HealthMonitor {
                                     } else {
                                         healthCheckAllPassed &= true;
                                     }
-                                    healthCheckFailedList.remove(inspectorName);
+                                    failedHealthCheckList.remove(inspectorName);
                                 } else {
                                     healthCheckAllPassed = false;
                                     healthCheckFailedReport.addErrors(errs);
-                                    healthCheckFailedList.add(inspectorName);
+                                    failedHealthCheckList.add(inspectorName);
                                         /*Level level = healthInspector.logLevel();
                                         if (level != null && log.isEnabled(level)) {
                                             healthCheckFailedReport.addErrors(errs);
@@ -287,8 +291,10 @@ public class HealthMonitor {
                         setHealthStatus(healthCheckAllPassed, inspectionReport);
                     } else {
                         try {
-                            //inspectionReport = BeanUtil.toJson(healthCheckFailedReport, true, true);
-                            inspectionReport = healthCheckFailedReport.toStringWithStackTrace();
+                            List<String> affectedServices = getAffectedServices();
+                            healthCheckFailedReport.adAdditionalField("affectedServices", affectedServices);
+                            //inspectionReport = healthCheckFailedReport.toStringWithStackTrace();
+                            inspectionReport = healthCheckFailedReport.toJson();
                         } catch (Throwable ex) {
                             inspectionReport = " toJson failed " + ex;
                         }
@@ -368,7 +374,7 @@ public class HealthMonitor {
     public static String buildMessage() {
         StringBuilder sb = new StringBuilder();
         sb.append(BootConstants.BR)
-                .append("Health Check: ").append(isHealthCheckSuccess ? "passed" : "failed: ").append(healthCheckFailedList).append(BootConstants.BR);
+                .append("Health Check: ").append(isHealthCheckSuccess ? "passed" : "failed: ").append(failedHealthCheckList).append(BootConstants.BR);
         if (!isHealthCheckSuccess) {
             sb.append("\t cause: ").append(statusReasonHealthCheck).append(BootConstants.BR);
         }
@@ -420,27 +426,31 @@ public class HealthMonitor {
     }
 
 
-    public static boolean isRequiredHealthChecksFailed(String[] requiredHealthChecks, EmptyHealthCheckPolicy mode, final Set<String> failedHealthChecks) {
+    public static boolean isRequiredHealthChecksFailed(String[] requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicyo, final Set<String> failedHealthChecks) {
         Set<String> set = null;
         if (requiredHealthChecks != null && requiredHealthChecks.length > 0) {
             set = new HashSet<>(Math.max((int) (requiredHealthChecks.length / 0.75f) + 1, 16));
             Collections.addAll(set, requiredHealthChecks);
         }
-        return isRequiredHealthChecksFailed(set, mode, failedHealthChecks);
+        return isRequiredHealthChecksFailed(set, emptyHealthCheckPolicyo, failedHealthChecks);
     }
 
-    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy policy, final Set<String> failedHealthChecks) {
+    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicyo) {
+        return isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicyo, null);
+    }
+
+    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicyo, final Set<String> failedHealthChecks) {
         if (failedHealthChecks != null) {
             failedHealthChecks.clear();
         }
         if (requiredHealthChecks == null || requiredHealthChecks.isEmpty()) {
-            switch (policy) {
+            switch (emptyHealthCheckPolicyo) {
                 case REQUIRE_ALL -> {
                     // if criticalHealthChecks is empty (default), that means requrie ALL HealthChecks, so return true if healthCheckFailedList is NOT empty
                     if (failedHealthChecks == null) {
-                        return !healthCheckFailedList.isEmpty();
+                        return !failedHealthCheckList.isEmpty();
                     } else {
-                        failedHealthChecks.addAll(healthCheckFailedList);
+                        failedHealthChecks.addAll(failedHealthCheckList);
                     }
                 }
                 case REQUIRE_NONE -> {
@@ -451,7 +461,7 @@ public class HealthMonitor {
         } else {
             // if criticalHealthChecks is NOT empty (user specified), that means critical on only given HealthChecks, so return true if healthCheckFailedList contains any of the criticalHealthChecks
             for (String criticalHealthCheck : requiredHealthChecks) {
-                if (healthCheckFailedList.contains(criticalHealthCheck)) {
+                if (failedHealthCheckList.contains(criticalHealthCheck)) {
                     if (failedHealthChecks == null) {
                         return true;
                     } else {
@@ -465,5 +475,49 @@ public class HealthMonitor {
         } else {
             return !failedHealthChecks.isEmpty();
         }
+    }
+
+    protected static Map<String, Set<String>> affectedServices = new ConcurrentHashMap<>();
+
+    private static final String ALL = EmptyHealthCheckPolicy.REQUIRE_ALL.name();
+
+    public static void registerAffectedServices(HttpMethod httpMethod, String declaredUri, Set<String> healthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicy) {
+        String registeredUri = httpMethod + " " + declaredUri;
+
+        if (healthChecks == null || healthChecks.isEmpty()) {
+            switch (emptyHealthCheckPolicy) {
+                case REQUIRE_ALL -> {
+                    affectedServices.computeIfAbsent(ALL, k -> new HashSet<>()).add(registeredUri);
+                    return;
+                }
+                case REQUIRE_NONE -> {
+                    return;
+                }
+            }
+        }
+        for (String healthCheck : healthChecks) {
+            if (StringUtils.isEmpty(healthCheck)) {
+                continue;
+            }
+            affectedServices.computeIfAbsent(healthCheck, k -> new HashSet<>()).add(registeredUri);
+        }
+    }
+
+    private static final List<String> EMPTY_LIST = Collections.emptyList();
+
+    public static List<String> getAffectedServices() {
+        if (failedHealthCheckList.isEmpty()) {
+            return EMPTY_LIST;
+        }
+        List<String> currentAffectedServices = new ArrayList<>();
+        Set<String> all = affectedServices.get(ALL);
+        if (all != null) {
+            currentAffectedServices.addAll(all);
+        }
+        for (String failedHealthCheck : failedHealthCheckList) {
+            currentAffectedServices.addAll(affectedServices.get(failedHealthCheck));
+        }
+        // remove duplicated and sort by alphabetical order for better readability
+        return currentAffectedServices.stream().filter(Objects::nonNull).distinct().sorted().toList();
     }
 }

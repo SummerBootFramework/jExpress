@@ -31,6 +31,7 @@ import org.summerboot.jexpress.annotation.rest.Ping;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.util.reflect.ReflectionUtil;
 import org.summerboot.jexpress.util.runtime.ApplicationUtil;
 
@@ -224,6 +225,10 @@ public class JaxRsRequestProcessorManager {
                     JaxRsRequestProcessor processor;
                     try {
                         processor = new JaxRsRequestProcessor(javaInstance, javaMethod, httpMethod, path, declareRoles);
+                        String declaredUri = processor.getDeclaredUri();
+                        Set<String> requiredHealthChecks = processor.getRequiredHealthChecks();
+                        HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = processor.getEmptyHealthCheckPolicy();
+                        HealthMonitor.registerAffectedServices(httpMethod, declaredUri, requiredHealthChecks, emptyHealthCheckPolicy);
                         memo.append("\n\t- ").append(httpMethod).append(" ").append(path).append(" (").append(javaMethod.getDeclaringClass().getName()).append(".").append(javaMethod.getName()).append(" )");
                     } catch (Throwable ex) {
                         errors.append("failed to create processor for ").append(controllerClass.getName()).append(".").append(javaMethod.getName()).append("\n\t").append(ex);
@@ -240,7 +245,7 @@ public class JaxRsRequestProcessorManager {
                                 : new HashMap<>();
                         httpMethodMapRef.put(httpMethod, processorMapPerHttpMethod);
                     }
-                    String key = processor.getProcessedDeclaredPath();
+                    String key = processor.getProcessedDeclaredUri();
 //                    if (subMap.containsKey(key)) {
 //                        errors.add("request already exists: " + httpMethod + " '" + path + "' @ " + controllerClass.getName() + "." + javaMethod.getName() + "()");
 //                        continue;

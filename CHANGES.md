@@ -24,6 +24,7 @@
 * ✨ New API: LargeFileStreamHandler for streaming large file response with low memory usage, and support for WebSocket for partial content delivery.
 * WebResourceController.requestWebResource with @Daemon to serve web resources with enhanced reliability.
 * Performance improvement: AgentPdfBox - Serial graphics processing converted to parallel processing
+* @Ping will return a new field affectedServices in the response if there are any unhealthy services.
 
 #### Architecture-Oriented packaging layering Rules
 

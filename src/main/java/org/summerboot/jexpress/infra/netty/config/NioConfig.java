@@ -27,6 +27,7 @@ import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.infra.netty.util.IoMultiplexer;
+import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.lang.BeanUtil;
 import org.summerboot.jexpress.util.net.GeoIpUtil;
@@ -105,8 +106,12 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.idle.threshold.second", defaultValue = "61", desc = "make it prime number when you have both NIO and gRPC server running")
     protected volatile int idleThresholdSecond;
 
-    @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", desc = "@Inspector.names in CSV format, empty/null means require ALL HealthChecks")
+    @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", desc = "@Inspector.names in CSV format, empty/null value depends on emptyHealthCheckPolicy")
     protected volatile Set<String> pingSyncHealthStatus_requiredHealthChecks;
+
+    @Config(key = "ping.sync.HealthStatus.emptyHealthCheckPolicy", defaultValue = "REQUIRE_ALL", desc = "Policy for handling empty requiredHealthChecks, available values: REQUIRE_ALL (default), REQUIRE_NONE")
+    protected volatile HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
+
     @Config(key = "ping.sync.PauseStatus", defaultValue = "true", desc = "Ping response status is synced with PAUSE status")
     protected volatile boolean pingSyncPauseStatus;
     @Config(key = "ping.sync.showRootCause", defaultValue = "false", desc = "Ping response with root cause, this may expose internal info to external caller")
@@ -615,6 +620,10 @@ public class NioConfig extends BootConfig {
 
     public Set<String> getPingSyncHealthStatus_requiredHealthChecks() {
         return pingSyncHealthStatus_requiredHealthChecks;
+    }
+
+    public HealthMonitor.EmptyHealthCheckPolicy getEmptyHealthCheckPolicy() {
+        return emptyHealthCheckPolicy;
     }
 
     public boolean isPingSyncPauseStatus() {

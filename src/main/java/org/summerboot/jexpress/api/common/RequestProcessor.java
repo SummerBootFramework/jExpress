@@ -18,10 +18,12 @@ package org.summerboot.jexpress.api.common;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
+import org.summerboot.jexpress.integration.HealthMonitor;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -32,15 +34,20 @@ public interface RequestProcessor {
 
     ProcessorSettings getProcessorSettings();
 
-    String getDeclaredPath();
+    String getDeclaredUri();
 
-    String getProcessedDeclaredPath();
+    String getProcessedDeclaredUri();
+
+    Set<String> getRequiredHealthChecks();
+
+    HealthMonitor.EmptyHealthCheckPolicy getEmptyHealthCheckPolicy();
 
     boolean isRoleBased();
 
     boolean matches(String httpRequestPath);
 
     boolean authorizationCheck(final ChannelHandlerContext channelHandlerCtx, final HttpHeaders httpHeaders, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context, int badRequestErrorCode) throws Throwable;
+
 
     Object process(ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, SessionContext context) throws Throwable;
 

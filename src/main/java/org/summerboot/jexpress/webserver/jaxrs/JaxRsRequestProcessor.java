@@ -69,8 +69,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     //basic info
     protected final Object javaInstance;
     protected final Method javaMethod;
-    protected final String declaredPath;
-    protected final String processedDeclaredPath;
+    protected final String declaredUri;
+    protected final String processedDeclaredUri;
     protected final Set<String> rolesAllowed;
     protected final boolean roleBased;
     protected final boolean permitAll;
@@ -81,7 +81,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     protected final Log classLevelLogAnnotation;
     protected final boolean rejectWhenPaused;
     //protected final boolean rejectWhenHealthCheckFailed;
-    protected final String[] requiredHealthChecks;
+    protected final Set<String> requiredHealthChecks;
     protected final HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy;
 
     //param info    
@@ -102,11 +102,11 @@ public class JaxRsRequestProcessor implements RequestProcessor {
 //    protected final boolean logResponseHeader;
 //    protected final boolean logResponseBody;
 
-    public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String declaredPath, final Set<String> declareRoles) {
+    public JaxRsRequestProcessor(final Object javaInstance, final Method javaMethod, final HttpMethod httpMethod, final String declaredUri, final Set<String> declareRoles) {
         //1. Basic info
         this.javaInstance = javaInstance;
         this.javaMethod = javaMethod;
-        this.declaredPath = declaredPath;
+        this.declaredUri = declaredUri;
         Class controllerClass = javaInstance.getClass();
         String info = controllerClass.getName() + "." + javaMethod.getName();
         DeclareRoles drs = (DeclareRoles) controllerClass.getAnnotation(DeclareRoles.class);
@@ -138,10 +138,10 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         RequiresHealthCheck classLevelRequiresHealthCheck = (RequiresHealthCheck) controllerClass.getAnnotation(RequiresHealthCheck.class);
         RequiresHealthCheck methodLevelRequiresHealthCheck = javaMethod.getAnnotation(RequiresHealthCheck.class);
         if (methodLevelRequiresHealthCheck != null) {
-            requiredHealthChecks = methodLevelRequiresHealthCheck.value();
+            requiredHealthChecks = toImmutableSet(info, methodLevelRequiresHealthCheck.value());
             emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
         } else if (classLevelRequiresHealthCheck != null) {
-            requiredHealthChecks = classLevelRequiresHealthCheck.value();
+            requiredHealthChecks = toImmutableSet(info, classLevelRequiresHealthCheck.value());
             emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
         } else {
             requiredHealthChecks = null;
@@ -269,7 +269,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         String pathParamRegex_OptionalInURL = "(\\/.*)?";
         String matrixParamRegx = "(;.+=.*)*";
         Map<String, MetaPathParam> pathParamMapTemp = new HashMap<>();
-        String[] pathMembers = FormatterUtil.parseURL(declaredPath);
+        String[] pathMembers = FormatterUtil.parseURL(declaredUri);
         StringBuilder sb = new StringBuilder();
         int size = pathMembers.length;
         int last = size - 1;
@@ -300,8 +300,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         }
         this.hasPathParam = !pathParamMapTemp.isEmpty();
         this.pathParamMap = hasPathParam ? Map.copyOf(pathParamMapTemp) : null;
-        this.processedDeclaredPath = (hasPathParam || hasMatrixParam) ? sb.toString() : declaredPath;
-        this.regexPattern = (hasPathParam || hasMatrixParam) ? Pattern.compile(this.processedDeclaredPath) : null;
+        this.processedDeclaredUri = (hasPathParam || hasMatrixParam) ? sb.toString() : declaredUri;
+        this.regexPattern = (hasPathParam || hasMatrixParam) ? Pattern.compile(this.processedDeclaredUri) : null;
 
         //logging info
         classLevelLogAnnotation = (Log) controllerClass.getAnnotation(Log.class);
@@ -331,6 +331,20 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                 responseHeaderServerTsName = BootConstants.RESPONSE_HEADER_KEY_TS;
             }
             processorSettings.setHttpServiceResponseHeaderName_ServerTimestamp(responseHeaderServerTsName);
+        }
+    }
+
+    protected static Set<String> toImmutableSet(String info, String[] array) {
+        if (array == null) {
+            return null;
+        }
+        if (array.length < 1) {
+            return Set.of();
+        }
+        try {
+            return Set.of(array);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(info + " @RequiresHealthCheck " + Arrays.toString(array) + " has " + ex.getMessage());
         }
     }
 
@@ -387,13 +401,23 @@ public class JaxRsRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public String getDeclaredPath() {
-        return declaredPath;
+    public String getDeclaredUri() {
+        return declaredUri;
     }
 
     @Override
-    public String getProcessedDeclaredPath() {
-        return processedDeclaredPath;
+    public String getProcessedDeclaredUri() {
+        return processedDeclaredUri;
+    }
+
+    @Override
+    public HealthMonitor.EmptyHealthCheckPolicy getEmptyHealthCheckPolicy() {
+        return emptyHealthCheckPolicy;
+    }
+
+    @Override
+    public Set<String> getRequiredHealthChecks() {
+        return requiredHealthChecks;
     }
 
     @Override
@@ -406,7 +430,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         if (regexPattern != null) {
             return regexPattern.matcher(path).matches();
         } else {
-            return processedDeclaredPath.equals(path);
+            return processedDeclaredUri.equals(path);
         }
     }
 
@@ -595,7 +619,7 @@ public class JaxRsRequestProcessor implements RequestProcessor {
                     } else {
                         String pattern = meta.pathParamMetaPattern.pattern();
                         Err e = new Err(BootErrorCode.BAD_REQUEST_DATA, null,
-                                "Value (" + value + ") does not match parameter (" + pathParamName + ")'s pattern (" + pattern + ") in declared URL: " + declaredPath, null);
+                                "Value (" + value + ") does not match parameter (" + pathParamName + ")'s pattern (" + pattern + ") in declared URL: " + declaredUri, null);
                         context.status(HttpResponseStatus.BAD_REQUEST).error(e);
                     }
                 }
