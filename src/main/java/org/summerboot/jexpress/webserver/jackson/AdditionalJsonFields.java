@@ -35,10 +35,11 @@ public class AdditionalJsonFields {
 
     @JsonAnySetter
     public void adAdditionalField(String key, Object value) {
-        if (additionalFields == null) {
-            additionalFields = new TreeMap<>();
-        }
-        additionalFields.put(key, value);
+//        if (additionalFields == null) {
+//            additionalFields = new TreeMap<>();
+//        }
+//        additionalFields.put(key, value);
+        additionalFields.computeIfAbsent(key, k -> value);
     }
 
 

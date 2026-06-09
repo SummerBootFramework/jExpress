@@ -38,6 +38,7 @@ import org.summerboot.jexpress.boot.lifecycle.http.HttpLifecycleListener;
 import org.summerboot.jexpress.infra.netty.config.NioConfig;
 import org.summerboot.jexpress.infra.netty.util.NioHttpUtil;
 import org.summerboot.jexpress.integration.HealthMonitor;
+import org.summerboot.jexpress.util.format.ServiceErrorSanitizer;
 import org.summerboot.jexpress.util.time.TimeUtil;
 
 import java.time.OffsetDateTime;
@@ -87,14 +88,14 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                     }
                     if (se == null) {
                         internalReason = null;
-                    } else {
-                        if (!NioConfig.cfg.isPingSyncShowRootCause()) {
-                            se.getErrors().forEach((error) -> {
-                                error.setErrorDesc(null);
-                                error.setCause(null);
-                            });
-                        }
+                    } else if (NioConfig.cfg.isPingSyncShowRootCause()) {
                         internalReason = se.toJson();
+                    } else {
+                        int errorFieldBitmap = ServiceErrorSanitizer.ERR_FIELD_ERROR_CODE
+                                | ServiceErrorSanitizer.ERR_FIELD_ERROR_TAG
+                                | ServiceErrorSanitizer.ERR_FIELD_ADDITIONAL_FIELDS;
+                        ServiceError sanitized = ServiceErrorSanitizer.deepClone(se, true, errorFieldBitmap);
+                        internalReason = sanitized.toJson();
                     }
                     boolean isContinue = httpLifecycleListener.beforeProcessPingRequest(ctx, req.uri(), hit, status);
                     if (isContinue) {

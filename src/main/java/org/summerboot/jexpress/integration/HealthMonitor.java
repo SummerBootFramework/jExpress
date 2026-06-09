@@ -339,10 +339,10 @@ public class HealthMonitor {
         updateServiceStatus(serviceStatusChanged, detailedReason);
     }
 
-    protected static void setHealthCheckPassed(boolean newStatus) {
-        boolean serviceStatusChanged = isHealthCheckSuccess ^ newStatus;
-        isHealthCheckSuccess = newStatus;
-        if (newStatus) {
+    protected static void setHealthCheckPassed(boolean isPassed) {
+        boolean serviceStatusChanged = isHealthCheckSuccess ^ isPassed;
+        isHealthCheckSuccess = isPassed;
+        if (isPassed) {
             failedHealthChecks.clear();
             updateServiceStatus(serviceStatusChanged, "Health check passed");
             return;
@@ -378,15 +378,18 @@ public class HealthMonitor {
 
     public static String buildMessage() {
         StringBuilder sb = new StringBuilder();
+
         sb.append(BootConstants.BR)
-                .append("Health Check: ").append(isHealthCheckSuccess ? "passed" : "failed: ").append(BootConstants.BR);
+                .append("Health Check: ").append(isHealthCheckSuccess ? "passed" : "with error: ").append(BootConstants.BR);
         if (!isHealthCheckSuccess) {
-            sb.append("\t cause: ").append(statusReasonLastKnown).append(BootConstants.BR);
+            sb.append("\t cause: ").append(statusReasonHealthCheck == null ? "" : statusReasonHealthCheck.toJson()).append(BootConstants.BR);
         }
+
         sb.append("Service Status: ").append(isServicePaused ? "paused" : "running").append(BootConstants.BR);
         if (isServicePaused) {
             sb.append("\t cause: ").append(statusReasonPaused == null ? "" : statusReasonPaused.toJson()).append(BootConstants.BR);
         }
+        
         return sb.toString();
     }
 
