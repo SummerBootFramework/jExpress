@@ -50,6 +50,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -73,12 +74,11 @@ public class HealthMonitor {
      */
     protected static volatile boolean isHealthCheckSuccess = true;
     protected static volatile boolean isServicePaused = false;
-    protected static volatile String statusReasonHealthCheck;
-    protected static volatile String statusReasonPaused;
-    protected static volatile String statusReasonPausedForExternalCaller;
+    protected static volatile ServiceError statusReasonHealthCheck;
+    protected static volatile ServiceError statusReasonPaused;
     protected static volatile String statusReasonLastKnown;
-    protected static final Set<String> pauseReleaseCodes = new HashSet<>();
-    protected static final Set<String> failedHealthCheckList = new HashSet<>();
+    protected static final Map<String, Err> pauseReleaseCodes = new ConcurrentHashMap<>();
+    protected static final Map<String, List<Err>> failedHealthChecks = new ConcurrentHashMap<>();
 
     public static void setAppLifecycleListener(AppLifecycleListener listener) {
         appLifecycleListener = listener;
@@ -86,23 +86,23 @@ public class HealthMonitor {
 
     private static final String ANNOTATION = HealthChecker.class.getSimpleName();
 
-    public static void registerDefaultHealthInspectors(Map<String, Object> defaultHealthInspectors, StringBuilder memo) {
+    public static void registerDefaultHealthInspectors(Map<String, Object> annotatedHealthCheckers, StringBuilder memo) {
         REGISTERED_HEALTH_CHECKERS.clear();
-        if (defaultHealthInspectors == null || defaultHealthInspectors.isEmpty()) {
+        if (annotatedHealthCheckers == null || annotatedHealthCheckers.isEmpty()) {
             memo.append(BootConstants.BR).append("\t- @" + ANNOTATION + " registered: none");
             return;
         }
         StringBuilder sb = new StringBuilder();
         boolean error = false;
-        for (Map.Entry<String, Object> entry : defaultHealthInspectors.entrySet()) {
-            String name = entry.getKey();
-            Object healthInspector = entry.getValue();
-            if (healthInspector instanceof HealthChecker) {
-                REGISTERED_HEALTH_CHECKERS.add((HealthChecker) healthInspector);
-                memo.append(BootConstants.BR).append("\t- @Inspector registered: ").append(name).append("=").append(healthInspector.getClass().getName());
+        for (Map.Entry<String, Object> entry : annotatedHealthCheckers.entrySet()) {
+            String className = entry.getKey();
+            Object annotatedHealthChecker = entry.getValue();
+            if (annotatedHealthChecker instanceof HealthChecker) {
+                REGISTERED_HEALTH_CHECKERS.add((HealthChecker) annotatedHealthChecker);
+                memo.append(BootConstants.BR).append("\t- @Inspector registered: ").append(className).append("=").append(annotatedHealthChecker.getClass().getName());
             } else {
                 error = true;
-                sb.append(BootConstants.BR).append("\tCoding Error: class ").append(healthInspector.getClass().getName()).append(" has annotation @").append(HealthCheck.class.getSimpleName()).append(", should implement ").append(HealthChecker.class.getName());
+                sb.append(BootConstants.BR).append("\tCoding Error: class ").append(annotatedHealthChecker.getClass().getName()).append(" has annotation @").append(HealthCheck.class.getSimpleName()).append(", should implement ").append(HealthChecker.class.getName());
             }
         }
         if (error) {
@@ -216,101 +216,86 @@ public class HealthMonitor {
         int inspectionIntervalSeconds = NioConfig.cfg.getHealthInspectionIntervalSeconds();
         long timeoutMs = BackOffice.agent.getProcessTimeoutMilliseconds();
         String timeoutDesc = BackOffice.agent.getProcessTimeoutAlertMessage();
-        final Set<HealthChecker> batchInspectors = new TreeSet<>();
+        final Set<HealthChecker> triggeredHealthCheckers = new TreeSet<>();
+        AtomicLong retry = new AtomicLong(0);
         do {
-            ServiceError healthCheckFailedReport = new ServiceError(BootConstants.APP_ID + "-HealthMonitor");
-            batchInspectors.clear();
-            Boolean healthCheckAllPassed = null;
+            triggeredHealthCheckers.clear();
+            Boolean allHealthCheckPassed = null;
             try {
-                // take all health inspectors from the queue, remove duplicated
+                // take all health checkers from the queue, remove duplicated
                 do {
-                    HealthChecker healthChecker = HEALTH_CHECKER_QUEUE.take();// block/wait here for health inspectors
-                    batchInspectors.add(healthChecker);
+                    HealthChecker triggeredHealthChecker = HEALTH_CHECKER_QUEUE.take();// block/wait here for health checkers
+                    triggeredHealthCheckers.add(triggeredHealthChecker);
                 } while (!HEALTH_CHECKER_QUEUE.isEmpty());
-                // inspect
-                for (HealthChecker healthChecker : batchInspectors) {
-                    HealthCheck healthCheckAnnotation = healthChecker.getClass().getAnnotation(HealthCheck.class);
-                    final String inspectorName;
+                // for each checker do health check
+                for (HealthChecker triggeredHealthChecker : triggeredHealthCheckers) {
+                    HealthCheck healthCheckAnnotation = triggeredHealthChecker.getClass().getAnnotation(HealthCheck.class);
+                    final String triggeredHealthCheckerName;
                     if (healthCheckAnnotation != null && StringUtils.isNoneBlank(healthCheckAnnotation.name())) {
-                        inspectorName = healthCheckAnnotation.name();
+                        triggeredHealthCheckerName = healthCheckAnnotation.name();
                     } else {
-                        inspectorName = healthChecker.getClass().getSimpleName();
+                        triggeredHealthCheckerName = triggeredHealthChecker.getClass().getSimpleName();
                     }
 
-                    try (var a = Timeout.watch(inspectorName + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
-                        HealthChecker.InspectionType inspectionType = healthChecker.inspectionType();
-                        List<Err> errs = healthChecker.ping();
+                    try (var a = Timeout.watch(triggeredHealthCheckerName + ".ping()", timeoutMs).withDesc(timeoutDesc)) {
+                        List<Err> errs = triggeredHealthChecker.ping();
                         boolean currentInspectionPassed = errs == null || errs.isEmpty();
                         if (!currentInspectionPassed) {
-                            HEALTH_CHECKER_QUEUE.offer(healthChecker);
+                            HEALTH_CHECKER_QUEUE.offer(triggeredHealthChecker); // put failed health check back into the queue
                         }
+                        HealthChecker.InspectionType inspectionType = triggeredHealthChecker.inspectionType();
                         switch (inspectionType) {
                             case PauseCheck -> {
-                                String lockCode = healthChecker.pauseLockCode();
-                                String reason;
+                                String lockCode = triggeredHealthChecker.pauseLockCode();
                                 if (currentInspectionPassed) {
-                                    reason = inspectorName + " success";
-                                    pauseService(false, lockCode, reason);
+                                    //failedHealthChecks.remove(triggeredHealthCheckerName);
+                                    pauseService(false, lockCode, triggeredHealthCheckerName, "health check success");
                                 } else {
-                                    try {
-                                        reason = BeanUtil.toJson(errs, true, true);
-                                    } catch (Throwable ex) {
-                                        reason = inspectorName + " failed " + ex;
-                                    }
-                                    pauseService(true, lockCode, reason);
+                                    //failedHealthChecks.put(triggeredHealthCheckerName, errs);
+                                    pauseService(true, lockCode, triggeredHealthCheckerName, "health check failed with errs: " + BeanUtil.toJson(errs));
                                 }
                             }
                             case HealthCheck -> {
                                 if (currentInspectionPassed) {
-                                    if (healthCheckAllPassed == null) {
-                                        healthCheckAllPassed = true;
+                                    if (allHealthCheckPassed == null) {
+                                        allHealthCheckPassed = true;
                                     } else {
-                                        healthCheckAllPassed &= true;
+                                        allHealthCheckPassed &= true;
                                     }
-                                    failedHealthCheckList.remove(inspectorName);
+                                    failedHealthChecks.remove(triggeredHealthCheckerName);
                                 } else {
-                                    healthCheckAllPassed = false;
-                                    healthCheckFailedReport.addErrors(errs);
-                                    failedHealthCheckList.add(inspectorName);
-                                        /*Level level = healthInspector.logLevel();
-                                        if (level != null && log.isEnabled(level)) {
-                                            healthCheckFailedReport.addErrors(errs);
-                                        }*/
+                                    allHealthCheckPassed = false;
+                                    failedHealthChecks.put(triggeredHealthCheckerName, errs);
                                 }
+
+
                             }
                         }
                     } catch (Throwable ex) {
-                        HEALTH_CHECKER_QUEUE.offer(healthChecker);
-                        log.error("Health check error: " + inspectorName, ex);
+                        HEALTH_CHECKER_QUEUE.offer(triggeredHealthChecker);
+                        log.error("Health check error: " + triggeredHealthCheckerName, ex);
                     }
                 }
-                if (healthCheckAllPassed != null) {
-                    String inspectionReport;
-                    if (healthCheckAllPassed) {
-                        inspectionReport = "Current all health check passed";
-                        setHealthStatus(healthCheckAllPassed, inspectionReport);
-                    } else {
-                        try {
-                            List<String> affectedServices = getAffectedServices();
-                            healthCheckFailedReport.adAdditionalField("affectedServices", affectedServices);
-                            //inspectionReport = healthCheckFailedReport.toStringWithStackTrace();
-                            inspectionReport = healthCheckFailedReport.toJson();
-                        } catch (Throwable ex) {
-                            inspectionReport = " toJson failed " + ex;
-                        }
-                        setHealthStatus(healthCheckAllPassed, inspectionReport);
-                        long retryIndex = HealthChecker.retryIndex.get();// not being set yet
-                        if (appLifecycleListener != null && started) {
-                            try {
-                                appLifecycleListener.onHealthInspectionFailed(appContext, isHealthCheckSuccess, isServicePaused, retryIndex, inspectionIntervalSeconds);
-                            } catch (Throwable ex) {
-                                log.error("appLifecycleListener.onHealthInspectionFailed() error", ex);
-                            }
-                        }
-                    }
-                }
-                started = true;
+                // all done, summarize the results
+                if (allHealthCheckPassed != null) {
+                    setHealthCheckPassed(allHealthCheckPassed);
 
+                    long retryValue = retry.get();// not being set yet
+                    if (allHealthCheckPassed) {
+                        retry.set(0);
+                    } else {
+                        retry.incrementAndGet();
+                    }
+                    if (appLifecycleListener != null && started) {
+                        try {
+                            appLifecycleListener.onHealthCheckFinished(appContext, isHealthCheckSuccess, isServicePaused, retryValue, inspectionIntervalSeconds);
+                        } catch (Throwable ex) {
+                            log.error("appLifecycleListener.onHealthInspectionFailed() error", ex);
+                        }
+                    }
+                }
+
+                started = true;
                 // wait
                 TimeUnit.SECONDS.sleep(inspectionIntervalSeconds);
             } catch (InterruptedException ex) {
@@ -320,41 +305,61 @@ public class HealthMonitor {
         } while (keepRunning);
     };
 
-    protected static void setHealthStatus(boolean newStatus, String reason) {
-        boolean serviceStatusChanged = isHealthCheckSuccess ^ newStatus;
-        isHealthCheckSuccess = newStatus;
-        statusReasonHealthCheck = reason;
-        updateServiceStatus(serviceStatusChanged, reason);
-    }
-
-    public static void pauseService(boolean pauseService, String lockCode, String reason) {
+    public static void pauseService(boolean pauseService, String lockCode, String triggeredHealthCheckerName, String reason) {
         boolean serviceStatusChanged = isServicePaused ^ pauseService;
         // check lock
         if (lockCode == null) {
             lockCode = "";
         }
+
+        final String detailedReason;
         if (pauseService) {
-            pauseReleaseCodes.add(lockCode);
+            isServicePaused = true;// pause immediately once any lock code added, to make sure no new request will be processed before the service is paused
+            Err err = new Err(BootErrorCode.SERVICE_PAUSED, triggeredHealthCheckerName, "Service paused due to " + reason + ", lockCode: " + lockCode, null);
+            pauseReleaseCodes.put(lockCode, err);
+            detailedReason = BootConstants.APP_ID + " Service paused by health checker (" + triggeredHealthCheckerName + "), lock code: " + lockCode;
+            statusReasonPaused = new ServiceError(BootConstants.APP_ID + "-HealthMonitor");
+            statusReasonPaused.addError(err);
         } else {
             pauseReleaseCodes.remove(lockCode);
             int size = pauseReleaseCodes.size();
             if (size > 0) {// keep paused by other reasons with different passwords
-                pauseService = true;
-                reason += ", still paused by other " + size + " reason(s) with different lock code(s)";
+                isServicePaused = true;
+                detailedReason = BootConstants.APP_ID + " Service remain paused by other " + size + " lock code(s), although just released by health checker (" + triggeredHealthCheckerName + "), lock code: " + lockCode;
+                statusReasonPaused = new ServiceError(BootConstants.APP_ID + "-HealthMonitor");
+                pauseReleaseCodes.values().forEach(err -> {
+                    statusReasonPaused.addError(err);
+                });
+            } else {
+                isServicePaused = false;
+                detailedReason = BootConstants.APP_ID + " Service resumed by health checker (" + triggeredHealthCheckerName + "), lock code: " + lockCode + ", all lock codes released";
+                statusReasonPaused = null;
             }
         }
-        //serviceStatusChanged = isServicePaused ^ pauseService;
-        isServicePaused = pauseService;
-        if (isServicePaused) {
-            ServiceError se = new ServiceError(HealthMonitor.class.getSimpleName());
-            Err error = new Err(BootErrorCode.SERVICE_PAUSED, null, "Service is paused: " + lockCode, null);
-            se.addError(error);
-            statusReasonPausedForExternalCaller = se.toJson();
-        }
-        statusReasonPaused = reason;
-        updateServiceStatus(serviceStatusChanged, reason);
+        updateServiceStatus(serviceStatusChanged, detailedReason);
     }
 
+    protected static void setHealthCheckPassed(boolean newStatus) {
+        boolean serviceStatusChanged = isHealthCheckSuccess ^ newStatus;
+        isHealthCheckSuccess = newStatus;
+        if (newStatus) {
+            failedHealthChecks.clear();
+            updateServiceStatus(serviceStatusChanged, "Health check passed");
+            return;
+        }
+
+        //failedHealthChecks.forEach((k, v) -> log.warn("Health check failed: " + k + ", errors: " + v));
+        List<String> affectedServices = getAffectedServices();
+        statusReasonHealthCheck = new ServiceError(BootConstants.APP_ID + "-HealthMonitor");
+        statusReasonHealthCheck.adAdditionalField("affectedServices", affectedServices);
+        failedHealthChecks.forEach((healthCheckerName, errors) -> {
+            errors.forEach((error) -> {
+                error.setErrorTag(healthCheckerName);
+            });
+            statusReasonHealthCheck.addErrors(errors);
+        });
+        updateServiceStatus(serviceStatusChanged, statusReasonHealthCheck.toJson());
+    }
 
     protected static void updateServiceStatus(boolean serviceStatusChanged, String reason) {
         statusReasonLastKnown = reason;
@@ -374,12 +379,14 @@ public class HealthMonitor {
     public static String buildMessage() {
         StringBuilder sb = new StringBuilder();
         sb.append(BootConstants.BR)
-                .append("Health Check: ").append(isHealthCheckSuccess ? "passed" : "failed: ").append(failedHealthCheckList).append(BootConstants.BR);
+                .append("Health Check: ").append(isHealthCheckSuccess ? "passed" : "failed: ").append(BootConstants.BR);
         if (!isHealthCheckSuccess) {
-            sb.append("\t cause: ").append(statusReasonHealthCheck).append(BootConstants.BR);
+            sb.append("\t cause: ").append(statusReasonLastKnown).append(BootConstants.BR);
         }
-        sb.append("Service Status: ").append(isServicePaused ? "paused" : "running").append(BootConstants.BR)
-                .append("\t cause: ").append(statusReasonPaused).append(BootConstants.BR);
+        sb.append("Service Status: ").append(isServicePaused ? "paused" : "running").append(BootConstants.BR);
+        if (isServicePaused) {
+            sb.append("\t cause: ").append(statusReasonPaused == null ? "" : statusReasonPaused.toJson()).append(BootConstants.BR);
+        }
         return sb.toString();
     }
 
@@ -387,19 +394,15 @@ public class HealthMonitor {
         return isServicePaused;
     }
 
-    public static String getStatusReasonPaused() {
+    public static ServiceError getStatusReasonPaused() {
         return statusReasonPaused;
-    }
-
-    public static String getStatusReasonPausedForExternalCaller() {
-        return statusReasonPausedForExternalCaller;
     }
 
     public static boolean isHealthCheckSuccess() {
         return isHealthCheckSuccess;
     }
 
-    public static String getStatusReasonHealthCheck() {
+    public static ServiceError getStatusReasonHealthCheck() {
         return statusReasonHealthCheck;
     }
 
@@ -422,7 +425,15 @@ public class HealthMonitor {
     }
 
     public enum EmptyHealthCheckPolicy {
-        REQUIRE_ALL, REQUIRE_NONE
+        /**
+         * Require all discovered checks, failing if none are explicitly bound.
+         */
+        REQUIRE_ALL,
+
+        /**
+         * Allow the application to start healthy even with no checks registered.
+         */
+        REQUIRE_NONE
     }
 
 
@@ -439,18 +450,18 @@ public class HealthMonitor {
         return isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicyo, null);
     }
 
-    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicyo, final Set<String> failedHealthChecks) {
+    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicy, final Set<String> failedHealthChecks) {
         if (failedHealthChecks != null) {
             failedHealthChecks.clear();
         }
         if (requiredHealthChecks == null || requiredHealthChecks.isEmpty()) {
-            switch (emptyHealthCheckPolicyo) {
+            switch (emptyHealthCheckPolicy) {
                 case REQUIRE_ALL -> {
                     // if criticalHealthChecks is empty (default), that means requrie ALL HealthChecks, so return true if healthCheckFailedList is NOT empty
                     if (failedHealthChecks == null) {
-                        return !failedHealthCheckList.isEmpty();
+                        return !HealthMonitor.failedHealthChecks.isEmpty();
                     } else {
-                        failedHealthChecks.addAll(failedHealthCheckList);
+                        failedHealthChecks.addAll(failedHealthChecks);
                     }
                 }
                 case REQUIRE_NONE -> {
@@ -461,7 +472,7 @@ public class HealthMonitor {
         } else {
             // if criticalHealthChecks is NOT empty (user specified), that means critical on only given HealthChecks, so return true if healthCheckFailedList contains any of the criticalHealthChecks
             for (String criticalHealthCheck : requiredHealthChecks) {
-                if (failedHealthCheckList.contains(criticalHealthCheck)) {
+                if (failedHealthChecks.contains(criticalHealthCheck)) {
                     if (failedHealthChecks == null) {
                         return true;
                     } else {
@@ -506,7 +517,7 @@ public class HealthMonitor {
     private static final List<String> EMPTY_LIST = Collections.emptyList();
 
     public static List<String> getAffectedServices() {
-        if (failedHealthCheckList.isEmpty()) {
+        if (failedHealthChecks.isEmpty()) {
             return EMPTY_LIST;
         }
         List<String> currentAffectedServices = new ArrayList<>();
@@ -514,7 +525,7 @@ public class HealthMonitor {
         if (all != null) {
             currentAffectedServices.addAll(all);
         }
-        for (String failedHealthCheck : failedHealthCheckList) {
+        for (String failedHealthCheck : failedHealthChecks.keySet()) {
             currentAffectedServices.addAll(affectedServices.get(failedHealthCheck));
         }
         // remove duplicated and sort by alphabetical order for better readability

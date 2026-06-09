@@ -25,8 +25,6 @@ public interface ServerStatusMBean {
 
     String getLastIOReport();
 
-    long getHealthInspector();
-
     String getServiceStatus();
 
     String getServiceStatusReason();

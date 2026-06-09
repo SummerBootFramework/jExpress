@@ -58,6 +58,7 @@ public interface BootConstants {
     long CFG_CHANGE_MONITOR_THROTTLE_MS = BackOffice.agent.getCfgChangeMonitorThrottleMillis();
     int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
     long WEB_RESOURCE_TTL_MS = BackOffice.agent.getWebResourceCacheTtlSec() * 1000;
+    String HEALTH_CHECKER_NAME_ADMIN = "AdminHealthChecker";
     String DEFAULT_MASTER_PASSWORD_FILE = "etc" + File.separator + BackOffice.agent.getDefaultMasterPasswordFile();
     String DIR_STANDALONE = BackOffice.agent.getDomainFolderPrefix();
     String DIR_CONFIGURATION = BackOffice.agent.getConfigFolderName();

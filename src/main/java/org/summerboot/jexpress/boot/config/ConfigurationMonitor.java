@@ -153,11 +153,11 @@ public class ConfigurationMonitor implements FileAlterationListener {
         boolean pause = pauseFile.exists();
         String cause;
         if (pause) {
-            cause = "File detected: " + pauseFile.getAbsolutePath();
+            cause = "File detected";
         } else {
-            cause = "File not detected: " + pauseFile.getAbsolutePath();
+            cause = "File not detected";
         }
-        HealthMonitor.pauseService(pause, PAUSE_LOCK_CODE, cause);
+        HealthMonitor.pauseService(pause, PAUSE_LOCK_CODE, cause, pauseFile.getAbsolutePath());
     }
 
     private boolean isPauseFile(File file) {
@@ -196,7 +196,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
             return;
         }
         log.info(() -> "new " + file.getAbsoluteFile());
-        HealthMonitor.pauseService(true, PAUSE_LOCK_CODE, "file created " + file.getAbsolutePath());
+        HealthMonitor.pauseService(true, PAUSE_LOCK_CODE, "File created", file.getAbsolutePath());
     }
 
     @Override
@@ -205,7 +205,7 @@ public class ConfigurationMonitor implements FileAlterationListener {
             return;
         }
         log.info(() -> "del " + file.getAbsoluteFile());
-        HealthMonitor.pauseService(false, PAUSE_LOCK_CODE, "file deleted " + file.getAbsolutePath());
+        HealthMonitor.pauseService(false, PAUSE_LOCK_CODE, "File deleted", file.getAbsolutePath());
     }
 
     @Override

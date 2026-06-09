@@ -41,7 +41,7 @@ public interface AppLifecycleListener extends /* do NOT SummerInitializer (it wi
      */
     void onApplicationStatusUpdated(SummerApplication.AppContext context, boolean healthOk, boolean paused, boolean serviceStatusChanged, String reason) throws Exception;
 
-    void onHealthInspectionFailed(SummerApplication.AppContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception;
+    void onHealthCheckFinished(SummerApplication.AppContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception;
 
     void onConfigChangeBefore(File configFile, JExpressConfig cfg);
 

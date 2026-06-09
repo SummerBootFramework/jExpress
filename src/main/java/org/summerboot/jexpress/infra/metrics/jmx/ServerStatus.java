@@ -17,7 +17,6 @@
 package org.summerboot.jexpress.infra.metrics.jmx;
 
 import com.google.inject.Singleton;
-import org.summerboot.jexpress.api.health.HealthChecker;
 import org.summerboot.jexpress.infra.metrics.HttpClientStatusListener;
 import org.summerboot.jexpress.infra.metrics.NioStatusListener;
 import org.summerboot.jexpress.integration.HealthMonitor;
@@ -128,11 +127,6 @@ public class ServerStatus extends NotificationBroadcasterSupport implements NioS
     public String getLastIOReport() {
         BootIoStatusData event = events.getFirst();
         return event == null ? "" : event.toString();
-    }
-
-    @Override
-    public long getHealthInspector() {
-        return HealthChecker.retryIndex.get();
     }
 
     @Override

@@ -26,6 +26,7 @@ import org.summerboot.jexpress.annotation.rest.Daemon;
 import org.summerboot.jexpress.annotation.rest.Ping;
 import org.summerboot.jexpress.annotation.rest.RequiresHealthCheck;
 import org.summerboot.jexpress.api.common.ServiceError;
+import org.summerboot.jexpress.boot.BootConstants;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -52,7 +53,7 @@ abstract public class PingController {
     @Path(BootUri.CURRENT_VERSION + BootUri.LOAD_BALANCER_PING)
     @Ping
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     public void ping() {
         //method with @Ping annotation will be handled by BootHttpPingHandler
     }

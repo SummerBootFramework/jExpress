@@ -97,8 +97,8 @@ public class AppLifecycleHandler implements AppLifecycleListener {
     }
 
     @Override
-    public void onHealthInspectionFailed(SummerApplication.AppContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception {
-        if (postOffice != null) {
+    public void onHealthCheckFinished(SummerApplication.AppContext context, boolean healthOk, boolean paused, long retryIndex, int nextInspectionIntervalSeconds) throws Exception {
+        if (!healthOk && postOffice != null) {
             String content = HealthMonitor.buildMessage();
             postOffice.sendAlertAsync(SmtpClientConfig.cfg.getEmailToAppSupport(), "Health check Failed", content, null, true);
         }

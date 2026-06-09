@@ -167,7 +167,7 @@ abstract public class BootController extends PingController {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_JSECURITYCHECK)
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     //@CaptureTransaction("user.signJWT")
     @Log(requestBody = false, maskDataFields = BootUri.X_AUTH_TOKEN)
     public Caller longin_jSecurityCheck(@Parameter(required = true) @Nonnull @FormParam("j_username") String userId,
@@ -199,7 +199,7 @@ abstract public class BootController extends PingController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_LOGIN)
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     //@CaptureTransaction("user.signJWT")
     @Log(requestBody = false, maskDataFields = BootUri.X_AUTH_TOKEN)
     public Caller longin_JSON(@Valid @Nonnull LoginVo loginVo,
@@ -251,7 +251,7 @@ abstract public class BootController extends PingController {
     @DELETE
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_LOGIN)
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     //@PermitAll
     //@CaptureTransaction("user.logoutToken")
     public void logout(@Parameter(hidden = true) final ServiceRequest request, @Parameter(hidden = true) final SessionContext context) {
@@ -287,7 +287,7 @@ abstract public class BootController extends PingController {
     @GET
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_OTT)
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     @Log(responseBody = false)
     public String oneTimeTokenAuthenticate(@QueryParam("wsURI") String wsURI, @HeaderParam(NioHttpUtil.HTTP_HEADER_AUTH_TOKEN) String authHeader, @Parameter(hidden = true) final SessionContext context) {
         String jwt = BootAuthenticator.getBearerToken(authHeader);
@@ -317,7 +317,7 @@ abstract public class BootController extends PingController {
     @Produces(MediaType.TEXT_HTML)
     @RolesAllowed({BootUri.ROLE_ADMIN})
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     //@CaptureTransaction("admin.version")
     public void version(@Parameter(hidden = true) final SessionContext context) {
         context.response(getVersion()).status(HttpResponseStatus.OK);
@@ -353,7 +353,7 @@ abstract public class BootController extends PingController {
     @Produces(MediaType.TEXT_HTML)
     @RolesAllowed({BootUri.ROLE_ADMIN})
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     //@CaptureTransaction("admin.inspect")
     public void checkHealth(@Parameter(hidden = true) final SessionContext context) {
         HealthMonitor.inspect();
@@ -379,7 +379,7 @@ abstract public class BootController extends PingController {
     @Path(BootUri.CURRENT_VERSION + BootUri.API_ADMIN_GracefulShutdown)
     @RolesAllowed({BootUri.ROLE_ADMIN})
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     //@CaptureTransaction("admin.changeStatus")
     public void gracefulShutdownOn(@Parameter(hidden = true) final SessionContext context) throws IOException {
         gracefulShutdown(true, context);
@@ -405,14 +405,14 @@ abstract public class BootController extends PingController {
     @Path(BootUri.CURRENT_VERSION + BootUri.API_ADMIN_GracefulShutdown)
     @RolesAllowed({BootUri.ROLE_ADMIN})
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     //@CaptureTransaction("admin.changeStatus")
     public void gracefulShutdownOff(@Parameter(hidden = true) final SessionContext context) {
         gracefulShutdown(false, context);
     }
 
     protected void gracefulShutdown(boolean isSet, SessionContext context) {
-        HealthMonitor.pauseService(isSet, BootConstants.PAUSE_LOCK_CODE_VIA_API, "request by " + context.caller());
+        HealthMonitor.pauseService(isSet, BootConstants.PAUSE_LOCK_CODE_VIA_API, "Request by api", context.caller().toString());
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
@@ -421,7 +421,7 @@ abstract public class BootController extends PingController {
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({BootUri.ROLE_ADMIN})
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     public void loadTestBenchmarkPost1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -437,7 +437,7 @@ abstract public class BootController extends PingController {
     @POST
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_LOADTEST + "/{delayMilsec}")
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     public void loadTestBenchmarkPost2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -454,7 +454,7 @@ abstract public class BootController extends PingController {
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_LOADTEST)// .../loadtest?delayMilsec=123
     @RolesAllowed({BootUri.ROLE_ADMIN})
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     public void loadTestBenchmarkGet1(final ServiceRequest request, final SessionContext context, @QueryParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {
@@ -470,7 +470,7 @@ abstract public class BootController extends PingController {
     @GET
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_LOADTEST + "/{delayMilsec}")
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     public void loadTestBenchmarkGet2(final ServiceRequest request, final SessionContext context, @PathParam("delayMilsec") long wait) {
         if (wait > 0) {
             try {

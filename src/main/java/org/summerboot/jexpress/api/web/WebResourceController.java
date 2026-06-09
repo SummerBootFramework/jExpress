@@ -22,6 +22,7 @@ import org.summerboot.jexpress.annotation.rest.Daemon;
 import org.summerboot.jexpress.annotation.rest.RequiresHealthCheck;
 import org.summerboot.jexpress.api.common.ServiceRequest;
 import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.infra.netty.util.NioHttpUtil;
 
 import java.io.File;
@@ -37,7 +38,7 @@ abstract public class WebResourceController {
     @GET
     @Path("/favicon.ico")
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     public File favicon() {
         return new File(getFaviconPath());
     }
@@ -53,7 +54,7 @@ abstract public class WebResourceController {
     @GET
     @Path("/{path: .*}")
     @Daemon
-    @RequiresHealthCheck("")
+    @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     public void requestWebResource(final ServiceRequest request, final SessionContext response) throws IOException {
         NioHttpUtil.sendWebResource(request, response);
     }

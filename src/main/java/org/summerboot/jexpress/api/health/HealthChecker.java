@@ -20,7 +20,6 @@ import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.api.common.Err;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @param <T> parameter
@@ -28,7 +27,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public interface HealthChecker<T extends Object> extends Comparable<Object> {
 
-    AtomicLong retryIndex = new AtomicLong(0);
 
     List<Err> ping(T... param);
 

@@ -31,6 +31,7 @@ import io.netty.handler.codec.http.HttpUtil;
 import io.netty.util.ReferenceCountUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.api.common.ServiceError;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.boot.lifecycle.http.HttpLifecycleListener;
@@ -74,23 +75,30 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                 try {
                     HttpResponseStatus status = HttpResponseStatus.OK;
                     String internalReason = null;// Do NOT expose internal information to external caller!
-                    //if (NioConfig.cfg.isPingSyncHealthStatus() && !HealthMonitor.isHealthCheckSuccess()) {
-                    //Set<String> failedHealthChecks = new HashSet<>();
-                    if (!HealthMonitor.isHealthCheckSuccess()) {
+                    ServiceError se = null;
+                    if (NioConfig.cfg.isPingSyncPauseStatus() && HealthMonitor.isServicePaused()) {
+                        status = HttpResponseStatus.SERVICE_UNAVAILABLE;
+                        se = HealthMonitor.getStatusReasonPaused();
+                    } else if (!HealthMonitor.isHealthCheckSuccess()) {
                         if (HealthMonitor.isRequiredHealthChecksFailed(NioConfig.cfg.getPingSyncHealthStatus_requiredHealthChecks(), NioConfig.cfg.getEmptyHealthCheckPolicy())) {
                             status = HttpResponseStatus.BAD_GATEWAY;
                         }
-                        internalReason = HealthMonitor.getStatusReasonHealthCheck();
+                        se = HealthMonitor.getStatusReasonHealthCheck();
                     }
-                    if (NioConfig.cfg.isPingSyncPauseStatus() && HealthMonitor.isServicePaused()) {
-                        status = HttpResponseStatus.SERVICE_UNAVAILABLE;
-                        internalReason = HealthMonitor.getStatusReasonPausedForExternalCaller();
+                    if (se == null) {
+                        internalReason = null;
+                    } else {
+                        if (!NioConfig.cfg.isPingSyncShowRootCause()) {
+                            se.getErrors().forEach((error) -> {
+                                error.setErrorDesc(null);
+                                error.setCause(null);
+                            });
+                        }
+                        internalReason = se.toJson();
                     }
                     boolean isContinue = httpLifecycleListener.beforeProcessPingRequest(ctx, req.uri(), hit, status);
                     if (isContinue) {
-                        if (!NioConfig.cfg.isPingSyncShowRootCause()) {
-                            internalReason = null;
-                        }
+
                         DefaultHttpHeaders responseHeaders = new DefaultHttpHeaders();
                         responseHeaders.set(BootConstants.RESPONSE_HEADER_KEY_REF, BootConstants.APP_ID);
                         responseHeaders.set(BootConstants.RESPONSE_HEADER_KEY_TS, OffsetDateTime.now().format(TimeUtil.ISO_ZONED_DATE_TIME3));
