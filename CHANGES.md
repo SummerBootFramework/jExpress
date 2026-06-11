@@ -1,6 +1,6 @@
 ## 📅 CHANGES
 
-## Version 2.7.0 (2026-05-30)
+## Version 2.7.0 (2026-06-11)
 
 * 🔒 Security Patch: jjwt-jackson's dependency has 5 security issues caused by old Jackson2 lib
 * 🛠 REF2610-1: support application without package specified
