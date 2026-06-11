@@ -21,11 +21,14 @@ import org.summerboot.jexpress.annotation.config.Config;
 import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.security.crypto.EncryptorUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 
 import java.io.File;
 import java.util.Properties;
 
+/**
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
+ */
 class MasterPassword extends BootConfig {
     public static void main(String[] args) {
         String t = generateTemplate(MasterPassword.class);

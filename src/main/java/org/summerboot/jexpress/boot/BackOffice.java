@@ -20,10 +20,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.summerboot.jexpress.annotation.config.Config;
 import org.summerboot.jexpress.annotation.config.ConfigHeader;
+import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.util.reflect.ReflectionUtil;
-import org.summerboot.jexpress.core.error.BootErrorCode;
 
 import java.io.File;
 import java.util.HashMap;
@@ -279,8 +279,8 @@ public class BackOffice extends BootConfig {
     @Config(key = "HealthMonitor.PauseLockCode.viaFile", defaultValue = "PauseLockCode.file")
     private String pauseLockCodeViaFile = "PauseLockCode.file";
 
-    @Config(key = "HealthMonitor.PauseLockCode.viaWeb", defaultValue = "PauseLockCode.web")
-    private String pauseLockCodeViaWeb = "PauseLockCode.web";
+    @Config(key = "HealthMonitor.PauseLockCode.viaWeb", defaultValue = "PauseLockCode.api")
+    private String pauseLockCodeViaApi = "PauseLockCode.api";
 
     @ConfigHeader(title = "4.2 Default Log4j2.xml Variables Naming")
     @Config(key = "naming.log4j2.xml.var.logId", defaultValue = "logId")
@@ -519,8 +519,8 @@ public class BackOffice extends BootConfig {
         return pauseLockCodeViaFile;
     }
 
-    public String getPauseLockCodeViaWeb() {
-        return pauseLockCodeViaWeb;
+    public String getPauseLockCodeViaApi() {
+        return pauseLockCodeViaApi;
     }
 
     public String getLog4J2LogId() {

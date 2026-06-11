@@ -21,7 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BootConstants;
-import org.summerboot.jexpress.security.crypto.EncryptorUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -428,6 +428,13 @@ public class FormatterUtil {
             byte[] bytes = baos.toByteArray();
             return bytes;
         }
+    }
+
+    public static String toString(byte[] byteArray) {
+        ByteBuffer buffer = ByteBuffer.allocate(byteArray.length);
+        buffer.put(byteArray);
+        buffer.flip();
+        return toString(buffer, true, true, 10, "\t");
     }
 
     public static String toString(ByteBuffer buffer) {

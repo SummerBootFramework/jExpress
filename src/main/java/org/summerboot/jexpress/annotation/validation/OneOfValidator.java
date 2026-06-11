@@ -31,6 +31,8 @@ import java.util.List;
 /**
  * Checks against one of the specified values. Returns isValid false if the
  * values is empty. Use @NotNull to explicitly reject null values.
+ *
+ * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class OneOfValidator implements ConstraintValidator<OneOf, List<String>> {
 

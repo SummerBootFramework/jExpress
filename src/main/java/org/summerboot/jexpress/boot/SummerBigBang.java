@@ -33,26 +33,26 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.quartz.Job;
 import org.quartz.Scheduler;
 import org.summerboot.jexpress.annotation.Controller;
-import org.summerboot.jexpress.annotation.HealthCheck;
 import org.summerboot.jexpress.annotation.Order;
+import org.summerboot.jexpress.annotation.health.HealthCheck;
+import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
 import org.summerboot.jexpress.boot.config.JExpressConfig;
-import org.summerboot.jexpress.boot.context.BootGuiceModule;
-import org.summerboot.jexpress.boot.context.ScannedGuiceModule;
-import org.summerboot.jexpress.boot.lifecycle.AppInitializer;
-import org.summerboot.jexpress.core.error.BootErrorCode;
-import org.summerboot.jexpress.web.jaxrs.JaxRsRequestProcessorManager;
+import org.summerboot.jexpress.boot.ioc.BootGuiceModule;
+import org.summerboot.jexpress.boot.ioc.ScannedGuiceModule;
+import org.summerboot.jexpress.boot.lifecycle.app.AppInitializer;
+import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.integration.scheduling.quartz.QuartzUtil;
-import org.summerboot.jexpress.observability.health.HealthMonitor;
-import org.summerboot.jexpress.security.crypto.EncryptorUtil;
-import org.summerboot.jexpress.security.crypto.SecurityUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.token.jwt.JwtUtil;
-import org.summerboot.jexpress.util.runtime.ApplicationUtil;
 import org.summerboot.jexpress.util.format.FormatterUtil;
+import org.summerboot.jexpress.util.i18n.I18n;
 import org.summerboot.jexpress.util.io.PropertiesFile;
 import org.summerboot.jexpress.util.reflect.ReflectionUtil;
-import org.summerboot.jexpress.util.i18n.I18n;
+import org.summerboot.jexpress.util.runtime.ApplicationUtil;
+import org.summerboot.jexpress.webserver.jaxrs.JaxRsRequestProcessorManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -665,7 +665,7 @@ abstract public class SummerBigBang extends SummerSingularity {
     }
 
     @Inject
-    protected void onGuiceInjectorCreated_DefaultHealthInspectorInjected(@HealthCheck() Map<String, Object> defaultHealthInspectors) {
+    protected void onGuiceInjectorCreated_DefaultHealthInspectorInjected(@HealthCheck Map<String, Object> defaultHealthInspectors) {
         log.trace("");
         HealthMonitor.registerDefaultHealthInspectors(defaultHealthInspectors, memo);
     }

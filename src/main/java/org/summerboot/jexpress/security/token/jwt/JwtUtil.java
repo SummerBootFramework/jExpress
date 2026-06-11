@@ -24,7 +24,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.MacAlgorithm;
 import io.jsonwebtoken.security.SignatureAlgorithm;
-import org.summerboot.jexpress.security.crypto.EncryptorUtil;
+import org.summerboot.jexpress.security.EncryptorUtil;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;

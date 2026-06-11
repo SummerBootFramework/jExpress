@@ -1,0 +1,38 @@
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+.idea_modules/
+.shelf/
+.fleet/
+
+#### Dependency directories ###
+lib/
+**/lib/
+
+### Build files ###
+target/
+build/
+out/
+dist/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+### Log files ###
+gc.log*
+*.log
+log/
+**/log/
+logs/
+**/logs/
+*.log.*
+
+### Test configuration domains ###
+**/standalone_test*/
+src/test/

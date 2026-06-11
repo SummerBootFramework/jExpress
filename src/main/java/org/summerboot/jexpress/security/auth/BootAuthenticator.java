@@ -35,23 +35,27 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.api.auth.Authenticator;
+import org.summerboot.jexpress.api.auth.Caller;
+import org.summerboot.jexpress.api.auth.User;
+import org.summerboot.jexpress.api.cache.AuthTokenCache;
+import org.summerboot.jexpress.api.common.BootErrorCode;
+import org.summerboot.jexpress.api.common.BootPoi;
+import org.summerboot.jexpress.api.common.Err;
+import org.summerboot.jexpress.api.common.RequestProcessor;
+import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.api.grpc.GrpcConstants;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstants;
-import org.summerboot.jexpress.boot.BootPoi;
-import org.summerboot.jexpress.boot.lifecycle.AuthenticatorListener;
-import org.summerboot.jexpress.core.error.BootErrorCode;
-import org.summerboot.jexpress.core.error.Err;
-import org.summerboot.jexpress.core.session.SessionContext;
-import org.summerboot.jexpress.grpc.api.GrpcConstants;
-import org.summerboot.jexpress.grpc.server.ContextualizedServerCallListenerEx;
-import org.summerboot.jexpress.grpc.server.GrpcServerConfig;
-import org.summerboot.jexpress.integration.cache.api.AuthTokenCache;
-import org.summerboot.jexpress.security.crypto.SecurityUtil;
+import org.summerboot.jexpress.boot.lifecycle.auth.AuthenticatorListener;
+import org.summerboot.jexpress.infra.grpc.server.ContextualizedServerCallListenerEx;
+import org.summerboot.jexpress.infra.grpc.server.config.GrpcServerConfig;
+import org.summerboot.jexpress.infra.netty.util.NioHttpUtil;
+import org.summerboot.jexpress.security.SecurityUtil;
+import org.summerboot.jexpress.security.auth.config.AuthConfig;
 import org.summerboot.jexpress.security.token.jwt.JwtUtil;
 import org.summerboot.jexpress.util.format.FormatterUtil;
 import org.summerboot.jexpress.util.net.GeoIpUtil;
-import org.summerboot.jexpress.web.netty.handler.RequestProcessor;
-import org.summerboot.jexpress.web.netty.util.NioHttpUtil;
 
 import javax.naming.NamingException;
 import java.net.SocketAddress;
@@ -62,7 +66,6 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @param <E> auth(T metaData)
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
@@ -87,7 +90,7 @@ public abstract class BootAuthenticator implements Authenticator, ServerIntercep
     @Override
     public String signJWT(String username, String pwd, Object metaData, int validForMinutes, final SessionContext context) throws NamingException {
         //1. protect request body from being logged
-        //context.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
+        //ioc.logRequestBody(true);@Deprecated use @Log(requestBody = false, responseHeader = false) at @Controller method level
 
         //2. signJWT caller against LDAP or DB
         context.poi(BootPoi.LDAP_BEGIN);
@@ -459,7 +462,7 @@ public abstract class BootAuthenticator implements Authenticator, ServerIntercep
                 status = Status.PERMISSION_DENIED.withDescription(ERROR + "Invalid IP address: " + error);
             } else {
                 ctx = ctx.withValue(GrpcCallerAddr, remoteAddr);
-                String headerValueAuthorization = metadata.get(GrpcConstants.Key_Authorization);
+                String headerValueAuthorization = metadata.get(GrpcConstants.Authorization);
                 if (headerValueAuthorization == null) {
                     //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");
                     //return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);

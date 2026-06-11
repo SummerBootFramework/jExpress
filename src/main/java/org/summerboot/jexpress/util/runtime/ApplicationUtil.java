@@ -18,8 +18,8 @@ package org.summerboot.jexpress.util.runtime;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.boot.BootConstants;
-import org.summerboot.jexpress.core.error.BootErrorCode;
 import org.summerboot.jexpress.util.reflect.ReflectionUtil;
 
 import java.io.File;

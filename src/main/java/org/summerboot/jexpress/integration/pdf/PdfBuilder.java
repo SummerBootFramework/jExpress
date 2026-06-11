@@ -25,12 +25,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.RenderDestination;
+import org.summerboot.jexpress.api.common.BootPoi;
+import org.summerboot.jexpress.api.common.Err;
+import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.api.mail.PostOffice;
 import org.summerboot.jexpress.boot.BootConstants;
-import org.summerboot.jexpress.boot.BootPoi;
-import org.summerboot.jexpress.core.error.Err;
-import org.summerboot.jexpress.core.session.SessionContext;
-import org.summerboot.jexpress.integration.mail.PostOffice;
-import org.summerboot.jexpress.integration.mail.SmtpClientConfig;
+import org.summerboot.jexpress.integration.mail.config.SmtpClientConfig;
 import org.summerboot.jexpress.util.format.PageCssUtil;
 
 import java.io.File;
@@ -77,8 +77,8 @@ public class PdfBuilder {
 
     private final Map<String, Template> FreeMarkerTemplates = new HashMap<>();
 
-    protected PdfBoxPdfAgent pdfBoxPdfAgent;
-    protected ItextPdfAgent agentIText;
+    protected PdfBoxAgent pdfBoxAgent;
+    protected ItextAgent agentIText;
 
 
     /**
@@ -108,8 +108,8 @@ public class PdfBuilder {
         this.htmlTemplateDir = htmlTemplateDir;
         // cache dir can also be specified using java -Dpdfbox.fontcache=<path to cache dir>
         //Fonts can also be added using a font-face at-rule in the CSS, but NOT good for performance
-        this.pdfBoxPdfAgent = new PdfBoxPdfAgent(fontDir, fontCacheDir);
-        this.agentIText = new ItextPdfAgent(fontDir);
+        this.pdfBoxAgent = new PdfBoxAgent(fontDir, fontCacheDir);
+        this.agentIText = new ItextAgent(fontDir);
         this.dumpDir = dumpDir;
     }
 
@@ -132,17 +132,17 @@ public class PdfBuilder {
         try {
             if (isSinglePage) {
                 htmlContent = PageCssUtil.setHeight(htmlContent, "1mm");
-                PdfBoxPdfAgent.LayoutInfo layoutInfo = pdfBoxPdfAgent.layoutThenGetInfo(htmlContent, htmlTemplateDir);
+                PdfBoxAgent.LayoutInfo layoutInfo = pdfBoxAgent.layoutThenGetInfo(htmlContent, htmlTemplateDir);
                 context.poi(BootPoi.PDF_HC);
 
                 int pageCount = layoutInfo.getPageCount();
-                float pageHeightMillimeters = layoutInfo.getPageHeight() * pageCount / PdfBoxPdfAgent.POINTS_PER_MM;
+                float pageHeightMillimeters = layoutInfo.getPageHeight() * pageCount / PdfBoxAgent.POINTS_PER_MM;
                 String htmlTemplate = htmlContent;
                 int retry = 0;
                 while (pageCount > 1 && retry < 2) {
                     pageHeightMillimeters += extraSpace;//add extra space
                     htmlTemplate = PageCssUtil.setHeight(htmlContent, pageHeightMillimeters + "mm;");
-                    layoutInfo = pdfBoxPdfAgent.layoutThenGetInfo(htmlTemplate, htmlTemplateDir);
+                    layoutInfo = pdfBoxAgent.layoutThenGetInfo(htmlTemplate, htmlTemplateDir);
                     context.poi(BootPoi.PDF_HV);
                     pageCount = layoutInfo.getPageCount();
                     retry++;
@@ -169,7 +169,7 @@ public class PdfBuilder {
             //4. generate PDF from HTML
             switch (agent) {
                 case PDFBox -> {
-                    pdf = pdfBoxPdfAgent.html2PDF(htmlContent, htmlTemplateDir, cfg.buildProtectionPolicy(), cfg.getDocInfo(), cfg.getPdfVersion());
+                    pdf = pdfBoxAgent.html2PDF(htmlContent, htmlTemplateDir, cfg.buildProtectionPolicy(), cfg.getDocInfo(), cfg.getPdfVersion());
                     context.poi(BootPoi.PDF_H2PPE);
                 }
                 case iText -> {
@@ -196,7 +196,7 @@ public class PdfBuilder {
     public List<byte[]> pdf2Images(String requesterTxId, byte[] pdf, String password, ImageType imageType, float imageDPI, String imageFormat, RenderDestination renderDestination, SessionContext context) throws IOException {
         context.poi(BootPoi.PDF2IMG_BEGIN);
         String sessionName = requesterTxId + "_" + imageType + "_" + renderDestination + "_" + imageDPI + "_" + imageFormat;
-        List<byte[]> imagePages = PdfBoxPdfAgent.pdf2Images(pdf, password, imageDPI, imageType, imageFormat, renderDestination);
+        List<byte[]> imagePages = PdfBoxAgent.pdf2Images(pdf, password, imageDPI, imageType, imageFormat, renderDestination);
         context.poi(BootPoi.PDF2IMG_END).memo("imagePages", "" + imagePages.size());
         if (isDumpEnabled()) {
             int page = 0, total = imagePages.size();

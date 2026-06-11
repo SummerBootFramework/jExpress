@@ -19,12 +19,12 @@ package org.summerboot.jexpress.integration.ldap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.summerboot.jexpress.boot.lifecycle.AuthenticatorListener;
-import org.summerboot.jexpress.security.crypto.SecurityUtil;
-import org.summerboot.jexpress.security.auth.AuthConfig;
-import org.summerboot.jexpress.security.auth.Authenticator;
+import org.summerboot.jexpress.api.auth.Authenticator;
+import org.summerboot.jexpress.api.auth.User;
+import org.summerboot.jexpress.boot.lifecycle.auth.AuthenticatorListener;
+import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.auth.BootAuthenticator;
-import org.summerboot.jexpress.security.auth.User;
+import org.summerboot.jexpress.security.auth.config.AuthConfig;
 
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
