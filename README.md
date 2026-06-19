@@ -4,11 +4,11 @@
 * **[Maven Central Repository][2]**
 * **[mvnrepository.com][3]**
 
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.7.0
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.7.1
 
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.7.0
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.7.1
 
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.7.0
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.7.1
 
 [View Changelog (CHANGES)](CHANGES.md)
 
@@ -36,7 +36,7 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
 <dependency>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.7.0</version>
+    <version>2.7.1</version>
 </dependency>
 ```
 

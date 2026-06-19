@@ -389,7 +389,7 @@ public class HealthMonitor {
         if (isServicePaused) {
             sb.append("\t cause: ").append(statusReasonPaused == null ? "" : statusReasonPaused.toJson()).append(BootConstants.BR);
         }
-        
+
         return sb.toString();
     }
 
@@ -529,7 +529,10 @@ public class HealthMonitor {
             currentAffectedServices.addAll(all);
         }
         for (String failedHealthCheck : failedHealthChecks.keySet()) {
-            currentAffectedServices.addAll(affectedServices.get(failedHealthCheck));
+            Set<String> affected = affectedServices.get(failedHealthCheck);
+            if (affected != null) {
+                currentAffectedServices.addAll(affected);
+            }
         }
         // remove duplicated and sort by alphabetical order for better readability
         return currentAffectedServices.stream().filter(Objects::nonNull).distinct().sorted().toList();
