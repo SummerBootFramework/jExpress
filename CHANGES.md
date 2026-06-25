@@ -2,6 +2,8 @@
 
 ## Version 2.7.1 (2026-06-28)
 
+* performance improvement: use LongAdder instead of AtomicLong for GrpcServiceCounter to reduce contention in high concurrency scenarios.
+
 ## Version 2.7.0 (2026-06-11)
 
 * 🔒 Security Patch: jjwt-jackson's dependency has 5 security issues caused by old Jackson2 lib

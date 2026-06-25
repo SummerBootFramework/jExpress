@@ -99,7 +99,8 @@ abstract public class NioChannelInitializer extends ChannelInitializer<SocketCha
 
     @Override
     public void initChannel(SocketChannel socketChannel) {
-        long tc = NioCounter.COUNTER_TOTAL_CHANNEL.incrementAndGet();
+        NioCounter.TotalChannel.increment();
+        long tc = NioCounter.TotalChannel.sum();
         log.debug(() -> tc + "[" + this.hashCode() + "]" + socketChannel);
 
         ChannelPipeline channelPipeline = socketChannel.pipeline();

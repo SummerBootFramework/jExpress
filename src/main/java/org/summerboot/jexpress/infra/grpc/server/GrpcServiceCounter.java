@@ -17,6 +17,7 @@
 package org.summerboot.jexpress.infra.grpc.server;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -25,9 +26,9 @@ class GrpcServiceCounter {
 
     protected final AtomicLong ping = new AtomicLong(0);
     protected final AtomicLong biz = new AtomicLong(0);
-    protected final AtomicLong hit = new AtomicLong(0);
-    protected final AtomicLong processed = new AtomicLong(0);
-    protected final AtomicLong cancelled = new AtomicLong(0);
+    protected final LongAdder hit = new LongAdder();
+    protected final LongAdder processed = new LongAdder();
+    protected final LongAdder cancelled = new LongAdder();
 
     public long getPing() {
         return ping.get();
@@ -46,35 +47,35 @@ class GrpcServiceCounter {
     }
 
     public long getHit() {
-        return hit.get();
+        return hit.sum();
     }
 
-    public long incrementHit() {
-        return hit.incrementAndGet();
+    public void incrementHit() {
+        hit.increment();
     }
 
     public long getHitAndReset() {
-        return hit.getAndSet(0);
+        return hit.sumThenReset();
     }
 
     public long getProcessed() {
-        return processed.get();
+        return processed.sum();
     }
 
-    public long incrementProcessed() {
-        return processed.incrementAndGet();
+    public void incrementProcessed() {
+        processed.increment();
     }
 
     public long getProcessedAndReset() {
-        return processed.getAndSet(0);
+        return processed.sumThenReset();
     }
 
     public long getCancelled() {
-        return cancelled.get();
+        return cancelled.sum();
     }
 
-    public long incrementCancelled() {
-        return cancelled.incrementAndGet();
+    public void incrementCancelled() {
+        cancelled.increment();
     }
 
 }
