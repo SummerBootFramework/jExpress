@@ -440,31 +440,32 @@ public class HealthMonitor {
     }
 
 
-    public static boolean isRequiredHealthChecksFailed(String[] requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicyo, final Set<String> failedHealthChecks) {
+    public static boolean isRequiredHealthChecksFailed(String[] requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicy, final Set<String> returnFailedHealthChecks) {
         Set<String> set = null;
         if (requiredHealthChecks != null && requiredHealthChecks.length > 0) {
             set = new HashSet<>(Math.max((int) (requiredHealthChecks.length / 0.75f) + 1, 16));
             Collections.addAll(set, requiredHealthChecks);
         }
-        return isRequiredHealthChecksFailed(set, emptyHealthCheckPolicyo, failedHealthChecks);
+        return isRequiredHealthChecksFailed(set, emptyHealthCheckPolicy, returnFailedHealthChecks);
     }
 
     public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicyo) {
         return isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicyo, null);
     }
 
-    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicy, final Set<String> failedHealthChecks) {
-        if (failedHealthChecks != null) {
-            failedHealthChecks.clear();
+    public static boolean isRequiredHealthChecksFailed(Set<String> requiredHealthChecks, EmptyHealthCheckPolicy emptyHealthCheckPolicy, final Set<String> returnFailedHealthChecks) {
+        if (returnFailedHealthChecks != null) {
+            returnFailedHealthChecks.clear();
         }
+        Set<String> failedHealthCheckNames = HealthMonitor.failedHealthChecks.keySet();
         if (requiredHealthChecks == null || requiredHealthChecks.isEmpty()) {
             switch (emptyHealthCheckPolicy) {
                 case REQUIRE_ALL -> {
                     // if criticalHealthChecks is empty (default), that means requrie ALL HealthChecks, so return true if healthCheckFailedList is NOT empty
-                    if (failedHealthChecks == null) {
+                    if (returnFailedHealthChecks == null) {
                         return !HealthMonitor.failedHealthChecks.isEmpty();
                     } else {
-                        failedHealthChecks.addAll(failedHealthChecks);
+                        returnFailedHealthChecks.addAll(failedHealthCheckNames);
                     }
                 }
                 case REQUIRE_NONE -> {
@@ -474,20 +475,20 @@ public class HealthMonitor {
             }
         } else {
             // if criticalHealthChecks is NOT empty (user specified), that means critical on only given HealthChecks, so return true if healthCheckFailedList contains any of the criticalHealthChecks
-            for (String criticalHealthCheck : requiredHealthChecks) {
-                if (failedHealthChecks.contains(criticalHealthCheck)) {
-                    if (failedHealthChecks == null) {
+            for (String requiredHealthCheckName : requiredHealthChecks) {
+                if (failedHealthCheckNames.contains(requiredHealthCheckName)) {
+                    if (returnFailedHealthChecks == null) {
                         return true;
                     } else {
-                        failedHealthChecks.add(criticalHealthCheck);
+                        returnFailedHealthChecks.add(requiredHealthCheckName);
                     }
                 }
             }
         }
-        if (failedHealthChecks == null) {
+        if (returnFailedHealthChecks == null) {
             return false;
         } else {
-            return !failedHealthChecks.isEmpty();
+            return !returnFailedHealthChecks.isEmpty();
         }
     }
 
