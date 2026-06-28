@@ -255,8 +255,8 @@ public class NioServer {
             boolean useVirtualThread = nioCfg.getTpeThreadingMode().equals(BootConfig.ThreadingMode.VirtualThread);
             QPS_SERVICE = Executors.newSingleThreadScheduledExecutor(NamedDefaultThreadFactory.build("NIO.QPS_SERVICE", useVirtualThread));
             QPS_SERVICE.scheduleAtFixedRate(() -> {
-                long hps = NioCounter.COUNTER_HIT.getAndSet(0);
-                long tps = NioCounter.COUNTER_SENT.getAndSet(0);
+                long hps = NioCounter.HitPerSec.sumThenReset();
+                long tps = NioCounter.SentPerSec.sumThenReset();
                 if (nioListener == null && !log.isDebugEnabled()) {
                     return;
                 }
@@ -270,9 +270,9 @@ public class NioServer {
                 ThreadPoolExecutor tpe = nioCfg.getBizExecutor();
                 int active = tpe.getActiveCount();
                 int queue = tpe.getQueue().size();
-                long activeChannel = NioCounter.COUNTER_ACTIVE_CHANNEL.get();
+                long activeChannel = NioCounter.ActiveChannel.sum();
                 //if (hps > 0 || tps > 0 || active > 0 || queue > 0 || activeChannel > 0) {
-                long totalChannel = NioCounter.COUNTER_TOTAL_CHANNEL.get();
+                long totalChannel = NioCounter.TotalChannel.sum();
                 long pool = tpe.getPoolSize();
                 int core = tpe.getCorePoolSize();
                 //int queueRemainingCapacity = tpe.getQueue().remainingCapacity();

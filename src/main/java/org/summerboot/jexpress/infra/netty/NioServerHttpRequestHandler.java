@@ -82,13 +82,13 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         //a new client is connected
-        long tc = NioCounter.COUNTER_ACTIVE_CHANNEL.incrementAndGet();
-        log.trace(() -> tc + " - " + info(ctx));
+        NioCounter.ActiveChannel.increment();
+        log.trace(() -> info(ctx));
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        NioCounter.COUNTER_ACTIVE_CHANNEL.decrementAndGet();
+        NioCounter.ActiveChannel.decrement();
     }
 
     @Override
@@ -106,7 +106,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     @Override
     public void channelRead0(final ChannelHandlerContext ctx, final FullHttpRequest req) {
         final long start = System.currentTimeMillis();
-        NioCounter.COUNTER_HIT.incrementAndGet();
+        NioCounter.HitPerSec.increment();
         final long hitIndex = NioCounter.COUNTER_BIZ_HIT.incrementAndGet();
         final String txId = BootConstants.APP_ID + "-" + hitIndex;
         boolean isDecoderSuccess = req.decoderResult().isSuccess();
@@ -207,7 +207,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 responseDataBytes = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
             } finally {
                 try {
-                    NioCounter.COUNTER_SENT.incrementAndGet();
+                    NioCounter.SentPerSec.increment();
                     long responseTime = System.currentTimeMillis() - start;
                     this.afterService(requestHeaders, httpMethod, httpRequestUri, parameters, httpPostRequestBody, context);
                     String report = null;

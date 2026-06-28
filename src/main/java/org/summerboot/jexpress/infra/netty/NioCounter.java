@@ -17,16 +17,17 @@
 package org.summerboot.jexpress.infra.netty;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 public class NioCounter {//package access only, not a public class
 
-    protected static final AtomicLong COUNTER_PING_HIT = new AtomicLong(0);
     protected static final AtomicLong COUNTER_BIZ_HIT = new AtomicLong(0);
-    protected static final AtomicLong COUNTER_TOTAL_CHANNEL = new AtomicLong(0);
-    protected static final AtomicLong COUNTER_ACTIVE_CHANNEL = new AtomicLong(0);
-    protected static final AtomicLong COUNTER_HIT = new AtomicLong(0);
-    protected static final AtomicLong COUNTER_SENT = new AtomicLong(0);
+    protected static final AtomicLong COUNTER_PING_HIT = new AtomicLong(0);
+    protected static final LongAdder TotalChannel = new LongAdder();
+    protected static final LongAdder ActiveChannel = new LongAdder();
+    protected static final LongAdder HitPerSec = new LongAdder();
+    protected static final LongAdder SentPerSec = new LongAdder();
 }
