@@ -207,7 +207,7 @@ public class HealthMonitor {
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                    HealthMonitor.shutdown();
+                    shutdown();
                 }, "HealthMonitor.shutdownHook")
         );
     }
@@ -457,13 +457,13 @@ public class HealthMonitor {
         if (returnFailedHealthChecks != null) {
             returnFailedHealthChecks.clear();
         }
-        Set<String> failedHealthCheckNames = HealthMonitor.failedHealthChecks.keySet();
+        Set<String> failedHealthCheckNames = failedHealthChecks.keySet();
         if (requiredHealthChecks == null || requiredHealthChecks.isEmpty()) {
             switch (emptyHealthCheckPolicy) {
                 case REQUIRE_ALL -> {
                     // if criticalHealthChecks is empty (default), that means requrie ALL HealthChecks, so return true if healthCheckFailedList is NOT empty
                     if (returnFailedHealthChecks == null) {
-                        return !HealthMonitor.failedHealthChecks.isEmpty();
+                        return !failedHealthChecks.isEmpty();
                     } else {
                         returnFailedHealthChecks.addAll(failedHealthCheckNames);
                     }

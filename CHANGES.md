@@ -2,10 +2,6 @@
 
 ## Version 2.7.1 (2026-06-28)
 
-* performance improvement: use LongAdder instead of AtomicLong for GrpcServiceCounter to reduce contention in high concurrency scenarios.
-
-## Version 2.7.0 (2026-06-11)
-
 * 🔒 Security Patch: jjwt-jackson's dependency has 5 security issues caused by old Jackson2 lib
 * 🛠 REF2610-1: support application without package specified
 * Refactoring: BootConstant -> BootConstants
@@ -29,6 +25,7 @@
 * WebResourceController.requestWebResource with @Daemon to serve web resources with enhanced reliability.
 * Performance improvement: AgentPdfBox - Serial graphics processing converted to parallel processing
 * @Ping will return a new field affectedServices in the response if there are any unhealthy services.
+* performance improvement: use LongAdder instead of AtomicLong for GrpcServiceCounter to reduce contention in high concurrency scenarios.
 
 #### Architecture-Oriented packaging layering Rules
 

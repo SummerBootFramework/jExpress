@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.7.1-SNAPSHOT</version>
+    <version>2.7.1</version>
     <packaging>jar</packaging>
     <name>jExpress ${project.version}</name>
     <description>jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>
@@ -189,7 +189,7 @@
         <netty.version>4.2.15.Final</netty.version>
         <netty-tcnative.version>2.0.79.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.82.0</grpc.version>
+        <grpc.version>1.82.1</grpc.version>
         <guava.version>33.6.0-jre</guava.version>
         <protobuf.version>4.35.1</protobuf.version>
         <!-- Web JAX-RS -->
@@ -210,14 +210,14 @@
         <jackson2.version>2.22.0</jackson2.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.22</tomcat-embed-el.version>
-        <hibernate-validator.version>9.1.0.Final</hibernate-validator.version>
+        <tomcat-embed-el.version>11.0.23</tomcat-embed-el.version>
+        <hibernate-validator.version>9.1.1.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.4.1.Final</hibernate.version>
+        <hibernate.version>7.4.2.Final</hibernate.version>
         <hikari-cp.version>7.1.0</hikari-cp.version>
 
         <!-- Cache -->
