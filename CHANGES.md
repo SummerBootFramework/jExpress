@@ -1,5 +1,9 @@
 ## 📅 CHANGES
 
+## Version 2.7.2 (2026-07-24)
+
+* security patch: CVE-2026-54515 caused by Jackson Databind 2.22.0
+
 ## Version 2.7.1 (2026-06-28)
 
 * 🔒 Security Patch: jjwt-jackson's dependency has 5 security issues caused by old Jackson2 lib
