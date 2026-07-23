@@ -33,7 +33,7 @@ public interface BootConstants {
     String APP_ID = String.format("%06d", APP_ID_VALUE);
 
     //version
-    String VERSION = "jExpress 2.7.1";
+    String VERSION = "jExpress 2.7.2";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
     String JSONFILTER_NAME_SERVICEERROR = "ServiceErrorFilter";
@@ -58,6 +58,8 @@ public interface BootConstants {
     long CFG_CHANGE_MONITOR_THROTTLE_MS = BackOffice.agent.getCfgChangeMonitorThrottleMillis();
     int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
     long WEB_RESOURCE_TTL_MS = BackOffice.agent.getWebResourceCacheTtlSec() * 1000;
+    long CACHE_PING_TTL_MS = BackOffice.agent.getCachePingTtlMilliseconds();
+    long CACHE_PING_VERIFY_MS = BackOffice.agent.getCachePingVerifyMilliseconds();
     String HEALTH_CHECKER_NAME_ADMIN = "AdminHealthChecker";
     String DEFAULT_MASTER_PASSWORD_FILE = "etc" + File.separator + BackOffice.agent.getDefaultMasterPasswordFile();
     String DIR_STANDALONE = BackOffice.agent.getDomainFolderPrefix();

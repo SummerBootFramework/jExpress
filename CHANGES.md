@@ -3,6 +3,7 @@
 ## Version 2.7.2 (2026-07-24)
 
 * security patch: CVE-2026-54515 caused by Jackson Databind 2.22.0
+* cache ping ttl and verify time are now configurable via boot.ini: cache.ping.ttl.milliseconds and cache.ping.verify.milliseconds
 
 ## Version 2.7.1 (2026-06-28)
 
@@ -14,9 +15,9 @@
 * Refactoring: HealthInspector.java renamed to HealthChecker.java
 * Refactoring: @GrpcService renamed to @GrpcController
 * Refactoring: @ImportResource renamed to @ConfigFilename
-* Refactoring: ApplicationUtil.runAndWaitForAllResults() renamed to ConcurrentUtil.runAndWaitForAllResults()
+* Refactoring: ApplicationUtil.runAndWaitForAllResults () renamed to ConcurrentUtil.runAndWaitForAllResults ()
 * Refactoring: predefined URI constants inside BootURI
-* Refactoring: SessionContext.forcePrettyResponse(boolean) -> SessionContext.pretty(Boolean), it will override @Log(pretty = ?)
+* Refactoring: SessionContext.forcePrettyResponse (boolean) -> SessionContext.pretty (Boolean), it will override @Log (pretty = ?)
 * Refactoring: Architecture-Oriented package names are re-organized, migration guide via IntelliJ > Editor > General > Auto Import, check the following two options, then delete the broken imports:
     * Add unambiguous imports on the fly
     * Optimize imports on the fly
@@ -24,7 +25,7 @@
 * ✨ New API: util.pdf package.PDFBuilder, PDFBuilderConfig and ProtectionSpec
 * ✨ New feature: org.summerboot.jexpress.util.io.FileUtil
 * ✨ New feature: @Controller now handles Web methods as file downloads if the return type is: java.io.File, java.nio.file.Path, or byte[]
-* ✨ New API: FormatterUtil.formatCurrency(BigDecimal amount, RoundingMode roundingMode)
+* ✨ New API: FormatterUtil.formatCurrency (BigDecimal amount, RoundingMode roundingMode)
 * ✨ New API: LargeFileStreamHandler for streaming large file response with low memory usage, and support for WebSocket for partial content delivery.
 * WebResourceController.requestWebResource with @Daemon to serve web resources with enhanced reliability.
 * Performance improvement: AgentPdfBox - Serial graphics processing converted to parallel processing
@@ -96,24 +97,24 @@ All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to e
 * return Application session ID when admin request version
 * new Annotation: @ParamCollectionDelimiter - to be used if developer need to override the default delimiter: comma (",")
     * Scope: to be used in @Controller class or method level.
-    * Example: @ParamCollectionDelimiter(";") means your List\<Objetc\> will use ; as the delimiter (obj1; obj2; obj3; ...)
+    * Example: @ParamCollectionDelimiter (";") means your List\<Objetc\> will use ; as the delimiter (obj1; obj2; obj3; ...)
 * @Controller.responseHeader_ServerTs default value, was hardcoded, is now configured in boot.ini (line 138): naming.responseHeader.X-Reference=X-Reference
 * @Controller.responseHeader_Reference default value, was hardcoded, is now configured in boot.ini (line 139): naming.responseHeader.X-ServerTs=X-ServerTs
-* New API: force pretty response for specified @Controller method via SessionContext.forcePrettyResponse(true)
+* New API: force pretty response for specified @Controller method via SessionContext.forcePrettyResponse (true)
 * File response and redirect response now come with SessionContext response headers
 * Ping handler response header now includes X-Reference and X-ServerTs
-* New API: ApplicationUtil.runAndWaitForAllResults(List\<Callable\<T\>\> tasks, List\<T\> results): Use multi-virtual-threaded concurrent calls and wait for all calls to complete before summarizing
+* New API: ApplicationUtil.runAndWaitForAllResults (List\<Callable\<T\>\> tasks, List\<T\> results): Use multi-virtual-threaded concurrent calls and wait for all calls to complete before summarizing
   and returning and The results keep the same order as tasks
 * make SessionContext thread safe
-* New cfg_nio.properties added: #nio.default.response.Charset=UTF-8: Accept-Charset header is deprecated and no longer used by modern browsers, servers often default to a widely compatible encoding (
-  like UTF-8) or the resource's default encoding for better user experience.
+* New cfg_nio.properties added: #nio.default.response.Charset=UTF-8: Accept-Charset header is deprecated and no longer used by modern browsers, servers often default to a widely compatible encoding
+  (like UTF-8) or the resource's default encoding for better user experience.
 * Reformating config files
-* New Class: CustomizedJsonField and AdditionalFields, ServiceError and Err now both extend AdditionalFields class, so that adAdditionalField(String key, Object value) can be used to set customized
+* New Class: CustomizedJsonField and AdditionalFields, ServiceError and Err now both extend AdditionalFields class, so that adAdditionalField (String key, Object value) can be used to set customized
   JSON fields
 * RFE269-1: Enhanced Security check - gRPC Client
 * REF269-2: Enhanced logging - Separate service logs from status logs by updated log4j2.xml, enabled logging with hitId.
 * REF269-3a: Enhanced CLI Security - implemented password masking and removed "-auth"
-* REF269-3b: New API SecurityUtil.promptPassword();
+* REF269-3b: New API SecurityUtil.promptPassword ();
 * REF269-4: Enhanced gRPC client config description (GRPCClientConfig.java)
 * REF269-5: @Config supports format and example
 * REF269-6: HTTP and gRPC request can be filtered by JWT whitelist/blacklist, JWT filter configurations are added into cfg_auth.properties and handled by BootAuthenticator
@@ -143,9 +144,9 @@ All users are strongly encouraged to upgrade to **jExpress 2.6.9 or later** to e
 
 #### 💥 Breaking Changes & API Refactoring
 
-* SessionContext: uri() renamed to uriRawDecoded() - the difference between SessionContext.uriRawDecoded() and ServiceRequest.etHttpRequestPath():
-    * SessionContext.uriRawDecoded() is the raw URI from FullHttpRequest.uri()
-    * ServiceRequest.getHttpRequestPath() is the URI from QueryStringDecoder.path(uriRawDecoded)
+* SessionContext: uri () renamed to uriRawDecoded () - the difference between SessionContext.uriRawDecoded () and ServiceRequest.etHttpRequestPath ():
+    * SessionContext.uriRawDecoded () is the raw URI from FullHttpRequest.uri ()
+    * ServiceRequest.getHttpRequestPath () is the URI from QueryStringDecoder.path (uriRawDecoded)
 
 ## Version 2.6.5 (2025-12-18)
 
@@ -252,9 +253,8 @@ New configuration items have been added to set the server-specific idle connecti
 
 ## Version 2.6.0
 
-* **Enhanced security 1:** This change uses enhanced encryption/decryption to protect sensitive data, like passwords in config files.
-  The 2.5.2 cannot read the current encrypted data by 2.5.1.
-  It requires the app with 2.5.1 to decrypt to `DEC`, or deploy with `DEC`.
+* **Enhanced security 1:** This change uses enhanced encryption/decryption to protect sensitive data, like passwords in config files. The 2.5.2 cannot read the current encrypted data by 2.5.1. It
+  requires the app with 2.5.1 to decrypt to `DEC`, or deploy with `DEC`.
 
     * to decrypt: `java -jar your-app.jar -decrypt -auth <root password> [-domain <your domain>]`
       or: `java -jar your-app.jar -decrypt -authfile <path to root password file> [-domain <your domain>]`
@@ -279,8 +279,8 @@ New configuration items have been added to set the server-specific idle connecti
 
 * **API new:** Added `@UniqueIgnore` to mute `@Unique` check alert for expected duplicated values.
 
-* **API new:** Added `@Inspector.name` and `@Daemon.requiredHealthChecks` (array of `@Inspector.names`, empty/null means ignore all HealthChecks).
-  This is to set `Controller` and/or its methods on daemon mode (accessible when pause/health failed but not for specified `@Inspector.name`).
+* **API new:** Added `@Inspector.name` and `@Daemon.requiredHealthChecks` (array of `@Inspector.names`, empty/null means ignore all HealthChecks). This is to set `Controller` and/or its methods on
+  daemon mode (accessible when pause/health failed but not for specified `@Inspector.name`).
 
 * **API renamed:**
 

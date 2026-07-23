@@ -20,6 +20,7 @@ import org.summerboot.jexpress.api.auth.Caller;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.Err;
 import org.summerboot.jexpress.api.health.HealthChecker;
+import org.summerboot.jexpress.boot.BootConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,13 +35,13 @@ public interface AuthTokenCache extends HealthChecker {
     default List<Err> ping(Object... params) {
         Err e = null;
         try {
-            String key = "jwt123";
-            blacklist(key, "uid123", 1000);
+            String key = "ping,key";
+            blacklist(key, "ping.value", BootConstants.CACHE_PING_TTL_MS);
             boolean isOnBlacklist = isBlacklist(key);
             if (!isOnBlacklist) {
                 e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Data Error - failed to read", null, null);
             }
-            TimeUnit.MILLISECONDS.sleep(1500);
+            TimeUnit.MILLISECONDS.sleep(BootConstants.CACHE_PING_VERIFY_MS);
             isOnBlacklist = isBlacklist(key);
             if (isOnBlacklist) {
                 e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Access Error - failed to expire", null, null);
