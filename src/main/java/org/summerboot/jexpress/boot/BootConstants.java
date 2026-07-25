@@ -55,7 +55,7 @@ public interface BootConstants {
     String BR = BackOffice.agent.getLineSeparator();
     boolean CFG_ERROR_CODE_AS_INT = BackOffice.agent.isErrorCodeAsInt();
     boolean CFG_JWT_AUD_AS_CSV = BackOffice.agent.isJwtAudAsCSV();
-    long CFG_CHANGE_MONITOR_THROTTLE_MS = BackOffice.agent.getCfgChangeMonitorThrottleMillis();
+    long CFG_CHANGE_MONITOR_THROTTLE_MS = BackOffice.agent.getCfgChangeMonitorThrottleMilliseconds();
     int PACKAGE_LEVEL = BackOffice.agent.getReflectionPackageLevel();
     long WEB_RESOURCE_TTL_MS = BackOffice.agent.getWebResourceCacheTtlSec() * 1000;
     long CACHE_PING_TTL_MS = BackOffice.agent.getCachePingTtlMilliseconds();
