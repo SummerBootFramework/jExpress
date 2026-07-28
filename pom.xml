@@ -232,7 +232,7 @@
         <!-- Barcode -->
         <zxing.version>3.5.4</zxing.version>
         <!-- PDF - PDFBox -->
-        <pdfbox.version>3.0.7</pdfbox.version>
+        <pdfbox.version>3.0.8</pdfbox.version>
         <!-- PDF - io.github.openhtmltopdf -->
         <openhtml.version>1.1.40</openhtml.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
