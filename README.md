@@ -4,25 +4,25 @@
 * **[Maven Central Repository][2]**
 * **[mvnrepository.com][3]**
 
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.7.2
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.7.3
 
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.7.2
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.7.3
 
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.7.2
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.7.3
 
 [View Changelog (CHANGES)](CHANGES.md)
 
 > **Java 21+ · Netty 4.2 · Guice 7 · Jakarta EE · Virtual Threads**
 
-Summer Boot Framework was initiated by a group of developers in 2004 to provide a high-performance, free, customizable, and lightweight Netty JAX-RS RESTful, WebSocket, and gRPC
-service with JPA and other powerful reusable non-functional features. Since 2011, it has been adopted by several Toronto law firms to customize their back-end services.
+Summer Boot Framework was initiated by a group of developers in 2004 to provide a high-performance, free, customizable, and lightweight Netty JAX-RS RESTful, WebSocket, and gRPC service with JPA and
+other powerful reusable non-functional features. Since 2011, it has been adopted by several Toronto law firms to customize their back-end services.
 
 Its sub-project, **jExpress** (a.k.a. Summer Boot Framework Core), focuses on solving the following non-functional and operational maintainability requirements.
 
 ![Summer Boot Overview](SummerBootOverview.png)
 
-**Open Source History:** jExpress was initially open-sourced on MS MySpace in Sep 2006. Due to the shutdown of MySpace, this framework was migrated to a server sponsored by one of
-the law firms in October 2011, then to GitLab in Dec 2016, and eventually to GitHub in Sep 2021.
+**Open Source History:** jExpress was initially open-sourced on MS MySpace in Sep 2006. Due to the shutdown of MySpace, this framework was migrated to a server sponsored by one of the law firms in
+October 2011, then to GitLab in Dec 2016, and eventually to GitHub in Sep 2021.
 
 > Disclaimer: We really had a great time with GitLab until 2021 when we realized one of the contributor's employers was also using GitLab at that time. We decided to move to GitHub
 > instead to avoid incurring unnecessary hassles.
@@ -36,7 +36,7 @@ the law firms in October 2011, then to GitLab in Dec 2016, and eventually to Git
 <dependency>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.7.2</version>
+    <version>2.7.3</version>
 </dependency>
 ```
 

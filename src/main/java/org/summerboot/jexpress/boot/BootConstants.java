@@ -33,7 +33,7 @@ public interface BootConstants {
     String APP_ID = String.format("%06d", APP_ID_VALUE);
 
     //version
-    String VERSION = "jExpress 2.7.2";
+    String VERSION = "jExpress 2.7.3";
     String JEXPRESS_PACKAGE_NAME = "org.summerboot.jexpress";
 
     String JSONFILTER_NAME_SERVICEERROR = "ServiceErrorFilter";
