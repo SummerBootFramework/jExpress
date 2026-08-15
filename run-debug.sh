@@ -1,52 +1,38 @@
 #!/bin/bash
-#
-# Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://apache.org
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-#
-
 # shellcheck shell=bash
 
 # Check if Java was actually found
-JAVA_PATH=$(find /usr/lib/jvm -name 'java-21-openjdk*' -type d | head -1)
+JAVA_PATH=$(find /usr/lib/jvm -name 'java-25-openjdk*' -type d | head -1)
 
 if [ -z "$JAVA_PATH" ]; then
-    echo "Error: Java 21 OpenJDK not found in /usr/lib/jvm"
+    echo "Error: Java 25 OpenJDK not found in /usr/lib/jvm"
     exit 1
 fi
 
 echo "Starting with Java: ${JAVA_PATH}"
 
 "${JAVA_PATH}/bin/java" \
- -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005 \
- -Dio.netty.native.workdir=./ \
- -Dio.grpc.netty.shaded.io.netty.native.workdir=./ \
- -Djava.awt.headless=true \
- -Xms2G -Xmx2G \
- -XX:+UseZGC -XX:ZUncommitDelay=300 -XX:+ZGenerational -XX:+AlwaysPreTouch \
- -XX:+PerfDisableSharedMem \
- -XX:+ZUncommit \
- -XX:+DisableExplicitGC \
- -XX:MaxDirectMemorySize=1g \
- -XX:+HeapDumpOnOutOfMemoryError \
- -XX:HeapDumpPath="standalone_$1/log/heapdump.hprof" \
- -XX:+ExitOnOutOfMemoryError \
- -Xlog:gc*:file="standalone_$1/log/gc.log":time,level,tags:filecount=5,filesize=10M \
- -Dfile.encoding=UTF-8 \
- -Duser.timezone=America/Toronto \
- -Djava.security.egd=file:/dev/./urandom \
- -Dio.netty.handler.ssl.openssl.engine.enable=true \
- -Dio.netty.leakDetectionLevel=SIMPLE \
- -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
- -jar jExpressApp.jar -domain "$1" -debug
+  -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005 \
+  --enable-native-access=ALL-UNNAMED \
+  -Dio.netty.native.workdir=./ \
+  -Dio.grpc.netty.shaded.io.netty.native.workdir=./ \
+  -Djava.awt.headless=true \
+  -Xms2G -Xmx2G \
+  -XX:+UseZGC \
+  -XX:+ZUncommit -XX:ZUncommitDelay=300 \
+  -XX:+AlwaysPreTouch \
+  -XX:+UseStringDeduplication \
+  -XX:+DisableExplicitGC \
+  -XX:MaxDirectMemorySize=1g \
+  -XX:+HeapDumpOnOutOfMemoryError \
+  -XX:HeapDumpPath="standalone_$1/log/heapdump.hprof" \
+  -XX:ErrorFile="standalone_$1/log/hs_err_%p.log" \
+  -XX:+ExitOnOutOfMemoryError \
+  -Xlog:gc*:file="standalone_$1/log/gc.log":time,level,tags:filecount=5,filesize=10M \
+  -Dfile.encoding=UTF-8 \
+  -Duser.timezone=America/Toronto \
+  -Djava.security.egd=file:/dev/./urandom \
+  -Dio.netty.handler.ssl.openssl.engine.enable=true \
+  -Dio.netty.leakDetectionLevel=SIMPLE \
+  -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector \
+  -jar jExpressApp.jar -domain "$1" -debug
