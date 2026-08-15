@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.7.1-SNAPSHOT</version>
+    <version>2.7.2</version>
     <packaging>jar</packaging>
     <name>jExpress ${project.version}</name>
     <description>jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>
@@ -181,15 +181,15 @@
         <jakarta-mail.version>2.0.2</jakarta-mail.version>
         <jakarta-activation.version>2.0.1</jakarta-activation.version>
         <!-- Security -->
-        <bouncycastle.version>1.84</bouncycastle.version>
+        <bouncycastle.version>1.85</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.13.0</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.2.16.Final</netty.version>
-        <netty-tcnative.version>2.0.80.Final</netty-tcnative.version>
+        <netty.version>4.2.17.Final</netty.version>
+        <netty-tcnative.version>2.0.81.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.82.1</grpc.version>
+        <grpc.version>1.83.1</grpc.version>
         <guava.version>33.6.0-jre</guava.version>
         <protobuf.version>4.35.1</protobuf.version>
         <!-- Web JAX-RS -->
@@ -198,54 +198,54 @@
 
 
         <!-- MIME-Type -->
-        <tika.version>3.3.1</tika.version>
+        <tika.version>3.3.2</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>4.0.0</rs-api.version>
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <reflections.version>0.10.2</reflections.version>
 
         <!-- JSON/XML/Bean Validation -->
-        <jackson.version>3.2.0</jackson.version>
+        <jackson.version>3.2.1</jackson.version>
         <jackson.annotations.version>2.22</jackson.annotations.version>
         <jackson2.version>2.22.1</jackson2.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.23</tomcat-embed-el.version>
-        <hibernate-validator.version>9.1.2.Final</hibernate-validator.version>
+        <tomcat-embed-el.version>11.0.24</tomcat-embed-el.version>
+        <hibernate-validator.version>9.1.3.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.4.4.Final</hibernate.version>
+        <hibernate.version>7.4.5.Final</hibernate.version>
         <hikari-cp.version>7.1.0</hikari-cp.version>
 
         <!-- Cache -->
-        <jedis.version>7.5.3</jedis.version>
+        <jedis.version>8.0.0</jedis.version>
 
         <quartz.version>2.5.2</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
 
         <!-- Template Engine -->
         <freemarker.version>2.3.34</freemarker.version>
-        <jsoup.version>1.22.2</jsoup.version>
+        <jsoup.version>1.23.1</jsoup.version>
         <!-- Barcode -->
         <zxing.version>3.5.4</zxing.version>
         <!-- PDF - PDFBox -->
-        <pdfbox.version>3.0.7</pdfbox.version>
+        <pdfbox.version>3.0.8</pdfbox.version>
         <!-- PDF - io.github.openhtmltopdf -->
-        <openhtml.version>1.1.40</openhtml.version>
+        <openhtml.version>1.1.73</openhtml.version>
         <batik-transcoder.version>1.19</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext-core.version>9.6.0</itext-core.version>
-        <itext-html2pdf.version>6.3.2</itext-html2pdf.version>
+        <itext-core.version>9.7.1</itext-core.version>
+        <itext-html2pdf.version>6.3.3</itext-html2pdf.version>
 
         <veracode.version>1.2.1</veracode.version>
 
         <!-- Testing  -->
         <testng.version>7.12.0</testng.version>
         <jsonassert.version>2.0-rc1</jsonassert.version>
-        <jdbc.version>9.7.0</jdbc.version>
+        <jdbc.version>26.7.0</jdbc.version>
     </properties>
 
     <dependencies>

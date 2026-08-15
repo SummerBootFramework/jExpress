@@ -16,15 +16,18 @@ Environment=APP_ARGS="-debug"
 
 
 Environment="JVM_OPTIONS=\
+ -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005 \
  -Djava.awt.headless=true \
  -Xms2G -Xmx2G \
- -XX:+UseZGC -XX:ZUncommitDelay=300 -XX:+ZGenerational -XX:+AlwaysPreTouch \
- -XX:+PerfDisableSharedMem \
- -XX:+ZUncommit \
+ -XX:+UseZGC \
+ -XX:+ZUncommit -XX:ZUncommitDelay=300 \
+ -XX:+AlwaysPreTouch \
+ -XX:+UseStringDeduplication \
  -XX:+DisableExplicitGC \
  -XX:MaxDirectMemorySize=1g \
  -XX:+HeapDumpOnOutOfMemoryError \
  -XX:HeapDumpPath=heapdump.hprof \
+ -XX:ErrorFile=hs_err_%p.log \
  -XX:+ExitOnOutOfMemoryError \
  -Xlog:gc*:file=gc.log:time,level,tags:filecount=5,filesize=10M \
  -Dfile.encoding=UTF-8 \
@@ -36,15 +39,15 @@ Environment="JVM_OPTIONS=\
  -Dio.grpc.netty.shaded.io.netty.native.workdir=lib \
  -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
 
-# 1. Find Java 21, validate, write KEY=VALUE to env file (single line — mandatory)
-#ExecStartPre=/bin/sh -c 'JAVA=$(find /usr/lib/jvm -name "java-21-openjdk*" -type d | head -1); if [ -z "$JAVA" ]; then echo "Error: Java 21 OpenJDK not found in /usr/lib/jvm" >&2; exit 1; fi; echo "JAVA_PATH=$JAVA/bin/java" > /tmp/java.env'
+# 1. Find Java 25, validate, write KEY=VALUE to env file (single line — mandatory)
+#ExecStartPre=/bin/sh -c 'JAVA=$(find /usr/lib/jvm -name "java-25*" -type d | head -1); if [ -z "$JAVA" ]; then echo "Error: Java 25 OpenJDK not found in /usr/lib/jvm" >&2; exit 1; fi; echo "JAVA_PATH=$JAVA/bin/java" > /tmp/java.env'
 
 # 2. Load JAVA_PATH — hardcoded filename, $VAR is NOT expanded in EnvironmentFile paths
 #EnvironmentFile=-/tmp/java.env
 
-# 3. Run the application with Java 21/25
+# 3. Run the application with Java 25
 #ExecStart=/bin/sh -c 'exec $JAVA_PATH $JVM_OPTIONS -jar $APP_JAR $APP_ARGS'
-ExecStart=/bin/sh -c "JAVA_PATH=$(find /usr/lib/jvm -name 'java-21*' -type d | head -1)/bin/java; exec $JAVA_PATH $JVM_OPTIONS -jar $APP_JAR $APP_ARGS"
+ExecStart=/bin/sh -c "JAVA_PATH=$(find /usr/lib/jvm -name 'java-25*' -type d | head -1)/bin/java; exec $JAVA_PATH $JVM_OPTIONS -jar $APP_JAR $APP_ARGS"
 
 # 4. Cleanup
 #ExecStopPost=/bin/sh -c 'rm -f /tmp/java.env'

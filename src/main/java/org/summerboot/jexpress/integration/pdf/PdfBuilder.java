@@ -143,9 +143,9 @@ public class PdfBuilder {
                     pageHeightMillimeters += extraSpace;//add extra space
                     htmlTemplate = PageCssUtil.setHeight(htmlContent, pageHeightMillimeters + "mm;");
                     layoutInfo = pdfBoxAgent.layoutThenGetInfo(htmlTemplate, htmlTemplateDir);
-                    context.poi(BootPoi.PDF_HV);
                     pageCount = layoutInfo.getPageCount();
                     retry++;
+                    context.poi(BootPoi.PDF_HV);
                 }
                 if (retry > 1) {
                     context.level(Level.WARN).memo("template height oversize retry = " + retry).error(new Err(0, null, null, null, sessionName + " template height oversize retry = " + retry));

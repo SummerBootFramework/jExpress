@@ -42,8 +42,8 @@ public interface BootPoi {
     String CACHE_END = "cache.end";
     String PDF_BEGIN = "pdf.begin";
     String PDF_END = "pdf.end";
-    String PDF_HC = "height calculation.end";
-    String PDF_HV = "height verification.end";
+    String PDF_HC = "height_calculation.end";
+    String PDF_HV = "height_verification.end";
     String PDF_DH = "dump.html";
     String PDF_DP = "dump.pdf";
     String PDF_DI = "dump.img";

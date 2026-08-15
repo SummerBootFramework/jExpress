@@ -183,7 +183,7 @@ public class BackOffice extends BootConfig {
     private String lineSeparator = System.lineSeparator();
 
     @Config(key = "default.ConfigChangeMonitor.Throttle.Milliseconds", defaultValue = "100")
-    private long CfgChangeMonitorThrottleMillis = 100;
+    private long CfgChangeMonitorThrottleMilliseconds = 100;
 
     @Config(key = "default.web.resource.ttl.sec", defaultValue = "3600")
     private long webResourceCacheTtlSec = 3600;
@@ -193,6 +193,12 @@ public class BackOffice extends BootConfig {
 
     @Config(key = "timeout.alert.milliseconds", defaultValue = "10000")
     private long processTimeoutMilliseconds = 10000;
+
+    @Config(key = "cache.ping.ttl.milliseconds", defaultValue = "1000")
+    private long cachePingTtlMilliseconds = 1000;
+
+    @Config(key = "cache.ping.verify.milliseconds", defaultValue = "2500")
+    private long cachePingVerifyMilliseconds = 2500;
 
     private static final String ALERT_MSG_TIMEOUT = "Note: This is a known issue in Linux systems where the/dev/random runs out of \"entropy\" and it causes the system to blockthreads. \n\tTo verify: cat /dev/random or install rng-tools and/or haveged.\n\tOr add a JVM argument to the runner: -Djava.security.egd=file:/dev/./urandom";
     @Config(key = "timeout.alert.message", defaultValue = ALERT_MSG_TIMEOUT)
@@ -439,8 +445,8 @@ public class BackOffice extends BootConfig {
         return lineSeparator;
     }
 
-    public long getCfgChangeMonitorThrottleMillis() {
-        return CfgChangeMonitorThrottleMillis;
+    public long getCfgChangeMonitorThrottleMilliseconds() {
+        return CfgChangeMonitorThrottleMilliseconds;
     }
 
     public long getWebResourceCacheTtlSec() {
@@ -453,6 +459,14 @@ public class BackOffice extends BootConfig {
 
     public long getProcessTimeoutMilliseconds() {
         return processTimeoutMilliseconds;
+    }
+
+    public long getCachePingTtlMilliseconds() {
+        return cachePingTtlMilliseconds;
+    }
+
+    public long getCachePingVerifyMilliseconds() {
+        return cachePingVerifyMilliseconds;
     }
 
     public String getProcessTimeoutAlertMessage() {
@@ -674,4 +688,5 @@ public class BackOffice extends BootConfig {
     public int getAlgorithmSecretKeyIterationCount() {
         return algorithmSecretKeyIterationCount;
     }
+
 }
