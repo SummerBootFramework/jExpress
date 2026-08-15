@@ -1,8 +1,10 @@
 ## 📅 CHANGES
 
-## Version 2.7.2 (2026-07-24)
+## Version 2.7.2 (2026-08-15)
 
-* security patch: CVE-2026-54515 caused by Jackson Databind 2.22.0
+* security patch: CVE-2026-59889 CVE-2026-54515 caused by Jackson Databind 2.22.0
+* security patch: CVE-2026-59889 caused by Jackson Databind 3.2.0
+* security patch: CVE-2026-71497 caused by Jsoup 1.22.2
 * cache ping ttl and verify time are now configurable via boot.ini: cache.ping.ttl.milliseconds and cache.ping.verify.milliseconds
 
 ## Version 2.7.1 (2026-06-28)
