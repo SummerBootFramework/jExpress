@@ -187,7 +187,12 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
         Caller caller = context.caller();
         if (caller != null) {
             Thread currentThread = Thread.currentThread();
-            String id = currentThread.getName() + "-" + caller.getTenantId() + "." + caller.getUid();
+            //String id = currentThread.getName() + "-" + caller.getTenantId() + "." + caller.getUid();
+            String currentThreadName = currentThread.getName();
+            if (currentThreadName.contains("-tid#")) {// REF273-1
+                currentThreadName = currentThreadName.substring(0, currentThreadName.indexOf("-tid#"));
+            }
+            String id = currentThreadName + "-tid#" + caller.getTenantId() + ".uid#" + caller.getUid();
             currentThread.setName(id);
         }
         return caller != null;
