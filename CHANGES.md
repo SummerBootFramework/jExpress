@@ -1,6 +1,6 @@
 ## 📅 CHANGES
 
-## Version 2.7.3 (2026-09-11)
+## Version 2.7.3 (2026-09-09)
 
 * security patch
 * REF273-1: BootHttpRequestHandler.handleRequest () remove the previously appended tenant and user ID from the thread name to avoid potential information leakage in logs or thread dumps. The thread
