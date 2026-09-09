@@ -1,5 +1,11 @@
 ## 📅 CHANGES
 
+## Version 2.7.3 (2026-09-09)
+
+* security patch
+* REF273-1: BootHttpRequestHandler.handleRequest () remove the previously appended tenant and user ID from the thread name to avoid potential information leakage in logs or thread dumps. The thread
+  name is now restored to its original state after processing the request.
+
 ## Version 2.7.2 (2026-08-15)
 
 * security patch: CVE-2026-59889 CVE-2026-54515 caused by Jackson Databind 2.22.0
