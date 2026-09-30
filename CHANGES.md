@@ -1,5 +1,9 @@
 ## 📅 CHANGES
 
+## Version 2.7.4 (2026-10-20)
+
+* security patch
+
 ## Version 2.7.3 (2026-09-09)
 
 * security patch

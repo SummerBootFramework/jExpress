@@ -4,11 +4,11 @@
 * **[Maven Central Repository][2]**
 * **[mvnrepository.com][3]**
 
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.7.3
+[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.7.4
 
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.7.3
+[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.7.4
 
-[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.7.3
+[3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.7.4
 
 [View Changelog (CHANGES)](CHANGES.md)
 
@@ -36,7 +36,7 @@ October 2011, then to GitLab in Dec 2016, and eventually to GitHub in Sep 2021.
 <dependency>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.7.3</version>
+    <version>2.7.4</version>
 </dependency>
 ```
 
