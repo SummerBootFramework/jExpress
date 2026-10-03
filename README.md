@@ -54,6 +54,8 @@ Scaling distributed microservice layers via temporary, high-churn contract engin
 * **Auto-Generated Configurations & CLI Linting:** The framework natively generates standard configuration templates and binds their state dynamically to active source variables. A
   built-in Command Line Interface (`CLI`) linting suite reformats, aligns, and cleans chaotic or unorganized property scopes via a single shell command, ensuring absolute stylistic
   consistency across a multi-vendor codebase.
+* **Multi-Environment Domain Swapping:** The framework supports native runtime configuration domains. Operations teams can execute instant environment swaps at boot time,
+  eliminating hardcoded profile risks and ensuring correct localized property bindings across Dev, Staging, and Production zones.
 * **Full-Envelope, Asynchronous Logging (Logging After Response Sent):** Traditional logging systems are structurally disjointed and heavily degrade runtime application throughput. **jExpress**
   completely rewrites this lifecycle using a non-blocking, post-response logging sub-engine:
     * **Single-Entry Aggregation:** **It captures, structure-matches, and seals the entire `Request Header`, `Request Body`, `Response Header`, and `Response Body` into a single,
@@ -62,6 +64,13 @@ Scaling distributed microservice layers via temporary, high-churn contract engin
       structured, auto-rotated, and dynamically labeled utilizing the target node's physical server hostname.
 * **Performance-Metric Embedded Logs:** Core key performance indicators (KPIs)—including exact transaction execution durations and network throughput metadata—are natively injected
   into every log entry out-of-the-box, providing global telemetry without requiring developers to manually write telemetry interceptors.
+* **Dual-Tier Lifecycle Session Tracing:** To facilitate rapid tracking across hyper-concurrency distributions, the framework introduces an automated, two-layer diagnostic
+  identifier setup:
+    * **Application Boot Session Key:** Every application startup triggers a unique 6-digit session tag. Tracking this variable across log aggregated views immediately alerts
+      operations to silent or un-orchestrated application restarts.
+    * **Composite Request Tracer:** For every incoming transaction, the server dynamically appends an index sequence to the 6-digit boot session key. This composite tracer is
+      stamped inside the application log and returned directly within the client's `Response Header`, enabling engineering squads to isolate a specific transaction out of millions
+      in seconds.
 
 ### Pillar 2: Zero-Trust Security & Ironclad Compliance (Security Defences)
 
@@ -78,6 +87,9 @@ default.*
   scanning**, deploying out-of-the-box with embedded URL Sanitizers and rigid safeguards against standard code-injection attacks.
 * **Staging & Testing Sandboxing (Access Filters):** Integrated IP and Caller-Token blacklist/whitelist infrastructure blocks unauthorized network traffic, malicious scanning
   engines, or scrapers from executing staging or integration environments during early-stage cross-team testing cycles.
+* **Secure Admin Governance Portal:** The platform exposes an authenticated Administrative Dashboard. This secure boundary permits authorized auditors and operations personnel to
+  inspect runtime infrastructure statuses and extract protected metadataâ€”such as software internal version strings required for formal **ISO Compliance Audits**â€”without
+  exposing source blocks or raw configurations to external contractors.
 
 ### Pillar 3: Intelligent Operations & Self-Healing Resilience (High Availability)
 
@@ -91,6 +103,11 @@ failures.*
   cleanly shuts down the dependent path, completely avoiding the generation of corrupt, split-brain, or orphan transactions.
 * **Intelligent Alert Routing (Email Auto-Alert):** Runtime errors are automatically classified at the core layer: expected business exceptions are directed to the operations
   Support Team for standard tracking, whereas unhandled, high-severity system panics immediately alert the Core Development Architecture Team for instant mitigation.
+* **Proactive Lifecycle Status Alerts:** The engine embeds native lifecycle event hooks. The framework automatically dispatches instant, out-of-the-box email alerts directly to the
+  operations Support Team at the exact millisecond an application instance initializes or enters a teardown phase, maintaining absolute visibility over node availability.
+* **Graceful Teardown Engine:** To guarantee data consistency during rolling deployments or scaling actions, the framework enforces an automated graceful shutdown protocol. Upon
+  intercepting a termination signal, the service stops accepting new inbound requests, safely flushes ongoing asynchronous logging pipelines, completes flight transactions, and
+  releases infrastructure sockets without dropping connections or corrupting inflight data.
 
 ---
 
