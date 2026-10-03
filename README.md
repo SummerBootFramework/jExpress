@@ -58,19 +58,19 @@ Scaling distributed microservice layers via temporary, high-churn contract engin
   eliminating hardcoded profile risks and ensuring correct localized property bindings across Dev, Staging, and Production zones.
 * **Full-Envelope, Asynchronous Logging (Logging After Response Sent):** Traditional logging systems are structurally disjointed and heavily degrade runtime application throughput. **jExpress**
   completely rewrites this lifecycle using a non-blocking, post-response logging sub-engine:
-    * **Single-Entry Aggregation:** **It captures, structure-matches, and seals the entire `Request Header`, `Request Body`, `Response Header`, and `Response Body` into a single,
-      cohesive, atomic log entry.**
-    * **Zero-Latency Impact:** Downstream clients receive their execution packets instantaneously without blocking for log serialization or disk I/O. Log files are asynchronously
-      structured, auto-rotated, and dynamically labeled utilizing the target node's physical server hostname.
+  * **Single-Entry Aggregation:** **It captures, structure-matches, and seals the entire `Request Header`, `Request Body`, `Response Header`, and `Response Body` into a single,
+    cohesive, atomic log entry.**
+  * **Zero-Latency Impact:** Downstream clients receive their execution packets instantaneously without blocking for log serialization or disk I/O. Log files are asynchronously
+    structured, auto-rotated, and dynamically labeled utilizing the target node's physical server hostname.
 * **Performance-Metric Embedded Logs:** Core key performance indicators (KPIs)—including exact transaction execution durations and network throughput metadata—are natively injected
   into every log entry out-of-the-box, providing global telemetry without requiring developers to manually write telemetry interceptors.
 * **Dual-Tier Lifecycle Session Tracing:** To facilitate rapid tracking across hyper-concurrency distributions, the framework introduces an automated, two-layer diagnostic
   identifier setup:
-    * **Application Boot Session Key:** Every application startup triggers a unique 6-digit session tag. Tracking this variable across log aggregated views immediately alerts
-      operations to silent or un-orchestrated application restarts.
-    * **Composite Request Tracer:** For every incoming transaction, the server dynamically appends an index sequence to the 6-digit boot session key. This composite tracer is
-      stamped inside the application log and returned directly within the client's `Response Header`, enabling engineering squads to isolate a specific transaction out of millions
-      in seconds.
+  * **Application Boot Session Key:** Every application startup triggers a unique 6-digit session tag. Tracking this variable across log aggregated views immediately alerts
+    operations to silent or un-orchestrated application restarts.
+  * **Composite Request Tracer:** For every incoming transaction, the server dynamically appends an index sequence to the 6-digit boot session key. This composite tracer is
+    stamped inside the application log and returned directly within the client's `Response Header`, enabling engineering squads to isolate a specific transaction out of millions
+    in seconds.
 
 ### Pillar 2: Zero-Trust Security & Ironclad Compliance (Security Defences)
 
@@ -161,3 +161,4 @@ While Spring Boot is an excellent general-purpose technology, replacing our infr
   developers become productive immediately without burdening our core staff or leaving behind an unmaintainable legacy footprint.
 
 ### Bottom Line: By leveraging the certainty of the jExpress Framework, we do not just regulate the codebase quality of external vendors—we lock in a performance floor of 100K+ TPS, achieving the ultimate technology management goal: Low-barrier development paired with high-standard delivery.
+
