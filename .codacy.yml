@@ -9,11 +9,11 @@ exclude-paths:
 tools:
   pmd:
     enabled: true
-    exclude-paths:
-      - 'target'
   pmd-legacy:
-    enabled: false
+    enabled: false  # 禁用 legacy 版本避免冲突
   checkstyle:
-    enabled: false
+    enabled: true
   spotbugs:
-    enabled: false
+    enabled: false  # 需要编译的 class 文件
+  remark-lint:
+    enabled: true
