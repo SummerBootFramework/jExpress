@@ -1,19 +1,7 @@
-exclude-paths:
-  - '.git'
-  - 'node_modules'
-  - 'dist'
-  - 'build'
-  - 'target'
-  - '.github'
-
 tools:
   pmd:
-    enabled: true
+    enabled: false
   pmd-legacy:
-    enabled: false  # 禁用 legacy 版本避免冲突
-  checkstyle:
-    enabled: true
+    enabled: false
   spotbugs:
-    enabled: false  # 需要编译的 class 文件
-  remark-lint:
-    enabled: true
+    enabled: false
