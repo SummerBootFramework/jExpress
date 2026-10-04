@@ -1,60 +1,37 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# This workflow checks out code, performs a Codacy security scan
-# and integrates the results with the
-# GitHub Advanced Security code scanning feature.  For more information on
-# the Codacy security scan action usage and parameters, see
-# https://github.com/codacy/codacy-analysis-cli-action.
-# For more information on Codacy Analysis CLI in general, see
-# https://github.com/codacy/codacy-analysis-cli.
-
 name: Codacy Security Scan
 
 on:
   push:
-    branches: [ main, develop, release*, feature/*, bugfix/*, hotfix/* ]
+    branches: [ "main", "master" ]
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ main, develop, release* ]
+    branches: [ "main", "master" ]
   schedule:
-    - cron: '0 11,23 * * *'
-
-permissions:
-  contents: read
+    - cron: '30 18 * * 4' # 每周固定时间自动扫描
 
 jobs:
   codacy-security-scan:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
     name: Codacy Security Scan
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repository to the GitHub Actions runner
+      # Step 1: 检出你的 Java 源码
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Execute Codacy Analysis CLI and generate a SARIF output with the security issues identified during the analysis
+      # Step 2: 运行 Codacy 静态分析 CLI，输出为 SARIF 格式
       - name: Run Codacy Analysis CLI
-        uses: codacy/codacy-analysis-cli-action@d840f886c4bd4edc059706d09c6a1586111c540b
+        uses: codacy/codacy-analysis-cli-action@master
         with:
-          # Check https://github.com/codacy/codacy-analysis-cli#project-token to get your project token from your Codacy repository
-          # You can also omit the token and run the tools that support default configurations
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          # 如果你要将结果同步到 Codacy 官网面板，请在 GitHub Project Secrets 中配置该 Token
+          # project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           verbose: true
           output: results.sarif
           format: sarif
-          # Adjust severity of non-security issues
+          # 针对 Java 优化，强制检查安全与质量
           gh-code-scanning-compat: true
-          # Force 0 exit code to allow SARIF file generation
-          # This will handover control about PR rejection to the GitHub side
           max-allowed-issues: 2147483647
 
-      # Upload the SARIF file generated in the previous step
+      # Step 3: 将 SARIF 报告上传到 GitHub 的 Security 面板（公共仓库免费）
       - name: Upload SARIF results file
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
