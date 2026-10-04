@@ -1,0 +1,19 @@
+exclude-paths:
+  - '.git'
+  - 'node_modules'
+  - 'dist'
+  - 'build'
+  - 'target'
+  - '.github'
+
+tools:
+  pmd:
+    enabled: true
+    exclude-paths:
+      - 'target'
+  pmd-legacy:
+    enabled: false
+  checkstyle:
+    enabled: false
+  spotbugs:
+    enabled: false
