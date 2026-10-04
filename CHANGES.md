@@ -2,7 +2,7 @@
 
 ## Version 2.7.4 (2026-10-20)
 
-- security patch
+- security patch: Jackson Databind
 
 ## Version 2.7.3 (2026-09-09)
 
