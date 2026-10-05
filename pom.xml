@@ -207,7 +207,7 @@
         <!-- JSON/XML/Bean Validation -->
         <jackson.version>3.2.2</jackson.version>
         <jackson.annotations.version>2.22</jackson.annotations.version>
-        <jackson2.version>2.22.2</jackson2.version>
+        <jackson2.version>2.22.3</jackson2.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
         <tomcat-embed-el.version>11.0.25</tomcat-embed-el.version>
