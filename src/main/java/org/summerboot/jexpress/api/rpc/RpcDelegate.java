@@ -69,6 +69,8 @@ public interface RpcDelegate {
 
     <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException;
 
+    <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException;
+
     /**
      * @param <T>
      * @param sessionContext
@@ -78,6 +80,8 @@ public interface RpcDelegate {
      * @throws IOException
      */
     <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException;
+
+    <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest req, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException;
 
     /**
      * Need to call RpcResult.update(...) to deserialize JSON to success/error
@@ -94,6 +98,21 @@ public interface RpcDelegate {
     <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException;
 
     /**
+     * Need to call RpcResult.update(...) to deserialize JSON to success/error
+     * result
+     *
+     * @param <T>
+     * @param context
+     * @param originRequest
+     * @param originRequestBody
+     * @param isStreaming
+     * @param successStatusList
+     * @return a Non-Null RpcResult
+     * @throws IOException
+     */
+    <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException;
+
+    /**
      * Reset request
      *
      * @param context
@@ -104,4 +123,6 @@ public interface RpcDelegate {
      * @throws IOException
      */
     <T> RpcResult<T> rpcEx(SessionContext context, RpcResult<T> request, HttpResponseStatus... successStatusList) throws IOException;
+
+    <T> RpcResult<T> rpcEx(SessionContext context, RpcResult<T> request, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException;
 }
