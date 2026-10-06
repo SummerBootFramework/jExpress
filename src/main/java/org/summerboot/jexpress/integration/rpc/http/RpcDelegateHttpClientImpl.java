@@ -27,6 +27,7 @@ import org.summerboot.jexpress.api.rpc.RpcResult;
 import org.summerboot.jexpress.integration.rpc.http.config.HttpClientConfig;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
@@ -53,15 +54,20 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
             String value = httpClientDefaultRequestHeaders.get(key);
             reqBuilder.setHeader(key, value);
         });
-        reqBuilder.timeout(Duration.ofMillis(httpCfg.getHttpClientTimeoutMs()));
+        reqBuilder.timeout(Duration.ofMillis(httpCfg.getHttpRequestTimeoutMs()));
     }
 
     @Override
     public <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException {
+        return this.rpcEx(sessionContext, reqBuilder, false, successStatusList);
+    }
+
+    @Override
+    public <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
         configure(reqBuilder);
         HttpRequest req = reqBuilder.build();
         String reqbody = RpcDelegate.getHttpRequestBody(req);
-        return this.rpcEx(sessionContext, req, reqbody, successStatusList);
+        return this.rpcEx(sessionContext, req, reqbody, isStreaming, successStatusList);
     }
 
     /**
@@ -74,9 +80,14 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
      */
     @Override
     public <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException {
+        return rpcEx(sessionContext, req, false, successStatusList);
+    }
+
+    @Override
+    public <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest req, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
         Optional<HttpRequest.BodyPublisher> pub = req.bodyPublisher();
         String reqbody = RpcDelegate.getHttpRequestBody(req);
-        return this.rpcEx(sessionContext, req, reqbody, successStatusList);
+        return this.rpcEx(sessionContext, req, reqbody, isStreaming, successStatusList);
     }
 
     /**
@@ -93,17 +104,27 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
      */
     @Override
     public <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException {
+        return this.rpcEx(context, originRequest, originRequestBody, false, successStatusList);
+    }
+
+
+    public <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
         //1. log memo
         context.memo(RpcMemo.MEMO_RPC_REQUEST, originRequest.toString() + " caller=" + context.caller());
         if (originRequestBody != null) {
             context.memo(RpcMemo.MEMO_RPC_REQUEST_DATA, originRequestBody);
         }
         //2. call remote sever
-        HttpResponse httpResponse;
+        HttpResponse<String> httpResponse1 = null;
+        HttpResponse<InputStream> httpResponse2 = null;
         context.poi(BootPoi.RPC_BEGIN);
         try {
             HttpClientConfig httpCfg = getHttpClientConfig();
-            httpResponse = httpCfg.getHttpClient().send(originRequest, HttpResponse.BodyHandlers.ofString());
+            if (isStreaming) {
+                httpResponse2 = httpCfg.getHttpClient().send(originRequest, HttpResponse.BodyHandlers.ofInputStream());
+            } else {
+                httpResponse1 = httpCfg.getHttpClient().send(originRequest, HttpResponse.BodyHandlers.ofString());
+            }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "Http Client Interrupted", ex);
@@ -116,9 +137,8 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
 
         // 3a. check remote success or not
         boolean isRemoteSuccess = false;
-        int statusCode = httpResponse.statusCode();
+        int statusCode = isStreaming ? httpResponse2.statusCode() : httpResponse1.statusCode();
         if (successStatusList == null || successStatusList.length < 1) {
-            //isRemoteSuccess = statusCode == HttpResponseStatus.OK.code();
             isRemoteSuccess = (statusCode >= HttpResponseStatus.OK.code() && statusCode <= 299);
         } else {
             for (HttpResponseStatus successStatus : successStatusList) {// a simple loop is way faster than Arrays
@@ -130,16 +150,16 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
         }
 
         //3b. update status   
-        RpcResult<T> rpcResult = new RpcResult<>(originRequest, originRequestBody, httpResponse, isRemoteSuccess, getHttpClientConfig());
+        RpcResult<T> rpcResult = new RpcResult<>(originRequest, originRequestBody, isStreaming ? httpResponse2 : httpResponse1, isRemoteSuccess, isStreaming, getHttpClientConfig());
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
-        context.memo(RpcMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + httpResponse.headers());
-        context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA, rpcResponseJsonBody);
+        context.memo(RpcMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + (isStreaming ? httpResponse2.headers() : httpResponse1.headers()));
+        context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA, isStreaming ? "stream data" : rpcResponseJsonBody);
         // let caller decide how to process the RpcResult - rpcResult.update(successResponseClass, errorResponseClass, ioc);
         return rpcResult;
     }
 
     /**
-     * Reset request
+     * resend the same request with the same body, and return a Non-Null RpcResult
      *
      * @param context
      * @param request
@@ -150,7 +170,11 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
      */
     @Override
     public <T> RpcResult<T> rpcEx(SessionContext context, RpcResult<T> request, HttpResponseStatus... successStatusList) throws IOException {
-        return this.rpcEx(context, request.getOriginRequest(), request.getOriginRequestBody(), successStatusList);
+        return this.rpcEx(context, request, false, successStatusList);
     }
 
+    @Override
+    public <T> RpcResult<T> rpcEx(SessionContext context, RpcResult<T> request, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
+        return this.rpcEx(context, request.getOriginRequest(), request.getOriginRequestBody(), isStreaming, successStatusList);
+    }
 }

@@ -1,8 +1,11 @@
 ## 📅 CHANGES
 
-## Version 2.7.4 (2026-10-20)
+## Version 2.7.4 (2026-10-10)
 
 - security patch: Jackson Databind
+- Http Client upgrade:
+    - HttpClientConfig: refactor with new configuration items.
+    - RpcDelegate and RpcResult: Support streaming processing of large HTTP client response bodies in high-concurrency scenarios.
 
 ## Version 2.7.3 (2026-09-09)
 

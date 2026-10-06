@@ -93,19 +93,19 @@ abstract public class HttpClientConfig extends BootConfig {
     @Override
     protected void reset() {
         jsonParserTimeZone = TimeZone.getDefault();
-        httpClientCoreSize = BootConstants.CPU_CORE * 2 + 1;// how many tasks running at the same time
-        httpClientMaxSize = BootConstants.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        responseCallbackTpeCoreSize = BootConstants.CPU_CORE * 2 + 1;// how many tasks running at the same time
+        responseCallbackTpeMaxSize = BootConstants.CPU_CORE * 2 + 1;// how many tasks running at the same time
         proxyAuthStrategy = ProxyAuthStrategy.AUTHENTICATOR;
     }
 
     @Override
     public void shutdown() {
         String tn = Thread.currentThread().getName();
-        if (tpe != null && !tpe.isShutdown()) {
-            System.out.println(tn + ": shutdown tpe: " + tpe);
-            tpe.shutdown();
+        if (responseCallbackTpe != null && !responseCallbackTpe.isShutdown()) {
+            System.out.println(tn + ": shutdown tpe: " + responseCallbackTpe);
+            responseCallbackTpe.shutdown();
         } else {
-            System.out.println(tn + ": already shutdown tpe: " + tpe);
+            System.out.println(tn + ": already shutdown tpe: " + responseCallbackTpe);
         }
         if (ses != null && !ses.isShutdown()) {
             System.out.println(tn + ": shutdown ses: " + ses);
@@ -167,9 +167,15 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "http.proxy.userPwd", validate = Config.Validate.Encrypted)
     protected volatile String proxyUserPwd;
 
+    @Config(key = "jdk.http.auth.tunneling.disabledSchemes", trim = false, defaultValue = "Basic", desc = "By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111. " +
+            "\nTo enable basic authentication with the proxy when tunneling through an authenticating proxy, set this property to an empty string. " +
+            "\nTo disable most of the authentication schemes, set this property to Basic, Digest, NTLM, or Kerberos. ")
+    protected volatile String proxyAuthTunnelingDisabledSchemes = "Basic";
+
     @Config(key = "http.proxy.authStrategy", defaultValue = "AUTHENTICATOR",
             desc = "valid values: AUTHENTICATOR (default, sets Authenticator only at the HttpClient level), HEADER (Sets Proxy-Authorization only in the request header)")
     protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.AUTHENTICATOR;
+
 
     @JsonIgnore
     protected volatile String proxyAuthorizationBasicValue;
@@ -200,40 +206,54 @@ abstract public class HttpClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile HttpClient.Builder builder;
 
-    @Config(key = "http.timeout.connect.ms", defaultValue = "3000", desc = "The maximum time to wait for only the connection to be established, should be less than http.timeout.ms")
-    protected volatile long httpConnectTimeoutMs = 3000;
+    @Config(key = "connection.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for only the connection to be established, should be less than http.timeout.ms")
+    protected volatile long httpConnectionTimeoutMs = 3000;
 
-    @Config(key = "http.timeout.ms", defaultValue = "5000", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
-    protected volatile long httpClientTimeoutMs = 5000;
+    @Config(key = "request.timeout.ms", defaultValue = "5000", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
+    protected volatile long httpRequestTimeoutMs = 5000;
 
-    @Config(key = "http.executor.mode", defaultValue = "VirtualThread",
-            desc = "valid value = VirtualThread (default for Java 21+), CPU, IO and Mixed (default for old Java)\n use CPU core + 1 when application is CPU bound\n"
+
+    @Config(key = "jdk.httpclient.maxconnections", defaultValue = "2000",
+            desc = "The maximum number of TCP connections per domain determines the \"concurrency output limit\" under high concurrency: For HTTP/1.1 set to 2000 connections per domain, while HTTP/2 sets to 500 TCP connections per domain.")
+    protected volatile int maxConnections = 2000;
+    @Config(key = "jdk.httpclient.connectionPoolSize", defaultValue = "2500",
+            desc = "The total number of connections in the connection pool, ensuring sufficient space for idle connections (slightly larger than the single-domain limit to allow for occasional minor adjustments), determines the \"connection retention and reuse capability\" after a request ends.")
+    protected volatile int connectionPoolSize = 2500;
+    @Config(key = "jdk.httpclient.keepalive.timeout", defaultValue = "120",
+            desc = "Extending the lifespan of long-lived connections: Since it's a high-frequency access, keeping connections alive for 120 seconds allows newly arriving virtual threads to 100% utilize existing connections. For HTTP/1.1 shortens this to 60 seconds (to avoid long-term port saturation due to too many connections), while HTTP/2 keeps connections alive for 120 seconds to maximize connection reuse.")
+    protected volatile long keepAliveTimeoutMs = 120;
+
+
+    @Config(key = "responseCallback.executor.enabled", defaultValue = "false", desc = "enable/disable the responseCallback.executor, default is false for quick and small response body, enable it when response is slow and large, and the responseCallback is CPU bound")
+    protected volatile boolean isResponseCallbackTpeEnabled = false;
+    @Config(key = "responseCallback.executor.mode", defaultValue = "VirtualThread",
+            desc = "valid value = VirtualThread (default), CPU, IO and Mixed \n use CPU core + 1 when application is CPU bound\n"
                     + "use CPU core x 2 + 1 when application is I/O bound\n"
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
-    protected volatile ThreadingMode tpeThreadingMode = ThreadingMode.VirtualThread;
+    protected volatile ThreadingMode responseCallbackThreadingMode = ThreadingMode.VirtualThread;
 
-    @Config(key = "httpclient.executor.CoreSize", predefinedValue = "0",
-            desc = "CoreSize 0 = current computer/VM's available processors x 2 + 1")
-    protected volatile int httpClientCoreSize = BootConstants.CPU_CORE * 2 + 1;// how many tasks running at the same time
+    @Config(key = "responseCallback.executor.CoreSize", defaultValue = "" + Integer.MAX_VALUE,
+            desc = "CoreSize 0 = Integer.MAX_VALUE")
+    protected volatile int responseCallbackTpeCoreSize = Integer.MAX_VALUE;// how many tasks running at the same time
 
-    @Config(key = "httpclient.executor.MaxSize", predefinedValue = "0",
-            desc = "MaxSize 0 = current computer/VM's available processors x 2 + 1")
-    protected volatile int httpClientMaxSize = BootConstants.CPU_CORE * 2 + 1;// how many tasks running at the same time
+    @Config(key = "responseCallback.executor.MaxSize", defaultValue = "" + Integer.MAX_VALUE,
+            desc = "MaxSize 0 = Integer.MAX_VALUE")
+    protected volatile int responseCallbackTpeMaxSize = Integer.MAX_VALUE;// how many tasks running at the same time
 
-    @Config(key = "http.executor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
+    @Config(key = "responseCallback.executor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
-    protected volatile int httpClientQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
+    protected volatile int responseCallbackTpeQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
 
-    @Config(key = "http.executor.KeepAliveSec", defaultValue = "60")
-    protected volatile int tpeKeepAliveSeconds = 60;
+    @Config(key = "responseCallback.executor.KeepAliveSec", defaultValue = "60")
+    protected volatile int responseCallbackTpeKeepAliveSeconds = 60;
 
-    @Config(key = "http.executor.prestartAllCoreThreads", defaultValue = "false")
-    protected boolean prestartAllCoreThreads = false;
+    @Config(key = "responseCallback.executor.prestartAllCoreThreads", defaultValue = "false")
+    protected boolean responseCallbackTpePrestartAllCoreThreads = false;
 
-    @Config(key = "http.executor.allowCoreThreadTimeOut", defaultValue = "false")
-    protected boolean allowCoreThreadTimeOut = false;
+    @Config(key = "responseCallback.executor.allowCoreThreadTimeOut", defaultValue = "false")
+    protected boolean responseCallbackTpeAllowCoreThreadTimeOut = false;
 
-    protected ThreadPoolExecutor tpe;
+    protected ThreadPoolExecutor responseCallbackTpe;
     @JsonIgnore
     protected ScheduledExecutorService ses;
 
@@ -294,19 +314,16 @@ abstract public class HttpClientConfig extends BootConfig {
         if (StringUtils.isBlank(tlsProtocol)) {
             sslContext = null;
         } else {
-            KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
-            final TrustManager[] trustManagers = tmf == null ? null : tmf.getTrustManagers();
-            sslContext = SslUtil.buildSSLContext(keyManagers, trustManagers, tlsProtocol);
             if (hostnameVerification != null) {
                 System.setProperty("jdk.internal.http.disableHostnameVerification", hostnameVerification ? "false" : "true");
             }
+            KeyManager[] keyManagers = kmf == null ? null : kmf.getKeyManagers();
+            final TrustManager[] trustManagers = tmf == null ? null : tmf.getTrustManagers();
+            sslContext = SslUtil.buildSSLContext(keyManagers, trustManagers, tlsProtocol);
         }
-
-        // 3.3 HTTP Client Executor
-
-        // -Djdk.http.keepalive.timeout=99999
-        //System.setProperty("jdk.http.keepalive.timeout", "99999");
-        //System.setProperty("jdk.http.connectionPoolSize", "1");
+        System.setProperty("jdk.httpclient.maxconnections", "" + maxConnections);
+        System.setProperty("jdk.httpclient.connectionPoolSize", "" + connectionPoolSize);
+        System.setProperty("jdk.httpclient.keepalive.timeout", "" + keepAliveTimeoutMs);
 
         String error = helper.getError();
         if (error != null) {
@@ -318,23 +335,33 @@ abstract public class HttpClientConfig extends BootConfig {
             return;
         }
 
-        ThreadPoolExecutor old = tpe;
+
+        ThreadPoolExecutor old = responseCallbackTpe;
         int currentTpeHashCode = old == null ? -1 : old.hashCode();
-        tpe = buildThreadPoolExecutor(old, "HttpClient", tpeThreadingMode,
-                httpClientCoreSize, httpClientMaxSize, httpClientQueueSize, tpeKeepAliveSeconds, null,
-                prestartAllCoreThreads, allowCoreThreadTimeOut, false);
-        boolean isHttpClientSettingsChanged = tpe.hashCode() != currentTpeHashCode;
+        if (isResponseCallbackTpeEnabled) {
+            responseCallbackTpe = buildThreadPoolExecutor(old, "HttpClient", responseCallbackThreadingMode,
+                    responseCallbackTpeCoreSize, responseCallbackTpeMaxSize, responseCallbackTpeQueueSize, responseCallbackTpeKeepAliveSeconds, null,
+                    responseCallbackTpePrestartAllCoreThreads, responseCallbackTpeAllowCoreThreadTimeOut, false);
+        } else {
+            responseCallbackTpe = null;
+        }
+        int newTpeHashCode = responseCallbackTpe == null ? -1 : responseCallbackTpe.hashCode();
+        boolean isHttpClientSettingsChanged = newTpeHashCode != currentTpeHashCode;
         // 1. save
         ScheduledExecutorService sesold = ses;
-        // 2. build new
-//                tpe = new ThreadPoolExecutor(currentCore, currentMax, 60L, TimeUnit.SECONDS,
-//                        new LinkedBlockingQueue<>(currentQueue), new NamedDefaultThreadFactory("HttpClient"), new AbortPolicyWithReport("HttpClientExecutor"));
 
-        builder = HttpClient.newBuilder()
-                .executor(tpe)
-                .version(HttpClient.Version.HTTP_2)
-                .followRedirects(redirectOption)
-                .connectTimeout(Duration.ofMillis(httpConnectTimeoutMs));
+        if (isResponseCallbackTpeEnabled) {
+            builder = HttpClient.newBuilder()
+                    .executor(responseCallbackTpe)
+                    .version(HttpClient.Version.HTTP_2)
+                    .followRedirects(redirectOption)
+                    .connectTimeout(Duration.ofMillis(httpConnectionTimeoutMs));
+        } else {
+            builder = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_2)
+                    .followRedirects(redirectOption)
+                    .connectTimeout(Duration.ofMillis(httpConnectionTimeoutMs));
+        }
         if (sslContext != null) {
             builder.sslContext(sslContext);
         }
@@ -342,7 +369,10 @@ abstract public class HttpClientConfig extends BootConfig {
             builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
         }
 
-        System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");// -Djdk.http.auth.tunneling.disabledSchemes=""
+        if (proxyAuthTunnelingDisabledSchemes == null) {
+            proxyAuthTunnelingDisabledSchemes = "";
+        }
+        System.setProperty("jdk.http.auth.tunneling.disabledSchemes", proxyAuthTunnelingDisabledSchemes);// -Djdk.http.auth.tunneling.disabledSchemes=""
         if (StringUtils.isNotBlank(proxyHost)) {
             //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
             builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
@@ -381,23 +411,25 @@ abstract public class HttpClientConfig extends BootConfig {
         }
         httpClient = builder.build();
         // 3. register new
-        ses = Executors.newSingleThreadScheduledExecutor(NamedDefaultThreadFactory.build("HttpClient.QPS_SERVICE", tpeThreadingMode.equals(ThreadingMode.VirtualThread)));
-        ses.scheduleAtFixedRate(() -> {
-            int queue = tpe.getQueue().size();
-            int active = tpe.getActiveCount();
-            if (active > 0 || queue > 0) {
-                long task = tpe.getTaskCount();
-                long completed = tpe.getCompletedTaskCount();
-                long pool = tpe.getPoolSize();
-                int core = tpe.getCorePoolSize();
-                long max = tpe.getMaximumPoolSize();
-                long largest = tpe.getLargestPoolSize();
-                if (listener != null) {
-                    listener.onHTTPClientAccessReportUpdate(task, completed, queue, active, pool, core, max, largest);
+        if (isResponseCallbackTpeEnabled) {
+            ses = Executors.newSingleThreadScheduledExecutor(NamedDefaultThreadFactory.build("HttpClient.QPS_SERVICE", true));
+            ses.scheduleAtFixedRate(() -> {
+                int queue = responseCallbackTpe.getQueue().size();
+                int active = responseCallbackTpe.getActiveCount();
+                if (active > 0 || queue > 0) {
+                    long task = responseCallbackTpe.getTaskCount();
+                    long completed = responseCallbackTpe.getCompletedTaskCount();
+                    long pool = responseCallbackTpe.getPoolSize();
+                    int core = responseCallbackTpe.getCorePoolSize();
+                    long max = responseCallbackTpe.getMaximumPoolSize();
+                    long largest = responseCallbackTpe.getLargestPoolSize();
+                    if (listener != null) {
+                        listener.onHTTPClientAccessReportUpdate(task, completed, queue, active, pool, core, max, largest);
+                    }
+                    logger.info(() -> "HTTPClient.responseCallbackTpe task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
                 }
-                logger.info(() -> "HTTPClient task=" + task + ", completed=" + completed + ", queue=" + queue + ", active=" + active + ", pool=" + pool + ", core=" + core + ", max=" + max + ", largest=" + largest);
-            }
-        }, 0, 1, TimeUnit.SECONDS);
+            }, 0, 1, TimeUnit.SECONDS);
+        }
 
         // 4. shutdown old
         if (old != null && isHttpClientSettingsChanged) {
@@ -480,24 +512,24 @@ abstract public class HttpClientConfig extends BootConfig {
         return xmlMapper;
     }
 
-    public long getHttpConnectTimeoutMs() {
-        return httpConnectTimeoutMs;
+    public long getHttpConnectionTimeoutMs() {
+        return httpConnectionTimeoutMs;
     }
 
-    public long getHttpClientTimeoutMs() {
-        return httpClientTimeoutMs;
+    public long getHttpRequestTimeoutMs() {
+        return httpRequestTimeoutMs;
     }
 
-    public int getHttpClientCoreSize() {
-        return httpClientCoreSize;
+    public int getResponseCallbackTpeCoreSize() {
+        return responseCallbackTpeCoreSize;
     }
 
-    public int getHttpClientMaxSize() {
-        return httpClientMaxSize;
+    public int getResponseCallbackTpeMaxSize() {
+        return responseCallbackTpeMaxSize;
     }
 
-    public int getHttpClientQueueSize() {
-        return httpClientQueueSize;
+    public int getResponseCallbackTpeQueueSize() {
+        return responseCallbackTpeQueueSize;
     }
 
     public String getHttpClientInfo() {
@@ -505,6 +537,62 @@ abstract public class HttpClientConfig extends BootConfig {
     }
 
     public String getTpeInfo() {
-        return String.valueOf(tpe);
+        return String.valueOf(responseCallbackTpe);
+    }
+
+    public KeyManagerFactory getKmf() {
+        return kmf;
+    }
+
+    public TrustManagerFactory getTmf() {
+        return tmf;
+    }
+
+    public Boolean getHostnameVerification() {
+        return hostnameVerification;
+    }
+
+    public HttpClient.Redirect getRedirectOption() {
+        return redirectOption;
+    }
+
+    public int getMaxConnections() {
+        return maxConnections;
+    }
+
+    public int getConnectionPoolSize() {
+        return connectionPoolSize;
+    }
+
+    public long getKeepAliveTimeoutMs() {
+        return keepAliveTimeoutMs;
+    }
+
+    public boolean isResponseCallbackTpeEnabled() {
+        return isResponseCallbackTpeEnabled;
+    }
+
+    public ThreadingMode getResponseCallbackThreadingMode() {
+        return responseCallbackThreadingMode;
+    }
+
+    public int getResponseCallbackTpeKeepAliveSeconds() {
+        return responseCallbackTpeKeepAliveSeconds;
+    }
+
+    public boolean isResponseCallbackTpePrestartAllCoreThreads() {
+        return responseCallbackTpePrestartAllCoreThreads;
+    }
+
+    public boolean isResponseCallbackTpeAllowCoreThreadTimeOut() {
+        return responseCallbackTpeAllowCoreThreadTimeOut;
+    }
+
+    public ThreadPoolExecutor getResponseCallbackTpe() {
+        return responseCallbackTpe;
+    }
+
+    public String getProxyAuthTunnelingDisabledSchemes() {
+        return proxyAuthTunnelingDisabledSchemes;
     }
 }
