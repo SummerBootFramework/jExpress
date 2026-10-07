@@ -32,7 +32,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -58,59 +57,38 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
     }
 
     @Override
-    public <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, HttpResponseStatus... successStatusList) throws IOException {
-        return this.rpcEx(sessionContext, reqBuilder, false, successStatusList);
+    public <T> RpcResult<T> rpc(SessionContext context, HttpRequest.Builder httpRequestBuilder, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
+        configure(httpRequestBuilder);
+        HttpRequest httpRequest = httpRequestBuilder.build();
+        return rpc(context, httpRequest, isStreaming, successStatusList);
+    }
+
+
+    @Override
+    public <T> RpcResult<T> rpc(SessionContext context, HttpRequest httpRequest, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
+        String originRequestBody = RpcDelegate.getHttpRequestBody(httpRequest);
+        return rpcEx(context, httpRequest, originRequestBody, isStreaming, successStatusList);
     }
 
     @Override
-    public <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest.Builder reqBuilder, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
-        configure(reqBuilder);
-        HttpRequest req = reqBuilder.build();
-        String reqbody = RpcDelegate.getHttpRequestBody(req);
-        return this.rpcEx(sessionContext, req, reqbody, isStreaming, successStatusList);
+    public <T> RpcResult<T> rpc(SessionContext context, RpcResult<T> rpcResult, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
+        return rpcEx(context, rpcResult.getOriginRequest(), rpcResult.getOriginRequestBody(), isStreaming, successStatusList);
     }
 
     /**
-     * @param <T>
-     * @param sessionContext
-     * @param req
-     * @param successStatusList
-     * @return
-     * @throws IOException
-     */
-    @Override
-    public <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest req, HttpResponseStatus... successStatusList) throws IOException {
-        return rpcEx(sessionContext, req, false, successStatusList);
-    }
-
-    @Override
-    public <T> RpcResult<T> rpcEx(SessionContext sessionContext, HttpRequest req, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
-        Optional<HttpRequest.BodyPublisher> pub = req.bodyPublisher();
-        String reqbody = RpcDelegate.getHttpRequestBody(req);
-        return this.rpcEx(sessionContext, req, reqbody, isStreaming, successStatusList);
-    }
-
-    /**
-     * Need to call RpcResult.update(...) to deserialize JSON to success/error
-     * result
      *
-     * @param <T>
      * @param context
-     * @param originRequest
-     * @param originRequestBody
-     * @param successStatusList
-     * @return a Non-Null RpcResult
+     * @param httpRequest
+     * @param originRequestBody it will be used for logging only, not for sending to remote server, so it can be null if the request has no body
+     * @param isStreaming       response body will not be logged if isStreaming=true and no error occurs, but the response body will be logged if isStreaming=false or error occurs
+     * @param successStatusList expected success status list, if the actual status is not in this list, it will be treated as error
+     * @param <T>               successResponseClass will be used to deserialize the response body, so they can be null if the caller does not want to deserialize the response body
+     * @return Non-Null RpcResult, use rpcResult.remoteSuccess() to check if the remote call was successful, and rpcResult.deserialize() to deserialize JSON to success/error object
      * @throws IOException
      */
-    @Override
-    public <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, HttpResponseStatus... successStatusList) throws IOException {
-        return this.rpcEx(context, originRequest, originRequestBody, false, successStatusList);
-    }
-
-
-    public <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest originRequest, String originRequestBody, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
+    protected <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest httpRequest, String originRequestBody, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
         //1. log memo
-        context.memo(RpcMemo.MEMO_RPC_REQUEST, originRequest.toString() + " caller=" + context.caller());
+        context.memo(RpcMemo.MEMO_RPC_REQUEST, httpRequest.toString() + " caller=" + context.caller());
         if (originRequestBody != null) {
             context.memo(RpcMemo.MEMO_RPC_REQUEST_DATA, originRequestBody);
         }
@@ -121,15 +99,15 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
         try {
             HttpClientConfig httpCfg = getHttpClientConfig();
             if (isStreaming) {
-                httpResponse2 = httpCfg.getHttpClient().send(originRequest, HttpResponse.BodyHandlers.ofInputStream());
+                httpResponse2 = httpCfg.getHttpClient().send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
             } else {
-                httpResponse1 = httpCfg.getHttpClient().send(originRequest, HttpResponse.BodyHandlers.ofString());
+                httpResponse1 = httpCfg.getHttpClient().send(httpRequest, HttpResponse.BodyHandlers.ofString());
             }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "Http Client Interrupted", ex);
             context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
-            RpcResult<T> rpcResult = new RpcResult<>(originRequest, originRequestBody, null, false, getHttpClientConfig());
+            RpcResult<T> rpcResult = new RpcResult<>(httpRequest, originRequestBody, null, false, getHttpClientConfig());
             return rpcResult;
         } finally {
             context.poi(BootPoi.RPC_END);
@@ -150,31 +128,11 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
         }
 
         //3b. update status   
-        RpcResult<T> rpcResult = new RpcResult<>(originRequest, originRequestBody, isStreaming ? httpResponse2 : httpResponse1, isRemoteSuccess, isStreaming, getHttpClientConfig());
+        RpcResult<T> rpcResult = new RpcResult<>(httpRequest, originRequestBody, isStreaming ? httpResponse2 : httpResponse1, isRemoteSuccess, isStreaming, getHttpClientConfig());
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
         context.memo(RpcMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + (isStreaming ? httpResponse2.headers() : httpResponse1.headers()));
         context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA, isStreaming ? "stream data" : rpcResponseJsonBody);
-        // let caller decide how to process the RpcResult - rpcResult.update(successResponseClass, errorResponseClass, ioc);
+
         return rpcResult;
-    }
-
-    /**
-     * resend the same request with the same body, and return a Non-Null RpcResult
-     *
-     * @param context
-     * @param request
-     * @param successStatusList
-     * @param <T>
-     * @return
-     * @throws IOException
-     */
-    @Override
-    public <T> RpcResult<T> rpcEx(SessionContext context, RpcResult<T> request, HttpResponseStatus... successStatusList) throws IOException {
-        return this.rpcEx(context, request, false, successStatusList);
-    }
-
-    @Override
-    public <T> RpcResult<T> rpcEx(SessionContext context, RpcResult<T> request, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
-        return this.rpcEx(context, request.getOriginRequest(), request.getOriginRequestBody(), isStreaming, successStatusList);
     }
 }
