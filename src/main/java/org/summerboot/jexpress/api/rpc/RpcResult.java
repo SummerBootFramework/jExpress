@@ -146,59 +146,6 @@ public class RpcResult<T> {
         return contentType;
     }
 
-    public RpcResult<T> update(Class<T> successResponseClass, final SessionContext context) {
-        return update(httpClientConfiguredObjectMapper, successResponseClass, context);
-    }
-
-    public RpcResult<T> update(JavaType successResponseType, final SessionContext context) {
-        return update(httpClientConfiguredObjectMapper, successResponseType, context);
-    }
-
-    /**
-     * Deserialize the response body to successResponse if remoteSuccess is true, otherwise keep successResponse as null.
-     * If the deserialized response is invalid or indicates error, set error in ioc and return null for successResponse.
-     * <p>
-     * This is a convenience method for the common case where you do ONLY need to deserialize success response and leave the error in the log for receiving error response,
-     * so it does not require caller to check remoteSuccess before calling this method, and it will handle both deserialization error and error response indicated by the deserialized response.
-     * <p>
-     * <p>
-     * If you need more control, you can call the deserialize method directly, or simply leave the error response handling to the framework (by implementing ServiceErrorConvertible in the successResponseClass).
-     *
-     * @param jacksonMapper
-     * @param successResponseClass
-     * @param context
-     * @return this
-     */
-    public RpcResult<T> update(ObjectMapper jacksonMapper, Class<T> successResponseClass, final SessionContext context) {
-        if (remoteSuccess) {
-            successResponse = deserialize(jacksonMapper, successResponseClass, context);
-        }
-        return this;
-    }
-
-
-    /**
-     * Deserialize the response body to successResponse if remoteSuccess is true, otherwise keep successResponse as null.
-     * If the deserialized response is invalid or indicates error, set error in ioc and return null for successResponse.
-     * <p>
-     * This is a convenience method for the common case where you do ONLY need to deserialize success response and leave the error in the log for receiving error response,
-     * so it does not require caller to check remoteSuccess before calling this method, and it will handle both deserialization error and error response indicated by the deserialized response.
-     * <p>
-     * <p>
-     * If you need more control, you can call the deserialize method directly, or simply leave the error response handling to the framework (by implementing ServiceErrorConvertible in the successResponseClass).
-     *
-     * @param jacksonMapper
-     * @param successResponseType
-     * @param context
-     * @return this
-     */
-    public RpcResult<T> update(ObjectMapper jacksonMapper, JavaType successResponseType, final SessionContext context) {
-        if (remoteSuccess) {
-            successResponse = deserialize(jacksonMapper, successResponseType, context);
-        }
-        return this;
-    }
-
     public <R> R deserialize(Class<R> responseClass, final SessionContext context) {
         return deserialize(httpClientConfiguredObjectMapper, responseClass, context);
     }
@@ -273,6 +220,13 @@ public class RpcResult<T> {
                         ? jacksonMapper.readValue(rpcResponseBody, responseType)
                         : jacksonMapper.readValue(rpcResponseBody, responseClass);
             }
+            if (remoteSuccess) {
+                try {
+                    successResponse = (T) ret;
+                } catch (ClassCastException ex) {
+                    // ignore, just return ret
+                }
+            }
             if (doValidation) {
                 String error = BeanUtil.getBeanValidationResult(ret);
                 if (error != null) {
@@ -287,6 +241,7 @@ public class RpcResult<T> {
                     return null;
                 }
             }
+
             if (!remoteSuccess && context != null && ret instanceof ServiceErrorConvertible) {
                 ServiceErrorConvertible errorResponse = (ServiceErrorConvertible) ret;
                 if (errorResponse.isSingleError()) {
