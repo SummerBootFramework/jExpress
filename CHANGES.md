@@ -6,6 +6,7 @@
 - Http Client upgrade:
     - HttpClientConfig: refactor with new configuration items.
     - RpcDelegate and RpcResult: Support streaming processing of large HTTP client response bodies in high-concurrency scenarios.
+- Refactoring:  @GrpcController renamed to @GrpcService, roll back and revert changes from v2.7.1
 
 ## Version 2.7.3 (2026-09-09)
 
