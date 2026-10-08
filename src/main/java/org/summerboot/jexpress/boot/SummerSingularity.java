@@ -28,7 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.annotation.Controller;
-import org.summerboot.jexpress.annotation.GrpcController;
+import org.summerboot.jexpress.annotation.GrpcService;
 import org.summerboot.jexpress.annotation.Service;
 import org.summerboot.jexpress.annotation.Service.ChannelHandlerType;
 import org.summerboot.jexpress.annotation.Version;
@@ -492,7 +492,7 @@ abstract public class SummerSingularity {
         log.trace("");
         //grpcBindableServiceImplClasses.addAll(ReflectionUtil.getAllImplementationsByInterface(BindableService.class, callerRootPackageNames));
         //for (String rootPackageName : packages) {
-        Set<Class<?>> grpcServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcController.class, false, packages);
+        Set<Class<?>> grpcServerClasses = ReflectionUtil.getAllImplementationsByAnnotation(GrpcService.class, false, packages);
         for (Class grpcServerClass : grpcServerClasses) {
             if (BindableService.class.isAssignableFrom(grpcServerClass)) {
                 grpcBindableServiceImplClasses.add(grpcServerClass);
