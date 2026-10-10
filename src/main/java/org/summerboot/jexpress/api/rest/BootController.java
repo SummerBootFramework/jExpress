@@ -165,6 +165,7 @@ abstract public class BootController extends PingController {
     )
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_JSECURITYCHECK)
     @Daemon
     @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
@@ -197,6 +198,7 @@ abstract public class BootController extends PingController {
     )
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_LOGIN)
     @Daemon
     @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
@@ -286,6 +288,7 @@ abstract public class BootController extends PingController {
     )
     @GET
     @Path(BootUri.CURRENT_VERSION + BootUri.API_NF_OTT)
+    @Produces(MediaType.TEXT_PLAIN)
     @Daemon
     @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     @Log(responseBody = false)
@@ -314,13 +317,14 @@ abstract public class BootController extends PingController {
     )
     @GET
     @Path(BootUri.CURRENT_VERSION + BootUri.API_ADMIN_VERSION)
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed({BootUri.ROLE_ADMIN})
     @Daemon
     @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
     //@CaptureTransaction("admin.version")
-    public void version(@Parameter(hidden = true) final SessionContext context) {
-        context.response(getVersion()).status(HttpResponseStatus.OK);
+    public String version(@Parameter(hidden = true) final SessionContext context) {
+        //context.response(getVersion()).status(HttpResponseStatus.OK);
+        return getVersion();
     }
 
     protected String version;
@@ -350,13 +354,21 @@ abstract public class BootController extends PingController {
     )
     @GET
     @Path(BootUri.CURRENT_VERSION + BootUri.API_ADMIN_CheckHealth)
-    @Produces(MediaType.TEXT_HTML)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @RolesAllowed({BootUri.ROLE_ADMIN})
     @Daemon
     @RequiresHealthCheck(BootConstants.HEALTH_CHECKER_NAME_ADMIN)
+    @Log(pretty = Log.Bool.True)
     //@CaptureTransaction("admin.inspect")
-    public void checkHealth(@Parameter(hidden = true) final SessionContext context) {
+    public ServiceError checkHealth(@Parameter(hidden = true) final SessionContext context) {
         HealthMonitor.inspect();
+        ServiceError error = HealthMonitor.getStatusReasonHealthCheck();
+        if (error == null) {
+            context.status(HttpResponseStatus.OK);// force not to convert to 204 (No Content) even if the response body is empty
+        } else {
+            context.status(HttpResponseStatus.BAD_GATEWAY);//.pretty(true); or @Log(pretty = Log.Bool.True)
+        }
+        return error;
     }
 
     @Operation(
