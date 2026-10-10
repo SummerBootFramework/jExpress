@@ -134,7 +134,7 @@ public class RpcResult<T> {
         return rpcResponseBody;
     }
 
-    public boolean remoteSuccess() {
+    public boolean isRemoteSuccess() {
         return remoteSuccess;
     }
 

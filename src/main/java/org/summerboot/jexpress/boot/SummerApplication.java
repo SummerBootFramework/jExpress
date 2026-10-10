@@ -382,12 +382,12 @@ abstract public class SummerApplication extends SummerBigBang {
                 appLifecycleListener.onApplicationStart(appContext, super.appVersion, startingMemo.toString());
             }
         } catch (java.net.BindException ex) {// from NioServer
-            log.fatal(ex + BootConstants.BR + BackOffice.agent.getPortInUseAlertMessage());
+            log.fatal(ex + BootConstants.BR + BackOffice.agent.getPortInUseAlertMessage(), ex);
             ApplicationUtil.RTO(BootErrorCode.RTO_BINDING_ERROR, null, null);
         } catch (Throwable ex) {
             Throwable cause = ExceptionUtils.getRootCause(ex);
             if (cause instanceof java.net.BindException) {// from gRPC server
-                log.fatal(ex + BootConstants.BR + BackOffice.agent.getPortInUseAlertMessage());
+                log.fatal(ex + BootConstants.BR + BackOffice.agent.getPortInUseAlertMessage(), ex);
             } else {
                 log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle, appVersion), ex); // REF269-2
             }

@@ -344,6 +344,7 @@ public class HealthMonitor {
         isHealthCheckSuccess = isPassed;
         if (isPassed) {
             failedHealthChecks.clear();
+            statusReasonHealthCheck = null;
             updateServiceStatus(serviceStatusChanged, "Health check passed");
             return;
         }

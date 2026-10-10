@@ -83,7 +83,7 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
      * @param isStreaming       response body will not be logged if isStreaming=true and no error occurs, but the response body will be logged if isStreaming=false or error occurs
      * @param successStatusList expected success status list, if the actual status is not in this list, it will be treated as error
      * @param <T>               successResponseClass will be used to deserialize the response body, so they can be null if the caller does not want to deserialize the response body
-     * @return Non-Null RpcResult, use rpcResult.remoteSuccess() to check if the remote call was successful, and rpcResult.deserialize() to deserialize JSON to success/error object
+     * @return Non-Null RpcResult, use rpcResult.isRemoteSuccess() to check if the remote call was successful, and rpcResult.deserialize() to deserialize JSON to success/error object
      * @throws IOException
      */
     protected <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest httpRequest, String originRequestBody, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {

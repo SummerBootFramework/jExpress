@@ -279,7 +279,7 @@ public class SessionContext {
     }
 
     public SessionContext status(HttpResponseStatus status) {
-        return status(status, null);
+        return status(status, HttpResponseStatus.OK == status ? false : null);
     }
 
     public SessionContext status(HttpResponseStatus status, Boolean autoConvertBlank200To204) {
