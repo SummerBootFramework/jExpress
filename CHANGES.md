@@ -8,6 +8,8 @@
     - RpcDelegate and RpcResult: Support streaming processing of large HTTP client response bodies in high-concurrency scenarios.
 - Refactoring:  @GrpcController renamed to @GrpcService, roll back and revert changes from v2.7.1
 - When **`SessionContext.status(HttpResponseStatus.OK)`** is called, it will not auto convert to 204 (No Content) even if the response body is empty
+- New gRPC server config @ cfg_grpc.properties: **`gRpc.server.healthCheckPolicy=REQUIRE_ALL`** default to require all health checks to pass, or **`gRpc.server.healthCheckPolicy=REQUIRE_NONE`** to
+  allow gRPC server to continue serving requests even if some health checks fail.
 
 ## Version 2.7.3 (2026-09-09)
 

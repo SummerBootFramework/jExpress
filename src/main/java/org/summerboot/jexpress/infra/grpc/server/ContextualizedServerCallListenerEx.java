@@ -38,6 +38,7 @@ import org.summerboot.jexpress.api.common.ServiceError;
 import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.api.grpc.GrpcConstants;
 import org.summerboot.jexpress.boot.BootConstants;
+import org.summerboot.jexpress.infra.grpc.server.config.GrpcServerConfig;
 import org.summerboot.jexpress.infra.netty.NioServerHttpRequestHandler;
 import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.security.SecurityUtil;
@@ -70,7 +71,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     public static <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(long startTs, Caller caller, String jti, Context context, ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
         String[] requiredHealthChecks = null;
-        HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
+        HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = GrpcServerConfig.cfg.getHealthCheckPolicy();
         Set<String> failedHealthChecks = new HashSet<>();
         boolean isHealtchCheckFailed = HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicy, failedHealthChecks);
         if (isHealtchCheckFailed) {
