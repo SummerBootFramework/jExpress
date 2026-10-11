@@ -18,7 +18,6 @@ package org.summerboot.jexpress.infra.grpc.helper;
 
 import io.grpc.BindableService;
 import io.grpc.NameResolverProvider;
-import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
@@ -334,9 +333,8 @@ public abstract class GrpcTestHelper {
         };
         GrpcServer grpcServer = new GrpcServer(host, port, kmfServer, tmfServer, tpe, true, false, null, serverInterceptor);
 
-        ServerBuilder serverBuilder = grpcServer.getServerBuilder();
         for (BindableService serviceImpl : serviceImps) {
-            serverBuilder.addService(serviceImpl);
+            grpcServer.registerService(serviceImpl);
         }
 
         // 2. start server

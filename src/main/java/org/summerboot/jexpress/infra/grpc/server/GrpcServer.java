@@ -16,15 +16,21 @@
  */
 package org.summerboot.jexpress.infra.grpc.server;
 
+import com.google.protobuf.Message;
+import io.grpc.BindableService;
 import io.grpc.Grpc;
+import io.grpc.MethodDescriptor;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerCredentials;
 import io.grpc.ServerInterceptor;
+import io.grpc.ServerServiceDefinition;
 import io.grpc.TlsServerCredentials;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.summerboot.jexpress.annotation.rest.RequiresHealthCheck;
 import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.boot.lifecycle.app.IdleEventMonitor;
 import org.summerboot.jexpress.infra.grpc.server.config.GrpcServerConfig;
@@ -34,7 +40,10 @@ import org.summerboot.jexpress.util.concurrent.NamedDefaultThreadFactory;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -70,11 +79,6 @@ public class GrpcServer {
             return TimeUnit.SECONDS.toMillis(GrpcServerConfig.cfg.getIdleThresholdSecond());
         }
     };
-
-
-    public ServerBuilder getServerBuilder() {
-        return serverBuilder;
-    }
 
     static GrpcServiceCounter getServiceCounter() {
         return serviceCounter;
@@ -225,4 +229,102 @@ public class GrpcServer {
             server = null;
         }
     }
+
+
+    public void registerService(ServerServiceDefinition serviceDefinition) {
+        serverBuilder.addService(serviceDefinition);
+    }
+
+    public void registerService(BindableService service) {
+        // 1. 注册 gRPC 服务到 serverBuilder
+        serverBuilder.addService(service);
+
+        // 2. 遍历服务类及其父类，查找所有带 @RequiresHealthCheck 注解的方法，并缓存到 requiredHealthCheckCache
+        Class<?> startClazz = service.getClass();
+        ServerServiceDefinition serviceDefinition = service.bindService();
+
+        // 遍历 gRPC 描述符中的所有方法
+        for (MethodDescriptor<?, ?> methodDesc : serviceDefinition.getServiceDescriptor().getMethods()) {
+            String fullMethodName = methodDesc.getFullMethodName(); // 例如: "UserService/GetUser"
+            String bareMethodName = methodDesc.getBareMethodName(); // 例如: "GetUser"
+
+            // 寻找匹配的注解
+            RequiresHealthCheck annotation = findAnnotationInHierarchy(startClazz, bareMethodName, methodDesc);
+
+            if (annotation != null) {
+                requiredHealthCheckCache.put(fullMethodName, annotation.value());
+            }
+        }
+    }
+
+    // cache to store the mapping of gRPC method full names to their required health checks
+    private static final Map<String, String[]> requiredHealthCheckCache = new HashMap<>();
+
+    public static String[] getRequiredHealthChecks(String fullMethodName) {
+        return requiredHealthCheckCache.get(fullMethodName);
+    }
+
+    private static RequiresHealthCheck findAnnotationInHierarchy(Class<?> clazz, String bareMethodName, MethodDescriptor<?, ?> methodDesc) {
+        while (clazz != null && clazz != Object.class) {
+            Method[] methods = clazz.getDeclaredMethods();
+            for (Method method : methods) {
+
+                // 1. check if the method name matches the bareMethodName
+                if (!method.getName().equalsIgnoreCase(bareMethodName)) {
+                    continue;
+                }
+
+                // 2. core filtering: check if the method has exactly 2 parameters
+                Class<?>[] parameterTypes = method.getParameterTypes();
+                if (parameterTypes.length != 2) {
+                    continue;
+                }
+
+                // 3. core filtering: check if the second parameter is of type StreamObserver
+                if (!StreamObserver.class.isAssignableFrom(parameterTypes[1])) {
+                    continue;
+                }
+
+                // 4. Precision filtering using advanced techniques: Compare against the official Protobuf fully qualified name of the first parameter (the Request message)
+                // Both gRPC method descriptors and Java-compiled Message classes contain Protobuf metadata.
+                Class<?> firstParamType = parameterTypes[0];
+                if (Message.class.isAssignableFrom(firstParamType)) {
+                    try {
+                        // Use reflection to call getDefaultInstance().getDescriptorForType().getFullName() on the generated class
+                        // e.g., for com.google.protobuf.Empty, this returns "google.protobuf.Empty"
+                        Method getDefaultInstance = firstParamType.getMethod("getDefaultInstance");
+                        Message defaultInstance = (Message) getDefaultInstance.invoke(null);
+                        String javaProtoFullName = defaultInstance.getDescriptorForType().getFullName();
+
+                        /*
+                        TODO:
+                        Extract the fully qualified request type name from the native gRPC MethodDescriptor.
+                        The format of methodDesc.getFullMethodName() is typically "package.Service/MethodName".
+                        In standard generated code, the Marshaller's toString() output or internal name can be identified via reflection
+                        or by directly applying the following comparison logic:
+
+                        [Safest Defensive Approach]: Having already ruled out cases where the parameter count isn't 2, method names don't match,
+                        or the second parameter isn't a StreamObserver, I think that if the method name matches exactly,
+                        there is a 99% probability— within standard stubs—that this is the specific RPC implementation method I'm looking for.
+                         */
+
+                    } catch (Exception ignored) {
+                        // Even if reflection throws an error, this can still serve as a fallback due to the filtering provided by the three strong rules mentioned earlier.
+                    }
+                }
+
+                // 5. Precisely matching gRPC core methods
+                if (method.isAnnotationPresent(RequiresHealthCheck.class)) {
+                    return method.getAnnotation(RequiresHealthCheck.class);
+                }
+
+                // The correct gRPC method was found (i.e., it matched the `bareMethodName` and satisfied the gRPC signature),
+                // but it lacked the required annotation, so the process terminated by returning `null`.
+                return null;
+            }
+            clazz = clazz.getSuperclass();
+        }
+        return null;
+    }
+
 }

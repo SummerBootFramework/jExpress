@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.grpc.BindableService;
-import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerServiceDefinition;
 import org.apache.commons.cli.CommandLine;
@@ -340,14 +339,13 @@ abstract public class SummerApplication extends SummerBigBang {
                         boolean useVirtualThread = grpcServerConfig.getTpeThreadingMode().equals(GrpcServerConfig.ThreadingMode.VirtualThread);
                         GrpcServer grpcServer = new GrpcServer(host, port, grpcServerConfig.getKmf(), grpcServerConfig.getTmf(), grpcServerConfig.getTpe(), useVirtualThread, doReport, nioListener, serverInterceptor);
                         doReport = false;
-                        ServerBuilder serverBuilder = grpcServer.getServerBuilder();
                         for (Class<? extends BindableService> c : grpcBindableServiceImplClasses) {
                             BindableService impl = guiceInjector.getInstance(c);
-                            serverBuilder.addService(impl);
+                            grpcServer.registerService(impl);
                         }
                         for (Class<ServerServiceDefinition> c : grpcServerServiceDefinitionImplClasses) {
                             ServerServiceDefinition impl = guiceInjector.getInstance(c);
-                            serverBuilder.addService(impl);
+                            grpcServer.registerService(impl);
                         }
                         if (grpcServerConfig.isAutoStart()) {
                             grpcServer.start(startingMemo);
