@@ -70,7 +70,8 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     }
 
     public static <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(long startTs, Caller caller, String jti, Context context, ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-        String[] requiredHealthChecks = null;
+        String fullMethodName = call.getMethodDescriptor().getFullMethodName();
+        String[] requiredHealthChecks = GrpcServer.getRequiredHealthChecks(fullMethodName);
         HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = GrpcServerConfig.cfg.getHealthCheckPolicy();
         Set<String> failedHealthChecks = new HashSet<>();
         boolean isHealtchCheckFailed = HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicy, failedHealthChecks);

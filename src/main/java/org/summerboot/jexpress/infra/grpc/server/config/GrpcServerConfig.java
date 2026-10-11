@@ -141,8 +141,8 @@ public class GrpcServerConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
     @ConfigHeader(title = "4. " + ID + " health check policy")
-    @Config(key = ID + ".healthCheckPolicy", defaultValue = "REQUIRE_ALL", desc = "REQUIRE_ALL (default): All health checks must pass, REQUIRE_NONE: No health checks required")
-    protected HealthMonitor.EmptyHealthCheckPolicy healthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
+    @Config(key = ID + ".healthCheckPolicy", defaultValue = "REQUIRE_NONE", desc = "For gRPC methods, if `@RequiresHealthCheck` is not specified, the default is `REQUIRE_NONE` (no health check required); if `REQUIRE_ALL` is specified, all existing health checks must pass.")
+    protected HealthMonitor.EmptyHealthCheckPolicy healthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
 
     protected void generateTemplate_truststore(StringBuilder sb, Properties currentValues) {
         appendCurrentValue(KEY_tmf_key, currentValues, FILENAME_TRUSTSTORE_4SERVER, sb, true);
