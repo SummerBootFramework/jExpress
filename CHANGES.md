@@ -1,31 +1,34 @@
 ## 📅 CHANGES
 
-## Version 2.7.4 (2026-10-10)
+## Version 2.7.4 (2026-10-12)
 
-- security patch: Jackson Databind
-- Http Client upgrade:
+- 🔒 Security patch: Jackson Databind
+- 💥 Http Client upgrade:
     - HttpClientConfig: refactor with new configuration items.
     - RpcDelegate and RpcResult: Support streaming processing of large HTTP client response bodies in high-concurrency scenarios.
-- Refactoring:  @GrpcController renamed to @GrpcService, roll back and revert changes from v2.7.1
-- When **`SessionContext.status(HttpResponseStatus.OK)`** is called, it will not auto convert to 204 (No Content) even if the response body is empty
-- gRPC server now supports health check for each gRPC method via @RequiresHealthCheck annotation.
-    - for gRPC server methods with **`@RequiresHealthCheck`** annotation: if the required health checks fail, the gRPC server will return UNAVAILABLE status
-      with detailed error message.
-    - for gRPC server methods without **`@RequiresHealthCheck`** annotation: it depends on the new gRPC server configuration in cfg_grpc.properties: **`gRpc.server.healthCheckPolicy=REQUIRE_NONE`**
-      (default) to allow gRPC server to continue serving requests even if some health checks fail, or **`gRpc.server.healthCheckPolicy=REQUIRE_ALL`** to let the gRPC server return UNAVAILABLE status
-      with detailed error message if there is any existing health checks failed
+- 💥 Refactoring:  @GrpcController renamed to @GrpcService, roll back and revert changes from v2.7.1
+- ✨ Updated feature: when **`SessionContext.status(HttpResponseStatus.OK)`** is called, it will not auto convert to 204 (No Content) even if the response body is empty
+- ✨ Updated feature: admin URL **'/checkhealth'** now returns detailed health check results in JSON format, including the list of failed health checks if any.
+- ✨ Updated feature: etc/boot.conf: new configuration item: naming.logging.protectedContentReplaceWith= ***, to replace sensitive content in logs with asterisks (***)
+- ✨ Updated feature: cfg_nio.properties: ping.sync.HealthStatus.emptyHealthCheckPolicy is now deprecated, use ping.sync.HealthStatus.requiredHealthChecks instead
+- ✨ Updated feature: cfg_grpc.properties: gRpc.server.HealthStatus.emptyHealthCheckPolicy is now deprecated, use gRpc.server.HealthStatus.requiredHealthChecks instead
+- ✨ Updated feature: gRPC server now supports health check for each gRPC method via @RequiresHealthCheck annotation.
+    - for any gRPC BindableService method with **`@RequiresHealthCheck`** annotation: if the required health checks fail, the request is rejected and a 9 FAILED_PRECONDITION error is returned.
+    - for any gRPC BindableService method without **`@RequiresHealthCheck`** annotation: it depends on the new gRPC server configuration in cfg_grpc.properties: item
+      `gRpc.server.HealthStatus.requiredHealthChecks`
+- 🔧 Migration guide: use CLI **'-format'** to format etc/boot.conf, cfg_grpc.properties and cfg_nio.properties to see the new configuration items
 
 ## Version 2.7.3 (2026-09-09)
 
-- security patch
+- Security patch
 - REF273-1: BootHttpRequestHandler.handleRequest () remove the previously appended tenant and user ID from the thread name to avoid potential information leakage in logs or thread dumps. The thread
   name is now restored to its original state after processing the request.
 
 ## Version 2.7.2 (2026-08-15)
 
-- security patch: CVE-2026-59889 CVE-2026-54515 caused by Jackson Databind 2.22.0
-- security patch: CVE-2026-59889 caused by Jackson Databind 3.2.0
-- security patch: CVE-2026-71497 caused by Jsoup 1.22.2
+- Security patch: CVE-2026-59889 CVE-2026-54515 caused by Jackson Databind 2.22.0
+- Security patch: CVE-2026-59889 caused by Jackson Databind 3.2.0
+- Security patch: CVE-2026-71497 caused by Jsoup 1.22.2
 - cache ping ttl and verify time are now configurable via boot.ini: cache.ping.ttl.milliseconds and cache.ping.verify.milliseconds
 
 ## Version 2.7.1 (2026-06-28)

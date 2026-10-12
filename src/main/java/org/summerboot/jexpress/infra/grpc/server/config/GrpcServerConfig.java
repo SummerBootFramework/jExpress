@@ -141,8 +141,11 @@ public class GrpcServerConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
     @ConfigHeader(title = "4. " + ID + " health check policy")
-    @Config(key = ID + ".healthCheckPolicy", defaultValue = "REQUIRE_NONE", desc = "For gRPC methods, if `@RequiresHealthCheck` is not specified, the default is `REQUIRE_NONE` (no health check required); if `REQUIRE_ALL` is specified, all existing health checks must pass.")
-    protected HealthMonitor.EmptyHealthCheckPolicy healthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
+    @Config(key = ID + ".HealthStatus.requiredHealthChecks", format = "REQUIRE_NONE | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
+            desc = "For any gRPC BindableService method, when @RequiresHealthCheck is not specified: \nREQUIRE_NONE (default, and accept request even if any @HealthCheck fails), \nor REQUIRE_ALL (if any class annotated with @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned), \nor a list of @HealthCheck.name in CSV format (if any listed @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned)")
+    protected volatile String[] defaultRequiredHealthChecks;
+
+    protected volatile HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
 
     protected void generateTemplate_truststore(StringBuilder sb, Properties currentValues) {
         appendCurrentValue(KEY_tmf_key, currentValues, FILENAME_TRUSTSTORE_4SERVER, sb, true);
@@ -173,6 +176,22 @@ public class GrpcServerConfig extends BootConfig {
         tpe = buildThreadPoolExecutor(tpe, "Netty-gRPC.Biz", tpeThreadingMode,
                 tpeCore, tpeMax, tpeQueue, tpeKeepAliveSeconds, null,
                 prestartAllCoreThreads, allowCoreThreadTimeOut, true);
+
+        if (defaultRequiredHealthChecks == null) {
+            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
+            defaultRequiredHealthChecks = null;
+        } else {
+            if (defaultRequiredHealthChecks.length == 1) {
+                String requiredHealthCheck = defaultRequiredHealthChecks[0];
+                if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE.name())) {
+                    emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
+                    defaultRequiredHealthChecks = null;
+                } else if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL.name())) {
+                    emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
+                    defaultRequiredHealthChecks = null;
+                }
+            }
+        }
     }
 
     @Override
@@ -246,7 +265,11 @@ public class GrpcServerConfig extends BootConfig {
         return allowCoreThreadTimeOut;
     }
 
-    public HealthMonitor.EmptyHealthCheckPolicy getHealthCheckPolicy() {
-        return healthCheckPolicy;
+    public String[] getDefaultRequiredHealthChecks() {
+        return defaultRequiredHealthChecks;
+    }
+
+    public HealthMonitor.EmptyHealthCheckPolicy getEmptyHealthCheckPolicy() {
+        return emptyHealthCheckPolicy;
     }
 }

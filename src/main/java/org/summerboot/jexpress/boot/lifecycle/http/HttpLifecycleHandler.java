@@ -50,7 +50,7 @@ public class HttpLifecycleHandler implements HttpLifecycleListener {
     @Override
     public void afterProcess(boolean preProcessResult, Object processResult, Throwable processException, RequestProcessor processor, ChannelHandlerContext ctx, HttpHeaders httpRequestHeaders, HttpMethod httpMethod, String httpRequestPath, Map<String, List<String>> queryParams, String httpPostRequestBody, SessionContext context) {
 //        if (httpRequestHeaders.contains(HttpHeaderNames.Sensitive_Header)) {
-//            httpRequestHeaders.set(HttpHeaderNames.Sensitive_Header, "***");// protect Sensitive_Header from being logged
+//            httpRequestHeaders.set(HttpHeaderNames.Sensitive_Header, BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);// protect Sensitive_Header from being logged
 //        }
     }
 
@@ -60,7 +60,7 @@ public class HttpLifecycleHandler implements HttpLifecycleListener {
 
     @Override
     public String beforeSendingError(String errorContent) {
-        //return FormatterUtil.protectContent(errorContent, "UnknownHostException", ":", null, " ***");
+        //return FormatterUtil.protectContent(errorContent, "UnknownHostException", ":", null, BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
         return errorContent;
     }
 

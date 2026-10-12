@@ -114,10 +114,10 @@ abstract public class JpaHibernateConfig extends JpaConfig {
             }
         } finally {
             if (settings.get(Environment.JAKARTA_JDBC_PASSWORD) != null) {
-                settings.put(Environment.JAKARTA_JDBC_PASSWORD, "****");// protect password from being logged
+                settings.put(Environment.JAKARTA_JDBC_PASSWORD, BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);// protect password from being logged
             }
             /*if (settings.get(Environment.PASS) != null) {
-                settings.put(Environment.PASS, "****");// protect password from being logged
+                settings.put(Environment.PASS, BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);// protect password from being logged
             }*/
         }
     }
