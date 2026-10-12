@@ -116,4 +116,5 @@ public interface BootConstants {
     String SYS_PROP_SERVER_NAME = BackOffice.agent.getLog4j2ServerName();//"serverName"; // used by log4j2.xml ${hostName}
     String SYS_PROP_APP_PACKAGE_NAME = BackOffice.agent.getLog4j2AppPackageName();//"appPackageName"; // used by both log4j2.xml ${sys:appPackage} and JpaHibernateConfig to scan @Entity
     Level JOB_LISTENER_LOG_LEVEL = BackOffice.agent.getJobListenerLogLevel();
+    String LOGGING_PROTECTED_CONTENT_REPLACEMENT = BackOffice.agent.getProtectedContentReplaceWith();
 }

@@ -310,6 +310,9 @@ public class BackOffice extends BootConfig {
     private String jboListenerLogLevelString = Level.DEBUG.toString();
     private Level jboListenerLogLevel = Level.DEBUG;
 
+    @Config(key = "naming.logging.protectedContentReplaceWith", defaultValue = "***")
+    private String protectedContentReplaceWith = "***";
+
     @ConfigHeader(title = "4.3 Default CLI Naming")
     @Config(key = "naming.cli.usage", defaultValue = "?")
     private String cliName_usage = "?";
@@ -631,6 +634,10 @@ public class BackOffice extends BootConfig {
 
     public Level getJobListenerLogLevel() {
         return jboListenerLogLevel;
+    }
+
+    public String getProtectedContentReplaceWith() {
+        return protectedContentReplaceWith;
     }
 
     public String getKeystoreType() {

@@ -63,8 +63,6 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
 
     protected static ZoneId zoneId = ZoneId.systemDefault();
 
-    protected static String protectedContectReplaceWith = "***";
-
     public static boolean isPing(String methodName) {
         return methodName.endsWith("/ping");
     }
@@ -72,7 +70,10 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
     public static <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(long startTs, Caller caller, String jti, Context context, ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
         String fullMethodName = call.getMethodDescriptor().getFullMethodName();
         String[] requiredHealthChecks = GrpcServer.getRequiredHealthChecks(fullMethodName);
-        HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = GrpcServerConfig.cfg.getHealthCheckPolicy();
+        if (requiredHealthChecks == null) {
+            requiredHealthChecks = GrpcServerConfig.cfg.getDefaultRequiredHealthChecks();
+        }
+        HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = GrpcServerConfig.cfg.getEmptyHealthCheckPolicy();
         Set<String> failedHealthChecks = new HashSet<>();
         boolean isHealtchCheckFailed = HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicy, failedHealthChecks);
         if (isHealtchCheckFailed) {
@@ -323,7 +324,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
         boolean isTraceAll = BootConstants.isDebugMode();
         HttpHeaders requestHeaders = sessionContext.requestHeaders();
         if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
-            requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
+            requestHeaders.set(HttpHeaderNames.AUTHORIZATION, BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);// protect authenticator token from being logged
         }
         Caller caller = sessionContext.caller();
         ServiceError error = sessionContext.error();
@@ -383,7 +384,7 @@ public class ContextualizedServerCallListenerEx<ReqT> extends ForwardingServerCa
                 List<String> protectedDataFields = logSettings.getProtectDataFieldsFromLogging();
                 if (protectedDataFields != null) {
                     for (String protectedDataField : protectedDataFields) {
-                        report = FormatterUtil.replaceDataField(report, protectedDataField, protectedContectReplaceWith);
+                        report = FormatterUtil.replaceDataField(report, protectedDataField, BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
                     }
                 }
             }

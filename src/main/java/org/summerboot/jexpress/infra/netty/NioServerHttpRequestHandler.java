@@ -68,7 +68,6 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
     protected ZoneId zoneId = ZoneId.systemDefault();
 
     protected static NioConfig nioCfg = NioConfig.cfg;
-    protected static String protectedContectReplaceWith = "***";
 
     public NioServerHttpRequestHandler() {
         super(FullHttpRequest.class, false);//set AutoRelease to false to enable keepalive
@@ -221,7 +220,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         if (log.isEnabled(level)) {
                             boolean isTraceAll = BootConstants.isDebugMode();
                             if (!isTraceAll && requestHeaders.contains(HttpHeaderNames.AUTHORIZATION)) {
-                                requestHeaders.set(HttpHeaderNames.AUTHORIZATION, "***");// protect authenticator token from being logged
+                                requestHeaders.set(HttpHeaderNames.AUTHORIZATION, BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);// protect authenticator token from being logged
                             }
                             StringBuilder sb = new StringBuilder();
                             context.reportOverall(queuingTime, processTime, responseTime, sb);
@@ -239,7 +238,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                                     List<String> protectedDataFields = logSettings.getProtectDataFieldsFromLogging();
                                     if (protectedDataFields != null) {
                                         for (String protectedDataField : protectedDataFields) {
-                                            report = FormatterUtil.replaceDataField(report, protectedDataField, protectedContectReplaceWith);
+                                            report = FormatterUtil.replaceDataField(report, protectedDataField, BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
                                         }
                                     }
                                 }
@@ -416,16 +415,16 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         // 3c. verbose aspect
         // 3.1 request responseHeader
         boolean isVerbose = cfg == null ? true : cfg.isVerboseReqHeader();
-        sb.append("\n\t1.client_req.headers=").append((isTraceAll || context.logRequestHeader() && isVerbose) ? requestHeaders : "***");
+        sb.append("\n\t1.client_req.headers=").append((isTraceAll || context.logRequestHeader() && isVerbose) ? requestHeaders : BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
         // 3.2 request body
         isVerbose = cfg == null ? true : cfg.isVerboseReqContent();
-        sb.append("\n\t2.client_req.body(").append(requestDataBytes).append(" bytes)=").append((isTraceAll || context.logRequestBody() && isVerbose) ? httpPostRequestBody : "***");
+        sb.append("\n\t2.client_req.body(").append(requestDataBytes).append(" bytes)=").append((isTraceAll || context.logRequestBody() && isVerbose) ? httpPostRequestBody : BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
         // 3.3 ioc responseHeader
         isVerbose = cfg == null ? true : cfg.isVerboseRespHeader();
-        sb.append("\n\t3.server_resp.headers=").append((isTraceAll || context.logResponseHeader() && isVerbose) ? context.responseHeaders() : "***");
+        sb.append("\n\t3.server_resp.headers=").append((isTraceAll || context.logResponseHeader() && isVerbose) ? context.responseHeaders() : BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
         // 3.4 ioc body
         isVerbose = cfg == null ? true : cfg.isVerboseRespContent();
-        sb.append("\n\t4.server_resp.body(").append(responseDataBytes).append(" bytes)=").append((isTraceAll || context.logResponseBody() && isVerbose) ? context.txt() : "***");
+        sb.append("\n\t4.server_resp.body(").append(responseDataBytes).append(" bytes)=").append((isTraceAll || context.logResponseBody() && isVerbose) ? context.txt() : BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
     }
 
     abstract protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context);
