@@ -1,0 +1,1160 @@
+/*
+ * Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://apache.org
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+/*
+This stylesheet file contains common style css classes that can be used in ticket template.
+*/
+html, body, * {
+    filter: grayscale(100%); /* Standard */
+    -webkit-filter: grayscale(100%); /* Webkit */
+    filter: url("data:image/svg+xml;utf8,<svg version='1.1' xmlns='http://www.w3.org/2000/svg' height='0'><filter id='greyscale'><feColorMatrix type='matrix' values='0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0 0 0 1 0' /></filter></svg>#greyscale"); /* Firefox4-34*/
+    filter: gray; /* IE6-9 */
+    -webkit-filter: grayscale(1); /* Old WebKit */
+}
+
+* {
+    font-family: "ArialUnicodeMS";
+}
+
+.font-5 {
+    font-size: 5pt;
+}
+
+.font-6 {
+    font-size: 6pt;
+}
+
+.font-7 {
+    font-size: 7pt;
+}
+
+.font-8 {
+    font-size: 8pt
+}
+
+.font-9 {
+    font-size: 9pt;
+}
+
+.font-9_5 {
+    font-size: 9.6pt;
+}
+
+.font-10 {
+    font-size: 10pt;
+}
+
+.font-11 {
+    font-size: 11pt;
+}
+
+.font-11_5 {
+    font-size: 11.2pt;
+}
+
+.font-12 {
+    font-size: 12pt;
+}
+
+.font-13 {
+    font-size: 13pt;
+}
+
+.font-15 {
+    font-size: 15pt;
+}
+
+.font-14 {
+    font-size: 14pt;
+}
+
+.font-16 {
+    font-size: 16pt;
+}
+
+.font-17 {
+    font-size: 17pt;
+}
+
+.font-18 {
+    font-size: 18pt;
+}
+
+.font-19 {
+    font-size: 19pt;
+}
+
+.font-20 {
+    font-size: 20pt;
+}
+
+.font-21 {
+    font-size: 21pt;
+}
+
+.font-22 {
+    font-size: 22pt;
+}
+
+.font-23 {
+    font-size: 23pt;
+}
+
+.font-24 {
+    font-size: 24pt;
+}
+
+.font-25 {
+    font-size: 25pt;
+}
+
+.font-26 {
+    font-size: 26pt;
+}
+
+.font-27 {
+    font-size: 27pt;
+}
+
+.font-28 {
+    font-size: 28pt;
+}
+
+.font-30 {
+    font-size: 30pt;
+}
+
+.font-32 {
+    font-size: 32pt;
+}
+
+.font-35 {
+    font-size: 35pt;
+}
+
+.font-40 {
+    font-size: 40pt;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+@font-face {
+    font-family: arial;
+    src: url(../fonts/Arial.ttf);
+}
+
+@font-face {
+    font-family: arialbold;
+    src: url(../fonts/ArialBold.ttf);
+}
+
+@font-face {
+    font-family: arialBlack;
+    src: url(../fonts/ArialBlack.ttf);
+}
+
+@font-face {
+    font-family: olgc2;
+    src: url(../fonts/OLGC2.ttf);
+}
+
+@font-face {
+    font-family: olgc3;
+    src: url(../fonts/OLGC3.ttf);
+}
+
+@font-face {
+    font-family: tahoma;
+    src: url(../fonts/Tahoma.ttf);
+}
+
+@font-face {
+    font-family: tahomaBold;
+    src: url(../fonts/TahomaBold.ttf);
+}
+
+@font-face {
+    font-family: lucidaConsole;
+    src: url(../fonts/LucidaConsole.ttf);
+}
+
+@font-face {
+    font-family: Consolas;
+    src: url(../fonts/Consolas.ttf);
+}
+
+@font-face {
+    font-family: ConsolasBold;
+    src: url(../fonts/ConsolasBold.ttf);
+}
+
+.font-monospace {
+    font-family: var(--bs-font-monospace);
+}
+
+.fs-1 {
+    font-size: calc(1.375rem + 1.5vw);
+}
+
+.fs-2 {
+    font-size: calc(1.325rem + 0.9vw);
+}
+
+.fs-3 {
+    font-size: calc(1.3rem + 0.6vw);
+}
+
+.fs-4 {
+    font-size: calc(1.275rem + 0.3vw);
+}
+
+.fs-5 {
+    font-size: 1.25rem;
+}
+
+.fs-6 {
+    font-size: 1rem;
+}
+
+.fs-big {
+    font-size: calc(1.375rem + 1.5vw);
+
+}
+
+.fst-italic {
+    font-style: italic;
+}
+
+.fst-normal {
+    font-style: normal;
+}
+
+.fw-light {
+    font-weight: 300;
+}
+
+.fw-lighter {
+    font-weight: lighter;
+}
+
+.fw-normal {
+    font-weight: 400;
+}
+
+.fw-bold {
+    font-weight: bold;
+}
+
+.fw-semibold {
+    font-weight: 600;
+}
+
+.fw-bolder {
+    font-weight: bolder;
+}
+
+.fw-100 {
+    font-weight: 100
+}
+
+.fw-200 {
+    font-weight: 200
+}
+
+.fw-300 {
+    font-weight: 300
+}
+
+.fw-400 {
+    font-weight: 400
+}
+
+.fw-500 {
+    font-weight: 500
+}
+
+.fw-600 {
+    font-weight: 600
+}
+
+.fw-700 {
+    font-weight: 700
+}
+
+.fw-800 {
+    font-weight: 800
+}
+
+.fw-900 {
+    font-weight: 900
+}
+
+.consolas {
+    font-family: Consolas;
+}
+
+.ConsolasBold {
+    font-family: ConsolasBold;
+}
+
+.arial {
+    font-family: arial;
+}
+
+.arialBold {
+    font-family: arialbold;
+}
+
+.arial_black {
+    font-family: arialBlack;
+}
+
+.olgc2 {
+    font-family: olgc2;
+    font-weight: bold;
+}
+
+.olgc3 {
+    font-family: olgc3;
+}
+
+.tahomaBold {
+    font-family: tahomaBold;
+}
+
+.tahoma {
+    font-family: tahoma;
+    font-weight: normal;
+}
+
+.lucidaConsole {
+    font-family: lucidaConsole;
+    font-weight: bold;
+}
+
+.andale_mono {
+    font-family: "Andale mono";
+}
+
+.arial {
+    font-family: "Arial";
+}
+
+.coda {
+    font-family: "Coda"
+}
+
+.comic {
+    font-family: "Comic Sans"
+}
+
+.courier {
+    font-family: "Courier"
+}
+
+.cousine {
+    font-family: "Cousine"
+}
+
+.fugazOne {
+    font-family: "Georgia"
+}
+
+.relative {
+    position: relative;
+}
+
+.absolute {
+    position: absolute;
+}
+
+.bottom-right {
+    bottom: 0;
+    right: 0;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.vertical-top {
+    vertical-align: top;
+}
+
+.vertical-middle {
+    vertical-align: middle;
+}
+
+.vertical-bottom {
+    vertical-align: bottom;
+}
+
+.table {
+    display: table;
+}
+
+.table-row {
+    display: table-row;
+}
+
+.table-cell {
+    display: table-cell;
+}
+
+.flex {
+    display: table;
+}
+
+.flex > * {
+    display: table-cell;
+}
+
+.ml-auto {
+    margin-left: auto;
+}
+
+.mr-auto {
+    margin-right: auto;
+}
+
+.flex-row--reverse {
+    flex-direction: row-reverse;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-around {
+    justify-content: space-around;
+}
+
+.justify-evenly {
+    justify-content: space-evenly;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.m-0 {
+    margin: 0;
+}
+
+.m-1 {
+    margin: 0.25rem;
+}
+
+.m-2 {
+    margin: 0.5rem;
+}
+
+.m-3 {
+    margin: 1rem;
+}
+
+.m-4 {
+    margin: 1.5rem;
+}
+
+.m-5 {
+    margin: 3rem;
+}
+
+.m-auto {
+    margin: auto;
+}
+
+.mx-0 {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.mx-1 {
+    margin-right: 0.25rem;
+    margin-left: 0.25rem;
+}
+
+.mx-2 {
+    margin-right: 0.5rem;
+    margin-left: 0.5rem;
+}
+
+.mx-3 {
+    margin-right: 1rem;
+    margin-left: 1rem;
+}
+
+.mx-4 {
+    margin-right: 1.5rem;
+    margin-left: 1.5rem;
+}
+
+.mx-5 {
+    margin-right: 3rem;
+    margin-left: 3rem;
+}
+
+.mx-auto {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.my-0 {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.my-1 {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.my-2 {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.my-3 {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.my-4 {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.my-5 {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+}
+
+.my-auto {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.mt-0 {
+    margin-top: 0;
+}
+
+.mt-1 {
+    margin-top: 0.25rem;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.mt-3 {
+    margin-top: 1rem;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.mt-5 {
+    margin-top: 3rem;
+}
+
+.mt-auto {
+    margin-top: auto;
+}
+
+.mr-0 {
+    margin-right: 0;
+}
+
+.mr-1 {
+    margin-right: 0.25rem;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}
+
+.mr-3 {
+    margin-right: 1rem;
+}
+
+.mr-4 {
+    margin-right: 1.5rem;
+}
+
+.mr-5 {
+    margin-right: 3rem;
+}
+
+.mr-auto {
+    margin-right: auto;
+}
+
+.mb-0 {
+    margin-bottom: 0;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
+.mb-5 {
+    margin-bottom: 3rem;
+}
+
+.mb-auto {
+    margin-bottom: auto;
+}
+
+.ml-0 {
+    margin-left: 0;
+}
+
+.ml-1 {
+    margin-left: 0.25rem;
+}
+
+.ml-2 {
+    margin-left: 3.77px;
+}
+
+.ml-3 {
+    margin-left: 1rem;
+}
+
+.ml-4 {
+    margin-left: 1.5rem;
+}
+
+.ml-5 {
+    margin-left: 3rem;
+}
+
+.ml-auto {
+    margin-left: auto;
+}
+
+.p-0 {
+    padding: 0;
+}
+
+.p-1 {
+    padding: 0.25rem;
+}
+
+.p-2 {
+    padding: 0.5rem;
+}
+
+.p-3 {
+    padding: 1rem;
+}
+
+.p-4 {
+    padding: 1.5rem;
+}
+
+.p-5 {
+    padding: 3rem;
+}
+
+.px-0 {
+    padding-right: 0;
+    padding-left: 0;
+}
+
+.px-1 {
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
+}
+
+.px-2 {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+.px-3 {
+    padding-right: 1rem;
+    padding-left: 1rem;
+}
+
+.px-4 {
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.px-5 {
+    padding-right: 3rem;
+    padding-left: 3rem;
+}
+
+.pd {
+    padding-right: 0px;
+    padding-left: 1px;
+}
+
+.py-0 {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.py-1 {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.py-2 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.py-3 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.py-4 {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+.py-5 {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.pt-0 {
+    padding-top: 0;
+}
+
+.pt-1 {
+    padding-top: 0.25rem;
+}
+
+.pt-2 {
+    padding-top: 0.5rem;
+}
+
+.pt-3 {
+    padding-top: 1rem;
+}
+
+.pt-4 {
+    padding-top: 1.5rem;
+}
+
+.pt-5 {
+    padding-top: 3rem;
+}
+
+.pt-6 {
+    padding-top: -0.75rem;
+}
+
+.pr-0 {
+    padding-right: 0;
+}
+
+.pr-1 {
+    padding-right: 0.25rem;
+}
+
+.pr-2 {
+    padding-right: 0.5rem;
+}
+
+.pr-3 {
+    padding-right: 1rem;
+}
+
+.pr-4 {
+    padding-right: 1.5rem;
+}
+
+.pr-5 {
+    padding-right: 3rem;
+}
+
+.pb-0 {
+    padding-bottom: 0;
+}
+
+.pb-1 {
+    padding-bottom: 0.25rem;
+}
+
+.pb-2 {
+    padding-bottom: 0.5rem;
+}
+
+.pb-3 {
+    padding-bottom: 1rem;
+}
+
+.pb-4 {
+    padding-bottom: 1.5rem;
+}
+
+.pb-5 {
+    padding-bottom: 3rem;
+}
+
+.ps-0 {
+    padding-left: 0;
+}
+
+.pl-1 {
+    padding-left: 0.25rem;
+}
+
+.pl-2 {
+    padding-left: 0.5rem;
+}
+
+.pl-3 {
+    padding-left: 1rem;
+}
+
+.pl-4 {
+    padding-left: 1.5rem;
+}
+
+.pl-5 {
+    padding-left: 3rem;
+}
+
+.gap-0 {
+    gap: 0;
+}
+
+.gap-1 {
+    gap: 0.25rem;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-3 {
+    gap: 1rem;
+}
+
+.gap-4 {
+    gap: 1.5rem;
+}
+
+.gap-5 {
+    gap: 3rem;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+.w-95 {
+    width: 95%;
+}
+
+.w-90 {
+    width: 90%;
+}
+
+.w-80 {
+    width: 80%;
+}
+
+.w-50 {
+    width: 50%;
+}
+
+.w-49 {
+    width: 49%;
+}
+
+.w-25 {
+    width: 25%;
+}
+
+.w-35 {
+    width: 35%;
+}
+
+.lh-xs {
+    line-height: .5;
+}
+
+.lh-1 {
+    line-height: 1;
+}
+
+.lh-sm {
+    line-height: 1.25;
+}
+
+.lh-md {
+    line-height: 1.5;
+}
+
+.lh-base {
+    line-height: 1;
+}
+
+.lh-pick3-board {
+    line-height: 0.9;
+}
+
+.lh-pick4-board {
+    line-height: 0.9;
+}
+
+.lh-lg {
+    line-height: 2;
+}
+
+.ls-xs {
+    letter-spacing: .1px;
+}
+
+.ls-sm {
+    letter-spacing: .25px;
+}
+
+.ls-md {
+    letter-spacing: .50px;
+}
+
+.ls-xl {
+    letter-spacing: .75px;
+}
+
+.ls-xxl {
+    letter-spacing: 1.5px;
+}
+
+.ls-xxxl {
+    letter-spacing: 2.5px;
+}
+
+.whitespace-nowrap {
+    white-space: nowrap;
+}
+
+.text-start {
+    text-align: left;
+}
+
+.text-end {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.block {
+    display: block;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+.clear {
+    clear: both;
+}
+
+.float-left {
+    float: left;
+}
+
+.float-right {
+    float: right;
+}
+
+.border-1 {
+    border: 1px solid #000;
+}
+
+.border-2 {
+    border: 2px solid #000;
+}
+
+html, body, .container {
+    /* background-color: rgb(255, 250, 231); */
+    margin: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.container {
+    display: table;
+    table-layout: fixed;
+    background-color: transparent;
+}
+
+.leftPanel, .rightPanel {
+    display: table-cell;
+}
+
+.mainPanel {
+    width: auto;
+    vertical-align: top; /* here */
+    padding: 10px 0px 10px 5px;
+    background-repeat: repeat;
+}
+
+.bannerPanel {
+    width: 45px;
+    /* background-image: url("../images/bg_right.png"); */
+    background-repeat: repeat-y;
+    background-position: left;
+}
+
+.container {
+    width: 100%;
+    margin: auto;
+}
+
+/* .container section {
+  margin-bottom: 20px;
+} */
+img {
+    vertical-align: middle;
+    /* width: 95%; */
+}
+
+/* .goldBallDraw {
+  padding: 0px 5px;
+} */
+.raffleNumber {
+    padding: 3px 25px;
+}
+
+.raffleNumberMutiboard {
+    padding: 3px 5px;
+}
+
+.signatureLineContainer {
+
+}
+
+.signatureLineImage {
+    width: 45px;
+    height: 45px;
+}
+
+.signtureLineRight {
+    margin-left: 50px;
+    margin-right: 40px;
+}
+
+.signtureLine {
+    margin-top: 30px;
+    padding-top: 5px;
+    border-top: 2px solid;
+    font-weight: bold;
+}
+
+img.barcode {
+    /* display: block;
+    margin-left: auto;
+    margin-right: auto; */
+}
+
+img.barcode.mguard {
+    width: 211px; /* 211px = barcode width(446px) / (203dpi/96dpi) */
+}
+
+img.barcode.ctrlnum {
+    /*  width: 5.8cm;
+      height: 1.1cm;
+      margin-top: 2mm;
+      margin-bottom: 3mm;*/
+    padding-top: 3mm;
+    width: 146px; /* 146px = barcode width(308px) / (203dpi/96dpi)  */
+}
+
+.double-border-bottom {
+    width: 90%;
+    margin: auto;
+    border-bottom: 3px double;
+}
+
+.top-promo-message {
+    line-height: 11pt;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    /* padding: 1em 15px 1em;
+    width: 88%; */
+    /* padding: 2rem 15px 1.7rem; */
+    padding: 25px 0px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.border-top {
+    border-top: 2px solid;
+}
+
+.border-bottom {
+    border-bottom: 2px solid;
+}
+
+.guaranteedPrizeDraw {
+    width: 90%;
+    margin: auto;
+}
+
+.dot {
+    height: 35px;
+    width: 38px;
+    background-color: black;
+    border-radius: 50%;
+    color: white;
+    display: inline-block;
+    font-family: Arial;
+    text-align: center;
+    vertical-align: middle;
+}

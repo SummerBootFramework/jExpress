@@ -1,0 +1,12 @@
+{
+  "tillId": 12,
+  "sourceId": 1,
+  "messageId": 1486385392204,
+  "httpResponseCode": 200,
+  "terminalTransactionType": "BET_GAME_BASED",
+  "responseBody": {
+    "ErrorCode": 500,
+    "ErrorMessage": "this is an error",
+    "aaa": 123
+  }
+}

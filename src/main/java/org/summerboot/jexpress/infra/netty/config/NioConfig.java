@@ -106,11 +106,11 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.idle.threshold.second", defaultValue = "61", desc = "make it prime number when you have both NIO and gRPC server running")
     protected volatile int idleThresholdSecond;
 
-    @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", desc = "@Inspector.names in CSV format, empty/null value depends on emptyHealthCheckPolicy")
+    @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", format = "REQUIRE_NONE | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
+            desc = "REQUIRE_NONE (default, ping response 200 OK even if any @HealthCheck fails), \nor REQUIRE_ALL (If any class annotated with @HealthCheck fails the check, ping response 502 Bad Gateway), \nor a list of @HealthCheck.name in CSV format (If any listed @HealthCheck fails the check, ping response 502 Bad Gateway)")
     protected volatile Set<String> pingSyncHealthStatus_requiredHealthChecks;
 
-    @Config(key = "ping.sync.HealthStatus.emptyHealthCheckPolicy", defaultValue = "REQUIRE_ALL", desc = "Policy for handling empty requiredHealthChecks, available values: REQUIRE_ALL (default), REQUIRE_NONE")
-    protected volatile HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
+    protected volatile HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
 
     @Config(key = "ping.sync.PauseStatus", defaultValue = "true", desc = "Ping response status is synced with PAUSE status")
     protected volatile boolean pingSyncPauseStatus;
@@ -487,7 +487,22 @@ public class NioConfig extends BootConfig {
             }
         }
 
-        // 7. Web Server Mode       
+        if (pingSyncHealthStatus_requiredHealthChecks == null || pingSyncHealthStatus_requiredHealthChecks.isEmpty()) {
+            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
+        } else {
+            if (pingSyncHealthStatus_requiredHealthChecks.size() == 1) {
+                String requiredHealthCheck = pingSyncHealthStatus_requiredHealthChecks.iterator().next();
+                if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE.name())) {
+                    emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
+                    pingSyncHealthStatus_requiredHealthChecks = null;
+                } else if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL.name())) {
+                    emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
+                    pingSyncHealthStatus_requiredHealthChecks = null;
+                }
+            }
+        }
+
+        // 7. Web Server Mode
         rootFolder = cfgFile.getParentFile().getParentFile();
         docrootDir = null;
         docrootDir = rootFolder.getCanonicalPath() + File.separator + docroot;

@@ -1,0 +1,130 @@
+<!--
+  ~ Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     https://apache.org
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="author" content="北京荣盛商务调查公司"/>
+    <meta charset="UTF-8"/>
+    <!-- <meta http-equiv="Content-type" content="text/html; charset=UTF-8" /> -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>商业收据/Invoice</title>
+    <link href="styles/invoice.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+<div class="root">
+    <div>
+        <img class="logo" src="img/logo.png" alt="logo"/>
+    </div>
+    <table class="invoiceTalbe" border="1">
+        <tr>
+            <td>
+                <div class="title">公司信息</div>
+                <div>http://www.bjsirenzhentan.com/</div>
+                <div>http://www.13701083772.com/</div>
+                <div class="title">公司地址/Office Address：</div>
+                <div>
+                    北京市朝阳区东本环北路30号紫荆豪庭 (地铁六号线、十号线呼家楼B口)
+                </div>
+            </td>
+            <td class="invoiceDiv" rowspan="2">
+                <div class="invoicetitle">商业收据/Invoice</div>
+                <div class="title">Inovice#</div>
+                DLO-02353-20170505
+                <div class="title">Invoice Date:</div>
+                2017-05-05
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="title">委托人/Agent:</div>
+                <div>Du Law Office (Canada)</div>
+                <div class="title">委托人地址/Agent Addr:</div>
+                <div>
+                    55 Town Centre Court Suite 700 Scarborough ON M1P4X4 Canada
+                </div>
+                <div class="title">委托人联系方式/Agent Contact Info:</div>
+                <div>+1(416)290-0088</div>
+            </td>
+        </tr>
+    </table>
+    <div class="block">服务/Service</div>
+    <table class="invoiceTalbe" border="1">
+        <tr>
+            <th>日期/Date</th>
+            <th>服务/Service</th>
+            <th>费用/Amount</th>
+        </tr>
+        <tr>
+            <td>2017-02-09</td>
+            <td>委托人客户查询单号02353-1 - 银行账户调查定金</td>
+            <td>人民币￥50000.00</td>
+        </tr>
+        <tr>
+            <td>2017-02-09</td>
+            <td>委托人客户查询单号02353-2 - 北京商用房产权调查定金</td>
+            <td>人民币￥50000.00</td>
+        </tr>
+        <tr>
+            <td>2017-02-09</td>
+            <td>委托人客户查询单号02353-3 - 上海商用房产权调查定金</td>
+            <td>人民币￥50000.00</td>
+        </tr>
+        <tr>
+            <td>2017-05-05</td>
+            <td>委托人客户查询单号02353-1 - 银行账户调查尾款</td>
+            <td>人民币￥50000.00</td>
+        </tr>
+        <tr>
+            <td>2017-05-05</td>
+            <td>委托人客户查询单号02353-2 - 北京商用房产权调查尾款</td>
+            <td>人民币￥50000.00</td>
+        </tr>
+        <tr>
+            <td>2017-05-05</td>
+            <td>委托人客户查询单号02353-3 - 上海商用房产权调查尾款</td>
+            <td>人民币￥50000.00</td>
+        </tr>
+    </table>
+    <div class="block amountDue">
+        应付金额/Amount Due: 人民币￥300000.00 或等额加币CAD $60000.00
+        (汇率5.0)
+    </div>
+    <div class="block">支付/Payment <span class="memo">(如付款人与委托人不一致，所产生的银行转账凭证不能用于付款人的委托调查)</span></div>
+    <table class="invoiceTalbe" border="1">
+        <tr>
+            <th>日期/Date</th>
+            <th>支付信息/Payment Info</th>
+            <th>已付费用/Paid Amount</th>
+        </tr>
+        <tr>
+            <td>2017-02-09</td>
+            <td>经由委托人授权，由历琳琳代委托人支付人民币银行转账</td>
+            <td>人民币￥150000.00</td>
+        </tr>
+        <tr>
+            <td>2017-05-05</td>
+            <td>经由委托人授权，由历琳琳代委托人支付人民币银行转账</td>
+            <td>人民币￥150000.00</td>
+        </tr>
+    </table>
+    <div class="block amountDue">欠款总额/Total Balance Owed: 0.00</div>
+</div>
+</body>
+</html>
