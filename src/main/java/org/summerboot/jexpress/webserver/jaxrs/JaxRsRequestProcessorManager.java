@@ -31,6 +31,7 @@ import org.summerboot.jexpress.annotation.rest.Ping;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.infra.netty.config.NioConfig;
 import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.util.reflect.ReflectionUtil;
 import org.summerboot.jexpress.util.runtime.ApplicationUtil;
@@ -227,10 +228,17 @@ public class JaxRsRequestProcessorManager {
                         processor = new JaxRsRequestProcessor(javaInstance, javaMethod, httpMethod, path, declareRoles);
                         String declaredUri = processor.getDeclaredUri();
                         Set<String> requiredHealthChecks = processor.getRequiredHealthChecks();
+                        if (requiredHealthChecks == null || requiredHealthChecks.isEmpty()) {
+                            requiredHealthChecks = NioConfig.cfg.getDefaultRequiredHealthChecks();
+                        }
                         HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = processor.getEmptyHealthCheckPolicy();
+                        if (emptyHealthCheckPolicy == null) {
+                            emptyHealthCheckPolicy = NioConfig.cfg.getEmptyHealthCheckPolicy();
+                        }
                         HealthMonitor.registerAffectedServices(httpMethod, declaredUri, requiredHealthChecks, emptyHealthCheckPolicy);
                         memo.append("\n\t- ").append(httpMethod).append(" ").append(path).append(" (").append(javaMethod.getDeclaringClass().getName()).append(".").append(javaMethod.getName()).append(" )");
                     } catch (Throwable ex) {
+                        ex.printStackTrace();
                         errors.append("failed to create processor for ").append(controllerClass.getName()).append(".").append(javaMethod.getName()).append("\n\t").append(ex);
                         continue;
                     }

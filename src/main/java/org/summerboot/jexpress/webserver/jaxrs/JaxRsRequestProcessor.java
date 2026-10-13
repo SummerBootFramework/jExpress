@@ -42,6 +42,7 @@ import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.api.common.ServiceRequest;
 import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.boot.BootConstants;
+import org.summerboot.jexpress.infra.netty.config.NioConfig;
 import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.util.format.FormatterUtil;
 import org.summerboot.jexpress.util.lang.BeanUtil;
@@ -144,8 +145,8 @@ public class JaxRsRequestProcessor implements RequestProcessor {
             requiredHealthChecks = toImmutableSet(info, classLevelRequiresHealthCheck.value());
             emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
         } else {
-            requiredHealthChecks = null;
-            emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
+            requiredHealthChecks = NioConfig.cfg.getDefaultRequiredHealthChecks(); // null;// This value is determined dynamically at process runtime from NioConfig.cfg.getDefaultRequiredHealthChecks();
+            emptyHealthCheckPolicy = NioConfig.cfg.getEmptyHealthCheckPolicy(); // null;// This value is determined dynamically at process runtime from NioConfig.cfg.getEmptyHealthCheckPolicy();
         }
 
         //2. Parse @RolesAllowed, @PermitAll and @DenyAll - Method level preprocess - Authoritarian - Role based 
@@ -478,8 +479,12 @@ public class JaxRsRequestProcessor implements RequestProcessor {
         try {
             context.poi(BootPoi.BIZ_BEGIN);
             Set<String> failedHealthChecks = new HashSet<>();
-            //if (!HealthMonitor.isHealthCheckSuccess() && (rejectWhenHealthCheckFailed || HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, failedHealthChecks))) {
-            if (!HealthMonitor.isHealthCheckSuccess() && HealthMonitor.isRequiredHealthChecksFailed(requiredHealthChecks, emptyHealthCheckPolicy, failedHealthChecks)) {
+            // This value is determined dynamically at process runtime if null
+            Set<String> _requiredHealthChecks = requiredHealthChecks == null ? NioConfig.cfg.getDefaultRequiredHealthChecks() : requiredHealthChecks;
+            // This value is determined dynamically at process runtime if null
+            HealthMonitor.EmptyHealthCheckPolicy _emptyHealthCheckPolicy = emptyHealthCheckPolicy == null ? NioConfig.cfg.getEmptyHealthCheckPolicy() : emptyHealthCheckPolicy;
+
+            if (!HealthMonitor.isHealthCheckSuccess() && HealthMonitor.isRequiredHealthChecksFailed(_requiredHealthChecks, _emptyHealthCheckPolicy, failedHealthChecks)) {
                 final String internalError = failedHealthChecks.toString();
                 context.status(HttpResponseStatus.BAD_GATEWAY)
                         .error(new Err(BootErrorCode.SERVICE_HEALTH_CHECK_FAILED, null, "Service health check failed by HealthMonitor", null,

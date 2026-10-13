@@ -106,9 +106,9 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.idle.threshold.second", defaultValue = "61", desc = "make it prime number when you have both NIO and gRPC server running")
     protected volatile int idleThresholdSecond;
 
-    @Config(key = "ping.sync.HealthStatus.requiredHealthChecks", format = "REQUIRE_NONE | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
-            desc = "REQUIRE_NONE (default, ping response 200 OK even if any @HealthCheck fails), \nor REQUIRE_ALL (If any class annotated with @HealthCheck fails the check, ping response 502 Bad Gateway), \nor a list of @HealthCheck.name in CSV format (If any listed @HealthCheck fails the check, ping response 502 Bad Gateway)")
-    protected volatile Set<String> pingSyncHealthStatus_requiredHealthChecks;
+    @Config(key = "nio.server.defaultRequiredHealthChecks", format = "REQUIRE_NONE | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
+            desc = "(restart required on change) This configuration can be overridden at code level by @Controller service methods or class with @RequiresHealthCheck annotation: \nREQUIRE_NONE (default, ping response 200 OK even if any @HealthCheck fails), \nor REQUIRE_ALL (If any class annotated with @HealthCheck fails the check, ping response 502 Bad Gateway), \nor a list of @HealthCheck.name in CSV format (If any listed @HealthCheck fails the check, ping response 502 Bad Gateway)")
+    protected volatile Set<String> defaultRequiredHealthChecks;
 
     protected volatile HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
 
@@ -487,17 +487,17 @@ public class NioConfig extends BootConfig {
             }
         }
 
-        if (pingSyncHealthStatus_requiredHealthChecks == null || pingSyncHealthStatus_requiredHealthChecks.isEmpty()) {
+        if (defaultRequiredHealthChecks == null || defaultRequiredHealthChecks.isEmpty()) {
             emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
         } else {
-            if (pingSyncHealthStatus_requiredHealthChecks.size() == 1) {
-                String requiredHealthCheck = pingSyncHealthStatus_requiredHealthChecks.iterator().next();
+            if (defaultRequiredHealthChecks.size() == 1) {
+                String requiredHealthCheck = defaultRequiredHealthChecks.iterator().next();
                 if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE.name())) {
                     emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
-                    pingSyncHealthStatus_requiredHealthChecks = null;
+                    defaultRequiredHealthChecks = null;
                 } else if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL.name())) {
                     emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
-                    pingSyncHealthStatus_requiredHealthChecks = null;
+                    defaultRequiredHealthChecks = null;
                 }
             }
         }
@@ -633,8 +633,8 @@ public class NioConfig extends BootConfig {
         return idleThresholdSecond;
     }
 
-    public Set<String> getPingSyncHealthStatus_requiredHealthChecks() {
-        return pingSyncHealthStatus_requiredHealthChecks;
+    public Set<String> getDefaultRequiredHealthChecks() {
+        return defaultRequiredHealthChecks;
     }
 
     public HealthMonitor.EmptyHealthCheckPolicy getEmptyHealthCheckPolicy() {

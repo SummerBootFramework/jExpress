@@ -81,7 +81,7 @@ public class BootHttpPingHandler extends SimpleChannelInboundHandler<HttpObject>
                         status = HttpResponseStatus.SERVICE_UNAVAILABLE;
                         se = HealthMonitor.getStatusReasonPaused();
                     } else if (!HealthMonitor.isHealthCheckSuccess()) {
-                        if (HealthMonitor.isRequiredHealthChecksFailed(NioConfig.cfg.getPingSyncHealthStatus_requiredHealthChecks(), NioConfig.cfg.getEmptyHealthCheckPolicy())) {
+                        if (HealthMonitor.isRequiredHealthChecksFailed(NioConfig.cfg.getDefaultRequiredHealthChecks(), NioConfig.cfg.getEmptyHealthCheckPolicy())) {
                             status = HttpResponseStatus.BAD_GATEWAY;
                         }
                         se = HealthMonitor.getStatusReasonHealthCheck();
