@@ -19,6 +19,14 @@
       `gRpc.server.HealthStatus.requiredHealthChecks`
 - 🔧 Migration guide: use CLI **'-format'** to format etc/boot.conf, cfg_grpc.properties and cfg_nio.properties to see the new configuration items
 
+> ### 📌 REF274-1： Gateway Security & Compatibility Guidelines for RSA Encryption
+>
+> * Affected configuration: `transformation.Asymmetric` inside `etc/boot.conf` (section 5.3)
+> * **STRONGLY RECOMMENDED:** Prioritize the short transformation string **`"RSA/ECB/OAEPPadding"`**. The SDK automatically reinforces this mode with the highest security specification (**Dual
+    SHA-256**) and ensures perfect cross-platform compatibility for decryption in multi-language backends such as **Go, Python, and C#**.
+> * **NOT RECOMMENDED:** Avoid using long transformation strings that explicitly contain `WITH` (e.g., *`"RSA/None/OAEPWithSHA-256AndMGF1Padding"`*). This triggers Java's legacy underlying behavior,
+    which silently falls back to the outdated **SHA-1** for the internal MGF1 hash.
+
 ## Version 2.7.3 (2026-09-09)
 
 - Security patch

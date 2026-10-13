@@ -106,8 +106,8 @@ public class NioConfig extends BootConfig {
     @Config(key = "nio.server.idle.threshold.second", defaultValue = "61", desc = "make it prime number when you have both NIO and gRPC server running")
     protected volatile int idleThresholdSecond;
 
-    @Config(key = "nio.server.defaultRequiredHealthChecks", format = "REQUIRE_NONE | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
-            desc = "(restart required on change) This configuration can be overridden at code level by @Controller service methods or class with @RequiresHealthCheck annotation: \nREQUIRE_NONE (default, ping response 200 OK even if any @HealthCheck fails), \nor REQUIRE_ALL (If any class annotated with @HealthCheck fails the check, ping response 502 Bad Gateway), \nor a list of @HealthCheck.name in CSV format (If any listed @HealthCheck fails the check, ping response 502 Bad Gateway)")
+    @Config(key = "nio.server.defaultRequiredHealthChecks", format = "Leave blank or comment out | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
+            desc = "(restart required on change) This configuration can be overridden at code level by @Controller service methods or class with @RequiresHealthCheck annotation: \nLeave blank or comment out (default, ping response 200 OK even if any @HealthCheck fails), \nor REQUIRE_ALL (If any class annotated with @HealthCheck fails the check, ping response 502 Bad Gateway), \nor a list of @HealthCheck.name in CSV format (If any listed @HealthCheck fails the check, ping response 502 Bad Gateway)")
     protected volatile Set<String> defaultRequiredHealthChecks;
 
     protected volatile HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
@@ -165,7 +165,7 @@ public class NioConfig extends BootConfig {
 
     @ConfigHeader(title = "2.2 NIO Security - Filter")
     @Config(key = "filter.CallerAddress.option", defaultValue = "String", desc = "Filters the caller's network address by type.\n" +
-            "Accepted values: String, HostString, HostName, AddressString, HostAddress, AddrHostName, or CanonicalHostName")
+            "Valid values (select only one) = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")
     protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
     @Config(key = "filter.CallerAddress.Whitelist", desc = "Caller network addr whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
     protected volatile Set<String> callerAddressFilterWhitelist;
@@ -492,10 +492,11 @@ public class NioConfig extends BootConfig {
         } else {
             if (defaultRequiredHealthChecks.size() == 1) {
                 String requiredHealthCheck = defaultRequiredHealthChecks.iterator().next();
-                if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE.name())) {
+                /*if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE.name())) {
                     emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
                     defaultRequiredHealthChecks = null;
-                } else if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL.name())) {
+                } else */
+                if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL.name())) {
                     emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
                     defaultRequiredHealthChecks = null;
                 }

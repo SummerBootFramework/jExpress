@@ -386,10 +386,12 @@ public class BackOffice extends BootConfig {
     @Config(key = "algorithm.Asymmetric", defaultValue = "RSA",
             desc = "Asymmetric key algorithm, valid values: RSA (default), DSA, EC, DiffieHellman, Ed25519, Ed448, etc.")
     private String algorithmAsymmetricKey = "RSA";
-    @Config(key = "transformation.Asymmetric", defaultValue = "RSA/None/OAEPWithSHA-256AndMGF1Padding",
-            desc = "Asymmetric cipher transformation, valid values: RSA/None/OAEPWithSHA-256AndMGF1Padding (default), RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc."
-                    + " \nryptographic algorithm ECB is weak and should not be used： RSA/ECB/PKCS1Padding")
-    private String ciphersTransformationAsymmetric = "RSA/None/OAEPWithSHA-256AndMGF1Padding";
+    @Config(key = "transformation.Asymmetric", defaultValue = "RSA/ECB/OAEPPadding",
+            desc = "Asymmetric cipher transformation, valid values: RSA/None/OAEPPadding (default, identical to RSA/ECB/OAEPPadding), RSA/ECB/OAEPPadding, RSA/None/OAEPWithSHA-256AndMGF1Padding, RSA/ECB/PKCS1Padding, RSA/ECB/OAEPWithSHA-1AndMGF1Padding, RSA/ECB/OAEPWithSHA-256AndMGF1Padding, DSA/None/PKCS1Padding, EC/None/PKCS1Padding, etc."
+                    + "\n PKCS1Padding is weak. ECB is weak with symmetric only (AES/ECB/***), but not with asymmetric (RSA/ECB/***)."
+                    + "\n STRONGLY RECOMMENDED: Prioritize the short transformation string \"RSA/ECB/OAEPPadding\". The SDK automatically reinforces this mode with the highest security specification (Dual SHA-256) and ensures perfect cross-platform compatibility for decryption in multi-language backends such as Go, Python, and C#."
+                    + "\n NOT RECOMMENDED: Avoid using long transformation strings that explicitly contain WITH (e.g., \"RSA/None/OAEPWithSHA-256AndMGF1Padding\"). This triggers Java's legacy underlying behavior, which silently falls back to the outdated SHA-1 for the internal MGF1 hash.")
+    private String ciphersTransformationAsymmetric = "RSA/None/OAEPPadding"; // REF274-1
 
     @ConfigHeader(title = "5.4 Security Settings: symmetric key (no password)")
     @Config(key = "algorithm.Symmetric", defaultValue = "AES",
