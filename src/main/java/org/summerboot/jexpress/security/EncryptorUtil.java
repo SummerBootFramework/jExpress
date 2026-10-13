@@ -42,7 +42,9 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -85,6 +87,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
@@ -781,20 +784,41 @@ public class EncryptorUtil {
      * @throws IllegalBlockSizeException
      * @throws BadPaddingException
      */
-    protected static byte[] asymmetric(int cipherMode, Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+    public static byte[] asymmetric(int cipherMode, Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
         Cipher rsaCipher = Cipher.getInstance(CIPHERS_TRANSFORMATION_ASYMMETRIC);
-        rsaCipher.init(cipherMode, asymmetricKey);
+
+        // REF274-1
+        final String upperParam = CIPHERS_TRANSFORMATION_ASYMMETRIC.toUpperCase();
+        if (!upperParam.contains("OAEP") || upperParam.contains("WITH")) {
+            // 1. 如果完全不包含 OAEP（比如 PKCS1Padding），或者包含了 OAEP，但用户在字符串里已经写明了 WithSHA-XXX... 比如 "RSA/None/OAEPWithSHA-256AndMGF1Padding"，让 Java 保持其默认行为
+            /**
+             * A major cross-platform compatibility pitfall in Java: When you use the string `OAEPWithSHA-256AndMGF1Padding`,
+             * Java's default SunJCE encryption provider exhibits a peculiar behavior: the main hash uses SHA-256, but the internal hash function of MGF1 defaults to SHA-1.
+             * This causes data encrypted in Java to be undecryptable on platforms like Go, Python, or C# (BouncyCastle), which strictly treat both hashes as SHA-256.
+             */
+            rsaCipher.init(cipherMode, asymmetricKey);
+        } else {
+            // 2. 包含 OAEP 且不带 WITH（即模糊的 OAEPPadding），比如用户只写了模糊的 "RSA/ECB/OAEPPadding" 或 "RSA/None/OAEPPadding", 强制锁死高安全级别的 SHA-256，防止 Java 默认退回到脆弱的 SHA-1
+            OAEPParameterSpec oaepParams = new OAEPParameterSpec(
+                    "SHA-256",
+                    "MGF1",
+                    new MGF1ParameterSpec("SHA-256"),
+                    PSource.PSpecified.DEFAULT
+            );
+            rsaCipher.init(cipherMode, asymmetricKey, oaepParams);
+        }
+
         // Encrypt the Rijndael key with the RSA cipher
         // and write it to the beginning of the file.
         byte[] out = rsaCipher.doFinal(in);
         return out;
     }
 
-    public static byte[] encrypt(Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+    public static byte[] encrypt(Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
         return asymmetric(Cipher.ENCRYPT_MODE, asymmetricKey, in);
     }
 
-    public static byte[] decrypt(Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+    public static byte[] decrypt(Key asymmetricKey, byte[] in) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
         return asymmetric(Cipher.DECRYPT_MODE, asymmetricKey, in);
     }
 

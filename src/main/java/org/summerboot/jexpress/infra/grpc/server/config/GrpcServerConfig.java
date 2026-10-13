@@ -74,7 +74,7 @@ public class GrpcServerConfig extends BootConfig {
     @Config(key = ID + ".idle.threshold.second", defaultValue = "59", desc = "make it prime number when you have both NIO and gRPC server running")
     protected volatile int idleThresholdSecond;
 
-    @Config(key = ID + ".CallerAddressFilter.option", defaultValue = "String", desc = "valid value = String, HostString, HostName, AddressStirng, HostAddress, AddrHostName, CanonicalHostName")
+    @Config(key = ID + ".CallerAddressFilter.option", defaultValue = "String", desc = "Valid values (select only one) = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")
     protected volatile GeoIpUtil.CallerAddressFilterOption CallerAddressFilterOption = GeoIpUtil.CallerAddressFilterOption.String;
     @Config(key = ID + ".CallerAddressFilter.Whitelist", desc = "Whitelist in CSV format, example: 127.0.0.1, 192\\\\.168\\\\.1\\\\.")
     protected volatile Set<String> callerAddressFilterWhitelist;
@@ -141,8 +141,8 @@ public class GrpcServerConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
     @ConfigHeader(title = "4. " + ID + " health check policy")
-    @Config(key = ID + ".defaultRequiredHealthChecks", format = "REQUIRE_NONE | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
-            desc = "This configuration can be overridden at code level by gRPC BindableService methods with @RequiresHealthCheck annotation: \nREQUIRE_NONE (default, and accept request even if any @HealthCheck fails), \nor REQUIRE_ALL (if any class annotated with @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned), \nor a list of @HealthCheck.name in CSV format (if any listed @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned)")
+    @Config(key = ID + ".defaultRequiredHealthChecks", format = "Leave blank or comment out | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
+            desc = "This configuration can be overridden at code level by gRPC BindableService methods with @RequiresHealthCheck annotation: \nLeave blank or comment out (default, and accept request even if any @HealthCheck fails), \nor REQUIRE_ALL (if any class annotated with @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned), \nor a list of @HealthCheck.name in CSV format (if any listed @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned)")
     protected volatile String[] defaultRequiredHealthChecks;
 
     protected volatile HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
@@ -179,14 +179,14 @@ public class GrpcServerConfig extends BootConfig {
 
         if (defaultRequiredHealthChecks == null) {
             emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
-            defaultRequiredHealthChecks = null;
         } else {
             if (defaultRequiredHealthChecks.length == 1) {
                 String requiredHealthCheck = defaultRequiredHealthChecks[0];
-                if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE.name())) {
+                /*if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE.name())) {
                     emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
                     defaultRequiredHealthChecks = null;
-                } else if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL.name())) {
+                } else */
+                if (requiredHealthCheck.equalsIgnoreCase(HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL.name())) {
                     emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_ALL;
                     defaultRequiredHealthChecks = null;
                 }
