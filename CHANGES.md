@@ -10,9 +10,10 @@
 - ✨ Updated feature: when **`SessionContext.status(HttpResponseStatus.OK)`** is called, it will not auto convert to 204 (No Content) even if the response body is empty
 - ✨ Updated feature: admin URL **'/checkhealth'** now returns detailed health check results in JSON format, including the list of failed health checks if any.
 - ✨ Updated feature: etc/boot.conf: new configuration item: naming.logging.protectedContentReplaceWith= ***, to replace sensitive content in logs with asterisks (***)
-- ✨ Updated feature: cfg_nio.properties: ping.sync.HealthStatus.emptyHealthCheckPolicy is now deprecated, use ping.sync.HealthStatus.requiredHealthChecks instead
-- ✨ Updated feature: cfg_grpc.properties: gRpc.server.HealthStatus.emptyHealthCheckPolicy is now deprecated, use gRpc.server.HealthStatus.requiredHealthChecks instead
-- ✨ Updated feature: gRPC server now supports health check for each gRPC method via @RequiresHealthCheck annotation.
+- ✨ Updated feature: cfg_nio.properties: `ping.sync.HealthStatus.emptyHealthCheckPolicy` and `ping.sync.HealthStatus.requiredHealthChecks` have been deprecated, use
+  `nio.server.defaultRequiredHealthChecks` instead
+- ✨ Updated feature: cfg_grpc.properties: `gRpc.server.HealthStatus.emptyHealthCheckPolicy` has been deprecated, use `gRpc.server.defaultRequiredHealthChecks` instead
+- ✨ Updated feature: gRPC server now supports health check for each gRPC method via `@RequiresHealthCheck` annotation.
     - for any gRPC BindableService method with **`@RequiresHealthCheck`** annotation: if the required health checks fail, the request is rejected and a 9 FAILED_PRECONDITION error is returned.
     - for any gRPC BindableService method without **`@RequiresHealthCheck`** annotation: it depends on the new gRPC server configuration in cfg_grpc.properties: item
       `gRpc.server.HealthStatus.requiredHealthChecks`

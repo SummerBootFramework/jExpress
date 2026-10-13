@@ -141,8 +141,8 @@ public class GrpcServerConfig extends BootConfig {
     protected volatile TrustManagerFactory tmf;
 
     @ConfigHeader(title = "4. " + ID + " health check policy")
-    @Config(key = ID + ".HealthStatus.requiredHealthChecks", format = "REQUIRE_NONE | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
-            desc = "For any gRPC BindableService method, when @RequiresHealthCheck is not specified: \nREQUIRE_NONE (default, and accept request even if any @HealthCheck fails), \nor REQUIRE_ALL (if any class annotated with @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned), \nor a list of @HealthCheck.name in CSV format (if any listed @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned)")
+    @Config(key = ID + ".defaultRequiredHealthChecks", format = "REQUIRE_NONE | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",
+            desc = "This configuration can be overridden at code level by gRPC BindableService methods with @RequiresHealthCheck annotation: \nREQUIRE_NONE (default, and accept request even if any @HealthCheck fails), \nor REQUIRE_ALL (if any class annotated with @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned), \nor a list of @HealthCheck.name in CSV format (if any listed @HealthCheck fails the check, the request is rejected and a 9 FAILED_PRECONDITION error is returned)")
     protected volatile String[] defaultRequiredHealthChecks;
 
     protected volatile HealthMonitor.EmptyHealthCheckPolicy emptyHealthCheckPolicy = HealthMonitor.EmptyHealthCheckPolicy.REQUIRE_NONE;
