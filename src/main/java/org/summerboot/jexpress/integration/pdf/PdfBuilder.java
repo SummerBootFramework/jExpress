@@ -151,7 +151,7 @@ public class PdfBuilder {
                     context.level(Level.WARN).memo("template height oversize retry = " + retry).error(new Err(0, null, null, null, sessionName + " template height oversize retry = " + retry));
                     //log.fatal("template height oversize (retry={}) for TxId={}", retry, sessionName);
                     if (po != null) {
-                        po.sendAlertAsync(SmtpClientConfig.cfg.getEmailToAppSupport(), "HTML oversize @" + sessionName, "retry=" + retry, null, true);
+                        po.sendAlertAsync(SmtpClientConfig.cfg.getEmailToDevelopment(), "HTML oversize @" + sessionName, "retry=" + retry, null, true);
                     }
                 }
                 htmlContent = htmlTemplate;
