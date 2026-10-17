@@ -189,7 +189,7 @@
         <netty.version>4.2.19.Final</netty.version>
         <netty-tcnative.version>2.0.84.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.84.1</grpc.version>
+        <grpc.version>1.84.3</grpc.version>
         <guava.version>33.7.2-jre</guava.version>
         <protobuf.version>4.36.2</protobuf.version>
         <!-- Web JAX-RS -->
@@ -219,6 +219,9 @@
         <!-- JPA -->
         <hibernate.version>7.4.13.Final</hibernate.version>
         <hikari-cp.version>7.1.0</hikari-cp.version>
+
+        <!-- JNA -->
+        <jna.version>5.19.1</jna.version>
 
         <!-- Cache -->
         <jedis.version>8.0.2</jedis.version>
@@ -579,6 +582,14 @@
             <version>${hikari-cp.version}</version>
         </dependency>
 
+        <!-- JNA -->
+        <!-- https://mvnrepository.com/artifact/net.java.dev.jna/jna -->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>${jna.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- Cache -->
         <!-- https://mvnrepository.com/artifact/redis.clients/jedis MIT-->
