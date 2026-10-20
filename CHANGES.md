@@ -18,6 +18,7 @@
     - for any gRPC BindableService method without **`@RequiresHealthCheck`** annotation: it depends on the new gRPC server configuration in cfg_grpc.properties: item
       `gRpc.server.HealthStatus.requiredHealthChecks`
 - 🔧 Migration guide: use CLI **'-format'** to format etc/boot.conf, cfg_grpc.properties and cfg_nio.properties to see the new configuration items
+- New feature: **`JnaUtil.loadLibrary()`** - loads a Linux shared library from a byte array using a memory-backed file.
 
 > ### 📌 REF274-1： Gateway Security & Compatibility Guidelines for RSA Encryption
 >

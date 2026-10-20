@@ -173,7 +173,7 @@
         <commons-cli.version>1.11.0</commons-cli.version>
         <commons-io.version>2.22.0</commons-io.version>
         <commons-text.version>1.15.0</commons-text.version>
-        <owasp.encoder.version>1.5.0</owasp.encoder.version>
+        <owasp.encoder.version>1.6.0</owasp.encoder.version>
         <!-- Logging -->
         <log4j-api.version>2.26.1</log4j-api.version>
         <log4j-disruptor.version>4.0.0</log4j-disruptor.version>
@@ -189,11 +189,11 @@
         <netty.version>4.2.19.Final</netty.version>
         <netty-tcnative.version>2.0.84.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.84.3</grpc.version>
+        <grpc.version>1.85.0</grpc.version>
         <guava.version>33.7.2-jre</guava.version>
         <protobuf.version>4.36.2</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.54</swagger.core.version>
+        <swagger.core.version>2.2.55</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
@@ -207,11 +207,11 @@
         <!-- JSON/XML/Bean Validation -->
         <jackson.version>3.2.3</jackson.version>
         <jackson.annotations.version>2.22</jackson.annotations.version>
-        <jackson2.version>2.22.3</jackson2.version>
+        <jackson2.version>2.22.4</jackson2.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.26</tomcat-embed-el.version>
-        <hibernate-validator.version>9.1.4.Final</hibernate-validator.version>
+        <tomcat-embed-el.version>11.0.27</tomcat-embed-el.version>
+        <hibernate-validator.version>9.1.5.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
