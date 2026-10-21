@@ -35,8 +35,8 @@ public class JnaUtil {
     /**
      * System property to specify the path where JNA should look for 3rd party native libraries.
      */
-    public static final String SYS_LIB_PATH = "jna.library.path"; //System.setProperty("jna.library.path", "/path/to/mylib.so"); // -Djna.library.path=/path/to/mylib.so
-    public static final String SYS_LIB_TEMP_DIR = "jna.tmpdir"; // System.setProperty("jna.tmpdir", "/path/to/temp"); // -Djna.tmpdir=/path/to/temp
+    public static final String SYS_JNA_LIB_PATH = "jna.library.path"; //System.setProperty("jna.library.path", "/path/to/mylib.so"); // -Djna.library.path=/path/to/mylib.so
+    public static final String SYS_JNA_LIB_TEMP_DIR = "jna.tmpdir"; // System.setProperty("jna.tmpdir", "/path/to/temp"); // -Djna.tmpdir=/path/to/temp
 
     /**
      * System property to specify the path where JNA should look for its own native library (libjnidispatch.so).
@@ -45,8 +45,9 @@ public class JnaUtil {
      * <p> 2. need to disable JNA's automatic extraction and unpacking of native libraries from JAR files or resources.
      * <p> 3. want to load a so file  from memory-backed file (memfd_create) instead of a physical file on disk, which can be useful for security or performance reasons.
      */
-    public static final String SYS_LIB_NOUNPACK = "jna.nounpack"; // System.setProperty("jna.nounpack", "true"); // -Djna.nounpack=true
-    public static final String SYS_BOOT_LIB_PATH = "jna.boot.library.path"; // System.setProperty("jna.boot.library.path", "/usr/lib64/jna"); // -Djna.boot.library.path=<path to libjnidispatch.so, which is inside jna-5.19.1.jar>
+    public static final String SYS_JNA_LIB_NOUNPACK = "jna.nounpack"; // System.setProperty("jna.nounpack", "true"); // -Djna.nounpack=true
+    public static final String SYS_JNA_NOSYS = "jna.nosys"; // System.setProperty("jna.nosys", "true"); // -Djna.nosys=true
+    public static final String SYS_JNA_BOOT_LIB_PATH = "jna.boot.library.path"; // System.setProperty("jna.boot.library.path", "/usr/lib64/jna"); // -Djna.boot.library.path=<path to libjnidispatch.so, which is inside jna-5.19.1.jar>
 
     public interface LibC extends Library {
         LibC INSTANCE = load(); // Load the platform's C standard library
@@ -86,6 +87,7 @@ public class JnaUtil {
      * <p>To disable JNA's automatic extraction of native libraries from JAR files
      * or resources, set these JVM options before JNA initializes:
      * <pre>{@code
+     * -Djna.nosys=true (optional to avoid Jar Hell - force to use jExpress' newer libjnidispatch over the system-installed JNA library)
      * -Djna.nounpack=true
      * -Djna.boot.library.path=/path/to/libjnidispatch.so (inside jna-5.19.1.jar)
      * }</pre>

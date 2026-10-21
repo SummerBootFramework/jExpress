@@ -1,6 +1,6 @@
 ## 📅 CHANGES
 
-## Version 2.7.4 (2026-10-12)
+## Version 2.7.4 (2026-10-24)
 
 - 🔒 Security patch: Jackson Databind
 - 💥 Http Client upgrade:
