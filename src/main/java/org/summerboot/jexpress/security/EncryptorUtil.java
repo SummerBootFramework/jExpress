@@ -1136,7 +1136,7 @@ public class EncryptorUtil {
             }
             byte[] md5 = md5(new File(plainDataFileName), md5Algorithm);
             if (meta != null) {
-                meta.setMd5(md5ToString(md5));
+                meta.setMd5(md5Algorithm + ": " + md5ToString(md5));
             }
             if (decryptedMD5 != null) {
                 boolean isMatch = md5 != null && decryptedMD5.length == md5.length;
@@ -1254,7 +1254,7 @@ public class EncryptorUtil {
 
             byte[] md5 = md5(ret, md5Algorithm);
             if (meta != null) {
-                meta.setMd5(md5ToString(md5));
+                meta.setMd5(md5Algorithm + ": " + md5ToString(md5));
             }
             if (decryptedMD5 != null) {
                 boolean isMatch = md5 != null && decryptedMD5.length == md5.length;
