@@ -1,9 +1,9 @@
-- **[Apache Central Repository][1]**
-- **[Maven Central Repository][2]**
+- **[Maven Central Repository][1]**
+- **[Apache Central Repository][2]**
 - **[mvnrepository.com][3]**
 
-[1]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.7.4
-[2]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.7.4
+[1]: https://central.sonatype.com/artifact/org.summerboot/jexpress/2.7.4
+[2]: https://repo.maven.apache.org/maven2/org/summerboot/jexpress/2.7.4
 [3]: https://mvnrepository.com/artifact/org.summerboot/jexpress/2.7.4
 
 [View Changelog (CHANGES)](CHANGES.md)
