@@ -24,7 +24,7 @@ October 2011, then to GitLab in Dec 2016, and eventually to GitHub in Sep 2021.
 <dependency>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.7.4</version>
+    <version>2.7.5</version>
 </dependency>
 ```
 

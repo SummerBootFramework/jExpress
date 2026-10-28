@@ -1,5 +1,10 @@
 ## 📅 CHANGES
 
+## Version 2.7.5 (2026-11-24)
+
+- ServiceError.ref is now sanitized to null if it is blank or empty, preventing the inclusion of empty or whitespace-only strings in error responses. This change enhances the clarity and consistency
+  of error reporting by ensuring that only meaningful references are included in the ServiceError object.
+
 ## Version 2.7.4 (2026-10-24)
 
 - 🔒 Security patch: Jackson Databind
