@@ -5,6 +5,7 @@
 - ServiceError.ref is now sanitized to null if it is blank or empty, preventing the inclusion of empty or whitespace-only strings in error responses. This change enhances the clarity and consistency
   of error reporting by ensuring that only meaningful references are included in the ServiceError object.
 - REF275-1: Enforce JJWT to use Jackson 3
+- RpcDelegate and RpcResult: refactoring
 
 ## Version 2.7.4 (2026-10-24)
 
