@@ -54,25 +54,24 @@ public class RpcResult<T> {
     protected T successResponse;
     protected final ContentType contentType;
     protected final boolean isStreaming;
+    protected final SessionContext context;
 
     enum ContentType {JSON, XML, OTHER}
 
     protected ObjectMapper httpClientConfiguredObjectMapper = null;
 
+    @Deprecated(since = "2.7.4", forRemoval = false)
     public RpcResult(HttpRequest originRequest, String originRequestBody, HttpResponse<String> httpResponse, boolean remoteSuccess) {
-        this(originRequest, originRequestBody, httpResponse, remoteSuccess, null);
+        this(originRequest, originRequestBody, httpResponse, remoteSuccess, false, null, null);
     }
 
-    public RpcResult(HttpRequest originRequest, String originRequestBody, HttpResponse<String> httpResponse, boolean remoteSuccess, HttpClientConfig httpClientConfig) {
-        this(originRequest, originRequestBody, httpResponse, remoteSuccess, false, httpClientConfig);
-    }
-
-    public RpcResult(HttpRequest originRequest, String originRequestBody, HttpResponse<?> httpResponse, boolean remoteSuccess, boolean isStreaming, HttpClientConfig httpClientConfig) {
+    public RpcResult(HttpRequest originRequest, String originRequestBody, HttpResponse<?> httpResponse, boolean remoteSuccess, boolean isStreaming, HttpClientConfig httpClientConfig, SessionContext context) {
         this.originRequest = originRequest;
         this.originRequestBody = originRequestBody;
         this.httpResponse = httpResponse;
         this.rpcResponseBody = httpResponse == null || isStreaming ? null : String.valueOf(httpResponse.body());
         this.httpStatusCode = httpResponse == null ? 0 : httpResponse.statusCode();
+        this.context = context;
         this.httpStatus = HttpResponseStatus.valueOf(httpStatusCode);
         this.remoteSuccess = remoteSuccess;
         this.isStreaming = isStreaming;
@@ -146,23 +145,87 @@ public class RpcResult<T> {
         return contentType;
     }
 
+    /**
+     *
+     * @param successResponseClass
+     * @return
+     * @deprecated use { @link #deserialize(Class)}
+     * <p>Sample code：
+     * <pre>{@code
+     *     if(rpcResult.isRemoteSuccess()){
+     *         MySuccessObj obj = rpcResult.deserialize(MySuccessObj.class);
+     *     } else {
+     *         MyErrorObj err = rpcResult.deserialize(MyErrorObj.class);
+     *     }
+     * }</pre>
+     */
+    @Deprecated(since = "2.7.4", forRemoval = false)
+    public RpcResult<T> update(Class<T> successResponseClass) {
+        return update(successResponseClass, context);
+    }
+
+    /**
+     *
+     * @param successResponseClass
+     * @param context
+     * @return
+     * @deprecated use { @link #deserialize(Class)}
+     * <p>Sample code：
+     * <pre>{@code
+     *     if(rpcResult.isRemoteSuccess()){
+     *         MySuccessObj obj = rpcResult.deserialize(MySuccessObj.class);
+     *     } else {
+     *         MyErrorObj err = rpcResult.deserialize(MyErrorObj.class);
+     *     }
+     * }</pre>
+     */
+    @Deprecated(since = "2.7.4", forRemoval = false)
+    public RpcResult<T> update(Class<T> successResponseClass, final SessionContext context) {
+        if (remoteSuccess) {
+            successResponse = deserialize(httpClientConfiguredObjectMapper, null, successResponseClass, true, context);
+        }
+        return this;
+    }
+
+    /**
+     *
+     * @param responseClass
+     * @param context
+     * @param <R>
+     * @return
+     * @deprecated use { @link #deserialize(Class)}
+     * <p>Sample code：
+     * <pre>{@code
+     *     if(rpcResult.isRemoteSuccess()){
+     *         MySuccessObj obj = rpcResult.deserialize(MySuccessObj.class);
+     *     } else {
+     *         MyErrorObj err = rpcResult.deserialize(MyErrorObj.class);
+     *     }
+     * }</pre>
+     */
+    @Deprecated(since = "2.7.4", forRemoval = false)
     public <R> R deserialize(Class<R> responseClass, final SessionContext context) {
-        return deserialize(httpClientConfiguredObjectMapper, responseClass, context);
+        return deserialize(httpClientConfiguredObjectMapper, null, responseClass, true, context);
     }
 
-    public <R> R deserialize(JavaType responseType, final SessionContext context) {
-        return deserialize(httpClientConfiguredObjectMapper, responseType, context);
+    public <R> R deserialize(Class<R> responseClass) {
+        return deserialize(httpClientConfiguredObjectMapper, responseClass);
     }
 
-    public <R> R deserialize(ObjectMapper jacksonMapper, Class<R> responseClass, final SessionContext context) {
+    public <R> R deserialize(JavaType responseType) {
+        return deserialize(httpClientConfiguredObjectMapper, responseType);
+    }
+
+    public <R> R deserialize(ObjectMapper jacksonMapper, Class<R> responseClass) {
         return deserialize(jacksonMapper, null, responseClass, true, context);
     }
 
-    public <R> R deserialize(ObjectMapper jacksonMapper, JavaType responseType, final SessionContext context) {
+    public <R> R deserialize(ObjectMapper jacksonMapper, JavaType responseType) {
         return deserialize(jacksonMapper, responseType, null, true, context);
     }
 
-    // Debug 现场还原的最大字符数（通常 4KB~8KB 足够看清出错的 JSON 结构了）
+
+    // 💡 for debugging:  Maximum number of characters to retrieve for reconstruction (typically 4KB–8KB is sufficient to clearly identify a malformed JSON structure)
     private static final int SNAPSHOT_SIZE = 8 * 1024;
 
     protected <R> R deserialize(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, boolean doValidation, final SessionContext context) {
@@ -174,10 +237,10 @@ public class RpcResult<T> {
         try {
             if (isStreaming) {
                 try (InputStream rawInputStream = (InputStream) httpResponse.body()) {
-                    // 💡 1. 创建一个极小的内存口袋，只用来抄录前 8KB 的数据快照
+                    // 💡 1. Create a tiny memory pocket, used exclusively for recording an 8KB snapshot of the data.
                     ByteArrayOutputStream debugSnapshot = new ByteArrayOutputStream(SNAPSHOT_SIZE);
 
-                    // 2. 包装原始网络流：在 Jackson 边读边解的过程中，顺便往快照里写一份
+                    // 💡 2. Wrapping the raw network stream: while Jackson reads and parses the data, simultaneously write a copy to a snapshot.
                     InputStream wrappedStream = new InputStream() {
                         private int bytesCopied = 0;
 
@@ -211,7 +274,9 @@ public class RpcResult<T> {
                                 : jacksonMapper.readValue(wrappedStream, responseClass);
                     } catch (JacksonException ex) {
                         String jsonSnapshotStr = debugSnapshot.toString(StandardCharsets.UTF_8);
-                        context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA, jsonSnapshotStr);
+                        if (context != null) {
+                            context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA, jsonSnapshotStr);
+                        }
                         throw ex;
                     }
                 }

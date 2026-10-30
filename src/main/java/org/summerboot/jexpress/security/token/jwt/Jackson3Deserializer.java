@@ -26,7 +26,7 @@ import java.io.Reader;
 import java.util.Map;
 
 /**
- * REF275-1
+ * REF275-1: Enforce JJWT to use Jackson 3
  *
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */

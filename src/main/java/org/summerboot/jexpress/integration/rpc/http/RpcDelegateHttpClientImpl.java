@@ -107,7 +107,7 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
             Thread.currentThread().interrupt();
             Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "Http Client Interrupted", ex);
             context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
-            RpcResult<T> rpcResult = new RpcResult<>(httpRequest, originRequestBody, null, false, getHttpClientConfig());
+            RpcResult<T> rpcResult = new RpcResult<>(httpRequest, originRequestBody, null, false, false, getHttpClientConfig(), context);
             return rpcResult;
         } finally {
             context.poi(BootPoi.RPC_END);
@@ -128,7 +128,7 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
         }
 
         //3b. update status   
-        RpcResult<T> rpcResult = new RpcResult<>(httpRequest, originRequestBody, isStreaming ? httpResponse2 : httpResponse1, isRemoteSuccess, isStreaming, getHttpClientConfig());
+        RpcResult<T> rpcResult = new RpcResult<>(httpRequest, originRequestBody, isStreaming ? httpResponse2 : httpResponse1, isRemoteSuccess, isStreaming, getHttpClientConfig(), context);
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
         context.memo(RpcMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + (isStreaming ? httpResponse2.headers() : httpResponse1.headers()));
         context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA, isStreaming ? "stream data" : rpcResponseJsonBody);

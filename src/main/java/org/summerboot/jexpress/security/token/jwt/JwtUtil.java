@@ -130,7 +130,7 @@ public class JwtUtil {
 
     public static String createJWT(String keyAlgorithm, String jwtSigningKey, int ttlSeconds, String id, String issuer, String subject, Collection<String> audience) {
         JwtBuilder builder = Jwts.builder()
-                .json(new Jackson3Serializer(jackson3ObjectMapper)) // REF275-1
+                .json(new Jackson3Serializer(jackson3ObjectMapper)) // REF275-1: Enforce JJWT to use Jackson 3
                 .id(id)
                 .issuer(issuer)
                 .subject(subject);
@@ -145,7 +145,7 @@ public class JwtUtil {
 
     public static String createJWT(String keyAlgorithm, byte[] jwtSigningKey, int ttlSeconds, String id, String issuer, String subject, Collection<String> audience) {
         JwtBuilder builder = Jwts.builder()
-                .json(new Jackson3Serializer(jackson3ObjectMapper)) // REF275-1
+                .json(new Jackson3Serializer(jackson3ObjectMapper)) // REF275-1: Enforce JJWT to use Jackson 3
                 .id(id)
                 .issuer(issuer)
                 .subject(subject);
@@ -174,7 +174,7 @@ public class JwtUtil {
 
     public static String createJWT(Key privateKey, int ttlSeconds, String id, String issuer, String subject, Collection<String> audience) {
         JwtBuilder builder = Jwts.builder()
-                .json(new Jackson3Serializer(jackson3ObjectMapper)) // REF275-1
+                .json(new Jackson3Serializer(jackson3ObjectMapper)) // REF275-1: Enforce JJWT to use Jackson 3
                 .id(id)
                 .issuer(issuer)
                 .subject(subject);
@@ -201,7 +201,7 @@ public class JwtUtil {
 
     public static Jws<Claims> parseJWT(SecretKey jwtRootSigningKey, String token) {
         JwtParser parser = Jwts.parser() // (1)
-                .json(new Jackson3Deserializer(jackson3ObjectMapper)) // REF275-1
+                .json(new Jackson3Deserializer(jackson3ObjectMapper)) // REF275-1: Enforce JJWT to use Jackson 3
                 .verifyWith(jwtRootSigningKey) // (2)
                 .build(); // (3)
         return parseJWT(parser, token); // (4)
@@ -209,7 +209,7 @@ public class JwtUtil {
 
     public static Jws<Claims> parseJWT(PublicKey publicKey, String token) {
         JwtParser parser = Jwts.parser() // (1)
-                .json(new Jackson3Deserializer(jackson3ObjectMapper)) // REF275-1
+                .json(new Jackson3Deserializer(jackson3ObjectMapper)) // REF275-1: Enforce JJWT to use Jackson 3
                 .verifyWith(publicKey) // (2)
                 .build(); // (3)
         return parseJWT(parser, token); // (4)
