@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.7.4</version>
+    <version>2.7.5-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>jExpress ${project.version}</name>
     <description>jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>
@@ -217,7 +217,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.4.13.Final</hibernate.version>
+        <hibernate.version>7.4.14.Final</hibernate.version>
         <hikari-cp.version>7.1.0</hikari-cp.version>
 
         <!-- JNA -->
@@ -237,7 +237,7 @@
         <!-- PDF - PDFBox -->
         <pdfbox.version>3.0.8</pdfbox.version>
         <!-- PDF - io.github.openhtmltopdf -->
-        <openhtml.version>1.1.100</openhtml.version>
+        <openhtml.version>1.1.105</openhtml.version>
         <batik-transcoder.version>1.20</batik-transcoder.version>
         <!-- PDF - iText -->
         <itext-core.version>9.8.0</itext-core.version>
@@ -356,17 +356,35 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jwt.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <version>${jwt.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
             <version>${jwt.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- backward compatibility for jjwt only https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
         <!--
@@ -382,6 +400,7 @@
             <version>${jackson2.version}</version>
             <scope>compile</scope>
         </dependency>
+
 
         <!-- NIO Netty -->
         <!-- https://mvnrepository.com/artifact/io.netty/netty-all Apache 2.0-->

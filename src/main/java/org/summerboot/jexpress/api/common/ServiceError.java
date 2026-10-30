@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.apache.commons.lang3.StringUtils;
 import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.util.lang.BeanUtil;
 import org.summerboot.jexpress.webserver.jackson.AdditionalJsonFields;
@@ -48,7 +49,7 @@ public class ServiceError extends AdditionalJsonFields {
     }
 
     public ServiceError(String ref) {
-        this.ref = ref;
+        this.ref = StringUtils.isBlank(ref) ? null : ref;
     }
 
 //    public ServiceError(int errorCode, String errorTag, String errorDesc, Throwable ex) {
