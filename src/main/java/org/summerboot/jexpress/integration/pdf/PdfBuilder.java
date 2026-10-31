@@ -172,7 +172,7 @@ public class PdfBuilder {
         if (extraSpace < 1) {
             extraSpace = 5;
         }
-        final String sessionName = requesterTxId + "[" + agent + "]" + (isSinglePage ? "SP" : "A4") + "+" + extraSpace + "mm";
+        final String sessionName = requesterTxId + "[" + agent + "]" + (isSinglePage ? ("SP+" + extraSpace + "mm") : "MP");
         byte[] pdf = null;
         try {
             if (isSinglePage) {
