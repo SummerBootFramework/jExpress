@@ -6,6 +6,12 @@
   of error reporting by ensuring that only meaningful references are included in the ServiceError object.
 - REF275-1: Enforce JJWT to use Jackson 3
 - RpcDelegate and RpcResult: refactoring
+- PdfBuilder: extra space for single page PDF
+    - removed **`PostOffice`** parameter, replaced with **`SinglePageHeightCalculationListener.onHeightCalculationRetry()`** to let caller decide what to do when retry happened.
+        - Multiple **`SinglePageHeightCalculationListener`** can be added via **`PdfBuilder.addListener()`**
+        - Multiple **`SinglePageHeightCalculationListener`** can be removed via **`PdfBuilder.removeListener()`**
+        - A one time **`SinglePageHeightCalculationListener`** can be provided via **`htmlToPdf(...)`** to override added listeners
+    - max retry can be defined by caller via **`PdfBuilderConfig.setSinglePageHeightCalculationMaxIteration(int)`**, the default value is 3; it was previously hardcoded to 2.
 
 ## Version 2.7.4 (2026-10-24)
 
