@@ -49,6 +49,7 @@ public class PdfBuilderConfig {
     private String userPwd = null;
     private int encryptionKeyLength = ProtectionSpec.EncryptionKeyLength; // PDFBox
     private int encryptionAlgorithm = ProtectionSpec.EncryptionAlgorithm; // iText
+    private int singlePageHeightCalculationMaxIteration = 3;
 
     public PdfBuilderConfig() {
         this(null);
@@ -167,5 +168,13 @@ public class PdfBuilderConfig {
 
     public void setEncryptionAlgorithm(int encryptionAlgorithm) {
         this.encryptionAlgorithm = encryptionAlgorithm;
+    }
+
+    public int getSinglePageHeightCalculationMaxIteration() {
+        return singlePageHeightCalculationMaxIteration;
+    }
+
+    public void setSinglePageHeightCalculationMaxIteration(int singlePageHeightCalculationMaxIteration) {
+        this.singlePageHeightCalculationMaxIteration = singlePageHeightCalculationMaxIteration;
     }
 }

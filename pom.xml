@@ -80,10 +80,10 @@
                 <maven-scm.version>2.2.1</maven-scm.version>
                 <maven-source.version>3.4.0</maven-source.version>
                 <maven-javadoc.version>3.12.0</maven-javadoc.version>
-                <maven-deploy.version>3.1.4</maven-deploy.version>
+                <maven-deploy.version>3.2.0</maven-deploy.version>
                 <maven-gpg.version>3.2.8</maven-gpg.version>
                 <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
-                <central-publishing.version>0.10.0</central-publishing.version>
+                <central-publishing.version>0.12.0</central-publishing.version>
             </properties>
             <build>
                 <plugins>
@@ -161,13 +161,13 @@
         <!--        <maven.compiler.target>21</maven.compiler.target>-->
         <maven.compiler.release>21</maven.compiler.release>
         <maven-clean.version>3.5.0</maven-clean.version>
-        <maven-compiler.version>3.15.0</maven-compiler.version>
-        <maven-dependency.version>3.10.0</maven-dependency.version>
-        <maven-jar.version>3.5.0</maven-jar.version>
+        <maven-compiler.version>3.16.0</maven-compiler.version>
+        <maven-dependency.version>3.11.0</maven-dependency.version>
+        <maven-jar.version>3.5.1</maven-jar.version>
         <maven-resources.version>3.5.0</maven-resources.version>
-        <maven-surefire.version>3.5.5</maven-surefire.version>
-        <maven-doc-version>3.12.0</maven-doc-version>
-        <maven-install.version>3.1.4</maven-install.version>
+        <maven-surefire.version>3.6.1</maven-surefire.version>
+        <maven-javadoc-version>3.12.0</maven-javadoc-version>
+        <maven-install.version>3.2.0</maven-install.version>
         <!-- Commons -->
         <commons-lang3.version>3.21.0</commons-lang3.version>
         <commons-cli.version>1.11.0</commons-cli.version>
@@ -877,11 +877,9 @@
                 <configuration>
                     <showDeprecation>true</showDeprecation>
                     <compilerArgs>
-                        <arg>-parameters</arg> <!-- 关键：保留参数名 -->
+                        <arg>-parameters</arg> <!-- Preserve parameter names -->
+                        <!-- <arg>-Xlint:unchecked</arg> -->
                     </compilerArgs>
-                    <!--                    <compilerArgs>-->
-                    <!--                        <arg>-Xlint:unchecked</arg>-->
-                    <!--                    </compilerArgs>-->
                 </configuration>
 
             </plugin>
@@ -925,7 +923,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${maven-doc-version}</version>
+                <version>${maven-javadoc-version}</version>
                 <configuration>
                     <additionalJOptions>
                         <additionalJOption>--allow-script-in-comments</additionalJOption>
