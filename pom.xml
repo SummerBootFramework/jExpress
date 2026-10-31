@@ -157,8 +157,6 @@
     <properties>
         <!-- common properties and dependencies -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!--        <maven.compiler.source>21</maven.compiler.source>-->
-        <!--        <maven.compiler.target>21</maven.compiler.target>-->
         <maven.compiler.release>21</maven.compiler.release>
         <maven-clean.version>3.5.0</maven-clean.version>
         <maven-compiler.version>3.16.0</maven-compiler.version>

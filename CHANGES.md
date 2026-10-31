@@ -10,7 +10,7 @@
     - removed **`PostOffice`** parameter, replaced with **`SinglePageHeightCalculationListener.onHeightCalculationRetry()`** to let caller decide what to do when retry happened.
         - Multiple **`SinglePageHeightCalculationListener`** can be added via **`PdfBuilder.addListener()`**
         - Multiple **`SinglePageHeightCalculationListener`** can be removed via **`PdfBuilder.removeListener()`**
-        - A one time **`SinglePageHeightCalculationListener`** can be provided via **`htmlToPdfSinglePage(...)`** to override added listeners
+        - A one time **`SinglePageHeightCalculationListener`** can be provided via **`htmlToPdf(...)`** to override added listeners
     - max retry can be defined by caller via **`PdfBuilderConfig.setSinglePageHeightCalculationMaxIteration(int)`**, the default value is 3; it was previously hardcoded to 2.
 
 ## Version 2.7.4 (2026-10-24)

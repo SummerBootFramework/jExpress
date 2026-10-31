@@ -137,7 +137,7 @@ public class PdfBuilder {
     }
 
     /**
-     * Build multipage PDF
+     * Build a multipage PDF
      *
      * @param requesterTxId
      * @param htmlContent
@@ -146,12 +146,12 @@ public class PdfBuilder {
      * @return
      * @throws IOException
      */
-    public byte[] htmlToPdfMultiPage(String requesterTxId, String htmlContent, PdfBuilderConfig cfg, SessionContext context) throws IOException {
+    public byte[] htmlToPdf(String requesterTxId, String htmlContent, PdfBuilderConfig cfg, SessionContext context) throws IOException {
         return htmlToPdf(requesterTxId, htmlContent, cfg, false, 0, null, context);
     }
 
     /**
-     * Build single page PDF
+     * Build a single page PDF
      *
      * @param requesterTxId
      * @param htmlContent
@@ -162,7 +162,7 @@ public class PdfBuilder {
      * @return
      * @throws IOException
      */
-    public byte[] htmlToPdfSinglePage(String requesterTxId, String htmlContent, PdfBuilderConfig cfg, int extraSpace, SinglePageHeightCalculationListener onetimeListener, SessionContext context) throws IOException {
+    public byte[] htmlToPdf(String requesterTxId, String htmlContent, PdfBuilderConfig cfg, int extraSpace, SinglePageHeightCalculationListener onetimeListener, SessionContext context) throws IOException {
         return htmlToPdf(requesterTxId, htmlContent, cfg, true, extraSpace, onetimeListener, context);
     }
 
