@@ -19,7 +19,6 @@ package org.summerboot.jexpress.integration.pdf;
 
 import com.google.protobuf.ByteString;
 import com.openhtmltopdf.util.XRLog;
-import freemarker.template.Template;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,9 +27,7 @@ import org.apache.pdfbox.rendering.RenderDestination;
 import org.summerboot.jexpress.api.common.BootPoi;
 import org.summerboot.jexpress.api.common.Err;
 import org.summerboot.jexpress.api.common.SessionContext;
-import org.summerboot.jexpress.api.mail.PostOffice;
 import org.summerboot.jexpress.boot.BootConstants;
-import org.summerboot.jexpress.integration.mail.config.SmtpClientConfig;
 import org.summerboot.jexpress.util.format.PageCssUtil;
 
 import java.io.File;
@@ -40,9 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.CRC32;
 
 /**
@@ -65,21 +60,26 @@ public class PdfBuilder {
         return pdfBuilder;
     }
 
-    public final File dumpDir;
-
-    public boolean isDumpEnabled() {
-        return BootConstants.isDebugMode() && dumpDir.exists();
+    public static interface SinglePageHeightCalculationListener {
+        /**
+         *
+         * @param retry
+         * @param pageCount
+         * @param requesterTxId
+         * @param htmlContent
+         * @param agent
+         * @param extraSpace
+         * @param pageHeightMillimeters
+         */
+        void onHeightCalculationRetry(int retry, int pageCount, String requesterTxId, String htmlContent, PdfBuilderConfig.Agent agent, int extraSpace, float pageHeightMillimeters);
     }
 
-    private File htmlTemplateDir;
-
+    public final File dumpDir;
+    private final File htmlTemplateDir;
+    protected final PdfBoxAgent pdfBoxAgent;
+    protected final ItextAgent agentIText;
+    protected final List<SinglePageHeightCalculationListener> listeners = new ArrayList<>();
     //private static final WriterProperties WRITER_PROPS = IText.buildDefaultAccessPermission(null, null, true, PdfVersion.PDF_1_7);
-
-    private final Map<String, Template> FreeMarkerTemplates = new HashMap<>();
-
-    protected PdfBoxAgent pdfBoxAgent;
-    protected ItextAgent agentIText;
-
 
     /**
      * Initializes the PDF builder with template and font directories.
@@ -113,21 +113,44 @@ public class PdfBuilder {
         this.dumpDir = dumpDir;
     }
 
-    public byte[] html2PDF(String requesterTxId, String htmlContent, PdfBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
-        return html2PDF(requesterTxId, htmlContent, false, cfg, po, context);
+    public File getDumpDir() {
+        return dumpDir;
     }
 
-    public byte[] html2PDF(String requesterTxId, String htmlContent, boolean isSinglePage, PdfBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
-        return html2PDF(requesterTxId, htmlContent, isSinglePage, 5, cfg, po, context);
+    public File getHtmlTemplateDir() {
+        return htmlTemplateDir;
     }
 
-    public byte[] html2PDF(String requesterTxId, String htmlContent, boolean isSinglePage, int extraSpace, PdfBuilderConfig cfg, PostOffice po, SessionContext context) throws IOException {
+    public void addListener(SinglePageHeightCalculationListener listener) {
+        if (listener == null) {
+            return;
+        }
+        listeners.add(listener);
+    }
+
+    public boolean removeListener(SinglePageHeightCalculationListener listener) {
+        return listeners.remove(listener);
+    }
+
+    public boolean isDumpEnabled() {
+        return BootConstants.isDebugMode() && dumpDir.exists();
+    }
+
+    public byte[] html2PDF(String requesterTxId, String htmlContent, PdfBuilderConfig cfg, SessionContext context) throws IOException {
+        return html2PDF(requesterTxId, htmlContent, false, cfg, context);
+    }
+
+    public byte[] html2PDF(String requesterTxId, String htmlContent, boolean isSinglePage, PdfBuilderConfig cfg, SessionContext context) throws IOException {
+        return html2PDF(requesterTxId, htmlContent, isSinglePage, 5, cfg, context);
+    }
+
+    public byte[] html2PDF(String requesterTxId, String htmlContent, boolean isSinglePage, int extraSpace, PdfBuilderConfig cfg, SessionContext context) throws IOException {
         context.poi(BootPoi.PDF_BEGIN);
         PdfBuilderConfig.Agent agent = cfg.getAgent();
         if (extraSpace < 1) {
             extraSpace = 5;
         }
-        final String sessionName = requesterTxId + "_" + agent + "_" + isSinglePage + "_" + extraSpace;
+        final String sessionName = requesterTxId + "[" + agent + "]" + (isSinglePage ? "SP" : "A4") + "+" + extraSpace + "mm";
         byte[] pdf = null;
         try {
             if (isSinglePage) {
@@ -144,15 +167,23 @@ public class PdfBuilder {
                     htmlTemplate = PageCssUtil.setHeight(htmlContent, pageHeightMillimeters + "mm;");
                     layoutInfo = pdfBoxAgent.layoutThenGetInfo(htmlTemplate, htmlTemplateDir);
                     pageCount = layoutInfo.getPageCount();
+                    context.poi(BootPoi.PDF_HV)
+                            .memo("retry=" + retry + ",pages=" + pageCount + ", extraSpace=" + extraSpace + "mm, height=" + pageHeightMillimeters + "mm", Level.TRACE);
                     retry++;
-                    context.poi(BootPoi.PDF_HV);
                 }
                 if (retry > 1) {
-                    context.level(Level.WARN).memo("template height oversize retry = " + retry).error(new Err(0, null, null, null, sessionName + " template height oversize retry = " + retry));
-                    //log.fatal("template height oversize (retry={}) for TxId={}", retry, sessionName);
-                    if (po != null) {
-                        po.sendAlertAsync(SmtpClientConfig.cfg.getEmailToDevelopment(), "HTML oversize @" + sessionName, "retry=" + retry, null, true);
+                    context.level(Level.WARN)
+                            .memo("template height oversize retry = " + retry)
+                            .error(new Err(0, null, null, null, sessionName + " template height oversize retry = " + retry));
+                    for (SinglePageHeightCalculationListener listener : listeners) {
+                        if (listener == null) {
+                            continue;
+                        }
+                        listener.onHeightCalculationRetry(retry, pageCount, requesterTxId, htmlContent, agent, extraSpace, pageHeightMillimeters);
                     }
+//                    if (po != null) {
+//                        po.sendAlertAsync(SmtpClientConfig.cfg.getEmailToDevelopment(), "HTML oversize @" + sessionName, "retry=" + retry, null, true);
+//                    }
                 }
                 htmlContent = htmlTemplate;
             }
@@ -191,7 +222,6 @@ public class PdfBuilder {
         }
         return pdf;
     }
-
 
     public List<byte[]> pdf2Images(String requesterTxId, byte[] pdf, String password, ImageType imageType, float imageDPI, String imageFormat, RenderDestination renderDestination, SessionContext context) throws IOException {
         context.poi(BootPoi.PDF2IMG_BEGIN);

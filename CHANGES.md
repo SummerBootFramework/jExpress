@@ -6,6 +6,7 @@
   of error reporting by ensuring that only meaningful references are included in the ServiceError object.
 - REF275-1: Enforce JJWT to use Jackson 3
 - RpcDelegate and RpcResult: refactoring
+- PdfBuilder: removed **`PostOffice`** parameter, replaced with **`SinglePageHeightCalculationListener.onHeightCalculationRetry()`** to let caller decide what to do when retry happened.
 
 ## Version 2.7.4 (2026-10-24)
 

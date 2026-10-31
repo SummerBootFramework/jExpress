@@ -193,12 +193,12 @@
         <guava.version>33.7.2-jre</guava.version>
         <protobuf.version>4.36.2</protobuf.version>
         <!-- Web JAX-RS -->
-        <swagger.core.version>2.2.55</swagger.core.version>
+        <swagger.core.version>3.0.0</swagger.core.version>
         <!--<elastic-apm.version>1.36.0</elastic-apm.version>-->
 
 
         <!-- MIME-Type -->
-        <tika.version>4.1.0</tika.version>
+        <tika.version>4.2.0</tika.version>
         <!-- JAX-RS -->
         <rs-api.version>4.0.0</rs-api.version>
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
@@ -876,6 +876,9 @@
                 <version>${maven-compiler.version}</version>
                 <configuration>
                     <showDeprecation>true</showDeprecation>
+                    <compilerArgs>
+                        <arg>-parameters</arg> <!-- 关键：保留参数名 -->
+                    </compilerArgs>
                     <!--                    <compilerArgs>-->
                     <!--                        <arg>-Xlint:unchecked</arg>-->
                     <!--                    </compilerArgs>-->
