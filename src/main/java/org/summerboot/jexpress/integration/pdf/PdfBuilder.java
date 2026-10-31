@@ -132,6 +132,10 @@ public class PdfBuilder {
         return listeners.remove(listener);
     }
 
+    public List<SinglePageHeightCalculationListener> getListeners() {
+        return List.copyOf(listeners);
+    }
+
     public boolean isDumpEnabled() {
         return BootConstants.isDebugMode() && dumpDir.exists();
     }
@@ -151,7 +155,22 @@ public class PdfBuilder {
     }
 
     /**
-     * Build a single page PDF
+     * Build a single page PDF with added listeners
+     *
+     * @param requesterTxId
+     * @param htmlContent
+     * @param cfg
+     * @param extraSpace
+     * @param context
+     * @return
+     * @throws IOException
+     */
+    public byte[] htmlToPdf(String requesterTxId, String htmlContent, PdfBuilderConfig cfg, int extraSpace, SessionContext context) throws IOException {
+        return htmlToPdf(requesterTxId, htmlContent, cfg, true, extraSpace, null, context);
+    }
+
+    /**
+     * Build a single page PDF with onetime listener to override added listeners
      *
      * @param requesterTxId
      * @param htmlContent
@@ -170,7 +189,7 @@ public class PdfBuilder {
         context.poi(BootPoi.PDF_BEGIN);
         PdfBuilderConfig.Agent agent = cfg.getAgent();
         if (extraSpace < 1) {
-            extraSpace = 5;
+            extraSpace = 1;
         }
         final String sessionName = requesterTxId + "[" + agent + "]" + (isSinglePage ? ("SP+" + extraSpace + "mm") : "MP");
         byte[] pdf = null;
