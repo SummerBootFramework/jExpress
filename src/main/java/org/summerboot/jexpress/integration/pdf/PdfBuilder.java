@@ -63,7 +63,7 @@ public class PdfBuilder {
     public static interface SinglePageHeightCalculationListener {
         /**
          *
-         * @param retry
+         * @param iterationCount
          * @param pageCount
          * @param requesterTxId
          * @param htmlContent
@@ -71,7 +71,7 @@ public class PdfBuilder {
          * @param extraSpace
          * @param pageHeightMillimeters
          */
-        void onHeightCalculationRetry(int retry, int pageCount, String requesterTxId, String htmlContent, PdfBuilderConfig.Agent agent, int extraSpace, float pageHeightMillimeters);
+        void onHeightCalculationRetry(int iterationCount, int pageCount, String requesterTxId, String htmlContent, PdfBuilderConfig.Agent agent, int extraSpace, float pageHeightMillimeters);
     }
 
     public final File dumpDir;
