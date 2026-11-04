@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.7.5</version>
+    <version>2.7.6-SNAPSHTOT</version>
     <packaging>jar</packaging>
     <name>jExpress ${project.version}</name>
     <description>jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>
@@ -235,7 +235,7 @@
         <!-- PDF - PDFBox -->
         <pdfbox.version>3.0.8</pdfbox.version>
         <!-- PDF - io.github.openhtmltopdf -->
-        <openhtml.version>1.1.105</openhtml.version>
+        <openhtml.version>1.1.108</openhtml.version>
         <batik-transcoder.version>1.20</batik-transcoder.version>
         <!-- PDF - iText -->
         <itext-core.version>9.8.0</itext-core.version>

@@ -1,5 +1,7 @@
 ## 📅 CHANGES
 
+## Version 2.7.6 (2026-11-24)
+
 ## Version 2.7.5 (2026-11-01)
 
 - ServiceError.ref is now sanitized to null if it is blank or empty, preventing the inclusion of empty or whitespace-only strings in error responses. This change enhances the clarity and consistency
