@@ -104,6 +104,10 @@ public class GrpcServer {
         }
     }
 
+    public ServerBuilder getServerBuilder() {
+        return serverBuilder;
+    }
+
     protected ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
         if (kmf == null) {
             return null;

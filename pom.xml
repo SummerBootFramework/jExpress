@@ -184,11 +184,11 @@
         <jwt.version>0.13.0</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.2.19.Final</netty.version>
-        <netty-tcnative.version>2.0.84.Final</netty-tcnative.version>
+        <netty.version>4.2.20.Final</netty.version>
+        <netty-tcnative.version>2.0.85.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.85.1</grpc.version>
-        <guava.version>33.7.2-jre</guava.version>
+        <guava.version>33.8.0-jre</guava.version>
         <protobuf.version>4.36.2</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>3.0.0</swagger.core.version>
@@ -209,7 +209,7 @@
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
         <tomcat-embed-el.version>11.0.27</tomcat-embed-el.version>
-        <hibernate-validator.version>9.1.5.Final</hibernate-validator.version>
+        <hibernate-validator.version>9.1.6.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
@@ -229,7 +229,7 @@
 
         <!-- Template Engine -->
         <freemarker.version>2.3.35</freemarker.version>
-        <jsoup.version>1.23.2</jsoup.version>
+        <jsoup.version>1.24.1</jsoup.version>
         <!-- Barcode -->
         <zxing.version>3.5.4</zxing.version>
         <!-- PDF - PDFBox -->

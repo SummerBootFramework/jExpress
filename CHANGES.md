@@ -2,6 +2,9 @@
 
 ## Version 2.7.6 (2026-11-24)
 
+- GrpcServerConfig.configServerBuilder now added **`4. gRpc.server ServerBuilder Settings`** to allow user override default value of Enforcement Policy, Server Keepalive, Connection Management and
+  Size Protection.
+
 ## Version 2.7.5 (2026-11-01)
 
 - ServiceError.ref is now sanitized to null if it is blank or empty, preventing the inclusion of empty or whitespace-only strings in error responses. This change enhances the clarity and consistency
