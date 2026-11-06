@@ -438,4 +438,59 @@ abstract public class GrpcClientConfig extends BootConfig {
         return channelBuilder;
     }
 
+    public String getLoadBalancingTargetScheme() {
+        return loadBalancingTargetScheme;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public Integer getMaxInboundMessageSize() {
+        return maxInboundMessageSize;
+    }
+
+    public Integer getMaxHeaderListSize() {
+        return maxHeaderListSize;
+    }
+
+    public Long getPerRpcBufferLimit() {
+        return perRpcBufferLimit;
+    }
+
+    public Integer getMaxHedgedAttempts() {
+        return maxHedgedAttempts;
+    }
+
+    public Long getIdleTimeoutSeconds() {
+        return idleTimeoutSeconds;
+    }
+
+    public Boolean getKeepAliveWithoutCalls() {
+        return keepAliveWithoutCalls;
+    }
+
+    public Long getKeepAliveTimeSeconds() {
+        return keepAliveTimeSeconds;
+    }
+
+    public Long getKeepAliveTimeoutSeconds() {
+        return keepAliveTimeoutSeconds;
+    }
+
+    public Boolean getRetryEnabled() {
+        return retryEnabled;
+    }
+
+    public Integer getMaxRetryAttempts() {
+        return maxRetryAttempts;
+    }
+
+    public Long getRetryBufferSize() {
+        return retryBufferSize;
+    }
+
+    public static int getPriority() {
+        return priority;
+    }
 }

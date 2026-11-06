@@ -353,4 +353,44 @@ public class GrpcServerConfig extends BootConfig {
     public HealthMonitor.EmptyHealthCheckPolicy getEmptyHealthCheckPolicy() {
         return emptyHealthCheckPolicy;
     }
+
+    public Long getPermitKeepAliveTimeSeconds() {
+        return permitKeepAliveTimeSeconds;
+    }
+
+    public Boolean getPermitKeepAliveWithoutCalls() {
+        return permitKeepAliveWithoutCalls;
+    }
+
+    public Long getKeepAliveTimeSeconds() {
+        return keepAliveTimeSeconds;
+    }
+
+    public Long getKeepAliveTimeoutSeconds() {
+        return keepAliveTimeoutSeconds;
+    }
+
+    public Long getHandshakeTimeoutSeconds() {
+        return handshakeTimeoutSeconds;
+    }
+
+    public Long getMaxConnectionIdleSeconds() {
+        return maxConnectionIdleSeconds;
+    }
+
+    public Long getMaxConnectionAgeSeconds() {
+        return maxConnectionAgeSeconds;
+    }
+
+    public Long getMaxConnectionAgeGraceSeconds() {
+        return maxConnectionAgeGraceSeconds;
+    }
+
+    public Integer getMaxInboundMessageBytes() {
+        return maxInboundMessageBytes;
+    }
+
+    public Integer getMaxInboundMetadataBytes() {
+        return maxInboundMetadataBytes;
+    }
 }
