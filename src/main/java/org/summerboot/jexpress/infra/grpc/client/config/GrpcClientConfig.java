@@ -123,7 +123,7 @@ abstract public class GrpcClientConfig extends BootConfig {
 
     protected volatile NameResolverProvider nameResolverProvider;
 
-    //1. gRPC connection
+    // 1. gRPC connection
     @Config(key = ID + ".target.url", defaultValue = "grpc:///",
             desc = "non-cluster server target",
             format = "scheme://host:port",
@@ -140,7 +140,7 @@ abstract public class GrpcClientConfig extends BootConfig {
     @Config(key = ID + ".ssl.Provider", defaultValue = "OPENSSL", desc = "ssl provider: OPENSSL (default), OPENSSL_REFCNT,  JDK")
     protected SslProvider sslProvider = SslProvider.OPENSSL;
 
-    //2. TRC (The Remote Caller) keystore    
+    // 2. TRC (The Remote Caller) keystore
     protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
     protected static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
     protected static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
@@ -161,7 +161,7 @@ abstract public class GrpcClientConfig extends BootConfig {
         generateTemplate = true;
     }
 
-    //3. TRC (The Remote Caller) truststore
+    // 3. TRC (The Remote Caller) truststore
     protected static final String KEY_tmf_key = ID + ".ssl.TrustStore";
     protected static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @ConfigHeader(title = "3. " + ID + " truststore")
@@ -187,8 +187,9 @@ abstract public class GrpcClientConfig extends BootConfig {
     @JsonIgnore
     protected volatile NettyChannelBuilder channelBuilder;
 
-    @ConfigHeader(title = "4. " + ID + " Channel Settings",
-            desc = "The following settings are for NettyChannelBuilder, which is used to create a gRPC channel")
+    // 4. NettyChannelBuilder settings
+    @ConfigHeader(title = "4. " + ID + " NettyChannelBuilder Settings",
+            desc = "The following settings are for NettyChannelBuilder, which is used to config a gRPC channel")
     @Config(key = ID + ".channel.userAgent", desc = "string: default null")
     protected volatile String userAgent = null;
     @Config(key = ID + ".channel.maxInboundMessageSize", desc = "int: default 4194304 if not set")
@@ -241,13 +242,13 @@ abstract public class GrpcClientConfig extends BootConfig {
             tmf = io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory.INSTANCE;
         }
         channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy.getValue(), uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, tlsProtocols);
-        configNettyChannelBuilder(channelBuilder);
+        overrideDefaultConfig(channelBuilder);
         for (GrpcClient listener : listeners) {
             listener.updateChannelBuilder(channelBuilder);
         }
     }
 
-    protected void configNettyChannelBuilder(NettyChannelBuilder nettyChannelBuilder) {
+    public void overrideDefaultConfig(NettyChannelBuilder nettyChannelBuilder) {
         if (userAgent != null) {
             nettyChannelBuilder.userAgent(userAgent);
         }
@@ -437,4 +438,59 @@ abstract public class GrpcClientConfig extends BootConfig {
         return channelBuilder;
     }
 
+    public String getLoadBalancingTargetScheme() {
+        return loadBalancingTargetScheme;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public Integer getMaxInboundMessageSize() {
+        return maxInboundMessageSize;
+    }
+
+    public Integer getMaxHeaderListSize() {
+        return maxHeaderListSize;
+    }
+
+    public Long getPerRpcBufferLimit() {
+        return perRpcBufferLimit;
+    }
+
+    public Integer getMaxHedgedAttempts() {
+        return maxHedgedAttempts;
+    }
+
+    public Long getIdleTimeoutSeconds() {
+        return idleTimeoutSeconds;
+    }
+
+    public Boolean getKeepAliveWithoutCalls() {
+        return keepAliveWithoutCalls;
+    }
+
+    public Long getKeepAliveTimeSeconds() {
+        return keepAliveTimeSeconds;
+    }
+
+    public Long getKeepAliveTimeoutSeconds() {
+        return keepAliveTimeoutSeconds;
+    }
+
+    public Boolean getRetryEnabled() {
+        return retryEnabled;
+    }
+
+    public Integer getMaxRetryAttempts() {
+        return maxRetryAttempts;
+    }
+
+    public Long getRetryBufferSize() {
+        return retryBufferSize;
+    }
+
+    public static int getPriority() {
+        return priority;
+    }
 }
