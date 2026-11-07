@@ -163,11 +163,11 @@ public class BootGuiceModule extends AbstractModule {
         // binder.addBinding("NFC").to(NonFunctionalServiceController.class);
         // binder.addBinding("BIZ").to(BusinessServiceController.class);
 
-        final Set<Class<?>> classesAll = new HashSet();//to remove duplicated
+        final Set<Class<?>> classesAll = new HashSet<>();//to remove duplicated
         //for (String rootPackageName : rootPackageNames) {
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(annotation, false, rootPackageNames);
         //classesAll.addAll(classes);
-        for (Class c : classes) {
+        for (Class<?> c : classes) {
             //<A extends Annotation>
             Annotation a = c.getAnnotation(annotation);
             int mod = c.getModifiers();
@@ -179,7 +179,7 @@ public class BootGuiceModule extends AbstractModule {
                 Controller ca = (Controller) a;
                 alternativeName = ca.AlternativeName();
             } else if (a instanceof HealthCheck) {
-                Service sa = (Service) c.getAnnotation(Service.class);
+                Service sa = c.getAnnotation(Service.class);
                 if (sa != null) {
                     alternativeName = sa.AlternativeName();
                 }

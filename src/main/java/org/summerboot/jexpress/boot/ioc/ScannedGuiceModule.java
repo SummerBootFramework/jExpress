@@ -39,13 +39,13 @@ public class ScannedGuiceModule extends AbstractModule {
      * Annotation scan results as ScannedGuiceModule input
      * Format: bindingClass <--> {key=(ImplTag+named) <--> [@Service impl list]}
      */
-    protected final Map<Class, Map<String, List<SummerSingularity.ServiceMetadata>>> scannedServiceBindingMap;
+    protected final Map<Class<?>, Map<String, List<SummerSingularity.ServiceMetadata>>> scannedServiceBindingMap;
     protected final Set<String> userSpecifiedImplTags;
     protected final StringBuilder memo;
 
     protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames;
 
-    public ScannedGuiceModule(Map<Class, Map<String, List<SummerSingularity.ServiceMetadata>>> scannedServiceBindingMap, Set<String> userSpecifiedImplTags, Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames, StringBuilder memo) {
+    public ScannedGuiceModule(Map<Class<?>, Map<String, List<SummerSingularity.ServiceMetadata>>> scannedServiceBindingMap, Set<String> userSpecifiedImplTags, Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames, StringBuilder memo) {
         this.scannedServiceBindingMap = scannedServiceBindingMap;
         this.userSpecifiedImplTags = userSpecifiedImplTags;
         this.channelHandlerNames = channelHandlerNames;
@@ -62,12 +62,12 @@ public class ScannedGuiceModule extends AbstractModule {
 
     @Override
     public void configure() {
-        for (Class interfaceClass : scannedServiceBindingMap.keySet()) {
+        for (Class<?> interfaceClass : scannedServiceBindingMap.keySet()) {
             Map<String, List<SummerSingularity.ServiceMetadata>> taggedServiceMap = scannedServiceBindingMap.get(interfaceClass);
             SummerSingularity.ServiceMetadata defaultImpl = null;
             SummerSingularity.ServiceMetadata tagMatchImpl = null;
             SummerSingularity.ServiceMetadata bindingImpl;
-            Map<String, SummerSingularity.ServiceMetadata> namedServiceImpls = new HashMap();
+            Map<String, SummerSingularity.ServiceMetadata> namedServiceImpls = new HashMap<>();
             for (String uniqueKey : taggedServiceMap.keySet()) {
                 SummerSingularity.ServiceMetadata serviceImpl = taggedServiceMap.get(uniqueKey).get(0);//validated by SummerSingularity.scanAnnotation_Service_ValidateBindingMap() for error msg
                 if (serviceImpl == null) {
@@ -128,7 +128,7 @@ public class ScannedGuiceModule extends AbstractModule {
                     Service.ChannelHandlerType channelHandlerType = bindingImpl.getChannelHandlerType();
                     Set<String> nameList = channelHandlerNames.get(channelHandlerType);
                     if (nameList == null) {
-                        nameList = new TreeSet();
+                        nameList = new TreeSet<>();
                         channelHandlerNames.put(channelHandlerType, nameList);
                     }
                     nameList.add(named);
