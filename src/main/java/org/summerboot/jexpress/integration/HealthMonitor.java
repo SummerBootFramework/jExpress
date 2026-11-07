@@ -153,11 +153,11 @@ public class HealthMonitor {
             if (serviceAnnotation != null) {
                 Class c = healthChecker.getClass();
                 boolean usedByTag = false;
-                Class[] bindingClasses = serviceAnnotation.binding();
+                Class<?>[] bindingClasses = serviceAnnotation.binding();
                 if (bindingClasses == null || bindingClasses.length < 1) {
                     bindingClasses = c.getInterfaces();
                 }
-                for (Class bindingClasse : bindingClasses) {
+                for (Class<?> bindingClasse : bindingClasses) {
                     Object o = guiceInjector.getInstance(bindingClasse);
                     if (o.getClass().equals(c)) {
                         usedByTag = true;

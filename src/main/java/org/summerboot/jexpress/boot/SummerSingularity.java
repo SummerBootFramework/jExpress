@@ -144,11 +144,11 @@ abstract public class SummerSingularity {
     /*
      * Annotation scan results as CLI inputs
      */
-    protected final List<String> availableUniqueTagOptions = new ArrayList();
+    protected final List<String> availableUniqueTagOptions = new ArrayList<>();
     protected final Map<String, ConfigMetadata> scannedJExpressConfigs = new LinkedHashMap<>();
-    protected final Set<String> availableImplTagOptions = new HashSet();
-    protected final Set<Class<? extends BindableService>> grpcBindableServiceImplClasses = new HashSet();
-    protected final Set<Class<ServerServiceDefinition>> grpcServerServiceDefinitionImplClasses = new HashSet();
+    protected final Set<String> availableImplTagOptions = new HashSet<>();
+    protected final Set<Class<? extends BindableService>> grpcBindableServiceImplClasses = new HashSet<>();
+    protected final Set<Class<ServerServiceDefinition>> grpcServerServiceDefinitionImplClasses = new HashSet<>();
     protected boolean hasControllers = false;
     protected boolean hasGrpcImpl = false;
     protected boolean hasAuthImpl = false;
@@ -157,8 +157,8 @@ abstract public class SummerSingularity {
      * Annotation scan results as BootGuiceModule input
      * Format: bindingClass <--> {key=(ImplTag+named) <--> [@Service impl classes list]}
      */
-    protected final Map<Class, Map<String, List<ServiceMetadata>>> scannedServiceBindingMap = new HashMap();
-    protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames = new HashMap();
+    protected final Map<Class<?>, Map<String, List<ServiceMetadata>>> scannedServiceBindingMap = new HashMap<>();
+    protected final Map<Service.ChannelHandlerType, Set<String>> channelHandlerNames = new HashMap<>();
 
     protected SummerSingularity(Class callerClass, String... args) {
         System.out.println("jExpress loading from " + HOST);
@@ -211,7 +211,7 @@ abstract public class SummerSingularity {
             System.out.println("jExpress init.1");
         }
         memo.append(BootConstants.BR).append("\t- deployee callerClass=").append(primaryClass.getName());
-        Set<String> packageSet = new HashSet();
+        Set<String> packageSet = new HashSet<>();
         Set<String> configuredPackageSet = BackOffice.agent.getRootPackageNames();
         if (configuredPackageSet != null && !configuredPackageSet.isEmpty()) {
             packageSet.addAll(configuredPackageSet);
@@ -261,11 +261,11 @@ abstract public class SummerSingularity {
         return (T) this;
     }
 
-    protected void scanAnnotation_Version(Class callerClass) {
+    protected void scanAnnotation_Version(Class<?> callerClass) {
         if (BackOffice.agent.isTraceWithSystemOut()) {
             System.out.println("jExpress scanning version");
         }
-        Version version = (Version) callerClass.getAnnotation(Version.class);
+        Version version = callerClass.getAnnotation(Version.class);
         if (version != null) {
             String logManager = version.LogManager();
             if (StringUtils.isNotBlank(logManager)) {
@@ -402,13 +402,13 @@ abstract public class SummerSingularity {
         StringBuilder errors = new StringBuilder();
         boolean error = false;
         Set<Class<?>> classes = ReflectionUtil.getAllImplementationsByAnnotation(Unique.class, false, rootPackageNames);
-        for (Class classWithUniqueValues : classes) {
+        for (Class<?> classWithUniqueValues : classes) {
             if (!classWithUniqueValues.isInterface()) {
                 error = true;
                 errors.append(BootConstants.BR).append("\t @Unique can only apply on interfaces, ").append(classWithUniqueValues).append(" is not an interface");
                 continue;
             }
-            Unique u = (Unique) classWithUniqueValues.getAnnotation(Unique.class);
+            Unique u = classWithUniqueValues.getAnnotation(Unique.class);
             String tag = u.name();
             availableUniqueTagOptions.add(tag);
             Class uniqueType = u.type();
@@ -449,7 +449,7 @@ abstract public class SummerSingularity {
         //    classesAll.addAll(jExpressConfigClasses);
         //}
 
-        for (Class jExpressConfigClass : jExpressConfigClasses) {
+        for (Class<? extends JExpressConfig> jExpressConfigClass : jExpressConfigClasses) {
             int mod = jExpressConfigClass.getModifiers();
             if (mod == 0 || Modifier.isAbstract(mod) || Modifier.isInterface(mod)) {
                 continue;
@@ -462,7 +462,7 @@ abstract public class SummerSingularity {
             String[] checkImplTagUsed = {};
             boolean loadWhenImplTagUsed = false;
 
-            ConfigFilename ir = (ConfigFilename) jExpressConfigClass.getAnnotation(ConfigFilename.class);
+            ConfigFilename ir = jExpressConfigClass.getAnnotation(ConfigFilename.class);
             if (ir != null) {
                 configFileName = ir.value();
                 checkImplTagUsed = ir.whenUseAlternative();
@@ -512,8 +512,8 @@ abstract public class SummerSingularity {
         //classesAll.addAll(classes);
         //}
         List<String> alternativeNames = new ArrayList<>();
-        for (Class c : classes) {
-            Controller a = (Controller) c.getAnnotation(Controller.class);
+        for (Class<?> c : classes) {
+            Controller a = c.getAnnotation(Controller.class);
             if (a == null) {
                 continue;
             }
@@ -544,8 +544,8 @@ abstract public class SummerSingularity {
         log.trace("");
         List<String> tags = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        for (Class serviceImplClass : classesAll) {
-            Service serviceAnnotation = (Service) serviceImplClass.getAnnotation(Service.class);
+        for (Class<?> serviceImplClass : classesAll) {
+            Service serviceAnnotation = serviceImplClass.getAnnotation(Service.class);
             if (serviceAnnotation == null) {
                 continue;
             }
@@ -556,7 +556,7 @@ abstract public class SummerSingularity {
             Class[] bindingClasses = serviceAnnotation.binding();
             Service.ChannelHandlerType ChannelHandlerType = serviceAnnotation.type();
             if (bindingClasses != null && bindingClasses.length > 0) {//developer specified 
-                for (Class bindingClass : bindingClasses) {
+                for (Class<?> bindingClass : bindingClasses) {
                     if (!bindingClass.isAssignableFrom(serviceImplClass)) {
                         List<Class> interfaces = ReflectionUtil.getAllInterfaces(serviceImplClass, true);
                         List<Class> superclasses = ReflectionUtil.getAllSuperClasses(serviceImplClass);
@@ -641,8 +641,8 @@ abstract public class SummerSingularity {
         //}
         hasControllers = !classes.isEmpty();
         // @DeclareRoles
-        for (Class c : classes) {
-            DeclareRoles drs = (DeclareRoles) c.getAnnotation(DeclareRoles.class);
+        for (Class<?> c : classes) {
+            DeclareRoles drs = c.getAnnotation(DeclareRoles.class);
             if (drs != null) {
                 String[] roles = drs.value();
                 declareRoles.addAll(Arrays.asList(roles));
@@ -668,13 +668,13 @@ abstract public class SummerSingularity {
 
     protected static class ConfigMetadata {
 
-        final Class cfgClass;
+        final Class<? extends JExpressConfig> cfgClass;
         final String configFileName;
         final JExpressConfig instance;
         final String[] whenUseAlternative;
         final boolean thenLoadConfig;
 
-        ConfigMetadata(String configFileName, Class cfgClass, JExpressConfig instance, String[] whenUseAlternative, boolean thenLoadConfig) {
+        ConfigMetadata(String configFileName, Class<? extends JExpressConfig> cfgClass, JExpressConfig instance, String[] whenUseAlternative, boolean thenLoadConfig) {
             this.configFileName = configFileName;
             this.cfgClass = cfgClass;
             this.instance = instance;
@@ -690,12 +690,12 @@ abstract public class SummerSingularity {
 
     public static class ServiceMetadata {
 
-        final Class serviceImplClass;
+        final Class<?> serviceImplClass;
         final String named;
         final String implTag;
         final ChannelHandlerType channelHandlerType;
 
-        public ServiceMetadata(Class serviceImplClass, String named, String implTag, ChannelHandlerType channelHandlerType) {
+        public ServiceMetadata(Class<?> serviceImplClass, String named, String implTag, ChannelHandlerType channelHandlerType) {
             this.serviceImplClass = serviceImplClass;
             this.named = named;
             this.implTag = implTag;
@@ -707,7 +707,7 @@ abstract public class SummerSingularity {
             return "ServiceImpl{" + serviceImplClass.getName() + ", named=" + named + ", implTag=" + implTag + '}';
         }
 
-        public Class getServiceImplClass() {
+        public Class<?> getServiceImplClass() {
             return serviceImplClass;
         }
 

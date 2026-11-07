@@ -517,7 +517,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         if (cli.hasOption(BootConstants.CLI_CONFIG_DEMO)) {
             int i = 0;
             for (String cfgName : scannedJExpressConfigs.keySet()) {
-                Class c = scannedJExpressConfigs.get(cfgName).cfgClass;
+                Class<? extends JExpressConfig> c = scannedJExpressConfigs.get(cfgName).cfgClass;
                 try {
                     ConfigUtil.createConfigFile(c, userSpecifiedConfigDir, cfgName, true);
                 } catch (IOException ex) {
@@ -716,7 +716,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 //            }
             scheduler = injector.getInstance(Scheduler.class);
         }
-        for (Class c : classes) {
+        for (Class<? extends Job> c : classes) {
             try {
                 triggers += QuartzUtil.addQuartzJob(scheduler, c);
             } catch (Throwable ex) {
