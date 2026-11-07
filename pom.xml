@@ -25,7 +25,9 @@
     <version>2.7.6-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>jExpress ${project.version}</name>
-    <description>jExpress focuses on addressing non-functional and operational maintainability needs, some of which Spring Boot may not yet provide.</description>
+    <description>jExpress is an enterprise-ready, mission-critical microservice foundation built on the architectural philosophy of "Enforcement-as-Code" and "Out-of-the-Box (OOTB) Readiness". The
+        jExpress Framework is designed to decouple corporate technology compliance from external talent volatility, locking in strict security bounds and high-throughput baselines by default.
+    </description>
     <url>https://github.com/SummerBootFramework</url>
     <licenses>
         <license>

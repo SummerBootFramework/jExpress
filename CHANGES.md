@@ -2,8 +2,8 @@
 
 ## Version 2.7.6 (2026-11-24)
 
-- GrpcServerConfig.configServerBuilder now added **`4. gRpc.server ServerBuilder Settings`** to allow user override default value of Enforcement Policy, Server Keepalive, Connection Management and
-  Size Protection.
+- GrpcServerConfig.overrideDefaultConfig now reads new config section **`4. gRpc.server ServerBuilder Settings`** to allow user override default value of Enforcement Policy, Server Keepalive,
+  Connection Management and Size Protection.
 
 ## Version 2.7.5 (2026-11-01)
 
@@ -42,8 +42,11 @@
 >
 > * Affected configuration: `transformation.Asymmetric` inside `etc/boot.conf` (section 5.3)
 > * **STRONGLY RECOMMENDED:** Prioritize the short transformation string **`"RSA/ECB/OAEPPadding"`**. The SDK automatically reinforces this mode with the highest security specification (**Dual
+
     SHA-256**) and ensures perfect cross-platform compatibility for decryption in multi-language backends such as **Go, Python, and C#**.
+
 > * **NOT RECOMMENDED:** Avoid using long transformation strings that explicitly contain `WITH` (e.g., *`"RSA/None/OAEPWithSHA-256AndMGF1Padding"`*). This triggers Java's legacy underlying behavior,
+
     which silently falls back to the outdated **SHA-1** for the internal MGF1 hash.
 
 ## Version 2.7.3 (2026-09-09)

@@ -108,6 +108,10 @@ public class GrpcServer {
         return serverBuilder;
     }
 
+    public void overrideDefaultConfig(GrpcServerConfig cfg) {
+        cfg.overrideDefaultConfig(serverBuilder);
+    }
+
     protected ServerCredentials initTLS(KeyManagerFactory kmf, TrustManagerFactory tmf) {
         if (kmf == null) {
             return null;

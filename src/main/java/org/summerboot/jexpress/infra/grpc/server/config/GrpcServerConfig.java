@@ -24,7 +24,6 @@ import org.summerboot.jexpress.annotation.config.ConfigHeader;
 import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.boot.config.BootConfig;
 import org.summerboot.jexpress.boot.config.ConfigUtil;
-import org.summerboot.jexpress.infra.grpc.server.GrpcServer;
 import org.summerboot.jexpress.integration.HealthMonitor;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.util.net.GeoIpUtil;
@@ -228,11 +227,7 @@ public class GrpcServerConfig extends BootConfig {
         }
     }
 
-    public void configServerBuilder(GrpcServer grpcServer) {
-        configServerBuilder(grpcServer.getServerBuilder());
-    }
-
-    public void configServerBuilder(ServerBuilder serverBuilder) {
+    public void overrideDefaultConfig(ServerBuilder serverBuilder) {
         if (permitKeepAliveTimeSeconds != null) {
             // 300 秒 (5分钟): 允许客户端发送心跳 PING 的最快频率（最小间隔时间）。如果客户端设置的 keepAliveTime 小于 5 分钟，服务端会判定为 Ping Flood（洪水攻击）并强制切断连接，返回 GOAWAY (错误码：ENHANCE_YOUR_CALM)。
             serverBuilder.permitKeepAliveTime(permitKeepAliveTimeSeconds, TimeUnit.SECONDS);

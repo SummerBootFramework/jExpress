@@ -116,6 +116,7 @@ abstract public class SummerApplication extends SummerBigBang {
                     callerClass = Class.forName(stackTraceElement.getClassName());
                     break;
                 } catch (ClassNotFoundException ex) {
+                    // ingore, try next stack trace element
                 }
             }
         }
@@ -123,6 +124,7 @@ abstract public class SummerApplication extends SummerBigBang {
             try {
                 callerClass = Class.forName(mainClassName);
             } catch (ClassNotFoundException ex) {
+                // ingore, try next stack trace element
             }
         }
         if (callerClass == null) {
@@ -156,6 +158,7 @@ abstract public class SummerApplication extends SummerBigBang {
                     callerClass = Class.forName(stackTraceElement.getClassName());
                     break;
                 } catch (ClassNotFoundException ex) {
+                    // ingore, try next stack trace element
                 }
             }
         }
@@ -233,11 +236,12 @@ abstract public class SummerApplication extends SummerBigBang {
     protected void traceConfig() {
         log.trace("");
         if (!memoLogged) {
-            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_LOGID).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_LOGID));
-            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_LOGFILEPATH).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_LOGFILEPATH));
-            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_LOGFILENAME));
-            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_SERVER_NAME).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_SERVER_NAME));
-            memo.append(BootConstants.BR).append("\t- sys.prop.").append(BootConstants.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_APP_PACKAGE_NAME));
+            final String tag = "\t- sys.prop.";
+            memo.append(BootConstants.BR).append(tag).append(BootConstants.SYS_PROP_LOGID).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_LOGID));
+            memo.append(BootConstants.BR).append(tag).append(BootConstants.SYS_PROP_LOGFILEPATH).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_LOGFILEPATH));
+            memo.append(BootConstants.BR).append(tag).append(BootConstants.SYS_PROP_LOGFILENAME).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_LOGFILENAME));
+            memo.append(BootConstants.BR).append(tag).append(BootConstants.SYS_PROP_SERVER_NAME).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_SERVER_NAME));
+            memo.append(BootConstants.BR).append(tag).append(BootConstants.SYS_PROP_APP_PACKAGE_NAME).append(" = ").append(System.getProperty(BootConstants.SYS_PROP_APP_PACKAGE_NAME));
 
             memo.append(BootConstants.BR).append("\t- start: PostOffice=").append(postOffice.getClass().getName());
             //memo.append(BootConstant.BR).append("\t- start: ConfigChangeListener=").append(configChangeListener.getClass().getName());
@@ -338,7 +342,7 @@ abstract public class SummerApplication extends SummerBigBang {
                     try (var a = Timeout.watch("starting gRPC Server at " + host + ":" + port, timeoutMs).withDesc(timeoutDesc)) {
                         boolean useVirtualThread = grpcServerConfig.getTpeThreadingMode().equals(GrpcServerConfig.ThreadingMode.VirtualThread);
                         GrpcServer grpcServer = new GrpcServer(host, port, grpcServerConfig.getKmf(), grpcServerConfig.getTmf(), grpcServerConfig.getTpe(), useVirtualThread, doReport, nioListener, serverInterceptor);
-                        grpcServerConfig.configServerBuilder(grpcServer);
+                        grpcServer.overrideDefaultConfig(grpcServerConfig);
                         doReport = false;
                         for (Class<? extends BindableService> c : grpcBindableServiceImplClasses) {
                             BindableService impl = guiceInjector.getInstance(c);
@@ -400,16 +404,15 @@ abstract public class SummerApplication extends SummerBigBang {
                 int countConsoleAppender = 0;
                 for (Map.Entry<String, Appender> entry : as.entrySet()) {
                     Appender appender = entry.getValue();
-                    if (appender instanceof ConsoleAppender) {
+                    if (appender instanceof ConsoleAppender sa) {
                         countConsoleAppender++;
                         if (countConsoleAppender > 1) {
                             prompt = null;
                             break;
                         }
-                        ConsoleAppender sa = (ConsoleAppender) appender;
+                        //ConsoleAppender sa = (ConsoleAppender) appender;
                         Filter f = sa.getFilter();
-                        if (f instanceof LevelRangeFilter) {
-                            LevelRangeFilter lrf = (LevelRangeFilter) f;
+                        if (f instanceof LevelRangeFilter lrf) {
                             Level maxLevel = lrf.getMaxLevel();
                             if (!Level.ALL.equals(maxLevel)) {
                                 prompt = "\nTo show logs in console, please edit " + this.userSpecifiedConfigDir + File.separator

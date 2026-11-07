@@ -242,13 +242,13 @@ abstract public class GrpcClientConfig extends BootConfig {
             tmf = io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory.INSTANCE;
         }
         channelBuilder = initNettyChannelBuilder(nameResolverProvider, loadBalancingPolicy.getValue(), uri, kmf, tmf, overrideAuthority, ciphers, sslProvider, tlsProtocols);
-        configNettyChannelBuilder(channelBuilder);
+        overrideDefaultConfig(channelBuilder);
         for (GrpcClient listener : listeners) {
             listener.updateChannelBuilder(channelBuilder);
         }
     }
 
-    protected void configNettyChannelBuilder(NettyChannelBuilder nettyChannelBuilder) {
+    public void overrideDefaultConfig(NettyChannelBuilder nettyChannelBuilder) {
         if (userAgent != null) {
             nettyChannelBuilder.userAgent(userAgent);
         }
