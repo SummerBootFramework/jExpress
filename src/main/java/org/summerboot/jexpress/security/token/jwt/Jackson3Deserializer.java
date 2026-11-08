@@ -41,6 +41,7 @@ public class Jackson3Deserializer implements Deserializer<Map<String, ?>> {
 
 
     @Override
+    @Deprecated
     public Map<String, ?> deserialize(byte[] bytes) throws DeserializationException {
         return objectMapper.readValue(bytes, Map.class);
     }
