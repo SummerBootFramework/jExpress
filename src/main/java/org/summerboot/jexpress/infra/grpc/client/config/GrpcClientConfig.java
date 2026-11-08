@@ -22,8 +22,9 @@ import io.grpc.NameResolverProvider;
 import io.grpc.NameResolverRegistry;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.grpc.netty.shaded.io.netty.channel.epoll.EpollDomainSocketChannel;
-import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.epoll.EpollIoHandler;
 import io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
@@ -351,7 +352,7 @@ abstract public class GrpcClientConfig extends BootConfig {
             switch (uri.getScheme()) {
                 case "unix": //https://github.com/grpc/grpc-java/issues/1539
                     channelBuilder = NettyChannelBuilder.forAddress(new DomainSocketAddress(uri.getPath()))
-                            .eventLoopGroup(new EpollEventLoopGroup())
+                            .eventLoopGroup(new MultiThreadIoEventLoopGroup(EpollIoHandler.newFactory()))
                             .channelType(EpollDomainSocketChannel.class);
                     break;
                 default:

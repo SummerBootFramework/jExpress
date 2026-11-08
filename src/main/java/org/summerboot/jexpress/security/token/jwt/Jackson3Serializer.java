@@ -41,6 +41,7 @@ public class Jackson3Serializer implements Serializer<Map<String, ?>> {
 
 
     @Override
+    @Deprecated
     public byte[] serialize(Map<String, ?> t) throws SerializationException {
         return objectMapper.writeValueAsBytes(t);
     }

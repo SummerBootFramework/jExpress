@@ -217,7 +217,7 @@
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.4.14.Final</hibernate.version>
+        <hibernate.version>7.4.15.Final</hibernate.version>
         <hikari-cp.version>7.1.0</hikari-cp.version>
 
         <!-- JNA -->
