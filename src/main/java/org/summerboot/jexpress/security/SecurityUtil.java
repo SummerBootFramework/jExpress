@@ -157,7 +157,7 @@ public class SecurityUtil {
 
         if (!sanitizePath(filePath) || !filePath.equals(realPath)) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "Invalid file path", null, "Malicious file request: " + filePath);
+            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSIBLE, null, "Invalid file path", null, "Malicious file request: " + filePath);
             context.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
         }
@@ -172,7 +172,7 @@ public class SecurityUtil {
         if (file.isDirectory() || !file.isFile()
                 || file.isHidden() || !file.canRead()) {
             //var e = new ServiceError(appErrorCode, null, "⚠", null);
-            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, "Invalid file path", null, "Can not read file: " + filePath);
+            Err e = new Err(BootErrorCode.FILE_NOT_ACCESSIBLE, null, "Invalid file path", null, "Can not read file: " + filePath);
             context.status(HttpResponseStatus.FORBIDDEN).error(e);
             return false;
         }
