@@ -1,0 +1,24 @@
+# Auto-detect text files and normalize line endings to LF by default
+* text=auto eol=lf
+
+# Explicitly enforce LF for common source code and configuration files (Flutter, React Native, MAUI, Java, Web, etc.)
+*.dart text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.java text eol=lf
+*.kt text eol=lf
+*.swift text eol=lf
+*.cs text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.xml text eol=lf
+*.gradle text eol=lf
+*.sh text eol=lf
+
+# Force CRLF for Windows-specific scripts so they run properly in Windows CMD/PowerShell
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

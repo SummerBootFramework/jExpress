@@ -64,7 +64,7 @@ public class BackOffice extends BootConfig {
 
         if (StringUtils.isBlank(lineSeparator) || lineSeparator.equalsIgnoreCase("system") || lineSeparator.equalsIgnoreCase("default") || lineSeparator.equalsIgnoreCase("SystemDefault")) {
             lineSeparator = System.lineSeparator();
-        } else if (lineSeparator.equalsIgnoreCase("Linux") || lineSeparator.equalsIgnoreCase("Unix") || lineSeparator.equalsIgnoreCase("LF")) {
+        } else if (lineSeparator.equalsIgnoreCase("Linux") || lineSeparator.equalsIgnoreCase("Unix") || lineSeparator.equalsIgnoreCase("Mac") || lineSeparator.equalsIgnoreCase("LF")) {
             lineSeparator = "\n";
         } else if (lineSeparator.equalsIgnoreCase("Windows") || lineSeparator.equalsIgnoreCase("Win") || lineSeparator.equalsIgnoreCase("CRLF ")) {
             lineSeparator = "\r\n";
@@ -179,9 +179,9 @@ public class BackOffice extends BootConfig {
     @Config(key = "type.JWTAudAsCSV", defaultValue = "true", desc = "Parse JWT Audience value as CSV for JWT backward compatibility")
     private boolean jwtAudAsCSV = true;
 
-    @Config(key = "default.lineSeparator", defaultValue = "system", desc = "available values: system, Linux, Windows")
+    @Config(key = "default.lineSeparator", defaultValue = "system", desc = "available values: system, LF, CRLF, Linux (same as LF), Mac (same as LF), Windows (same as CRLF)")
     private String lineSeparator = System.lineSeparator();
-
+ 
     @Config(key = "default.ConfigChangeMonitor.Throttle.Milliseconds", defaultValue = "100")
     private long CfgChangeMonitorThrottleMilliseconds = 100;
 

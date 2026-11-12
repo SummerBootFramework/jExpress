@@ -204,7 +204,7 @@ abstract public class HttpClientConfig extends BootConfig {
     protected volatile HttpClient httpClient;
 
     @JsonIgnore
-    protected volatile HttpClient.Builder builder;
+    protected volatile HttpClient.Builder httpClientBuilder;
 
     @Config(key = "connection.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for only the connection to be established, should be less than http.timeout.ms")
     protected volatile long httpConnectionTimeoutMs = 3000;
@@ -257,7 +257,7 @@ abstract public class HttpClientConfig extends BootConfig {
     @JsonIgnore
     protected ScheduledExecutorService ses;
 
-    protected static final String HEADER_CLIENT_REQUEST = "http.DefaultReqHttpHeaders.";
+    protected static final String HEADER_CLIENT_REQUEST = "httpclient.DefaultRequestHeaders.";
     //3.3 HTTP Client Default Headers
     @ConfigHeader(title = "3. HTTP Client Default Headers",
             desc = "put generic HTTP Client request headers here",
@@ -270,7 +270,9 @@ abstract public class HttpClientConfig extends BootConfig {
 
     protected void generateTemplate_RequestHeaders(StringBuilder sb, Properties currentValues) {
         if (!appendCurrentValue(HEADER_CLIENT_REQUEST, currentValues, sb)) {
-            sb.append("#").append(HEADER_CLIENT_REQUEST).append("request_header_name=request_header_value" + BootConstants.BR);
+            sb//.append("#").append(HEADER_CLIENT_REQUEST).append("request_header_name=request_header_value" + BootConstants.BR)
+                    .append(HEADER_CLIENT_REQUEST).append("Accept=application/json" + BootConstants.BR)
+                    .append(HEADER_CLIENT_REQUEST).append("Content-Type=application/json;charset=UTF-8" + BootConstants.BR);
         }
     }
 
@@ -351,22 +353,22 @@ abstract public class HttpClientConfig extends BootConfig {
         ScheduledExecutorService sesold = ses;
 
         if (isResponseCallbackTpeEnabled) {
-            builder = HttpClient.newBuilder()
+            httpClientBuilder = HttpClient.newBuilder()
                     .executor(responseCallbackTpe)
                     .version(HttpClient.Version.HTTP_2)
                     .followRedirects(redirectOption)
                     .connectTimeout(Duration.ofMillis(httpConnectionTimeoutMs));
         } else {
-            builder = HttpClient.newBuilder()
+            httpClientBuilder = HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_2)
                     .followRedirects(redirectOption)
                     .connectTimeout(Duration.ofMillis(httpConnectionTimeoutMs));
         }
         if (sslContext != null) {
-            builder.sslContext(sslContext);
+            httpClientBuilder.sslContext(sslContext);
         }
         if (StringUtils.isNotBlank(proxyHost)) {
-            builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
+            httpClientBuilder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
         }
 
         if (proxyAuthTunnelingDisabledSchemes == null) {
@@ -375,7 +377,7 @@ abstract public class HttpClientConfig extends BootConfig {
         System.setProperty("jdk.http.auth.tunneling.disabledSchemes", proxyAuthTunnelingDisabledSchemes);// -Djdk.http.auth.tunneling.disabledSchemes=""
         if (StringUtils.isNotBlank(proxyHost)) {
             //1. By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111.
-            builder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
+            httpClientBuilder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
             if (proxyUserName == null) {
                 proxyUserName = "";
             }
@@ -394,7 +396,7 @@ abstract public class HttpClientConfig extends BootConfig {
                     case AUTHENTICATOR -> {
                         // set proxy authenticator at the builder level:
                         final char[] proxyUserPwdChars = proxyUserPwd.toCharArray();
-                        builder.authenticator(new Authenticator() {
+                        httpClientBuilder.authenticator(new Authenticator() {
                             @Override
                             protected PasswordAuthentication getPasswordAuthentication() {
                                 if (getRequestorType() == Authenticator.RequestorType.PROXY) {
@@ -407,9 +409,9 @@ abstract public class HttpClientConfig extends BootConfig {
                 }
             }
         } else {
-            builder.proxy(ProxySelector.of((InetSocketAddress) Proxy.NO_PROXY.address()));
+            httpClientBuilder.proxy(ProxySelector.of((InetSocketAddress) Proxy.NO_PROXY.address()));
         }
-        httpClient = builder.build();
+        httpClient = httpClientBuilder.build();
         // 3. register new
         if (isResponseCallbackTpeEnabled) {
             ses = Executors.newSingleThreadScheduledExecutor(NamedDefaultThreadFactory.build("HttpClient.QPS_SERVICE", true));
@@ -446,12 +448,12 @@ abstract public class HttpClientConfig extends BootConfig {
         return httpClient;
     }
 
-    public HttpClient.Builder getBuilder() {
-        return builder;
+    public HttpClient.Builder getHttpClientBuilder() {
+        return httpClientBuilder;
     }
 
     public HttpClient updateBuilder(HttpClient.Builder builder) {
-        this.builder = builder;
+        this.httpClientBuilder = builder;
         this.httpClient = builder.build();
         return this.httpClient;
     }
