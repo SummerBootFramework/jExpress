@@ -84,7 +84,7 @@ public interface BootErrorCode {
     int HTTPCLIENT_UNKNOWN_RESPONSE_FORMAT = getErrorCode(IO_BASE + 5);
     int HTTPCLIENT_INVALID_RESPONSE_FORMAT = getErrorCode(IO_BASE + 6);
     int NETWORK_ERROR = getErrorCode(IO_BASE + 7);
-    int FILE_NOT_ACCESSABLE = getErrorCode(IO_BASE + 8);
+    int FILE_NOT_ACCESSIBLE = getErrorCode(IO_BASE + 8);
     int FILE_NOT_FOUND = getErrorCode(IO_BASE + 9);
 
     // Auth

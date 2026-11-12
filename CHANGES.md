@@ -4,6 +4,7 @@
 
 - GrpcServerConfig.overrideDefaultConfig now reads new config section **`4. gRpc.server ServerBuilder Settings`** to allow user override default value of Enforcement Policy, Server Keepalive,
   Connection Management and Size Protection.
+- RpcDelegate.rpcEx(): refactoring to support exception logging, exception details and exception cause in the context memo log, and to support exception cause in the ServiceError response.
 
 ## Version 2.7.5 (2026-11-01)
 

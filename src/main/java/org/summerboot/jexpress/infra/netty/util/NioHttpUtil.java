@@ -439,7 +439,7 @@ public class NioHttpUtil {
             String requestedPath = webResourceFile.getCanonicalPath();
             // CWE-73 False Positive prove
             if (!requestedPath.startsWith(NioConfig.cfg.getDocrootDir())) {
-                Err e = new Err(BootErrorCode.FILE_NOT_ACCESSABLE, null, null, null, "Invalid request path: " + httpRequestPath);
+                Err e = new Err(BootErrorCode.FILE_NOT_ACCESSIBLE, null, null, null, "Invalid request path: " + httpRequestPath);
                 context.status(HttpResponseStatus.FORBIDDEN).error(e);
                 return;
             }

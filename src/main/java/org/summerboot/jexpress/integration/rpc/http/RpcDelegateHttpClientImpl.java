@@ -105,10 +105,29 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
             }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "Http Client Interrupted", ex);
+            /*Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "Http Client Interrupted", ex);
             context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
             RpcResult<T> rpcResult = new RpcResult<>(httpRequest, originRequestBody, null, false, false, getHttpClientConfig(), context);
-            return rpcResult;
+            return rpcResult;*/
+            Throwable cause = ex.getCause();
+            if (cause != null) {
+                context.memo(RpcMemo.MEMO_RPC_RESPONSE, "Interrupted: " + cause);
+            } else {
+                context.memo(RpcMemo.MEMO_RPC_RESPONSE, "Interrupted: " + ex);
+            }
+            Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, "Http Client Interrupted", ex);
+            context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
+            throw new IOException("Http Client Interrupted", ex);
+        } catch (Throwable ex) {
+            Throwable cause = ex.getCause();
+            if (cause != null) {
+                context.memo(RpcMemo.MEMO_RPC_RESPONSE, "exception: " + cause);
+            } else {
+                context.memo(RpcMemo.MEMO_RPC_RESPONSE, "exception: " + ex);
+            }
+            Err e = new Err(BootErrorCode.IO_BASE, null, "Http Client Exception", ex);
+            context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
+            throw new IOException("Http Client Exception", ex);
         } finally {
             context.poi(BootPoi.RPC_END);
         }
