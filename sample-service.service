@@ -16,7 +16,7 @@ Environment=APP_ARGS="-debug"
 
 
 Environment="JVM_OPTIONS=\
- -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005 \
+ -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:5005 \
  -Djava.awt.headless=true \
  -Xms2G -Xmx2G \
  -XX:+UseZGC \

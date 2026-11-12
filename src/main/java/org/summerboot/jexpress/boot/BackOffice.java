@@ -64,10 +64,12 @@ public class BackOffice extends BootConfig {
 
         if (StringUtils.isBlank(lineSeparator) || lineSeparator.equalsIgnoreCase("system") || lineSeparator.equalsIgnoreCase("default") || lineSeparator.equalsIgnoreCase("SystemDefault")) {
             lineSeparator = System.lineSeparator();
-        } else if (lineSeparator.equalsIgnoreCase("Linux") || lineSeparator.equalsIgnoreCase("Unix") || lineSeparator.equalsIgnoreCase("LF")) {
+        } else if (lineSeparator.equalsIgnoreCase("Linux") || lineSeparator.equalsIgnoreCase("Unix") || lineSeparator.equalsIgnoreCase("Mac") || lineSeparator.equalsIgnoreCase("LF")) {
             lineSeparator = "\n";
         } else if (lineSeparator.equalsIgnoreCase("Windows") || lineSeparator.equalsIgnoreCase("Win") || lineSeparator.equalsIgnoreCase("CRLF ")) {
             lineSeparator = "\r\n";
+        } else if (lineSeparator.equalsIgnoreCase("CR") || lineSeparator.equalsIgnoreCase("ClassicMac")) {
+            lineSeparator = "\r";
         } else {
             throw new IllegalArgumentException("efault.lineSeparator=" + lineSeparator + ", available values: system, Linux, Windows");
         }
@@ -179,8 +181,8 @@ public class BackOffice extends BootConfig {
     @Config(key = "type.JWTAudAsCSV", defaultValue = "true", desc = "Parse JWT Audience value as CSV for JWT backward compatibility")
     private boolean jwtAudAsCSV = true;
 
-    @Config(key = "default.lineSeparator", defaultValue = "system", desc = "available values: system, Linux, Windows")
-    private String lineSeparator = System.lineSeparator();
+    @Config(key = "default.lineSeparator", defaultValue = "LF", desc = "available values: system, LF, CRLF, CR, Linux (same as LF), Mac (same as LF), Windows (same as CRLF), ClassicMac (same as CR)")
+    private String lineSeparator = "\n";
 
     @Config(key = "default.ConfigChangeMonitor.Throttle.Milliseconds", defaultValue = "100")
     private long CfgChangeMonitorThrottleMilliseconds = 100;

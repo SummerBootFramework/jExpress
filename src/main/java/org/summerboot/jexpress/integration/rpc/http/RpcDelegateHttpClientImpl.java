@@ -72,7 +72,7 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
 
     @Override
     public <T> RpcResult<T> rpc(SessionContext context, RpcResult<T> rpcResult, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
-        return rpcEx(context, rpcResult.getOriginRequest(), rpcResult.getOriginRequestBody(), isStreaming, successStatusList);
+        return rpcEx(context, rpcResult.originRequest(), rpcResult.originRequestBody(), isStreaming, successStatusList);
     }
 
     /**

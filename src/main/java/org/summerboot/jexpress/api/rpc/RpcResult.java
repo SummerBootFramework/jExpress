@@ -109,11 +109,11 @@ public class RpcResult<T> {
         }
     }
 
-    public HttpRequest getOriginRequest() {
+    public HttpRequest originRequest() {
         return originRequest;
     }
 
-    public String getOriginRequestBody() {
+    public String originRequestBody() {
         return originRequestBody;
     }
 
@@ -121,16 +121,16 @@ public class RpcResult<T> {
         return httpResponse;
     }
 
-    public HttpResponseStatus httpStatus() {
-        return httpStatus;
+    public String httpResponseBody() {
+        return rpcResponseBody;
     }
 
     public int httpStatusCode() {
         return httpStatusCode;
     }
 
-    public String httpResponseBody() {
-        return rpcResponseBody;
+    public HttpResponseStatus httpStatus() {
+        return httpStatus;
     }
 
     public boolean isRemoteSuccess() {
@@ -143,6 +143,18 @@ public class RpcResult<T> {
 
     public ContentType contentType() {
         return contentType;
+    }
+
+    public boolean isStreaming() {
+        return isStreaming;
+    }
+
+    public SessionContext getContext() {
+        return context;
+    }
+
+    public ObjectMapper getHttpClientConfiguredObjectMapper() {
+        return httpClientConfiguredObjectMapper;
     }
 
     /**
