@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -213,16 +214,10 @@ abstract public class HttpClientConfig extends BootConfig {
     protected volatile long httpRequestTimeoutMs = 5000;
 
 
-    @Config(key = "jdk.httpclient.maxconnections", defaultValue = "2000",
-            desc = "The maximum number of TCP connections per domain determines the \"concurrency output limit\" under high concurrency: For HTTP/1.1 set to 2000 connections per domain, while HTTP/2 sets to 500 TCP connections per domain.")
-    protected volatile int maxConnections = 2000;
-    @Config(key = "jdk.httpclient.connectionPoolSize", defaultValue = "2500",
-            desc = "The total number of connections in the connection pool, ensuring sufficient space for idle connections (slightly larger than the single-domain limit to allow for occasional minor adjustments), determines the \"connection retention and reuse capability\" after a request ends.")
-    protected volatile int connectionPoolSize = 2500;
-    @Config(key = "jdk.httpclient.keepalive.timeout", defaultValue = "120",
-            desc = "Extending the lifespan of long-lived connections: Since it's a high-frequency access, keeping connections alive for 120 seconds allows newly arriving virtual threads to 100% utilize existing connections. For HTTP/1.1 shortens this to 60 seconds (to avoid long-term port saturation due to too many connections), while HTTP/2 keeps connections alive for 120 seconds to maximize connection reuse.")
-    protected volatile long keepAliveTimeoutMs = 120;
-
+    @Config(key = "request.limiter.max.concurrent", desc = "The maximum number of concurrent requests, no limit by default. Blank or 0 or Integer.MAX_VALUE means no limit. If the number of concurrent requests exceeds this limit, the request will be hold to wait for next available slot. This is to prevent the server from being overwhelmed by too many requests.")
+    protected volatile Integer maxAllowedConcurrentRequests = null;
+    @JsonIgnore
+    protected volatile Semaphore concurrentRequestLimiter;
 
     @Config(key = "responseCallback.executor.enabled", defaultValue = "false", desc = "enable/disable the responseCallback.executor, default is false for quick and small response body, enable it when response is slow and large, and the responseCallback is CPU bound")
     protected volatile boolean isResponseCallbackTpeEnabled = false;
@@ -309,6 +304,12 @@ abstract public class HttpClientConfig extends BootConfig {
             }
         });
 
+        if (maxAllowedConcurrentRequests != null && maxAllowedConcurrentRequests > 0 && maxAllowedConcurrentRequests < Integer.MAX_VALUE) {
+            concurrentRequestLimiter = new Semaphore(maxAllowedConcurrentRequests);
+        } else {
+            concurrentRequestLimiter = null;
+        }
+
         jsonMapper = BeanUtil.buildJsonMapper(jsonParserTimeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, false, true, true).build();
         xmlMapper = BeanUtil.buildXmlMapper(jsonParserTimeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, false, true, true).build();
 
@@ -323,9 +324,6 @@ abstract public class HttpClientConfig extends BootConfig {
             final TrustManager[] trustManagers = tmf == null ? null : tmf.getTrustManagers();
             sslContext = SslUtil.buildSSLContext(keyManagers, trustManagers, tlsProtocol);
         }
-        System.setProperty("jdk.httpclient.maxconnections", "" + maxConnections);
-        System.setProperty("jdk.httpclient.connectionPoolSize", "" + connectionPoolSize);
-        System.setProperty("jdk.httpclient.keepalive.timeout", "" + keepAliveTimeoutMs);
 
         String error = helper.getError();
         if (error != null) {
@@ -558,20 +556,16 @@ abstract public class HttpClientConfig extends BootConfig {
         return redirectOption;
     }
 
-    public int getMaxConnections() {
-        return maxConnections;
-    }
-
-    public int getConnectionPoolSize() {
-        return connectionPoolSize;
-    }
-
-    public long getKeepAliveTimeoutMs() {
-        return keepAliveTimeoutMs;
-    }
-
     public boolean isResponseCallbackTpeEnabled() {
         return isResponseCallbackTpeEnabled;
+    }
+
+    public Integer getMaxAllowedConcurrentRequests() {
+        return maxAllowedConcurrentRequests;
+    }
+
+    public Semaphore getConcurrentRequestLimiter() {
+        return concurrentRequestLimiter;
     }
 
     public ThreadingMode getResponseCallbackThreadingMode() {
