@@ -53,6 +53,7 @@ public interface BootPoi {
     String PDF2IMG_END = "pdf2img.end";
 
     String RPC_BEGIN = "rpc.begin";
+    String RPC_SEMAPHORE_ACQUIRED = "rpc.semaphore.acquired";
     String RPC_END = "rpc.end";
     String GRPC_BEGIN = "gRPC.begin";
     String GRPC_END = "gRPC.end";

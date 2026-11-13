@@ -5,6 +5,10 @@
 - GrpcServerConfig.overrideDefaultConfig now reads new config section **`4. gRpc.server ServerBuilder Settings`** to allow user override default value of Enforcement Policy, Server Keepalive,
   Connection Management and Size Protection.
 - RpcDelegate.rpcEx(): refactoring to support exception logging, exception details and exception cause in the context memo log, and to support exception cause in the ServiceError response.
+- Default line break (etc/boot.conf default.lineSeparator=LF): default to LF (Unix/Linux) (was system) for all generated files, including log files, config files, and generated PDF files. This change
+  ensures consistent line endings across different operating systems and prevents potential issues when transferring files between Windows and Unix/Linux environments.
+- HttpClientConfig: refactoring to support new configuration (**`request.limiter.max.concurrent`**) items for connection management, size protection, and keepalive settings. This allows users to
+  fine-tune the behavior of the HTTP client for better performance and resource management in high-concurrency scenarios.
 
 ## Version 2.7.5 (2026-11-01)
 

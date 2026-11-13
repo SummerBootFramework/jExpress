@@ -28,10 +28,12 @@ import org.summerboot.jexpress.integration.rpc.http.config.HttpClientConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -96,12 +98,21 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
         HttpResponse<String> httpResponse1 = null;
         HttpResponse<InputStream> httpResponse2 = null;
         context.poi(BootPoi.RPC_BEGIN);
+
+        HttpClientConfig httpCfg = getHttpClientConfig();
+        final Semaphore concurrentRequestLimiter = httpCfg.getConcurrentRequestLimiter();
+        boolean acquired = false;
         try {
-            HttpClientConfig httpCfg = getHttpClientConfig();
+            if (concurrentRequestLimiter != null) {
+                concurrentRequestLimiter.acquire();
+                acquired = true;
+                context.poi(BootPoi.RPC_SEMAPHORE_ACQUIRED);
+            }
+            HttpClient sharedHttpClient = httpCfg.getHttpClient();
             if (isStreaming) {
-                httpResponse2 = httpCfg.getHttpClient().send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+                httpResponse2 = sharedHttpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
             } else {
-                httpResponse1 = httpCfg.getHttpClient().send(httpRequest, HttpResponse.BodyHandlers.ofString());
+                httpResponse1 = sharedHttpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
@@ -129,6 +140,9 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
             context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
             throw new IOException("Http Client Exception", ex);
         } finally {
+            if (acquired) {
+                concurrentRequestLimiter.release();
+            }
             context.poi(BootPoi.RPC_END);
         }
 
