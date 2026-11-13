@@ -181,7 +181,7 @@ public class BackOffice extends BootConfig {
     @Config(key = "type.JWTAudAsCSV", defaultValue = "true", desc = "Parse JWT Audience value as CSV for JWT backward compatibility")
     private boolean jwtAudAsCSV = true;
 
-    @Config(key = "default.lineSeparator", defaultValue = "LF", desc = "available values: system, LF, CRLF, CR, Linux (same as LF), Mac (same as LF), Windows (same as CRLF), ClassicMac (same as CR)")
+    @Config(key = "default.lineSeparator", defaultValue = "LF", desc = "available values: system (based on OS), LF (default), CRLF, CR, Linux (same as LF), Mac (same as LF), Windows (same as CRLF), ClassicMac (same as CR)")
     private String lineSeparator = "\n";
 
     @Config(key = "default.ConfigChangeMonitor.Throttle.Milliseconds", defaultValue = "100")
