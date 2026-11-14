@@ -158,7 +158,7 @@ public class BackOffice extends BootConfig {
     private volatile Map<Integer, Integer> bootErrorCodeMapping;
 
     protected void generateTemplate_ErrorCodeList(StringBuilder sb, Properties currentValues) {
-        sb.append(listBootErrorCode()).append(System.lineSeparator());
+        sb.append(listBootErrorCode()).append(lineSeparator);
     }
 
     public Map<Integer, Integer> getBootErrorCodeMapping() {

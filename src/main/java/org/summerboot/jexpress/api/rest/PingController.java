@@ -41,7 +41,7 @@ abstract public class PingController {
             summary = "ping service status",
             description = "Load Balancer (F5, Nginx, etc) will do the health check via this ping service, if Http Status is not 200(OK), the load Balancer will stop sending new request to this service.<br>"
                     + "Below is an example of F5 config: Basically it's one monitor that does the check to each member in the pool . It will mark each server within the pool member down if it does not receive a 200. <br>"
-                    + "<i>GET /myservices/myapp/ping HTTP/1.1\\r\\nConnection: Close\\r\\n\\r\\n</i>",
+                    + "<i>GET /myservices/myapp/ping HTTP/1.1\\nConnection: Close\\n\\n</i>",
             responses = {
                     @ApiResponse(responseCode = "200", description = "The service status is healthy"),
                     @ApiResponse(responseCode = "5XX", description = "The service status is unhealthy if response code is not 200",
