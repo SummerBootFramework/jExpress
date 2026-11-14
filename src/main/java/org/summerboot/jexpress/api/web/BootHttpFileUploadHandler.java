@@ -248,7 +248,7 @@ public abstract class BootHttpFileUploadHandler<T> extends SimpleChannelInboundH
                     : partialContent.length();
 
         } catch (EndOfDataDecoderException | IOException e1) {
-            log.debug("\r\n\r\nEND OF CONTENT CHUNK BY CHUNK\r\n\r\n");
+            log.debug(BootConstants.BR + BootConstants.BR + "END OF CONTENT CHUNK BY CHUNK" + BootConstants.BR + BootConstants.BR);
         }
         return totalReceivedBytes > maxAllowedSize;
     }

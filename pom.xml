@@ -169,7 +169,7 @@
         <maven-javadoc-version>3.12.0</maven-javadoc-version>
         <maven-install.version>3.2.0</maven-install.version>
         <!-- Commons -->
-        <commons-lang3.version>3.21.0</commons-lang3.version>
+        <commons-lang3.version>3.22.0</commons-lang3.version>
         <commons-cli.version>1.11.0</commons-cli.version>
         <commons-io.version>2.22.0</commons-io.version>
         <commons-text.version>1.15.0</commons-text.version>
@@ -181,7 +181,7 @@
         <jakarta-mail.version>2.0.2</jakarta-mail.version>
         <jakarta-activation.version>2.0.1</jakarta-activation.version>
         <!-- Security -->
-        <bouncycastle.version>1.86</bouncycastle.version>
+        <bouncycastle.version>1.87</bouncycastle.version>
         <!-- JWT -->
         <jwt.version>0.13.0</jwt.version>
 

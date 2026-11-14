@@ -17,6 +17,8 @@
 *.xml text eol=lf
 *.gradle text eol=lf
 *.sh text eol=lf
+*.properties text eol=lf
+*.conf text eol=lf
 
 # Force CRLF for Windows-specific scripts so they run properly in Windows CMD/PowerShell
 *.bat text eol=crlf
