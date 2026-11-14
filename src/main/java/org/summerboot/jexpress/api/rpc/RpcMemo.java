@@ -23,8 +23,8 @@ public interface RpcMemo {
 
     String MEMO_RPC_UNAUTHORIZED = "RPC_UNAUTHORIZED";
 
-    String MEMO_RPC_REQUEST = "1.RPC_req";
-    String MEMO_RPC_REQUEST_DATA = "2.RPC_req.body";
-    String MEMO_RPC_RESPONSE = "3.RPC_resp";
-    String MEMO_RPC_RESPONSE_DATA = "4.RPC_resp.body";
+    String MEMO_RPC_REQUEST = "rpc.1req";
+    String MEMO_RPC_REQUEST_DATA = "rpc.2req.body";
+    String MEMO_RPC_RESPONSE = "rpc.3resp";
+    String MEMO_RPC_RESPONSE_DATA = "rpc.4resp.body";
 }
