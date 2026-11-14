@@ -218,6 +218,8 @@ abstract public class HttpClientConfig extends BootConfig {
     protected volatile Integer maxAllowedConcurrentRequests = null;
     @JsonIgnore
     protected volatile Semaphore concurrentRequestLimiter;
+    @Config(key = "request.limiter.queuing.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for a concurrent request slot, default is 3000 ms, no timeout if the value is 0 or blank or Long.MAX_VALUE. If the request cannot get a slot within this time, it will be rejected with an error.")
+    protected volatile Long concurrentRequestQueuingTimeoutMs = 3000L;
 
     @Config(key = "responseCallback.executor.enabled", defaultValue = "false", desc = "enable/disable the responseCallback.executor, default is false for quick and small response body, enable it when response is slow and large, and the responseCallback is CPU bound")
     protected volatile boolean isResponseCallbackTpeEnabled = false;
@@ -308,6 +310,12 @@ abstract public class HttpClientConfig extends BootConfig {
             concurrentRequestLimiter = new Semaphore(maxAllowedConcurrentRequests);
         } else {
             concurrentRequestLimiter = null;
+        }
+
+        if (concurrentRequestQueuingTimeoutMs != null && concurrentRequestQueuingTimeoutMs > 0 && concurrentRequestQueuingTimeoutMs < Long.MAX_VALUE) {
+            // do nothing, use the value
+        } else {
+            concurrentRequestQueuingTimeoutMs = null;
         }
 
         jsonMapper = BeanUtil.buildJsonMapper(jsonParserTimeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, false, true, true).build();
@@ -566,6 +574,10 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public Semaphore getConcurrentRequestLimiter() {
         return concurrentRequestLimiter;
+    }
+
+    public Long getConcurrentRequestQueuingTimeoutMs() {
+        return concurrentRequestQueuingTimeoutMs;
     }
 
     public ThreadingMode getResponseCallbackThreadingMode() {

@@ -17,6 +17,8 @@
 
 package org.summerboot.jexpress.util.concurrent;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -67,7 +69,7 @@ public class ConcurrentUtil {
                 Thread.currentThread().interrupt();
                 errors.add(ex);
             } catch (ExecutionException ex) {
-                Throwable cause = ex.getCause();
+                Throwable cause = ExceptionUtils.getRootCause(ex);
                 errors.add(cause);
             } finally {
                 results.add(result);

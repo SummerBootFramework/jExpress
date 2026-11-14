@@ -17,6 +17,7 @@
 package org.summerboot.jexpress.integration.rpc.http;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.BootPoi;
 import org.summerboot.jexpress.api.common.Err;
@@ -31,9 +32,14 @@ import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -42,6 +48,7 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
 
     abstract protected HttpClientConfig getHttpClientConfig();
 
+    protected AtomicLong concurrentRequestCount = new AtomicLong(0);
 
     /**
      * set default headers; proxy auth; timeout
@@ -89,27 +96,53 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
      * @throws IOException
      */
     protected <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest httpRequest, String originRequestBody, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
+        String requestId = concurrentRequestCount.incrementAndGet() + "_";
         //1. log memo
-        context.memo(RpcMemo.MEMO_RPC_REQUEST, httpRequest.toString() + " caller=" + context.caller());
+        context.memo(requestId + RpcMemo.MEMO_RPC_REQUEST, httpRequest.toString() + " caller=" + context.caller());
         if (originRequestBody != null) {
-            context.memo(RpcMemo.MEMO_RPC_REQUEST_DATA, originRequestBody);
+            context.memo(requestId + RpcMemo.MEMO_RPC_REQUEST_DATA, originRequestBody);
         }
         //2. call remote sever
         HttpResponse<String> httpResponse1 = null;
         HttpResponse<InputStream> httpResponse2 = null;
-        context.poi(BootPoi.RPC_BEGIN);
+        context.poi(requestId + BootPoi.RPC_BEGIN);
 
         HttpClientConfig httpCfg = getHttpClientConfig();
         final Semaphore concurrentRequestLimiter = httpCfg.getConcurrentRequestLimiter();
+        final Long concurrentRequestQueuingTimeoutMs = httpCfg.getConcurrentRequestQueuingTimeoutMs();
         boolean acquired = false;
+
         try {
             if (concurrentRequestLimiter != null) {
-                concurrentRequestLimiter.acquire();
+                if (concurrentRequestQueuingTimeoutMs == null) {
+                    concurrentRequestLimiter.acquire();
+                } else {
+                    if (!concurrentRequestLimiter.tryAcquire(concurrentRequestQueuingTimeoutMs, TimeUnit.MILLISECONDS)) {
+                        context.poi(requestId + BootPoi.RPC_END);
+                        String msg = "Concurrent request limit exceeded: max = " + httpCfg.getMaxAllowedConcurrentRequests() + ", queuing timeout = " + concurrentRequestQueuingTimeoutMs + " ms";
+                        msg = buildError(requestId, null, msg, BootErrorCode.HTTPCLIENT_TOO_MANY_CONNECTIONS_REJECT, HttpResponseStatus.TOO_MANY_REQUESTS, context);
+                        throw new RejectedExecutionException(msg);
+                    }
+                }
                 acquired = true;
-                context.poi(BootPoi.RPC_SEMAPHORE_ACQUIRED);
+            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+
+            context.poi(requestId + BootPoi.RPC_END);
+            String msg = buildError(requestId, ex, "HttpClient queuing interrupted", BootErrorCode.APP_INTERRUPTED, HttpResponseStatus.SERVICE_UNAVAILABLE, context);
+            RejectedExecutionException rejectEx = new RejectedExecutionException(msg);
+            rejectEx.initCause(ex);
+            throw rejectEx;
+        }
+        try {
+            if (acquired) {
+                context.poi(requestId + BootPoi.RPC_SEMAPHORE_ACQUIRED);
             }
             HttpClient sharedHttpClient = httpCfg.getHttpClient();
             if (isStreaming) {
+                // WARNING#1: the response body will not be logged unless an error occurs, so the caller should handle the response body stream properly to avoid resource leak
+                // WARNING#2: the concurrentRequestLimiter will be released before the response body stream is closed
                 httpResponse2 = sharedHttpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
             } else {
                 httpResponse1 = sharedHttpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -117,30 +150,27 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
 
-            Throwable cause = ex.getCause();
-            if (cause == null) {
-                cause = ex;
-            }
-            String msg = "HttpClient interrupted: " + cause;
-            context.memo(RpcMemo.MEMO_RPC_RESPONSE, msg);
-            Err e = new Err(BootErrorCode.APP_INTERRUPTED, null, msg, ex);
-            context.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).error(e);
+            String msg = buildError(requestId, ex, "HttpClient interrupted", BootErrorCode.APP_INTERRUPTED, HttpResponseStatus.SERVICE_UNAVAILABLE, context);
+            CancellationException cancelEx = new CancellationException(msg);
+            cancelEx.initCause(ex);
+            throw cancelEx;
+        } catch (HttpTimeoutException ex) {
+            String msg = buildError(requestId, ex, "HttpClient gateway timeout", BootErrorCode.HTTP_REQUEST_TIMEOUT, HttpResponseStatus.GATEWAY_TIMEOUT, context);
             throw new IOException(msg, ex);
         } catch (Throwable ex) {
-            Throwable cause = ex.getCause();
-            if (cause == null) {
-                cause = ex;
+            Throwable cause = getRootCause(ex);
+            final String msg;
+            if (cause instanceof HttpTimeoutException) {
+                msg = buildError(requestId, ex, "HttpClient gateway timeout", BootErrorCode.HTTP_REQUEST_TIMEOUT, HttpResponseStatus.GATEWAY_TIMEOUT, context);
+            } else {
+                msg = buildError(requestId, ex, "HttpClient exception", BootErrorCode.IO_BASE, HttpResponseStatus.BAD_GATEWAY, context);
             }
-            String msg = "HttpClient exception: " + cause;
-            context.memo(RpcMemo.MEMO_RPC_RESPONSE, msg);
-            Err e = new Err(BootErrorCode.IO_BASE, null, msg, ex);
-            context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
             throw new IOException(msg, ex);
         } finally {
             if (acquired) {
                 concurrentRequestLimiter.release();
             }
-            context.poi(BootPoi.RPC_END);
+            context.poi(requestId + BootPoi.RPC_END);
         }
 
         // 3a. check remote success or not
@@ -160,9 +190,32 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
         //3b. update status   
         RpcResult<T> rpcResult = new RpcResult<>(httpRequest, originRequestBody, isStreaming ? httpResponse2 : httpResponse1, isRemoteSuccess, isStreaming, getHttpClientConfig(), context);
         String rpcResponseJsonBody = rpcResult.httpResponseBody();
-        context.memo(RpcMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatusCode() + " " + (isStreaming ? httpResponse2.headers() : httpResponse1.headers()));
-        context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA, isStreaming ? "stream data" : rpcResponseJsonBody);
+        context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatus() + " " + (isStreaming ? httpResponse2.headers() : httpResponse1.headers()));
+        context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE_DATA, isStreaming ? "stream data" : rpcResponseJsonBody);
 
         return rpcResult;
+    }
+
+    protected static Throwable getRootCause(Throwable ex) {
+        Throwable cause = ExceptionUtils.getRootCause(ex);
+        if (cause == null) {
+            return ex;
+        }
+        return cause;
+    }
+
+    protected String buildError(String requestId, Throwable ex, String title, int errorCode, HttpResponseStatus status, SessionContext context) {
+        String msg;
+        if (ex == null) {
+            msg = title;
+        } else {
+            Throwable cause = getRootCause(ex);
+            msg = title + ": " + cause;
+        }
+        context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE, msg);
+        msg = requestId + "rpc: " + msg;
+        Err e = new Err(errorCode, null, msg, ex);
+        context.status(status).error(e);
+        return msg;
     }
 }
