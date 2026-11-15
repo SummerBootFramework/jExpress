@@ -18,6 +18,8 @@ package org.summerboot.jexpress.api.rpc;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.api.common.BootErrorCode;
 import org.summerboot.jexpress.api.common.Err;
 import org.summerboot.jexpress.api.common.ServiceErrorConvertible;
@@ -29,21 +31,26 @@ import tools.jackson.databind.JavaType;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.lang.ref.Cleaner;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
  * @param <T> Success (JSON) result type
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class RpcResult<T> {
+public class RpcResult<T> implements AutoCloseable {
 
+    protected final Long index;
     protected final HttpRequest originRequest;
     protected final String originRequestBody;
     protected final HttpResponse<?> httpResponse;
@@ -56,25 +63,82 @@ public class RpcResult<T> {
     protected final boolean isStreaming;
     protected final SessionContext context;
 
+    // for streaming response: if the caller forgets to close the RpcResult or consume the stream, this will close it when GC collects the RpcResult
+    private static final Logger log = LogManager.getLogger(RpcResult.class);
+    private static final Cleaner STREAM_CLEANER = Cleaner.create();
+    private final Cleaner.Cleanable cleanable;
+    private final StreamCloseAction closeAction;
+
+    @Override
+    public void close() throws IOException {
+        if (cleanable != null) {
+            // 1. Mark it as an "explicit, normal shutdown" to inform the Cleaner not to issue leak warnings.
+            closeAction.markExplicitlyClosed();
+            // 2. Trigger `clean()` to close the stream and unregister from the `Cleaner` queue.
+            cleanable.clean();
+            if (closeAction.lastException != null) {
+                throw closeAction.lastException;
+            }
+        } else {
+            closeHttpResponseStream(httpResponse);
+        }
+    }
+
+    public void closeQuietly() {
+        try {
+            close();
+        } catch (IOException ignored) {
+        }
+    }
+
+    public static IOException closeHttpResponseStream(HttpResponse<?> httpResponse) {
+        if (httpResponse != null && httpResponse.body() instanceof InputStream inputStream) {
+            try {
+                inputStream.close();
+            } catch (IOException closeEx) {
+                return closeEx;
+            }
+        }
+        return null;
+    }
+
     enum ContentType {JSON, XML, OTHER}
 
     protected ObjectMapper httpClientConfiguredObjectMapper = null;
 
     @Deprecated(since = "2.7.4", forRemoval = false)
     public RpcResult(HttpRequest originRequest, String originRequestBody, HttpResponse<String> httpResponse, boolean remoteSuccess) {
-        this(originRequest, originRequestBody, httpResponse, remoteSuccess, false, null, null);
+        this(null, originRequest, originRequestBody, httpResponse, remoteSuccess, false, null, null);
     }
 
-    public RpcResult(HttpRequest originRequest, String originRequestBody, HttpResponse<?> httpResponse, boolean remoteSuccess, boolean isStreaming, HttpClientConfig httpClientConfig, SessionContext context) {
+    public RpcResult(Long index, HttpRequest originRequest, String originRequestBody, HttpResponse<?> httpResponse, boolean remoteSuccess, boolean isStreaming, HttpClientConfig httpClientConfig, SessionContext context) {
+        this.index = index;
         this.originRequest = originRequest;
         this.originRequestBody = originRequestBody;
         this.httpResponse = httpResponse;
-        this.rpcResponseBody = httpResponse == null || isStreaming ? null : String.valueOf(httpResponse.body());
-        this.httpStatusCode = httpResponse == null ? 0 : httpResponse.statusCode();
+        this.httpStatusCode = httpResponse.statusCode();
         this.context = context;
         this.httpStatus = HttpResponseStatus.valueOf(httpStatusCode);
         this.remoteSuccess = remoteSuccess;
         this.isStreaming = isStreaming;
+        final String requestId = index == null ? "" : index + "rpc: ";
+        if (isStreaming) {
+            if (remoteSuccess) {
+                rpcResponseBody = null;
+            } else if (httpResponse.body() != null && httpResponse.body() instanceof InputStream inputStream) {
+                // read the stream to a string for error handling, since we cannot deserialize a streaming response
+                try (InputStream is = inputStream) {
+                    rpcResponseBody = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(requestId + "Failed to read the stream while building RpcResult (" + httpStatus + ")", ex);
+                }
+            } else {
+                rpcResponseBody = null;
+            }
+        } else {
+            this.rpcResponseBody = String.valueOf(httpResponse.body());
+        }
+
 
         if (httpResponse != null) {
             HttpHeaders headers = httpResponse.headers();
@@ -93,7 +157,7 @@ public class RpcResult<T> {
             } else {
                 contentType = ContentType.JSON;
             }
-        } else {
+        } else { // 100% not happen, but just in case, we will default to JSON
             contentType = ContentType.JSON;
         }
         if (httpClientConfig == null) {
@@ -107,6 +171,21 @@ public class RpcResult<T> {
                 case XML -> httpClientConfig.getXmlMapper();
             };
         }
+
+        // cleaner for streaming response: if the caller forgets to close the RpcResult or consume the stream, this will close it when GC collects the RpcResult
+        if (isStreaming && remoteSuccess && httpResponse != null && httpResponse.body() instanceof InputStream inputStream) {
+            // Extract the description as a plain string in advance to prevent memory leaks caused by a static inner class holding a reference to `originRequest`.
+            String reqDesc = originRequest != null ? (originRequest.method() + " " + originRequest.uri()) : "unknown request";
+            this.closeAction = new StreamCloseAction(inputStream, reqDesc);
+            this.cleanable = STREAM_CLEANER.register(this, this.closeAction);
+        } else {
+            this.closeAction = null;
+            this.cleanable = null;
+        }
+    }
+
+    public long index() {
+        return index;
     }
 
     public HttpRequest originRequest() {
@@ -240,15 +319,22 @@ public class RpcResult<T> {
     // 💡 for debugging:  Maximum number of characters to retrieve for reconstruction (typically 4KB–8KB is sufficient to clearly identify a malformed JSON structure)
     private static final int SNAPSHOT_SIZE = 8 * 1024;
 
-    protected <R> R deserialize(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, boolean doValidation, final SessionContext context) {
-        if (responseClass == null && responseType == null || !isStreaming && StringUtils.isBlank(rpcResponseBody)) {
+    public <R> R deserialize(ObjectMapper jacksonMapper, JavaType responseType, Class<R> responseClass, boolean doValidation, final SessionContext context) {
+        boolean processStreaming = isStreaming && remoteSuccess;
+        if (responseClass == null && responseType == null || !processStreaming && StringUtils.isBlank(rpcResponseBody)) {
+            closeQuietly();
             return null;
         }
-        R ret;
 
+        final String requestId = index == null ? "" : index + "rpc: ";
+        R ret;
         try {
-            if (isStreaming) {
-                try (InputStream rawInputStream = (InputStream) httpResponse.body()) {
+            if (processStreaming) {
+                if (httpResponse == null || !(httpResponse.body() instanceof InputStream rawInputStream)) {
+                    return null;
+                }
+                //try (InputStream rawInputStream = (InputStream) httpResponse.body()) {
+                try (this) { // to trigger this.close() and unregister the Cleaner when done
                     // 💡 1. Create a tiny memory pocket, used exclusively for recording an 8KB snapshot of the data.
                     ByteArrayOutputStream debugSnapshot = new ByteArrayOutputStream(SNAPSHOT_SIZE);
 
@@ -308,11 +394,11 @@ public class RpcResult<T> {
                 String error = BeanUtil.getBeanValidationResult(ret);
                 if (error != null) {
                     if (context != null) {
-                        if (isStreaming) {
+                        if (processStreaming) {
                             String jsonSnapshotStr = BeanUtil.toJson(ret, false, false);
-                            context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA, jsonSnapshotStr);
+                            context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA + ".stream.validationFailed", jsonSnapshotStr);
                         }
-                        Err e = new Err(BootErrorCode.HTTPCLIENT_INVALID_RESPONSE_FORMAT, null, "Invalid HTTP client JSON response", null, error);
+                        Err e = new Err(BootErrorCode.HTTPCLIENT_INVALID_RESPONSE_FORMAT, null, requestId + "Invalid HTTP client JSON response", null, error);
                         context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
                     }
                     return null;
@@ -331,12 +417,61 @@ public class RpcResult<T> {
             }
         } catch (Throwable ex) {
             if (context != null) {
-                Err e = new Err(BootErrorCode.HTTPCLIENT_UNKNOWN_RESPONSE_FORMAT, null, "Unknown HTTP client JSON response", ex, ex.toString());
+                Err e = new Err(BootErrorCode.HTTPCLIENT_UNKNOWN_RESPONSE_FORMAT, null, requestId + "Unknown HTTP client JSON response", ex, ex.toString());
                 context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
             }
             return null;
         }
         return ret;
+    }
+
+
+    /**
+     * Internal class to handle closing of streaming InputStream when RpcResult is garbage collected.
+     * This is a safety net to prevent resource leaks if the caller forgets to close the RpcResult or consume the stream.
+     * <p>
+     * It uses a Cleaner to register a cleanup action that will be executed when the RpcResult is no longer reachable. The cleanup action will close the InputStream and log a warning if it was not explicitly closed by the caller.
+     * <p>
+     * Note: This class is only used for streaming responses (isStreaming = true) and when the HTTP response is successful (remoteSuccess = true).
+     * <p>
+     * Usage:
+     * <pre>{@code
+     *     RpcResult<MyResponse> rpcResult = new RpcResult<>(...);
+     *     // If the caller forgets to close the RpcResult or consume the stream via deserialize(), the StreamCloseAction will automatically close the InputStream when the RpcResult is garbage collected.
+    */
+    private static class StreamCloseAction implements Runnable {
+        private final InputStream stream;
+        private final String requestDesc;
+        private final AtomicBoolean closed = new AtomicBoolean(false);
+        private volatile boolean explicitlyClosed = false;
+        private volatile IOException lastException;
+
+        StreamCloseAction(InputStream stream, String requestDesc) {
+            this.stream = stream;
+            this.requestDesc = requestDesc;
+        }
+
+        void markExplicitlyClosed() {
+            this.explicitlyClosed = true;
+        }
+
+        @Override
+        public void run() {
+            if (closed.compareAndSet(false, true)) {
+                // If it is not explicitly closed via `close()` or `deserialize()`, it indicates a leak that has been caught by the GC-triggered fallback mechanism.
+                if (!explicitlyClosed) {
+                    log.warn("Unclosed streaming HTTP response detected and closed by GC Cleaner. Caller forgot to close RpcResult or consume stream for request: [{}]", requestDesc);
+                }
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    this.lastException = e;
+                    if (!explicitlyClosed) {
+                        log.warn("Failed to close leaked streaming response for request: [{}]", requestDesc, e);
+                    }
+                }
+            }
+        }
     }
 }
 
