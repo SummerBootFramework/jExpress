@@ -920,7 +920,7 @@ public class SessionContext {
 
         public Memo(String id, String desc, Level logLevel) {
             this.id = id;
-            this.desc = desc;
+            this.desc = desc == null ? "null" : desc;
             this.logLevel = logLevel == null ? Level.OFF : logLevel;
         }
     }

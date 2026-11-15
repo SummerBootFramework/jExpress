@@ -29,6 +29,7 @@ import org.summerboot.jexpress.integration.rpc.http.config.HttpClientConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -48,7 +49,7 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
 
     abstract protected HttpClientConfig getHttpClientConfig();
 
-    protected AtomicLong concurrentRequestCount = new AtomicLong(0);
+    protected static AtomicLong concurrentRequestCount = new AtomicLong(0);
 
     /**
      * set default headers; proxy auth; timeout
@@ -96,7 +97,8 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
      * @throws IOException
      */
     protected <T> RpcResult<T> rpcEx(SessionContext context, HttpRequest httpRequest, String originRequestBody, boolean isStreaming, HttpResponseStatus... successStatusList) throws IOException {
-        String requestId = concurrentRequestCount.incrementAndGet() + "_";
+        long requestCount = concurrentRequestCount.incrementAndGet();
+        String requestId = requestCount + "_";
         //1. log memo
         context.memo(requestId + RpcMemo.MEMO_RPC_REQUEST, httpRequest.toString() + " caller=" + context.caller());
         if (originRequestBody != null) {
@@ -175,7 +177,8 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
 
         // 3a. check remote success or not
         boolean isRemoteSuccess = false;
-        int statusCode = isStreaming ? httpResponse2.statusCode() : httpResponse1.statusCode();
+        HttpResponse<?> httpResponse = isStreaming ? httpResponse2 : httpResponse1;
+        int statusCode = httpResponse.statusCode();
         if (successStatusList == null || successStatusList.length < 1) {
             isRemoteSuccess = (statusCode >= HttpResponseStatus.OK.code() && statusCode <= 299);
         } else {
@@ -187,13 +190,27 @@ public abstract class RpcDelegateHttpClientImpl implements RpcDelegate {
             }
         }
 
-        //3b. update status   
-        RpcResult<T> rpcResult = new RpcResult<>(httpRequest, originRequestBody, isStreaming ? httpResponse2 : httpResponse1, isRemoteSuccess, isStreaming, getHttpClientConfig(), context);
-        String rpcResponseJsonBody = rpcResult.httpResponseBody();
-        context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE, rpcResult.httpStatus() + " " + (isStreaming ? httpResponse2.headers() : httpResponse1.headers()));
-        context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE_DATA, isStreaming ? "stream data" : rpcResponseJsonBody);
-
-        return rpcResult;
+        //3b. update status
+        context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE, HttpResponseStatus.valueOf(statusCode) + " " + httpResponse.headers());
+        try {
+            RpcResult<T> rpcResult = new RpcResult<>(requestCount, httpRequest, originRequestBody, httpResponse, isRemoteSuccess, isStreaming, getHttpClientConfig(), context);
+            context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE_DATA, rpcResult.httpResponseBody());
+            return rpcResult;
+        } catch (UncheckedIOException ex) {
+            IOException closeEx = RpcResult.closeHttpResponseStream(httpResponse2);
+            if (closeEx != null) {
+                ex.addSuppressed(closeEx);
+            }
+            String msg = buildError(requestId, ex, "Failed to build RpcResult", BootErrorCode.IO_BASE, HttpResponseStatus.BAD_GATEWAY, context);
+            throw new IOException(msg, ex);
+        } catch (Throwable ex) {
+            IOException closeEx = RpcResult.closeHttpResponseStream(httpResponse2);
+            if (closeEx != null && closeEx != ex) {
+                ex.addSuppressed(closeEx);
+            }
+            buildError(requestId, ex, "Failed to build RpcResult", BootErrorCode.IO_BASE, HttpResponseStatus.INTERNAL_SERVER_ERROR, context);
+            throw ex;
+        }
     }
 
     protected static Throwable getRootCause(Throwable ex) {
