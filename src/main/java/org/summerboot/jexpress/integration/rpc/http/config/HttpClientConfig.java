@@ -155,15 +155,6 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "http.ssl.HostnameVerification", defaultValue = "true")
     protected volatile Boolean hostnameVerification = true;
 
-    @Config(key = "networkaddress.cache.ttl", desc = "The time-to-live for DNS cache entries, default is 30 seconds, min is -1.")
-    protected volatile Integer dnsCacheTtlSeconds = null;
-    @Config(key = "networkaddress.cache.negative.ttl", desc = "The time-to-live for negative DNS cache entries, default is 10 seconds, min is -1.")
-    protected volatile Integer dnsCacheNegativeTtlSeconds = null;
-    @Config(key = "jdk.httpclient.keepalive.timeout", desc = "Control the lifetime of idle connections in the HTTP/1.1 connection pool, default 30 seconds since JDK 20+")
-    protected volatile Long keepAliveTimeoutSeconds = null;
-    @Config(key = "jdk.httpclient.keepalive.timeout.h2", desc = "Control the lifetime of idle connections in the HTTP/2 connection pool, default 30 seconds since JDK 20+")
-    protected volatile Long keepAliveH2TimeoutSeconds = null;
-
     @Config(key = "http.proxy.host", desc = "The proxy host, if not set, no proxy will be used.")
     protected volatile String proxyHost;
 
@@ -214,6 +205,15 @@ abstract public class HttpClientConfig extends BootConfig {
 
     @JsonIgnore
     protected volatile HttpClient.Builder httpClientBuilder;
+
+    @Config(key = "networkaddress.cache.ttl", desc = "The time-to-live for DNS cache entries, default is 30 seconds, min is -1.")
+    protected volatile Integer dnsCacheTtlSeconds = null;
+    @Config(key = "networkaddress.cache.negative.ttl", desc = "The time-to-live for negative DNS cache entries, default is 10 seconds, min is -1.")
+    protected volatile Integer dnsCacheNegativeTtlSeconds = null;
+    @Config(key = "jdk.httpclient.keepalive.timeout", desc = "Control the lifetime of idle connections in the HTTP/1.1 connection pool, default 30 seconds since JDK 20+")
+    protected volatile Long keepAliveTimeoutSeconds = null;
+    @Config(key = "jdk.httpclient.keepalive.timeout.h2", desc = "Control the lifetime of idle connections in the HTTP/2 connection pool, default 30 seconds since JDK 20+")
+    protected volatile Long keepAliveH2TimeoutSeconds = null;
 
     @Config(key = "connection.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for only the connection to be established, should be less than http.timeout.ms")
     protected volatile long httpConnectionTimeoutMs = 3000;
@@ -533,22 +533,6 @@ abstract public class HttpClientConfig extends BootConfig {
         return proxyAuthorizationBasicValue;
     }
 
-    public Integer getDnsCacheTtlSeconds() {
-        return dnsCacheTtlSeconds;
-    }
-
-    public Integer getDnsCacheNegativeTtlSeconds() {
-        return dnsCacheNegativeTtlSeconds;
-    }
-
-    public Long getKeepAliveTimeoutSeconds() {
-        return keepAliveTimeoutSeconds;
-    }
-
-    public Long getKeepAliveH2TimeoutSeconds() {
-        return keepAliveH2TimeoutSeconds;
-    }
-
     public boolean isDeserializationCaseInsensitive() {
         return deserializationCaseInsensitive;
     }
@@ -567,6 +551,23 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public XmlMapper getXmlMapper() {
         return xmlMapper;
+    }
+
+
+    public Integer getDnsCacheTtlSeconds() {
+        return dnsCacheTtlSeconds;
+    }
+
+    public Integer getDnsCacheNegativeTtlSeconds() {
+        return dnsCacheNegativeTtlSeconds;
+    }
+
+    public Long getKeepAliveTimeoutSeconds() {
+        return keepAliveTimeoutSeconds;
+    }
+
+    public Long getKeepAliveH2TimeoutSeconds() {
+        return keepAliveH2TimeoutSeconds;
     }
 
     public long getHttpConnectionTimeoutMs() {
