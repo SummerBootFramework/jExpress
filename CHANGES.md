@@ -12,6 +12,10 @@
     - HttpRpcClient.getHttpClientConfig() renamed to getConfig() to provide access to the underlying HttpClientConfig for advanced configuration and customization.
     - HttpClientConfig: refactoring to support new configuration (**`request.limiter.max.concurrent`** and **`request.limiter.queuing.timeout.ms`**) items for limiting concurrent requests in
       high-concurrency scenarios.
+    - HttpClientConfig: refactoring to support new configuration (**`networkaddress.cache.ttl`** and **`networkaddress.cache.negative.ttl`**) items for controlling DNS cache behavior, allowing
+      fine-tuning of DNS resolution and caching strategies.
+    - HttpClientConfig: refactoring to support new configuration (**`jdk.httpclient.keepalive.timeout`** and **`jdk.httpclient.keepalive.timeout.h2`**) items for controlling the lifetime of idle
+      connections in the HTTP/1.1 and HTTP/2 connection pools, improving resource management and connection reuse.
     - RpcDelegate.rpcEx(): refactoring to support exception logging, exception details and exception cause in the context memo log, and to support exception cause in the ServiceError response.
     - RpcResult: refactoring to handle streaming response auto-close and auto-cleanup, preventing resource leaks and ensuring proper cleanup of resources after processing streaming responses.
     - At the moment a certificate becomes invalid or a handshake fails, capture the full list of candidate IP addresses resolved for the current domain name.

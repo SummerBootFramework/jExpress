@@ -159,6 +159,10 @@ abstract public class HttpClientConfig extends BootConfig {
     protected volatile Integer dnsCacheTtlSeconds = null;
     @Config(key = "networkaddress.cache.negative.ttl", desc = "The time-to-live for negative DNS cache entries, default is 10 seconds, min is -1.")
     protected volatile Integer dnsCacheNegativeTtlSeconds = null;
+    @Config(key = "jdk.httpclient.keepalive.timeout", desc = "Control the lifetime of idle connections in the HTTP/1.1 connection pool, default 30 seconds since JDK 20+")
+    protected volatile Long keepAliveTimeoutSeconds = null;
+    @Config(key = "jdk.httpclient.keepalive.timeout.h2", desc = "Control the lifetime of idle connections in the HTTP/2 connection pool, default 30 seconds since JDK 20+")
+    protected volatile Long keepAliveH2TimeoutSeconds = null;
 
     @Config(key = "http.proxy.host", desc = "The proxy host, if not set, no proxy will be used.")
     protected volatile String proxyHost;
@@ -333,6 +337,20 @@ abstract public class HttpClientConfig extends BootConfig {
                 java.security.Security.setProperty("networkaddress.cache.negative.ttl", dnsCacheNegativeTtlSeconds.toString());
             } else {
                 helper.addError("Invalid networkaddress.cache.negative.ttl configured: " + dnsCacheNegativeTtlSeconds + " (must be >= -1)", null);
+            }
+        }
+        if (keepAliveTimeoutSeconds != null) {
+            if (keepAliveTimeoutSeconds >= 0) {
+                System.setProperty("jdk.httpclient.keepalive.timeout", keepAliveTimeoutSeconds.toString());
+            } else {
+                helper.addError("Invalid jdk.httpclient.keepalive.timeout configured: " + keepAliveTimeoutSeconds + " (must be >= 0)", null);
+            }
+        }
+        if (keepAliveH2TimeoutSeconds != null) {
+            if (keepAliveH2TimeoutSeconds >= 0) {
+                System.setProperty("jdk.httpclient.keepalive.timeout.h2", keepAliveH2TimeoutSeconds.toString());
+            } else {
+                helper.addError("Invalid jdk.httpclient.keepalive.timeout.h2 configured: " + keepAliveH2TimeoutSeconds + " (must be >= 0)", null);
             }
         }
 
@@ -521,6 +539,14 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public Integer getDnsCacheNegativeTtlSeconds() {
         return dnsCacheNegativeTtlSeconds;
+    }
+
+    public Long getKeepAliveTimeoutSeconds() {
+        return keepAliveTimeoutSeconds;
+    }
+
+    public Long getKeepAliveH2TimeoutSeconds() {
+        return keepAliveH2TimeoutSeconds;
     }
 
     public boolean isDeserializationCaseInsensitive() {
