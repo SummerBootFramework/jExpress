@@ -200,12 +200,6 @@ abstract public class HttpClientConfig extends BootConfig {
 
     //3.2 HTTP Client Performance    
     @ConfigHeader(title = "2. HTTP Client Performance")
-    @JsonIgnore
-    protected volatile HttpClient httpClient;
-
-    @JsonIgnore
-    protected volatile HttpClient.Builder httpClientBuilder;
-
     @Config(key = "networkaddress.cache.ttl", desc = "The time-to-live for DNS cache entries, default is 30 seconds, min is -1.")
     protected volatile Integer dnsCacheTtlSeconds = null;
     @Config(key = "networkaddress.cache.negative.ttl", desc = "The time-to-live for negative DNS cache entries, default is 10 seconds, min is -1.")
@@ -279,6 +273,13 @@ abstract public class HttpClientConfig extends BootConfig {
                     .append(HEADER_CLIENT_REQUEST).append("Content-Type=application/json;charset=UTF-8" + BootConstants.BR);
         }
     }
+
+    @JsonIgnore
+    protected volatile HttpClient httpClient;
+
+    @JsonIgnore
+    protected volatile HttpClient.Builder httpClientBuilder;
+
 
     protected HttpClientStatusListener listener = null;
 

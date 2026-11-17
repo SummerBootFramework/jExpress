@@ -170,7 +170,7 @@ public abstract class HttpRpcClient implements RpcClient {
             final String msg;
             if (cause instanceof HttpTimeoutException) {
                 msg = buildError(requestId, ex, "HttpClient gateway timeout", BootErrorCode.HTTP_REQUEST_TIMEOUT, HttpResponseStatus.GATEWAY_TIMEOUT, updateContext, context);
-            } else if (cause instanceof javax.net.ssl.SSLException) {
+            } else if (ex instanceof javax.net.ssl.SSLException) {
                 // networkaddress.cache.ttl = 5
                 // networkaddress.cache.negative.ttl = 2
                 // At the moment a certificate becomes invalid or a handshake fails, capture the full list of candidate IP addresses resolved for the current domain name.
