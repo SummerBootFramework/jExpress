@@ -26,6 +26,7 @@ import org.summerboot.jexpress.api.rpc.RpcClient;
 import org.summerboot.jexpress.api.rpc.RpcMemo;
 import org.summerboot.jexpress.api.rpc.RpcResult;
 import org.summerboot.jexpress.integration.rpc.http.config.HttpClientConfig;
+import org.summerboot.jexpress.security.UrlSanitizer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -169,6 +170,12 @@ public abstract class HttpRpcClient implements RpcClient {
             final String msg;
             if (cause instanceof HttpTimeoutException) {
                 msg = buildError(requestId, ex, "HttpClient gateway timeout", BootErrorCode.HTTP_REQUEST_TIMEOUT, HttpResponseStatus.GATEWAY_TIMEOUT, updateContext, context);
+            } else if (cause instanceof javax.net.ssl.SSLException) {
+                // networkaddress.cache.ttl = 5
+                // networkaddress.cache.negative.ttl = 2
+                // At the moment a certificate becomes invalid or a handshake fails, capture the full list of candidate IP addresses resolved for the current domain name.
+                String candidateIps = UrlSanitizer.resolveHostIps(httpRequest.uri());
+                msg = buildError(requestId, ex, "HttpClient SSL handshake failed [ips=" + candidateIps + "]", BootErrorCode.IO_BASE, HttpResponseStatus.BAD_GATEWAY, updateContext, context);
             } else {
                 msg = buildError(requestId, ex, "HttpClient exception", BootErrorCode.IO_BASE, HttpResponseStatus.BAD_GATEWAY, updateContext, context);
             }

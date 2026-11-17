@@ -20,8 +20,12 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.tika.utils.StringUtils;
 import org.owasp.encoder.Encode;
 
+import java.net.InetAddress;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
@@ -172,5 +176,23 @@ public class UrlSanitizer {
         cleaned = cleaned.replaceAll("(?i)on\\w+\\s*=", "");
 
         return cleaned;
+    }
+
+    public static String resolveHostIps(URI uri) {
+        String host = uri.getHost();
+        if (uri == null || StringUtils.isBlank(host)) {
+            return "unknown";
+        }
+        try {
+            InetAddress[] addresses = InetAddress.getAllByName(host);
+            if (addresses == null || addresses.length == 0) {
+                return "empty";
+            }
+            return Arrays.stream(addresses)
+                    .map(InetAddress::getHostAddress)
+                    .collect(Collectors.joining(","));
+        } catch (Throwable ignored) {
+            return "resolve_failed";
+        }
     }
 }

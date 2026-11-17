@@ -155,7 +155,12 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "http.ssl.HostnameVerification", defaultValue = "true")
     protected volatile Boolean hostnameVerification = true;
 
-    @Config(key = "http.proxy.host")
+    @Config(key = "networkaddress.cache.ttl", desc = "The time-to-live for DNS cache entries, default is 30 seconds, min is -1.")
+    protected volatile Integer dnsCacheTtlSeconds = null;
+    @Config(key = "networkaddress.cache.negative.ttl", desc = "The time-to-live for negative DNS cache entries, default is 10 seconds, min is -1.")
+    protected volatile Integer dnsCacheNegativeTtlSeconds = null;
+
+    @Config(key = "http.proxy.host", desc = "The proxy host, if not set, no proxy will be used.")
     protected volatile String proxyHost;
 
     @Config(key = "http.proxy.port", defaultValue = "8080")
@@ -176,7 +181,6 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "http.proxy.authStrategy", defaultValue = "AUTHENTICATOR",
             desc = "valid values: AUTHENTICATOR (default, sets Authenticator only at the HttpClient level), HEADER (Sets Proxy-Authorization only in the request header)")
     protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.AUTHENTICATOR;
-
 
     @JsonIgnore
     protected volatile String proxyAuthorizationBasicValue;
@@ -212,7 +216,6 @@ abstract public class HttpClientConfig extends BootConfig {
 
     @Config(key = "request.timeout.ms", defaultValue = "5000", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
     protected volatile long httpRequestTimeoutMs = 5000;
-
 
     @Config(key = "request.limiter.max.concurrent", desc = "The maximum number of concurrent requests, no limit by default. Blank or 0 or Integer.MAX_VALUE means no limit. If the number of concurrent requests exceeds this limit, the request will be hold to wait for next available slot. This is to prevent the server from being overwhelmed by too many requests.")
     protected volatile Integer maxAllowedConcurrentRequests = null;
@@ -318,6 +321,21 @@ abstract public class HttpClientConfig extends BootConfig {
             concurrentRequestQueuingTimeoutMs = null;
         }
 
+        if (dnsCacheTtlSeconds != null) {
+            if (dnsCacheTtlSeconds >= -1) {
+                java.security.Security.setProperty("networkaddress.cache.ttl", dnsCacheTtlSeconds.toString());
+            } else {
+                helper.addError("Invalid networkaddress.cache.ttl configured: " + dnsCacheTtlSeconds + " (must be >= -1)", null);
+            }
+        }
+        if (dnsCacheNegativeTtlSeconds != null) {
+            if (dnsCacheNegativeTtlSeconds >= -1) {
+                java.security.Security.setProperty("networkaddress.cache.negative.ttl", dnsCacheNegativeTtlSeconds.toString());
+            } else {
+                helper.addError("Invalid networkaddress.cache.negative.ttl configured: " + dnsCacheNegativeTtlSeconds + " (must be >= -1)", null);
+            }
+        }
+
         jsonMapper = BeanUtil.buildJsonMapper(jsonParserTimeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, false, true, true).build();
         xmlMapper = BeanUtil.buildXmlMapper(jsonParserTimeZone, deserializationFailOnUnknownProperties, deserializationCaseInsensitive, false, true, true).build();
 
@@ -372,9 +390,6 @@ abstract public class HttpClientConfig extends BootConfig {
         }
         if (sslContext != null) {
             httpClientBuilder.sslContext(sslContext);
-        }
-        if (StringUtils.isNotBlank(proxyHost)) {
-            httpClientBuilder.proxy(ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort)));
         }
 
         if (proxyAuthTunnelingDisabledSchemes == null) {
@@ -498,6 +513,14 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public String getProxyAuthorizationBasicValue() {
         return proxyAuthorizationBasicValue;
+    }
+
+    public Integer getDnsCacheTtlSeconds() {
+        return dnsCacheTtlSeconds;
+    }
+
+    public Integer getDnsCacheNegativeTtlSeconds() {
+        return dnsCacheNegativeTtlSeconds;
     }
 
     public boolean isDeserializationCaseInsensitive() {
