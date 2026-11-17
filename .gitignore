@@ -32,6 +32,7 @@ log/
 logs/
 **/logs/
 *.log.*
+*.hprof
 
 ### Test configuration domains ###
 **/standalone_test*/

@@ -391,14 +391,14 @@ public class RpcResult<T> implements AutoCloseable {
                 }
             }
             if (doValidation) {
-                String error = BeanUtil.getBeanValidationResult(ret);
-                if (error != null) {
+                String beanValidationError = BeanUtil.getBeanValidationResult(ret);
+                if (beanValidationError != null) {
                     if (context != null) {
                         if (processStreaming) {
                             String jsonSnapshotStr = BeanUtil.toJson(ret, false, false);
                             context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA + ".stream.validationFailed", jsonSnapshotStr);
                         }
-                        Err e = new Err(BootErrorCode.HTTPCLIENT_INVALID_RESPONSE_FORMAT, null, requestId + "Invalid HTTP client JSON response", null, error);
+                        Err e = new Err(BootErrorCode.HTTPCLIENT_INVALID_RESPONSE_FORMAT, null, requestId + "Invalid HTTP client JSON response", null, beanValidationError);
                         context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
                     }
                     return null;

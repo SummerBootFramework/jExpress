@@ -6,7 +6,10 @@
   Connection Management and Size Protection.
 - Default line break (etc/boot.conf default.lineSeparator=LF): default to LF (Unix/Linux) (was system) for all generated files, including log files, config files, and generated PDF files. This change
   ensures consistent line endings across different operating systems and prevents potential issues when transferring files between Windows and Unix/Linux environments.
-- HttpClient: added index# in the log for each concurrent request to help identify and trace individual requests in high-concurrency scenarios.
+- HttpRpcClient: added index# in the log for each concurrent request to help identify and trace individual requests in high-concurrency scenarios.
+    - RpcDelegate renamed to RpcClient
+    - RpcDelegateHttpClientImpl renamed to HttpRpcClient
+    - HttpRpcClient.getHttpClientConfig() renamed to getConfig() to provide access to the underlying HttpClientConfig for advanced configuration and customization.
     - HttpClientConfig: refactoring to support new configuration (**`request.limiter.max.concurrent`** and **`request.limiter.queuing.timeout.ms`**) items for limiting concurrent requests in
       high-concurrency scenarios.
     - RpcDelegate.rpcEx(): refactoring to support exception logging, exception details and exception cause in the context memo log, and to support exception cause in the ServiceError response.
