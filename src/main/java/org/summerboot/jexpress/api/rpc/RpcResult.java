@@ -100,7 +100,6 @@ public class RpcResult<T> implements AutoCloseable {
     enum ContentType {JSON, XML, OTHER}
 
     protected ObjectMapper httpClientConfiguredObjectMapper = null;
-    private static final int MAX_ERROR_BODY_BYTES = 64 * 1024;
 
     @Deprecated(since = "2.7.4", forRemoval = false)
     public RpcResult(HttpRequest originRequest, String originRequestBody, HttpResponse<?> httpResponse, boolean remoteSuccess) {
@@ -336,6 +335,7 @@ public class RpcResult<T> implements AutoCloseable {
             );
         }
         if (responseBodyType == HttpClientUtil.ResponseBodyType.REACTIVE_PUBLISHER && remoteSuccess) {
+            // closeQuietly(); do not close here, let caller continue to subscribe to httpResponse.body() directly
             throw new UnsupportedOperationException(
                     "Cannot deserialize an active Flow.Publisher response synchronously. Subscribe to httpResponse.body() directly."
             );
@@ -372,7 +372,7 @@ public class RpcResult<T> implements AutoCloseable {
                     } catch (JacksonException ex) {
                         String jsonSnapshotStr = debugSnapshot.toString(charset);
                         if (context != null) {
-                            context.memo(RpcMemo.MEMO_RPC_RESPONSE_DATA, jsonSnapshotStr);
+                            context.memo(requestSeq + "_" + RpcMemo.MEMO_RPC_RESPONSE_DATA, jsonSnapshotStr);
                         }
                         throw ex;
                     }
@@ -394,7 +394,7 @@ public class RpcResult<T> implements AutoCloseable {
                 if (context != null) {
 //                    if (processStreaming) {
 //                        String jsonSnapshotStr = BeanUtil.toJson(ret, false, false);
-//                        context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE_DATA + ".stream.validationFailed", jsonSnapshotStr);
+//                        context.memo(requestSeq + "_" + RpcMemo.MEMO_RPC_RESPONSE_DATA + ".stream.validationFailed", jsonSnapshotStr);
 //                    }
                     Err e = new Err(BootErrorCode.HTTPCLIENT_INVALID_RESPONSE_FORMAT, null, requestId + "Invalid HTTP client JSON response", null, beanValidationError);
                     context.status(HttpResponseStatus.BAD_GATEWAY).error(e);
