@@ -153,7 +153,7 @@ public class HttpClientUtil {
     }
 
     /**
-     * 判断 HttpResponse 的实际 Body 类型
+     * Determine the actual body type of the HttpResponse
      */
     public static ResponseBodyType detectBodyType(HttpResponse<?> response) {
         if (response == null) {
@@ -399,6 +399,12 @@ public class HttpClientUtil {
                 }
                 return readBytes;
             }
+
+            /* disable this to avoid close multiple times
+            @Override
+            public void close() throws IOException {
+                rawInputStream.close();
+            }*/
         };
     }
 

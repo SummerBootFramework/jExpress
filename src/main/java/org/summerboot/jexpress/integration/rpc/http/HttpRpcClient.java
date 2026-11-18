@@ -26,7 +26,9 @@ import org.summerboot.jexpress.api.rpc.RpcClient;
 import org.summerboot.jexpress.api.rpc.RpcMemo;
 import org.summerboot.jexpress.api.rpc.RpcResult;
 import org.summerboot.jexpress.integration.rpc.http.config.HttpClientConfig;
+import org.summerboot.jexpress.util.runtime.ApplicationUtil;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
@@ -121,11 +123,12 @@ public abstract class HttpRpcClient implements RpcClient {
             String candidateIps = UrlSanitizer.resolveHostIps(httpRequest.uri());
             String msg = buildError(requestId, ex, "HttpClient SSL handshake failed [ips=" + candidateIps + "]", BootErrorCode.IO_BASE, HttpResponseStatus.BAD_GATEWAY, updateContext, context);
             throw new IOException(msg, ex);
-        }*/ catch (Exception ex) {
-            Throwable cause = getRootCause(ex);
+        }*/ catch (Throwable ex) {
             final String msg;
-            if (cause instanceof HttpTimeoutException) {
+            if (ApplicationUtil.hasCauseOfType(ex, HttpTimeoutException.class)) {
                 msg = buildError(requestId, ex, "HttpClient gateway timeout [ips=" + candidateIps + "]", BootErrorCode.HTTP_REQUEST_TIMEOUT, HttpResponseStatus.GATEWAY_TIMEOUT, updateContext, context);
+            } else if (ApplicationUtil.hasCauseOfType(ex, SSLException.class)) {
+                msg = buildError(requestId, ex, "HttpClient SSL handshake failed [ips=" + candidateIps + "]", BootErrorCode.IO_BASE, HttpResponseStatus.BAD_GATEWAY, updateContext, context);
             } else {
                 msg = buildError(requestId, ex, "HttpClient exception [ips=" + candidateIps + "]", BootErrorCode.IO_BASE, HttpResponseStatus.BAD_GATEWAY, updateContext, context);
             }
@@ -156,7 +159,11 @@ public abstract class HttpRpcClient implements RpcClient {
 
         // 5. Build RpcResult and return
         if (context != null) {
-            context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE, HttpResponseStatus.valueOf(statusCode) + " " + httpResponse.headers());
+            try {
+                context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE, HttpResponseStatus.valueOf(statusCode) + " " + httpResponse.headers());
+            } catch (Exception e) {
+                context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE, statusCode + " " + httpResponse.headers());
+            }
         }
         try {
             RpcResult<T> rpcResult = new RpcResult<>(requestSeq, httpRequest, originRequestBody, httpResponse, isRemoteSuccess, httpCfg, context);
@@ -171,7 +178,7 @@ public abstract class HttpRpcClient implements RpcClient {
             }
             String msg = buildError(requestId, ex, "Failed to build RpcResult", BootErrorCode.IO_BASE, HttpResponseStatus.BAD_GATEWAY, updateContext, context);
             throw new IOException(msg, ex);
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             Exception closeEx = HttpClientUtil.closeHttpResponseStream(httpResponse);
             if (closeEx != null && closeEx != ex) {
                 ex.addSuppressed(closeEx);
@@ -205,5 +212,4 @@ public abstract class HttpRpcClient implements RpcClient {
         }
         return msg;
     }
-
 }

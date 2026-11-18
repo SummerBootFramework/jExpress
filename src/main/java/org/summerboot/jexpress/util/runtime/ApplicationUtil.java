@@ -257,4 +257,15 @@ public class ApplicationUtil {
         System.exit(code);
     }
 
+    public static boolean hasCauseOfType(Throwable ex, Class<? extends Throwable> targetType) {
+        Throwable current = ex;
+        java.util.Set<Throwable> visited = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        while (current != null && visited.add(current)) {
+            if (targetType.isInstance(current)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
 }
