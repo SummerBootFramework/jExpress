@@ -237,7 +237,7 @@ public class PdfBuilder {
                     Path htmlFile = Paths.get(new File(dumpDir, sessionName + ".html").getAbsolutePath());
                     Files.writeString(htmlFile, htmlContent);
                     context.poi(BootPoi.PDF_DH);
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     log.fatal(dumpDir, ex);
                 }
             }
@@ -258,7 +258,7 @@ public class PdfBuilder {
                     Path pdfFile = Paths.get(new File(dumpDir, sessionName + ".pdf").getAbsolutePath());
                     Files.write(pdfFile, pdf);
                     context.poi(BootPoi.PDF_DP);
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     log.fatal(dumpDir, ex);
                 }
             }
@@ -286,7 +286,7 @@ public class PdfBuilder {
                     Path imageFile = Paths.get(new File(dumpDir, sessionName + "_" + page + "of" + total + "." + imageFormat).getAbsolutePath());
                     Files.write(imageFile, imageData);
                     context.poi(BootPoi.PDF_DI);
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     log.fatal(dumpDir, ex);
                     context.memo(dumpDir.getAbsolutePath(), ex.toString());
                 }

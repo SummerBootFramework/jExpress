@@ -143,7 +143,7 @@ public class BackOffice extends BootConfig {
             StringBuilder sb = new StringBuilder().append("## Default Error Codes:").append(BR);
             sorted.forEach((value, key) -> sb.append("## ").append(key).append(": ").append(value).append(BR));
             ret = sb.toString();
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return ret;

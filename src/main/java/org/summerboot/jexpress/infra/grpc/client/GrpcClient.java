@@ -85,7 +85,7 @@ public abstract class GrpcClient<T extends GrpcClient<T>> {
             shutdownHook = new Thread(() -> {
                 try {
                     channel.shutdownNow();
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                 }
             }, "GrpcClient.shutdown and disconnect from " + info);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
@@ -117,7 +117,7 @@ public abstract class GrpcClient<T extends GrpcClient<T>> {
             if (channel != null) {
                 try {
                     channel.shutdownNow();
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                 } finally {
                     channel = null;
                 }
@@ -125,7 +125,7 @@ public abstract class GrpcClient<T extends GrpcClient<T>> {
             if (shutdownHook != null) {
                 try {
                     Runtime.getRuntime().removeShutdownHook(shutdownHook);
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                 } finally {
                     shutdownHook = null;
                 }

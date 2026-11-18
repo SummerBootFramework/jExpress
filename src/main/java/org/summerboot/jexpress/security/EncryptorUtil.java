@@ -203,7 +203,7 @@ public class EncryptorUtil {
             SecretKeyFactory factory = SecretKeyFactory.getInstance(ALGORITHM_SECRET_KEY);
             byte[] keyBytes = factory.generateSecret(spec).getEncoded();
             return new SecretKeySpec(keyBytes, "AES");
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Failed to build secret key", ex);
         }
     }
@@ -1090,7 +1090,7 @@ public class EncryptorUtil {
                     if (meta != null) {
                         meta.setInfo(new String(metadata, StandardCharsets.UTF_8));
                     }
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     throw new ProviderException("Digital Signature verification failed", ex);
                 }
 //                String metaInfo = new String(metadata, StandardCharsets.UTF_8);
@@ -1206,7 +1206,7 @@ public class EncryptorUtil {
                     if (meta != null) {
                         meta.setInfo(new String(metadata, StandardCharsets.UTF_8));
                     }
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     throw new ProviderException("Digital Signature verification failed", ex);
                 }
 //                String metaInfo = new String(metadata, StandardCharsets.UTF_8);

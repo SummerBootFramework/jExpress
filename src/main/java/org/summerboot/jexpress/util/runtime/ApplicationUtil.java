@@ -229,7 +229,7 @@ public class ApplicationUtil {
         try (InputStream ioStream = classLoader.getResourceAsStream(RESOURCE_PATH + srcFileName);) {
             final byte[] bytes = IOUtils.toByteArray(ioStream);
             Files.write(targetFile, bytes);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             String msg = ex + "\n\tCould generate from " + srcFileName + " to " + targetFile;
             ApplicationUtil.RTO(BootErrorCode.RTO_CREATE_IF_NOT_EXIST_ERROR, msg, ex);
         }

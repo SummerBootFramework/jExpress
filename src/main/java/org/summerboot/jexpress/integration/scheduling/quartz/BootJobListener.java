@@ -68,7 +68,7 @@ public class BootJobListener extends JobListenerSupport {
             try {
                 Scheduler scheduler = context.getScheduler();
                 QuartzUtil.getNextFireTimes(scheduler, sb);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 sb.append(ex);
             }
             log.log(level, () -> sb.toString());

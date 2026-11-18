@@ -429,7 +429,7 @@ abstract public class SummerSingularity {
                     String json = BeanUtil.toJson(sorted, true, false);
                     sb.append(BootConstants.BR).append(tag).append("=").append(json);
                 }
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 throw new RuntimeException("check unique failed on " + classWithUniqueValues.getName(), ex);
             }
         }

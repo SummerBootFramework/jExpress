@@ -388,7 +388,7 @@ abstract public class SummerBigBang extends SummerSingularity {
                 masterPassword = MasterPassword.cfg.getMasterPassword();
             }
             EncryptorUtil.setMasterPassword(masterPassword);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             ApplicationUtil.RTO(BootErrorCode.RTO_CFG_LOADING_ERROR, "Failed to load master password: " + ex.toString(), null);
         }
 
@@ -590,7 +590,7 @@ abstract public class SummerBigBang extends SummerSingularity {
 
             //2. load configurations
             updated = ConfigUtil.loadConfigs(mode, log, userSpecifiedResourceBundle, userSpecifiedConfigDir.toPath(), configs, userSpecifiedCfgMonitorThrottleMillis, userSpecifiedConfigDir);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             log.fatal(I18n.info.unlaunched.format(userSpecifiedResourceBundle), ex);
             ApplicationUtil.RTO(BootErrorCode.RTO_CFG_LOADING_ERROR, null, null);
         }
@@ -719,7 +719,7 @@ abstract public class SummerBigBang extends SummerSingularity {
         for (Class<? extends Job> c : classes) {
             try {
                 triggers += QuartzUtil.addQuartzJob(scheduler, c);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 throw new RuntimeException("Filed to addQuartzJob for " + c, ex);
             }
         }

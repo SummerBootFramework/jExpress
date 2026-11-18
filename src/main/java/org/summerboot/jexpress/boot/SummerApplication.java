@@ -421,7 +421,7 @@ abstract public class SummerApplication extends SummerBigBang {
                         }
                     }
                 }
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 log.error("Failed to inspect " + this.userSpecifiedConfigDir + File.separator + "log4j2.xml", ex);
             }
             if (prompt != null) {

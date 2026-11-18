@@ -149,7 +149,7 @@ public class SecurityUtil {
         String realPath;
         try {
             realPath = file.getAbsoluteFile().toPath().normalize().toString();
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             Err e = new Err(BootErrorCode.NIO_REQUEST_BAD_DOWNLOAD, null, "Invalid file path", ex, "Invalid file path: " + filePath);
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return false;

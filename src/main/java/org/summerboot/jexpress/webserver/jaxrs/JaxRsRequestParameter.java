@@ -270,7 +270,7 @@ class JaxRsRequestParameter {
                     } else {
                         postDataObj = BeanUtil.fromJson(request.getHttpPostRequestBody(), targetClass, genericClassT);
                     }
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     // 1. convert to JSON
                     Err e = new Err(BootErrorCode.BAD_REQUEST_UNKNOWN_JSON_REQUEST_BODY, null, "Unknown request(JSON) body", ex, "Unknown request(JSON) body: " + ex.toString());
                     // 2. build JSON response with same app error code, and keep the default INFO log level.
@@ -323,7 +323,7 @@ class JaxRsRequestParameter {
                 v = request.getHttpPostRequestBody();
                 try {
                     postDataObj = BeanUtil.fromXML(v, targetClass);
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     // 1. convert to JSON
                     Err e = new Err(BootErrorCode.BAD_REQUEST_UNKNOWN_XML_REQUEST_BODY, null, "Unknown request(XML) body", ex, "Unknown request(XML) body: " + ex.toString());
                     // 2. build JSON response with same app error code, and keep the default INFO log level.
@@ -384,7 +384,7 @@ class JaxRsRequestParameter {
         }
         try {
             return ReflectionUtil.toJavaType(targetClass, parameterizedType, value, true, false, false, enumConvert, collectionDelimiter);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             Err e = new Err(BootErrorCode.BAD_REQUEST_DATA, null, "Failed to parse data type: invalid " + type + "{" + key + "}=" + value, ex);
             context.status(HttpResponseStatus.BAD_REQUEST).error(e);
             return ReflectionUtil.toStandardJavaType(null, false, targetClass, false, false, null);//primitive types devault value or null

@@ -94,7 +94,7 @@ public class GeoIpUtil {
                     }
                 }
             }
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             sb1.append(ex);
         }
         String systemInfo = "<br>Pid#" + java.lang.management.ManagementFactory.getRuntimeMXBean().getName()

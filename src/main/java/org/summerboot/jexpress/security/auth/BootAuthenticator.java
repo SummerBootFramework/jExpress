@@ -491,7 +491,7 @@ public abstract class BootAuthenticator implements Authenticator, ServerIntercep
                     }
                 }
             }
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             status = Status.UNAUTHENTICATED.withDescription(ERROR + ex.getMessage()).withCause(ex);
         }
 

@@ -122,7 +122,7 @@ public abstract class IdleEventMonitor {
                     idleEventMonitor.onCall(idleEventMonitor.getName());
                 } catch (InterruptedException ex) {
                     log.info("IdleEventMonitor.interrupted: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null), ex);
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     log.info("IdleEventMonitor.exception: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null), ex);
                 }
             } while (statusMap.getOrDefault(idleEventMonitor, true));

@@ -138,7 +138,7 @@ public class BootPostOfficeImpl implements PostOffice {
                 Runnable postman = () -> {
                     try {
                         email.send(SmtpClientConfig.cfg.getMailSession());
-                    } catch (Throwable ex) {
+                    } catch (Exception ex) {
                         log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
                     }
                 };
@@ -147,7 +147,7 @@ public class BootPostOfficeImpl implements PostOffice {
                 email.send(SmtpClientConfig.cfg.getMailSession());
             }
             success = true;
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             log.fatal("Failed to send email: " + ExceptionUtils.getRootCause(ex).toString());
         }
         return success;
