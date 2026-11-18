@@ -47,7 +47,8 @@ public abstract class HttpRpcClient implements RpcClient {
 
     protected static AtomicLong requestSequence = new AtomicLong(0);
 
-    public <T> RpcResult<T> rpc(SessionContext context, boolean updateContext, HttpRequest httpRequest, String originRequestBody, HttpResponse.BodyHandler<T> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException {
+    @Override
+    public <T, B> RpcResult<T> rpc(SessionContext context, boolean updateContext, HttpRequest httpRequest, String originRequestBody, HttpResponse.BodyHandler<B> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException {
         Objects.requireNonNull(httpRequest, "httpRequest must not be null");
         Objects.requireNonNull(responseBodyHandler, "responseBodyHandler must not be null");
         HttpClientConfig httpCfg = Objects.requireNonNull(getConfig(), "HttpClientConfig must not be null");
@@ -93,7 +94,7 @@ public abstract class HttpRpcClient implements RpcClient {
         }
 
         // 3. Do the actual HTTP request and handle the response
-        HttpResponse<T> httpResponse = null;
+        HttpResponse<B> httpResponse = null;
         String candidateIps = "n/a";
         try {
             HttpClient sharedHttpClient = httpCfg.getHttpClient();

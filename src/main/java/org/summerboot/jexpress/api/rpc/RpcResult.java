@@ -103,7 +103,7 @@ public class RpcResult<T> implements AutoCloseable {
     private static final int MAX_ERROR_BODY_BYTES = 64 * 1024;
 
     @Deprecated(since = "2.7.4", forRemoval = false)
-    public RpcResult(HttpRequest originRequest, String originRequestBody, HttpResponse<String> httpResponse, boolean remoteSuccess) {
+    public RpcResult(HttpRequest originRequest, String originRequestBody, HttpResponse<?> httpResponse, boolean remoteSuccess) {
         this(null, originRequest, originRequestBody, httpResponse, remoteSuccess, null, null);
     }
 

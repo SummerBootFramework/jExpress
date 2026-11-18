@@ -50,13 +50,14 @@ public interface RpcClient {
      * <p>
      * Default headers from {@link #getConfig()} will be applied to the builder before building the request.
      *
+     * @param <T>                the target business type expected when deserializing the {@link RpcResult}
      * @param context            the current session context for logging, memos, and error tracking
      * @param httpRequestBuilder the mutable request builder to configure and send
      * @param goodStatus         optional custom HTTP statuses considered successful (defaults to 2xx if empty)
      * @return an {@link RpcResult} wrapping the {@link String} response
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    default RpcResult<String> rpc(SessionContext context, HttpRequest.Builder httpRequestBuilder, HttpResponseStatus... goodStatus) throws IOException {
+    default <T> RpcResult<T> rpc(SessionContext context, HttpRequest.Builder httpRequestBuilder, HttpResponseStatus... goodStatus) throws IOException {
         return rpc(context, true, httpRequestBuilder, HttpResponse.BodyHandlers.ofString(), goodStatus);
     }
 
@@ -67,19 +68,21 @@ public interface RpcClient {
      * <b>Resource Management:</b> The returned {@link RpcResult} holds an open stream on 2xx responses and must be
      * closed via {@code try-with-resources} or consumed via {@link RpcResult#deserialize}.
      *
+     * @param <T>                the target business type expected when deserializing the {@link RpcResult}
      * @param context            the current session context
      * @param httpRequestBuilder the mutable request builder to configure and send
      * @param goodStatus         optional custom HTTP statuses considered successful
      * @return an {@link RpcResult} wrapping the {@link InputStream} response
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    default RpcResult<InputStream> rpcStream(SessionContext context, HttpRequest.Builder httpRequestBuilder, HttpResponseStatus... goodStatus) throws IOException {
+    default <T> RpcResult<T> rpcStream(SessionContext context, HttpRequest.Builder httpRequestBuilder, HttpResponseStatus... goodStatus) throws IOException {
         return rpcStream(context, true, httpRequestBuilder, goodStatus);
     }
 
     /**
      * Executes a streaming HTTP request built from the given builder, returning the response body as an {@link InputStream}.
      *
+     * @param <T>                the target business type expected when deserializing the {@link RpcResult}
      * @param context            the current session context
      * @param updateContext      whether to record RPC telemetry and errors into the {@link SessionContext}
      * @param httpRequestBuilder the mutable request builder to configure and send
@@ -87,7 +90,7 @@ public interface RpcClient {
      * @return an {@link RpcResult} wrapping the {@link InputStream} response
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    default RpcResult<InputStream> rpcStream(SessionContext context, boolean updateContext, HttpRequest.Builder httpRequestBuilder, HttpResponseStatus... goodStatus) throws IOException {
+    default <T> RpcResult<T> rpcStream(SessionContext context, boolean updateContext, HttpRequest.Builder httpRequestBuilder, HttpResponseStatus... goodStatus) throws IOException {
         return rpc(context, updateContext, httpRequestBuilder, HttpResponse.BodyHandlers.ofInputStream(), goodStatus);
     }
 
@@ -95,7 +98,8 @@ public interface RpcClient {
      * Configures the given {@link HttpRequest.Builder} with preset headers from {@link #getConfig()},
      * builds the immutable {@link HttpRequest}, and executes it using the specified {@link HttpResponse.BodyHandler}.
      *
-     * @param <T>                 the type of the response body
+     * @param <T>                 the target business type expected when deserializing the {@link RpcResult}
+     * @param <B>                 the raw HTTP response body type produced by {@code responseBodyHandler}
      * @param context             the current session context
      * @param updateContext       whether to record RPC telemetry and errors into the {@link SessionContext}
      * @param httpRequestBuilder  the mutable request builder to configure and send
@@ -104,7 +108,7 @@ public interface RpcClient {
      * @return an {@link RpcResult} wrapping the response of type {@code T}
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    default <T> RpcResult<T> rpc(SessionContext context, boolean updateContext, HttpRequest.Builder httpRequestBuilder, HttpResponse.BodyHandler<T> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException {
+    default <T, B> RpcResult<T> rpc(SessionContext context, boolean updateContext, HttpRequest.Builder httpRequestBuilder, HttpResponse.BodyHandler<B> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException {
         Objects.requireNonNull(httpRequestBuilder, "httpRequestBuilder must not be null");
         HttpClientUtil.configure(httpRequestBuilder, getConfig());
         HttpRequest httpRequest = httpRequestBuilder.build();
@@ -120,13 +124,14 @@ public interface RpcClient {
      * Unlike the {@link HttpRequest.Builder} overloads, this method does <b>not</b> inject default headers
      * from {@link #getConfig()}, preserving the exact headers provided by the caller.
      *
+     * @param <T>         the target business type expected when deserializing the {@link RpcResult}
      * @param context     the current session context
      * @param httpRequest the pre-built immutable HTTP request
      * @param goodStatus  optional custom HTTP statuses considered successful
      * @return an {@link RpcResult} wrapping the {@link String} response
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    default RpcResult<String> rpc(SessionContext context, HttpRequest httpRequest, HttpResponseStatus... goodStatus) throws IOException {
+    default <T> RpcResult<T> rpc(SessionContext context, HttpRequest httpRequest, HttpResponseStatus... goodStatus) throws IOException {
         return rpc(context, true, httpRequest, HttpResponse.BodyHandlers.ofString(), goodStatus);
     }
 
@@ -135,13 +140,14 @@ public interface RpcClient {
      * <p>
      * Preserves the exact headers on the provided {@link HttpRequest} without applying config defaults.
      *
+     * @param <T>         the target business type expected when deserializing the {@link RpcResult}
      * @param context     the current session context
      * @param httpRequest the pre-built immutable HTTP request
      * @param goodStatus  optional custom HTTP statuses considered successful
      * @return an {@link RpcResult} wrapping the {@link InputStream} response
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    default RpcResult<InputStream> rpcStream(SessionContext context, HttpRequest httpRequest, HttpResponseStatus... goodStatus) throws IOException {
+    default <T> RpcResult<T> rpcStream(SessionContext context, HttpRequest httpRequest, HttpResponseStatus... goodStatus) throws IOException {
         return rpc(context, true, httpRequest, HttpResponse.BodyHandlers.ofInputStream(), goodStatus);
     }
 
@@ -150,7 +156,8 @@ public interface RpcClient {
      * <p>
      * Preserves the exact headers on the provided {@link HttpRequest} without applying config defaults.
      *
-     * @param <T>                 the type of the response body
+     * @param <T>                 the target business type expected when deserializing the {@link RpcResult}
+     * @param <B>                 the raw HTTP response body type produced by {@code responseBodyHandler}
      * @param context             the current session context
      * @param updateContext       whether to record RPC telemetry and errors into the {@link SessionContext}
      * @param httpRequest         the pre-built immutable HTTP request
@@ -159,7 +166,7 @@ public interface RpcClient {
      * @return an {@link RpcResult} wrapping the response of type {@code T}
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    default <T> RpcResult<T> rpc(SessionContext context, boolean updateContext, HttpRequest httpRequest, HttpResponse.BodyHandler<T> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException {
+    default <T, B> RpcResult<T> rpc(SessionContext context, boolean updateContext, HttpRequest httpRequest, HttpResponse.BodyHandler<B> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException {
         Objects.requireNonNull(httpRequest, "httpRequest must not be null");
         String originRequestBody = HttpClientUtil.getHttpRequestBody(httpRequest);
         return rpc(context, updateContext, httpRequest, originRequestBody, responseBodyHandler, goodStatus);
@@ -173,13 +180,14 @@ public interface RpcClient {
      * <p>
      * Automatically closes any unconsumed stream held by the previous {@code rpcResult} before retrying.
      *
+     * @param <T>        the target business type expected when deserializing the {@link RpcResult}
      * @param context    the current session context
      * @param rpcResult  the previous {@link RpcResult} whose original request will be re-executed
      * @param goodStatus optional custom HTTP statuses considered successful
      * @return a new {@link RpcResult} wrapping the retry {@link String} response
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    default RpcResult<String> rpc(SessionContext context, RpcResult<?> rpcResult, HttpResponseStatus... goodStatus) throws IOException {
+    default <T> RpcResult<T> rpc(SessionContext context, RpcResult<?> rpcResult, HttpResponseStatus... goodStatus) throws IOException {
         return rpc(context, true, rpcResult, HttpResponse.BodyHandlers.ofString(), goodStatus);
     }
 
@@ -191,7 +199,8 @@ public interface RpcClient {
      * <p>
      * Use code with caution.
      *
-     * @param <T>                 the type of the response body
+     * @param <T>                 the target business type expected when deserializing the {@link RpcResult}
+     * @param <B>                 the raw HTTP response body type produced by {@code responseBodyHandler}
      * @param context             the current session context
      * @param updateContext       whether to record RPC telemetry and errors into the {@link SessionContext}
      * @param rpcResult           the previous {@link RpcResult} to retry
@@ -200,7 +209,7 @@ public interface RpcClient {
      * @return a new {@link RpcResult} wrapping the retry response of type {@code T}
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    default <T> RpcResult<T> rpc(SessionContext context, boolean updateContext, RpcResult<?> rpcResult, HttpResponse.BodyHandler responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException {
+    default <T, B> RpcResult<T> rpc(SessionContext context, boolean updateContext, RpcResult<?> rpcResult, HttpResponse.BodyHandler<B> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException {
         Objects.requireNonNull(rpcResult, "rpcResult must not be null");
         rpcResult.closeQuietly();
         return rpc(context, updateContext, rpcResult.originRequest(), rpcResult.originRequestBody(), responseBodyHandler, goodStatus);
@@ -210,7 +219,8 @@ public interface RpcClient {
     /**
      * Core execution method implemented by concrete RPC clients to send the HTTP request and construct the {@link RpcResult}.
      *
-     * @param <T>                 the type of the response body
+     * @param <T>                 the target business type expected when deserializing the {@link RpcResult}
+     * @param <B>                 the raw HTTP response body type produced by {@code responseBodyHandler}
      * @param context             the current session context
      * @param updateContext       whether to record RPC telemetry and errors into the {@link SessionContext}
      * @param httpRequest         the final immutable HTTP request to send
@@ -220,5 +230,5 @@ public interface RpcClient {
      * @return an {@link RpcResult} wrapping the response of type {@code T}
      * @throws IOException if an I/O error occurs when sending or receiving
      */
-    <T> RpcResult<T> rpc(SessionContext context, boolean updateContext, HttpRequest httpRequest, String originRequestBody, HttpResponse.BodyHandler<T> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException;
+    <T, B> RpcResult<T> rpc(SessionContext context, boolean updateContext, HttpRequest httpRequest, String originRequestBody, HttpResponse.BodyHandler<B> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException;
 }
