@@ -237,7 +237,7 @@ public class JaxRsRequestProcessorManager {
                         }
                         HealthMonitor.registerAffectedServices(httpMethod, declaredUri, requiredHealthChecks, emptyHealthCheckPolicy);
                         memo.append("\n\t- ").append(httpMethod).append(" ").append(path).append(" (").append(javaMethod.getDeclaringClass().getName()).append(".").append(javaMethod.getName()).append(" )");
-                    } catch (Throwable ex) {
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                         errors.append("failed to create processor for ").append(controllerClass.getName()).append(".").append(javaMethod.getName()).append("\n\t").append(ex);
                         continue;

@@ -157,7 +157,7 @@ public class RedisConfig implements JExpressConfig {
         jedisPools.forEach((p) -> {
             try {
                 p.destroy();
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
             }
         });
     }

@@ -18,7 +18,8 @@
       connections in the HTTP/1.1 and HTTP/2 connection pools, improving resource management and connection reuse.
     - RpcDelegate.rpcEx(): refactoring to support exception logging, exception details and exception cause in the context memo log, and to support exception cause in the ServiceError response.
     - RpcResult: refactoring to handle streaming response auto-close and auto-cleanup, preventing resource leaks and ensuring proper cleanup of resources after processing streaming responses.
-    - At the moment a certificate becomes invalid or a handshake fails, capture the full list of candidate IP addresses resolved for the current domain name.
+    - At the moment an exception occurs, capture the full list of candidate IP addresses resolved for the current domain name.
+    - support request type: String, InputStream, Stream, byte[], Path, Flow.Publishe and custom
 
 ## Version 2.7.5 (2026-11-01)
 

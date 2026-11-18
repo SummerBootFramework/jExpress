@@ -46,7 +46,7 @@ public interface AuthTokenCache extends HealthChecker {
             if (isOnBlacklist) {
                 e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Access Error - failed to expire", null, null);
             }
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             e = new Err(BootErrorCode.ACCESS_ERROR_CACHE, null, "Cache Access Error - " + ex.toString(), ex, null);
         }
         List<Err> errors = null;

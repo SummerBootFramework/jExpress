@@ -150,7 +150,7 @@ public class WebSocketAuthHandlerOtt extends ChannelInboundHandlerAdapter {
                 WebSocketPipelinesInitializer initializer = null;
                 try {
                     initializer = injector.getInstance(WebSocketPipelinesInitializer.class);
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     // No WebSocketPipelinesInitializer defined, skip pipeline initialization
                 }
                 if (initializer == null) {

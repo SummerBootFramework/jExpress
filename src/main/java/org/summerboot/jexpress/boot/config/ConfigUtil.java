@@ -215,7 +215,7 @@ public class ConfigUtil {
                     temp.load(configFile, false);// try it first on a temp vo to avoid bad CFG file damage the current settings
                 }
                 cfg.load(configFile, true);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 cause = ex;
                 log.error(configFile, ex);
             } finally {
@@ -497,7 +497,7 @@ public class ConfigUtil {
             } else {
                 addError("invalid format, expected:  \"" + key + "\"=ENC(encrypted value)", null);
             }
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             addError("invalid \"" + key + "\"", ex);
         }
         return pwd;
@@ -542,7 +542,7 @@ public class ConfigUtil {
                 return null;
             }
             return FormatterUtil.parseBindingAddresss(v);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             addError("invalid \"" + key + "\"", ex);
             return null;
         }
@@ -564,7 +564,7 @@ public class ConfigUtil {
             char[] pwdKey = StringUtils.isBlank(alias) || pwd == null ? null : pwd.toCharArray();
 
             kmf = SslUtil.buildKeyManagerFactory(sslKeyStorePath, pwdStore, alias, pwdKey);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex, ex);
         }
         return kmf;
@@ -582,7 +582,7 @@ public class ConfigUtil {
             String pwd = getAsPassword(props, storePwd);
             char[] pwdStore = pwd == null ? null : pwd.toCharArray();
             tmf = SslUtil.buildTrustManagerFactory(sslKeyStorePath, pwdStore);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             addError("Failed to load \"" + sslKeyStorePath + "\") - " + ex.toString(), ex);
         }
         return tmf;

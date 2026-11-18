@@ -271,7 +271,7 @@ public class HealthMonitor {
 
                             }
                         }
-                    } catch (Throwable ex) {
+                    } catch (Exception ex) {
                         HEALTH_CHECKER_QUEUE.offer(triggeredHealthChecker);
                         log.error("Health check error: " + triggeredHealthCheckerName, ex);
                     }
@@ -289,7 +289,7 @@ public class HealthMonitor {
                     if (appLifecycleListener != null && started) {
                         try {
                             appLifecycleListener.onHealthCheckFinished(appContext, isHealthCheckSuccess, isServicePaused, retryValue, inspectionIntervalSeconds);
-                        } catch (Throwable ex) {
+                        } catch (Exception ex) {
                             log.error("appLifecycleListener.onHealthInspectionFailed() error", ex);
                         }
                     }
@@ -371,7 +371,7 @@ public class HealthMonitor {
         if (appLifecycleListener != null) {
             try {
                 appLifecycleListener.onApplicationStatusUpdated(appContext, isHealthCheckSuccess, isServicePaused, serviceStatusChanged, reason);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 log.error("appLifecycleListener.onApplicationStatusUpdated() error", ex);
             }
         }

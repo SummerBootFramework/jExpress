@@ -41,7 +41,7 @@ public class BearerAuthCredential extends CallCredentials {
                 Metadata headers = new Metadata();
                 headers.put(GrpcConstants.Authorization, GrpcConstants.BEARER_TYPE + " " + jwt);
                 metadataApplier.apply(headers);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 metadataApplier.fail(Status.UNAUTHENTICATED.withCause(ex));
             }
         });

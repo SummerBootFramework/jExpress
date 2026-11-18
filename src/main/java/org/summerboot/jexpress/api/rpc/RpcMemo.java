@@ -25,6 +25,7 @@ public interface RpcMemo {
 
     String MEMO_RPC_REQUEST = "rpc.1req";
     String MEMO_RPC_REQUEST_DATA = "rpc.2req.body";
+    String MEMO_RPC_RESPONSE_IPS = "rpc.3resp.ips";
     String MEMO_RPC_RESPONSE = "rpc.3resp";
     String MEMO_RPC_RESPONSE_DATA = "rpc.4resp.body";
 }

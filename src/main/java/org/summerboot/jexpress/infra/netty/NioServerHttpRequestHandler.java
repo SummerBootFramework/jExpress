@@ -199,7 +199,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                 Err e = new Err(BootErrorCode.BAD_REQUEST_DATA, null, "Unable to serve client request", ex);
                 context.error(e).status(HttpResponseStatus.BAD_REQUEST).level(Level.WARN);
                 responseDataBytes = NioHttpUtil.sendResponse(ctx, isKeepAlive, context, this, processorSettings);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 ioEx = ex;
                 Err e = new Err(BootErrorCode.NIO_UNEXPECTED_SERVICE_FAILURE, null, "Failed to serve client request", ex);
                 context.error(e).status(HttpResponseStatus.INTERNAL_SERVER_ERROR).level(Level.FATAL);
@@ -247,12 +247,12 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                             // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
                             log.log(level, "{}", report);// CWE-117 False Positive
                         }
-                    } catch (Throwable ex) {
+                    } catch (Exception ex) {
                         log.fatal("logging failed \n{}", report, ex);// CWE-117 False Positive
                     }
                     try {
                         afterLogging(report, requestHeaders, httpMethod, httpRequestUriRaw, httpPostRequestBody, context, queuingTime, processTime, responseTime, responseDataBytes, ioEx);
-                    } catch (Throwable ex) {
+                    } catch (Exception ex) {
                         log.error("afterLogging failed", ex);
                     }
                 } finally {
@@ -394,7 +394,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                         } else {
                             isInFilter = s.contains(target);
                         }
-                    } catch (Throwable ex) {
+                    } catch (Exception ex) {
                     }
                     if (isInFilter) {
                         break;

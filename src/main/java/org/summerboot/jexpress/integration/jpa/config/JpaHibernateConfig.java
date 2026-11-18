@@ -108,7 +108,7 @@ abstract public class JpaHibernateConfig extends JpaConfig {
                 logger.warn("close current jpa connection due to config changed");
                 try {
                     old.close();
-                } catch (Throwable ex) {
+                } catch (Exception ex) {
                     logger.warn("failed to close current jpa connection", ex);
                 }
             }
@@ -129,7 +129,7 @@ abstract public class JpaHibernateConfig extends JpaConfig {
             try {
                 sessionFactory.close();
                 sessionFactory = null;
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace(System.err);
             }
         }

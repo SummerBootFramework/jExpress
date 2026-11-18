@@ -105,7 +105,7 @@ public abstract class BootConfig implements JExpressConfig {
             //return ret;// - discard the new instance, return the cached singleton
             //return (T) cache.get(implclass);
             return implclass.cast(cache.get(implclass));
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Failed to instance " + implclass, ex);
         }
     }
@@ -246,7 +246,7 @@ public abstract class BootConfig implements JExpressConfig {
         try {
             resetToDefault();
             preLoad(cfgFile, isReal, helper, props);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
             helper.addError("failed to preLoad configs:" + ex, ex);
         }
@@ -259,7 +259,7 @@ public abstract class BootConfig implements JExpressConfig {
                 this.loadField(field, configFolder, helper, props, autoDecrypt);
             } catch (NullPointerException ex) {
                 ex.printStackTrace();
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 String key = field.getAnnotation(Config.class).key();
                 Class expectedType = field.getType();
                 helper.addError("invalid \"" + key + "\" - " + expectedType + ", error=" + ex, ex);
@@ -269,7 +269,7 @@ public abstract class BootConfig implements JExpressConfig {
         // 3. more
         try {
             loadCustomizedConfigs(cfgFile, isReal, helper, props);
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
             helper.addError("failed to init customized configs:" + ex, ex);
         } finally {
@@ -442,7 +442,7 @@ public abstract class BootConfig implements JExpressConfig {
                 Constructor cons = configClass.getDeclaredConstructor();
                 cons.setAccessible(true);
                 objectInstance = cons.newInstance();
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
@@ -571,7 +571,7 @@ public abstract class BootConfig implements JExpressConfig {
                             if (dfv != null) {
                                 dv = dfv.toString();//String.valueOf(dfv);
                             }
-                        } catch (Throwable ex) {
+                        } catch (Exception ex) {
                             ex.printStackTrace();
                         }
                     }
