@@ -353,7 +353,7 @@ public class HttpClientUtil {
     }
 
     /**
-     * Extracts an InputStream from either INPUT_STREAM or LINE_STREAM (Stream<?>) for Jackson deserialization.
+     * Extracts an InputStream from either INPUT_STREAM or LINE_STREAM ({@code Stream<?>}) for Jackson deserialization.
      */
     public static InputStream extractStreamForDeserialization(HttpResponse<?> httpResponse, Charset charset) {
         Object body = httpResponse.body();
