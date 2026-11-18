@@ -186,8 +186,8 @@
         <jwt.version>0.13.0</jwt.version>
 
         <!-- NIO Netty -->
-        <netty.version>4.2.20.Final</netty.version>
-        <netty-tcnative.version>2.0.85.Final</netty-tcnative.version>
+        <netty.version>4.2.21.Final</netty.version>
+        <netty-tcnative.version>2.0.86.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.85.1</grpc.version>
         <guava.version>33.8.0-jre</guava.version>
@@ -210,7 +210,7 @@
         <jackson2.version>2.23.0</jackson2.version>
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
-        <tomcat-embed-el.version>11.0.27</tomcat-embed-el.version>
+        <tomcat-embed-el.version>11.0.29</tomcat-embed-el.version>
         <hibernate-validator.version>9.1.6.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
@@ -240,7 +240,7 @@
         <openhtml.version>1.1.114</openhtml.version>
         <batik-transcoder.version>1.20</batik-transcoder.version>
         <!-- PDF - iText -->
-        <itext-core.version>9.8.0</itext-core.version>
+        <itext-core.version>9.8.1</itext-core.version>
         <itext-html2pdf.version>6.3.4</itext-html2pdf.version>
 
         <veracode.version>1.2.1</veracode.version>
