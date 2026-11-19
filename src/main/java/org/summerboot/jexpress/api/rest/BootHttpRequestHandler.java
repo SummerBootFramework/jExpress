@@ -33,6 +33,7 @@ import org.summerboot.jexpress.api.common.BootPoi;
 import org.summerboot.jexpress.api.common.ProcessorSettings;
 import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.boot.lifecycle.http.HttpExceptionListener;
 import org.summerboot.jexpress.boot.lifecycle.http.HttpLifecycleListener;
 import org.summerboot.jexpress.infra.netty.NioServerHttpRequestHandler;
@@ -96,7 +97,7 @@ public class BootHttpRequestHandler extends NioServerHttpRequestHandler {
             }
 
             // step2. caller authentication
-            if (processor.isRoleBased() || BootAuthenticator.hasBearerToken(httpRequestHeaders)) {
+            if (processor.isRoleBased() || (BootConstants.CFG_JWT_VERIFY_ON_RECEIPT && BootAuthenticator.hasBearerToken(httpRequestHeaders))) {
                 context.poi(BootPoi.AUTH_BEGIN);
                 if (!authenticationCheck(processor, httpRequestHeaders, httpRequestPath, context)) {
                     context.status(HttpResponseStatus.UNAUTHORIZED);
