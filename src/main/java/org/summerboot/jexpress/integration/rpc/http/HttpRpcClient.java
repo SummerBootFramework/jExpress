@@ -204,12 +204,15 @@ public abstract class HttpRpcClient implements RpcClient {
             Throwable cause = getRootCause(ex);
             msg = title + ": " + cause;
         }
-        context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE, msg);
+        if (context != null) {
+            context.memo(requestId + RpcMemo.MEMO_RPC_RESPONSE, msg);
+        }
         msg = requestId + "rpc: " + msg;
-        if (updateContext) {
+        if (updateContext && context != null) {
             Err e = new Err(errorCode, null, msg, ex);
             context.status(status).error(e);
         }
+
         return msg;
     }
 }
