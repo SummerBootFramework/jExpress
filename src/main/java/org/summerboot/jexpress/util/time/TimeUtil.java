@@ -551,4 +551,10 @@ public class TimeUtil {
     public static String getSystemDefaultZoneOffset(ZoneId zoneId) {
         return zoneId.getRules().getOffset(Instant.now()).getId();
     }
+
+    public static ZoneId parseZoneId(String timeZone) {
+        return (timeZone == null || timeZone.isBlank())
+                ? ZONE_ID_ONTARIO
+                : ZoneId.of(timeZone);
+    }
 }

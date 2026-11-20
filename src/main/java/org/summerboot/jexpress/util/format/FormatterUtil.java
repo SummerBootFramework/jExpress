@@ -729,4 +729,15 @@ public class FormatterUtil {
             return null;
         }
     }
+
+    /**
+     * Converts milliseconds to a clean decimal seconds string without trailing zeros.
+     * Examples: 1556 -> "1.556", 1500 -> "1.5", 60000 -> "60"
+     */
+    public static String formatMillisAsSeconds(long millis) {
+        if (millis % 1000 == 0) {
+            return Long.toString(millis / 1000);
+        }
+        return BigDecimal.valueOf(millis, 3).stripTrailingZeros().toPlainString();
+    }
 }
