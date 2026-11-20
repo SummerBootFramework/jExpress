@@ -24,7 +24,9 @@
     - implements IdleEventMonitor.IdleEventListener
 - etc/boot.conf: new config item **`jwt.verify-on-receipt`**: Determines whether the server verifies the JWT immediately upon receipt, even if it is not used in subsequent processing. Defaults to true
   to adhere to fail-fast and defense-in-depth principles, and should only be set to false when running a mock server. This item was hardcoded as true.
-- IdleEventMonitor: Refactored for nanosecond-precision control and idempotent startup
+- IdleEventMonitor:
+    - Refactored for nanosecond-precision control and idempotent startup
+    - added report(..) feature
 
 ## Version 2.7.5 (2026-11-01)
 

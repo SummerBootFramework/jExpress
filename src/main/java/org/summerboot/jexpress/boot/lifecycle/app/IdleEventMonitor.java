@@ -20,13 +20,18 @@ package org.summerboot.jexpress.boot.lifecycle.app;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
+import org.summerboot.jexpress.util.format.FormatterUtil;
 import org.summerboot.jexpress.util.time.TimeUtil;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
@@ -41,7 +46,8 @@ public abstract class IdleEventMonitor {
 
     protected static final Logger log = LogManager.getLogger(IdleEventMonitor.class);
 
-    public record CallState(long nanoTime, long wallClockMillis, String transactionId) {
+    // Stores ONLY real business access records (never overwritten by internal timer resets)
+    public record CallState(long wallClockMillis, String transactionId) {
     }
 
     private enum State {RUNNING, PAUSED}
@@ -57,10 +63,14 @@ public abstract class IdleEventMonitor {
         }, "idle-monitor-shutdown"));
     }
 
-    private final AtomicReference<CallState> lastState = new AtomicReference<>(
-            new CallState(System.nanoTime(), System.currentTimeMillis(), null)
-    );
+    // 1. Dedicated monotonic timer for idle countdown (updated by both onCall and internal resets)
+    private final AtomicLong lastTimerNano = new AtomicLong(System.nanoTime());
+
+    // 2. Dedicated record for real user calls (updated ONLY by onCall; null until first real request)
+    private final AtomicReference<CallState> lastCallState = new AtomicReference<>(null);
+
     private final String name;
+    private final AtomicLong requestSequence = new AtomicLong(0);
 
     public interface IdleEventListener {
         void onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
@@ -74,28 +84,156 @@ public abstract class IdleEventMonitor {
         return name;
     }
 
+    public void onCall() {
+        onCall(null);
+    }
+
+    /**
+     * Records a real business request: updates both the actual access record and the idle timer.
+     */
     public void onCall(String transactionId) {
-        this.lastState.set(new CallState(System.nanoTime(), System.currentTimeMillis(), transactionId));
+        long seq = requestSequence.incrementAndGet();
+        String txId = (transactionId == null ? "" : transactionId) + "@" + name + "#" + seq;
+        long nowNano = System.nanoTime();
+        long nowMillis = System.currentTimeMillis();
+
+        // Update real access record first, then reset the countdown timer
+        this.lastCallState.set(new CallState(nowMillis, txId));
+        this.lastTimerNano.set(nowNano);
+    }
+
+    /**
+     * Internal helper: resets only the countdown timer without touching real user access records.
+     */
+    private void resetTimer() {
+        this.lastTimerNano.set(System.nanoTime());
     }
 
     public String getLastTransactionId() {
-        return lastState.get().transactionId();
+        CallState state = lastCallState.get();
+        return state != null ? state.transactionId() : null;
     }
 
     public long getLastTimestamp() {
-        return lastState.get().wallClockMillis();
+        CallState state = lastCallState.get();
+        return state != null ? state.wallClockMillis() : 0L;
     }
 
     public long getWaitMillis(long thresholdMillis) {
-        return getWaitMillis(thresholdMillis, lastState.get());
+        return getWaitMillis(thresholdMillis, lastTimerNano.get());
     }
 
-    private long getWaitMillis(long thresholdMillis, CallState state) {
-        long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - state.nanoTime());
+    private long getWaitMillis(long thresholdMillis, long timerNanoSnapshot) {
+        long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - timerNanoSnapshot);
         return thresholdMillis - elapsedMillis;
     }
 
     public abstract long getIdleIntervalMillis();
+
+
+    private static final String DEFAULT_REPORT_TEMPLATE = """
+            ==================================================
+            %s
+            Monitor Name     : %s
+            Report Time      : %s
+            Idle Threshold   : %s seconds
+            Last Access Time : %s
+            Last Access By   : %s
+            ==================================================
+            """;
+
+    /**
+     * Generates an idle event report using default title, default timezone, and default template.
+     */
+    public String report() {
+        return report(null, TimeUtil.ZONE_ID_ONTARIO, DEFAULT_REPORT_TEMPLATE);
+    }
+
+    /**
+     * Generates an idle event report with a custom title, using default timezone and default template.
+     */
+    public String report(String reportTitle) {
+        return report(reportTitle, TimeUtil.ZONE_ID_ONTARIO, DEFAULT_REPORT_TEMPLATE);
+    }
+
+    /**
+     * Generates an idle event report using default title, specified ZoneId, and default template.
+     */
+    public String report(ZoneId zoneId) {
+        return report(null, zoneId, DEFAULT_REPORT_TEMPLATE);
+    }
+
+    /**
+     * Generates an idle event report with a custom title and timezone ID string, using default template.
+     */
+    public String report(String reportTitle, String timeZone) {
+        return report(reportTitle, TimeUtil.parseZoneId(timeZone), DEFAULT_REPORT_TEMPLATE);
+    }
+
+    /**
+     * Generates an idle event report with a custom title and ZoneId, using default template.
+     */
+    public String report(String reportTitle, ZoneId zoneId) {
+        return report(reportTitle, zoneId, DEFAULT_REPORT_TEMPLATE);
+    }
+
+    /**
+     * Generates an idle event report with a custom title, timezone ID string, and custom template.
+     */
+    public String report(String reportTitle, String timeZone, String reportTemplate) {
+        return report(reportTitle, TimeUtil.parseZoneId(timeZone), reportTemplate);
+    }
+
+    /**
+     * Generates an idle event report using the specified title, ZoneId, and custom format template.
+     *
+     * @param reportTitle    Optional title prefix. Uses "[IDLE EVENT REPORT]" if null/blank,
+     *                       otherwise "[<reportTitle> IDLE EVENT REPORT]".
+     * @param zoneId         Target ZoneId. Falls back to America/Toronto if null.
+     * @param reportTemplate Custom format string accepting 6 string arguments (%s):
+     *                       (1) formattedTitle, (2) monitorName, (3) formattedReportTime,
+     *                       (4) formattedIdleSeconds, (5) formattedLastAccessTime, (6) lastAccessBy.
+     *                       Falls back to DEFAULT_REPORT_TEMPLATE if null/blank.
+     */
+    public String report(String reportTitle, ZoneId zoneId, String reportTemplate) {
+        String formattedTitle = (reportTitle == null || reportTitle.isBlank())
+                ? "[IDLE EVENT REPORT]"
+                : "[" + reportTitle.trim() + " IDLE EVENT REPORT]";
+
+        ZoneId targetZone = (zoneId != null) ? zoneId : TimeUtil.ZONE_ID_ONTARIO;
+        String template = (reportTemplate != null && !reportTemplate.isBlank())
+                ? reportTemplate
+                : DEFAULT_REPORT_TEMPLATE;
+
+        // Reuse the zoned formatter for both Report Time and Last Access Time
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(targetZone);
+        String formattedReportTime = formatter.format(Instant.now());
+
+        // Read the real user call record (never polluted by internal timer resets)
+        CallState state = this.lastCallState.get();
+        String formattedIdleSeconds = FormatterUtil.formatMillisAsSeconds(this.getIdleIntervalMillis());
+
+        String formattedLastAccessTime;
+        String lastAccessBy;
+
+        if (state != null) {
+            formattedLastAccessTime = formatter.format(Instant.ofEpochMilli(state.wallClockMillis()));
+            lastAccessBy = state.transactionId();
+        } else {
+            formattedLastAccessTime = "N/A";
+            lastAccessBy = "N/A (No requests since startup)";
+        }
+
+        return template.formatted(
+                formattedTitle,
+                this.name,
+                formattedReportTime,
+                formattedIdleSeconds,
+                formattedLastAccessTime,
+                lastAccessBy
+        );
+    }
+
 
     /**
      * Starts monitoring idle events for the given monitor instance using a virtual thread.
@@ -104,11 +242,9 @@ public abstract class IdleEventMonitor {
         Objects.requireNonNull(monitor, "IdleEventMonitor cannot be null");
         Objects.requireNonNull(listener, "IdleEventListener cannot be null");
 
-
         threadMap.computeIfAbsent(monitor, m -> {
-            // Initialize state and reset timer BEFORE starting the virtual thread
-            // so immediate calls to pause() or stopAll() right after start() take effect reliably.
-            m.onCall(m.getName());
+            // Reset ONLY the countdown timer before starting; preserve any existing real CallState
+            m.resetTimer();
             stateMap.put(m, State.RUNNING);
 
             return Thread.startVirtualThread(() -> {
@@ -136,28 +272,35 @@ public abstract class IdleEventMonitor {
                                 continue;
                             }
 
-                            // Capture an atomic snapshot of the current state
-                            CallState snapshot = m.lastState.get();
+                            // Capture an atomic snapshot of the countdown timer
+                            long timerSnapshot = m.lastTimerNano.get();
 
-                            // Double-check against the exact snapshot before firing the event.
+                            // Double-check against the exact timer snapshot before firing
                             // Prevents false triggers if onCall() updated lastState right before this line.
-                            if (m.getWaitMillis(idleIntervalMillis, snapshot) > 0) {
+                            if (m.getWaitMillis(idleIntervalMillis, timerSnapshot) > 0) {
                                 continue;
                             }
 
+                            CallState realCall = m.lastCallState.get();
                             log.info("IdleEventMonitor.onIdle: {}, lastTxId={}, lastTS={}",
-                                    m.getName(), snapshot.transactionId(), TimeUtil.toOffsetDateTime(snapshot.wallClockMillis(), null));
+                                    m.getName(),
+                                    realCall != null ? realCall.transactionId() : "N/A",
+                                    realCall != null ? TimeUtil.toOffsetDateTime(realCall.wallClockMillis(), null) : "N/A");
 
                             listener.onIdle(m);
 
-                            // Reset the timer only if no new call arrived during listener execution
-                            m.lastState.compareAndSet(snapshot, new CallState(System.nanoTime(), System.currentTimeMillis(), m.getName()));
+                            // Reset ONLY the timer if no new call arrived during listener execution
+                            m.lastTimerNano.compareAndSet(timerSnapshot, System.nanoTime());
 
                         } catch (Exception ex) {
+                            CallState realCall = m.lastCallState.get();
                             log.error("IdleEventMonitor.exception: {}, lastTxId={}, lastTS={}",
-                                    m.getName(), m.getLastTransactionId(), TimeUtil.toOffsetDateTime(m.getLastTimestamp(), null), ex);
-                            // Reset the timer on exception to prevent tight-loop log flooding
-                            m.onCall(m.getName());
+                                    m.getName(),
+                                    realCall != null ? realCall.transactionId() : "N/A",
+                                    realCall != null ? TimeUtil.toOffsetDateTime(realCall.wallClockMillis(), null) : "N/A",
+                                    ex);
+                            // Reset ONLY the timer on exception
+                            m.resetTimer();
                         }
                     }
                 } finally {
@@ -181,10 +324,13 @@ public abstract class IdleEventMonitor {
 
     /**
      * Resumes monitoring, resets the idle timer, and unparks the virtual thread immediately.
+     *
+     * @param monitor
      */
     public static void resume(IdleEventMonitor monitor) {
         if (monitor != null && stateMap.replace(monitor, State.PAUSED, State.RUNNING)) {
-            monitor.onCall(monitor.getName());
+// Reset ONLY the countdown timer on resume; preserve real lastCallState
+            monitor.resetTimer();
             log.info("IdleEventMonitor.resumed: {}", monitor.getName());
             LockSupport.unpark(threadMap.get(monitor));
         }
@@ -192,6 +338,8 @@ public abstract class IdleEventMonitor {
 
     /**
      * Permanently stops and cleans up a single monitor instance.
+     *
+     * @param monitor
      */
     public static void stop(IdleEventMonitor monitor) {
         if (monitor == null) {
