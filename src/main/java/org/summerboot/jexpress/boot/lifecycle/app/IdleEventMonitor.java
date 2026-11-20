@@ -93,7 +93,7 @@ public abstract class IdleEventMonitor {
      */
     public void onCall(String transactionId) {
         long seq = requestSequence.incrementAndGet();
-        String txId = (transactionId == null ? "" : transactionId) + "@" + name + "#" + seq;
+        String txId = (transactionId == null ? "" : transactionId) + " @" + name + "#" + seq;
         long nowNano = System.nanoTime();
         long nowMillis = System.currentTimeMillis();
 
