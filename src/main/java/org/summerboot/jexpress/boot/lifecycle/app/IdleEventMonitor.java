@@ -329,7 +329,7 @@ public abstract class IdleEventMonitor {
      */
     public static void resume(IdleEventMonitor monitor) {
         if (monitor != null && stateMap.replace(monitor, State.PAUSED, State.RUNNING)) {
-// Reset ONLY the countdown timer on resume; preserve real lastCallState
+            // Reset ONLY the countdown timer on resume; preserve real lastCallState
             monitor.resetTimer();
             log.info("IdleEventMonitor.resumed: {}", monitor.getName());
             LockSupport.unpark(threadMap.get(monitor));
