@@ -222,6 +222,12 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "request.limiter.queuing.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for a concurrent request slot, default is 3000 ms, no timeout if the value is 0 or blank or Long.MAX_VALUE. If the request cannot get a slot within this time, it will be rejected with an error.")
     protected volatile Long concurrentRequestQueuingTimeoutMs = 3000L;
 
+    @Config(key = "request.idleEventMonitor.threshold.second", defaultValue = "60", desc = "Specifies the idle timeout threshold, in seconds, before an idle event is triggered for a request")
+    protected volatile int idleThresholdSecond = 60;
+
+    @Config(key = "request.idleEventMonitor.name", defaultValue = "HttpClient")
+    protected volatile String idleEventMonitorName = "HttpClient";
+
     @Config(key = "responseCallback.executor.enabled", defaultValue = "false", desc = "enable/disable the responseCallback.executor, default is false for quick and small response body, enable it when response is slow and large, and the responseCallback is CPU bound")
     protected volatile boolean isResponseCallbackTpeEnabled = false;
     @Config(key = "responseCallback.executor.mode", defaultValue = "VirtualThread",
@@ -629,6 +635,14 @@ abstract public class HttpClientConfig extends BootConfig {
 
     public Long getConcurrentRequestQueuingTimeoutMs() {
         return concurrentRequestQueuingTimeoutMs;
+    }
+
+    public int getIdleThresholdSecond() {
+        return idleThresholdSecond;
+    }
+
+    public String getIdleEventMonitorName() {
+        return idleEventMonitorName;
     }
 
     public ThreadingMode getResponseCallbackThreadingMode() {
