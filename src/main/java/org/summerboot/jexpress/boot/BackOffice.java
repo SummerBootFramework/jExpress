@@ -181,7 +181,7 @@ public class BackOffice extends BootConfig {
     @Config(key = "jwt.Aud.AsCSV", defaultValue = "true", desc = "Parse JWT Audience value as CSV for JWT backward compatibility")
     private boolean jwtAudAsCSV = true;
 
-    @Config(key = "jwt.verify-on-receipt", defaultValue = "true", desc = "Determines whether the server verifies the JWT immediately upon receipt, even if it is not used in subsequent processing. Defaults to true to adhere to fail-fast and defense-in-depth principles, and should only be set to false when running a mock server.")
+    @Config(key = "jwt.verify-on-receipt", defaultValue = "true", desc = "Determines whether the server verifies the JWT immediately upon receipt, even if it is not used in subsequent processing. Defaults to true to adhere to fail-fast and defense-in-depth principles, and should only be set to false when running as a mock server.")
     private boolean verifyJwtOnReceipt = true;
 
     @Config(key = "default.lineSeparator", defaultValue = "LF", desc = "available values: system (based on OS), LF (default), CRLF, CR, Linux (same as LF), Mac (same as LF), Windows (same as CRLF), ClassicMac (same as CR)")

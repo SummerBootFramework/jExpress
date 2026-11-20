@@ -16,17 +16,19 @@
  */
 package org.summerboot.jexpress.boot.lifecycle.app;
 
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.util.time.TimeUtil;
 
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * IdleEventMonitor is a utility class to track the last request timestamp and loose transaction ID.
@@ -37,9 +39,32 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class IdleEventMonitor {
 
-    private final AtomicLong lastTimestamp = new AtomicLong(System.currentTimeMillis());
-    private final AtomicReference<String> lastTransactionId = new AtomicReference<>();
+    protected static final Logger log = LogManager.getLogger(IdleEventMonitor.class);
+
+    public record CallState(long nanoTime, long wallClockMillis, String transactionId) {
+    }
+
+    private enum State {RUNNING, PAUSED}
+
+    private static final Map<IdleEventMonitor, State> stateMap = new ConcurrentHashMap<>();
+    private static final Map<IdleEventMonitor, Thread> threadMap = new ConcurrentHashMap<>();
+
+    // Register a JVM shutdown hook to gracefully stop all active monitors on exit
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("JVM shutting down, stopping all IdleEventMonitors...");
+            stopAll();
+        }, "idle-monitor-shutdown"));
+    }
+
+    private final AtomicReference<CallState> lastState = new AtomicReference<>(
+            new CallState(System.nanoTime(), System.currentTimeMillis(), null)
+    );
     private final String name;
+
+    public interface IdleEventListener {
+        void onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
+    }
 
     public IdleEventMonitor(String name) {
         this.name = name;
@@ -49,98 +74,142 @@ public abstract class IdleEventMonitor {
         return name;
     }
 
-    public void onCall(String lastTransactionId) {
-        onCall(System.currentTimeMillis(), lastTransactionId);
-    }
-
-    public void onCall(long timestamp, String lastTransactionId) {
-        this.lastTimestamp.set(timestamp);
-        this.lastTransactionId.set(lastTransactionId);
+    public void onCall(String transactionId) {
+        this.lastState.set(new CallState(System.nanoTime(), System.currentTimeMillis(), transactionId));
     }
 
     public String getLastTransactionId() {
-        return lastTransactionId.get();
+        return lastState.get().transactionId();
     }
 
     public long getLastTimestamp() {
-        return lastTimestamp.get();
-    }
-
-    public long getWaitMillis(long threshold, TimeUnit timeUnit) {
-        return getWaitMillis(timeUnit.toMillis(threshold));
+        return lastState.get().wallClockMillis();
     }
 
     public long getWaitMillis(long thresholdMillis) {
-        return thresholdMillis - (System.currentTimeMillis() - lastTimestamp.get());
+        return getWaitMillis(thresholdMillis, lastState.get());
     }
 
-    public boolean isTimeout(long threshold, TimeUnit timeUnit) {
-        return isTimeout(timeUnit.toMillis(threshold));
+    private long getWaitMillis(long thresholdMillis, CallState state) {
+        long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - state.nanoTime());
+        return thresholdMillis - elapsedMillis;
     }
-
-    public boolean isTimeout(long thresholdMillis) {
-        return System.currentTimeMillis() - lastTimestamp.get() > thresholdMillis;
-    }
-
-
-    protected static final Logger log = LogManager.getLogger(IdleEventMonitor.class.getName());
-
-    private static final Map<IdleEventMonitor, Boolean> statusMap = new ConcurrentHashMap<>();
-
-    public static interface IdleEventListener {
-        void onIdle(IdleEventMonitor idleEventMonitor) throws Exception;
-    }
-
 
     public abstract long getIdleIntervalMillis();
 
-    public static void start(final IdleEventMonitor idleEventMonitor, final IdleEventListener idleEventListener) throws Exception {
-        if (idleEventMonitor == null) {
-            throw new IllegalArgumentException("Request tracker cannot be null");
-        }
-//        if (threshold < 1) {
-//            log.warn("IdleEventMonitor ({}}) is disabled due to threshold = {}}", idleEventMonitor.getName(), threshold);
-//            return;
-//        }
-        //idleEventListener.onIdle(idleEventMonitor);
-        Thread.startVirtualThread(() -> {
-            log.info("IdleEventMonitor.start: {}", idleEventMonitor.getName());
-            do {
+    /**
+     * Starts monitoring idle events for the given monitor instance using a virtual thread.
+     */
+    public static void start(final IdleEventMonitor monitor, final IdleEventListener listener) {
+        Objects.requireNonNull(monitor, "IdleEventMonitor cannot be null");
+        Objects.requireNonNull(listener, "IdleEventListener cannot be null");
+
+
+        threadMap.computeIfAbsent(monitor, m -> {
+            // Initialize state and reset timer BEFORE starting the virtual thread
+            // so immediate calls to pause() or stopAll() right after start() take effect reliably.
+            m.onCall(m.getName());
+            stateMap.put(m, State.RUNNING);
+
+            return Thread.startVirtualThread(() -> {
+                log.info("IdleEventMonitor.start: {}", m.getName());
                 try {
-                    long idleIntervalMillis = idleEventMonitor.getIdleIntervalMillis();
-                    if (idleIntervalMillis < 1) {
-                        Thread.sleep(TimeUnit.SECONDS.toMillis(BackOffice.agent.getIdleConfig0ReloadIntervalSec()));
-                        continue;
+                    while (!Thread.currentThread().isInterrupted() && stateMap.containsKey(m)) {
+                        try {
+                            // Park indefinitely without consuming CPU while paused
+                            if (stateMap.get(m) == State.PAUSED) {
+                                LockSupport.park();
+                                continue;
+                            }
+
+                            long idleIntervalMillis = m.getIdleIntervalMillis();
+                            if (idleIntervalMillis < 1) {
+                                long reloadMillis = TimeUnit.SECONDS.toMillis(BackOffice.agent.getIdleConfig0ReloadIntervalSec());
+                                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(reloadMillis));
+                                continue;
+                            }
+
+                            long ttlMillis = m.getWaitMillis(idleIntervalMillis);
+                            if (ttlMillis > 0) {
+                                // Park for the remaining idle duration; can be woken immediately by pause/stop
+                                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(ttlMillis));
+                                continue;
+                            }
+
+                            // Capture an atomic snapshot of the current state
+                            CallState snapshot = m.lastState.get();
+
+                            // Double-check against the exact snapshot before firing the event.
+                            // Prevents false triggers if onCall() updated lastState right before this line.
+                            if (m.getWaitMillis(idleIntervalMillis, snapshot) > 0) {
+                                continue;
+                            }
+
+                            log.info("IdleEventMonitor.onIdle: {}, lastTxId={}, lastTS={}",
+                                    m.getName(), snapshot.transactionId(), TimeUtil.toOffsetDateTime(snapshot.wallClockMillis(), null));
+
+                            listener.onIdle(m);
+
+                            // Reset the timer only if no new call arrived during listener execution
+                            m.lastState.compareAndSet(snapshot, new CallState(System.nanoTime(), System.currentTimeMillis(), m.getName()));
+
+                        } catch (Exception ex) {
+                            log.error("IdleEventMonitor.exception: {}, lastTxId={}, lastTS={}",
+                                    m.getName(), m.getLastTransactionId(), TimeUtil.toOffsetDateTime(m.getLastTimestamp(), null), ex);
+                            // Reset the timer on exception to prevent tight-loop log flooding
+                            m.onCall(m.getName());
+                        }
                     }
-                    long ttlMillis = idleEventMonitor.getWaitMillis(idleIntervalMillis);
-                    if (ttlMillis >= 0) {
-                        Thread.sleep(ttlMillis);
-                        continue;
-                    }
-                    log.info("IdleEventMonitor.onIdle: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null));
-                    idleEventListener.onIdle(idleEventMonitor);
-                    idleEventMonitor.onCall(idleEventMonitor.getName());
-                } catch (InterruptedException ex) {
-                    log.info("IdleEventMonitor.interrupted: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null), ex);
-                } catch (Exception ex) {
-                    log.info("IdleEventMonitor.exception: {}, lastTxId={}, lastTS={}", idleEventMonitor.getName(), idleEventMonitor.getLastTransactionId(), TimeUtil.toOffsetDateTime(idleEventMonitor.getLastTimestamp(), null), ex);
+                } finally {
+                    // Remove only if the map still points to this exact thread instance
+                    threadMap.remove(m, Thread.currentThread());
+                    log.info("IdleEventMonitor.shutdown: {}", m.getName());
                 }
-            } while (statusMap.getOrDefault(idleEventMonitor, true));
-            log.info("IdleEventMonitor.shutdown: {}", idleEventMonitor.getName());
+            });
         });
     }
 
-    public static void stop(IdleEventMonitor idleEventMonitor) {
-        if (idleEventMonitor == null) {
-            return;
+    /**
+     * Pauses monitoring and parks the underlying virtual thread immediately.
+     */
+    public static void pause(IdleEventMonitor monitor) {
+        if (monitor != null && stateMap.replace(monitor, State.RUNNING, State.PAUSED)) {
+            log.info("IdleEventMonitor.paused: {}", monitor.getName());
+            LockSupport.unpark(threadMap.get(monitor));
         }
-        statusMap.put(idleEventMonitor, false);
     }
 
-    public static void stop() {
-        for (IdleEventMonitor tracker : statusMap.keySet()) {
-            stop(tracker);
+    /**
+     * Resumes monitoring, resets the idle timer, and unparks the virtual thread immediately.
+     */
+    public static void resume(IdleEventMonitor monitor) {
+        if (monitor != null && stateMap.replace(monitor, State.PAUSED, State.RUNNING)) {
+            monitor.onCall(monitor.getName());
+            log.info("IdleEventMonitor.resumed: {}", monitor.getName());
+            LockSupport.unpark(threadMap.get(monitor));
         }
-        statusMap.clear();
+    }
+
+    /**
+     * Permanently stops and cleans up a single monitor instance.
+     */
+    public static void stop(IdleEventMonitor monitor) {
+        if (monitor == null) {
+            return;
+        }
+        stateMap.remove(monitor);
+        Thread thread = threadMap.remove(monitor);
+        if (thread != null) {
+            LockSupport.unpark(thread);
+        }
+    }
+
+    /**
+     * Stops all active monitor instances. Automatically triggered by the JVM shutdown hook.
+     */
+    public static void stopAll() {
+        for (IdleEventMonitor monitor : new ArrayList<>(stateMap.keySet())) {
+            stop(monitor);
+        }
     }
 }

@@ -25,6 +25,7 @@ import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.api.rpc.RpcClient;
 import org.summerboot.jexpress.api.rpc.RpcMemo;
 import org.summerboot.jexpress.api.rpc.RpcResult;
+import org.summerboot.jexpress.boot.lifecycle.app.IdleEventMonitor;
 import org.summerboot.jexpress.integration.rpc.http.config.HttpClientConfig;
 import org.summerboot.jexpress.util.runtime.ApplicationUtil;
 
@@ -45,9 +46,26 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public abstract class HttpRpcClient implements RpcClient {
+public abstract class HttpRpcClient implements RpcClient, IdleEventMonitor.IdleEventListener {
 
     protected static AtomicLong requestSequence = new AtomicLong(0);
+
+    public final IdleEventMonitor idleEventMonitor = new IdleEventMonitor(getConfig().getIdleEventMonitorName()) {
+        @Override
+        public long getIdleIntervalMillis() {
+            return TimeUnit.SECONDS.toMillis(getConfig().getIdleThresholdSecond());
+        }
+    };
+
+    @Override
+    public void monitorIdleEvent() throws Exception {
+        IdleEventMonitor.start(idleEventMonitor, this);
+    }
+
+    @Override
+    public IdleEventMonitor getIdleEventMonitor() {
+        return idleEventMonitor;
+    }
 
     @Override
     public <T, B> RpcResult<T> rpc(SessionContext context, boolean updateContext, HttpRequest httpRequest, String originRequestBody, HttpResponse.BodyHandler<B> responseBodyHandler, HttpResponseStatus... goodStatus) throws IOException {
@@ -108,7 +126,7 @@ public abstract class HttpRpcClient implements RpcClient {
             // WARNING#1 - streaming: response body is not logged unless an error occurs; caller must consume or close RpcResult
             // WARNING#2 - streaming: concurrentRequestLimiter is released once headers/initial response arrive
             httpResponse = sharedHttpClient.send(httpRequest, responseBodyHandler);
-
+            idleEventMonitor.onCall(context == null ? "HttpClient.req" + requestSeq : context.txId() + "_HttpClient.req" + requestSeq);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
 

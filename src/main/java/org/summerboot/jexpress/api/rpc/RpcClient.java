@@ -18,6 +18,7 @@ package org.summerboot.jexpress.api.rpc;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.summerboot.jexpress.api.common.SessionContext;
+import org.summerboot.jexpress.boot.lifecycle.app.IdleEventMonitor;
 import org.summerboot.jexpress.integration.rpc.http.HttpClientUtil;
 import org.summerboot.jexpress.integration.rpc.http.config.HttpClientConfig;
 
@@ -41,6 +42,10 @@ public interface RpcClient {
      * @return the {@link HttpClientConfig} instance, or {@code null} if using system defaults
      */
     HttpClientConfig getConfig();
+
+    void monitorIdleEvent() throws Exception;
+
+    IdleEventMonitor getIdleEventMonitor();
 
     // ==================== HttpRequest.Builder Entry Points (Applies Config Default Headers) ====================
 

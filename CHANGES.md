@@ -20,8 +20,11 @@
     - RpcResult: refactoring to handle streaming response auto-close and auto-cleanup, preventing resource leaks and ensuring proper cleanup of resources after processing streaming responses.
     - At the moment an exception occurs, capture the full list of candidate IP addresses resolved for the current domain name.
     - support request type: String, InputStream, Stream, byte[], Path, Flow.Publishe and custom
+    - HttpClientConfig: new config items for idle event - **`request.idleEventMonitor.threshold.second`** and **`request.idleEventMonitor.name`**
+    - implements IdleEventMonitor.IdleEventListener
 - etc/boot.conf: new config item **`jwt.verify-on-receipt`**: Determines whether the server verifies the JWT immediately upon receipt, even if it is not used in subsequent processing. Defaults to true
   to adhere to fail-fast and defense-in-depth principles, and should only be set to false when running a mock server. This item was hardcoded as true.
+- IdleEventMonitor: Refactored for nanosecond-precision control and idempotent startup
 
 ## Version 2.7.5 (2026-11-01)
 
