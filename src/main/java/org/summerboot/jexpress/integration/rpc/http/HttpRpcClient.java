@@ -126,7 +126,7 @@ public abstract class HttpRpcClient implements RpcClient, IdleEventMonitor.IdleE
             // WARNING#1 - streaming: response body is not logged unless an error occurs; caller must consume or close RpcResult
             // WARNING#2 - streaming: concurrentRequestLimiter is released once headers/initial response arrive
             httpResponse = sharedHttpClient.send(httpRequest, responseBodyHandler);
-            String accessedBy = httpRequest.uri() + (context == null ? " " : context.txId()) + " @HttpClient#" + requestSeq;
+            String accessedBy = (context == null ? "" : context.txId()) + " " + httpRequest.uri() + " @HttpClient#" + requestSeq;
             idleEventMonitor.resetIdleTimer(accessedBy);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();

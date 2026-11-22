@@ -23,18 +23,14 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslProvider;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.summerboot.jexpress.api.auth.Caller;
-import org.summerboot.jexpress.api.common.SessionContext;
 import org.summerboot.jexpress.boot.config.BootConfig;
-import org.summerboot.jexpress.boot.lifecycle.auth.AuthenticatorListener;
 import org.summerboot.jexpress.infra.grpc.client.BootLoadBalancerProvider;
 import org.summerboot.jexpress.infra.grpc.client.config.GrpcClientConfig;
 import org.summerboot.jexpress.infra.grpc.server.GrpcServer;
-import org.summerboot.jexpress.security.auth.BootAuthenticator;
+import org.summerboot.jexpress.infra.grpc.server.GrpcServerInterceptor;
 import org.summerboot.jexpress.security.ssl.SslUtil;
 import org.summerboot.jexpress.util.runtime.ApplicationUtil;
 
-import javax.naming.NamingException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
@@ -325,12 +321,13 @@ public abstract class GrpcTestHelper {
         }
         // 1. config server
         ThreadPoolExecutor tpe = BootConfig.buildThreadPoolExecutor("");
-        ServerInterceptor serverInterceptor = new BootAuthenticator() {
+        /*ServerInterceptor serverInterceptor = new BootAuthenticator() {
             @Override
             protected Caller authenticate(String username, String password, Object metaData, AuthenticatorListener listener, SessionContext context) throws NamingException {
                 return null;
             }
-        };
+        };*/
+        ServerInterceptor serverInterceptor = new GrpcServerInterceptor();
         GrpcServer grpcServer = new GrpcServer(host, port, kmfServer, tmfServer, tpe, true, false, null, serverInterceptor);
 
         for (BindableService serviceImpl : serviceImps) {

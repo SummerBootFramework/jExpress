@@ -17,130 +17,187 @@
  */
 package org.summerboot.jexpress.infra.grpc.client;
 
+import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.summerboot.jexpress.boot.lifecycle.app.IdleEventMonitor;
 import org.summerboot.jexpress.infra.grpc.client.config.GrpcClientConfig;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * @param <T>
+ * Base gRPC client managing channel lifecycle, thread-safe reconnection,
+ * dynamic configuration updates, and idle connection monitoring.
+ *
+ * @param <T> the concrete subclass type for fluent method chaining
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMonitor.IdleEventListener {
+public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMonitor.IdleEventListener, AutoCloseable {
+
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private final Lock readLock = rwLock.readLock();
+    private Thread shutdownHook;
 
     protected NettyChannelBuilder channelBuilder;
     protected ManagedChannel channel;
-    protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
-    protected final Lock readLock = rwLock.readLock();
-    protected Thread shutdownHook;
+    protected final IdleEventMonitor idleEventMonitor;
 
-    protected IdleEventMonitor idleEventMonitor;
+    private boolean interceptorRegistered;
+    private final ClientInterceptor idleResetInterceptor;
 
-    public T withConfig(GrpcClientConfig cfg) {
+    /**
+     * Constructs a GrpcClient using a {@link GrpcClientConfig} and registers this client
+     * as a configuration update listener.
+     *
+     * @param cfg the client configuration (must not be null)
+     */
+    protected GrpcClient(GrpcClientConfig cfg) {
+        this(
+                Objects.requireNonNull(cfg, "GrpcClientConfig must not be null").getChannelBuilder(),
+                cfg.getIdleEventMonitorName(),
+                cfg.getIdleThresholdSecond()
+        );
+        // Register listener only after all fields are completely initialized to prevent 'this' escape
         cfg.addConfigUpdateListener(this);
-        return withNettyChannelBuilder(cfg.getChannelBuilder(), cfg.getIdleEventMonitorName(), cfg.getIdleThresholdSecond());
     }
 
     /**
-     * @param channelBuilder
+     * Constructs a GrpcClient with an explicit {@link NettyChannelBuilder} and idle monitoring settings.
+     *
+     * @param channelBuilder       the NettyChannelBuilder used to create channels (must not be null)
+     * @param idleEventMonitorName name identifier for the idle monitor
+     * @param idleThresholdSecond  idle timeout threshold in seconds (must be positive)
      */
-    public T withNettyChannelBuilder(NettyChannelBuilder channelBuilder, String idleEventMonitorName, int idleThresholdSecond) {
-        this.channelBuilder = channelBuilder;
-        idleEventMonitor = new IdleEventMonitor(idleEventMonitorName) {
+    protected GrpcClient(NettyChannelBuilder channelBuilder, String idleEventMonitorName, int idleThresholdSecond) {
+        this.channelBuilder = Objects.requireNonNull(channelBuilder, "NettyChannelBuilder must not be null");
+        if (idleThresholdSecond <= 0) {
+            throw new IllegalArgumentException("idleThresholdSecond must be positive");
+        }
+        this.idleEventMonitor = new IdleEventMonitor(idleEventMonitorName) {
             @Override
             public long getIdleIntervalMillis() {
                 return TimeUnit.SECONDS.toMillis(idleThresholdSecond);
             }
         };
-        return (T) this;
+        this.idleResetInterceptor = new GrpcClientInterceptor(this.idleEventMonitor);
     }
 
     /**
-     * callback when config file updated if GrpcClientConfig.addConfigUpdateListener(this);
+     * Callback invoked when the configuration is updated via {@link GrpcClientConfig}.
      *
-     * @param channelBuilder
+     * @param newChannelBuilder the updated channel builder (must not be null)
      */
-    public void updateChannelBuilder(NettyChannelBuilder channelBuilder) {
+    public void updateChannelBuilder(NettyChannelBuilder newChannelBuilder) {
+        Objects.requireNonNull(newChannelBuilder, "NettyChannelBuilder must not be null");
         rwLock.writeLock().lock();
-        this.channelBuilder = channelBuilder;
-        rwLock.writeLock().unlock();
+        try {
+            if (this.channelBuilder != newChannelBuilder) {
+                this.channelBuilder = newChannelBuilder;
+                this.interceptorRegistered = false; // Reset flag only if a new builder instance is provided
+            }
+        } finally {
+            rwLock.writeLock().unlock();
+        }
         onChannelBuilderUpdated();
     }
 
     /**
-     * By default, just call connect() to establish a new connection with the updated settings; or do nothing to keep using current connection.
+     * Hook triggered after {@link #updateChannelBuilder(NettyChannelBuilder)} completes.
+     * By default, immediately reconnects using the updated settings. Override to customize behavior.
      */
     protected void onChannelBuilderUpdated() {
         connect();
     }
 
     /**
-     * Disconnect the current connection and build a new connection within a write lock
+     * Disconnects any existing channel and establishes a new connection under a write lock.
+     * Rolls back partially initialized resources if connection setup fails.
      *
-     * @return
+     * @return this client instance for chaining
      */
+    @SuppressWarnings("unchecked")
     public T connect() {
         rwLock.writeLock().lock();
         try {
             disconnect(false);
-            channel = channelBuilder.build();
-            String info = channel.authority();
+
+            if (!interceptorRegistered) {
+                channelBuilder.intercept(idleResetInterceptor);
+                interceptorRegistered = true;
+            }
+
+            final ManagedChannel newChannel = channelBuilder.build();
+            this.channel = newChannel;
+
+            String info = newChannel.authority();
             shutdownHook = new Thread(() -> {
                 try {
-                    channel.shutdownNow();
-                } catch (Exception ex) {
+                    newChannel.shutdownNow();
+                } catch (Exception ignore) {
                 }
             }, "GrpcClient.shutdown and disconnect from " + info);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
-            onConnected(channel);
-            if (idleEventMonitor != null) {
-                IdleEventMonitor.start(idleEventMonitor, this);
-            }
+
+            onConnected(newChannel);
+            IdleEventMonitor.start(idleEventMonitor, this);
+        } catch (Throwable t) {
+            // Ensure partial resources (channel, shutdownHook) are cleaned up if onConnected() fails
+            disconnect(false);
+            throw t;
         } finally {
             rwLock.writeLock().unlock();
         }
         return (T) this;
     }
 
+    /**
+     * Resets the idle timer without specifying a caller identifier.
+     */
     protected void resetIdleTimer() {
         resetIdleTimer(null);
     }
 
+    /**
+     * Resets the idle timer, recording the method or component that accessed the client.
+     *
+     * @param accessedBy identifier of the caller (e.g., gRPC full method name)
+     */
     protected void resetIdleTimer(String accessedBy) {
-        if (idleEventMonitor != null) {
-            idleEventMonitor.resetIdleTimer(accessedBy);
-        }
+        idleEventMonitor.resetIdleTimer(accessedBy);
     }
 
     /**
-     * @param channel
+     * Invoked during {@link #connect()} once the {@link ManagedChannel} is built.
+     * Subclasses should initialize their gRPC stubs here.
+     * <p>
+     * <b>Warning:</b> Do not dispatch blocking work to external threads that attempt to acquire
+     * {@link #lock()} inside this method, as the current thread holds the write lock and will deadlock.
+     *
+     * @param channel the newly established ManagedChannel
      */
     protected abstract void onConnected(ManagedChannel channel);
 
     /**
-     * Disconnect the current connection
+     * Disconnects the current channel and stops idle monitoring in a thread-safe manner.
      */
     public void disconnect() {
         disconnect(true);
     }
 
     protected void disconnect(boolean withLock) {
-//        ManagedChannel c = (ManagedChannel) blockingStub.getChannel();
         if (withLock) {
             rwLock.writeLock().lock();
         }
         try {
-            if (idleEventMonitor != null) {
-                try {
-                    IdleEventMonitor.stop(idleEventMonitor);
-                } catch (Exception ignore) {
-                }
+            try {
+                IdleEventMonitor.stop(idleEventMonitor);
+            } catch (Exception ignore) {
             }
+
             if (channel != null) {
                 try {
                     channel.shutdownNow();
@@ -149,6 +206,7 @@ public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMo
                     channel = null;
                 }
             }
+
             if (shutdownHook != null) {
                 try {
                     Runtime.getRuntime().removeShutdownHook(shutdownHook);
@@ -164,45 +222,50 @@ public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMo
         }
     }
 
+    @Override
+    public void close() {
+        disconnect();
+    }
+
     /**
-     * Set a read lock for business method to prevent being called while connect/disconnect
+     * Acquires the read lock for business RPC calls to prevent concurrent connect/disconnect operations.
      */
     protected void lock() {
         readLock.lock();
     }
 
     /**
-     * Try a read lock for business method to prevent being called while connect/disconnect
+     * Attempts to acquire the read lock immediately without blocking.
      *
-     * @return
+     * @return {@code true} if the lock was acquired
      */
     protected boolean tryLock() {
         return readLock.tryLock();
     }
 
     /**
-     * Try a read lock in a given time period for business method to prevent being called while connect/disconnect
+     * Attempts to acquire the read lock within the given waiting time.
      *
-     * @param time
-     * @param unit
-     * @return
-     * @throws InterruptedException
+     * @param time the maximum time to wait for the lock
+     * @param unit the time unit of the {@code time} argument
+     * @return {@code true} if the lock was acquired
+     * @throws InterruptedException if the current thread is interrupted while acquiring the lock
      */
     protected boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
         return readLock.tryLock(time, unit);
     }
 
     /**
-     * Release the read lock for business method to prevent being called while connect/disconnect
+     * Releases the read lock acquired for business RPC calls.
      */
     protected void unlock() {
         readLock.unlock();
     }
 
     /**
-     * Get the read lock
+     * Returns the read lock used to guard RPC executions against lifecycle transitions.
      *
-     * @return
+     * @return the read lock
      */
     protected Lock getLock() {
         return readLock;
