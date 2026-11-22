@@ -38,6 +38,7 @@ import org.summerboot.jexpress.boot.lifecycle.http.HttpExceptionHandler;
 import org.summerboot.jexpress.boot.lifecycle.http.HttpExceptionListener;
 import org.summerboot.jexpress.boot.lifecycle.http.HttpLifecycleHandler;
 import org.summerboot.jexpress.boot.lifecycle.http.HttpLifecycleListener;
+import org.summerboot.jexpress.infra.grpc.server.GrpcServerInterceptor;
 import org.summerboot.jexpress.infra.metrics.HttpClientStatusListener;
 import org.summerboot.jexpress.infra.metrics.NioStatusListener;
 import org.summerboot.jexpress.infra.metrics.jmx.InstrumentationMgr;
@@ -115,8 +116,8 @@ public class BootGuiceModule extends AbstractModule {
         bind(Authenticator.class).to(LdapAuthenticator.class);
         memo.append(INFO).append(Authenticator.class.getName()).append(BIND_TO).append(LdapAuthenticator.class.getName());
 
-        bind(ServerInterceptor.class).to(LdapAuthenticator.class);
-        memo.append(INFO).append(ServerInterceptor.class.getName()).append(BIND_TO).append(LdapAuthenticator.class.getName());
+        bind(ServerInterceptor.class).to(GrpcServerInterceptor.class);
+        memo.append(INFO).append(ServerInterceptor.class.getName()).append(BIND_TO).append(GrpcServerInterceptor.class.getName());
 
         bind(HttpExceptionListener.class).to(HttpExceptionHandler.class);
         memo.append(INFO).append(HttpExceptionListener.class.getName()).append(BIND_TO).append(HttpExceptionHandler.class.getName());

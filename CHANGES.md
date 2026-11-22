@@ -5,6 +5,9 @@
 - 🔧 Migration guide: configuration updated, to migrate: use `java -jar <yourapp>.jar -format [-domain <domainname>]`
 - GrpcServerConfig.overrideDefaultConfig now reads new config section **`4. gRpc.server ServerBuilder Settings`** to allow user override default value of Enforcement Policy, Server Keepalive,
   Connection Management and Size Protection.
+- gRPC server detect ping: override GrpcServerInterceptor.isPing(methodName)
+- gRPC server sanitize user input and logging: override `GrpcServerInterceptor.buildListener(...)`, and override `GrpcServerCallListener.sanitizeUserInput(originalInput)` and
+  `buildClientServerCommunication(...)`
 - Default line break (etc/boot.conf default.lineSeparator=LF): default to LF (Unix/Linux) (was system) for all generated files, including log files, config files, and generated PDF files. This change
   ensures consistent line endings across different operating systems and prevents potential issues when transferring files between Windows and Unix/Linux environments.
 - HttpRpcClient: added index# in the log for each concurrent request to help identify and trace individual requests in high-concurrency scenarios.

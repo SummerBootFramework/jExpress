@@ -166,23 +166,32 @@ public class ReflectionUtil {
      * @return
      */
     public static Set<Class<?>> getAllImplementationsByAnnotation(Class<? extends Annotation> annotation, boolean honorInherited, String... rootPackageNames) {
-        Set<Class<?>> classes = new HashSet();
+        Set<Class<?>> classes = new HashSet<>();
         for (String rootPackageName : rootPackageNames) {
             if (rootPackageName == null || (!rootPackageName.isEmpty() && rootPackageName.isBlank())) {
-                continue;// skip null and whitespace-only; allow "" to scan default (no-package) classes
+                continue; // skip null and whitespace-only; allow "" to scan default (no-package) classes
             }
-            Reflections reflections = buildReflections(rootPackageName);//REF2610-1
+            Reflections reflections = buildReflections(rootPackageName); // REF2610-1
+            // Regardless of what `reflections` returns, collect the results first, then rely on the precise reflection filtering described below.
             Set<Class<?>> cs = reflections.getTypesAnnotatedWith(annotation, honorInherited);
-            if (cs.isEmpty()) {
-                continue;
+            if (!cs.isEmpty()) {
+                classes.addAll(cs);
             }
-            classes.addAll(cs);
         }
         classes.addAll(PluginClasses);
-        Set<Class<?>> ret = new HashSet();// honorInherited not working as expected, that will cause classes could contain subclasses with no such annotation
-        for (Class c : classes) {
-            if (c.isAnnotationPresent(annotation)) {
-                ret.add(c);
+
+        Set<Class<?>> ret = new HashSet<>(); // honorInherited not working as expected, that will cause classes could contain subclasses with no such annotation
+        for (Class<?> c : classes) {
+            if (honorInherited) {
+                // Allows inheritance: includes subclasses whose parent class carries this annotation (provided the annotation is marked with @Inherited)
+                if (c.isAnnotationPresent(annotation)) {
+                    ret.add(c);
+                }
+            } else {
+                // Strict match: Retain only those classes that have the annotation declared directly within themselves.
+                if (c.getDeclaredAnnotation(annotation) != null) {
+                    ret.add(c);
+                }
             }
         }
         return ret;

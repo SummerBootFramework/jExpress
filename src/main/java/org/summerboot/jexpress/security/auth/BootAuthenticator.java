@@ -18,13 +18,6 @@ package org.summerboot.jexpress.security.auth;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.grpc.Context;
-import io.grpc.Grpc;
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
-import io.grpc.ServerCallHandler;
-import io.grpc.ServerInterceptor;
-import io.grpc.Status;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtBuilder;
@@ -44,21 +37,16 @@ import org.summerboot.jexpress.api.common.BootPoi;
 import org.summerboot.jexpress.api.common.Err;
 import org.summerboot.jexpress.api.common.RequestProcessor;
 import org.summerboot.jexpress.api.common.SessionContext;
-import org.summerboot.jexpress.api.grpc.GrpcConstants;
 import org.summerboot.jexpress.boot.BackOffice;
 import org.summerboot.jexpress.boot.BootConstants;
 import org.summerboot.jexpress.boot.lifecycle.auth.AuthenticatorListener;
-import org.summerboot.jexpress.infra.grpc.server.ContextualizedServerCallListenerEx;
-import org.summerboot.jexpress.infra.grpc.server.config.GrpcServerConfig;
 import org.summerboot.jexpress.infra.netty.util.NioHttpUtil;
 import org.summerboot.jexpress.security.SecurityUtil;
 import org.summerboot.jexpress.security.auth.config.AuthConfig;
 import org.summerboot.jexpress.security.token.jwt.JwtUtil;
 import org.summerboot.jexpress.util.format.FormatterUtil;
-import org.summerboot.jexpress.util.net.GeoIpUtil;
 
 import javax.naming.NamingException;
-import java.net.SocketAddress;
 import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
@@ -69,7 +57,7 @@ import java.util.Set;
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
 @Singleton
-public abstract class BootAuthenticator implements Authenticator, ServerInterceptor {
+public abstract class BootAuthenticator implements Authenticator {
 
     protected static final String ERROR_NO_CFG = "JWT is not configured at " + BackOffice.agent.getAuthConfigFileName();
 
@@ -434,77 +422,8 @@ public abstract class BootAuthenticator implements Authenticator, ServerIntercep
         context.status(HttpResponseStatus.NO_CONTENT);
     }
 
-    protected static final String ERROR = "Bearer Authorization Failed: ";
+    public static final String ERROR = "Bearer Authorization Failed: ";
 
-    /**
-     * gRPC JWT verification
-     *
-     * @param <ReqT>
-     * @param <RespT>
-     * @param serverCall
-     * @param metadata
-     * @param serverCallHandler
-     * @return
-     */
-    @Override
-    public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
-        Status status = null;
-        Context ctx = Context.current();
-        long start = System.currentTimeMillis();
-        Caller caller = null;
-        String jti = null;
-        try {
-            GrpcServerConfig grpcServerCfg = GrpcServerConfig.cfg;
-            SocketAddress remoteAddr = serverCall.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
-            String error = GeoIpUtil.callerAddressFilter(remoteAddr, grpcServerCfg.getCallerAddressFilterWhitelist(), grpcServerCfg.getCallerAddressFilterBlacklist(), grpcServerCfg.getCallerAddressFilterOption());
-            if (error != null) {
-                //Err err = new Err(BootErrorCode.AUTH_INVALID_IP, null, null, null, "Invalid IP address: " + error);
-                status = Status.PERMISSION_DENIED.withDescription(ERROR + "Invalid IP address: " + error);
-            } else {
-                ctx = ctx.withValue(GrpcCallerAddr, remoteAddr);
-                String headerValueAuthorization = metadata.get(GrpcConstants.Authorization);
-                if (headerValueAuthorization == null) {
-                    //status = Status.UNAUTHENTICATED.withDescription(ERROR + "Authorization header is missing");
-                    //return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
-                    status = null;
-                } else if (!headerValueAuthorization.startsWith(GrpcConstants.BEARER_TYPE)) {
-                    status = Status.UNAUTHENTICATED.withDescription(ERROR + "Unknown authorization type, non " + GrpcConstants.BEARER_TYPE + " token provided");
-                } else {
-                    String jwt = headerValueAuthorization.substring(GrpcConstants.BEARER_TYPE.length()).trim();
-                    SessionContext context = SessionContext.build(0);
-                    caller = verifyToken(jwt, authTokenCache, null, context);
-                    if (caller == null) {
-                        String desc = context.error().getErrors().get(0).getErrorDesc();
-                        if (StringUtils.isBlank(desc)) {
-                            desc = context.status() + "";
-                        }
-                        status = Status.UNAUTHENTICATED.withDescription(ERROR + desc);
-                        //throw new StatusRuntimeException(status);
-                    } else {
-                        ctx = ctx.withValue(GrpcCaller, caller);
-                        jti = context.callerId();
-                        if (jti != null) {
-                            ctx = ctx.withValue(GrpcCallerId, jti);
-                        }
-                        //return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
-                        status = null;
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            status = Status.UNAUTHENTICATED.withDescription(ERROR + ex.getMessage()).withCause(ex);
-        }
-
-        if (status == null) {
-            // success process
-            //return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
-            return ContextualizedServerCallListenerEx.interceptCall(start, caller, jti, ctx, serverCall, metadata, serverCallHandler);
-        }
-        // error process
-        serverCall.close(status, metadata);
-        return new ServerCall.Listener<ReqT>() {
-        };
-    }
 
     @Override
     public String oneTimeTokenAuthenticate(String wsURI, String jwt, SessionContext context) {
