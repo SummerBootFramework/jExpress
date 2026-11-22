@@ -73,6 +73,8 @@ abstract public class HttpClientConfig extends BootConfig {
 
     protected static final String FILENAME_TRUSTSTORE_4CLIENT = "truststore_httpclient.p12";
 
+    protected final static String ID = "HttpClient";
+
     protected enum ProxyAuthenticationType {
         NONE, BASIC, DIGEST, NTLM, KERBEROS
     }
@@ -116,13 +118,13 @@ abstract public class HttpClientConfig extends BootConfig {
 
     //3.1 HTTP Client Security
     @ConfigHeader(title = "1. HTTP Client Security")
-    @Config(key = "http.ssl.protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
+    @Config(key = ID + ".ssl.protocol", defaultValue = "TLSv1.3", desc = DESC_TLS_PROTOCOL)
     protected volatile String tlsProtocol = "TLSv1.3";
 
-    protected static final String KEY_kmf_key = "httpclient.ssl.KeyStore";
-    protected static final String KEY_kmf_StorePwdKey = "httpclient.ssl.KeyStorePwd";
-    protected static final String KEY_kmf_AliasKey = "httpclient.ssl.KeyAlias";
-    protected static final String KEY_kmf_AliasPwdKey = "httpclient.ssl.KeyPwd";
+    protected static final String KEY_kmf_key = ID + ".ssl.KeyStore";
+    protected static final String KEY_kmf_StorePwdKey = ID + ".ssl.KeyStorePwd";
+    protected static final String KEY_kmf_AliasKey = ID + ".ssl.KeyAlias";
+    protected static final String KEY_kmf_AliasPwdKey = ID + ".ssl.KeyPwd";
 
     @JsonIgnore
     @Config(key = KEY_kmf_key, StorePwdKey = KEY_kmf_StorePwdKey, AliasKey = KEY_kmf_AliasKey, AliasPwdKey = KEY_kmf_AliasPwdKey,
@@ -138,8 +140,8 @@ abstract public class HttpClientConfig extends BootConfig {
         generateTemplate = true;
     }
 
-    protected static final String KEY_tmf_key = "http.ssl.TrustStore";
-    protected static final String KEY_tmf_StorePwdKey = "http.ssl.TrustStorePwd";
+    protected static final String KEY_tmf_key = ID + ".ssl.TrustStore";
+    protected static final String KEY_tmf_StorePwdKey = ID + ".ssl.TrustStorePwd";
     @Config(key = KEY_tmf_key, StorePwdKey = KEY_tmf_StorePwdKey, callbackMethodName4Dump = "generateTemplate_truststore",
             desc = DESC_TMF_CLIENT)
     @JsonIgnore
@@ -152,20 +154,20 @@ abstract public class HttpClientConfig extends BootConfig {
         generateTemplate = true;
     }
 
-    @Config(key = "http.ssl.HostnameVerification", defaultValue = "true")
+    @Config(key = ID + ".ssl.HostnameVerification", defaultValue = "true")
     protected volatile Boolean hostnameVerification = true;
 
-    @Config(key = "http.proxy.host", desc = "The proxy host, if not set, no proxy will be used.")
+    @Config(key = ID + ".proxy.host", desc = "The proxy host, if not set, no proxy will be used.")
     protected volatile String proxyHost;
 
-    @Config(key = "http.proxy.port", defaultValue = "8080")
+    @Config(key = ID + ".proxy.port", defaultValue = "8080")
     protected volatile int proxyPort = 8080;
 
-    @Config(key = "http.proxy.userName")
+    @Config(key = ID + ".proxy.userName")
     protected volatile String proxyUserName;
 
     @JsonIgnore
-    @Config(key = "http.proxy.userPwd", validate = Config.Validate.Encrypted)
+    @Config(key = ID + ".proxy.userPwd", validate = Config.Validate.Encrypted)
     protected volatile String proxyUserPwd;
 
     @Config(key = "jdk.http.auth.tunneling.disabledSchemes", trim = false, defaultValue = "Basic", desc = "By default, basic authentication with the proxy is disabled when tunneling through an authenticating proxy since java 8u111. " +
@@ -173,7 +175,7 @@ abstract public class HttpClientConfig extends BootConfig {
             "\nTo disable most of the authentication schemes, set this property to Basic, Digest, NTLM, or Kerberos. ")
     protected volatile String proxyAuthTunnelingDisabledSchemes = "Basic";
 
-    @Config(key = "http.proxy.authStrategy", defaultValue = "AUTHENTICATOR",
+    @Config(key = ID + ".proxy.authStrategy", defaultValue = "AUTHENTICATOR",
             desc = "valid values: AUTHENTICATOR (default, sets Authenticator only at the HttpClient level), HEADER (Sets Proxy-Authorization only in the request header)")
     protected volatile ProxyAuthStrategy proxyAuthStrategy = ProxyAuthStrategy.AUTHENTICATOR;
 
@@ -182,14 +184,14 @@ abstract public class HttpClientConfig extends BootConfig {
 
     //    @Config(key = "http.proxy.useAuthenticator")
 //    protected volatile boolean useAuthenticator = false;
-    @Config(key = "httpclient.redirectOption", defaultValue = "NEVER")
+    @Config(key = ID + ".redirectOption", defaultValue = "NEVER")
     protected volatile HttpClient.Redirect redirectOption = HttpClient.Redirect.NEVER;
 
-    @Config(key = "http.deserialization.CaseInsensitive", defaultValue = "false")
+    @Config(key = ID + ".deserialization.CaseInsensitive", defaultValue = "false")
     protected volatile boolean deserializationCaseInsensitive = false;
-    @Config(key = "http.deserialization.failOnUnknownProperties", defaultValue = "true")
+    @Config(key = ID + ".deserialization.failOnUnknownProperties", defaultValue = "true")
     protected volatile boolean deserializationFailOnUnknownProperties = true;
-    @Config(key = "http.deserialization.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
+    @Config(key = ID + ".deserialization.TimeZone", desc = "The ID for a TimeZone, either an abbreviation such as \"UTC\", a full name such as \"America/Toronto\", or a custom ID such as \"GMT-8:00\", or \"system\" as system default timezone.", defaultValue = "system")
     protected TimeZone jsonParserTimeZone = TimeZone.getDefault();
 
     @JsonIgnore
@@ -209,26 +211,26 @@ abstract public class HttpClientConfig extends BootConfig {
     @Config(key = "jdk.httpclient.keepalive.timeout.h2", desc = "Control the lifetime of idle connections in the HTTP/2 connection pool, default 30 seconds since JDK 20+")
     protected volatile Long keepAliveH2TimeoutSeconds = null;
 
-    @Config(key = "connection.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for only the connection to be established, should be less than http.timeout.ms")
+    @Config(key = ID + ".connection.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for only the connection to be established, should be less than http.timeout.ms")
     protected volatile long httpConnectionTimeoutMs = 3000;
 
-    @Config(key = "request.timeout.ms", defaultValue = "5000", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
+    @Config(key = ID + ".request.timeout.ms", defaultValue = "5000", desc = "The maximum time to wait from the beginning of the connection establishment until the server sends data back, this is the end-to-end timeout.")
     protected volatile long httpRequestTimeoutMs = 5000;
 
-    @Config(key = "request.limiter.max.concurrent", desc = "The maximum number of concurrent requests, no limit by default. Blank or 0 or Integer.MAX_VALUE means no limit. If the number of concurrent requests exceeds this limit, the request will be hold to wait for next available slot. This is to prevent the server from being overwhelmed by too many requests.")
+    @Config(key = ID + ".request.limiter.max.concurrent", desc = "The maximum number of concurrent requests, no limit by default. Blank or 0 or Integer.MAX_VALUE means no limit. If the number of concurrent requests exceeds this limit, the request will be hold to wait for next available slot. This is to prevent the server from being overwhelmed by too many requests.")
     protected volatile Integer maxAllowedConcurrentRequests = null;
     @JsonIgnore
     protected volatile Semaphore concurrentRequestLimiter;
 
-    @Config(key = "request.limiter.queuing.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for a concurrent request slot, default is 3000 ms, no timeout if the value is 0 or blank or Long.MAX_VALUE. If the request cannot get a slot within this time, it will be rejected with an error.")
+    @Config(key = ID + ".request.limiter.queuing.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for a concurrent request slot, default is 3000 ms, no timeout if the value is 0 or blank or Long.MAX_VALUE. If the request cannot get a slot within this time, it will be rejected with an error.")
     protected volatile Long concurrentRequestQueuingTimeoutMs = 3000L;
 
-    @Config(key = "request.idleEventMonitor.threshold.second", defaultValue = "60", desc = "Idle timeout threshold in seconds before triggering an idle event (HttpRpcClient.onIdle(IdleEventMonitor idleEventMonitor)) when no outgoing HTTP requests are sent.")
+    @Config(key = ID + ".request.idleEventMonitor.threshold.second", defaultValue = "60", desc = "Idle timeout threshold in seconds before triggering an idle event (HttpRpcClient.onIdle(IdleEventMonitor idleEventMonitor)) when no outgoing HTTP requests are sent.")
     protected volatile int idleThresholdSecond = 60;
-    @Config(key = "request.idleEventMonitor.name", defaultValue = "HttpClient")
+    @Config(key = ID + ".request.idleEventMonitor.name", defaultValue = "HttpClient")
     protected volatile String idleEventMonitorName = "HttpClient";
 
-    @Config(key = "responseCallback.executor.enabled", defaultValue = "false", desc = "enable/disable the responseCallback.executor, default is false for quick and small response body, enable it when response is slow and large, and the responseCallback is CPU bound")
+    @Config(key = ID + ".responseCallback.executor.enabled", defaultValue = "false", desc = "enable/disable the responseCallback.executor, default is false for quick and small response body, enable it when response is slow and large, and the responseCallback is CPU bound")
     protected volatile boolean isResponseCallbackTpeEnabled = false;
     @Config(key = "responseCallback.executor.mode", defaultValue = "VirtualThread",
             desc = "valid value = VirtualThread (default), CPU, IO and Mixed \n use CPU core + 1 when application is CPU bound\n"
@@ -236,32 +238,32 @@ abstract public class HttpClientConfig extends BootConfig {
                     + "need to find the best value based on your performance test result when nio.server.BizExecutor.mode=Mixed")
     protected volatile ThreadingMode responseCallbackThreadingMode = ThreadingMode.VirtualThread;
 
-    @Config(key = "responseCallback.executor.CoreSize", defaultValue = "" + Integer.MAX_VALUE,
+    @Config(key = ID + ".responseCallback.executor.CoreSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "CoreSize 0 = Integer.MAX_VALUE")
     protected volatile int responseCallbackTpeCoreSize = Integer.MAX_VALUE;// how many tasks running at the same time
 
-    @Config(key = "responseCallback.executor.MaxSize", defaultValue = "" + Integer.MAX_VALUE,
+    @Config(key = ID + ".responseCallback.executor.MaxSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "MaxSize 0 = Integer.MAX_VALUE")
     protected volatile int responseCallbackTpeMaxSize = Integer.MAX_VALUE;// how many tasks running at the same time
 
-    @Config(key = "responseCallback.executor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
+    @Config(key = ID + ".responseCallback.executor.QueueSize", defaultValue = "" + Integer.MAX_VALUE,
             desc = "The waiting list size when the pool is full")
     protected volatile int responseCallbackTpeQueueSize = Integer.MAX_VALUE;// waiting list size when the pool is full
 
-    @Config(key = "responseCallback.executor.KeepAliveSec", defaultValue = "60")
+    @Config(key = ID + ".responseCallback.executor.KeepAliveSec", defaultValue = "60")
     protected volatile int responseCallbackTpeKeepAliveSeconds = 60;
 
-    @Config(key = "responseCallback.executor.prestartAllCoreThreads", defaultValue = "false")
+    @Config(key = ID + ".responseCallback.executor.prestartAllCoreThreads", defaultValue = "false")
     protected boolean responseCallbackTpePrestartAllCoreThreads = false;
 
-    @Config(key = "responseCallback.executor.allowCoreThreadTimeOut", defaultValue = "false")
+    @Config(key = ID + ".responseCallback.executor.allowCoreThreadTimeOut", defaultValue = "false")
     protected boolean responseCallbackTpeAllowCoreThreadTimeOut = false;
 
     protected ThreadPoolExecutor responseCallbackTpe;
     @JsonIgnore
     protected ScheduledExecutorService ses;
 
-    protected static final String HEADER_CLIENT_REQUEST = "httpclient.DefaultRequestHeaders.";
+    protected static final String HEADER_CLIENT_REQUEST = ID + ".DefaultRequestHeaders.";
     //3.3 HTTP Client Default Headers
     @ConfigHeader(title = "3. HTTP Client Default Headers",
             desc = "put generic HTTP Client request headers here",
