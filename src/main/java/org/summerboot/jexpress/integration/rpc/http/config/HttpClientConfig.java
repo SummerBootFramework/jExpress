@@ -219,12 +219,12 @@ abstract public class HttpClientConfig extends BootConfig {
     protected volatile Integer maxAllowedConcurrentRequests = null;
     @JsonIgnore
     protected volatile Semaphore concurrentRequestLimiter;
+
     @Config(key = "request.limiter.queuing.timeout.ms", defaultValue = "3000", desc = "The maximum time to wait for a concurrent request slot, default is 3000 ms, no timeout if the value is 0 or blank or Long.MAX_VALUE. If the request cannot get a slot within this time, it will be rejected with an error.")
     protected volatile Long concurrentRequestQueuingTimeoutMs = 3000L;
 
-    @Config(key = "request.idleEventMonitor.threshold.second", defaultValue = "60", desc = "Specifies the idle timeout threshold, in seconds, before an idle event is triggered for a request")
+    @Config(key = "request.idleEventMonitor.threshold.second", defaultValue = "60", desc = "Idle timeout threshold in seconds before triggering an idle event (HttpRpcClient.onIdle(IdleEventMonitor idleEventMonitor)) when no outgoing HTTP requests are sent.")
     protected volatile int idleThresholdSecond = 60;
-
     @Config(key = "request.idleEventMonitor.name", defaultValue = "HttpClient")
     protected volatile String idleEventMonitorName = "HttpClient";
 
