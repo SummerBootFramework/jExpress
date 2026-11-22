@@ -103,7 +103,7 @@ public class NioConfig extends BootConfig {
     protected volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = "nio.server.autostart", defaultValue = "true")
     protected volatile boolean autoStart = true;
-    @Config(key = "nio.server.idle.threshold.second", defaultValue = "61", desc = "make it prime number when you have both NIO and gRPC server running")
+    @Config(key = "nio.server.idle.threshold.second", defaultValue = "61", desc = "Idle timeout threshold in seconds before triggering an idle event (AppLifecycleHandler.onIdle(IdleEventMonitor idleEventMonitor)) when no incoming HTTP requests are received.")
     protected volatile int idleThresholdSecond;
 
     @Config(key = "nio.server.defaultRequiredHealthChecks", format = "Leave blank or comment out | REQUIRE_ALL | @HealthCheck.name1, @HealthCheck.name2, ..., @HealthCheck.nameN",

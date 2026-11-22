@@ -27,6 +27,8 @@
 - IdleEventMonitor:
     - Refactored for nanosecond-precision control and idempotent startup
     - added report(..) feature
+    - HttpRpcClient implements IdleEventMonitor.IdleEventListener, it will also automatically invoke the resetIdleTimer() after sending a request
+    - GrpcClient implements IdleEventMonitor.IdleEventListener, developer need to manually invoke the resetIdleTimer() after sending a request
 
 ## Version 2.7.5 (2026-11-01)
 

@@ -19,6 +19,7 @@ package org.summerboot.jexpress.infra.grpc.client;
 
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import org.summerboot.jexpress.boot.lifecycle.app.IdleEventMonitor;
 import org.summerboot.jexpress.infra.grpc.client.config.GrpcClientConfig;
 
 import java.util.concurrent.TimeUnit;
@@ -30,7 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @param <T>
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public abstract class GrpcClient<T extends GrpcClient<T>> {
+public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMonitor.IdleEventListener {
 
     protected NettyChannelBuilder channelBuilder;
     protected ManagedChannel channel;
@@ -38,17 +39,24 @@ public abstract class GrpcClient<T extends GrpcClient<T>> {
     protected final Lock readLock = rwLock.readLock();
     protected Thread shutdownHook;
 
+    protected IdleEventMonitor idleEventMonitor;
+
     public T withConfig(GrpcClientConfig cfg) {
-        this.channelBuilder = cfg.getChannelBuilder();
         cfg.addConfigUpdateListener(this);
-        return (T) this;
+        return withNettyChannelBuilder(cfg.getChannelBuilder(), cfg.getIdleEventMonitorName(), cfg.getIdleThresholdSecond());
     }
 
     /**
      * @param channelBuilder
      */
-    public T withNettyChannelBuilder(NettyChannelBuilder channelBuilder) {
+    public T withNettyChannelBuilder(NettyChannelBuilder channelBuilder, String idleEventMonitorName, int idleThresholdSecond) {
         this.channelBuilder = channelBuilder;
+        idleEventMonitor = new IdleEventMonitor(idleEventMonitorName) {
+            @Override
+            public long getIdleIntervalMillis() {
+                return TimeUnit.SECONDS.toMillis(idleThresholdSecond);
+            }
+        };
         return (T) this;
     }
 
@@ -90,10 +98,23 @@ public abstract class GrpcClient<T extends GrpcClient<T>> {
             }, "GrpcClient.shutdown and disconnect from " + info);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
             onConnected(channel);
+            if (idleEventMonitor != null) {
+                IdleEventMonitor.start(idleEventMonitor, this);
+            }
         } finally {
             rwLock.writeLock().unlock();
         }
         return (T) this;
+    }
+
+    protected void resetIdleTimer() {
+        resetIdleTimer(null);
+    }
+
+    protected void resetIdleTimer(String accessedBy) {
+        if (idleEventMonitor != null) {
+            idleEventMonitor.resetIdleTimer(accessedBy);
+        }
     }
 
     /**
@@ -114,10 +135,16 @@ public abstract class GrpcClient<T extends GrpcClient<T>> {
             rwLock.writeLock().lock();
         }
         try {
+            if (idleEventMonitor != null) {
+                try {
+                    IdleEventMonitor.stop(idleEventMonitor);
+                } catch (Exception ignore) {
+                }
+            }
             if (channel != null) {
                 try {
                     channel.shutdownNow();
-                } catch (Exception ex) {
+                } catch (Exception ignore) {
                 } finally {
                     channel = null;
                 }
@@ -125,7 +152,7 @@ public abstract class GrpcClient<T extends GrpcClient<T>> {
             if (shutdownHook != null) {
                 try {
                     Runtime.getRuntime().removeShutdownHook(shutdownHook);
-                } catch (Exception ex) {
+                } catch (Exception ignore) {
                 } finally {
                     shutdownHook = null;
                 }

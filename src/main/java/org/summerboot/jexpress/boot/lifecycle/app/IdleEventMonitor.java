@@ -47,7 +47,7 @@ public abstract class IdleEventMonitor {
     protected static final Logger log = LogManager.getLogger(IdleEventMonitor.class);
 
     // Stores ONLY real business access records (never overwritten by internal timer resets)
-    public record CallState(long wallClockMillis, String transactionId) {
+    public record CallState(long wallClockMillis, String accessedBy) {
     }
 
     private enum State {RUNNING, PAUSED}
@@ -84,16 +84,21 @@ public abstract class IdleEventMonitor {
         return name;
     }
 
-    public void onCall() {
-        onCall(null);
+    /**
+     * Records an activity heartbeat to break the idle state and reset the idle timer.
+     */
+    public void resetIdleTimer() {
+        resetIdleTimer(null);
     }
 
     /**
-     * Records a real business request: updates both the actual access record and the idle timer.
+     * Records an activity heartbeat to break the idle state and reset the idle timer.
+     *
+     * @param accessedBy identifier of the active caller or endpoint (e.g., request URL)
      */
-    public void onCall(String transactionId) {
+    public void resetIdleTimer(String accessedBy) {
         long seq = requestSequence.incrementAndGet();
-        String txId = (transactionId == null ? "" : transactionId) + " @" + name + "#" + seq;
+        String txId = (accessedBy == null ? "" : accessedBy) + " @" + name + "#" + seq;
         long nowNano = System.nanoTime();
         long nowMillis = System.currentTimeMillis();
 
@@ -111,7 +116,7 @@ public abstract class IdleEventMonitor {
 
     public String getLastTransactionId() {
         CallState state = lastCallState.get();
-        return state != null ? state.transactionId() : null;
+        return state != null ? state.accessedBy() : null;
     }
 
     public long getLastTimestamp() {
@@ -187,8 +192,8 @@ public abstract class IdleEventMonitor {
     /**
      * Generates an idle event report using the specified title, ZoneId, and custom format template.
      *
-     * @param reportTitle    Optional title prefix. Uses "[IDLE EVENT REPORT]" if null/blank,
-     *                       otherwise "[<reportTitle> IDLE EVENT REPORT]".
+     * @param reportTitle    Optional title prefix. Uses {@code "[IDLE EVENT REPORT]"} if null/blank,
+     *                       otherwise {@code "[<reportTitle> IDLE EVENT REPORT]"}.
      * @param zoneId         Target ZoneId. Falls back to America/Toronto if null.
      * @param reportTemplate Custom format string accepting 6 string arguments (%s):
      *                       (1) formattedTitle, (2) monitorName, (3) formattedReportTime,
@@ -218,7 +223,7 @@ public abstract class IdleEventMonitor {
 
         if (state != null) {
             formattedLastAccessTime = formatter.format(Instant.ofEpochMilli(state.wallClockMillis()));
-            lastAccessBy = state.transactionId();
+            lastAccessBy = state.accessedBy();
         } else {
             formattedLastAccessTime = "N/A";
             lastAccessBy = "N/A (No requests since startup)";
@@ -282,9 +287,9 @@ public abstract class IdleEventMonitor {
                             }
 
                             CallState realCall = m.lastCallState.get();
-                            log.info("IdleEventMonitor.onIdle: {}, lastTxId={}, lastTS={}",
+                            log.info("IdleEventMonitor.onIdle: {}, lastAccessedBy={}, lastTS={}",
                                     m.getName(),
-                                    realCall != null ? realCall.transactionId() : "N/A",
+                                    realCall != null ? realCall.accessedBy() : "N/A",
                                     realCall != null ? TimeUtil.toOffsetDateTime(realCall.wallClockMillis(), null) : "N/A");
 
                             listener.onIdle(m);
@@ -294,9 +299,9 @@ public abstract class IdleEventMonitor {
 
                         } catch (Exception ex) {
                             CallState realCall = m.lastCallState.get();
-                            log.error("IdleEventMonitor.exception: {}, lastTxId={}, lastTS={}",
+                            log.error("IdleEventMonitor.exception: {}, lastAccessedBy={}, lastTS={}",
                                     m.getName(),
-                                    realCall != null ? realCall.transactionId() : "N/A",
+                                    realCall != null ? realCall.accessedBy() : "N/A",
                                     realCall != null ? TimeUtil.toOffsetDateTime(realCall.wallClockMillis(), null) : "N/A",
                                     ex);
                             // Reset ONLY the timer on exception
