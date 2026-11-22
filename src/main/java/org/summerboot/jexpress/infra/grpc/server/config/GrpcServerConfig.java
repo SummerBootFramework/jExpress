@@ -73,7 +73,7 @@ public class GrpcServerConfig extends BootConfig {
     protected volatile List<InetSocketAddress> bindingAddresses;
     @Config(key = ID + ".autostart", defaultValue = "true")
     protected volatile boolean autoStart;
-    @Config(key = ID + ".idle.threshold.second", defaultValue = "59", desc = "Idle timeout threshold in seconds before triggering an idle event (AppLifecycleHandler.onIdle(IdleEventMonitor idleEventMonitor)) when no incoming gRPC requests are received.")
+    @Config(key = ID + ".idleEventMonitor.threshold.second", defaultValue = "59", desc = "Idle timeout threshold in seconds before triggering an idle event (AppLifecycleHandler.onIdle(IdleEventMonitor idleEventMonitor)) when no incoming gRPC requests are received.")
     protected volatile int idleThresholdSecond;
 
     @Config(key = ID + ".CallerAddressFilter.option", defaultValue = "String", desc = "Valid values (select only one) = String, HostString, HostName, AddressString, HostAddress, AddrHostName, CanonicalHostName")

@@ -2,6 +2,7 @@
 
 ## Version 2.7.6 (2026-11-24)
 
+- 🔧 Migration guide: configuration updated, to migrate: use `java -jar <yourapp>.jar -format [-domain <domainname>]`
 - GrpcServerConfig.overrideDefaultConfig now reads new config section **`4. gRpc.server ServerBuilder Settings`** to allow user override default value of Enforcement Policy, Server Keepalive,
   Connection Management and Size Protection.
 - Default line break (etc/boot.conf default.lineSeparator=LF): default to LF (Unix/Linux) (was system) for all generated files, including log files, config files, and generated PDF files. This change
@@ -19,7 +20,7 @@
     - RpcDelegate.rpcEx(): refactoring to support exception logging, exception details and exception cause in the context memo log, and to support exception cause in the ServiceError response.
     - RpcResult: refactoring to handle streaming response auto-close and auto-cleanup, preventing resource leaks and ensuring proper cleanup of resources after processing streaming responses.
     - At the moment an exception occurs, capture the full list of candidate IP addresses resolved for the current domain name.
-    - support request type: String, InputStream, Stream, byte[], Path, Flow.Publishe and custom
+    - support request type: String, InputStream, Stream, byte[], Path, Flow.Publisher and custom
     - HttpClientConfig: new config items for idle event - **`request.idleEventMonitor.threshold.second`** and **`request.idleEventMonitor.name`**
     - implements IdleEventMonitor.IdleEventListener
 - etc/boot.conf: new config item **`jwt.verify-on-receipt`**: Determines whether the server verifies the JWT immediately upon receipt, even if it is not used in subsequent processing. Defaults to true
@@ -27,8 +28,8 @@
 - IdleEventMonitor:
     - Refactored for nanosecond-precision control and idempotent startup
     - added report(..) feature
-    - HttpRpcClient implements IdleEventMonitor.IdleEventListener, it will also automatically invoke the resetIdleTimer() after sending a request
-    - GrpcClient implements IdleEventMonitor.IdleEventListener, developer need to manually invoke the resetIdleTimer() after sending a request
+    - `HttpRpcClient` implements `IdleEventMonitor.IdleEventListener` and automatically invokes `resetIdleTimer()` after sending a request.
+    - `GrpcClient` implements `IdleEventMonitor.IdleEventListener`; developers need to manually invoke `resetIdleTimer()` after sending a request.
 
 ## Version 2.7.5 (2026-11-01)
 
@@ -49,7 +50,7 @@
 - 💥 Http Client upgrade:
     - HttpClientConfig: refactor with new configuration items.
     - RpcDelegate and RpcResult: Support streaming processing of large HTTP client response bodies in high-concurrency scenarios.
-- 💥 Refactoring:  @GrpcController renamed to @GrpcService, roll back and revert changes from v2.7.1
+- 💥 Refactoring: @GrpcController renamed to @GrpcService, roll back and revert changes from v2.7.1
 - ✨ Updated feature: when **`SessionContext.status(HttpResponseStatus.OK)`** is called, it will not auto convert to 204 (No Content) even if the response body is empty
 - ✨ Updated feature: admin URL **'/checkhealth'** now returns detailed health check results in JSON format, including the list of failed health checks if any.
 - ✨ Updated feature: etc/boot.conf: new configuration item: naming.logging.protectedContentReplaceWith= ***, to replace sensitive content in logs with asterisks (***)
@@ -63,16 +64,13 @@
 - 🔧 Migration guide: use CLI **'-format'** to format etc/boot.conf, cfg_grpc.properties and cfg_nio.properties to see the new configuration items
 - New feature: **`JnaUtil.loadLibrary()`** - loads a Linux shared library from a byte array using a memory-backed file.
 
-> ### 📌 REF274-1： Gateway Security & Compatibility Guidelines for RSA Encryption
+> ### 📌 REF274-1: Gateway Security & Compatibility Guidelines for RSA Encryption
 >
 > * Affected configuration: `transformation.Asymmetric` inside `etc/boot.conf` (section 5.3)
 > * **STRONGLY RECOMMENDED:** Prioritize the short transformation string **`"RSA/ECB/OAEPPadding"`**. The SDK automatically reinforces this mode with the highest security specification (**Dual
-
-    SHA-256**) and ensures perfect cross-platform compatibility for decryption in multi-language backends such as **Go, Python, and C#**.
-
+>   SHA-256**) and ensures perfect cross-platform compatibility for decryption in multi-language backends such as **Go, Python, and C#**.
 > * **NOT RECOMMENDED:** Avoid using long transformation strings that explicitly contain `WITH` (e.g., *`"RSA/None/OAEPWithSHA-256AndMGF1Padding"`*). This triggers Java's legacy underlying behavior,
-
-    which silently falls back to the outdated **SHA-1** for the internal MGF1 hash.
+>   which silently falls back to the outdated **SHA-1** for the internal MGF1 hash.
 
 ## Version 2.7.3 (2026-09-09)
 
@@ -117,7 +115,6 @@
 #### Architecture-Oriented packaging layering Rules
 
 ```text
-
 ┌──────────────────────────────────────────────┐
 │                    boot                      │ wires everything (only)
 └───────┬──────────────────────┬───────────────┘

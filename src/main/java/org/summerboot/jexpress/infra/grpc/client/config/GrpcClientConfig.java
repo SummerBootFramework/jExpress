@@ -124,9 +124,9 @@ abstract public class GrpcClientConfig extends BootConfig {
 
     protected volatile NameResolverProvider nameResolverProvider;
 
-    @Config(key = "request.idleEventMonitor.threshold.second", defaultValue = "60", desc = "Idle timeout threshold in seconds before triggering an idle event (GrpcClient.onIdle(IdleEventMonitor idleEventMonitor)). Developers must manually call GrpcClient.resetIdleTimer(...) upon outgoing gRPC requests to reset the idle timer.")
+    @Config(key = ID + ".idleEventMonitor.threshold.second", defaultValue = "60", desc = "Idle timeout threshold in seconds before triggering an idle event (GrpcClient.onIdle(IdleEventMonitor idleEventMonitor)). Developers must manually call GrpcClient.resetIdleTimer(...) upon outgoing gRPC requests to reset the idle timer.")
     protected volatile int idleThresholdSecond = 60;
-    @Config(key = "request.idleEventMonitor.name", defaultValue = "GrpcClient")
+    @Config(key = ID + ".idleEventMonitor.name", defaultValue = "GrpcClient")
     protected volatile String idleEventMonitorName = "GrpcClient";
 
     // 1. gRPC connection
