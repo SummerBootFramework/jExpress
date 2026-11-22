@@ -28,8 +28,10 @@
 - IdleEventMonitor:
     - Refactored for nanosecond-precision control and idempotent startup
     - added report(..) feature
+    - `AppLifecycleHandler` implements `IdleEventMonitor.IdleEventListener` on behalf of `NioServer` and `GrpcServer`; `NioServer` and `GrpcServer` automatically invoke `resetIdleTimer()` after
+      receiving an HTTP or gRPC request.
     - `HttpRpcClient` implements `IdleEventMonitor.IdleEventListener` and automatically invokes `resetIdleTimer()` after sending a request.
-    - `GrpcClient` implements `IdleEventMonitor.IdleEventListener`; developers need to manually invoke `resetIdleTimer()` after sending a request.
+    - `GrpcClient` implements `IdleEventMonitor.IdleEventListener`; and automatically invokes `resetIdleTimer()` after sending a request.
 
 ## Version 2.7.5 (2026-11-01)
 
