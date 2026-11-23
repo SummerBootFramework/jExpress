@@ -3,6 +3,7 @@
 ## Version 2.7.6 (2026-11-24)
 
 - 🔧 Migration guide: configuration updated, to migrate: use `java -jar <yourapp>.jar -format [-domain <domainname>]`
+- log4j2.xml updated
 - GrpcServerConfig.overrideDefaultConfig now reads new config section **`4. gRpc.server ServerBuilder Settings`** to allow user override default value of Enforcement Policy, Server Keepalive,
   Connection Management and Size Protection.
 - gRPC server detect ping: override GrpcServerInterceptor.isPing(methodName)
@@ -14,7 +15,9 @@
     - RpcDelegate renamed to RpcClient
     - RpcDelegateHttpClientImpl renamed to HttpRpcClient
     - HttpRpcClient.getHttpClientConfig() renamed to getConfig() to provide access to the underlying HttpClientConfig for advanced configuration and customization.
-    - HttpClientConfig: refactoring to support new configuration (**`request.limiter.max.concurrent`** and **`request.limiter.queuing.timeout.ms`**) items for limiting concurrent requests in
+    - HttpClientConfig: refactoring to support new configuration (**`HttpClient.request.limiter.max.concurrent`** and **`HttpClient.request.limiter.queuing.timeout.ms`**) items for limiting concurrent
+      requests
+      in
       high-concurrency scenarios.
     - HttpClientConfig: refactoring to support new configuration (**`networkaddress.cache.ttl`** and **`networkaddress.cache.negative.ttl`**) items for controlling DNS cache behavior, allowing
       fine-tuning of DNS resolution and caching strategies.
@@ -24,7 +27,7 @@
     - RpcResult: refactoring to handle streaming response auto-close and auto-cleanup, preventing resource leaks and ensuring proper cleanup of resources after processing streaming responses.
     - At the moment an exception occurs, capture the full list of candidate IP addresses resolved for the current domain name.
     - support request type: String, InputStream, Stream, byte[], Path, Flow.Publisher and custom
-    - HttpClientConfig: new config items for idle event - **`request.idleEventMonitor.threshold.second`** and **`request.idleEventMonitor.name`**
+    - HttpClientConfig: new config items for idle event - **`HttpClient.request.idleEventMonitor.threshold.second`** and **`HttpClient.request.idleEventMonitor.name`**
     - implements IdleEventMonitor.IdleEventListener
 - etc/boot.conf: new config item **`jwt.verify-on-receipt`**: Determines whether the server verifies the JWT immediately upon receipt, even if it is not used in subsequent processing. Defaults to true
   to adhere to fail-fast and defense-in-depth principles, and should only be set to false when running a mock server. This item was hardcoded as true.
