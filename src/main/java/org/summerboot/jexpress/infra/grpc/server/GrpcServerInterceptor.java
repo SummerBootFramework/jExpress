@@ -162,20 +162,19 @@ public class GrpcServerInterceptor implements ServerInterceptor {
         if (isHealthCheckFailed) {
             final String internalError = failedHealthChecks.toString();
             call.close(Status.FAILED_PRECONDITION.withDescription("Service health check failed by HealthMonitor: " + internalError), new Metadata());
-            return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(new ServerCall.Listener<ReqT>() {
+            return new ForwardingServerCallListener.SimpleForwardingServerCallListener(new ServerCall.Listener<ReqT>() {
             }) {
             };
         }
         if (HealthMonitor.isServicePaused()) {
             call.close(Status.UNAVAILABLE.withDescription("Service is temporarily paused by HealthMonitor: " + HealthMonitor.getStatusReasonPaused()), new Metadata());
-            return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(new ServerCall.Listener<ReqT>() {
+            return new ForwardingServerCallListener.SimpleForwardingServerCallListener(new ServerCall.Listener<ReqT>() {
             }) {
             };
         }
 
         Context previous;
-        String methodName = call.getMethodDescriptor().getFullMethodName();
-        boolean isPing = methodName == null ? true : isPing(methodName);
+        boolean isPing = fullMethodName == null ? true : isPing(fullMethodName);
         GrpcServerCallListener<ReqT> listener;
         final SessionContext sessionContext;
         var serverCall = call;
@@ -198,7 +197,7 @@ public class GrpcServerInterceptor implements ServerInterceptor {
                 String methodType = call.getMethodDescriptor().getType().name();
                 SocketAddress remoteAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
                 SocketAddress localAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_LOCAL_ADDR);
-                sessionContext = new SessionContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, "gRPC HTTP/2", HttpMethod.POST, methodName, null);
+                sessionContext = new SessionContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, "gRPC HTTP/2", HttpMethod.POST, fullMethodName, null);
                 sessionContext.caller(caller).callerId(jti).sessionAttribute("MethodType", methodType);
                 ctx = ctx.withValue(GrpcConstants.SessionContext, sessionContext);
                 serverCall = new ForwardingServerCall.SimpleForwardingServerCall<>(call) {
@@ -240,9 +239,8 @@ public class GrpcServerInterceptor implements ServerInterceptor {
         }
 
         try {
-            ServerCall.Listener<ReqT> sl = next.startCall(serverCall, headers);
-            //listener = new GrpcServerCallListener<>(sl, ctx, sessionContext, !isPing);
-            listener = buildListener(sl, ctx, sessionContext, isPing);
+            ServerCall.Listener<ReqT> delegate = next.startCall(serverCall, headers);
+            listener = buildListener(delegate, ctx, fullMethodName, !isPing, headers, sessionContext, caller);
             if (!isPing) {
                 log.trace("interceptCall: {}", listener);
             }
@@ -253,11 +251,11 @@ public class GrpcServerInterceptor implements ServerInterceptor {
         return listener;
     }
 
-    public boolean isPing(String methodName) {
-        return methodName.endsWith("/ping");
+    public boolean isPing(String fullMethodName) {
+        return fullMethodName.endsWith("/ping");
     }
 
-    protected <ReqT> GrpcServerCallListener<ReqT> buildListener(ServerCall.Listener<ReqT> sl, Context ctx, SessionContext sessionContext, boolean isPing) {
-        return new GrpcServerCallListener<>(sl, ctx, sessionContext, !isPing);
+    protected <ReqT> GrpcServerCallListener buildListener(ServerCall.Listener<ReqT> delegate, Context ctx, String fullMethodName, boolean isBusinessRequest, Metadata metadata, SessionContext sessionContext, Caller caller) {
+        return new GrpcServerCallListener<>(delegate, ctx, fullMethodName, isBusinessRequest, metadata, sessionContext, caller);
     }
 }

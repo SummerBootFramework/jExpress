@@ -18,6 +18,7 @@ package org.summerboot.jexpress.infra.grpc.server;
 
 import io.grpc.Context;
 import io.grpc.ForwardingServerCallListener;
+import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -44,18 +45,21 @@ import java.util.List;
  */
 public class GrpcServerCallListener<ReqT> extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
 
-
     protected final static Logger log = LogManager.getLogger(GrpcServerCallListener.class);
 
     protected ZoneId zoneId = ZoneId.systemDefault();
 
     private final Context ctx;
+    private final String fullMethodName;
+    private boolean isBusinessRequest;
+    private final Metadata metadata;
 
     private final SessionContext sessionContext;
+    private final Caller caller;
 
     private List<String> httpPostRequestBodyList; // null until first message
+    private long totalBodyLength = 0L; // O(1) real-time recording of total length
 
-    private boolean isBusinessRequest;
 
     private final Long hit;
 
@@ -77,11 +81,14 @@ public class GrpcServerCallListener<ReqT> extends ForwardingServerCallListener.S
      * @param sessionContext
      * @param isBusinessRequest
      */
-    public GrpcServerCallListener(ServerCall.Listener<ReqT> delegate, Context ctx, SessionContext sessionContext, boolean isBusinessRequest) {
+    public GrpcServerCallListener(ServerCall.Listener<ReqT> delegate, Context ctx, String fullMethodName, boolean isBusinessRequest, Metadata metadata, SessionContext sessionContext, Caller caller) {
         super(delegate);
         this.ctx = ctx;
-        this.sessionContext = sessionContext;
+        this.fullMethodName = fullMethodName;
         this.isBusinessRequest = isBusinessRequest;
+        this.metadata = metadata;
+        this.sessionContext = sessionContext;
+        this.caller = caller;
         this.hit = sessionContext == null ? null : sessionContext.hit();
     }
 
@@ -107,7 +114,10 @@ public class GrpcServerCallListener<ReqT> extends ForwardingServerCallListener.S
             if (httpPostRequestBodyList == null) {
                 httpPostRequestBodyList = new ArrayList<>();
             }
-            httpPostRequestBodyList.add(message.toString());
+            String bodyStr = message.toString();
+            httpPostRequestBodyList.add(bodyStr);
+            totalBodyLength += bodyStr.length(); // Required character count (for log truncation and quota estimation)
+            // totalBodyLength += com.google.common.base.Utf8.encodedLength(bodyStr); // Requires the precise number of UTF-8 bytes (for scenarios involving a mix of Chinese and English)
         }
 
         try {
@@ -184,7 +194,10 @@ public class GrpcServerCallListener<ReqT> extends ForwardingServerCallListener.S
                 log.trace("{} end: {}", actionName, this);// before ThreadContext.remove
             }
             if (doReport) {
-                report(actionName);
+                Level level = sessionContext.level();
+                String report = buildReport(actionName, level, sessionContext);
+                // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
+                log.log(level, report);// CWE-117 False Positive
             }
             if (hit != null) {
                 ThreadContext.remove(BootConstants.SYS_PROP_HITINDEX);// REF269-2
@@ -192,13 +205,12 @@ public class GrpcServerCallListener<ReqT> extends ForwardingServerCallListener.S
         }
     }
 
-    protected void report(String actionName) {
+    protected String buildReport(String actionName, Level level, SessionContext sessionContext) {
         if (!isBusinessRequest || sessionContext == null) {
-            return;
+            return "";
         }
-        Level level = sessionContext.level();
         if (!log.isEnabled(level)) {
-            return;
+            return "";
         }
         long responseTime = System.currentTimeMillis() - sessionContext.startTimestamp();
         boolean isTraceAll = BootConstants.isDebugMode();
@@ -249,9 +261,10 @@ public class GrpcServerCallListener<ReqT> extends ForwardingServerCallListener.S
             }
         }
 
-        long requestDataBytes = 0;
-        long responseDataBytes = 0;
-        buildClientServerCommunication(requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, sessionContext, sb, isTraceAll);
+        long requestDataBytes = totalBodyLength;
+        String responseBody = sessionContext.txt();
+        long responseDataBytes = responseBody == null ? 0 : responseBody.length();
+        buildClientServerCommunication(fullMethodName, requestHeaders, requestDataBytes, sanitizedUserInput, sessionContext.responseHeaders(), responseDataBytes, responseBody, sessionContext, sb, isTraceAll);
         sessionContext.reportMemo(sb, log.getLevel());
         sessionContext.reportError(sb);
         sb.append(BootConstants.BR);
@@ -269,15 +282,14 @@ public class GrpcServerCallListener<ReqT> extends ForwardingServerCallListener.S
                 }
             }
         }
-        // should only sanitize user input: report = SecurityUtil.sanitizeCRLF(report);
-        log.log(level, report);// CWE-117 False Positive
+        return report;
     }
 
     protected String sanitizeUserInput(String originalInput) {
         return SecurityUtil.sanitizeCRLF(originalInput);// CWE-117 False Positive prove
     }
 
-    protected void buildClientServerCommunication(HttpHeaders requestHeaders, long requestDataBytes, String sanitizedUserInput, long responseDataBytes, SessionContext context, StringBuilder sb, boolean isTraceAll) {
-        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, sessionContext, sb, isTraceAll);
+    protected void buildClientServerCommunication(String fullMethodName, HttpHeaders requestHeaders, long requestDataBytes, String sanitizedUserInput, HttpHeaders responseHeaders, long responseDataBytes, String responseBody, SessionContext context, StringBuilder sb, boolean isTraceAll) {
+        NioServerHttpRequestHandler.verboseClientServerCommunication(null, requestHeaders, requestDataBytes, sanitizedUserInput, responseHeaders, responseDataBytes, responseBody, sessionContext, sb, isTraceAll);
     }
 }

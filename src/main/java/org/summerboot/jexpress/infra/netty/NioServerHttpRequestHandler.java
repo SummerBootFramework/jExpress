@@ -226,7 +226,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
                             context.reportOverall(queuingTime, processTime, responseTime, sb);
                             context.reportPOI(nioCfg, sb);
                             String sanitizedUserInput = SecurityUtil.sanitizeCRLF(httpPostRequestBody);// CWE-117 False Positive prove
-                            verboseClientServerCommunication(nioCfg, requestHeaders, requestDataBytes, sanitizedUserInput, responseDataBytes, context, sb, isTraceAll);
+                            verboseClientServerCommunication(nioCfg, requestHeaders, requestDataBytes, sanitizedUserInput, context.responseHeaders(), responseDataBytes, context.txt(), context, sb, isTraceAll);
                             context.reportMemo(sb, log.getLevel());
                             context.reportError(sb);
                             sb.append(BootConstants.BR);
@@ -322,7 +322,7 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         return sb.toString();
     }
 
-    public static void verboseClientServerCommunication(NioConfig cfg, HttpHeaders requestHeaders, long requestDataBytes, String httpPostRequestBody, long responseDataBytes, SessionContext context, StringBuilder sb, boolean isTraceAll) {
+    public static void verboseClientServerCommunication(NioConfig cfg, HttpHeaders requestHeaders, long requestDataBytes, String httpPostRequestBody, HttpHeaders responseHeaders, long responseDataBytes, String responseBody, SessionContext context, StringBuilder sb, boolean isTraceAll) {
         boolean isInFilter = false;
         // 3a. caller filter
         Caller caller = context.caller();
@@ -421,10 +421,10 @@ public abstract class NioServerHttpRequestHandler extends SimpleChannelInboundHa
         sb.append("\n\t2.client_req.body(").append(requestDataBytes).append(" bytes)=").append((isTraceAll || context.logRequestBody() && isVerbose) ? httpPostRequestBody : BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
         // 3.3 ioc responseHeader
         isVerbose = cfg == null ? true : cfg.isVerboseRespHeader();
-        sb.append("\n\t3.server_resp.headers=").append((isTraceAll || context.logResponseHeader() && isVerbose) ? context.responseHeaders() : BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
+        sb.append("\n\t3.server_resp.headers=").append((isTraceAll || context.logResponseHeader() && isVerbose) ? responseHeaders : BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
         // 3.4 ioc body
         isVerbose = cfg == null ? true : cfg.isVerboseRespContent();
-        sb.append("\n\t4.server_resp.body(").append(responseDataBytes).append(" bytes)=").append((isTraceAll || context.logResponseBody() && isVerbose) ? context.txt() : BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
+        sb.append("\n\t4.server_resp.body(").append(responseDataBytes).append(" bytes)=").append((isTraceAll || context.logResponseBody() && isVerbose) ? responseBody : BootConstants.LOGGING_PROTECTED_CONTENT_REPLACEMENT);
     }
 
     abstract protected ProcessorSettings service(final ChannelHandlerContext ctx, final HttpHeaders httpHeaders, final HttpMethod httpMethod, final String httpRequestPath, final Map<String, List<String>> queryParams, final String httpPostRequestBody, final SessionContext context);
