@@ -162,20 +162,20 @@ public class GrpcServerInterceptor implements ServerInterceptor {
         if (isHealthCheckFailed) {
             final String internalError = failedHealthChecks.toString();
             call.close(Status.FAILED_PRECONDITION.withDescription("Service health check failed by HealthMonitor: " + internalError), new Metadata());
-            return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(new ServerCall.Listener<ReqT>() {
+            return new ForwardingServerCallListener.SimpleForwardingServerCallListener(new ServerCall.Listener<ReqT>() {
             }) {
             };
         }
         if (HealthMonitor.isServicePaused()) {
             call.close(Status.UNAVAILABLE.withDescription("Service is temporarily paused by HealthMonitor: " + HealthMonitor.getStatusReasonPaused()), new Metadata());
-            return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(new ServerCall.Listener<ReqT>() {
+            return new ForwardingServerCallListener.SimpleForwardingServerCallListener(new ServerCall.Listener<ReqT>() {
             }) {
             };
         }
 
         Context previous;
         boolean isPing = fullMethodName == null ? true : isPing(fullMethodName);
-        GrpcServerCallListener<ReqT, RespT> listener;
+        GrpcServerCallListener<ReqT> listener;
         final SessionContext sessionContext;
         var serverCall = call;
 
