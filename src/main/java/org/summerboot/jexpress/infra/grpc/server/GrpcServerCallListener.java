@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author Changski Tie Zheng Zhang 张铁铮, 魏泽北, 杜旺财, 杜富贵
  */
-public class GrpcServerCallListener<ReqT, RespT> extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
+public class GrpcServerCallListener<ReqT> extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
 
     protected final static Logger log = LogManager.getLogger(GrpcServerCallListener.class);
 
