@@ -44,10 +44,11 @@ public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMo
 
     protected NettyChannelBuilder channelBuilder;
     protected ManagedChannel channel;
+
     protected final IdleEventMonitor idleEventMonitor;
 
-    private boolean interceptorRegistered;
     private final ClientInterceptor idleResetInterceptor;
+    private boolean interceptorRegistered;
 
     /**
      * Constructs a GrpcClient using a {@link GrpcClientConfig} and registers this client
