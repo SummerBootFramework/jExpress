@@ -212,13 +212,13 @@
         <!-- Bean Validation -->
         <jakarta.el.version>6.0.1</jakarta.el.version>
         <tomcat-embed-el.version>11.0.29</tomcat-embed-el.version>
-        <hibernate-validator.version>9.1.6.Final</hibernate-validator.version>
+        <hibernate-validator.version>9.2.0.Final</hibernate-validator.version>
 
         <!-- IOC Injection -->
         <guice.version>7.0.0</guice.version>
 
         <!-- JPA -->
-        <hibernate.version>7.4.16.Final</hibernate.version>
+        <hibernate.version>7.4.17.Final</hibernate.version>
         <hikari-cp.version>7.1.0</hikari-cp.version>
 
         <!-- JNA -->
@@ -238,7 +238,7 @@
         <!-- PDF - PDFBox -->
         <pdfbox.version>3.0.8</pdfbox.version>
         <!-- PDF - io.github.openhtmltopdf -->
-        <openhtml.version>1.1.114</openhtml.version>
+        <openhtml.version>1.1.117</openhtml.version>
         <batik-transcoder.version>1.20</batik-transcoder.version>
         <!-- PDF - iText -->
         <itext-core.version>9.8.1</itext-core.version>
