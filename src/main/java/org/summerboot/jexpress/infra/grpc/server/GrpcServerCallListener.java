@@ -184,7 +184,7 @@ public class GrpcServerCallListener<ReqT> extends ForwardingServerCallListener.S
         }
         if (isBegin) {
             if (hit != null) {
-                ThreadContext.put(BootConstants.SYS_PROP_HITINDEX, "-" + hit);// REF269-2
+                ThreadContext.put(BootConstants.SYS_PROP_HITINDEX, "-g" + hit);// REF269-2, REF276-1
             }
             if (log.isTraceEnabled()) {
                 log.trace("{} begin: {}", actionName, this);// after ThreadContext.put
