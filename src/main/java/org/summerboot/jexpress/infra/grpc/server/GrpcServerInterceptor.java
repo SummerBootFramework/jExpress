@@ -174,8 +174,7 @@ public class GrpcServerInterceptor implements ServerInterceptor {
         }
 
         Context previous;
-        String methodName = call.getMethodDescriptor().getFullMethodName();
-        boolean isPing = methodName == null ? true : isPing(methodName);
+        boolean isPing = fullMethodName == null ? true : isPing(fullMethodName);
         GrpcServerCallListener<ReqT, RespT> listener;
         final SessionContext sessionContext;
         var serverCall = call;
@@ -198,7 +197,7 @@ public class GrpcServerInterceptor implements ServerInterceptor {
                 String methodType = call.getMethodDescriptor().getType().name();
                 SocketAddress remoteAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
                 SocketAddress localAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_LOCAL_ADDR);
-                sessionContext = new SessionContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, "gRPC HTTP/2", HttpMethod.POST, methodName, null);
+                sessionContext = new SessionContext(localAddr, remoteAddr, txId, hitIndex, startTs, httpHeaders, "gRPC HTTP/2", HttpMethod.POST, fullMethodName, null);
                 sessionContext.caller(caller).callerId(jti).sessionAttribute("MethodType", methodType);
                 ctx = ctx.withValue(GrpcConstants.SessionContext, sessionContext);
                 serverCall = new ForwardingServerCall.SimpleForwardingServerCall<>(call) {
@@ -241,7 +240,7 @@ public class GrpcServerInterceptor implements ServerInterceptor {
 
         try {
             ServerCall.Listener<ReqT> delegate = next.startCall(serverCall, headers);
-            listener = buildListener(delegate, ctx, sessionContext, caller, !isPing, call, headers);
+            listener = buildListener(delegate, ctx, fullMethodName, !isPing, headers, sessionContext, caller);
             if (!isPing) {
                 log.trace("interceptCall: {}", listener);
             }
@@ -252,11 +251,11 @@ public class GrpcServerInterceptor implements ServerInterceptor {
         return listener;
     }
 
-    public boolean isPing(String methodName) {
-        return methodName.endsWith("/ping");
+    public boolean isPing(String fullMethodName) {
+        return fullMethodName.endsWith("/ping");
     }
 
-    protected <ReqT, RespT> GrpcServerCallListener buildListener(ServerCall.Listener<ReqT> delegate, Context ctx, SessionContext sessionContext, Caller caller, boolean isBusinessRequest, ServerCall<ReqT, RespT> serverCall, Metadata metadata) {
-        return new GrpcServerCallListener<>(delegate, ctx, sessionContext, caller, isBusinessRequest, serverCall, metadata);
+    protected <ReqT> GrpcServerCallListener buildListener(ServerCall.Listener<ReqT> delegate, Context ctx, String fullMethodName, boolean isBusinessRequest, Metadata metadata, SessionContext sessionContext, Caller caller) {
+        return new GrpcServerCallListener<>(delegate, ctx, fullMethodName, isBusinessRequest, metadata, sessionContext, caller);
     }
 }

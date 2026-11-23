@@ -50,16 +50,16 @@ public class GrpcServerCallListener<ReqT, RespT> extends ForwardingServerCallLis
     protected ZoneId zoneId = ZoneId.systemDefault();
 
     private final Context ctx;
+    private final String fullMethodName;
+    private boolean isBusinessRequest;
+    private final Metadata metadata;
 
     private final SessionContext sessionContext;
     private final Caller caller;
-    private final ServerCall<ReqT, RespT> serverCall;
-    private final Metadata metadata;
 
     private List<String> httpPostRequestBodyList; // null until first message
     private long totalBodyLength = 0L; // O(1) real-time recording of total length
 
-    private boolean isBusinessRequest;
 
     private final Long hit;
 
@@ -81,14 +81,14 @@ public class GrpcServerCallListener<ReqT, RespT> extends ForwardingServerCallLis
      * @param sessionContext
      * @param isBusinessRequest
      */
-    public GrpcServerCallListener(ServerCall.Listener<ReqT> delegate, Context ctx, SessionContext sessionContext, Caller caller, boolean isBusinessRequest, ServerCall<ReqT, RespT> serverCall, Metadata metadata) {
+    public GrpcServerCallListener(ServerCall.Listener<ReqT> delegate, Context ctx, String fullMethodName, boolean isBusinessRequest, Metadata metadata, SessionContext sessionContext, Caller caller) {
         super(delegate);
         this.ctx = ctx;
+        this.fullMethodName = fullMethodName;
+        this.isBusinessRequest = isBusinessRequest;
+        this.metadata = metadata;
         this.sessionContext = sessionContext;
         this.caller = caller;
-        this.serverCall = serverCall;
-        this.metadata = metadata;
-        this.isBusinessRequest = isBusinessRequest;
         this.hit = sessionContext == null ? null : sessionContext.hit();
     }
 
@@ -264,7 +264,6 @@ public class GrpcServerCallListener<ReqT, RespT> extends ForwardingServerCallLis
         long requestDataBytes = totalBodyLength;
         String responseBody = sessionContext.txt();
         long responseDataBytes = responseBody == null ? 0 : responseBody.length();
-        String fullMethodName = this.serverCall.getMethodDescriptor().getFullMethodName();
         buildClientServerCommunication(fullMethodName, requestHeaders, requestDataBytes, sanitizedUserInput, sessionContext.responseHeaders(), responseDataBytes, responseBody, sessionContext, sb, isTraceAll);
         sessionContext.reportMemo(sb, log.getLevel());
         sessionContext.reportError(sb);
