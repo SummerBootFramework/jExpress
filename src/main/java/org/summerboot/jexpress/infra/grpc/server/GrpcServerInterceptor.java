@@ -186,7 +186,7 @@ public class GrpcServerInterceptor implements ServerInterceptor {
             } else {
                 GrpcServer.getServiceCounter().incrementHit();
                 final long hitIndex = GrpcServer.getServiceCounter().incrementBiz();
-                final String txId = BootConstants.APP_ID + "-g" + hitIndex; // REF276-1
+                final String txId = BootConstants.APP_ID + "-g" + hitIndex; // REF280-1
                 GrpcServer.IDLE_EVENT_MONITOR.resetIdleTimer(txId + " " + fullMethodName);
                 HttpHeaders httpHeaders = new DefaultHttpHeaders();
                 for (String key : headers.keys()) {

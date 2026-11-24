@@ -1,6 +1,6 @@
 ## 📅 CHANGES
 
-## Version 2.7.6 (2026-11-24)
+## Version 2.8.1 (2026-11-24)
 
 - 🔧 Migration guide: configuration updated, to migrate: use `java -jar <yourapp>.jar -format [-domain <domainname>]`
 - log4j2.xml updated
@@ -38,7 +38,7 @@
       receiving an HTTP or gRPC request.
     - `HttpRpcClient` implements `IdleEventMonitor.IdleEventListener` and automatically invokes `resetIdleTimer()` after sending a request.
     - `GrpcClient` implements `IdleEventMonitor.IdleEventListener`; and automatically invokes `resetIdleTimer()` after sending a request.
-- REF276-1: gRPC server reference number format changed to `xxxxxx-g{x}` (previously shared the same `xxxxxx-{x}` format as the NIO HTTP server) so that gRPC and HTTP requests can be easily
+- REF280-1: gRPC server reference number format changed to `xxxxxx-g{x}` (previously shared the same `xxxxxx-{x}` format as the NIO HTTP server) so that gRPC and HTTP requests can be easily
   distinguished when a single server runs both gRPC and HTTP services concurrently.
 
 ## Version 2.7.5 (2026-11-01)

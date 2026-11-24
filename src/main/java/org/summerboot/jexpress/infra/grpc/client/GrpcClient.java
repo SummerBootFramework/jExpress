@@ -17,11 +17,14 @@
  */
 package org.summerboot.jexpress.infra.grpc.client;
 
+import io.grpc.CallCredentials;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.stub.AbstractStub;
 import org.summerboot.jexpress.boot.lifecycle.app.IdleEventMonitor;
 import org.summerboot.jexpress.infra.grpc.client.config.GrpcClientConfig;
+import org.summerboot.jexpress.infra.grpc.server.interceptor.BearerAuthCredential;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +52,8 @@ public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMo
 
     private final ClientInterceptor idleResetInterceptor;
     private boolean interceptorRegistered;
+
+    protected CallCredentials callCredentials;
 
     /**
      * Constructs a GrpcClient using a {@link GrpcClientConfig} and registers this client
@@ -111,7 +116,7 @@ public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMo
      * By default, immediately reconnects using the updated settings. Override to customize behavior.
      */
     protected void onChannelBuilderUpdated() {
-        connect();
+        connect(this.callCredentials);
     }
 
     /**
@@ -122,6 +127,30 @@ public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMo
      */
     @SuppressWarnings("unchecked")
     public T connect() {
+        return connect((CallCredentials) null);
+    }
+
+    /**
+     * Disconnects any existing channel and establishes a new connection under a write lock.
+     * Rolls back partially initialized resources if connection setup fails.
+     *
+     * @param jwt
+     * @return this client instance for chaining
+     */
+    @SuppressWarnings("unchecked")
+    public T connect(String jwt) {
+        return connect(jwt == null ? null : new BearerAuthCredential(jwt));
+    }
+
+    /**
+     * Disconnects any existing channel and establishes a new connection under a write lock.
+     * Rolls back partially initialized resources if connection setup fails.
+     *
+     * @param callCredentials
+     * @return this client instance for chaining
+     */
+    @SuppressWarnings("unchecked")
+    public T connect(CallCredentials callCredentials) {
         rwLock.writeLock().lock();
         try {
             disconnect(false);
@@ -143,7 +172,8 @@ public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMo
             }, "GrpcClient.shutdown and disconnect from " + info);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-            onConnected(newChannel);
+            this.callCredentials = callCredentials;
+            onConnected(newChannel).withCallCredentials(callCredentials);
             IdleEventMonitor.start(idleEventMonitor, this);
         } catch (Throwable t) {
             // Ensure partial resources (channel, shutdownHook) are cleaned up if onConnected() fails
@@ -172,15 +202,16 @@ public abstract class GrpcClient<T extends GrpcClient<T>> implements IdleEventMo
     }
 
     /**
-     * Invoked during {@link #connect()} once the {@link ManagedChannel} is built.
+     * Invoked during {@link #connect(CallCredentials)} once the {@link ManagedChannel} is built.
      * Subclasses should initialize their gRPC stubs here.
      * <p>
      * <b>Warning:</b> Do not dispatch blocking work to external threads that attempt to acquire
      * {@link #lock()} inside this method, as the current thread holds the write lock and will deadlock.
      *
      * @param channel the newly established ManagedChannel
+     * @return
      */
-    protected abstract void onConnected(ManagedChannel channel);
+    protected abstract AbstractStub onConnected(ManagedChannel channel);
 
     /**
      * Disconnects the current channel and stops idle monitoring in a thread-safe manner.
