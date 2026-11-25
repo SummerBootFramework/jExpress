@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.summerboot</groupId>
     <artifactId>jexpress</artifactId>
-    <version>2.8.1</version>
+    <version>2.8.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>jExpress ${project.version}</name>
     <description>jExpress is an enterprise-ready, mission-critical microservice foundation built on the architectural philosophy of "Enforcement-as-Code" and "Out-of-the-Box (OOTB) Readiness". The
@@ -828,6 +828,7 @@
                             <directory>.</directory>
                             <includes>
                                 <include>gc.*</include>
+                                <include>*.hprof</include>
                             </includes>
                             <excludes>
                                 <exclude>plugin/*.jar</exclude>

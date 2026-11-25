@@ -263,6 +263,9 @@ public abstract class BootAuthenticator implements Authenticator {
      * @return
      */
     public static String getBearerToken(HttpHeaders httpRequestHeaders) {
+        if (httpRequestHeaders == null) {
+            return null;
+        }
         String authHeaderValue = httpRequestHeaders.get(HttpHeaderNames.AUTHORIZATION);
         return getBearerToken(authHeaderValue);
     }

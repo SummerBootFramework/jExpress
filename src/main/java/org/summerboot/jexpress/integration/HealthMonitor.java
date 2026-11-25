@@ -127,11 +127,17 @@ public class HealthMonitor {
             inspect();
             return;
         }
+        final int total = healthCheckers.length;
+        int skipped = 0;
         for (HealthChecker healthChecker : healthCheckers) {// use specified inspectors
             if (healthChecker == null) {
+                skipped++;
                 continue;
             }
             HEALTH_CHECKER_QUEUE.add(healthChecker);
+        }
+        if (skipped >= total) { // to handle inspect(null)
+            inspect();
         }
     }
 
