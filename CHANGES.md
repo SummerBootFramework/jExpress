@@ -2,6 +2,8 @@
 
 ## Version 2.8.2 (2026-12-24)
 
+- REF282-1: Properly handle null inputs in HealthMonitor.inspect(null) and BootAuthenticator.getBearerToken(HttpHeaders)
+
 ## Version 2.8.1 (2026-11-24)
 
 - 🔒 Fixed vulnerabilities from dependencies:

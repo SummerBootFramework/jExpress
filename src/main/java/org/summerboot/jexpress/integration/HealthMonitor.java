@@ -136,7 +136,9 @@ public class HealthMonitor {
             }
             HEALTH_CHECKER_QUEUE.add(healthChecker);
         }
-        if (skipped >= total) { // to handle inspect(null)
+
+        // REF282-1: to handle inspect(null)
+        if (skipped >= total) {
             inspect();
         }
     }
