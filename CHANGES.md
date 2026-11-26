@@ -2,13 +2,15 @@
 
 ## Version 2.8.2 (2026-12-24)
 
+- 🔒 Fixed vulnerabilities from dependencies:
+    - [CVE-2022-34169](https://mvnrepository.com/vulnerabilities/CVE-2022-34169)
+
 - REF282-1: Properly handle null inputs in HealthMonitor.inspect(null) and BootAuthenticator.getBearerToken(HttpHeaders)
 
 ## Version 2.8.1 (2026-11-24)
 
 - 🔒 Fixed vulnerabilities from dependencies:
     - [CVE-2026-102554](https://mvnrepository.com/vulnerabilities/CVE-2026-102554)
-    - [CVE-2022-34169](https://mvnrepository.com/vulnerabilities/CVE-2022-34169)
 - 🔧 Migration guide: configuration updated, to migrate: use `java -jar <yourapp>.jar -format [-domain <domainname>]`
 - 💥 log4j2.xml updated
 - 💥 GrpcServerConfig.overrideDefaultConfig now reads new config section **`4. gRpc.server ServerBuilder Settings`** to allow user override default value of Enforcement Policy, Server Keepalive,

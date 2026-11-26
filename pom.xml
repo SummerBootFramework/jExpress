@@ -190,7 +190,7 @@
         <netty.version>4.2.21.Final</netty.version>
         <netty-tcnative.version>2.0.86.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
-        <grpc.version>1.85.1</grpc.version>
+        <grpc.version>1.86.0</grpc.version>
         <guava.version>33.8.0-jre</guava.version>
         <protobuf.version>4.36.2</protobuf.version>
         <!-- Web JAX-RS -->
@@ -239,7 +239,9 @@
         <pdfbox.version>3.0.8</pdfbox.version>
         <!-- PDF - io.github.openhtmltopdf -->
         <openhtml.version>1.1.117</openhtml.version>
-        <batik-transcoder.version>1.20</batik-transcoder.version>
+        <!-- openhtmltopdf security patch -->
+        <batik.version>1.20</batik.version>
+        <xmlgraphics-commons.version>2.12</xmlgraphics-commons.version>
         <!-- PDF - iText -->
         <itext-core.version>9.8.1</itext-core.version>
         <itext-html2pdf.version>6.3.4</itext-html2pdf.version>
@@ -252,6 +254,37 @@
         <jdbc.version>26.10.0</jdbc.version>
         <mockito.version>5.24.0</mockito.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-transcoder</artifactId>
+                <version>${batik.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-codec</artifactId>
+                <version>${batik.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-ext</artifactId>
+                <version>${batik.version}</version>
+            </dependency>
+            <!-- Added: Covers version 1.9 introduced by jeuclid-core -->
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-svg-dom</artifactId>
+                <version>${batik.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>xmlgraphics-commons</artifactId>
+                <version>${xmlgraphics-commons.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Commons -->
@@ -739,12 +772,6 @@
             <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-svg-support</artifactId>
             <version>${openhtml.version}</version>
-        </dependency>
-        <!-- security patch https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-transcoder -->
-        <dependency>
-            <groupId>org.apache.xmlgraphics</groupId>
-            <artifactId>batik-transcoder</artifactId>
-            <version>${batik-transcoder.version}</version>
         </dependency>
 
         <dependency>
