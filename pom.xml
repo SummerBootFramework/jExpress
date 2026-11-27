@@ -225,7 +225,7 @@
         <jna.version>5.19.1</jna.version>
 
         <!-- Cache -->
-        <jedis.version>8.0.2</jedis.version>
+        <jedis.version>8.1.0</jedis.version>
 
         <quartz.version>2.5.2</quartz.version>
         <mqtt.version>1.2.5</mqtt.version>
@@ -238,7 +238,7 @@
         <!-- PDF - PDFBox -->
         <pdfbox.version>3.0.8</pdfbox.version>
         <!-- PDF - io.github.openhtmltopdf -->
-        <openhtml.version>1.1.117</openhtml.version>
+        <openhtml.version>1.1.125</openhtml.version>
         <!-- openhtmltopdf security patch -->
         <batik.version>1.20</batik.version>
         <xmlgraphics-commons.version>2.12</xmlgraphics-commons.version>
@@ -252,11 +252,12 @@
         <testng.version>7.12.0</testng.version>
         <jsonassert.version>2.0-rc1</jsonassert.version>
         <jdbc.version>26.10.0</jdbc.version>
-        <mockito.version>5.24.0</mockito.version>
+        <mockito.version>5.25.0</mockito.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- 1. 统一 Batik 为 1.20（修复 CVE 漏洞并消除 1.17 / 1.9 混用） -->
             <dependency>
                 <groupId>org.apache.xmlgraphics</groupId>
                 <artifactId>batik-transcoder</artifactId>
@@ -272,7 +273,6 @@
                 <artifactId>batik-ext</artifactId>
                 <version>${batik.version}</version>
             </dependency>
-            <!-- Added: Covers version 1.9 introduced by jeuclid-core -->
             <dependency>
                 <groupId>org.apache.xmlgraphics</groupId>
                 <artifactId>batik-svg-dom</artifactId>
@@ -281,7 +281,61 @@
             <dependency>
                 <groupId>org.apache.xmlgraphics</groupId>
                 <artifactId>xmlgraphics-commons</artifactId>
-                <version>${xmlgraphics-commons.version}</version>
+                <version>2.12</version>
+            </dependency>
+
+            <!-- 2. 统一 Guava 为最新 JRE 安全版（覆盖 gRPC 的 33.7.2-android 和 Guice 的 31.0.1-jre） -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+
+            <!-- 3. 统一 Protobuf 为 4.36.2 -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+
+            <!-- 4. 统一 SLF4J 为 2.0.20（防止 reflections 的 1.7.32 覆盖 Tika/Quartz 所需的 2.x） -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>2.0.20</version>
+            </dependency>
+
+            <!-- 5. 统一 Commons Lang3 & ErrorProne 注解为高版本 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>2.53.0</version>
+            </dependency>
+            <!-- 6. 统一 Hibernate / Logging / HikariCP / JAXB-API 版本 -->
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging</artifactId>
+                <version>3.6.3.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>1.4.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${hikari-cp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>4.0.5</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -483,12 +537,6 @@
             <artifactId>grpc-protobuf</artifactId>
             <version>${grpc.version}</version>
             <!--            <scope>provided</scope>-->
-        </dependency>
-        <!-- grpc security patch https://mvnrepository.com/artifact/com.google.guava/guava -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded -->
@@ -783,15 +831,6 @@
         </dependency>
 
         <!-- Document to Image -->
-        <!-- https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-all 
-        <dependency>
-            <groupId>org.apache.xmlgraphics</groupId>
-            <artifactId>batik-all</artifactId>
-            <version>batik.version</version>
-            <type>pom</type>
-        </dependency>
-        -->
-
         <!-- PDF - PDFBox -->
         <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
         <dependency>
@@ -811,6 +850,7 @@
             <groupId>com.veracode.annotation</groupId>
             <artifactId>VeracodeAnnotations</artifactId>
             <version>${veracode.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Testing -->
