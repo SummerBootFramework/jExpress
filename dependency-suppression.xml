@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2005-2026 Du Law Office - jExpress, The Summer Boot Framework Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     https://apache.org
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  -->
+
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd">
+
+
+    <!-- 1. 误报：VeracodeAnnotations 只是纯编译期注解库，非 Veracode 服务端平台 -->
+    <suppress>
+        <notes><![CDATA[False positive: VeracodeAnnotations is a compile-time annotation library, not the Veracode platform.]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.veracode\.annotation/VeracodeAnnotations@.*$</packageUrl>
+        <cpe>cpe:/a:veracode:veracode</cpe>
+    </suppress>
+
+    <!-- 2. 误报：CVE-2025-10543 仅影响 Go 语言版 paho.mqtt.golang，不影响 Java 版客户端 -->
+    <suppress>
+        <notes><![CDATA[False positive: CVE-2025-10543 applies only to paho.mqtt.golang, not the Java MQTTv5 client.]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.paho/org\.eclipse\.paho\.mqttv5\.client@.*$</packageUrl>
+        <cve>CVE-2025-10543</cve>
+    </suppress>
+
+</suppressions>
