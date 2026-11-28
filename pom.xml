@@ -787,8 +787,7 @@
 
 
             <!-- ================= 2. Indirect/transitive dependency version locking (for fixing vulnerabilities or conflicts, no need to include it below). ================= -->
-            <!-- Resolve the BATKI security vulnerability/version conflict introduced by component passing. -->
-            <!-- 1. Unify Batik to version 1.20 (fixes CVE vulnerability and eliminates the mixing of 1.17 and 1.9) -->
+            <!-- 1. Unify Batik -->
             <dependency>
                 <groupId>org.apache.xmlgraphics</groupId>
                 <artifactId>batik-transcoder</artifactId>
@@ -815,28 +814,28 @@
                 <version>2.12</version>
             </dependency>
 
-            <!-- 2. Guava is unified with the latest JRE security version (covering gRPC 33.7.2-android and Guice 31.0.1-jre). -->
+            <!-- 2. Unify Guava -->
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>33.8.0-jre</version>
             </dependency>
 
-            <!-- 3. 统一 SLF4J 为 2.0.20（防止 reflections 的 1.7.32 覆盖 Tika/Quartz 所需的 2.x） -->
+            <!-- 3. Unify SLF4J -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>2.0.20</version>
             </dependency>
 
-            <!--4. 统一 ErrorProne 注解为高版本 -->
+            <!--4. Unify ErrorProne -->
             <dependency>
                 <groupId>com.google.errorprone</groupId>
                 <artifactId>error_prone_annotations</artifactId>
                 <version>2.53.0</version>
             </dependency>
 
-            <!-- 5. 统一 Hibernate / Logging / HikariCP / JAXB-API 版本 -->
+            <!-- 5. Unify Hibernate / Logging / HikariCP / JAXB-API -->
             <dependency>
                 <groupId>org.jboss.logging</groupId>
                 <artifactId>jboss-logging</artifactId>
@@ -1536,8 +1535,6 @@
                 <version>${dependency-check.version}</version>
                 <configuration>
                     <ossIndexServerId>ossindex</ossIndexServerId>
-                    <!-- 如果使用的是 12.2.2 以下的老版本插件，需要额外加上下面这行指定新接口地址 -->
-                    <!-- <ossIndexAnalyzerUrl>https://api.guide.sonatype.com</ossIndexAnalyzerUrl> -->
                 </configuration>
             </plugin>
         </plugins>
