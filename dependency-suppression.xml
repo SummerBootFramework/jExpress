@@ -18,7 +18,7 @@
 
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd">
+              xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd https://dependency-check.github.io/DependencyCheck/dependency-suppression.1.4.xsd">
 
 
     <!-- 1. 误报：VeracodeAnnotations 只是纯编译期注解库，非 Veracode 服务端平台 -->
@@ -33,6 +33,24 @@
         <notes><![CDATA[False positive: CVE-2025-10543 applies only to paho.mqtt.golang, not the Java MQTTv5 client.]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.eclipse\.paho/org\.eclipse\.paho\.mqttv5\.client@.*$</packageUrl>
         <cve>CVE-2025-10543</cve>
+    </suppress>
+
+    <!-- 2. Quartz-Jobs 争议漏洞（未使用 JMS 预设任务且 JobDataMap 参数不对外开放） -->
+    <suppress>
+        <notes><![CDATA[
+        Disputed CVE-2023-39017: Project does not use JMS SendQueueMessageJob with untrusted user-supplied JobDataMap.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.quartz-scheduler/quartz-jobs@.*$</packageUrl>
+        <cve>CVE-2023-39017</cve>
+    </suppress>
+
+    <!-- 3. Commons Codec 文档描述不一致问题（如项目确认未使用 Blake3.doFinalize 派生密钥可启用此规则；否则建议直接升级到 1.23.0+） -->
+    <suppress>
+        <notes><![CDATA[
+        CVE-2026-119078: Project does not use Blake3.doFinalize for key derivation.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/commons-codec/commons-codec@.*$</packageUrl>
+        <cve>CVE-2026-119078</cve>
     </suppress>
 
 </suppressions>

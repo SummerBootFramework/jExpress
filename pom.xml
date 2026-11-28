@@ -62,7 +62,7 @@
         </developer>
     </developers>
     <scm>
-        <connection>sscm:git:git://github.com/SummerBootFramework/jExpress.git</connection>
+        <connection>scm:git:git://github.com/SummerBootFramework/jExpress.git</connection>
         <developerConnection>scm:git:ssh://github.com:SummerBootFramework/jExpress.git</developerConnection>
         <url>https://github.com/SummerBootFramework/jExpress/tree/main</url>
     </scm>
@@ -84,7 +84,6 @@
                 <maven-javadoc.version>3.12.0</maven-javadoc.version>
                 <maven-deploy.version>3.2.0</maven-deploy.version>
                 <maven-gpg.version>3.2.8</maven-gpg.version>
-                <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
                 <central-publishing.version>0.12.0</central-publishing.version>
             </properties>
             <build>
@@ -167,7 +166,8 @@
         <maven-resources.version>3.5.0</maven-resources.version>
         <maven-surefire.version>3.6.1</maven-surefire.version>
         <maven-failsafe.version>3.6.1</maven-failsafe.version>
-        <maven-javadoc-version>3.12.0</maven-javadoc-version>
+        <maven-javadoc.version>3.12.0</maven-javadoc.version>
+        <dependency-check.version>13.0.0</dependency-check.version>
         <maven-install.version>3.2.0</maven-install.version>
         <!-- Commons -->
         <commons-lang3.version>3.22.0</commons-lang3.version>
@@ -191,7 +191,6 @@
         <netty-tcnative.version>2.0.86.Final</netty-tcnative.version>
         <!-- gRPC and protobuf -->
         <grpc.version>1.86.0</grpc.version>
-        <guava.version>33.8.0-jre</guava.version>
         <protobuf.version>4.36.2</protobuf.version>
         <!-- Web JAX-RS -->
         <swagger.core.version>3.0.0</swagger.core.version>
@@ -238,10 +237,9 @@
         <!-- PDF - PDFBox -->
         <pdfbox.version>3.0.8</pdfbox.version>
         <!-- PDF - io.github.openhtmltopdf -->
-        <openhtml.version>1.1.125</openhtml.version>
+        <openhtml.version>1.2.0</openhtml.version>
         <!-- openhtmltopdf security patch -->
         <batik.version>1.20</batik.version>
-        <xmlgraphics-commons.version>2.12</xmlgraphics-commons.version>
         <!-- PDF - iText -->
         <itext-core.version>9.8.1</itext-core.version>
         <itext-html2pdf.version>6.3.4</itext-html2pdf.version>
@@ -257,7 +255,539 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- 1. 统一 Batik 为 1.20（修复 CVE 漏洞并消除 1.17 / 1.9 混用） -->
+            <!-- ================= 1. Version locking of direct dependencies (corresponding to <dependencies> below) ================ -->
+            <!-- Commons -->
+            <!-- https://mvnrepository.com/artifact/commons-cli/commons-cli Apache 2.0-->
+            <dependency>
+                <groupId>commons-cli</groupId>
+                <artifactId>commons-cli</artifactId>
+                <version>${commons-cli.version}</version>
+                <!--            <optional>true</optional>-->
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/commons-io/commons-io Apache 2.0-->
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 Apache 2.0-->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>${commons-text.version}</version>
+            </dependency>
+
+            <!-- Reflection -->
+            <!-- https://mvnrepository.com/artifact/org.reflections/reflections BSD 2-clause-->
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>${reflections.version}</version>
+            </dependency>
+
+
+            <!-- Logging -->
+            <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api Apache 2.0-->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j-api.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core Apache 2.0-->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j-api.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.lmax/disruptor Apache 2.0-->
+            <dependency>
+                <groupId>com.lmax</groupId>
+                <artifactId>disruptor</artifactId>
+                <version>${log4j-disruptor.version}</version>
+            </dependency>
+            <!-- JDK Logging Adapter https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-jul -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-jul</artifactId>
+                <version>${log4j-api.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- Mail -->
+            <!-- https://mvnrepository.com/artifact/com.sun.mail/jakarta.mail -->
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>jakarta.mail</artifactId>
+                <version>${jakarta-mail.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.sun.activation/jakarta.activation -->
+            <dependency>
+                <groupId>com.sun.activation</groupId>
+                <artifactId>jakarta.activation</artifactId>
+                <version>${jakarta-activation.version}</version>
+            </dependency>
+
+
+            <!-- Security -->
+            <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>-->
+            <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
+            <dependency>
+                <groupId>org.owasp.encoder</groupId>
+                <artifactId>encoder</artifactId>
+                <version>${owasp.encoder.version}</version>
+            </dependency>
+
+            <!-- JWT -->
+            <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt Apache 2.0-->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jwt.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jwt.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
+                <version>${jwt.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- backward compatibility for jjwt only https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
+            <!--
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>2.3.1</version>
+            </dependency>-->
+            <!-- fixed jjwt-jackson's dependency 5 security issues -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson2.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+
+            <!-- NIO Netty -->
+            <!-- https://mvnrepository.com/artifact/io.netty/netty-all Apache 2.0-->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/io.netty/netty-transport-native-epoll Apache 2.0-->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native-epoll</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/io.netty/netty-transport-native-kqueue Apache 2.0-->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-native-kqueue</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/io.netty/netty-tcnative-boringssl-static Apache-->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-tcnative-boringssl-static</artifactId>
+                <version>${netty-tcnative.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/io.netty/netty-tcnative-classes -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-tcnative-classes</artifactId>
+                <version>${netty-tcnative.version}</version>
+            </dependency>
+
+            <!-- gRPC and protobuf -->
+            <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+                <!--            <scope>provided</scope>-->
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/io.grpc/grpc-protobuf -->
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-protobuf</artifactId>
+                <version>${grpc.version}</version>
+                <!--            <scope>provided</scope>-->
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded -->
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-netty-shaded</artifactId>
+                <version>${grpc.version}</version>
+                <!--            <scope>provided</scope>-->
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/io.grpc/grpc-stub -->
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-stub</artifactId>
+                <version>${grpc.version}</version>
+                <!--            <scope>provided</scope>-->
+            </dependency>
+
+            <!-- Open API -->
+            <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>${swagger.core.version}</version>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/co.elastic.apm/apm-agent-api
+            <dependency>
+                <groupId>co.elastic.apm</groupId>
+                <artifactId>apm-agent-api</artifactId>
+                <version>${elastic-apm.version}</version>
+                <scope>provided</scope>
+            </dependency>-->
+
+
+            <!-- MIME-Type -->
+            <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core Apache 2.0-->
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>${tika.version}</version>
+            </dependency>
+            <!-- JAX-RS -->
+            <!-- https://mvnrepository.com/artifact/jakarta.ws.rs/jakarta.ws.rs-api -->
+            <dependency>
+                <groupId>jakarta.ws.rs</groupId>
+                <artifactId>jakarta.ws.rs-api</artifactId>
+                <version>${rs-api.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api CDDL, GPL 2.0 -->
+            <!-- https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api -->
+            <dependency>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>${jakarta.annotation.version}</version>
+            </dependency>
+
+
+            <!-- JSON/XML/Bean Validation -->
+            <!-- Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind -->
+            <dependency>
+                <groupId>tools.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <!-- Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-core -->
+            <dependency>
+                <groupId>tools.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <!-- XML -->
+            <!-- Source: https://mvnrepository.com/artifact/tools.jackson.dataformat/jackson-dataformat-xml -->
+            <dependency>
+                <groupId>tools.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-xml</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations Apache 2.0-->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.annotations.version}</version>
+            </dependency>
+
+            <!-- Bean Validation -->
+            <!-- https://mvnrepository.com/artifact/jakarta.el/jakarta.el-api -->
+            <dependency>
+                <groupId>jakarta.el</groupId>
+                <artifactId>jakarta.el-api</artifactId>
+                <version>${jakarta.el.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.glassfish/jakarta.el -->
+            <!--        <dependency>-->
+            <!--            <groupId>org.glassfish</groupId>-->
+            <!--            <artifactId>jakarta.el</artifactId>-->
+            <!--            <version>4.0.2</version>-->
+            <!--        </dependency>-->
+            <!-- https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-el -->
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-el</artifactId>
+                <version>${tomcat-embed-el.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator -->
+            <dependency>
+                <groupId>org.hibernate.validator</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${hibernate-validator.version}</version>
+            </dependency>
+
+
+            <!-- Injection -->
+            <!-- https://mvnrepository.com/artifact/com.google.inject/guice Apache 2.0-->
+            <dependency>
+                <groupId>com.google.inject</groupId>
+                <artifactId>guice</artifactId>
+                <version>${guice.version}</version>
+            </dependency>
+
+
+            <!-- JPA -->
+            <!-- https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core  LGPL 2.1-->
+            <dependency>
+                <groupId>org.hibernate.orm</groupId>
+                <artifactId>hibernate-core</artifactId>
+                <version>${hibernate.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.eclipse.angus</groupId>
+                        <artifactId>angus-activation</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-hikaricp  LGPL 2.1-->
+            <dependency>
+                <groupId>org.hibernate.orm</groupId>
+                <artifactId>hibernate-hikaricp</artifactId>
+                <version>${hibernate.version}</version>
+            </dependency>
+            <!-- JPA Connection Pool -->
+            <!-- https://mvnrepository.com/artifact/com.zaxxer/HikariCP Apache 2.0-->
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${hikari-cp.version}</version>
+            </dependency>
+
+            <!-- JNA -->
+            <!-- https://mvnrepository.com/artifact/net.java.dev.jna/jna -->
+            <dependency>
+                <groupId>net.java.dev.jna</groupId>
+                <artifactId>jna</artifactId>
+                <version>${jna.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Cache -->
+            <!-- https://mvnrepository.com/artifact/redis.clients/jedis MIT-->
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>${jedis.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+
+            <!-- Scheduler -->
+            <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
+            <dependency>
+                <groupId>org.quartz-scheduler</groupId>
+                <artifactId>quartz</artifactId>
+                <version>${quartz.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.quartz-scheduler</groupId>
+                <artifactId>quartz-jobs</artifactId>
+                <version>${quartz.version}</version>
+            </dependency>
+            <!-- MQTT -->
+            <dependency>
+                <groupId>org.eclipse.paho</groupId>
+                <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+                <version>${mqtt.version}</version>
+            </dependency>
+
+
+            <!-- Template Engine -->
+            <!-- https://mvnrepository.com/artifact/org.freemarker/freemarker Apache 2.0-->
+            <dependency>
+                <groupId>org.freemarker</groupId>
+                <artifactId>freemarker</artifactId>
+                <version>${freemarker.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
+            </dependency>
+
+            <!-- Barcode -->
+            <!-- ZXing (“zebra crossing”) is an open-source, multi-format 1D/2D barcode image processing library implemented in Java, with ports to other languages. This is the main library that supports QR codes in Java. -->
+            <!-- https://mvnrepository.com/artifact/com.google.zxing/core -->
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>core</artifactId>
+                <version>${zxing.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.google.zxing/javase -->
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>javase</artifactId>
+                <version>${zxing.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+
+            <!-- PDF - iText -->
+            <!-- https://mvnrepository.com/artifact/com.itextpdf/itext-core AGPL 3.0-->
+            <dependency>
+                <groupId>com.itextpdf</groupId>
+                <artifactId>itext-core</artifactId>
+                <version>${itext-core.version}</version>
+                <type>pom</type>
+                <scope>provided</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.itextpdf/html2pdf AGPL 3.0-->
+            <dependency>
+                <groupId>com.itextpdf</groupId>
+                <artifactId>html2pdf</artifactId>
+                <version>${itext-html2pdf.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- PDF - io.github.openhtmltopdf -->
+            <!-- https://mvnrepository.com/artifact/io.github.openhtmltopdf/openhtmltopdf-pdfbox LGPL 2.1-->
+            <dependency>
+                <!-- ALWAYS required, usually included transitively. -->
+                <groupId>io.github.openhtmltopdf</groupId>
+                <artifactId>openhtmltopdf-core</artifactId>
+                <version>${openhtml.version}</version>
+            </dependency>
+            <dependency>
+                <!-- Required for PDF output. -->
+                <groupId>io.github.openhtmltopdf</groupId>
+                <artifactId>openhtmltopdf-pdfbox</artifactId>
+                <version>${openhtml.version}</version>
+            </dependency>
+            <dependency>
+                <!-- Required for image output only. -->
+                <groupId>io.github.openhtmltopdf</groupId>
+                <artifactId>openhtmltopdf-java2d</artifactId>
+                <version>${openhtml.version}</version>
+            </dependency>
+            <dependency>
+                <!-- Optional, leave out if you do not need right-to-left or bi-directional text support. -->
+                <groupId>io.github.openhtmltopdf</groupId>
+                <artifactId>openhtmltopdf-rtl-support</artifactId>
+                <version>${openhtml.version}</version>
+            </dependency>
+            <dependency>
+                <!-- Optional, leave out if you do not need logging via slf4j. -->
+                <groupId>io.github.openhtmltopdf</groupId>
+                <artifactId>openhtmltopdf-slf4j</artifactId>
+                <version>${openhtml.version}</version>
+            </dependency>
+            <dependency>
+                <!-- Optional, leave out if you do not need SVG support. -->
+                <groupId>io.github.openhtmltopdf</groupId>
+                <artifactId>openhtmltopdf-svg-support</artifactId>
+                <version>${openhtml.version}</version>
+            </dependency>
+
+            <dependency>
+                <!-- Optional, leave out if you do not need MathML support. -->
+                <!-- Introduced in RC-13. -->
+                <groupId>io.github.openhtmltopdf</groupId>
+                <artifactId>openhtmltopdf-mathml-support</artifactId>
+                <version>${openhtml.version}</version>
+            </dependency>
+
+            <!-- Document to Image -->
+            <!-- PDF - PDFBox -->
+            <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/xmpbox -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>xmpbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/com.veracode.annotation/VeracodeAnnotations -->
+            <dependency>
+                <groupId>com.veracode.annotation</groupId>
+                <artifactId>VeracodeAnnotations</artifactId>
+                <version>${veracode.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Testing -->
+            <!-- https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
+            <dependency>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
+                <version>${jdbc.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.testng/testng Apache 2.0-->
+            <dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <version>${testng.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- Source: https://mvnrepository.com/artifact/org.skyscreamer/jsonassert -->
+            <dependency>
+                <groupId>org.skyscreamer</groupId>
+                <artifactId>jsonassert</artifactId>
+                <version>${jsonassert.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+
+            <!-- ================= 2. Indirect/transitive dependency version locking (for fixing vulnerabilities or conflicts, no need to include it below). ================= -->
+            <!-- 1. Unify Batik -->
             <dependency>
                 <groupId>org.apache.xmlgraphics</groupId>
                 <artifactId>batik-transcoder</artifactId>
@@ -284,39 +814,28 @@
                 <version>2.12</version>
             </dependency>
 
-            <!-- 2. 统一 Guava 为最新 JRE 安全版（覆盖 gRPC 的 33.7.2-android 和 Guice 的 31.0.1-jre） -->
+            <!-- 2. Unify Guava -->
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>${guava.version}</version>
+                <version>33.8.0-jre</version>
             </dependency>
 
-            <!-- 3. 统一 Protobuf 为 4.36.2 -->
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>${protobuf.version}</version>
-            </dependency>
-
-            <!-- 4. 统一 SLF4J 为 2.0.20（防止 reflections 的 1.7.32 覆盖 Tika/Quartz 所需的 2.x） -->
+            <!-- 3. Unify SLF4J -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>2.0.20</version>
             </dependency>
 
-            <!-- 5. 统一 Commons Lang3 & ErrorProne 注解为高版本 -->
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>${commons-lang3.version}</version>
-            </dependency>
+            <!--4. Unify ErrorProne -->
             <dependency>
                 <groupId>com.google.errorprone</groupId>
                 <artifactId>error_prone_annotations</artifactId>
                 <version>2.53.0</version>
             </dependency>
-            <!-- 6. 统一 Hibernate / Logging / HikariCP / JAXB-API 版本 -->
+
+            <!-- 5. Unify Hibernate / Logging / HikariCP / JAXB-API -->
             <dependency>
                 <groupId>org.jboss.logging</groupId>
                 <artifactId>jboss-logging</artifactId>
@@ -326,11 +845,6 @@
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
                 <version>1.4.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.zaxxer</groupId>
-                <artifactId>HikariCP</artifactId>
-                <version>${hikari-cp.version}</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>
@@ -346,26 +860,22 @@
         <dependency>
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
-            <version>${commons-cli.version}</version>
             <!--            <optional>true</optional>-->
         </dependency>
         <!-- https://mvnrepository.com/artifact/commons-io/commons-io Apache 2.0-->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>${commons-io.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 Apache 2.0-->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>${commons-lang3.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>${commons-text.version}</version>
         </dependency>
 
         <!-- Reflection -->
@@ -373,7 +883,6 @@
         <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
-            <version>${reflections.version}</version>
         </dependency>
 
 
@@ -382,25 +891,21 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>${log4j-api.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core Apache 2.0-->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>${log4j-api.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.lmax/disruptor Apache 2.0-->
         <dependency>
             <groupId>com.lmax</groupId>
             <artifactId>disruptor</artifactId>
-            <version>${log4j-disruptor.version}</version>
         </dependency>
         <!-- JDK Logging Adapter https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-jul -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-jul</artifactId>
-            <version>${log4j-api.version}</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -409,13 +914,11 @@
         <dependency>
             <groupId>com.sun.mail</groupId>
             <artifactId>jakarta.mail</artifactId>
-            <version>${jakarta-mail.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.sun.activation/jakarta.activation -->
         <dependency>
             <groupId>com.sun.activation</groupId>
             <artifactId>jakarta.activation</artifactId>
-            <version>${jakarta-activation.version}</version>
         </dependency>
 
 
@@ -424,19 +927,16 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
-            <version>${bouncycastle.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>${bouncycastle.version}</version>
         </dependency>-->
         <!-- https://mvnrepository.com/artifact/org.owasp.encoder/encoder -->
         <dependency>
             <groupId>org.owasp.encoder</groupId>
             <artifactId>encoder</artifactId>
-            <version>${owasp.encoder.version}</version>
         </dependency>
 
         <!-- JWT -->
@@ -444,36 +944,15 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>${jwt.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>${jwt.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
-            <version>${jwt.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- backward compatibility for jjwt only https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
         <!--
@@ -486,7 +965,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson2.version}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -496,31 +974,26 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>${netty.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.netty/netty-transport-native-epoll Apache 2.0-->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <version>${netty.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.netty/netty-transport-native-kqueue Apache 2.0-->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-kqueue</artifactId>
-            <version>${netty.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.netty/netty-tcnative-boringssl-static Apache-->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <version>${netty-tcnative.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.netty/netty-tcnative-classes -->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-classes</artifactId>
-            <version>${netty-tcnative.version}</version>
         </dependency>
 
         <!-- gRPC and protobuf -->
@@ -528,14 +1001,12 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>${protobuf.version}</version>
             <!--            <scope>provided</scope>-->
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.grpc/grpc-protobuf -->
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-protobuf</artifactId>
-            <version>${grpc.version}</version>
             <!--            <scope>provided</scope>-->
         </dependency>
 
@@ -543,14 +1014,12 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
-            <version>${grpc.version}</version>
             <!--            <scope>provided</scope>-->
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.grpc/grpc-stub -->
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
-            <version>${grpc.version}</version>
             <!--            <scope>provided</scope>-->
         </dependency>
 
@@ -559,7 +1028,6 @@
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
-            <version>${swagger.core.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/co.elastic.apm/apm-agent-api 
@@ -576,21 +1044,18 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
-            <version>${tika.version}</version>
         </dependency>
         <!-- JAX-RS -->
         <!-- https://mvnrepository.com/artifact/jakarta.ws.rs/jakarta.ws.rs-api -->
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
             <artifactId>jakarta.ws.rs-api</artifactId>
-            <version>${rs-api.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api CDDL, GPL 2.0 -->
         <!-- https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api -->
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
-            <version>${jakarta.annotation.version}</version>
         </dependency>
 
 
@@ -599,26 +1064,22 @@
         <dependency>
             <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <!-- Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-core -->
         <dependency>
             <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <!-- XML -->
         <!-- Source: https://mvnrepository.com/artifact/tools.jackson.dataformat/jackson-dataformat-xml -->
         <dependency>
             <groupId>tools.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-xml</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations Apache 2.0-->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.annotations.version}</version>
         </dependency>
 
         <!-- Bean Validation -->
@@ -626,7 +1087,6 @@
         <dependency>
             <groupId>jakarta.el</groupId>
             <artifactId>jakarta.el-api</artifactId>
-            <version>${jakarta.el.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.glassfish/jakarta.el -->
         <!--        <dependency>-->
@@ -638,13 +1098,11 @@
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-el</artifactId>
-            <version>${tomcat-embed-el.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator -->
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
-            <version>${hibernate-validator.version}</version>
         </dependency>
 
 
@@ -653,7 +1111,6 @@
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-            <version>${guice.version}</version>
         </dependency>
 
 
@@ -662,7 +1119,6 @@
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>${hibernate.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.eclipse.angus</groupId>
@@ -674,14 +1130,12 @@
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-hikaricp</artifactId>
-            <version>${hibernate.version}</version>
         </dependency>
         <!-- JPA Connection Pool -->
         <!-- https://mvnrepository.com/artifact/com.zaxxer/HikariCP Apache 2.0-->
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>${hikari-cp.version}</version>
         </dependency>
 
         <!-- JNA -->
@@ -689,7 +1143,6 @@
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>${jna.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -698,7 +1151,6 @@
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
-            <version>${jedis.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -708,24 +1160,15 @@
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
-            <version>${quartz.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.zaxxer</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz-jobs</artifactId>
-            <version>${quartz.version}</version>
         </dependency>
         <!-- MQTT -->
         <dependency>
             <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
-            <version>${mqtt.version}</version>
         </dependency>
 
 
@@ -734,12 +1177,10 @@
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
-            <version>${freemarker.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>${jsoup.version}</version>
         </dependency>
 
         <!-- Barcode -->
@@ -748,14 +1189,12 @@
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
-            <version>${zxing.version}</version>
             <scope>provided</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.google.zxing/javase -->
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
-            <version>${zxing.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -765,7 +1204,6 @@
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>itext-core</artifactId>
-            <version>${itext-core.version}</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -773,7 +1211,6 @@
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>html2pdf</artifactId>
-            <version>${itext-html2pdf.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -783,43 +1220,31 @@
             <!-- ALWAYS required, usually included transitively. -->
             <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-core</artifactId>
-            <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Required for PDF output. -->
             <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-pdfbox</artifactId>
-            <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Required for image output only. -->
             <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-java2d</artifactId>
-            <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need right-to-left or bi-directional text support. -->
             <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-rtl-support</artifactId>
-            <version>${openhtml.version}</version>
         </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need logging via slf4j. -->
             <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-slf4j</artifactId>
-            <version>${openhtml.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <!-- Optional, leave out if you do not need SVG support. -->
             <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-svg-support</artifactId>
-            <version>${openhtml.version}</version>
         </dependency>
 
         <dependency>
@@ -827,7 +1252,6 @@
             <!-- Introduced in RC-13. -->
             <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-mathml-support</artifactId>
-            <version>${openhtml.version}</version>
         </dependency>
 
         <!-- Document to Image -->
@@ -836,20 +1260,17 @@
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>${pdfbox.version}</version>
         </dependency>
         <!-- Source: https://mvnrepository.com/artifact/org.apache.pdfbox/xmpbox -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>xmpbox</artifactId>
-            <version>${pdfbox.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.veracode.annotation/VeracodeAnnotations -->
         <dependency>
             <groupId>com.veracode.annotation</groupId>
             <artifactId>VeracodeAnnotations</artifactId>
-            <version>${veracode.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -858,28 +1279,80 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>${jdbc.version}</version>
             <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.testng/testng Apache 2.0-->
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>${testng.version}</version>
             <scope>test</scope>
         </dependency>
         <!-- Source: https://mvnrepository.com/artifact/org.skyscreamer/jsonassert -->
         <dependency>
             <groupId>org.skyscreamer</groupId>
             <artifactId>jsonassert</artifactId>
-            <version>${jsonassert.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
             <scope>test</scope>
+        </dependency>
+
+
+        <!-- ================= 2. Security & Conflict Overrides (Kept in <dependencies> intentionally so downstream Maven apps inherit safe versions automatically) ================= -->
+        <!-- 1. Unify Batik -->
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-transcoder</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-codec</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-ext</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-svg-dom</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>xmlgraphics-commons</artifactId>
+        </dependency>
+
+        <!-- 2. Unify Guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <!-- 3. Unify SLF4J -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!--4. 统一 ErrorProne -->
+        <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+        </dependency>
+
+        <!-- 5. Unify Hibernate / Logging / HikariCP / JAXB-API -->
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
         </dependency>
     </dependencies>
 
@@ -1048,11 +1521,20 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${maven-javadoc-version}</version>
+                <version>${maven-javadoc.version}</version>
                 <configuration>
                     <additionalJOptions>
                         <additionalJOption>--allow-script-in-comments</additionalJOption>
                     </additionalJOptions>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>${dependency-check.version}</version>
+                <configuration>
+                    <ossIndexServerId>ossindex</ossIndexServerId>
                 </configuration>
             </plugin>
         </plugins>
